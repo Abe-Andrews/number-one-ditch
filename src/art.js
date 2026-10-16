@@ -748,7 +748,6 @@
         p.set(x, y, s > 0.55 ? creamD : s < -0.6 ? creamL : cream);
       }
     }
-    p.vline(14, 1, 8, creamD); // the seam
     // face
     p.set(11, 10, black); p.set(11, 11, black); p.set(17, 10, black); p.set(17, 11, black);
     p.set(10, 10, white); p.set(18, 10, white);

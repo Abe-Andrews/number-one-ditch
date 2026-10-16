@@ -148,7 +148,7 @@
   S.phone = function* () {
     const f = flags();
     if (f.readChat) {
-      yield G.say(null, 'The family group chat. 147 unread messages. Most of them are Lily sending skulls.');
+      yield G.say(null, 'The family group chat. 147 unread messages. Most of them are Nani sending inspirational messages.');
       return;
     }
     yield G.say(null, '{c}~ FAMILY GROUP CHAT ~{/}');
