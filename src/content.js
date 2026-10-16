@@ -40,7 +40,7 @@
     },
     // Christian: round glasses, beard, cream blazer.
     dad: {
-      skin: '#f0c0a0', hair: '#a88458', hairStyle: 'receding', beard: '#a08262', glasses: '#4a4248', smile: '#ffffff',
+      skin: '#f0c0a0', hair: '#a88a62', hairStyle: 'cropped', beard: '#8a7058', glasses: '#4a4248', smile: '#ffffff',
       coat: '#ece4d0', shirt: '#283044', pants: '#4a4a58', shoes: '#4a3020',
       wide: true, torso: 7, legs: 4,
     },

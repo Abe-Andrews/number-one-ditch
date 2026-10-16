@@ -374,6 +374,15 @@
       p.hline(6, 9, y0 + 1, shade(c.skin, -0.06));
       for (let y = y0 + 2; y <= y0 + 5; y++) { p.set(3, y, y > y0 + 3 ? D : H); p.set(12, y, y > y0 + 3 ? D : H); }
       p.hline(6, 8, y0, L);
+    } else if (s === 'cropped') {
+      // short, textured hair on top; temples just a little higher (Dad)
+      top(3);
+      p.hline(4, 11, y0 + 3, H);
+      p.set(4, y0 + 3, D); p.set(11, y0 + 3, D);
+      for (let y = y0 + 3; y <= y0 + 5; y++) { p.set(3, y, y > y0 + 4 ? D : H); p.set(12, y, y > y0 + 4 ? D : H); }
+      for (let x = 4; x <= 11; x += 2) p.set(x, y0 + 1, L);
+      p.set(5, y0, L); p.set(8, y0, L);
+      p.set(6, y0 + 3, D); p.set(9, y0 + 3, D);
     } else if (s === 'cap') {
       // hair poking out under a cap
       for (let y = y0 + 3; y <= y0 + 6; y++) { p.set(3, y, H); p.set(12, y, H); }
@@ -555,6 +564,11 @@
     } else if (s === 'receding') {
       p.hline(5, 8, y0, H); p.hline(4, 7, y0 + 1, H); p.hline(3, 6, y0 + 2, H);
       for (let y = y0 + 3; y <= y0 + 6; y++) p.hline(3, 5, y, y > y0 + 4 ? D : H);
+    } else if (s === 'cropped') {
+      top(3);
+      p.hline(3, 10, y0 + 3, H); p.set(10, y0 + 3, D);
+      for (let y = y0 + 4; y <= y0 + 6; y++) p.hline(3, 5, y, y > y0 + 5 ? D : H);
+      for (let x = 4; x <= 10; x += 2) p.set(x, y0 + 1, c.hairL);
     } else if (s === 'cap') {
       for (let y = y0 + 3; y <= y0 + 6; y++) p.hline(3, 5, y, H);
       p.set(2, y0 + 5, D); p.set(6, y0 + 3, H);
