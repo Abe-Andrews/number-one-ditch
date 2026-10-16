@@ -120,6 +120,14 @@
       desc: 'Set one down with X. It goes BANG a few seconds later. Merry Christmas!',
       has: () => (st().items.package || 0) > 0 || !!fl().doronDeal,
     },
+    pipe: {
+      kind: 'gear', equip: true, name: 'Dad\'s Pipe', short: 'Dad\'s Pipe', icon: () => G.spr.pipe, has: () => !!st().items.pipe,
+      desc: () => {
+        const known = G.SIGNALS.filter((sg) => sg.known());
+        return 'Hand-carved by Dad. Press X, then puff arrows. ' +
+          (known.length ? 'Signals: ' + known.map((sg) => '{c}' + sg.name + '{/} ' + G.arrows(sg.seq)).join(', ') : '');
+      },
+    },
     bidet: { kind: 'gear', name: 'Portable Bidet', icon: () => null, desc: '', has: () => !!st().items.bidet },
     phone: {
       kind: 'key', name: 'Nate\'s Phone', icon: () => G.spr.phone, has: () => true,
@@ -143,7 +151,14 @@
     },
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
-  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'bidet', null, null, null, null];
+  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bidet', null, null, null];
+
+  // ================================================================ SMOKE SIGNALS (Dad's pipe)
+  // Like ocarina songs: learn a sequence, puff it with the pipe, something
+  // happens. Add new ones here as the story teaches them.
+  G.SIGNALS = [
+    { id: 'peace', name: 'Peace Be With You', seq: ['up', 'down', 'up'], known: () => !!fl().signal_peace, effect: () => G.SCRIPTS.signalPeace() },
+  ];
   G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', null, null, null, null];
 
   G.itemHas = (id) => {
@@ -180,7 +195,7 @@
   const CHARACTERS = [
     {
       id: 'dad', name: 'Dad', tag: '{c}Family', met: () => fl().readChat,
-      bio: 'Christian. Cream blazer, round glasses. Asks everyone if they speak EEENGLISH.',
+      bio: 'Christian. A pastor who carves pipes in his workshop. Asks everyone if they speak EEENGLISH.',
     },
     {
       id: 'elenglish', name: 'El EEENGLISH', met: () => fl().mainEvent,
@@ -921,6 +936,8 @@
     yield G.say('Doron', 'Dad. You came to Micro Mayhem. You were the MAIN EVENT.');
     yield G.say('Dad', '...Was I good?');
     yield G.say('Doron', 'You were incredible.');
+    yield G.say('Dad', 'Before you boys go... Nate, I made you something in my workshop.');
+    yield* S.pipeGift();
     yield G.say('Doron', 'Okay, Nate. A deal\'s a deal. Let\'s go move your boulder.');
     const s = G.state;
     if (!s.party.includes('doron')) s.party.push('doron');
@@ -931,7 +948,45 @@
     G.play.warp('arena', 11, 14, 'down');
   };
 
+  // Dad's hand-carved pipe and the first smoke signal.
+  S.pipeGift = function* () {
+    const s = G.state, f = flags();
+    s.items.pipe = true;
+    if (!s.xItem) s.xItem = 'pipe';
+    yield G.itemGet(G.spr.pipe, 'You got {y}Dad\'s Pipe{/}! Hand-carved in his workshop. Equip it to {y}X{/} to puff smoke signals.');
+    yield G.say('Dad', 'A good pipe is like a good sermon. It takes patience, and it\'s best shared.');
+    yield G.say('Dad', 'Every pipe has its signals. Here\'s one my father taught me. When things get rowdy, puff this.');
+    f.signal_peace = true;
+    G.audio.sfx('fanfare');
+    yield G.banner('YOU LEARNED A SMOKE SIGNAL', 'Peace Be With You:  ' + G.arrows(['up', 'down', 'up']), 200);
+    yield G.say('Dad', 'Peace be with you, son.');
+  };
+
+  S.pipeSession = function* () {
+    const id = yield G.pipeCmd();
+    const sig = id && G.SIGNALS.find((sg) => sg.id === id);
+    if (sig) yield* sig.effect();
+  };
+
+  // Smoke signal: calms every nearby enemy for about 10 seconds.
+  S.signalPeace = function* () {
+    yield G.banner('PEACE BE WITH YOU', 'Nearby enemies calm right down.', 110);
+    const p = P();
+    let n = 0;
+    for (const e of G.play.world.ents) {
+      if (!e.enemy || e.boss || e.dead || Math.hypot(e.x - p.x, e.y - p.y) > 180) continue;
+      e.calm = 600;
+      n++;
+    }
+    if (!n) yield G.say('Nate', 'Nobody around to calm down. Still a nice pipe, though.');
+  };
+
   S.dadArena = function* () {
+    if (!G.state.items.pipe) {
+      yield G.say('Dad', 'Nate! Before you go, I made you something in my workshop.');
+      yield* S.pipeGift();
+      return;
+    }
     yield G.say('Dad', 'The nachos here are excellent. Very EEENGLISH.');
     yield G.say('Dad', 'If your mother asks, I was at a book club.');
   };

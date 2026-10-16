@@ -221,6 +221,75 @@
     draw(ctx) { if (this.t >= 45) this.d.draw(ctx); },
   });
 
+  // ------------------------------------------------------------ Dad's pipe
+  // Ocarina-style: arrows puff smoke rings with notes; a known sequence
+  // returns that smoke signal's id (or nothing if put away).
+  const ARROW = { up: '↑', down: '↓', left: '←', right: '→' };
+  G.arrows = (seq) => seq.map((d) => ARROW[d]).join(' ');
+
+  G.pipeCmd = () => ({
+    start() {
+      this.seq = [];
+      this.t = 0;
+      this.matched = null;
+      G.play.player.pipeOut = true;
+      G.play.player.moving = false;
+    },
+    bowl() {
+      const p = G.play.player, S = p.spr, top = p.y - S.h + 2;
+      const off = { right: [9, 8], left: [-9, 8], down: [5, 9], up: [0, 6] }[p.dir];
+      return [p.x + off[0], top + off[1]];
+    },
+    update() {
+      const inp = G.input;
+      this.t++;
+      if (this.t % 14 === 0) {
+        const [bx, by] = this.bowl();
+        G.play.world.fx.push({ x: bx, y: by, vx: (Math.random() - 0.5) * 0.2, vy: -0.35, life: 34, color: '#c8c8d0', size: 2, grow: true });
+      }
+      if (this.matched) {
+        if (--this.matchT > 0) return false;
+        G.play.player.pipeOut = false;
+        this.result = this.matched;
+        return true;
+      }
+      for (const d of ['up', 'down', 'left', 'right']) if (inp.hit(d)) this.puff(d);
+      if (inp.hit('a') || inp.hit('b') || inp.hit('start')) {
+        inp.eat('a'); inp.eat('b'); inp.eat('start');
+        G.play.player.pipeOut = false;
+        return true;
+      }
+      return false;
+    },
+    puff(d) {
+      this.seq.push(d);
+      if (this.seq.length > 8) this.seq.shift();
+      G.audio.puff(d);
+      const [bx, by] = this.bowl(), [dx, dy] = G.DIRS[d];
+      G.play.world.fx.push({ x: bx, y: by - 2, vx: dx * 0.7, vy: dy * 0.7 - 0.15, ring: true, life: 50, max: 50, color: '#eeeef4' });
+      for (const sig of G.SIGNALS) {
+        if (!sig.known()) continue;
+        const n = sig.seq.length;
+        if (this.seq.length >= n && this.seq.slice(-n).join() === sig.seq.join()) {
+          this.matched = sig.id;
+          this.matchT = 45;
+          G.audio.sfx('secret');
+          break;
+        }
+      }
+    },
+    draw(ctx) {
+      const y = G.H - 40;
+      G.box(ctx, 6, y, 228, 36);
+      F().draw(ctx, 'DAD\'S PIPE', 12, y + 4, '#f8d850', { shadow: '#0c0814' });
+      F().draw(ctx, this.seq.length ? G.arrows(this.seq) : '{d}Puff with the arrow keys...', 70, y + 4, '#f8f8f0', { shadow: '#0c0814' });
+      const known = G.SIGNALS.filter((s) => s.known());
+      const line = known.length ? known.map((s) => s.name + ' ' + G.arrows(s.seq)).join('   ') : 'No smoke signals learned yet.';
+      F().draw(ctx, this.matched ? '{g}' + G.SIGNALS.find((s) => s.id === this.matched).name + '!' : '{c}' + line, 12, y + 15, '#f8f8f0', { shadow: '#0c0814' });
+      F().draw(ctx, 'Z: put the pipe away', 12, y + 25, '#9890a8', { shadow: '#0c0814' });
+    },
+  });
+
   // Big centered banner (chapter titles, achievements).
   G.banner = (title, sub, n = 150) => ({
     start() { this.t = 0; },

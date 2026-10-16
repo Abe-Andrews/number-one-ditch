@@ -251,6 +251,17 @@
         else ctx.drawImage(d.img, d.x - cx, d.y - cy);
       }
       for (const f of this.fx) {
+        if (f.ring) {
+          // smoke ring: a pixel circle that grows and fades
+          const r = 2 + (f.max - f.life) * 0.12;
+          ctx.globalAlpha = Math.min(1, f.life / 20) * 0.85;
+          ctx.fillStyle = f.color;
+          for (let a = 0; a < Math.PI * 2; a += 0.5) {
+            ctx.fillRect(Math.round(f.x + Math.cos(a) * r - cx), Math.round(f.y + Math.sin(a) * r * 0.7 - cy), 1, 1);
+          }
+          ctx.globalAlpha = 1;
+          continue;
+        }
         if (f.circle) {
           // explosion flash: an expanding disc that fades out
           ctx.globalAlpha = Math.min(1, f.life / 8);

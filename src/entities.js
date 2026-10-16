@@ -32,6 +32,17 @@
   }
   G.drawShadow = drawShadow;
 
+  // Little golden halo over enemies calmed by "Peace Be With You".
+  function drawHalo(ctx, x, y) {
+    x = Math.round(x); y = Math.round(y);
+    ctx.fillStyle = '#5a4810';
+    ctx.fillRect(x - 4, y - 1, 9, 4);
+    ctx.fillStyle = '#f8e070';
+    ctx.fillRect(x - 3, y, 7, 1); ctx.fillRect(x - 3, y + 1, 1, 1); ctx.fillRect(x + 3, y + 1, 1, 1); ctx.fillRect(x - 2, y + 2, 5, 1);
+    ctx.fillStyle = '#5a4810';
+    ctx.fillRect(x - 2, y + 1, 5, 1);
+  }
+
   function walkFrame(anim, moving) {
     return moving ? [1, 0, 2, 0][Math.floor(anim / 8) % 4] : 0;
   }
@@ -181,6 +192,10 @@
         ctx.drawImage(ic, Math.round(this.x - ic.width / 2) - cx, sy - ic.height - 1);
       }
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, sy - 12);
+      if (this.pipeOut && this.dir !== 'up') {
+        const pos = { right: [11, 7], left: [-3, 7], down: [8, 8] }[this.dir];
+        ctx.drawImage(this.dir === 'left' ? G.spr.pipeSmallL : G.spr.pipeSmall, sx + pos[0], sy + pos[1]);
+      }
     }
 
     drawHammer(ctx, cx, cy) {
@@ -588,6 +603,7 @@
         this.kb.x *= 0.85; this.kb.y *= 0.85;
         return;
       }
+      if (this.calm > 0) { this.calm--; return; }
       const p = G.play.player;
       const dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy);
       if (dist < 64) {
@@ -610,6 +626,7 @@
     hit(dmg, sx, sy) {
       this.hp -= dmg;
       this.hurtT = 14;
+      this.calm = 0;
       const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
       this.kb = { x: (dx / m) * 3, y: (dy / m) * 3 };
       G.audio.sfx('hit');
@@ -636,10 +653,11 @@
 
     draw(ctx, cx, cy) {
       drawShadow(ctx, this.x, this.y, cx, cy);
-      const z = Math.abs(Math.sin(this.t * 0.18)) * (this.hurtT ? 0 : 3);
+      const z = Math.abs(Math.sin(this.t * 0.18)) * (this.hurtT || this.calm ? 0 : 3);
       let img = G.spr.six[Math.floor(this.t / 10) % 2];
       if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
       ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - 16 - z) - cy);
+      if (this.calm > 0) drawHalo(ctx, this.x - cx, this.y - 19 - cy);
     }
   }
   G.Six = Six;
@@ -679,6 +697,13 @@
         w.move(this, this.kb.x, 0);
         w.move(this, 0, this.kb.y);
         this.kb.x *= 0.85; this.kb.y *= 0.85;
+        return;
+      }
+      if (this.calm > 0) {
+        this.calm--;
+        this.state = 'wander';
+        this.vx = this.vy = 0;
+        this.cool = 60;
         return;
       }
       const dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
@@ -743,6 +768,7 @@
     hit(dmg, sx, sy) {
       this.hp -= dmg;
       this.hurtT = 14;
+      this.calm = 0;
       const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
       this.kb = { x: (dx / m) * 3, y: (dy / m) * 3 };
       if (this.state === 'charge' || this.state === 'windup') { this.state = 'dizzy'; this.t = 40; }
@@ -768,6 +794,7 @@
       const jx = this.state === 'windup' ? ((this.t >> 1) & 1 ? 1 : -1) : 0;
       const sx = Math.round(this.x - 8 + jx) - cx, sy = Math.round(this.y - S.h + 2) - cy;
       ctx.drawImage(img, sx, sy);
+      if (this.calm > 0) drawHalo(ctx, this.x - cx, sy - 3);
       if (this.state === 'dizzy') {
         for (let i = 0; i < 3; i++) {
           const a = G.tick * 0.12 + (i * Math.PI * 2) / 3;

@@ -249,6 +249,15 @@ G.audio = (function () {
       if (ctx) startSong(name);
     },
     stop() { want = null; stopSong(); },
+    // Dad's pipe: each direction is a breathy note.
+    puff(dir) {
+      if (!ctx || muted) return;
+      const t = ctx.currentTime + 0.005;
+      const midi = { up: 74, right: 71, left: 67, down: 62 }[dir];
+      tone(N(midi), t, 0.4, 'triangle', 0.16);
+      tone(N(midi + 12), t, 0.25, 'sine', 0.03);
+      noise(t, 0.3, 0.06, sfxBus, 1500);
+    },
     toggleMute() {
       muted = !muted;
       if (master) master.gain.value = muted ? 0 : 0.5;

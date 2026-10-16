@@ -185,6 +185,8 @@
           s.flags.ateDoosh = true;
           G.script.run((function* () { yield G.say('Nate', 'Mmm. Doosh De Luche. Delicioso.'); })());
         }
+      } else if (s.xItem === 'pipe') {
+        G.script.run(G.SCRIPTS.pipeSession());
       } else if (s.xItem === 'package') {
         const w = this.world, p = this.player;
         if (!s.items.package || w.ents.filter((e) => e instanceof G.Package).length >= 2) { G.audio.sfx('bump'); return; }

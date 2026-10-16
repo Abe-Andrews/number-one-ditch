@@ -1459,6 +1459,28 @@
     return p.canvas();
   }
 
+  // Dad's hand-carved pipe: briar bowl and a black stem.
+  function pipeIcon() {
+    const p = new Pix(16, 10);
+    const wood = '#9a5530', woodL = '#c47a48', woodD = '#6a3418', stem = '#1c1c22';
+    p.rect(10, 1, 5, 7, wood);
+    p.vline(10, 2, 6, woodL); p.vline(14, 2, 7, woodD); p.hline(11, 13, 7, woodD);
+    p.hline(10, 14, 1, woodD); p.hline(11, 13, 2, '#3a2010');
+    p.hline(2, 9, 5, stem); p.hline(1, 9, 6, stem); p.hline(0, 2, 5, stem);
+    p.set(5, 5, '#4a4a54');
+    p.outline();
+    return p.canvas();
+  }
+
+  // Tiny pipe drawn at Nate's mouth while he puffs.
+  function pipeSmall() {
+    const p = new Pix(8, 6);
+    p.hline(0, 4, 3, '#1c1c22');
+    p.rect(4, 1, 3, 4, '#9a5530'); p.vline(6, 1, 4, '#6a3418');
+    p.hline(4, 6, 1, '#3a2010'); p.set(5, 0, '#ff9040');
+    return p.canvas();
+  }
+
   // A Micro Mayhem ticket: gold stock, a perforated stub and a red star.
   function ticketIcon() {
     const p = new Pix(16, 10);
@@ -1646,6 +1668,9 @@
     S.schoolDesk = schoolDesk();
     S.ticket = ticketIcon();
     S.phone = phoneIcon();
+    S.pipe = pipeIcon();
+    S.pipeSmall = pipeSmall();
+    S.pipeSmallL = mirror(S.pipeSmall);
     S.paper = paperIcon();
     S.chalkboard = chalkboard();
   };
