@@ -978,13 +978,14 @@
 
   // Smoke signal: calms every nearby enemy for about 10 seconds. Instant and
   // non-blocking (no banner), so the world never pauses for the pipe.
+  const PEACE_RADIUS = 64; // about 4 tiles around Nate; the flash ring shows the reach
   S.signalPeace = function () {
     const p = P(), w = G.play.world;
-    w.fx.push({ x: p.x, y: p.y - 12, vx: 0, vy: 0, circle: true, r: 60, max: 24, life: 24, color: '#fff0a0' });
+    w.fx.push({ x: p.x, y: p.y - 6, vx: 0, vy: 0, circle: true, r: PEACE_RADIUS - 6, max: 24, life: 24, color: '#fff0a0' });
     w.pop(p.x, p.y - 34, 'PEACE BE WITH YOU', '#f8e070');
     let n = 0;
     for (const e of w.ents) {
-      if (!e.enemy || e.boss || e.dead || Math.hypot(e.x - p.x, e.y - p.y) > 180) continue;
+      if (!e.enemy || e.boss || e.dead || Math.hypot(e.x - p.x, e.y - p.y) > PEACE_RADIUS) continue;
       e.calm = 600;
       n++;
     }
