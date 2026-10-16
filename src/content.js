@@ -1183,9 +1183,20 @@
   S.homeGatepost = function* () {
     yield G.say(null, 'A white gatepost with a ball on top. There\'s one on each side of the driveway.');
   };
+  // Nate's secret chemistry supplier.
   S.homePoolHouse = function* () {
+    const f = flags(), party = G.state.party;
+    if (f.chlorine) {
+      yield G.say(null, 'The pool house. The chlorine bucket is still mysteriously half empty. Nate is still not sorry.');
+      return;
+    }
+    f.chlorine = true;
     yield G.say(null, 'The little white pool house: a porch, a white rocking chair, and the flag on a bracket.');
-    yield G.say(null, 'Inside: towels, pool noodles, and a skimmer net.');
+    yield G.say(null, 'Inside: towels, pool noodles, a skimmer net... and a bucket of chlorine that is somehow ALWAYS half empty.');
+    yield G.say('Nate', '...I borrow it. For experiments.');
+    if (party.includes('doron')) yield G.say('Doron', 'So THAT\'S where it all went.');
+    if (party.includes('lily')) yield G.say('Lily', 'That\'s why the pool turned green every summer, Nate.');
+    yield G.say('Nate', 'Science requires sacrifices. Mostly the pool.');
   };
   S.homeTruck = function* () {
     yield G.say(null, 'Dad\'s old teal Ford pickup. It runs. Mostly.');
