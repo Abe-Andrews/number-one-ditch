@@ -249,7 +249,8 @@
     else if (!f.doronDeal) goal = 'Find Doron at the Easton Fairgrounds, east of campus.';
     else if (!f.dadBeaten) goal = 'Watch the main event inside the Expo Hall.';
     else if (!f.boulderGone) goal = 'Bring Doron to the boulder on the south road.';
-    else goal = 'Take the road south to Chesapeake, VA.';
+    else if (!f.homeArrived) goal = 'Take the south road to Rattlesnake Bridge Road. Home!';
+    else goal = 'Explore home. (More of the story is coming soon!)';
     const side = [];
     if (f.capQuest || s.items.cap) side.push(['Gus\'s lawn job', s.items.cap ? '{g}Done!' : G.sayable(G.capProgress()) + '/10 sacred numbers']);
     if (f.chemMet) side.push(['The Chem Final', f.chemPerfect ? '{g}Perfect!' : f.chemPassed ? 'Passed! Retake for a heart' : 'Not passed yet']);
@@ -290,6 +291,13 @@
         { wave: 'square', vol: 0.05, notes: 'E4:2 E4:2 G4:2 E4:2 A4:2 E4:2 B4:2 A4:2 | E4:2 E4:2 G4:2 E4:2 D5:4 B4:4 | E4:2 E4:2 G4:2 E4:2 A4:2 E4:2 B4:2 A4:2 | G4:4 F#4:4 E4:8' },
         { wave: 'sawtooth', vol: 0.06, notes: 'E2:2 E2:2 E3:2 E2:2 E2:2 E2:2 D3:2 E2:2 | E2:2 E2:2 E3:2 E2:2 G2:2 G2:2 A2:2 B2:2 | E2:2 E2:2 E3:2 E2:2 E2:2 E2:2 D3:2 E2:2 | C3:4 B2:4 E2:8' },
         { wave: 'noise', vol: 0.06, notes: 'k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 s:2 s:2 s:2' },
+      ],
+    },
+    home: {
+      bpm: 96,
+      tracks: [
+        { wave: 'square', vol: 0.045, notes: 'B4:4 D5:4 G5:6 F#5:2 | E5:4 D5:4 B4:8 | C5:4 E5:4 A5:6 G5:2 | F#5:12 R:4 | B4:4 D5:4 G5:6 B5:2 | A5:4 G5:4 E5:8 | C5:4 B4:4 A4:4 D5:4 | G4:12 R:4' },
+        { wave: 'triangle', vol: 0.15, notes: 'G2:8 D3:8 | C3:8 G2:8 | A2:8 E3:8 | D3:8 D2:8 | G2:8 B2:8 | C3:8 E3:8 | A2:8 D3:8 | G2:16' },
       ],
     },
     boss: {
@@ -1033,6 +1041,65 @@
     yield G.walkTo(p, p.x, p.y - 18, 1);
   };
 
+  // ---------------------------------------------------------------- home
+  const inside = '(The inside is coming in a future update!)';
+  S.homeFront = function* () {
+    yield G.say(null, 'The front door, with a wreath on it. Home sweet home.');
+    yield G.say(null, inside);
+  };
+  S.homeWing = function* () {
+    yield G.say(null, 'The French doors by the old brick chimney.');
+    yield G.say(null, inside);
+  };
+  S.homeGarage = function* () {
+    yield G.say(null, 'The garage. Three doors, a lot of tools, and about four hundred coffee cans full of screws.');
+    yield G.say(null, inside);
+  };
+  S.homeShed = function* () {
+    yield G.say(null, 'The shed. Rakes, shovels, and a croquet set nobody remembers buying.');
+  };
+  S.homeWorkshop = function* () {
+    yield G.say(null, 'Dad\'s workshop. Pipe blanks, rasps and sandpaper cover the bench.');
+    yield G.say(null, 'It smells like briar wood and sawdust. The string lights are always on.');
+  };
+  S.homeTruck = function* () {
+    yield G.say(null, 'Dad\'s old teal Ford pickup. It runs. Mostly.');
+  };
+  S.homeCoop = function* () {
+    yield G.say(null, 'The chicken coop. Somebody has been laying eggs in there.');
+    yield G.say('Nate', '...Hopefully not Father Eggmas.');
+  };
+  S.homeGreenhouse = function* () {
+    yield G.say(null, 'The little greenhouse, packed with seedlings.');
+  };
+  S.homeFirewood = function* () {
+    yield G.say(null, 'A neat stack of split firewood. Dad did all of it by hand.');
+  };
+  S.homePatio = function* () {
+    yield G.say(null, 'The stone patio: the umbrella, the grill, and the best seat in the house for sunsets.');
+  };
+  S.homePool = function* () {
+    yield G.say(null, 'The pool. Nate learned to swim here. (Swimming not included.)');
+  };
+  S.homeMailbox = function* () {
+    yield G.say(null, 'The mailbox. Inside: a catalog, a bill, and a postcard from Nani that just says "SHINE!"');
+  };
+  S.homeStreetSign = function* () {
+    yield G.say(null, 'RATTLESNAKE BRIDGE RD.');
+    yield G.say(null, 'Bedminster, New Jersey.');
+  };
+  S.homeEast = function* () {
+    const p = P();
+    yield G.say('Nate', 'Chesapeake is still a long way down this road.');
+    yield G.banner('TO BE CONTINUED...', 'The road to Chesapeake opens in a future update!', 240);
+    yield G.walkTo(p, p.x - 20, p.y, 1);
+  };
+  S.homeNorth = function* () {
+    const p = P();
+    yield G.say('Nate', 'Past the bridge it\'s just woods, deer and ticks. Nothing out there... yet.');
+    yield G.walkTo(p, p.x, p.y + 20, 1);
+  };
+
   S.partyTalk = function* (id) {
     const lines = {
       doron: [
@@ -1252,7 +1319,7 @@
       w.addTrigger(17, 25, 6, 2, () => {
         if (!flags().boulderGone && G.state.party.includes('doron')) G.script.run(S.boulderSmash());
       });
-      w.addTrigger(18, 29, 4, 1, () => G.script.run(S.southRoad()));
+      w.addTrigger(18, 29, 4, 1, () => G.play.warp('home', 1, 37, 'right'));
       w.add(new G.Sign(37, 11, 'EAST: Easton Fairgrounds. Tonight: {y}MICRO MAYHEM WRESTLING{/}!'));
       w.add(new G.Sign(35, 8, ['SCIENCE CENTER. Reopened (mostly) after "an incident involving homemade fireworks."', 'Today: {y}CHEMISTRY FINAL{/} with Dr. Moles.']));
       // the fairgrounds only open up once the boulder (and Doron's text) gives Nate a reason to go
@@ -1303,6 +1370,121 @@
       w.add(new G.NPC({ sprite: 'moles', name: 'Dr. Moles', x: 7 * 16 + 8, y: 3 * 16 + 14, dir: 'down', talk: S.chemFinal }));
       w.add(new G.NPC({ sprite: 'priya', name: 'Priya', x: 13 * 16 + 8, y: 7 * 16 + 14, dir: 'left', talk: S.priya }));
       w.addWarp(7, 10, 1, 1, 'campus', 33, 7, 'down');
+    },
+  };
+
+  // Nate's childhood home on Rattlesnake Bridge Rd, Bedminster NJ, laid out
+  // from the property survey: road and board fence along the bottom, the
+  // white farmhouse near the road, garage + Dad's covered workshop on the
+  // asphalt pad, pool and shed behind, the stone driveway winding north over
+  // a bridge across Brady Brook, and the fenced garden with the chicken coop.
+  // (No house number on purpose: the game is public.)
+  G.MAPS.home = {
+    name: 'Rattlesnake Bridge Rd',
+    music: 'home',
+    tiles() {
+      const W = 48, H = 40;
+      const g = Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => ((x >> 1) % 2 ? 'L' : 'M')));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
+      // stone driveway: in from the road, north past the house, up to the brook
+      fill(40, 26, 2, 11, 'g');
+      fill(39, 12, 2, 14, 'g');
+      fill(38, 0, 2, 12, 'g');
+      fill(22, 25, 18, 2, 'g');
+      // Brady Brook runs diagonally across the top; the driveway crosses on a bridge
+      const brook = (x) => Math.round(1 + x * 0.15);
+      for (let x = 0; x < W; x++) { set(x, brook(x), '~'); set(x, brook(x) + 1, '~'); }
+      for (let y = 0; y < H; y++) for (const x of [38, 39]) if (g[y][x] === '~') g[y][x] = 'W';
+      // woods along both banks (the conservation easement)
+      for (let x = 0; x < W - 1; x += 2) {
+        if (x >= 36 && x <= 41) continue;
+        const c = brook(x);
+        if (c >= 4) set(x, c - 3, 'T');
+        if (x % 4 === 0 || x > 18) set(x, c + 3, 'T');
+      }
+      // asphalt pad in front of the garage
+      fill(7, 25, 15, 3, 'a');
+      // Rattlesnake Bridge Road and the board fence along it
+      fill(0, 37, W, 1, 'a');
+      fill(0, 38, W, 1, 'Y');
+      fill(0, 36, W, 1, 'f');
+      set(40, 36, 'g'); set(41, 36, 'g');
+      // brick paver walk from the front door out to the road
+      fill(25, 34, 1, 3, 'p');
+      // boxwood hedges along the front of the house
+      fill(19, 34, 5, 1, 'H');
+      fill(27, 34, 4, 1, 'H');
+      // in-ground pool on a concrete deck
+      fill(25, 16, 7, 5, 'C');
+      fill(26, 17, 5, 3, '~');
+      // the garden: rustic X-braced fence, raised beds, snapdragons, paths
+      fill(2, 9, 15, 1, 'X'); fill(2, 17, 15, 1, 'X');
+      fill(2, 9, 1, 9, 'X'); fill(16, 9, 1, 9, 'X');
+      set(9, 17, 'k');
+      fill(3, 12, 13, 1, '=');
+      fill(10, 13, 1, 4, '=');
+      fill(11, 13, 1, 4, 'k');
+      [[4, 13], [5, 13], [4, 15], [5, 15], [13, 13], [14, 13], [13, 15], [14, 15]].forEach(([x, y]) => set(x, y, 'e'));
+      fill(7, 13, 2, 3, 'F');
+      // big oaks around the yard, woods on the edges
+      [[14, 30], [33, 30], [32, 22], [5, 28], [9, 31], [0, 19], [0, 23], [0, 27], [0, 31],
+        [46, 14], [46, 18], [46, 22], [46, 26], [46, 30], [46, 34], [44, 20], [44, 28]]
+        .forEach(([x, y]) => set(x, y, 'T'));
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      // buildings
+      w.addBuilding({ x: 9, y: 21, w: 7, h: 4, door: 3, style: 'shake', wall: '#2f4a3e', roof: '#4a4c56', garageDoors: 3, weathervane: true, locked: S.homeGarage });
+      w.addBuilding({ x: 17, y: 29, w: 4, h: 5, door: 1, style: 'clapboard', wall: '#f2f0ea', roof: '#4a4c56', shutters: '#1c2226', glass: '#3a4a6a', doorColor: '#c8dce8', doorFrame: '#ffffff', chimney: { x: 2, w: 10 }, locked: S.homeWing });
+      w.addBuilding({ x: 21, y: 28, w: 8, h: 6, door: 4, style: 'clapboard', stories: 2, wallH: 48, wall: '#f2f0ea', roof: '#4a4c56', shutters: '#1c2226', glass: '#3a4a6a', doorColor: '#1c3a2c', wreath: true, locked: S.homeFront });
+      w.addBuilding({ x: 21, y: 17, w: 2, h: 3, door: 0, style: 'shake', wall: '#7a6a58', roof: '#4a4c56', locked: S.homeShed });
+      // the yard
+      w.addProp({ img: G.spr.workshop, tx: 3, ty: 21, h: 4, solid: [3, 21, 5, 4], hit: [3, 21, 5, 4], talk: S.homeWorkshop });
+      w.addProp({ img: G.spr.truck, tx: 18, ty: 25, h: 3, dx: 2, solid: [18, 25, 2, 3], hit: [18, 25, 2, 3], talk: S.homeTruck });
+      w.addProp({ img: G.spr.coop, tx: 4, ty: 10, h: 2, solid: [4, 10, 6, 2], hit: [4, 10, 6, 2], talk: S.homeCoop });
+      w.addProp({ img: G.spr.greenhouse, tx: 12, ty: 10, h: 2, solid: [12, 10, 3, 2], hit: [12, 10, 3, 2], talk: S.homeGreenhouse });
+      w.addProp({ img: G.spr.firewood, tx: 17, ty: 21, solid: [17, 21, 2, 1], hit: [17, 21, 2, 1], talk: S.homeFirewood });
+      w.addProp({ img: G.spr.firewood, tx: 3, ty: 26, solid: [3, 26, 2, 1], hit: [3, 26, 2, 1], talk: S.homeFirewood });
+      w.addProp({ img: G.spr.sawhorses, tx: 31, ty: 27, dx: 2, solid: [31, 27, 3, 1] });
+      w.addProp({ img: G.spr.patio, tx: 29, ty: 31, h: 3, solid: [29, 32, 3, 2], hit: [29, 31, 3, 3], talk: S.homePatio });
+      w.addProp({ img: G.spr.mailbox, tx: 42, ty: 35, dx: 2, solid: [42, 35, 1, 1], hit: [42, 35, 1, 1], talk: S.homeMailbox });
+      w.addProp({ img: G.spr.streetSign, tx: 37, ty: 35, solid: [37, 35, 1, 1], hit: [37, 35, 1, 1], talk: S.homeStreetSign });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [26 * 16, 17 * 16, 31 * 16, 20 * 16], talk: S.homePool });
+      w.addTree(16, 19, 'pine');
+      w.addTree(34, 17, 'pine');
+      w.add(new G.Sign(41, 10, 'BRADY BROOK.'));
+
+      // the hens, free-ranging inside the garden fence
+      const pen = [3 * 16 + 6, 13 * 16 + 4, 16 * 16 - 6, 17 * 16 - 2];
+      [[6, 14, 'white'], [9, 14, 'brown'], [12, 14, 'white'], [10, 16, 'brown'], [6, 16, 'white']]
+        .forEach(([x, y, c]) => w.add(new G.Chicken(x * 16 + 8, y * 16 + 12, c, pen)));
+
+      // roads out: back west to campus, east toward Chesapeake (later), north past the bridge (later)
+      w.addTrigger(0, 37, 1, 2, () => G.play.warp('campus', 19, 27, 'up'));
+      w.addTrigger(47, 37, 1, 2, () => G.script.run(S.homeEast()));
+      w.addTrigger(38, 0, 2, 1, () => G.script.run(S.homeNorth()));
+    },
+    // the flock's revenge: angry hens swoop in from off-screen for a few seconds
+    tick(w) {
+      if (!w.swarmT || G.script.busy) return;
+      w.swarmT--;
+      if (w.swarmT % 22 !== 0) return;
+      const p = G.play.player, side = Math.floor(Math.random() * 4);
+      const cx = G.play.cam.x, cy = G.play.cam.y;
+      const sx = side === 0 ? cx - 16 : side === 1 ? cx + G.W + 16 : cx + Math.random() * G.W;
+      const sy = side === 2 ? cy - 16 : side === 3 ? cy + G.H + 16 : cy + Math.random() * G.H;
+      w.add(new G.AngryChicken(sx, sy, p.x, p.y));
+      if (w.swarmT === 0) w.chickenHits = 0;
+    },
+    onEnter() {
+      return (function* () {
+        if (flags().homeArrived) return;
+        flags().homeArrived = true;
+        yield G.wait(30);
+        yield G.say('Nate', 'Rattlesnake Bridge Road. Home sweet home.');
+        if (G.state.party.includes('doron')) yield G.say('Doron', 'Smells like woodsmoke and chickens. Feels like home.');
+      })();
     },
   };
 

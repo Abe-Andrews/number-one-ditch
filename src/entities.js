@@ -905,6 +905,97 @@
   }
   G.LightString = LightString;
 
+  // ============================================================== CHICKENS
+  // Hens that wander and peck inside a pen. Bonk one and it flees with a BAWK.
+  // Bonk them 6 times (the sacred number) and the whole flock gets revenge.
+  class Chicken extends Ent {
+    constructor(x, y, color, pen) {
+      super(x, y);
+      this.color = color;
+      this.pen = pen; // [x0, y0, x1, y1] in px
+      this.hb = { w: 8, h: 4 };
+      this.dir = Math.random() < 0.5 ? 'left' : 'right';
+      this.t = Math.floor(Math.random() * 100);
+      this.wt = 0;
+      this.peck = 0;
+      this.flee = 0;
+      this.vx = 0; this.vy = 0;
+    }
+
+    update(w) {
+      if (G.script.busy) return;
+      this.t++;
+      if (this.peck > 0) { this.peck--; return; }
+      if (this.flee <= 0 && --this.wt <= 0) {
+        if (Math.random() < 0.4) { this.peck = 30 + Math.random() * 40; this.vx = this.vy = 0; this.wt = 1; return; }
+        const a = Math.random() * Math.PI * 2;
+        this.vx = Math.cos(a) * 0.3; this.vy = Math.sin(a) * 0.3;
+        this.wt = 30 + Math.random() * 60;
+      }
+      if (this.flee > 0) this.flee--;
+      const [x0, y0, x1, y1] = this.pen;
+      if ((this.x + this.vx < x0 && this.vx < 0) || (this.x + this.vx > x1 && this.vx > 0)) this.vx = -this.vx;
+      if ((this.y + this.vy < y0 && this.vy < 0) || (this.y + this.vy > y1 && this.vy > 0)) this.vy = -this.vy;
+      const h = w.move(this, this.vx, this.vy);
+      if (h.hitX) this.vx = -this.vx;
+      if (h.hitY) this.vy = -this.vy;
+      if (this.vx) this.dir = this.vx < 0 ? 'left' : 'right';
+      const p = G.play.player;
+      if (this.t % 300 === 0 && Math.hypot(p.x - this.x, p.y - this.y) < 60) G.audio.sfx('cluck');
+    }
+
+    onHammer(p) {
+      const w = this.world;
+      w.chickenHits = (w.chickenHits || 0) + 1;
+      G.audio.sfx('bawk');
+      w.pop(this.x, this.y - 16, 'BAWK!', '#ffffff');
+      w.burst(this.x, this.y - 6, ['#ffffff', '#f4f2ec', '#e8e0d0'], 6, { speed: 1, up: 0.6, g: 0.05, life: 26 });
+      const dx = this.x - p.x, dy = this.y - p.y, m = Math.hypot(dx, dy) || 1;
+      this.vx = (dx / m) * 1.8; this.vy = (dy / m) * 1.8;
+      this.flee = 40; this.peck = 0;
+      if (w.chickenHits >= 6 && !w.swarmT) {
+        w.swarmT = 420;
+        w.pop(p.x, p.y - 40, 'THE CHICKENS HAVE HAD ENOUGH!', '#ff9a28');
+        G.play.shake(10, 2);
+      }
+    }
+
+    draw(ctx, cx, cy) {
+      ctx.drawImage(G.spr.shadow, Math.round(this.x - 6) - cx, Math.round(this.y - 3) - cy);
+      const S = G.spr.chickens[this.color][this.dir];
+      const hop = this.flee > 0 ? ((this.t >> 2) & 1) * 2 : 0;
+      const img = this.peck > 0 && (this.t >> 3) & 1 ? S[1] : S[0];
+      ctx.drawImage(img, Math.round(this.x - 7) - cx, Math.round(this.y - 12 - hop) - cy);
+    }
+  }
+  G.Chicken = Chicken;
+
+  // Revenge of the flock: angry hens swooping in from off-screen.
+  class AngryChicken extends Ent {
+    constructor(x, y, tx, ty) {
+      super(x, y);
+      const d = Math.hypot(tx - x, ty - y) || 1;
+      this.vx = ((tx - x) / d) * 2.3;
+      this.vy = ((ty - y) / d) * 2.3;
+      this.life = 200;
+      this.color = Math.random() < 0.5 ? 'white' : 'brown';
+      this.hb = { w: 8, h: 6 };
+    }
+    update() {
+      if (G.script.busy) return;
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0) { this.dead = true; return; }
+      const p = G.play.player;
+      if (G.overlap([this.x - 5, this.y - 12, this.x + 5, this.y - 2], p.hurtBox())) p.hurt(1, this.x, this.y);
+    }
+    draw(ctx, cx, cy) {
+      const S = G.spr.chickens[this.color][this.vx < 0 ? 'left' : 'right'];
+      ctx.drawImage(G.spr.shadow, Math.round(this.x - 6) - cx, Math.round(this.y - 3) - cy);
+      ctx.drawImage(S[(G.tick >> 2) & 1], Math.round(this.x - 7) - cx, Math.round(this.y - 20) - cy);
+    }
+  }
+  G.AngryChicken = AngryChicken;
+
   // ============================================================== BOULDER
   class Boulder extends Ent {
     // No talk(): pressing Z next to it swings the hammer so you get the CLANK.

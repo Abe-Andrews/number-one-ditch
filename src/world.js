@@ -28,6 +28,18 @@
     'h': { k: 'ropeH', solid: true },
     'j': { k: 'ropeV', solid: true },
     'P': { k: 'post', solid: true },
+    // home: Rattlesnake Bridge Rd
+    'L': { k: 'lawnL', group: 'lawn' },
+    'M': { k: 'lawnD', group: 'lawn' },
+    'g': { k: 'gravel', edge: true, group: 'gravel' },
+    'p': { k: 'pavers' },
+    'Y': { k: 'roadLine', edge: true, group: 'asphalt' },
+    'X': { k: 'rusticFence', solid: true },
+    'e': { k: 'raisedBed', solid: true },
+    'F': { k: 'flowerBed', solid: true },
+    'k': { k: 'fabric' },
+    'H': { k: 'hedge', solid: true },
+    'W': { k: 'bridge', group: 'bridge' },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 
@@ -70,9 +82,14 @@
       }
     }
 
-    addTree(x, y) {
-      const img = G.spr.trees[(x * 7 + y * 3) % G.spr.trees.length];
-      this.props.push({ img, x: x * 16, y: y * 16 - 2, base: y * 16 + 31 });
+    addTree(x, y, kind) {
+      if (kind === 'pine') {
+        const img = G.spr.pines[(x + y) % G.spr.pines.length];
+        this.props.push({ img, x: x * 16, y: y * 16 - 10, base: y * 16 + 31 });
+      } else {
+        const img = G.spr.trees[(x * 7 + y * 3) % G.spr.trees.length];
+        this.props.push({ img, x: x * 16, y: y * 16 - 2, base: y * 16 + 31 });
+      }
       this.blockTiles(x, y, 2, 2);
     }
 
@@ -91,7 +108,7 @@
     addBuilding(o) {
       // o: { x, y, w, h, door (offset), style, roof, wall, tower, to: {map, x, y}, locked: generator }
       const img = G.art.building(o);
-      const extra = o.tower ? 28 : 0;
+      const extra = G.art.buildingExtra(o);
       this.props.push({ img, x: o.x * 16, y: o.y * 16 - extra, base: (o.y + o.h) * 16 - 1 });
       this.blockTiles(o.x, o.y, o.w, o.h);
       const dx = o.x + o.door, dy = o.y + o.h - 1;

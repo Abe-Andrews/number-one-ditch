@@ -1006,6 +1006,94 @@
       p.rect(3, 2, 10, 12, OUT); p.rect(4, 3, 8, 10, '#9aa0aa');
       p.rect(5, 4, 6, 8, '#d03040'); p.hline(5, 10, 4, '#f06070');
     },
+    // ---- home (Rattlesnake Bridge Rd) tiles
+    lawnL(p, r) {
+      p.rect(0, 0, 16, 16, '#66c454');
+      for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#8ad868');
+      for (let i = 0; i < 2; i++) { const x = 2 + Math.floor(r() * 12), y = 3 + Math.floor(r() * 11); p.set(x, y, '#4aa83e'); p.set(x - 1, y - 1, '#4aa83e'); p.set(x + 1, y - 1, '#4aa83e'); }
+    },
+    lawnD(p, r) {
+      p.rect(0, 0, 16, 16, '#58b448');
+      for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#78cc5c');
+      for (let i = 0; i < 2; i++) { const x = 2 + Math.floor(r() * 12), y = 3 + Math.floor(r() * 11); p.set(x, y, '#3e963a'); p.set(x - 1, y - 1, '#3e963a'); p.set(x + 1, y - 1, '#3e963a'); }
+    },
+    gravel(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#b8b4ac');
+      for (let i = 0; i < 26; i++) {
+        const h = r();
+        p.set(r() * 16, r() * 16, h < 0.4 ? '#9a968e' : h < 0.75 ? '#d4d0c8' : '#8a7e70');
+      }
+      edgeFringe(p, mask, v, P.grass, '#8a867e');
+    },
+    pavers(p) {
+      // herringbone-ish red brick walk
+      p.rect(0, 0, 16, 16, '#b0583e');
+      for (let y = 0; y < 16; y += 4) {
+        p.hline(0, 15, y, '#d8b8a0');
+        for (let x = (y / 4) % 2 ? 2 : 6; x < 16; x += 8) p.vline(x, y, y + 3, '#d8b8a0');
+      }
+      p.set(3, 2, '#c8684c'); p.set(11, 10, '#c8684c'); p.set(7, 14, '#984830');
+    },
+    roadLine(p, r, v, mask) {
+      TILE_DRAW.asphalt(p, r, v, mask & ~1);
+      p.rect(2, 0, 7, 1, '#f0c838'); p.rect(2, 1, 7, 1, '#d8a828');
+    },
+    rusticFence(p, r) {
+      grassBase(p, r);
+      const wood = '#9a7a58', woodD = '#6a5038', wire = '#a8b0a0';
+      for (let y = 3; y < 14; y += 2) p.hline(0, 15, y, wire);
+      p.hline(0, 15, 2, OUT); p.hline(0, 15, 3, wood); p.hline(0, 15, 4, woodD);
+      p.hline(0, 15, 12, wood); p.hline(0, 15, 13, woodD);
+      for (let t = 0; t < 8; t++) { p.set(2 + t, 4 + t, wood); p.set(13 - t, 4 + t, wood); }
+      p.rect(0, 1, 2, 14, wood); p.vline(1, 1, 14, woodD);
+    },
+    raisedBed(p, r) {
+      p.rect(0, 0, 16, 16, '#7a5a3a');
+      p.rect(1, 1, 14, 14, '#5a3e28');
+      p.rect(2, 2, 12, 12, '#4a3020');
+      const greens = ['#4aa040', '#68c050', '#2e7a30'];
+      for (let i = 0; i < 6; i++) {
+        const x = 3 + Math.floor(r() * 9), y = 3 + Math.floor(r() * 9), g = greens[i % 3];
+        p.set(x, y, g); p.set(x + 1, y, g); p.set(x, y + 1, g); p.set(x + 1, y - 1, '#8ad868');
+        if (r() < 0.3) p.set(x + 1, y + 1, '#e04030');
+      }
+      p.hline(0, 15, 0, '#9a7a58'); p.vline(15, 0, 15, '#5a4028');
+    },
+    flowerBed(p, r) {
+      // snapdragons: tall spikes of red, pink and white
+      p.rect(0, 0, 16, 16, '#3e7a34');
+      const cols = ['#d83050', '#f08098', '#ffffff', '#c82838', '#f0d8e0'];
+      for (let i = 0; i < 7; i++) {
+        const x = 1 + Math.floor(r() * 14), top = 1 + Math.floor(r() * 6), c = cols[i % cols.length];
+        p.vline(x, top + 4, 15, '#2e6a28');
+        for (let y = top; y < top + 5; y++) p.set(x + (y % 2), y, c);
+      }
+    },
+    fabric(p, r) {
+      p.rect(0, 0, 16, 16, '#3a3c40');
+      for (let y = 1; y < 16; y += 3) p.hline(0, 15, y, '#44464c');
+      for (let i = 0; i < 3; i++) p.set(r() * 16, r() * 16, '#5a5c62');
+    },
+    hedge(p, r, v) {
+      // round boxwood
+      grassBase(p, r);
+      const q = new Pix(16, 16);
+      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+        const dx = x - 7.5, dy = y - 9;
+        if (dx * dx / 56 + dy * dy / 42 > 1) continue;
+        const s = dx * 0.3 + dy * 0.5 + (G.hash(x, y, v + 9) - 0.5) * 2.5;
+        q.set(x, y, s < -1.6 ? '#7ab858' : s < 1.2 ? '#3e7a34' : '#24562a');
+      }
+      q.outline('#163a1c');
+      for (let i = 0; i < q.d.length; i++) if (q.d[i]) p.d[i] = q.d[i];
+    },
+    bridge(p) {
+      // wooden plank bridge running north-south, rails on both sides
+      p.rect(0, 0, 16, 16, '#a07848');
+      for (let y = 0; y < 16; y += 3) p.hline(1, 14, y, '#7a5630');
+      p.rect(0, 0, 2, 16, '#6a4a2a'); p.rect(14, 0, 2, 16, '#6a4a2a');
+      p.vline(0, 0, 15, OUT); p.vline(15, 0, 15, OUT);
+    },
     concrete(p, r) {
       p.rect(0, 0, 16, 16, '#b4b4bc');
       for (let i = 0; i < 6; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#c4c4cc' : '#a0a0aa');
@@ -1080,10 +1168,14 @@
     return p.canvas();
   }
 
+  function buildingExtra(def) {
+    return def.tower ? 28 : (def.chimney || def.weathervane) ? 16 : 0;
+  }
+
   function building(def) {
-    const W = def.w * 16, H = def.h * 16, extra = def.tower ? 28 : 0;
+    const W = def.w * 16, H = def.h * 16, extra = buildingExtra(def);
     const p = new Pix(W, H + extra);
-    const wallH = 32, roofH = H - wallH;
+    const wallH = def.wallH || 32, roofH = H - wallH;
     const roof = def.roof || '#56607e', roofD = shade(roof, -0.3), roofL = shade(roof, 0.25);
     const wall = def.wall || '#b85840', wallD = shade(wall, -0.25), mortar = def.mortar || '#e2c4aa';
     // roof
@@ -1110,6 +1202,12 @@
         } else if (def.style === 'stone') {
           const row = Math.floor(y / 6), off = row % 2 ? 6 : 0;
           if (y % 6 === 5 || (x + off) % 12 === 0) col = wallD;
+        } else if (def.style === 'clapboard') {
+          if (y % 3 === 2) col = shade(wall, -0.1);
+        } else if (def.style === 'shake') {
+          const row = Math.floor(y / 5), off = row % 2 ? 3 : 0;
+          if (y % 5 === 4) col = wallD;
+          else if ((x + off) % 6 === 0) col = shade(wall, -0.14);
         } else if (def.style === 'metal') {
           if (x % 4 === 3) col = wallD;
           else if (x % 4 === 0) col = shade(wall, 0.18);
@@ -1120,25 +1218,70 @@
     p.hline(0, W - 1, wy, wallD);
     // windows
     const doorPx = def.door * 16;
-    for (let x = 6; x + 10 < W && def.style !== 'metal'; x += 24) {
-      if (x + 12 > doorPx - 4 && x < doorPx + 20) continue;
-      p.rect(x - 1, wy + 5, 12, 14, '#f4f0e8');
-      p.rect(x, wy + 6, 10, 12, '#4a6aa0');
-      p.rect(x + 1, wy + 7, 3, 4, '#a8c8f0');
-      p.vline(x + 5, wy + 6, wy + 17, '#f4f0e8');
-      p.hline(x, x + 9, wy + 11, '#f4f0e8');
-      p.hline(x - 2, x + 11, wy + 19, '#d8d0c0');
+    const rowsY = def.stories === 2 ? [wy + 3, wy + wallH - 22] : [wy + 5];
+    const noWindows = def.style === 'metal' || def.garageDoors;
+    for (let x = 6; x + 10 < W && !noWindows; x += 24) {
+      rowsY.forEach((yy, ri) => {
+        if (ri === rowsY.length - 1 && x + 12 > doorPx - 4 && x < doorPx + 20) return;
+        const gh = def.stories === 2 ? 11 : 14;
+        p.rect(x - 1, yy, 12, gh, '#f4f0e8');
+        p.rect(x, yy + 1, 10, gh - 2, def.glass || '#4a6aa0');
+        p.rect(x + 1, yy + 2, 3, 3, '#a8c8f0');
+        p.vline(x + 5, yy + 1, yy + gh - 2, '#f4f0e8');
+        p.hline(x, x + 9, yy + Math.floor(gh / 2), '#f4f0e8');
+        if (def.shutters) { p.rect(x - 4, yy, 3, gh, def.shutters); p.rect(x + 12, yy, 3, gh, def.shutters); }
+        else p.hline(x - 2, x + 11, yy + gh, '#d8d0c0');
+      });
+    }
+    if (def.garageDoors) {
+      // paneled roll-up doors along the bottom of the wall
+      const n = def.garageDoors, gap = 4, dw2 = Math.floor((W - 8 - gap * (n - 1)) / n), dh2 = Math.min(26, wallH - 4);
+      for (let i = 0; i < n; i++) {
+        const x0 = 4 + i * (dw2 + gap), y0 = wy + wallH - dh2;
+        p.rect(x0 - 1, y0 - 1, dw2 + 2, dh2 + 1, '#e8e8e8');
+        p.rect(x0, y0, dw2, dh2, '#f8f8f4');
+        for (let yy = y0 + 4; yy < y0 + dh2; yy += 6) p.hline(x0, x0 + dw2 - 1, yy, '#c8c8c8');
+        for (let xx = x0 + 5; xx < x0 + dw2 - 2; xx += 6) p.vline(xx, y0, y0 + dh2 - 1, '#dcdcdc');
+      }
     }
     // door
     const dx = doorPx + 1, dw = 14, dh = 24;
-    p.rect(dx - 1, wy + wallH - dh - 1, dw + 2, dh + 1, def.doorFrame || '#f0ece0');
-    p.rect(dx, wy + wallH - dh, dw, dh, def.doorColor || '#6a3a20');
-    p.vline(dx + 6, wy + wallH - dh, wy + wallH - 1, shade(def.doorColor || '#6a3a20', -0.3));
-    p.vline(dx + 7, wy + wallH - dh, wy + wallH - 1, shade(def.doorColor || '#6a3a20', -0.3));
-    p.set(dx + 4, wy + wallH - 11, '#f8d040'); p.set(dx + 9, wy + wallH - 11, '#f8d040');
+    if (!def.garageDoors) {
+      p.rect(dx - 1, wy + wallH - dh - 1, dw + 2, dh + 1, def.doorFrame || '#f0ece0');
+      p.rect(dx, wy + wallH - dh, dw, dh, def.doorColor || '#6a3a20');
+      p.vline(dx + 6, wy + wallH - dh, wy + wallH - 1, shade(def.doorColor || '#6a3a20', -0.3));
+      p.vline(dx + 7, wy + wallH - dh, wy + wallH - 1, shade(def.doorColor || '#6a3a20', -0.3));
+      p.set(dx + 4, wy + wallH - 11, '#f8d040'); p.set(dx + 9, wy + wallH - 11, '#f8d040');
+      if (def.wreath) {
+        const cx = dx + 7, cy = wy + wallH - dh + 6;
+        for (let a = 0; a < 12; a++) p.set(cx + Math.round(Math.cos(a / 12 * Math.PI * 2) * 3), cy + Math.round(Math.sin(a / 12 * Math.PI * 2) * 3), a % 4 ? '#2e7a30' : '#4aa040');
+        p.set(cx, cy + 3, '#d03030'); p.set(cx - 1, cy + 4, '#d03030'); p.set(cx + 1, cy + 4, '#d03030');
+      }
+    }
     if (def.sign) {
       p.rect(doorPx - 6, wy + 1, 28, 5, '#2a3a5a');
       p.hline(doorPx - 4, doorPx + 19, wy + 3, '#e8d8a0');
+    }
+    // red brick chimney running up the end of the house, with whitewash patches
+    if (def.chimney) {
+      const cx0 = def.chimney.x, cw = def.chimney.w || 10, top = 2;
+      for (let y = top; y < H + extra; y++) {
+        for (let x = cx0; x < cx0 + cw; x++) {
+          const row = Math.floor(y / 3), off = row % 2 ? 2 : 0;
+          let col = (y % 3 === 2 || (x + off) % 4 === 0) ? '#c8a088' : '#a8402e';
+          if (y > H + extra - 24 && G.hash(x, y, 31) < 0.35) col = '#e8dcd0';
+          p.set(x, y, col);
+        }
+      }
+      p.hline(cx0 - 1, cx0 + cw, top, '#6a2a20'); p.hline(cx0 - 1, cx0 + cw, top + 1, '#8a3428');
+    }
+    // horse weathervane on the ridge
+    if (def.weathervane) {
+      const vx = Math.floor(W / 2), dk = '#2a2a30';
+      p.vline(vx, 6, extra + 1, dk);
+      p.hline(vx - 4, vx + 4, 9, dk);
+      p.rect(vx - 4, 2, 7, 3, dk); p.set(vx + 3, 1, dk); p.set(vx + 4, 1, dk); p.set(vx + 3, 2, dk);
+      p.set(vx - 4, 5, dk); p.set(vx - 3, 5, dk); p.set(vx + 1, 5, dk); p.set(vx + 2, 5, dk); p.set(vx - 5, 2, dk);
     }
     // tower (Pardee-style)
     if (def.tower) {
@@ -1565,6 +1708,190 @@
     return c;
   }
 
+  // ---------------------------------------------------------------- home props
+  // Dad's workshop: the open covered area behind the garage. String lights,
+  // a workbench covered in pipe blanks, folding chairs, a wheelbarrow.
+  function workshop() {
+    const W = 80, H = 64, p = new Pix(W, H);
+    const roof = '#4a4c56', roofD = '#34363e', green = '#2f4a3e';
+    for (let y = 0; y < 20; y++) for (let x = 0; x < W; x++) p.set(x, y, y % 4 === 3 || (x + (Math.floor(y / 4) % 2) * 4) % 8 === 0 ? roofD : roof);
+    p.hline(0, W - 1, 0, '#6a6c76');
+    p.rect(0, 20, W, 4, green); p.hline(0, W - 1, 23, '#f0f0f0');
+    p.rect(0, 24, W, 34, '#3a3028');
+    // back wall boards
+    for (let x = 0; x < W; x += 6) p.vline(x, 24, 57, '#2e261e');
+    // workbench with pipe blanks
+    p.rect(6, 34, 46, 4, '#c09058'); p.hline(6, 51, 34, '#d8a868'); p.rect(8, 38, 2, 10, '#8a6038'); p.rect(48, 38, 2, 10, '#8a6038');
+    for (const x of [12, 22, 32, 42]) { p.rect(x, 31, 3, 3, '#7a3a20'); p.hline(x - 4, x - 1, 32, '#1c1c22'); }
+    p.rect(26, 30, 2, 4, '#9a9aa4');
+    // folding chairs
+    for (const x of [56, 63]) { p.rect(x, 40, 5, 4, '#f0f0f0'); p.vline(x, 36, 47, '#d8d8d8'); p.vline(x + 4, 44, 47, '#d8d8d8'); }
+    // white buckets and a wheelbarrow
+    p.rect(14, 46, 5, 7, '#f4f4f4'); p.hline(14, 18, 46, '#d8d8d8');
+    p.rect(66, 49, 11, 5, '#1c1c22'); p.rect(70, 54, 3, 3, '#3a3a40'); p.hline(64, 66, 51, '#8a8a90');
+    // posts and floor slab
+    for (const x of [1, 39, 77]) p.rect(x, 24, 2, 34, '#a07040');
+    p.rect(0, 58, W, 6, '#a8a8b0'); p.hline(0, W - 1, 58, '#c8c8d0');
+    p.outline();
+    const c = p.canvas(), ctx = c.getContext('2d');
+    // string lights under the eave
+    for (let x = 3; x < W; x += 5) { ctx.fillStyle = (x / 5) % 2 ? '#fff4c0' : '#ffe080'; ctx.fillRect(x, 25 + ((x / 5) % 2), 2, 2); }
+    return c;
+  }
+
+  // Dad's old teal Ford pickup, seen from above, tailgate toward the camera.
+  function truck() {
+    const p = new Pix(28, 46);
+    const teal = '#3a8a86', tealD = '#2a6662', tealL = '#5aaaa4', rust = '#8a5a3a';
+    for (const [x, y] of [[0, 7], [24, 7], [0, 33], [24, 33]]) p.rect(x, y, 4, 7, '#1c1c22');
+    p.rect(2, 1, 24, 44, teal);
+    p.vline(2, 1, 44, tealL); p.vline(25, 1, 44, tealD);
+    p.rect(4, 2, 20, 8, tealL); p.hline(4, 23, 1, '#e8e8e8');
+    p.set(4, 2, '#f8f0b0'); p.set(23, 2, '#f8f0b0');
+    p.rect(5, 11, 18, 5, '#34496a'); p.hline(6, 12, 12, '#8ab0d8');
+    p.rect(4, 16, 20, 7, teal); p.hline(4, 23, 16, tealL);
+    p.rect(4, 24, 20, 16, '#2a3a38');
+    p.rect(8, 27, 6, 4, '#6a6a70'); p.rect(15, 30, 5, 6, '#c8c0b0'); p.rect(10, 33, 3, 3, '#d83030');
+    p.rect(3, 40, 22, 4, tealD); p.hline(8, 9, 41, '#f0f0f0'); p.hline(11, 12, 41, '#f0f0f0'); p.hline(14, 15, 41, '#f0f0f0'); p.hline(17, 18, 41, '#f0f0f0');
+    p.hline(2, 25, 44, '#e0e0e0');
+    p.set(6, 20, rust); p.set(7, 21, rust); p.set(20, 38, rust); p.set(5, 37, rust);
+    p.outline();
+    return p.canvas();
+  }
+
+  // Red chicken coop with a white metal roof and a long white-framed run.
+  function coop() {
+    const W = 96, H = 44, p = new Pix(W, H);
+    const roof = '#e8eaee', roofD = '#b8bcc4', red = '#a83030', redD = '#7a2020';
+    // run: wire mesh with white frame
+    for (let y = 14; y < 40; y++) for (let x = 2; x < 58; x++) p.set(x, y, (x + y) % 4 === 0 || (x - y) % 4 === 0 ? '#9aa89a' : '#5a8a4a');
+    for (const x of [2, 16, 30, 44, 57]) p.rect(x, 12, 2, 28, '#f4f4f0');
+    p.hline(2, 58, 39, '#f4f4f0');
+    for (let y = 2; y < 13; y++) for (let x = 0; x < 62; x++) p.set(x, y, x % 5 === 0 ? roofD : roof);
+    // coop house
+    p.rect(58, 14, 36, 26, red);
+    for (let x = 60; x < 94; x += 4) p.vline(x, 14, 39, redD);
+    p.rect(64, 20, 8, 7, '#f4f4f0'); p.rect(65, 21, 6, 5, '#34496a');
+    p.rect(80, 26, 8, 13, '#f4f4f0'); p.rect(81, 27, 6, 12, redD);
+    for (let y = 0; y < 14; y++) for (let x = 56; x < 96; x++) p.set(x, y, x % 5 === 0 ? roofD : roof);
+    p.hline(56, 95, 13, '#9aa0a8');
+    p.outline();
+    return p.canvas();
+  }
+
+  function greenhouse() {
+    const p = new Pix(40, 36);
+    for (let y = 0; y < 10; y++) for (let x = 0; x < 40; x++) p.set(x, y, x % 5 === 0 ? '#b8bcc4' : '#e0e4ea');
+    p.rect(1, 10, 38, 22, '#cfe4ea');
+    for (let x = 1; x < 40; x += 8) p.vline(x, 10, 31, '#9a7a58');
+    p.hline(1, 38, 20, '#9a7a58');
+    for (let i = 0; i < 8; i++) p.set(3 + i * 4, 24 + (i % 2) * 3, '#4aa040');
+    p.rect(1, 32, 38, 4, '#8a6a48');
+    p.outline();
+    return p.canvas();
+  }
+
+  function firewood() {
+    const p = new Pix(32, 20);
+    for (let row = 0; row < 4; row++) {
+      for (let i = 0; i < 6; i++) {
+        const x = 1 + i * 5 + (row % 2) * 2, y = 4 + row * 4;
+        if (x > 27) continue;
+        p.rect(x, y, 4, 4, '#a07040'); p.rect(x + 1, y + 1, 2, 2, '#d8b070');
+      }
+    }
+    p.hline(0, 31, 3, '#7a5030');
+    p.outline();
+    return p.canvas();
+  }
+
+  function sawhorses() {
+    const p = new Pix(44, 22);
+    for (const x of [6, 32]) { for (let t = 0; t < 12; t++) { p.set(x - 4 + Math.floor(t / 3), 9 + t, '#b08050'); p.set(x + 4 - Math.floor(t / 3), 9 + t, '#b08050'); } p.rect(x - 5, 8, 11, 2, '#a07040'); }
+    p.rect(0, 3, 44, 3, '#f0d8a8'); p.hline(0, 43, 3, '#fff0c8');
+    p.rect(2, 6, 40, 2, '#e8c890');
+    p.outline();
+    return p.canvas();
+  }
+
+  // Stone-walled patio with the navy umbrella and the grill.
+  function patio() {
+    const W = 48, H = 40, p = new Pix(W, H);
+    p.rect(0, 12, W, 14, '#c8bca8');
+    for (let i = 0; i < 20; i++) p.set(G.hash(i, 1, 40) * W, 12 + G.hash(i, 2, 40) * 14, '#b0a490');
+    // grill
+    p.rect(30, 8, 12, 8, '#2a2a30'); p.hline(30, 41, 8, '#4a4a54'); p.vline(32, 16, 20, '#2a2a30'); p.vline(39, 16, 20, '#2a2a30');
+    // umbrella seen from above
+    for (let y = 0; y < 18; y++) for (let x = 0; x < 24; x++) {
+      const dx = x - 11.5, dy = y - 8.5;
+      if (dx * dx + dy * dy > 72) continue;
+      p.set(x, y, Math.floor((Math.atan2(dy, dx) + Math.PI) / (Math.PI / 4)) % 2 ? '#283a6a' : '#344a80');
+    }
+    p.set(11, 8, '#e8e8f0');
+    // low stone wall in front
+    for (let y = 26; y < H; y++) for (let x = 0; x < W; x++) {
+      const row = Math.floor((y - 26) / 4), off = row % 2 ? 4 : 0;
+      p.set(x, y, (y - 26) % 4 === 3 || (x + off) % 8 === 0 ? '#8a7e6c' : ['#c8b090', '#b89c7c', '#d8c4a4'][Math.floor(G.hash(Math.floor((x + off) / 8), row, 41) * 3)]);
+    }
+    p.hline(0, W - 1, 26, '#e0d4bc');
+    p.outline();
+    return p.canvas();
+  }
+
+  function mailbox() {
+    const p = new Pix(12, 24);
+    p.rect(5, 8, 2, 16, '#8a6038');
+    p.rect(1, 2, 10, 7, '#1c1c22'); p.hline(2, 9, 2, '#3a3a44');
+    p.rect(10, 0, 2, 5, '#d83030');
+    p.outline();
+    return p.canvas();
+  }
+
+  function streetSign() {
+    const p = new Pix(18, 32);
+    p.rect(8, 6, 2, 26, '#8a8a94');
+    p.rect(0, 0, 18, 7, '#2e7a48'); p.hline(2, 15, 3, '#f0f0f0');
+    p.outline();
+    return p.canvas();
+  }
+
+  function pineTree(seed) {
+    const p = new Pix(32, 42);
+    for (let tier = 0; tier < 4; tier++) {
+      const top = tier * 8, half = 6 + tier * 3;
+      for (let y = 0; y < 12; y++) {
+        const w = Math.floor((half * (y + 2)) / 13);
+        for (let x = 16 - w; x <= 16 + w; x++) {
+          const s = (x - 16) * 0.1 + (G.hash(x, top + y, seed) - 0.5) * 0.8;
+          p.set(x, top + y, s < -0.35 ? '#3e8a4a' : s < 0.4 ? '#2a6a3a' : '#1c4e2c');
+        }
+      }
+    }
+    p.rect(14, 36, 5, 6, '#6a4424'); p.vline(18, 36, 41, '#4a2c18');
+    p.outline('#102a18');
+    return p.canvas();
+  }
+
+  // Hens for the coop. Facing left; mirrored for right. Second frame pecks.
+  function chicken(color, peck) {
+    const p = new Pix(14, 13);
+    const D = shade(color, -0.2);
+    for (let y = 0; y < 13; y++) for (let x = 0; x < 14; x++) {
+      const dx = (x - 8) / 5, dy = (y - 7) / 3.6;
+      if (dx * dx + dy * dy <= 1) p.set(x, y, y > 7 ? D : color);
+    }
+    p.rect(12, 3, 2, 4, color); p.set(13, 2, color);
+    const hy = peck ? 7 : 3;
+    p.rect(2, hy, 4, 3, color);
+    p.set(3, hy - 1, '#d83030'); p.set(4, hy - 1, '#d83030');
+    p.set(1, hy + 1, '#f0a020');
+    p.set(3, hy + 1, '#1c1c22');
+    p.set(2, hy + 3, '#d83030');
+    p.vline(7, 10, 11, '#e8a020'); p.vline(9, 10, 11, '#e8a020'); p.set(6, 11, '#e8a020'); p.set(10, 11, '#e8a020');
+    p.outline();
+    return p.canvas();
+  }
+
   function shadowSprite(w) {
     const c = G.canvas(w, 4);
     const x = c.getContext('2d');
@@ -1618,7 +1945,7 @@
 
   // ================================================================ EXPORTS
   G.art = {
-    OUT, shade, Pix, fromRows, mirror, flash, person, P, scale2,
+    OUT, shade, Pix, fromRows, mirror, flash, person, P, scale2, buildingExtra,
     tile, tree, building,
   };
 
@@ -1666,6 +1993,22 @@
     S.cap = capIcon();
     S.heartBig = scale2(S.heart.full);
     S.schoolDesk = schoolDesk();
+    // home
+    S.workshop = workshop();
+    S.truck = truck();
+    S.coop = coop();
+    S.greenhouse = greenhouse();
+    S.firewood = firewood();
+    S.sawhorses = sawhorses();
+    S.patio = patio();
+    S.mailbox = mailbox();
+    S.streetSign = streetSign();
+    S.pines = [pineTree(4), pineTree(5)];
+    S.chickens = {};
+    for (const [k, col] of [['white', '#f4f2ec'], ['brown', '#b8683a']]) {
+      const a = chicken(col, false), b = chicken(col, true);
+      S.chickens[k] = { left: [a, b], right: [mirror(a), mirror(b)] };
+    }
     S.ticket = ticketIcon();
     S.phone = phoneIcon();
     S.pipe = pipeIcon();
