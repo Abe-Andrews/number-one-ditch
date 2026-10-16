@@ -325,6 +325,12 @@
         ctx.globalAlpha = 1;
         ctx.globalCompositeOperation = 'source-over';
       }
+      // old-photo look for flashbacks
+      if (G.flashback) {
+        ctx.globalCompositeOperation = 'saturation'; ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, G.W, G.H);
+        ctx.globalCompositeOperation = 'multiply'; ctx.fillStyle = '#f2d8a8'; ctx.fillRect(0, 0, G.W, G.H);
+        ctx.globalCompositeOperation = 'source-over';
+      }
       G.hud.draw(ctx);
       G.pipe.draw(ctx);
       const boss = this.world.ents.find((e) => e.boss && e.state !== 'defeated');

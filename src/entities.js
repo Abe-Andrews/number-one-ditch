@@ -207,6 +207,7 @@
     hurtBox() { return [this.x - 6, this.y - 14, this.x + 6, this.y]; }
 
     draw(ctx, cx, cy) {
+      if (this.hidden) return;
       const S = this.spr;
       drawShadow(ctx, this.x, this.y, cx, cy);
       if (this.inv > 0 && this.state !== 'hurt' && (this.inv >> 2) & 1) return;
@@ -345,6 +346,7 @@
     }
 
     draw(ctx, cx, cy) {
+      if (this.hidden) return;
       const S = this.S;
       drawShadow(ctx, this.x, this.y, cx, cy, S.h > 24);
       ctx.drawImage(S[this.dir][walkFrame(this.anim, this.moving)], Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);

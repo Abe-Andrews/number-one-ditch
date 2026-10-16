@@ -105,10 +105,16 @@
   // Badlands Chugs: bald, full beard, black "Don't Touch Dat" tee, white sneakers.
   G.CAST.badlands = {
     skin: '#6a4232', eyes: '#140c0a', hair: '#6a4232', hairStyle: 'bald', beard: '#24201e',
-    shirt: '#1c1c20', logo: '#a8a8b0', pants: '#2a2c34', shoes: '#f0f0f0', wide: true, torso: 8, legs: 4,
+    shirt: '#1c1c20', logo: '#a8a8b0', pants: '#2a2c34', shoes: '#f0f0f0', wide: true, big: true, torso: 9, legs: 4,
   };
   // ...right after chugging Nate's drink.
   G.CAST.badlands_blue = Object.assign({}, G.CAST.badlands, { skin: '#4a6ad0', hair: '#4a6ad0', beard: '#1c2a5a' });
+
+  // Nate at three, for the Alligator Incident flashback: light blue shirt, diaper, bare feet.
+  G.CAST.nate_toddler = {
+    skin: '#f8d0b4', hair: '#c8642c', hairStyle: 'short', blush: true,
+    shirt: '#8ab8e8', pants: '#f4f4f0', shorts: true, shoes: '#f0c0a0', torso: 3, legs: 2,
+  };
 
   // Dad as El EEENGLISH: luchador mask over his glasses and beard, blazer on.
   G.CAST.elenglish = Object.assign({}, G.CAST.dad, { mask: '#1c2c6c', maskTrim: '#e8e8f0', maskEmblem: '#d03038' });
@@ -197,7 +203,7 @@
   G.PARTY_ORDER = ['nate', 'doron', 'lily', 'abe', 'hannah'];
   G.PARTY_INFO = {
     nate: { name: 'Nate', bio: 'Geology major at Lafayette. Makes his own fireworks. Thinks about pH often.', skill: 'Rock hammer, chemistry, explosive presents' },
-    doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Never skips leg day. Owns three luchador masks.', skill: 'Lifts and smashes heavy things' },
+    doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Never skips leg day. Owns three luchador masks. Responsible for the Alligator Incident.', skill: 'Lifts and smashes heavy things' },
     lily: { name: 'Lily', bio: 'Nate\'s sister. Survived a refrigerator. Still subscribed to Badlands Chugs.', skill: 'A "No." that pops balloons' },
     abe: { name: 'Abe', bio: '', skill: '' },
     hannah: { name: 'Hannah', bio: '', skill: '' },
@@ -1582,6 +1588,68 @@
     G.play.warp('home', 43, 50, 'down');
   };
 
+  // ---------------------------------------------------------------- the Alligator Incident
+  // A true family story: Doron left a surprise in the upstairs toilet to gross
+  // out Abe. Abe never saw it. Three-year-old Nate did.
+  S.alligatorToilet = function* () {
+    const f = flags(), s = G.state, w = G.play.world, p = P();
+    if (f.alligator) {
+      yield G.say(null, 'The upstairs toilet. No alligators today. Nate checked. Twice.');
+      return;
+    }
+    f.alligator = true;
+    yield G.say(null, 'The upstairs toilet.');
+    yield G.emote(p, 'bang', 30);
+    yield G.say('Nate', '...I don\'t like this toilet.');
+    const doron = s.party.includes('doron');
+    if (doron) {
+      yield G.say('Doron', 'HA! Nate. Remember the alligator?');
+      yield G.say('Nate', 'Don\'t.');
+      yield G.say('Doron', 'I pooped in there to gross out Abe. Didn\'t flush. It was a masterpiece.');
+      yield G.say('Doron', 'But Abe never came. THIS guy did. Three years old, needs the bathroom...');
+    } else {
+      yield G.say('Nate', 'Doron once did something unspeakable in here, just to gross out Abe. He didn\'t flush.');
+      yield G.say('Nate', 'Abe never saw it. I did. I was three.');
+    }
+    // flashback
+    yield G.fadeOut(20);
+    G.flashback = true;
+    const hide = (v) => { p.hidden = v; for (const e of w.ents) if (e instanceof G.Follower) e.hidden = v; };
+    hide(true);
+    const kid = w.add(new G.NPC({ sprite: 'nate_toddler', name: 'Little Nate', x: 18 * 16 + 8, y: 5 * 16 + 14, dir: 'up' }));
+    yield G.camFocus(17 * 16, 8 * 16, 1);
+    yield G.fadeIn(20);
+    yield G.banner('FLASHBACK', 'Rattlesnake Bridge Rd, a long time ago', 120);
+    yield G.wait(40);
+    yield G.emote(kid, 'bang', 40);
+    G.audio.sfx('yell');
+    yield G.shakeCmd(20, 2);
+    yield G.walkTo(kid, 16 * 16 + 8, 7 * 16 + 14, 2);
+    yield G.camFocus(17 * 16, 10 * 16, 20);
+    yield G.walkTo(kid, 16 * 16 + 8, 11 * 16 + 14, 2);
+    kid.dir = 'down';
+    w.pop(kid.x, kid.y - 26, 'WAAAAAH!', '#78c8ff');
+    yield G.shakeCmd(30, 3);
+    yield G.say('Little Nate', 'THERE\'S AN ALLIGATOR IN THE TOILET!!!', { top: true });
+    w.pop(kid.x, kid.y - 26, 'WAAAAAAAAAH!', '#78c8ff');
+    yield G.wait(60);
+    yield G.fadeOut(20);
+    kid.dead = true;
+    G.flashback = false;
+    hide(false);
+    yield G.camFocus(null, null, 1);
+    yield G.fadeIn(20);
+    if (doron) {
+      yield G.say('Doron', 'Screaming! Crying! You wouldn\'t go near a toilet for a week.');
+      yield G.say('Nate', 'It had TEETH, Doron.');
+      yield G.say('Doron', 'It did not have teeth.');
+      yield G.say('Nate', 'I KNOW WHAT I SAW.');
+    } else {
+      yield G.say('Nate', 'It had teeth. I know what I saw.');
+    }
+    if (s.party.includes('lily')) yield G.say('Lily', 'Still the best story this family has.');
+  };
+
   // ---------------------------------------------------------------- the 6 key
   // Pressing 6 on the keyboard counts as saying the sacred number.
   S.sixKey = function* () {
@@ -2079,7 +2147,7 @@
       // ---- bathroom
       F.stand(sp.doubleVanity, 14, 3, 3, look('A double vanity. One side is very tidy. The other side is not.'));
       F.hang(sp.paintSunset, 18, 2, 1, look('A painting of the sun going down over the water.'), 8);
-      F.stand(sp.toilet, 19, 3, 1, look('It\'s a toilet. You\'ve seen one before.'));
+      F.stand(sp.toilet, 19, 3, 1, () => S.alligatorToilet());
       F.stand(sp.tub, 18, 6, 2, look('A bathtub. Rubber duck not included.'), { ht: 2 });
       // ---- Nate's room
       F.hang(sp.poster, 21, 2, 1, look('The periodic table Nate memorized in seventh grade. Twice.'), 6);

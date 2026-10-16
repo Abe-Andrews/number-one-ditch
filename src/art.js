@@ -136,14 +136,14 @@
     const y0 = 1, ty = y0 + 10, ly = ty + c.torso, sy = ly + c.legs;
     if (dir === 'right') return drawSide(p, c, step, y0, ty, ly, sy);
     const back = dir === 'up';
-    const bx0 = c.wide ? 4 : 5, bx1 = c.wide ? 11 : 10;
+    const bx0 = c.big ? 3 : c.wide ? 4 : 5, bx1 = c.big ? 12 : c.wide ? 11 : 10;
     const ax0 = bx0 - 1, ax1 = bx1 + 1;
 
     // legs / skirt
     if (c.dress) {
       skirtFront(p, c, step, ly, sy);
     } else {
-      p.hline(5, 10, ly, c.pants);
+      p.hline(c.big ? 4 : 5, c.big ? 11 : 10, ly, c.pants);
       const liftL = step === 1, liftR = step === 2;
       for (let y = ly + 1; y < sy; y++) {
         const bare = c.shorts && y - ly >= Math.ceil(c.legs / 2);
@@ -173,6 +173,12 @@
     // torso
     for (let y = ty; y < ly; y++) {
       for (let x = bx0; x <= bx1; x++) p.set(x, y, torsoPx(c, x, y, ty, x === bx1));
+    }
+    if (c.big) {
+      // rounded shoulders and a belly that sticks out a little at the sides
+      p.d[ty * p.w + bx0] = null; p.d[ty * p.w + bx1] = null;
+      for (let y = ty + 3; y < ly - 1; y++) { p.set(bx0 - 1, y, c.shirt); p.set(bx1 + 1, y, c.shirtD); }
+      if (!back) p.hline(bx0 + 2, bx1 - 2, ly - 2, shade(c.shirt, 0.12));
     }
     if (!back) {
       if (c.neckline) { p.hline(6, 9, ty, c.skin); if (c.necklace) p.set(8, ty, c.necklace); }
@@ -464,7 +470,7 @@
   }
 
   function drawSide(p, c, step, y0, ty, ly, sy) {
-    const sx0 = c.wide ? 5 : 6, sx1 = c.wide ? 10 : 9;
+    const sx0 = c.big ? 4 : c.wide ? 5 : 6, sx1 = c.big ? 11 : c.wide ? 10 : 9;
     const H = c.hair, D = c.hairD, s = c.hairStyle;
     const longHair = s === 'long' || s === 'wavy' || s === 'shoulder';
     const hairEnd = s === 'shoulder' ? ty + 1 : ty + 5;
@@ -527,6 +533,7 @@
 
     // torso
     for (let y = ty; y < ly; y++) for (let x = sx0; x <= sx1; x++) p.set(x, y, torsoPx(c, x, y, ty, x === sx0));
+    if (c.big) for (let y = ty + 2; y < ly; y++) p.set(sx1 + 1 + (y > ty + 3 && y < ly - 1 ? 1 : 0), y, c.shirt), p.set(sx1 + 1, y, c.shirt);
     if (c.neckline) p.set(sx1, ty, c.skin);
     if (c.collar) { p.set(sx1 - 1, ty, c.collar); p.set(sx1, ty, c.skin); }
     if (c.neck) p.set(sx1, ty, c.neck);
