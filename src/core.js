@@ -46,6 +46,8 @@ G.input = (function () {
     KeyZ: 'a', Space: 'a', KeyJ: 'a',
     KeyX: 'b', KeyK: 'b',
     Enter: 'start', Escape: 'start',
+    KeyQ: 'l', BracketLeft: 'l',
+    KeyE: 'r', BracketRight: 'r',
     KeyM: 'mute',
   };
   const held = {};

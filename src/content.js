@@ -105,14 +105,98 @@
   G.CAST.elenglish = Object.assign({}, G.CAST.dad, { mask: '#1c2c6c', maskTrim: '#e8e8f0', maskEmblem: '#d03038' });
 
   // ================================================================ ITEMS
+  // kind 'gear' shows on the ITEMS tab (equip to X); 'key' shows on KEY ITEMS.
+  // has()/count()/desc may be functions so entries can react to the story.
+  const st = () => G.state, fl = () => G.state.flags;
   G.ITEMS = {
-    hammer: { name: 'Rock Hammer', icon: () => G.spr.hammer.up, desc: 'A geologist\'s best friend. Swing it with Z.' },
-    doosh: { name: 'Doosh De Luche', icon: () => G.spr.doosh, desc: 'Heals 4 hearts. (It\'s pronounced dulce de leche.)', equip: true },
-    package: { name: 'Booby-Trapped Package', icon: () => G.spr.gift, desc: 'Press X to set one down. BANG in a few seconds. Merry Christmas!', equip: true },
-    bidet: { name: 'Portable Bidet', icon: () => null, desc: '' },
-    mystery: { name: '???', icon: () => null, desc: '' },
+    hammer: { kind: 'gear', name: 'Rock Hammer', icon: () => G.spr.hammer.up, desc: 'A geologist\'s best friend. Always on Z.' },
+    doosh: {
+      kind: 'gear', equip: true, name: 'Doosh De Luche', icon: () => G.spr.doosh,
+      desc: 'Heals 4 hearts. (It\'s pronounced dulce de leche.)',
+      has: () => (st().items.doosh || 0) > 0 || !!fl().hadDoosh,
+    },
+    package: {
+      kind: 'gear', equip: true, name: 'Booby-Trapped Package', short: 'Packages', icon: () => G.spr.gift,
+      desc: 'Set one down with X. It goes BANG a few seconds later. Merry Christmas!',
+      has: () => (st().items.package || 0) > 0 || !!fl().doronDeal,
+    },
+    bidet: { kind: 'gear', name: 'Portable Bidet', icon: () => null, desc: '', has: () => !!st().items.bidet },
+    phone: {
+      kind: 'key', name: 'Nate\'s Phone', icon: () => G.spr.phone, has: () => true,
+      desc: 'The family group chat. 147 unread, mostly Nani. Press Z to read one.',
+      use: () => G.SCRIPTS.naniMessage(),
+    },
+    hat: {
+      kind: 'key', name: 'Hat', icon: () => G.spr.cap, has: () => !!st().items.cap,
+      desc: 'Brown corduroy. Distinguished. Lucky. Nate never goes anywhere without it.',
+    },
+    tickets: {
+      kind: 'key', name: 'Micro Mayhem Tickets', icon: () => G.spr.ticket,
+      has: () => (st().items.tickets || 0) > 0, count: () => st().items.tickets,
+      desc: 'Doron\'s spare tickets. Talk to people to offer them one. Nobody ever takes them.',
+    },
+    chemFinal: {
+      kind: 'key', name: 'Graded Chem Final', icon: () => G.spr.paper, has: () => !!fl().chemPassed,
+      desc: () => (fl().chemPerfect
+        ? '5 out of 5, and not one sacred number. Gold star. In the margin: "Interesting phrasing."'
+        : 'Passed! In the margin: "Retake it without saying the number for extra credit."'),
+    },
   };
-  G.ITEM_SLOTS = ['hammer', 'doosh', 'package', 'bidet', 'mystery'];
+  // grid order; null = an empty slot for things Nate hasn't found yet
+  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'bidet', null, null, null, null];
+  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', null, null, null, null];
+
+  G.itemHas = (id) => {
+    const def = G.ITEMS[id];
+    if (!def) return false;
+    if (def.has) return def.has();
+    const v = st().items[id];
+    return !!v && (typeof v !== 'number' || v > 0);
+  };
+  G.itemCount = (id) => {
+    const def = G.ITEMS[id];
+    if (def.count) return def.count();
+    const v = st().items[id];
+    return typeof v === 'number' ? v : null;
+  };
+  G.itemDesc = (id) => {
+    const d = G.ITEMS[id].desc;
+    return typeof d === 'function' ? d() : d;
+  };
+
+  // ================================================================ PARTY
+  G.PARTY_ORDER = ['nate', 'doron', 'lily', 'abe', 'hannah'];
+  G.PARTY_INFO = {
+    nate: { name: 'Nate', bio: 'Geology major at Lafayette. Makes his own fireworks. Thinks about pH often.', skill: 'Rock hammer, chemistry, explosive presents' },
+    doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Never skips leg day. Owns three luchador masks.', skill: 'Lifts and smashes heavy things' },
+    lily: { name: 'Lily', bio: '', skill: '' },
+    abe: { name: 'Abe', bio: '', skill: '' },
+    hannah: { name: 'Hannah', bio: '', skill: '' },
+  };
+
+  // ================================================================ JOURNAL
+  // The current goal follows the story flags, so anyone picking the game back
+  // up knows where to go.
+  G.journal = () => {
+    const f = fl(), s = st();
+    let goal;
+    if (!f.readChat) goal = 'Check your phone. It\'s buzzing on the desk in your lab.';
+    else if (!s.items.hammer) goal = 'Grab your rock hammer from the chest in your lab.';
+    else if (!f.boulderSeen) goal = 'Head south toward Chesapeake, VA.';
+    else if (!s.items.cap) goal = f.capQuest ? 'Bonk 10 sacred numbers for Gus to get your hat back.' : 'Find your hat. Someone on the quad must have seen it.';
+    else if (!f.doronDeal) goal = 'Find Doron at the Easton Fairgrounds, east of campus.';
+    else if (!f.dadBeaten) goal = 'Watch the main event inside the Expo Hall.';
+    else if (!f.boulderGone) goal = 'Bring Doron to the boulder on the south road.';
+    else goal = 'Take the road south to Chesapeake, VA.';
+    const side = [];
+    if (f.capQuest || s.items.cap) side.push(['Gus\'s lawn job', s.items.cap ? '{g}Done!' : G.sayable(G.capProgress()) + '/10 sacred numbers']);
+    if (f.chemMet) side.push(['The Chem Final', f.chemPerfect ? '{g}Perfect!' : f.chemPassed ? 'Passed! Retake for a heart' : 'Not passed yet']);
+    if (f.ticketQuest) {
+      const left = s.items.tickets || 0;
+      side.push(['Doron\'s spare tickets', f.ticketsDone ? '{g}Done!' : f.dadBeaten ? 'The show\'s over' : left ? G.sayable(left) + ' left' : 'Go tell Doron!']);
+    }
+    return { goal, side };
+  };
 
   // ================================================================ MUSIC (original tunes)
   G.SONGS = {
@@ -183,6 +267,21 @@
     const p = P();
     yield G.say('Nate', msg);
     yield G.walkTo(p, p.x, p.y - 14, 1);
+  };
+
+  // Reading the phone from the KEY ITEMS menu: a random Nani message.
+  const NANI = [
+    'Nate, you are a shining star! Keep shining! Love, Nani',
+    'Remember to drink water and believe in yourself!',
+    'Every ditch is the number one ditch to somebody. Love, Nani',
+    'You are braver than you believe and smarter than you think!',
+    'Today is a gift. That is why they call it the present. (Not the exploding kind, Nate.)',
+    'Did you eat? Nani loves you!',
+    'Be the light you wish to see in the world. Also wear a jacket.',
+  ];
+  S.naniMessage = function* () {
+    yield G.say(null, '{c}~ FAMILY GROUP CHAT ~{/}');
+    yield G.text('Nani', NANI[Math.floor(Math.random() * NANI.length)]);
   };
 
   S.skipNote = function* () {
@@ -331,6 +430,7 @@
     if (s.teeth < 10) { yield G.say('Vendor', 'That\'s not enough teeth. Try whacking some tall grass.'); return; }
     G.play.addTeeth(-10);
     s.items.doosh++;
+    f.hadDoosh = true;
     if (!s.xItem) s.xItem = 'doosh';
     yield G.itemGet(G.spr.doosh, 'You got a {y}Doosh De Luche{/}! Press {y}X{/} to eat it and heal 4 hearts.');
   };

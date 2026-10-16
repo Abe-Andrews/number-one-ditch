@@ -1454,6 +1454,29 @@
     return p.canvas();
   }
 
+  function phoneIcon() {
+    const p = new Pix(12, 16);
+    p.rect(1, 0, 10, 16, '#2a2a34');
+    p.rect(2, 2, 8, 11, '#e8f0f8');
+    p.rect(3, 3, 5, 2, '#78e070'); p.rect(4, 6, 5, 2, '#68a8ff'); p.rect(3, 9, 4, 2, '#78e070');
+    p.hline(5, 6, 14, '#5a5a68');
+    p.outline();
+    return p.canvas();
+  }
+
+  // Graded test paper with a red A+.
+  function paperIcon() {
+    const p = new Pix(14, 16);
+    p.rect(1, 1, 12, 14, '#f8f8f0');
+    p.rect(10, 1, 3, 3, '#d8d8d0');
+    for (let y = 8; y < 14; y += 2) p.hline(3, 10, y, '#a0a0b0');
+    const R = '#e03040';
+    p.set(3, 3, R); p.set(2, 4, R); p.set(4, 4, R); p.hline(2, 4, 5, R); p.set(2, 6, R); p.set(4, 6, R);
+    p.set(7, 4, R); p.hline(6, 8, 5, R); p.set(7, 6, R);
+    p.outline();
+    return p.canvas();
+  }
+
   function schoolDesk() {
     const p = new Pix(16, 18);
     p.rect(4, 12, 8, 5, '#6a7080'); p.hline(4, 11, 12, '#8a90a0');
@@ -1606,6 +1629,8 @@
     S.heartBig = scale2(S.heart.full);
     S.schoolDesk = schoolDesk();
     S.ticket = ticketIcon();
+    S.phone = phoneIcon();
+    S.paper = paperIcon();
     S.chalkboard = chalkboard();
   };
 })();
