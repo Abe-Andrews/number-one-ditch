@@ -3081,21 +3081,6 @@
     p.outline(shade(cols[3], -0.4));
     return p.canvas();
   }
-  // A rainbow hot air balloon drifting over Bedminster.
-  function hotAirBalloon() {
-    const p = new Pix(20, 30);
-    const cols = ['#e83848', '#f8a028', '#f8e040', '#58c048', '#3878d8', '#9858c8'];
-    for (let y = 0; y < 20; y++) for (let x = 0; x < 20; x++) {
-      const d = (x - 9.5) ** 2 / 90 + (y - 9) ** 2 / (y < 9 ? 81 : 140);
-      if (d > 1) continue;
-      p.set(x, y, cols[Math.min(5, Math.floor(x / 3.4))]);
-    }
-    for (let y = 18; y < 22; y++) { p.set(6 + ((y - 18) >> 1), y, '#5a4a3a'); p.set(13 - ((y - 18) >> 1), y, '#5a4a3a'); }
-    p.rect(7, 22, 6, 5, '#8a5a30'); p.hline(7, 12, 22, '#a87040');
-    p.set(5, 5, '#ffffff'); p.set(6, 4, '#ffffff');
-    return finish(p);
-  }
-
   // ================================================================ STORY SPRITES
   // The four ingredients for the nastiest drink Nate can make.
   function milkIcon() {
@@ -3133,6 +3118,149 @@
     rows.forEach((r, y) => r.split('').forEach((ch, x) => { if (ch === 'o') { p.set(2 + x, y * 1 + 1, col); p.set(2 + x, y + 2, col); } }));
     p.set(3, 2, '#ffffff'); p.set(3, 3, '#ffffff');
     p.vline(6, 10, 15, '#e8e8f0');
+    return finish(p);
+  }
+
+  // ================================================================ HOME CRITTERS
+  // Angry eyebrows for things that shouldn't have faces.
+  function angryEyes(p, x, y, gap) {
+    p.set(x, y, '#1c1424'); p.set(x + gap, y, '#1c1424');
+    p.set(x - 1, y - 1, '#1c1424'); p.set(x + gap + 1, y - 1, '#1c1424');
+    p.set(x, y + 1, '#ffffff'); p.set(x + gap, y + 1, '#ffffff');
+  }
+
+  // Corn on the cob, husk and all. Nate had a bunch of these in his room.
+  function corncob(squash) {
+    const p = new Pix(14, 20), top = squash ? 2 : 0;
+    for (let y = top; y < 15; y++) {
+      const half = y < top + 2 ? 2 : y > 12 ? 3 : 4;
+      for (let x = 7 - half; x < 7 + half; x++) p.set(x, y, (x + y) % 2 ? '#f8d848' : '#e8b830');
+    }
+    for (let y = top + 1; y < 14; y += 2) p.set(5, y, '#fff0a0');
+    for (const [x0, dir] of [[3, -1], [10, 1]]) for (let k = 0; k < 6; k++) { p.set(x0 + dir * Math.floor(k / 2), 19 - k, '#4a9a38'); p.set(x0 + 1 + dir * Math.floor(k / 2), 19 - k, '#68b850'); }
+    p.rect(5, 15, 4, 5, '#5aaa44'); p.vline(7, 14, 19, '#3a7a2c');
+    angryEyes(p, 5, top + 5, 3);
+    p.hline(6, 8, top + 9, '#7a3a20');
+    return finish(p);
+  }
+  function kernelShot() {
+    const p = new Pix(5, 5);
+    p.rect(1, 1, 3, 3, '#f8d848'); p.set(1, 1, '#fff4b0');
+    return finish(p);
+  }
+
+  // A cereal box with a grudge. Frames: shuffle, shuffle, tipped over to pour.
+  function cerealBox(frame) {
+    const p = new Pix(18, 22);
+    const box = (x0, y0) => {
+      p.rect(x0, y0, 12, 18, '#d83838'); p.rect(x0 + 12, y0 + 1, 2, 17, '#a02828');
+      p.rect(x0, y0, 12, 5, '#f8d040'); p.hline(x0, x0 + 11, y0 + 5, '#c89818');
+      p.rect(x0 + 2, y0 + 10, 8, 5, '#f4f4f0'); p.hline(x0 + 3, x0 + 8, y0 + 15, '#d8d8d4');
+      for (const [dx, c] of [[3, '#58c048'], [5, '#3878d8'], [7, '#f8a028'], [4, '#c858e8'], [6, '#f8d040']]) p.set(x0 + dx, y0 + 10 + (dx % 2), c);
+      angryEyes(p, x0 + 3, y0 + 2, 5);
+    };
+    if (frame === 2) {
+      box(2, 3);
+      p.rect(2, 1, 12, 2, '#f8e070'); p.hline(2, 13, 0, '#c89818');
+      for (const [x, y, c] of [[3, 0, '#58c048'], [6, 0, '#3878d8'], [9, 0, '#f8a028'], [12, 0, '#c858e8']]) p.set(x, y, c);
+    } else {
+      box(frame ? 3 : 2, 4);
+    }
+    return finish(p);
+  }
+  function cerealRing(col) {
+    const p = new Pix(6, 6);
+    p.rect(1, 1, 4, 4, col); p.set(2, 2, null); p.d[2 * 6 + 2] = null; p.d[3 * 6 + 3] = null; p.d[2 * 6 + 3] = null; p.d[3 * 6 + 2] = null;
+    p.set(1, 1, shade(col, 0.4));
+    return finish(p);
+  }
+
+  // One of Nate's homemade fireworks: a rocket on a stick. Frame 1 has the fuse lit.
+  function rocket(lit) {
+    const p = new Pix(10, 26);
+    for (let y = 0; y < 4; y++) p.hline(5 - Math.ceil(y / 2), 4 + Math.ceil(y / 2), y, '#f4f4f0');
+    p.rect(3, 4, 4, 11, '#d83838'); p.hline(3, 6, 7, '#f4f4f0'); p.hline(3, 6, 11, '#f4f4f0'); p.vline(6, 4, 14, '#a02828');
+    p.set(4, 8, '#1c1424'); p.set(5, 8, '#1c1424');
+    p.vline(5, 15, 25, '#a87a48');
+    p.set(3, 15, '#5a5a62'); p.set(2, 16, '#5a5a62');
+    if (lit) { p.set(1, 16, '#f8d040'); p.set(1, 17, '#ffffff'); p.set(0, 16, '#f8a028'); p.set(2, 18, '#f8a028'); }
+    return finish(p);
+  }
+
+  // Snapdragon: a flower with teeth. Frames: closed, snapping open.
+  function snapdragon(open) {
+    const p = new Pix(18, 24);
+    p.vline(9, 12, 23, '#3a8a30'); p.vline(8, 14, 23, '#4aa040');
+    for (let k = 0; k < 5; k++) { p.set(7 - k, 19 - (k >> 1), '#58b048'); p.set(10 + k, 17 - (k >> 1), '#58b048'); }
+    const cx = 9, cy = open ? 7 : 8;
+    for (let y = 0; y < 13; y++) for (let x = 2; x < 16; x++) {
+      const d = (x - cx) ** 2 / 36 + (y - cy) ** 2 / 25;
+      if (d > 1) continue;
+      p.set(x, y, d > 0.6 ? '#c83878' : '#e858a0');
+    }
+    if (open) {
+      p.rect(5, 6, 8, 4, '#5a1028');
+      for (let x = 5; x < 13; x += 2) { p.set(x, 6, '#ffffff'); p.set(x + 1, 9, '#ffffff'); }
+    } else {
+      p.hline(5, 12, 9, '#8a2050'); for (let x = 6; x < 12; x += 2) p.set(x, 8, '#ffffff');
+    }
+    angryEyes(p, 6, 3, 5);
+    return finish(p);
+  }
+  function pollenShot() {
+    const p = new Pix(6, 6);
+    p.rect(1, 1, 4, 4, '#d8e048'); p.set(1, 1, '#f8f8a0'); p.set(4, 4, '#a8b030');
+    return finish(p);
+  }
+
+  // A New Jersey black bear (Bedminster has them). Facing right; two walk frames.
+  function bear(step) {
+    const p = new Pix(34, 26), fur = '#24201e', furL = '#3a3430';
+    for (let y = 4; y < 19; y++) for (let x = 2; x < 26; x++) {
+      if ((x - 13) ** 2 / 132 + (y - 11.5) ** 2 / 48 > 1) continue;
+      p.set(x, y, y < 8 ? furL : fur);
+    }
+    for (let y = 2; y < 13; y++) for (let x = 20; x < 32; x++) {
+      if ((x - 25.5) ** 2 / 28 + (y - 7.5) ** 2 / 24 > 1) continue;
+      p.set(x, y, fur);
+    }
+    p.rect(29, 7, 4, 4, '#a8845c'); p.set(32, 7, '#1c1414'); p.set(29, 10, '#8a6a48');
+    p.rect(21, 1, 3, 3, fur); p.set(22, 2, '#4a3e38');
+    p.set(27, 5, '#f8f4e8'); p.set(27, 6, '#140c0c');
+    const legs = step ? [[4, 0], [9, 2], [17, 2], [22, 0]] : [[4, 2], [9, 0], [17, 0], [22, 2]];
+    for (const [x, off] of legs) { p.rect(x, 17 - off, 4, 7 + off - (off ? 1 : 0), fur); p.hline(x, x + 3, 23 - (off ? 1 : 0), '#4a3e38'); }
+    return finish(p);
+  }
+
+  // Birdhouse gourd: dried, with a round door. Frames wobble left/right.
+  function gourd(lean) {
+    const p = new Pix(14, 18), body = '#c8a060', dark = '#9a7440', lite = '#e0c080';
+    const sx = lean ? 1 : 0;
+    for (let y = 2; y < 18; y++) for (let x = 0; x < 14; x++) {
+      const top = (x - 6.5 - sx) ** 2 / 6 + (y - 4.5) ** 2 / 9 <= 1;
+      const bot = (x - 6.5) ** 2 / 36 + (y - 12) ** 2 / 30 <= 1;
+      if (top || bot) p.set(x, y, x > 9 ? dark : x < 4 ? lite : body);
+    }
+    p.rect(6 + sx, 0, 2, 3, '#6a4a28');
+    p.rect(5, 10, 4, 4, '#2a1a10'); p.set(5, 10, '#4a3420');
+    p.hline(6, 8, 15, '#6a4a28');
+    angryEyes(p, 4, 7, 5);
+    return finish(p);
+  }
+  // The sparrow that lives in the gourd. Two flap frames, facing right.
+  function birdFrame(up) {
+    const p = new Pix(12, 9);
+    p.rect(3, 3, 6, 4, '#8a5a3a'); p.rect(8, 2, 3, 3, '#8a5a3a'); p.set(11, 3, '#e8b030'); p.set(9, 2, '#140c0c');
+    p.rect(4, 5, 4, 2, '#e8d8b0'); p.hline(1, 3, 4, '#6a4428');
+    if (up) { p.rect(4, 0, 4, 3, '#6a4428'); } else { p.rect(4, 6, 4, 3, '#6a4428'); }
+    return finish(p);
+  }
+
+  // An unopened can of beans (for Abe's science experiment).
+  function beanCan() {
+    const p = new Pix(8, 10);
+    p.rect(0, 0, 8, 10, '#c8ccd2'); p.hline(0, 7, 0, '#eef0f4'); p.hline(0, 7, 9, '#9aa0a8');
+    p.rect(0, 3, 8, 5, '#d86828'); p.set(2, 5, '#8a3a18'); p.set(4, 4, '#8a3a18'); p.set(5, 6, '#8a3a18');
     return finish(p);
   }
 
@@ -3331,9 +3459,17 @@
     S.gatePost = gatePost(); S.flag = flagFrames(); S.kidneyPool = kidneyPool(); S.marketUmbrella = marketUmbrella();
     S.teakSet = teakSet(); S.teakBench = teakBench(); S.lounger = lounger(); S.poolHouse = poolHouse(); S.porchFlag = porchFlag();
     S.adirondack = adirondack(); S.pinkTree = bloomTree(7, ['#ffe0ec', '#f8a8c8', '#e078a0', '#b85078']); S.purpleTree = bloomTree(9, ['#e8d8f8', '#c8a0e8', '#9a70c8', '#6a4898']);
-    S.hotAirBalloon = hotAirBalloon();
     // story
     S.milk = milkIcon(); S.dye = dyeIcon(); S.liquidSmoke = smokeIcon(); S.vodka = vodkaIcon();
+    S.corncob = [corncob(false), corncob(true)]; S.kernel = kernelShot();
+    S.cereal = [cerealBox(0), cerealBox(1), cerealBox(2)];
+    S.rings = ['#e83848', '#f8d040', '#58c048', '#3878d8'].map(cerealRing);
+    S.rocket = [rocket(false), rocket(true)];
+    S.snapdragon = [snapdragon(false), snapdragon(true)]; S.snapdragonL = S.snapdragon.map(mirror); S.pollen = pollenShot();
+    S.bear = [bear(0), bear(1)]; S.bearL = S.bear.map(mirror);
+    S.gourd = [gourd(false), gourd(true)];
+    S.bird = [birdFrame(true), birdFrame(false)]; S.birdL = S.bird.map(mirror);
+    S.beanCan = beanCan();
     S.note = noteSprite(); S.heartRed = heartBalloon('#e83848'); S.heartPink = heartBalloon('#f080b0');
     S.farmhouse = farmhouse();
     S.grill = grill();

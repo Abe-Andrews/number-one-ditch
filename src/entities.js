@@ -856,6 +856,384 @@
   }
   G.MikeyBoss = MikeyBoss;
 
+  // ============================================================== HOME CRITTERS
+  // Shared enemy plumbing for the home area: knockback, hurt flash, the Peace
+  // halo, contact damage, a one-time "what IS that" line, and a poof (plus a
+  // maybe-drop) when they go down. Subclasses supply think() and draw().
+  class Critter extends Ent {
+    constructor(x, y, hp) {
+      super(x, y);
+      this.enemy = true;
+      this.hp = hp;
+      this.t = Math.floor(Math.random() * 100);
+      this.hurtT = 0;
+      this.kb = { x: 0, y: 0 };
+      this.calm = 0;
+      this.vx = 0; this.vy = 0;
+      this.wt = 0;
+    }
+    hurtBox() { return [this.x - 7, this.y - 15, this.x + 7, this.y]; }
+    update(w) {
+      if (G.script.busy) return;
+      this.t++;
+      if (this.hurtT > 0) {
+        this.hurtT--;
+        w.move(this, this.kb.x, 0); w.move(this, 0, this.kb.y);
+        this.kb.x *= 0.85; this.kb.y *= 0.85;
+        return;
+      }
+      if (this.calm > 0) { this.calm--; return; }
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      if (this.intro && dist < 90) G.SCRIPTS.critterIntro(this.intro);
+      this.think(w, p, dx, dy, dist);
+      if (this.touch !== false && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(this.dmg || 1, this.x, this.y);
+    }
+    step(w) {
+      const h1 = w.move(this, this.vx, 0), h2 = w.move(this, 0, this.vy);
+      if (h1.hitX) this.vx = -this.vx;
+      if (h2.hitY) this.vy = -this.vy;
+    }
+    wander(w, sp) {
+      if (--this.wt <= 0) {
+        const a = Math.random() * Math.PI * 2, go = Math.random() < 0.7;
+        this.vx = go ? Math.cos(a) * sp : 0; this.vy = go ? Math.sin(a) * sp : 0;
+        this.wt = 40 + Math.random() * 80;
+      }
+      this.step(w);
+    }
+    chase(w, dx, dy, dist, sp) { this.vx = (dx / dist) * sp; this.vy = (dy / dist) * sp; this.step(w); }
+    hit(dmg, sx, sy) {
+      this.hp -= dmg;
+      this.hurtT = 14;
+      this.calm = 0;
+      const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1, k = this.rooted ? 0 : this.heavy ? 1.2 : 3;
+      this.kb = { x: (dx / m) * k, y: (dy / m) * k };
+      G.audio.sfx('hit');
+      if (this.hp <= 0) this.die();
+    }
+    die() {
+      this.dead = true;
+      G.audio.sfx('poof');
+      this.world.burst(this.x, this.y - 8, this.bits || ['#ffffff', '#e8e0f0'], 12, { speed: 1.2, life: 22, size: 3 });
+      G.play.maybeDrop(this.x, this.y, this.dropChance || 0.6);
+    }
+    drawSprite(ctx, cx, cy, img, lift = 0) {
+      drawShadow(ctx, this.x, this.y, cx, cy, this.bigShadow);
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height + 1 - lift) - cy);
+      if (this.calm > 0) drawHalo(ctx, this.x - cx, this.y - img.height - 4 - lift - cy);
+    }
+  }
+  G.Critter = Critter;
+
+  // Anything an enemy spits or pours: flies straight, stings on contact.
+  class Shot extends Ent {
+    constructor(x, y, vx, vy, img, o = {}) {
+      super(x, y);
+      Object.assign(this, { vx, vy, img, life: o.life || 150, dmg: o.dmg || 1, z: o.z || 7 });
+    }
+    update(w) {
+      if (G.script.busy) return;
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0 || w.tileSolid(Math.floor(this.x / 16), Math.floor(this.y / 16))) { this.dead = true; return; }
+      const p = G.play.player;
+      if (G.overlap([this.x - 3, this.y - 8, this.x + 3, this.y], p.hurtBox())) { this.dead = true; p.hurt(this.dmg, this.x, this.y); }
+    }
+    draw(ctx, cx, cy) {
+      ctx.drawImage(this.img, Math.round(this.x - this.img.width / 2) - cx, Math.round(this.y - this.z - this.img.height / 2) - cy);
+    }
+  }
+  G.Shot = Shot;
+
+  // Corn on the cob: hops after Nate and spits kernels.
+  class Corncob extends Critter {
+    constructor(x, y) {
+      super(x, y, 2);
+      this.intro = 'corn';
+      this.bits = ['#f8d848', '#ffffff', '#f8f0c0', '#5aa040'];
+      this.fireT = 60 + Math.random() * 60;
+    }
+    think(w, p, dx, dy, dist) {
+      if (dist > 84) { this.wander(w, 0.3); return; }
+      this.chase(w, dx, dy, dist, 0.45);
+      if (--this.fireT <= 0) {
+        this.fireT = 110;
+        const a = Math.atan2(dy, dx);
+        for (const o of [-0.32, 0, 0.32]) w.add(new Shot(this.x, this.y - 2, Math.cos(a + o) * 1.4, Math.sin(a + o) * 1.4, G.spr.kernel));
+        G.audio.sfx('blip');
+      }
+    }
+    die() { super.die(); this.world.pop(this.x, this.y - 22, 'POP!', '#f8e070'); }
+    draw(ctx, cx, cy) {
+      const hop = this.hurtT || this.calm ? 0 : Math.abs(Math.sin(this.t * 0.2)) * 3;
+      this.drawSprite(ctx, cx, cy, G.spr.corncob[hop > 2 ? 1 : 0], hop);
+    }
+  }
+  G.Corncob = Corncob;
+
+  // A cereal box: shuffles around, and when Nate lines up with it, it tips
+  // over and pours a stream of cereal at him.
+  class CerealBox extends Critter {
+    constructor(x, y) {
+      super(x, y, 3);
+      this.intro = 'cereal';
+      this.bits = ['#e83848', '#f8d040', '#58c048', '#3878d8', '#f8f8f0'];
+      this.pourT = 0;
+      this.cool = 40;
+    }
+    think(w, p, dx, dy, dist) {
+      if (this.pourT > 0) {
+        if (--this.pourT % 7 === 0) {
+          const [ux, uy] = DIRS[this.pourDir];
+          const jit = () => (Math.random() - 0.5) * 0.5;
+          w.add(new Shot(this.x + ux * 6, this.y + uy * 4, ux * 1.8 + (uy ? jit() : 0), uy * 1.8 + (ux ? jit() : 0), G.spr.rings[(this.pourT / 7) % 4 | 0], { life: 100 }));
+          G.audio.sfx('blip');
+        }
+        return;
+      }
+      if (this.cool > 0) this.cool--;
+      if (dist < 110 && this.cool <= 0 && (Math.abs(dx) < 10 || Math.abs(dy) < 10)) {
+        this.pourDir = G.dirToward(dx, dy);
+        this.pourT = 43;
+        this.cool = 120;
+        return;
+      }
+      if (dist < 110) this.chase(w, dx, dy, dist, 0.3); else this.wander(w, 0.25);
+    }
+    draw(ctx, cx, cy) {
+      this.drawSprite(ctx, cx, cy, this.pourT > 0 ? G.spr.cereal[2] : G.spr.cereal[Math.floor(this.t / 16) % 2]);
+    }
+  }
+  G.CerealBox = CerealBox;
+
+  // One of Nate's own fireworks. Gets close and the fuse lights; then it
+  // rockets at Nate and bursts. A bonk before launch defuses it.
+  class Firework extends Critter {
+    constructor(x, y) {
+      super(x, y, 1);
+      this.intro = 'firework';
+      this.touch = false;
+      this.state = 'idle';
+      this.bits = ['#e83848', '#f8d040', '#ffffff'];
+    }
+    think(w, p, dx, dy, dist) {
+      if (this.state === 'idle') { if (dist < 88) { this.state = 'lit'; this.ft = 54; } return; }
+      if (this.state === 'lit') {
+        if (this.ft % 8 === 0) G.audio.sfx('fuse');
+        if (this.ft % 3 === 0) w.burst(this.x - 4, this.y - 9, ['#f8d040', '#ffffff', '#f8a028'], 1, { speed: 0.7, life: 8, size: 1 });
+        if (--this.ft <= 0) {
+          this.state = 'fly';
+          this.ft = 70;
+          this.vx = (dx / dist) * 2.3; this.vy = (dy / dist) * 2.3;
+          G.audio.sfx('dash');
+        }
+        return;
+      }
+      this.x += this.vx; this.y += this.vy;
+      w.burst(this.x - this.vx * 3, this.y - 10 - this.vy * 3, ['#f8a028', '#f8d040', '#8a8a94'], 1, { speed: 0.3, life: 14, size: 2 });
+      const wall = w.tileSolid(Math.floor(this.x / 16), Math.floor(this.y / 16));
+      if (--this.ft <= 0 || wall || G.overlap(this.hurtBox(), p.hurtBox())) this.explode(w, p);
+    }
+    explode(w, p) {
+      this.dead = true;
+      G.audio.sfx('boom');
+      G.play.shake(8, 2);
+      w.burst(this.x, this.y - 10, ['#e83848', '#f8d040', '#58c0f8', '#c858e8', '#ffffff'], 22, { speed: 2, life: 30, size: 2 });
+      w.pop(this.x, this.y - 26, 'BOOM!', '#f8d040');
+      if (Math.hypot(p.x - this.x, p.y - this.y) < 24) p.hurt(1, this.x, this.y);
+    }
+    hit() {
+      if (this.dead) return;
+      this.dead = true;
+      G.audio.sfx('clank');
+      this.world.pop(this.x, this.y - 26, this.state === 'idle' ? 'BONK!' : 'DEFUSED!', '#c8c8d0');
+      this.world.burst(this.x, this.y - 10, this.bits, 8, { speed: 1, life: 18, size: 2 });
+      G.play.maybeDrop(this.x, this.y, 0.6);
+    }
+    draw(ctx, cx, cy) {
+      const img = G.spr.rocket[this.state === 'idle' ? 0 : 1];
+      if (this.state !== 'fly') { this.drawSprite(ctx, cx, cy, img, this.state === 'lit' ? (G.tick >> 1) & 1 : 0); return; }
+      ctx.save();
+      ctx.translate(Math.round(this.x) - cx, Math.round(this.y - 10) - cy);
+      ctx.rotate(Math.atan2(this.vy, this.vx) + Math.PI / 2);
+      ctx.drawImage(img, -5, -13);
+      ctx.restore();
+    }
+  }
+  G.Firework = Firework;
+
+  // Snapdragon: rooted in place, bites anything that gets close and spits pollen.
+  class Snapdragon extends Critter {
+    constructor(x, y) {
+      super(x, y, 2);
+      this.intro = 'flower';
+      this.rooted = true;
+      this.bits = ['#e83878', '#f8a0c8', '#58a840'];
+      this.cool = 50 + Math.random() * 60;
+      this.snapT = 0;
+      this.face = 'right';
+    }
+    think(w, p, dx, dy, dist) {
+      this.face = dx < 0 ? 'left' : 'right';
+      if (this.snapT > 0) this.snapT--;
+      if (dist < 26 && this.snapT <= 0) { this.snapT = 24; G.audio.sfx('swing'); }
+      if (dist < 100 && --this.cool <= 0) {
+        this.cool = 100;
+        this.snapT = 12;
+        w.add(new Shot(this.x, this.y - 2, (dx / dist) * 1.3, (dy / dist) * 1.3, G.spr.pollen, { life: 120, z: 12 }));
+        G.audio.sfx('blip');
+      }
+    }
+    draw(ctx, cx, cy) {
+      const set = this.face === 'left' ? G.spr.snapdragonL : G.spr.snapdragon;
+      this.drawSprite(ctx, cx, cy, set[this.snapT > 0 ? 1 : 0]);
+    }
+  }
+  G.Snapdragon = Snapdragon;
+
+  // The bear. Roams its patch of woods, growls, then charges. Wins? It just
+  // lumbers back into the woods (nobody hurts the bear).
+  class Bear extends Critter {
+    constructor(x, y) {
+      super(x, y, 8);
+      this.intro = 'bear';
+      this.heavy = true;
+      this.bigShadow = true;
+      this.dmg = 2;
+      this.hb = { w: 20, h: 8 };
+      this.home = { x, y };
+      this.state = 'roam';
+      this.face = 'right';
+    }
+    hurtBox() { return [this.x - 13, this.y - 20, this.x + 13, this.y]; }
+    update(w) {
+      if (this.fled) {
+        if (G.script.busy) return;
+        this.x += this.vx; this.y += this.vy; this.t++;
+        if (--this.st <= 0) this.dead = true;
+        return;
+      }
+      super.update(w);
+    }
+    think(w, p, dx, dy, dist) {
+      if (this.state === 'roam') {
+        const hx = this.x - this.home.x, hy = this.y - this.home.y, hd = Math.hypot(hx, hy) || 1;
+        if (hd > 72) { this.vx = (-hx / hd) * 0.4; this.vy = (-hy / hd) * 0.4; this.step(w); } else this.wander(w, 0.35);
+        if (dist < 96) { this.state = 'growl'; this.st = 44; w.pop(this.x, this.y - 32, 'GRRRR!', '#c8a080'); G.audio.sfx('yell'); }
+      } else if (this.state === 'growl') {
+        this.vx = this.vy = 0;
+        this.face = dx < 0 ? 'left' : 'right';
+        if (--this.st <= 0) { this.state = 'charge'; this.st = 70; this.vx = (dx / dist) * 2.5; this.vy = (dy / dist) * 2.5; G.audio.sfx('dash'); }
+      } else if (this.state === 'charge') {
+        const h1 = w.move(this, this.vx, 0), h2 = w.move(this, 0, this.vy);
+        if (h1.hitX || h2.hitY) { this.state = 'dazed'; this.st = 80; G.audio.sfx('bump'); G.play.shake(8, 2); }
+        else if (--this.st <= 0) { this.state = 'rest'; this.st = 70; }
+      } else if (--this.st <= 0) {
+        this.state = 'roam';
+      }
+      if (this.vx) this.face = this.vx < 0 ? 'left' : 'right';
+    }
+    die() {
+      // it doesn't go poof; it just leaves
+      this.fled = true;
+      this.enemy = false;
+      this.touch = false;
+      this.st = 120;
+      const p = G.play.player, dx = this.x - p.x, dy = this.y - p.y, m = Math.hypot(dx, dy) || 1;
+      this.vx = (dx / m) * 2; this.vy = (dy / m) * 2;
+      this.face = this.vx < 0 ? 'left' : 'right';
+      this.world.pop(this.x, this.y - 34, 'HMPH.', '#c8a080');
+      G.audio.sfx('poof');
+      for (let i = 0; i < 3; i++) this.world.add(new Pickup(this.x + (i - 1) * 10, this.y + 4, 'tooth5'));
+    }
+    draw(ctx, cx, cy) {
+      const set = this.face === 'left' ? G.spr.bearL : G.spr.bear;
+      const moving = this.fled || this.state === 'charge' || (this.state === 'roam' && (this.vx || this.vy));
+      const frame = moving ? Math.floor(this.t / (this.state === 'charge' || this.fled ? 5 : 10)) % 2 : 0;
+      if (this.fled) ctx.globalAlpha = Math.min(1, this.st / 40);
+      this.drawSprite(ctx, cx, cy, set[frame]);
+      ctx.globalAlpha = 1;
+      if (this.state === 'dazed') {
+        for (let i = 0; i < 3; i++) {
+          const a = G.tick * 0.12 + (i * Math.PI * 2) / 3;
+          ctx.fillStyle = i % 2 ? '#f8d850' : '#ffffff';
+          ctx.fillRect(Math.round(this.x + Math.cos(a) * 10) - cx, Math.round(this.y - 26 + Math.sin(a) * 3) - cy, 2, 2);
+        }
+      }
+    }
+  }
+  G.Bear = Bear;
+
+  // Birdhouse gourd: wobbles after Nate. Crack it and the sparrow inside comes out swinging.
+  class Gourd extends Critter {
+    constructor(x, y) {
+      super(x, y, 2);
+      this.intro = 'gourd';
+      this.bits = ['#c8a060', '#8a6a3a', '#f0d8a0'];
+    }
+    think(w, p, dx, dy, dist) {
+      if (dist < 72) {
+        this.chase(w, dx, dy, dist, 0.5);
+        if (this.t % 40 === 0) G.audio.sfx('fuse');
+      } else this.wander(w, 0.25);
+    }
+    die() {
+      super.die();
+      this.world.pop(this.x, this.y - 22, 'CRACK!', '#e8d8a0');
+      this.world.add(new Bird(this.x, this.y - 6));
+    }
+    draw(ctx, cx, cy) {
+      const wob = this.hurtT || this.calm ? 0 : Math.floor(this.t / 9) % 2;
+      this.drawSprite(ctx, cx, cy, G.spr.gourd[wob]);
+    }
+  }
+  G.Gourd = Gourd;
+
+  // The sparrow: swoops at Nate once or twice, then flies off.
+  class Bird extends Critter {
+    constructor(x, y) {
+      super(x, y, 1);
+      this.life = 220;
+      this.dropChance = 0.3;
+      this.bits = ['#8a5a3a', '#e8d8b0'];
+      this.vy = -1.2;
+    }
+    hurtBox() { return [this.x - 6, this.y - 22, this.x + 6, this.y - 6]; }
+    update(w) {
+      if (G.script.busy) return;
+      this.t++;
+      if (this.hurtT > 0) this.hurtT--;
+      const p = G.play.player;
+      if (this.leaving || --this.life <= 0) {
+        this.leaving = true;
+        this.x += this.vx; this.y -= 1.8;
+        if (this.y < G.play.cam.y - 40) this.dead = true;
+        return;
+      }
+      const dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1;
+      this.vx += (dx / d) * 0.09; this.vy += (dy / d) * 0.09;
+      const sp = Math.hypot(this.vx, this.vy);
+      if (sp > 1.7) { this.vx *= 1.7 / sp; this.vy *= 1.7 / sp; }
+      this.x += this.vx; this.y += this.vy;
+      if (G.overlap(this.hurtBox(), p.hurtBox())) { p.hurt(1, this.x, this.y); this.leaving = true; this.vx = dx > 0 ? -1.4 : 1.4; }
+    }
+    draw(ctx, cx, cy) {
+      const set = this.vx < 0 ? G.spr.birdL : G.spr.bird;
+      let img = set[(this.t >> 2) & 1];
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      ctx.drawImage(G.spr.shadow, Math.round(this.x - 6) - cx, Math.round(this.y - 3) - cy);
+      ctx.drawImage(img, Math.round(this.x - 6) - cx, Math.round(this.y - 20) - cy);
+    }
+  }
+  G.Bird = Bird;
+
+  // A plain sprite on the ground (used in cutscenes).
+  class Thing extends Ent {
+    constructor(x, y, img) { super(x, y); this.img = img; }
+    draw(ctx, cx, cy) { if (this.img) ctx.drawImage(this.img, Math.round(this.x - this.img.width / 2) - cx, Math.round(this.y - this.img.height) - cy); }
+  }
+  G.Thing = Thing;
+
   // ============================================================== SIX (enemy)
   class Six extends Ent {
     constructor(x, y) {

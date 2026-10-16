@@ -1206,9 +1206,6 @@
   S.homePool = function* () {
     yield G.say(null, 'The pool. Nate learned to swim here. (Swimming not included.)');
   };
-  S.homeFirePit = function* () {
-    yield G.say(null, 'The fire pit. S\'mores, ghost stories, and arguing about who gets to poke the logs.');
-  };
   S.homeLawnSet = function* () {
     yield G.say(null, 'White wrought-iron chairs and a yellow lawn chair. Comfy for about four minutes.');
   };
@@ -1586,6 +1583,89 @@
     yield G.say('Nate', 'That was the most powerful "No." I have ever witnessed.');
     yield G.say('Lily', 'Thank you. Now can we go? The ditch isn\'t going to save itself.');
     G.play.warp('home', 43, 50, 'down');
+  };
+
+  // ---------------------------------------------------------------- home critters
+  const CRITTER_LINES = {
+    corn: [['Nate', 'My CORN?! I kept a bunch of corn on the cob in my room and now it\'s ALIVE.'], ['Nate', 'Father Eggmas, you monster.']],
+    cereal: [['Nate', 'That\'s my cereal! I go through a box a day. I guess they finally fought back.']],
+    firework: [['Nate', 'Those are MY fireworks! I knew I should have stored them in the garage.']],
+    flower: [['Nate', 'Snapdragons. Living up to the name.']],
+    gourd: [['Nate', 'Birdhouse gourds. Hopping. Something is definitely living in there.']],
+    bear: [['Nate', 'A BEAR! Bedminster really does have bears!']],
+  };
+  S.critterIntro = function (kind) {
+    const f = flags();
+    if (f['met_' + kind]) return;
+    f['met_' + kind] = true;
+    const lines = CRITTER_LINES[kind].slice();
+    if (kind === 'bear' && G.state.party.includes('doron')) lines.push(['Doron', 'I could take him.'], ['Nate', 'Do NOT suplex the bear.']);
+    G.script.run((function* () { for (const [who, text] of lines) yield G.say(who, text); })());
+  };
+
+  // ---------------------------------------------------------------- the Bean Incident
+  // Another true family story: Abe put an unopened can of beans in the fire.
+  // It blew a hole through the bottom of the steel fire pit and flew across
+  // the yard, raining burning embers and beans.
+  S.homeFirePit = function* () {
+    const f = flags(), s = G.state, w = G.play.world, p = P();
+    if (f.beans) {
+      yield G.say(null, 'The fire pit, with a bean-can-sized hole blown through the bottom. Abe is no longer allowed near it with groceries.');
+      return;
+    }
+    f.beans = true;
+    yield G.say(null, 'The steel fire pit. There\'s a jagged hole blown clean through the bottom.');
+    yield G.say('Nate', '...Ah. The Bean Incident.');
+    if (s.party.includes('doron')) yield G.say('Doron', 'ABE.');
+    yield G.say('Nate', 'Abe wanted to know what happens if you put a can of beans in the fire. Unopened.');
+    // flashback
+    yield G.fadeOut(20);
+    G.flashback = true;
+    const hide = (v) => { p.hidden = v; for (const e of w.ents) if (e instanceof G.Follower) e.hidden = v; };
+    hide(true);
+    const pit = { x: 14 * 16 + 8, y: 39 * 16 + 9 };
+    const abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: pit.x - 6, y: pit.y + 20, dir: 'up' }));
+    const can = w.add(new G.Thing(pit.x, pit.y + 2, G.spr.beanCan));
+    yield G.camFocus(pit.x + 56, pit.y - 16, 1);
+    yield G.fadeIn(20);
+    yield G.banner('FLASHBACK', 'The front yard, one fateful night', 120);
+    yield G.say('Abe', 'Science. One can of beans. Straight into the fire.');
+    for (let i = 0; i < 3; i++) {
+      G.audio.sfx('fuse');
+      w.pop(pit.x, pit.y - 16, 'hisssss...', '#c8c8d0');
+      w.burst(pit.x, pit.y - 6, ['#f8a028', '#f8d040'], 3, { speed: 0.6, up: 0.6, life: 16, size: 1 });
+      yield G.wait(36);
+    }
+    yield G.say('Abe', '...Is it supposed to bulge like that?');
+    // KA-BEAN
+    G.audio.sfx('boom');
+    G.play.shake(40, 4);
+    w.fx.push({ x: pit.x, y: pit.y - 6, vx: 0, vy: 0, circle: true, r: 30, max: 14, life: 14, color: '#fff0c0' });
+    w.burst(pit.x, pit.y - 6, ['#f8a028', '#e85820', '#f8d040'], 26, { speed: 2.4, up: 1, g: 0.06, life: 40, size: 2 });
+    w.burst(pit.x, pit.y - 6, ['#8a4a28', '#a85a30', '#6a3418'], 18, { speed: 1.8, up: 1.4, g: 0.08, life: 50, size: 2 });
+    w.pop(pit.x, pit.y - 30, 'KA-BEAN!', '#f8a028');
+    abe.dir = 'up';
+    yield G.emote(abe, 'bang', 20);
+    // the can rockets across the whole yard, raining embers and beans
+    const path = [[pit.x + 30, pit.y - 22], [pit.x + 70, pit.y - 34], [pit.x + 110, pit.y - 36], [pit.x + 150, pit.y - 28], [pit.x + 185, pit.y - 10], [pit.x + 215, pit.y + 14]];
+    for (const [tx, ty] of path) {
+      yield G.walkTo(can, tx, ty, 3.4);
+      w.burst(can.x, can.y - 4, ['#f8a028', '#e85820', '#8a4a28', '#a85a30', '#f8d040'], 8, { speed: 0.8, up: 0.2, g: 0.07, life: 50, size: 2 });
+    }
+    G.audio.sfx('clank');
+    w.pop(can.x, can.y - 14, 'clank.', '#c8c8d0');
+    yield G.wait(50);
+    abe.dir = 'right';
+    yield G.say('Abe', '...Huh.', { top: true });
+    yield G.fadeOut(20);
+    abe.dead = true;
+    can.dead = true;
+    G.flashback = false;
+    hide(false);
+    yield G.camFocus(null, null, 1);
+    yield G.fadeIn(20);
+    yield G.say('Nate', 'It blew a hole right through the bottom of a steel fire pit, then flew clear across the yard.');
+    yield G.say('Nate', 'It rained burning embers and beans. Everywhere.');
   };
 
   // ---------------------------------------------------------------- the Alligator Incident
@@ -2086,6 +2166,11 @@
       F.hang(sp.bayWindow, 44, 12, 4, null, 1);
       F.stand(sp.blueHutch, 43, 13, 1, look('A light blue painted hutch full of pretty plates.'));
       F.stand(sp.trainTable, 45, 14, 2, look('An old wooden train table. Somebody built a whole little town on it.'));
+      // ---- critters: Nate's corn, Nate's cereal and Nate's fireworks, all very much alive
+      const at = (Kind, x, y) => w.add(new Kind(x * 16 + 8, y * 16 + 14));
+      at(G.Corncob, 12, 8); at(G.Corncob, 9, 15);
+      at(G.CerealBox, 41, 8); at(G.CerealBox, 47, 13);
+      at(G.Firework, 18, 12);
       // ---- ways out
       w.addTrigger(17, 3, 2, 1, () => G.play.warp('homeUp', 13, 13, 'up'));
       w.addWarp(4, 17, 1, 1, 'home', 14, 34, 'down');
@@ -2183,6 +2268,11 @@
       F.stand(sp.linenShelf, 29, 16, 1, look('Even more towels. Nobody knows how there are this many towels.'));
       F.hang(sp.wallWindow.two, 32, 15, 2, null, 3);
       F.stand(sp.windowSeat, 32, 16, 2, look('A window seat with a view of the whole yard. The best seat in the house.'));
+      // ---- critters (Nate's room is ground zero: he kept a LOT of corn in there)
+      const at = (Kind, x, y) => w.add(new Kind(x * 16 + 8, y * 16 + 14));
+      at(G.Corncob, 23, 6); at(G.Corncob, 25, 5); at(G.Corncob, 8, 11);
+      at(G.Firework, 22, 5);
+      at(G.CerealBox, 23, 18);
       w.addTrigger(13, 19, 2, 1, () => G.play.warp('homeDown', 17, 8, 'down'));
     },
   };
@@ -2363,6 +2453,12 @@
       w.addTree(46, 23, 'pine');
       w.add(new G.Sign(53, 12, 'BRADY BROOK.'));
 
+      // critters around the property: snapdragons, birdhouse gourds, and the bear by the brook
+      const at = (Kind, x, y) => w.add(new Kind(x * 16 + 8, y * 16 + 14));
+      for (const [x, y] of [[30, 22], [38, 22], [20, 41], [33, 45], [10, 45]]) at(G.Snapdragon, x, y);
+      for (const [x, y] of [[6, 33], [27, 42], [51, 38], [50, 46]]) at(G.Gourd, x, y);
+      at(G.Bear, 12, 14);
+
       // the hens, free-ranging inside the garden fence
       const pen = [27 * 16 + 6, 19 * 16 + 4, 40 * 16 - 6, 23 * 16 - 2];
       [[30, 20, 'white'], [33, 20, 'brown'], [36, 20, 'white'], [34, 22, 'brown'], [30, 22, 'white']]
@@ -2382,12 +2478,6 @@
         if (!flags().lilySaved) w.addTrigger(38, 50, 10, 5, () => { if (!flags().mikeyMet) G.script.run(S.mikeyIntro()); });
         else w.addTrigger(35, 46, 15, 9, () => G.script.run(S.mikeyGoldenHour()));
       }
-    },
-    // now and then a rainbow hot air balloon drifts across the sky
-    tint(ctx) {
-      const t = G.tick % 5400;
-      if (t > 1500) return;
-      ctx.drawImage(G.spr.hotAirBalloon, Math.round(G.W + 20 - t * ((G.W + 60) / 1500)), Math.round(14 + Math.sin(t / 70) * 4));
     },
     // the flock's revenge: angry hens swoop in from off-screen for a few seconds
     tick(w) {
