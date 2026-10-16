@@ -18,19 +18,37 @@
     };
   }
 
-  G.hasSave = () => {
-    try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
-  };
-  G.loadSave = () => {
+  // Three save files. File 1 keeps the original key, so older saves show up there.
+  G.SAVE_FILES = 3;
+  const fileKey = (n) => (n === 1 ? SAVE_KEY : SAVE_KEY + '-' + n);
+  G.readSave = (n) => {
     try {
-      const s = Object.assign(newState(), JSON.parse(localStorage.getItem(SAVE_KEY)));
+      const raw = localStorage.getItem(fileKey(n));
+      if (!raw) return null;
+      const s = Object.assign(newState(), JSON.parse(raw));
       // saves that got the cap before it came with a heart container get theirs now
       if (s.items.cap && !s.flags.capHeart) { s.flags.capHeart = true; s.maxHp += 2; }
+      s.slot = n;
       return s;
     } catch (e) { return null; }
   };
-  G.writeSave = () => {
-    try { localStorage.setItem(SAVE_KEY, JSON.stringify(G.state)); } catch (e) { /* storage unavailable */ }
+  G.hasSave = () => [1, 2, 3].some((n) => !!G.readSave(n));
+  // the file saved most recently (old saves without a timestamp count as oldest)
+  G.latestSave = () => {
+    let best = 0, when = -1;
+    for (let n = 1; n <= G.SAVE_FILES; n++) {
+      const s = G.readSave(n);
+      if (s && (s.savedAt || 0) > when) { when = s.savedAt || 0; best = n; }
+    }
+    return best;
+  };
+  G.loadSave = (n) => G.readSave(n || (G.state && G.state.slot) || G.latestSave() || 1);
+  // Write the game to file n (default: the file being played).
+  G.writeSave = (n) => {
+    const s = G.state;
+    s.slot = n || s.slot || 1;
+    s.savedAt = Date.now();
+    try { localStorage.setItem(fileKey(s.slot), JSON.stringify(s)); return true; } catch (e) { return false; }
   };
 
   // ================================================================ PLAY SCENE
@@ -251,6 +269,8 @@
         return;
       }
 
+      G.state.playTime = (G.state.playTime || 0) + 1;
+
       if (this.menu) {
         if (this.menu.update()) this.menu = null;
         return;
@@ -348,7 +368,7 @@
       G.fade = 0;
       this.t = 0;
       this.sel = 0;
-      this.opts = G.hasSave() ? ['Continue', 'New Game'] : ['New Game'];
+      this.opts = G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game'];
       G.audio.play('title');
     },
     update() {
@@ -358,12 +378,16 @@
       if (inp.hit('a') || inp.hit('start')) {
         inp.eat('a'); inp.eat('start');
         G.audio.sfx('select');
-        if (this.opts[this.sel] === 'Continue') {
-          G.state = G.loadSave() || newState();
+        const opt = this.opts[this.sel];
+        if (opt === 'Continue') {
+          G.state = G.loadSave(G.latestSave()) || newState();
           G.play.enter(false);
+        } else if (opt === 'Load File') {
+          G.files.enter('load');
+        } else if (G.hasSave()) {
+          G.files.enter('new');
         } else {
-          G.state = newState();
-          G.intro.enter();
+          G.files.start(1);
         }
       }
     },
@@ -384,7 +408,7 @@
       // Nate looking on
       ctx.drawImage(G.sprites.nate.right[(this.t >> 4) % 2 ? 0 : 0], 34, 104);
       // menu
-      const w = 84, h = this.opts.length * 12 + 8, x = Math.round((G.W - w) / 2), y = 114;
+      const w = 84, h = this.opts.length * 12 + 8, x = Math.round((G.W - w) / 2), y = this.opts.length > 2 ? 108 : 114;
       G.box(ctx, x, y, w, h);
       this.opts.forEach((o, i) => {
         F().draw(ctx, o, x + 18, y + 5 + i * 12, i === this.sel ? '#f8d850' : '#f8f8f0', { shadow: '#0c0814' });
@@ -393,6 +417,66 @@
       ctx.fillStyle = '#f8d850';
       ctx.fillRect(x + 8 + b, cy, 1, 5); ctx.fillRect(x + 9 + b, cy + 1, 1, 3); ctx.fillRect(x + 10 + b, cy + 2, 1, 1);
       F().draw(ctx, 'Z: select', 4, G.H - 10, '#ffffff', { shadow: '#1c1424' });
+    },
+  };
+
+  // ================================================================ FILE SELECT
+  G.files = {
+    enter(mode) {
+      G.scene = this;
+      G.fade = 0;
+      this.mode = mode;
+      this.sel = 0;
+      this.t = 0;
+      this.confirm = false;
+      this.saves = [1, 2, 3].map((n) => G.readSave(n));
+      if (mode === 'load') this.sel = Math.max(0, G.latestSave() - 1);
+      else { const empty = this.saves.findIndex((s) => !s); this.sel = empty < 0 ? 0 : empty; }
+    },
+    // a brand-new game in file n
+    start(n) {
+      G.audio.sfx('select');
+      G.state = newState();
+      G.writeSave(n);
+      G.intro.enter();
+    },
+    update() {
+      this.t++;
+      const inp = G.input;
+      if (this.confirm) {
+        if (inp.hit('a')) { inp.eat('a'); this.start(this.sel + 1); }
+        else if (inp.hit('b') || inp.hit('start')) { inp.eat('b'); inp.eat('start'); this.confirm = false; G.audio.sfx('cancel'); }
+        return;
+      }
+      if (inp.hit('up')) { this.sel = (this.sel + 2) % 3; G.audio.sfx('menu'); }
+      if (inp.hit('down')) { this.sel = (this.sel + 1) % 3; G.audio.sfx('menu'); }
+      if (inp.hit('b') || inp.hit('start')) { inp.eat('b'); inp.eat('start'); G.audio.sfx('cancel'); G.title.enter(); return; }
+      if (inp.hit('a')) {
+        inp.eat('a');
+        const s = this.saves[this.sel];
+        if (this.mode === 'load') {
+          if (!s) { G.audio.sfx('bump'); return; }
+          G.audio.sfx('select');
+          G.state = s;
+          G.play.enter(false);
+        } else if (s) {
+          this.confirm = true;
+          G.audio.sfx('menu');
+        } else {
+          this.start(this.sel + 1);
+        }
+      }
+    },
+    draw(ctx) {
+      ctx.drawImage(G.spr.ditch, 0, 0);
+      ctx.fillStyle = 'rgba(12,8,20,0.72)';
+      ctx.fillRect(0, 0, G.W, G.H);
+      const title = this.mode === 'load' ? 'LOAD A FILE' : 'NEW GAME: PICK A FILE';
+      F().draw(ctx, title, Math.round((G.W - F().width(title)) / 2), 6, '#f8d850', { shadow: '#0c0814' });
+      for (let i = 0; i < 3; i++) G.drawFileCard(ctx, 8, 20 + i * 40, 224, this.saves[i], i + 1, i === this.sel);
+      let help = this.mode === 'load' ? 'Z: load   X: back' : 'Z: start a new game here   X: back';
+      if (this.confirm) help = '{r}Erase File ' + (this.sel + 1) + ' and start over?{/}  Z: yes  X: no';
+      F().draw(ctx, help, 8, G.H - 11, '#c8c0d8', { shadow: '#0c0814' });
     },
   };
 
@@ -474,7 +558,7 @@
         inp.eat('a'); inp.eat('start');
         G.audio.sfx('select');
         if (this.sel === 0) {
-          G.state = G.loadSave() || newState();
+          G.state = G.loadSave(G.state.slot) || newState();
           G.state.hp = G.state.maxHp;
           G.play.enter(false);
         } else {

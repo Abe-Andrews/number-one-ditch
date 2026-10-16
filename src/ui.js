@@ -81,9 +81,10 @@
   };
 
   // ------------------------------------------------------------ pause menu
-  // Tabbed, Minish Cap style: ITEMS / KEY ITEMS / PEOPLE / JOURNAL.
+  // Tabbed, Minish Cap style: ITEMS / KEY ITEMS / PEOPLE / JOURNAL / SAVE.
   // Q/E switch tabs (or press up into the tab bar and use left/right).
-  const TABS = ['ITEMS', 'KEY ITEMS', 'PEOPLE', 'JOURNAL'];
+  const TABS = ['ITEMS', 'KEY ITEMS', 'PEOPLE', 'JOURNAL', 'SAVE'];
+  const SAVE_TAB = 4;
   const COLS = 4, ROWS = 2;
   const SEL = { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' };
   const TXT = (ctx, str, x, y, col) => F().draw(ctx, str, x, y, col || '#f8f8f0', { shadow: SH });
@@ -118,14 +119,16 @@
     update() {
       const inp = G.input;
       if (this.msgT > 0) this.msgT--;
+      // "overwrite File N?" on the SAVE tab
+      if (this.confirm) {
+        if (inp.hit('a')) { inp.eat('a'); this.saveTo(this.confirm); }
+        else if (inp.hit('b') || inp.hit('start')) { inp.eat('b'); inp.eat('start'); this.confirm = 0; G.audio.sfx('cancel'); }
+        return false;
+      }
       if (inp.hit('start')) { G.audio.sfx('cancel'); return true; }
       if (inp.hit('l')) this.switchTab(-1);
       if (inp.hit('r')) this.switchTab(1);
-      if (inp.hit('b')) {
-        G.play.autosave();
-        G.audio.sfx('select');
-        this.flash('Game saved!');
-      }
+      if (inp.hit('b')) this.saveTo(G.state.slot || 1);
 
       if (this.onTabs) {
         if (inp.hit('left')) this.switchTab(-1);
@@ -146,6 +149,16 @@
         const n = G.people().length;
         if (inp.hit('down')) this.move(1, n);
         if (inp.hit('up')) { if (this.sel > 0) this.move(-1, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
+      } else if (this.tab === SAVE_TAB) {
+        if (inp.hit('down')) this.move(1, G.SAVE_FILES);
+        if (inp.hit('up')) { if (this.sel > 0) this.move(-1, G.SAVE_FILES); else { this.onTabs = true; G.audio.sfx('menu'); } }
+        if (inp.hit('a')) {
+          inp.eat('a');
+          const n = this.sel + 1;
+          // saving over a different file that already has a game in it asks first
+          if (n !== (G.state.slot || 1) && G.readSave(n)) { this.confirm = n; G.audio.sfx('menu'); }
+          else this.saveTo(n);
+        }
       } else if (inp.hit('up')) {
         this.onTabs = true;
         G.audio.sfx('menu');
@@ -176,6 +189,15 @@
 
     flash(msg) { this.msg = msg; this.msgT = 120; }
 
+    // Save into file n; from now on autosaves go there too.
+    saveTo(n) {
+      this.confirm = 0;
+      const s = G.state, p = G.play.player;
+      if (p) { s.x = p.x; s.y = p.y; s.dir = p.dir; s.map = G.play.world.id; }
+      if (G.writeSave(n)) { G.audio.sfx('secret'); this.flash('Saved to File ' + n + '!'); }
+      else { G.audio.sfx('bump'); this.flash('{r}Couldn\'t save (browser storage is off).'); }
+    }
+
     draw(ctx) {
       ctx.fillStyle = 'rgba(12,8,20,0.86)';
       ctx.fillRect(0, 0, G.W, G.H);
@@ -183,22 +205,32 @@
       G.box(ctx, 4, 18, 232, 122);
       if (this.tab <= 1) this.drawGrid(ctx);
       else if (this.tab === 2) this.drawPeople(ctx);
+      else if (this.tab === SAVE_TAB) this.drawSave(ctx);
       else this.drawJournal(ctx);
-      let help = ['Z: set to X', 'Z: use', '', ''][this.tab];
-      help = (help ? help + '   ' : '') + 'X: save   Q/E: tabs   ENTER: close';
-      TXT(ctx, this.msgT > 0 ? '{g}' + this.msg : help, 8, 146, '#9890a8');
+      let help = ['Z: set to X   X: save', 'Z: use   X: save', 'X: save', 'X: save', 'Z: save to this file'][this.tab];
+      help += '   Q/E: tabs   ENTER: close';
+      if (this.confirm) help = '{r}Save over File ' + this.confirm + '?{/}  Z: yes  X: no';
+      TXT(ctx, this.msgT > 0 && !this.confirm ? '{g}' + this.msg : help, 8, 146, '#9890a8');
+    }
+
+    // three save files; the one being played is marked
+    drawSave(ctx) {
+      const cur = G.state.slot || 1;
+      for (let i = 0; i < G.SAVE_FILES; i++) {
+        G.drawFileCard(ctx, 8, 22 + i * 39, 224, G.readSave(i + 1), i + 1, i === this.sel && !this.onTabs, i + 1 === cur);
+      }
     }
 
     drawTabs(ctx) {
-      const ws = TABS.map((t) => F().width(t) + 10);
-      let x = Math.round((G.W - ws.reduce((a, b) => a + b, 0) - (TABS.length - 1) * 3) / 2);
+      const ws = TABS.map((t) => F().width(t) + 6);
+      let x = Math.round((G.W - ws.reduce((a, b) => a + b, 0) - (TABS.length - 1) * 2) / 2);
       TXT(ctx, 'Q', x - 10, 6, '#9890a8');
       TABS.forEach((t, i) => {
         const active = i === this.tab;
         const style = active ? (this.onTabs && (G.tick >> 4) & 1 ? { bg: '#5a4878', border: '#ffffff', inner: '#7a6a30' } : SEL) : undefined;
         G.box(ctx, x, 2, ws[i], 14, style);
         TXT(ctx, t, x + 5, 5, active ? '#f8d850' : '#9890a8');
-        x += ws[i] + 3;
+        x += ws[i] + 2;
       });
       TXT(ctx, 'E', x + 2, 6, '#9890a8');
     }
@@ -299,4 +331,31 @@
     }
   }
   G.PauseMenu = PauseMenu;
+
+  // Play time, keeping clear of the sacred number like everything else.
+  G.playTimeText = (frames) => {
+    const m = Math.floor((frames || 0) / 3600), h = Math.floor(m / 60);
+    return (h ? G.sayable(h) + 'h ' : '') + G.sayable(m % 60) + 'm';
+  };
+
+  // One save file: where you are, hearts, shark teeth, play time and the party.
+  G.drawFileCard = (ctx, x, y, w, s, n, sel, current) => {
+    G.box(ctx, x, y, w, 36, sel ? SEL : undefined);
+    TXT(ctx, 'FILE ' + n, x + 6, y + 6, sel ? '#f8d850' : '#c8c0d8');
+    if (current) TXT(ctx, '{g}playing', x + 6, y + 18);
+    if (!s) { TXT(ctx, '{d}- empty -', x + 56, y + 14); return; }
+    const place = (G.MAPS[s.map] && G.MAPS[s.map].name) || '???';
+    TXT(ctx, place, x + 50, y + 6, '#78e8e8');
+    for (let i = 0; i < s.maxHp / 2; i++) {
+      const v = s.hp - i * 2;
+      ctx.drawImage(v >= 2 ? G.spr.heart.full : v === 1 ? G.spr.heart.half : G.spr.heart.empty, x + 50 + (i % 10) * 8, y + 16);
+    }
+    ctx.drawImage(G.spr.tooth, x + 50, y + 26);
+    TXT(ctx, String(s.teeth), x + 60, y + 26);
+    TXT(ctx, G.playTimeText(s.playTime), x + 82, y + 26, '#c8c0d8');
+    s.party.forEach((id, i) => {
+      const S = id === 'nate' ? (s.items.cap ? G.sprites.nate : G.sprites.nate_nocap) : G.sprites[id];
+      if (S) ctx.drawImage(S.down[0], 0, 0, 16, 15, x + w - 22 - i * 16, y + 17, 16, 15);
+    });
+  };
 })();
