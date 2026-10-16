@@ -32,6 +32,22 @@
   }
   G.drawShadow = drawShadow;
 
+  // A bunch of bobbing balloons tied to someone's hand (Mikey's, for Lily).
+  function drawBalloons(ctx, x, top, seed) {
+    const hand = [Math.round(x + 5), Math.round(top + 16)];
+    [[-7, -14, '#e83848'], [0, -20, '#f080b0'], [7, -15, '#f8d040']].forEach(([dx, dy, col], i) => {
+      const bx = Math.round(x + dx + Math.sin(G.tick / 40 + i * 2 + seed) * 1.5);
+      const by = Math.round(top + dy + Math.sin(G.tick / 30 + i) * 1.5);
+      ctx.fillStyle = '#e8e8f0';
+      const n = Math.max(Math.abs(hand[0] - bx), Math.abs(hand[1] - by - 6));
+      for (let k = 0; k <= n; k += 1) ctx.fillRect(Math.round(bx + ((hand[0] - bx) * k) / n), Math.round(by + 6 + ((hand[1] - by - 6) * k) / n), 1, 1);
+      ctx.fillStyle = '#1c1424'; ctx.fillRect(bx - 3, by - 3, 7, 9); ctx.fillRect(bx - 4, by - 2, 9, 7);
+      ctx.fillStyle = col; ctx.fillRect(bx - 2, by - 2, 5, 7); ctx.fillRect(bx - 3, by - 1, 7, 5);
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(bx - 2, by - 1, 1, 2);
+      ctx.fillStyle = col; ctx.fillRect(bx, by + 5, 1, 1);
+    });
+  }
+
   // Little golden halo over enemies calmed by "Peace Be With You".
   function drawHalo(ctx, x, y) {
     x = Math.round(x); y = Math.round(y);
@@ -276,6 +292,7 @@
       drawShadow(ctx, this.x, this.y, cx, cy, S.h > 24);
       let img = S[this.dir][walkFrame(this.anim, this.moving)];
       if (this.flashT > 0 && (this.flashT >> 1) & 1) img = G.art.flash(img);
+      if (this.balloons) drawBalloons(ctx, this.x - cx, this.y - S.h - cy, this.x);
       ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
       if (this.held) ctx.drawImage(this.held, Math.round(this.x - this.held.width / 2) - cx, Math.round(this.y - S.h + 10) - cy);
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, Math.round(this.y - S.h - 10) - cy);

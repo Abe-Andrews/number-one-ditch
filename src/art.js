@@ -179,6 +179,7 @@
       if (c.neck) { p.set(7, ty, c.neck); p.set(8, ty, c.neck); }
       if (c.collar) { p.set(6, ty, c.collar); p.set(9, ty, c.collar); p.set(7, ty, c.skin); p.set(8, ty, c.skin); p.set(7, ty + 1, c.shirtD); }
     }
+    if (c.logo && !back) p.set(bx1 - 1, ty + 2, c.logo);
     if (c.belt) {
       p.hline(bx0, bx1, ly - 1, c.belt);
       if (!back) p.set(7, ly - 1, '#c8c8d0');
@@ -1680,6 +1681,20 @@
     return c;
   }
 
+  // Mikey's bouquet: red, pink and yellow flowers in paper.
+  function bouquet() {
+    const p = new Pix(12, 13);
+    const cols = ['#e03048', '#f080a8', '#f8d040', '#e03048', '#ffffff'];
+    [[3, 2], [6, 1], [8, 3], [4, 5], [7, 5], [2, 4]].forEach(([x, y], i) => {
+      const c = cols[i % cols.length];
+      p.set(x, y, c); p.set(x + 1, y, c); p.set(x, y + 1, c); p.set(x + 1, y + 1, shade(c, -0.2));
+    });
+    p.set(5, 3, '#4aa040'); p.set(9, 5, '#4aa040'); p.set(1, 6, '#4aa040');
+    for (let y = 7; y < 13; y++) p.hline(3 + Math.floor((y - 7) / 2), 8 - Math.floor((y - 7) / 2), y, y % 2 ? '#f0e8f8' : '#e0d0f0');
+    p.outline();
+    return p.canvas();
+  }
+
   // Nate's brown corduroy flat cap, for the item-get pose.
   function capIcon() {
     const p = new Pix(16, 10);
@@ -1993,6 +2008,7 @@
     S.cap = capIcon();
     S.heartBig = scale2(S.heart.full);
     S.schoolDesk = schoolDesk();
+    S.bouquet = bouquet();
     // home
     S.workshop = workshop();
     S.truck = truck();

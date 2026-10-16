@@ -49,9 +49,10 @@
       skin: '#e8b890', hair: '#e0c070', hairStyle: 'cap', hat: '#3a7ab0', hatStyle: 'ball',
       shirt: '#f0d040', pants: '#c8a878', shorts: true, shoes: '#606060', torso: 7, legs: 4,
     },
+    // Mikey: short brown hair, dark rectangular glasses, black polo.
     mikey: {
-      skin: '#f4d0b0', hair: '#5a3a20', hairStyle: 'short', glasses: '#3a3a40',
-      shirt: '#d8e0f0', collar: '#ffffff', pants: '#5a5a6a', shoes: '#202020', torso: 6, legs: 3,
+      skin: '#f4cdb0', hair: '#7a4a28', hairStyle: 'short', glasses: '#2a2e48', smile: '#f0e0d8',
+      shirt: '#1c1c24', collar: '#34343e', logo: '#d03038', pants: '#5a6478', shoes: '#2a2a30', torso: 5, legs: 3,
     },
     // Campus NPCs
     devin: { skin: '#b07850', hair: '#1c1418', hairStyle: 'short', shirt: '#8a2034', pants: '#3a4258', shoes: '#e8e8e8', torso: 6, legs: 3 },
@@ -208,6 +209,10 @@
       id: 'eggmas', name: 'Father Eggmas', tag: '{r}Villain', met: () => true, img: () => G.spr.eggmas,
       bio: 'A plush Christmas Humpty Dumpty from a thrift store. Wants the Number One Ditch to be Number Two.',
     },
+    {
+      id: 'mikey', name: 'Mikey', tag: '{p}Waiting for Lily', met: () => fl().mikeyMet,
+      bio: 'Showed up with flowers, balloons and a song. Won\'t let anyone drive to Chesapeake until he talks to Lily.',
+    },
     { id: 'gus', name: 'Gus', tag: '{y}Friend', met: () => fl().capQuest, bio: 'Lafayette\'s groundskeeper. Protector of petunias. Found Nate\'s hat.' },
     { id: 'moles', name: 'Dr. Moles', tag: '{y}Friend', met: () => fl().chemMet, bio: 'Chemistry professor. Nobody has ever gotten the last question on his final right.' },
     { id: 'pete', name: 'Pyro Pete', tag: '{y}Friend', met: () => fl().doronDeal, bio: 'Runs the pyro for Micro Mayhem. Thinks Nate\'s exploding present was beautiful.' },
@@ -250,6 +255,7 @@
     else if (!f.dadBeaten) goal = 'Watch the main event inside the Expo Hall.';
     else if (!f.boulderGone) goal = 'Bring Doron to the boulder on the south road.';
     else if (!f.homeArrived) goal = 'Take the south road to Rattlesnake Bridge Road. Home!';
+    else if (f.mikeyMet && !f.lilySaved) goal = 'Find Lily. Mikey won\'t let you drive to Chesapeake until he talks to her. (Coming soon!)';
     else goal = 'Explore home. (More of the story is coming soon!)';
     const side = [];
     if (f.capQuest || s.items.cap) side.push(['Gus\'s lawn job', s.items.cap ? '{g}Done!' : G.sayable(G.capProgress()) + '/10 sacred numbers']);
@@ -1043,6 +1049,62 @@
 
   // ---------------------------------------------------------------- home
   const inside = '(The inside is coming in a future update!)';
+
+  // Mikey: flowers, balloons, a song he's been practicing, and one mission.
+  S.mikeyIntro = function* () {
+    const f = flags(), p = P(), m = G.play.world.mikey;
+    if (f.mikeyMet || !m) return;
+    f.mikeyMet = true;
+    m.dir = G.dirToward(p.x - m.x, p.y - m.y);
+    yield G.emote(m, 'bang', 30);
+    yield G.say('Mikey', 'Nate! Oh, hi! Is... is Lily home?');
+    yield G.say('Nate', 'Mikey? What\'s with the balloons?');
+    yield G.say('Mikey', 'They\'re for Lily. So are the flowers. I\'ve also been practicing a song.');
+    yield G.say('Mikey', 'Have you seen her? I really, really need to talk to her. It\'s important.');
+    yield G.say('Nate', 'I just got here. I haven\'t seen her.');
+    if (G.state.party.includes('doron')) {
+      yield G.say('Doron', 'Who\'s the kid with the balloons?');
+      yield G.say('Nate', 'Mikey. He has a... thing for Lily.');
+      yield G.say('Doron', 'Oh no.');
+    }
+    yield G.say('Mikey', 'Then nobody\'s driving to Chesapeake until I talk to Lily. I\'ll be right here. With my balloons.');
+  };
+
+  S.mikey = function* (npc) {
+    const f = flags();
+    if (!f.mikeyMet) { yield* S.mikeyIntro(); return; }
+    const lines = [
+      'Have you found Lily yet? I\'ll wait. I\'m very good at waiting.',
+      'The balloons are starting to droop a little. That\'s fine. I\'m fine.',
+      'I\'ve been practicing my song all week. It\'s about a golden... hour.',
+      'Nobody drives to Chesapeake until I talk to Lily. That\'s the rule now.',
+    ];
+    f.mikeyTalk = ((f.mikeyTalk || 0) + 1) % lines.length;
+    yield G.say('Mikey', lines[f.mikeyTalk]);
+  };
+
+  // Try to leave and Mikey sprints over to block the road.
+  S.mikeyBlock = function* (side) {
+    const f = flags(), p = P(), w = G.play.world, m = w.mikey;
+    if (!m) return;
+    f.mikeyMet = true;
+    const back = side === 'west' ? 1 : -1;
+    yield G.walkTo(m, 40 * 16 + 8, 37 * 16 + 10, 4);
+    yield G.walkTo(m, G.clamp(p.x - back * 16, 8, w.pw - 8), p.y, 4);
+    m.dir = G.dirToward(p.x - m.x, p.y - m.y);
+    if (!f.mikeyBlocked) {
+      f.mikeyBlocked = true;
+      yield G.say('Mikey', 'WAIT! Nate! You can\'t drive to Chesapeake yet!');
+      yield G.say('Mikey', 'Not until you bring me Lily. I have flowers. I have balloons. I have a SONG.');
+      yield G.say('Nate', '...Fine. I\'ll find her.');
+    } else {
+      yield G.say('Mikey', ['Lily first. Then you can drive to Chesapeake.', 'Nope. Not until I see Lily.', 'The balloons and I are not moving.'][Math.floor(Math.random() * 3)]);
+    }
+    yield G.walkTo(p, p.x + back * 28, p.y, 1.4);
+    yield G.walkTo(m, 40 * 16 + 8, 37 * 16 + 10, 4);
+    yield G.walkTo(m, m.home.x, m.home.y, 3);
+    m.dir = 'down';
+  };
   S.homeFront = function* () {
     yield G.say(null, 'The front door, with a wreath on it. Home sweet home.');
     yield G.say(null, inside);
@@ -1088,11 +1150,25 @@
     yield G.say(null, 'RATTLESNAKE BRIDGE RD.');
     yield G.say(null, 'Bedminster, New Jersey.');
   };
-  S.homeEast = function* () {
-    const p = P();
+  // Leaving home from either end of the road: back to campus, or the long
+  // drive to Chesapeake (which Mikey blocks until Lily is saved).
+  S.homeLeave = function* (side) {
+    const p = P(), back = side === 'west' ? 1 : -1;
+    const c = yield G.ask('Nate', 'Where to?', ['Back to Lafayette', 'Drive to Chesapeake', 'Stay home']);
+    if (c === 0) { G.play.warp('campus', 19, 27, 'up'); return; }
+    if (c === 1) {
+      if (!flags().lilySaved) { yield* S.mikeyBlock(side); return; }
+      yield* S.homeEast(side);
+      return;
+    }
+    yield G.walkTo(p, p.x + back * 24, p.y, 1.2);
+  };
+
+  S.homeEast = function* (side) {
+    const p = P(), back = side === 'west' ? 1 : -1;
     yield G.say('Nate', 'Chesapeake is still a long way down this road.');
     yield G.banner('TO BE CONTINUED...', 'The road to Chesapeake opens in a future update!', 240);
-    yield G.walkTo(p, p.x - 20, p.y, 1);
+    yield G.walkTo(p, p.x + back * 24, p.y, 1);
   };
   S.homeNorth = function* () {
     const p = P();
@@ -1461,8 +1537,16 @@
         .forEach(([x, y, c]) => w.add(new G.Chicken(x * 16 + 8, y * 16 + 12, c, pen)));
 
       // roads out: back west to campus, east toward Chesapeake (later), north past the bridge (later)
-      w.addTrigger(0, 37, 1, 2, () => G.play.warp('campus', 19, 27, 'up'));
-      w.addTrigger(47, 37, 1, 2, () => G.script.run(S.homeEast()));
+      w.addTrigger(0, 37, 1, 2, () => G.script.run(S.homeLeave('west')));
+      w.addTrigger(47, 37, 1, 2, () => G.script.run(S.homeLeave('east')));
+
+      // Mikey, waiting at the start of the driveway with flowers and balloons
+      if (!flags().lilySaved) {
+        const mikey = w.add(new G.NPC({ sprite: 'mikey', name: 'Mikey', x: 39 * 16 + 8, y: 35 * 16 + 14, dir: 'down', talk: S.mikey, balloons: true }));
+        mikey.held = G.spr.bouquet;
+        w.mikey = mikey;
+        w.addTrigger(35, 35, 9, 4, () => { if (!flags().mikeyMet) G.script.run(S.mikeyIntro()); });
+      }
       w.addTrigger(38, 0, 2, 1, () => G.script.run(S.homeNorth()));
     },
     // the flock's revenge: angry hens swoop in from off-screen for a few seconds
@@ -1484,6 +1568,13 @@
         yield G.wait(30);
         yield G.say('Nate', 'Rattlesnake Bridge Road. Home sweet home.');
         if (G.state.party.includes('doron')) yield G.say('Doron', 'Smells like woodsmoke and chickens. Feels like home.');
+        const m = G.play.world.mikey;
+        if (m && !flags().mikeyMet) {
+          yield G.camFocus(m.x, m.y - 10, 60);
+          yield G.emote(m, 'bang', 40);
+          yield G.say('Nate', '...Is that Mikey? At the end of our driveway? With balloons?');
+          yield G.camFocus(null, null, 30);
+        }
       })();
     },
   };
