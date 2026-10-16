@@ -163,6 +163,9 @@
       if (s.flags.capQuest && !s.items.cap) {
         const n = G.capProgress();
         F().draw(ctx, 'Gus\'s lawn job: {y}' + G.sayable(n) + '/10{/} sacred numbers' + (n >= 10 ? ' {g}(go see Gus!){/}' : ''), 10, 134, '#78e8e8', { shadow: SH });
+      } else if (s.flags.ticketQuest && !s.flags.ticketsDone && !s.flags.dadBeaten) {
+        const left = s.items.tickets || 0;
+        F().draw(ctx, left ? 'Doron\'s spare tickets: {y}' + G.sayable(left) + ' left{/}' : 'All tickets given! {g}Go tell Doron.{/}', 10, 134, '#78e8e8', { shadow: SH });
       }
       const help = this.msgT > 0 ? '{g}' + this.msg : 'Z: set to X    X: save    ENTER: close';
       F().draw(ctx, help, 10, 145, '#9890a8', { shadow: SH });

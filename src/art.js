@@ -1443,6 +1443,17 @@
     return p.canvas();
   }
 
+  // A Micro Mayhem ticket: gold stock, a perforated stub and a red star.
+  function ticketIcon() {
+    const p = new Pix(16, 10);
+    p.rect(1, 1, 14, 8, '#f8d040');
+    p.rect(1, 1, 14, 1, '#fff0a0');
+    for (let y = 1; y < 9; y += 2) p.set(5, y, '#c09018');
+    p.set(10, 3, '#d03038'); p.hline(9, 11, 4, '#d03038'); p.set(10, 5, '#d03038'); p.set(9, 6, '#d03038'); p.set(11, 6, '#d03038');
+    p.outline();
+    return p.canvas();
+  }
+
   function schoolDesk() {
     const p = new Pix(16, 18);
     p.rect(4, 12, 8, 5, '#6a7080'); p.hline(4, 11, 12, '#8a90a0');
@@ -1594,6 +1605,7 @@
     S.cap = capIcon();
     S.heartBig = scale2(S.heart.full);
     S.schoolDesk = schoolDesk();
+    S.ticket = ticketIcon();
     S.chalkboard = chalkboard();
   };
 })();

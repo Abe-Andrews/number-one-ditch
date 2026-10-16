@@ -157,7 +157,9 @@
         const b = e.box();
         if (!G.overlap([b[0] - 2, b[1] - 6, b[2] + 2, b[3] + 2], pt)) continue;
         if (e instanceof G.NPC) e.dir = G.dirToward(p.x - e.x, p.y - e.y);
-        G.script.run(e.talk.call(e, e));
+        // while Nate is handing out Doron's spare tickets, people get offered one first
+        const offer = e instanceof G.NPC && G.SCRIPTS.ticketReaction(e);
+        G.script.run(offer || e.talk.call(e, e));
         return true;
       }
       for (const pr of this.world.props) {
@@ -300,6 +302,19 @@
         cam.y += (Math.random() * 2 - 1) * this.shakeMag;
       }
       this.world.draw(ctx, cam);
+      // time-of-day tint, then glowing bulbs on top of it
+      if (this.world.def.tint) this.world.def.tint(ctx);
+      if (this.world.glows.length) {
+        ctx.globalCompositeOperation = 'lighter';
+        const cx = Math.round(cam.x), cy = Math.round(cam.y);
+        for (const g of this.world.glows) {
+          ctx.fillStyle = g.color;
+          ctx.globalAlpha = 0.16; ctx.fillRect(g.x - 4 - cx, g.y - 4 - cy, 9, 9);
+          ctx.globalAlpha = 0.35; ctx.fillRect(g.x - 2 - cx, g.y - 2 - cy, 5, 5);
+        }
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
+      }
       G.hud.draw(ctx);
       const boss = this.world.ents.find((e) => e.boss && e.state !== 'defeated');
       if (boss) G.hud.bossBar(ctx, boss);

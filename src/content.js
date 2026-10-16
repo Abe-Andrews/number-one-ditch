@@ -90,6 +90,15 @@
     skin: '#d8a078', hair: '#e0e0e8', hairStyle: 'receding', glasses: '#2a2a30',
     coat: '#f4f4f4', shirt: '#6a4a8a', pants: '#3a3a44', shoes: '#2a2a2a', torso: 7, legs: 3,
   };
+  G.CAST.rose = {
+    skin: '#f4d4c0', hair: '#e8e8f0', hairStyle: 'shoulder', glasses: '#8a6a9a', smile: '#ffffff', blush: true,
+    shirt: '#e8a0c0', coat: '#f0c0d8', dress: '#8a7ab0', shoes: '#f0f0f0', torso: 5, legs: 3,
+  };
+  G.CAST.earl = {
+    skin: '#e8b090', hair: '#5a3a20', hairStyle: 'cap', hat: '#3a6a3a', hatStyle: 'ball', patch: '#f0f0f0', beard: '#5a3a20',
+    shirt: '#b83030', pattern: 'plaid', plaidL: '#d86060', plaidW: '#2a1a1a', sleeves: 'long', pants: '#3a4a6a', shoes: '#4a3428', boots: true,
+    wide: true, torso: 8, legs: 4,
+  };
   G.CAST.priya = { skin: '#b07850', hair: '#1a1010', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 };
 
   // Dad as El EEENGLISH: luchador mask over his glasses and beard, blazer on.
@@ -327,6 +336,8 @@
   };
 
   // Groundskeeper Gus found Nate's cap. He'll trade it for 10 bonked Sixes.
+  G.fairLit = () => !!(G.state && G.state.flags.doronDeal);
+
   const CAP_GOAL = 10;
   G.capProgress = () => Math.min(CAP_GOAL, G.state.stats.sixes || 0);
   // Abe's Rule #1 applies to on-screen counters too: 6 is shown as "5+1".
@@ -340,12 +351,12 @@
     }
     if (!f.capQuest) {
       yield G.say('Gus', 'Afternoon. Found this blowing around the quad this morning.');
-      yield G.say(null, 'Gus holds up a brown {y}corduroy flat cap{/}.');
-      yield G.say('Nate', 'MY CAP! That\'s mine!');
+      yield G.say(null, 'Gus holds up a brown corduroy {y}hat{/}.');
+      yield G.say('Nate', 'MY HAT! That\'s mine!');
       yield G.say('Gus', 'Is it now. Very distinguished. Tell you what...');
       yield G.say('Gus', 'Those walking... uh... {r}sixes{/} have been tearing up my lawn all morning.');
       yield G.say('Nate', 'The {r}sacred numbers{/}. I\'m not allowed to say it.');
-      yield G.say('Gus', '...Sure. Bonk {y}10{/} of your sacred numbers and the cap\'s all yours.');
+      yield G.say('Gus', '...Sure. Bonk {y}10{/} of your sacred numbers and the hat\'s all yours.');
       f.capQuest = true;
       const n = G.capProgress();
       if (n > 0) yield G.say('Gus', 'I saw you already got ' + G.sayable(n) + '. Those count. ' + G.sayable(CAP_GOAL - n) + ' to go.');
@@ -359,13 +370,13 @@
     }
     yield G.say('Gus', 'Ten sacred numbers! My lawn is saved. A deal\'s a deal.');
     s.items.cap = true;
-    yield G.itemGet(G.spr.cap, 'You got your {y}Flat Cap{/} back! Corduroy. Distinguished. Yours.');
+    yield G.itemGet(G.spr.cap, 'You got your {y}Hat{/} back! Corduroy. Distinguished. Yours.');
     yield G.say('Nate', 'Ahh. Now I can think clearly.');
     // the lucky cap comes with a heart container
     s.maxHp += 2;
     s.hp = s.maxHp;
     f.capHeart = true;
-    yield G.itemGet(G.spr.heartBig, 'With his lucky cap back, Nate feels braver. You got a {r}Heart Container{/}! Max hearts +1.');
+    yield G.itemGet(G.spr.heartBig, 'With his lucky hat back, Nate feels braver. You got a {r}Heart Container{/}! Max hearts +1.');
   };
 
   // The way east is closed until Nate has a reason to go AND his cap back.
@@ -449,9 +460,9 @@
     if (!f.doronChat) {
       yield G.say('Nate', 'The fairgrounds? No time for that. Chesapeake is {y}south{/}, not east.');
     } else if (f.capQuest) {
-      yield G.say('Nate', 'I\'m not showing up anywhere without my flat cap. {y}Gus{/} has it. Ten sacred numbers, then it\'s mine.');
+      yield G.say('Nate', 'I\'m not showing up anywhere without my hat. {y}Gus{/} has it. Ten sacred numbers, then it\'s mine.');
     } else {
-      yield G.say('Nate', 'I\'m not going anywhere without my {y}flat cap{/}. Someone on the quad must have seen it.');
+      yield G.say('Nate', 'I\'m not going anywhere without my {y}hat{/}. Someone on the quad must have seen it.');
     }
     yield G.walkTo(p, p.x - 20, p.y, 1);
   };
@@ -503,6 +514,13 @@
   S.doron = function* (npc) {
     const f = flags(), s = G.state, w = G.play.world;
     if (f.doronDeal) {
+      if (!f.ticketQuest) { yield* S.doronTickets(); return; }
+      if (f.ticketsGiven && !f.ticketsDone) { yield* S.ticketsReward(); return; }
+      if (!f.ticketsDone && s.items.tickets > 0) {
+        yield G.say('Doron', 'Still ' + G.sayable(s.items.tickets) + ' tickets left. Try anybody! Fair people, campus people...');
+        yield G.say('Doron', 'Or go inside and watch the main event. Your call. (Please pick the main event.)');
+        return;
+      }
       yield G.say('Doron', 'Main event\'s about to start! Get in there!');
       return;
     }
@@ -548,7 +566,102 @@
     yield G.itemGet(G.spr.gift, 'You got {y}5 Booby-Trapped Packages{/}! Press {y}X{/} to set one down. It goes BANG a few seconds later.');
     yield G.say('Pyro Pete', 'Need more? I\'ll wrap you {y}5 for 10 shark teeth{/}. I\'ll be right here.');
     yield G.say('Doron', 'Can we PLEASE go watch wrestling now?');
+    // the sun goes down and the fair lights up
     f.doronDeal = true;
+    G.audio.sfx('secret');
+    yield G.wait(30);
+    yield G.say(null, 'The sun sinks low. String lights flicker on, and the Ferris wheel starts to turn.');
+    yield* S.doronTickets();
+  };
+
+  // ---------------------------------------------------------------- Doron's spare tickets
+  // He bought 6. One's his, one's Nate's. Nobody ever takes the other 4.
+  const TICKET_REACTIONS = {
+    'Superfan': { accept: true, lines: [['', 'A FREE TICKET?! I already have one, but now I can sit in TWO seats!']] },
+    'Grandma Rose': { accept: true, lines: [['', 'Wrestling? At my age?'], ['', '...Absolutely. Do they still use the folding chairs?']] },
+    'Gus': { accept: true, lines: [['', 'Haven\'t been to a wrestling show since \'89.'], ['', 'Sure. Why not. The lawn can wait.']] },
+    'Devin': { accept: true, lines: [['', 'Is this another one of Abe\'s tricks?'], ['n', 'No. It\'s one of Doron\'s.'], ['', '...Fine. I\'ll go.']] },
+    'Attendant': { lines: [['', 'I\'m working, kid. Also, no.']] },
+    'Pyro Pete': { lines: [['', 'Kid, I\'m literally running the pyro.']] },
+    'Big Earl': { lines: [['', 'Wrestling\'s fake.'], ['n', 'The pyro is real.'], ['', 'Still no.']] },
+    'Prof. Schist': { lines: [['', 'I\'d rather watch sediment settle. And I do. Often.']] },
+    'Maya': { lines: [['', 'I have a thing tonight.'], ['', '...The thing is not going to wrestling.']] },
+    'Jordan': { lines: [['', 'Is that the show with the guy who yells about English? Hard pass.']] },
+    'Vendor': { lines: [['', 'And leave my Doosh unattended? Never.']] },
+    'Dr. Moles': { lines: [['', 'I have 200 finals to grade. They all have the same answer.']] },
+    'Priya': { lines: [['', 'I\'m literally in the middle of an exam.']] },
+    'Referee': { lines: [['', 'I\'m already going. I\'m the REFEREE.']] },
+  };
+
+  S.doronTickets = function* () {
+    const f = flags(), s = G.state;
+    f.ticketQuest = true;
+    s.items.tickets = 4;
+    yield G.say('Doron', 'Oh, and... I still have 4 extra tickets. I bought 6, like always.');
+    yield G.say('Doron', 'Nobody EVER takes them. If you find anyone who wants to come... anyone at all...');
+    yield G.itemGet(G.spr.ticket, 'You got {y}4 Micro Mayhem Tickets{/}! Talk to people around town to offer them one.');
+  };
+
+  S.ticketReaction = function (npc) {
+    const f = flags(), s = G.state;
+    if (!f.ticketQuest || f.ticketsGiven || f.dadBeaten || !(s.items.tickets > 0)) return null;
+    const r = TICKET_REACTIONS[npc.name];
+    const key = 'ticket_' + npc.name;
+    if (!r || f[key]) return null;
+    return (function* () {
+      f[key] = r.accept ? 'yes' : 'no';
+      yield G.say('Nate', 'Hey! Want a free ticket to {y}Micro Mayhem Wrestling{/}?');
+      for (const [who, line] of r.lines) yield G.say(who === 'n' ? 'Nate' : npc.name, line);
+      if (!r.accept) return;
+      s.items.tickets--;
+      G.audio.sfx('select');
+      if (s.items.tickets > 0) {
+        yield G.say(null, 'Ticket given! {y}' + G.sayable(s.items.tickets) + '{/} left.');
+      } else {
+        f.ticketsGiven = true;
+        yield G.say(null, 'That was the last ticket! Go tell {y}Doron{/}.');
+      }
+    })();
+  };
+
+  S.ticketsReward = function* () {
+    const f = flags();
+    yield G.say('Doron', 'Wait. You gave away ALL of them? People are actually COMING?!');
+    yield G.say('Doron', 'This is the best day of my life.');
+    yield G.say('Nate', 'Are you... crying?');
+    yield G.say('Doron', 'It\'s the pyro smoke.');
+    f.ticketsDone = true;
+    G.play.addTeeth(30);
+    yield G.itemGet(G.spr.toothGold, 'Doron gives you {y}30 shark teeth{/}. "For your trouble. And for being my brother."');
+  };
+
+  S.ferrisWheel = function* () {
+    if (G.fairLit()) yield G.say(null, 'The Ferris wheel is turning! ...Nate is too busy saving a ditch to ride it.');
+    else yield G.say(null, 'FERRIS WHEEL. Opens at 7 o\'clock.');
+  };
+
+  S.rose = function* () {
+    if (flags()['ticket_Grandma Rose'] === 'yes') {
+      yield G.say('Grandma Rose', 'Thank you for the ticket, dear. I\'ll be ringside!');
+      return;
+    }
+    yield G.say('Grandma Rose', 'I come to the fair every year for the funnel cake. Six teeth! Can you believe it?');
+  };
+
+  S.earl = function* () {
+    yield G.say('Big Earl', 'You ever notice how the Ferris wheel and the wrestlers both go in circles?');
+    yield G.say('Big Earl', '...Me neither. Forget I said anything.');
+  };
+
+  // after the main event, ticket holders stick around ringside
+  S.ringsideFan = function* (npc) {
+    const lines = {
+      Superfan: 'TWO SEATS! BEST NIGHT OF MY LIFE!',
+      'Grandma Rose': 'That man in the blazer has wonderful form.',
+      Gus: 'Haven\'t had this much fun since \'89.',
+      Devin: 'Okay. This is actually incredible.',
+    };
+    yield G.say(npc.name, lines[npc.name] || 'WOOOO!');
   };
 
   S.pete = function* () {
@@ -838,8 +951,8 @@
         G.state.items.hammer = true;
         yield G.itemGet(G.spr.hammer.up, 'You got the {y}Rock Hammer{/}! A geologist\'s best friend.');
         yield G.say(null, 'Press {y}Z{/} to swing it. Great for rocks, tall grass... and anything shaped like the sacred number.');
-        yield G.say('Nate', 'Hammer: check. Flat cap: ...wait. Where\'s my {y}flat cap{/}?!');
-        yield G.say('Nate', 'I never go anywhere without my cap. Maybe it blew away on the quad...');
+        yield G.say('Nate', 'Hammer: check. Hat: ...wait. Where\'s my {y}hat{/}?!');
+        yield G.say('Nate', 'I never go anywhere without my hat. Maybe it blew away on the quad...');
       }));
       w.addTrigger(6, 8, 1, 1, S.labExit);
     },
@@ -999,8 +1112,24 @@
       // tree border (gap on the west edge for the road back to campus)
       for (let x = 0; x < W; x += 2) { set(x, 0, 'T'); set(x, 30, 'T'); }
       for (let y = 2; y < 30; y += 2) { if (y !== 12) set(0, y, 'T'); set(38, y, 'T'); }
-      [[8, 3], [32, 4], [24, 26], [34, 12]].forEach(([x, y]) => set(x, y, 'T'));
+      [[8, 3], [24, 26], [34, 12]].forEach(([x, y]) => set(x, y, 'T'));
       return g.map((r) => r.join(''));
+    },
+    // sunset once the show is about to start, night after the main event
+    tint(ctx) {
+      const f = flags();
+      if (f.dadBeaten) {
+        ctx.fillStyle = 'rgba(14,20,72,0.5)';
+        ctx.fillRect(0, 0, G.W, G.H);
+      } else if (f.doronDeal) {
+        // banded sunset: purple sky up top fading into orange
+        ctx.fillStyle = 'rgba(255,110,40,0.26)';
+        ctx.fillRect(0, 0, G.W, G.H);
+        ctx.fillStyle = 'rgba(80,30,130,0.26)';
+        ctx.fillRect(0, 0, G.W, 56);
+        ctx.fillStyle = 'rgba(80,30,130,0.14)';
+        ctx.fillRect(0, 56, G.W, 40);
+      }
     },
     setup(w) {
       w.addBuilding({ x: 13, y: 2, w: 14, h: 7, door: 7, style: 'metal', wall: '#9aa4b4', roof: '#5a6474', banner: 'MICRO MAYHEM WRESTLING', to: { map: 'arena', x: 11, y: 16 } });
@@ -1010,7 +1139,15 @@
       w.addProp({ img: G.spr.standLemon, tx: 33, ty: 19, h: 3, solid: [33, 20, 4, 2], hit: [33, 20, 4, 2], talk: S.lemonade });
       for (const x of [30, 31, 32]) w.addProp({ img: G.spr.potty, tx: x, ty: 9, h: 2, solid: [x, 9, 1, 2], hit: [x, 9, 1, 2], talk: S.potty });
       for (const [x, y] of [[23, 16], [24, 16], [23, 17], [35, 10], [36, 10], [6, 9]]) w.addProp({ img: G.spr.hay, tx: x, ty: y, solid: [x, y, 1, 1] });
-      for (const [x, y] of [[19, 15], [22, 21], [18, 11]]) w.addProp({ img: G.spr.trash, tx: x, ty: y, dx: 2, solid: [x, y, 1, 1] });
+      for (const [x, y] of [[19, 15], [19, 21], [18, 11]]) w.addProp({ img: G.spr.trash, tx: x, ty: y, dx: 2, solid: [x, y, 1, 1] });
+      // Ferris wheel in the corner and strings of lights over the paths
+      w.props.push(new G.FerrisWheel(33 * 16, 8 * 16 + 14));
+      w.blockTiles(31, 8, 4, 1);
+      for (const [a, b] of [[[12, 11], [19, 11]], [[22, 11], [29, 11]], [[22, 21], [37, 21]]]) {
+        w.props.push(new G.LightString(a[0] * 16 + 8, a[1] * 16 + 14, b[0] * 16 + 8, b[1] * 16 + 14));
+        w.blockTiles(a[0], a[1], 1, 1);
+        w.blockTiles(b[0], b[1], 1, 1);
+      }
       [[4, 17, 0], [10, 17, 1], [16, 17, 2], [7, 24, 3], [13, 24, 4], [16, 24, 5]].forEach(([x, y, c]) =>
         w.addProp({ img: G.spr.cars[c], tx: x, ty: y, h: 2, dx: 4, solid: [x, y, 2, 2] }));
 
@@ -1020,6 +1157,8 @@
       npc('attendant', 'Attendant', 8, 15, S.attendant, { dir: 'right' });
       if (!flags().dadBeaten) npc('doron', 'Doron', 22, 10, S.doron);
       if (flags().doronDeal) npc('pete', 'Pyro Pete', 24, 10, S.pete, { dir: 'left' });
+      npc('rose', 'Grandma Rose', 27, 23, S.rose, { wander: 10 });
+      npc('earl', 'Big Earl', 25, 13, S.earl);
 
       w.add(new G.Sign(5, 11, ['EASTON FAIRGROUNDS', 'Tonight: {y}MICRO MAYHEM WRESTLING{/}! Doors at 7.']));
       w.add(new G.Sign(18, 14, 'PARKING. Do not leave valuables in your car. Or near the wrestlers.'));
@@ -1056,6 +1195,12 @@
 
       w.add(new G.NPC({ sprite: 'ref', name: 'Referee', x: 18 * 16 + 8, y: 15 * 16 + 14, talk: S.ref, wander: 20 }));
       if (flags().dadBeaten) w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 7 * 16 + 8, y: 15 * 16 + 14, dir: 'left', talk: S.dadArena }));
+      // everyone Nate gave one of Doron's tickets to shows up ringside
+      [['superfan', 'Superfan', 5, 8, 'right'], ['rose', 'Grandma Rose', 18, 8, 'left'], ['gus', 'Gus', 5, 10, 'right'], ['devin', 'Devin', 18, 10, 'left']]
+        .forEach(([sprite, name, x, y, dir]) => {
+          if (flags()['ticket_' + name] !== 'yes') return;
+          w.add(new G.NPC({ sprite, name, x: x * 16 + 8, y: y * 16 + 14, dir, talk: S.ringsideFan }));
+        });
 
       // before the main event, wrestlers are warming up in here
       if (!flags().doronDeal || flags().dadBeaten) {

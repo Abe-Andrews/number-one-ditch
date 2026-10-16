@@ -50,6 +50,7 @@
       this.ents = [];
       this.fx = [];
       this.texts = [];
+      this.glows = [];
       this.triggers = [];
       for (let y = 0; y < this.h; y++) {
         for (let x = 0; x < this.w; x++) {
@@ -239,8 +240,9 @@
         }
       }
 
+      this.glows = [];
       const list = [];
-      for (const p of this.props) if (p.img) list.push(p);
+      for (const p of this.props) if (p.img || p.draw) list.push(p);
       for (const e of this.ents) list.push(e);
       list.sort((a, b) => (a.flat ? -1e6 : a.base != null ? a.base : a.y) - (b.flat ? -1e6 : b.base != null ? b.base : b.y));
       const cx = Math.round(cam.x), cy = Math.round(cam.y);

@@ -779,6 +779,94 @@
   }
   G.Wrestler = Wrestler;
 
+  // ============================================================== FAIR DECORATIONS
+  // Pixel-plotted line helper (keeps everything crisp, no anti-aliasing).
+  function plot(ctx, x0, y0, x1, y1, color, w = 1) {
+    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) | 0 || 1;
+    ctx.fillStyle = color;
+    for (let i = 0; i <= n; i++) ctx.fillRect(Math.round(x0 + ((x1 - x0) * i) / n), Math.round(y0 + ((y1 - y0) * i) / n), w, w);
+  }
+  const BULBS = ['#ff5a5a', '#ffd84a', '#5ae07a', '#5aa8ff', '#ffffff'];
+
+  // Turns (with lights) once the show is about to start.
+  class FerrisWheel {
+    constructor(cx, groundY) {
+      this.hx = cx;
+      this.hy = groundY - 64;
+      this.R = 40;
+      this.base = groundY;
+      this.hit = [cx - 26, groundY - 18, cx + 26, groundY + 2];
+      this.talk = () => G.SCRIPTS.ferrisWheel();
+    }
+    draw(ctx, cx, cy) {
+      const lit = G.fairLit(), hx = this.hx - cx, hy = this.hy - cy, R = this.R, gy = this.base - cy;
+      // A-frame legs
+      plot(ctx, hx, hy, hx - 28, gy, '#4a4e5e', 2);
+      plot(ctx, hx, hy, hx + 28, gy, '#4a4e5e', 2);
+      plot(ctx, hx - 14, hy + 32, hx + 14, hy + 32, '#4a4e5e', 1);
+      ctx.fillStyle = '#6a6e7e'; ctx.fillRect(hx - 34, gy - 2, 68, 4);
+      // rim
+      for (let t = 0; t < 360; t += 2) {
+        const a = (t * Math.PI) / 180;
+        ctx.fillStyle = '#e8e8f0';
+        ctx.fillRect(Math.round(hx + Math.cos(a) * R), Math.round(hy + Math.sin(a) * R), 2, 2);
+        ctx.fillStyle = '#b8b8c8';
+        ctx.fillRect(Math.round(hx + Math.cos(a) * (R - 5)), Math.round(hy + Math.sin(a) * (R - 5)), 1, 1);
+      }
+      const spin = lit ? G.tick * 0.006 : 0.3;
+      for (let k = 0; k < 8; k++) {
+        const a = spin + (k * Math.PI) / 4;
+        const rx = hx + Math.cos(a) * R, ry = hy + Math.sin(a) * R;
+        plot(ctx, hx, hy, rx, ry, '#c8c8d8', 1);
+        // gondola hangs straight down from the rim
+        const col = ['#d83038', '#f8c030', '#3878d8', '#38a048'][k % 4];
+        ctx.fillStyle = '#2a2030'; ctx.fillRect(Math.round(rx) - 5, Math.round(ry) + 1, 10, 8);
+        ctx.fillStyle = col; ctx.fillRect(Math.round(rx) - 4, Math.round(ry) + 2, 8, 6);
+        ctx.fillStyle = '#f8f0e0'; ctx.fillRect(Math.round(rx) - 3, Math.round(ry) + 3, 6, 2);
+      }
+      ctx.fillStyle = '#2a2030'; ctx.fillRect(hx - 3, hy - 3, 6, 6);
+      ctx.fillStyle = '#c8c8d8'; ctx.fillRect(hx - 2, hy - 2, 4, 4);
+      if (!lit) return;
+      for (let t = 0; t < 360; t += 15) {
+        const a = (t * Math.PI) / 180 + spin;
+        const x = Math.round(hx + Math.cos(a) * R), y = Math.round(hy + Math.sin(a) * R);
+        const col = BULBS[((t / 15) + (G.tick >> 4)) % BULBS.length];
+        ctx.fillStyle = col; ctx.fillRect(x, y, 2, 2);
+        G.play.world.glows.push({ x: x + cx + 1, y: y + cy + 1, color: col });
+      }
+    }
+  }
+  G.FerrisWheel = FerrisWheel;
+
+  // A sagging string of bulbs between two poles; drawn overhead.
+  class LightString {
+    constructor(x1, y1, x2, y2) {
+      Object.assign(this, { x1, y1, x2, y2 });
+      this.base = Math.max(y1, y2) + 200;
+    }
+    draw(ctx, cx, cy) {
+      const lit = G.fairLit(), H = 30, sag = 12;
+      for (const [x, y] of [[this.x1, this.y1], [this.x2, this.y2]]) {
+        ctx.fillStyle = '#2a2030'; ctx.fillRect(x - 2 - cx, y - H - cy, 4, H + 1);
+        ctx.fillStyle = '#7a5a3a'; ctx.fillRect(x - 1 - cx, y - H - cy, 2, H);
+      }
+      const n = Math.max(8, Math.round(Math.abs(this.x2 - this.x1) / 2));
+      for (let i = 0; i <= n; i++) {
+        const t = i / n;
+        const x = Math.round(this.x1 + (this.x2 - this.x1) * t) - cx;
+        const y = Math.round(this.y1 - H + (this.y2 - this.y1) * t + sag * 4 * t * (1 - t)) - cy;
+        ctx.fillStyle = '#2a2030'; ctx.fillRect(x, y, 1, 1);
+        if (i % 4 !== 2) continue;
+        let col = BULBS[(i >> 2) % BULBS.length];
+        if (lit && ((i >> 2) + (G.tick >> 5)) % 7 === 0) col = '#ffffff';
+        ctx.fillStyle = lit ? col : G.art.shade(col, -0.55);
+        ctx.fillRect(x - 1, y + 1, 2, 2);
+        if (lit) G.play.world.glows.push({ x: x + cx, y: y + cy + 2, color: col });
+      }
+    }
+  }
+  G.LightString = LightString;
+
   // ============================================================== BOULDER
   class Boulder extends Ent {
     // No talk(): pressing Z next to it swings the hammer so you get the CLANK.
