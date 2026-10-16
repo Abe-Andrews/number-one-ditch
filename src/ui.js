@@ -150,7 +150,7 @@
       F().draw(ctx, 'ABE\'S RULES', 10, 92, '#ffa848', { shadow: SH });
       F().draw(ctx, '1. Nate and Lily may not say the sacred number.', 10, 104, '#f8f8f0', { shadow: SH });
       F().draw(ctx, '2. Abe is the Master. See rule 1.', 10, 114, '#f8f8f0', { shadow: SH });
-      F().draw(ctx, 'Sacred number slips: {r}' + s.stats.slips + '{/}    Sixes bonked: {y}' + (s.stats.sixes || 0), 10, 126, '#9890a8', { shadow: SH });
+      F().draw(ctx, 'Sacred number slips: {r}' + s.stats.slips + '{/}   Sixes: {y}' + (s.stats.sixes || 0) + '{/}   Pins: {y}' + (s.stats.pins || 0), 10, 126, '#9890a8', { shadow: SH });
       const help = this.msgT > 0 ? '{g}' + this.msg : 'Z: set to X    X: save    ENTER: close';
       F().draw(ctx, help, 10, 142, '#9890a8', { shadow: SH });
     }

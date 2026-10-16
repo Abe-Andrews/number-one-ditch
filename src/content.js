@@ -65,6 +65,16 @@
     },
     maya: { skin: '#d8a078', hair: '#2a1a14', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 },
     jordan: { skin: '#f2c8a0', hair: '#e0c070', hairStyle: 'short', glasses: '#202020', shirt: '#5a8a5a', pants: '#2a2a30', shoes: '#a03030', torso: 6, legs: 3 },
+    // Fairgrounds
+    superfan: { skin: '#f0c8a8', hair: '#5a3a20', hairStyle: 'cap', hat: '#d03038', hatStyle: 'ball', patch: '#f8d040', shirt: '#d03038', pants: '#3a4258', shoes: '#f0f0f0', torso: 6, legs: 3, smile: '#ffffff' },
+    attendant: { skin: '#c88a60', hair: '#2a1a14', hairStyle: 'short', shirt: '#f08020', collar: '#f8e040', pants: '#3a3a44', shoes: '#202024', torso: 7, legs: 3 },
+    lemonade: { skin: '#f8d8c0', hair: '#e8c060', hairStyle: 'shoulder', shirt: '#f8e040', pants: '#5878b8', shoes: '#f0f0f0', torso: 5, legs: 3, blush: true, smile: '#ffffff' },
+    ref: { skin: '#e8b890', hair: '#3a2418', hairStyle: 'buzz', shirt: '#f0f0f0', pattern: 'stripes', pants: '#1c1c24', shoes: '#1c1c24', torso: 6, legs: 3 },
+    // Luchador-style wrestlers: masks, singlets, boots.
+    wrestler_red: { mask: '#d83038', maskTrim: '#f8d040', skin: '#e8b08a', shirt: '#d83038', pants: '#d83038', neckline: true, sleeves: 0, shorts: true, boots: true, shoes: '#f0f0f0', wide: true, torso: 4, legs: 3 },
+    wrestler_blue: { mask: '#3058c8', maskTrim: '#e8e8f0', skin: '#c88a60', shirt: '#3058c8', pants: '#3058c8', neckline: true, sleeves: 0, shorts: true, boots: true, shoes: '#2a3a8a', wide: true, torso: 4, legs: 3 },
+    wrestler_gold: { mask: '#e8b830', maskTrim: '#1c1c24', skin: '#a86a48', shirt: '#1c1c24', pants: '#1c1c24', belt: '#e8c040', neckline: true, sleeves: 0, shorts: true, boots: true, shoes: '#1c1c24', wide: true, torso: 4, legs: 3 },
+    wrestler_green: { mask: '#38a048', maskTrim: '#ffffff', skin: '#f0c8a8', shirt: '#38a048', pants: '#38a048', neckline: true, sleeves: 0, shorts: true, boots: true, shoes: '#f0f0f0', wide: true, torso: 4, legs: 3 },
   };
 
   // ================================================================ ITEMS
@@ -92,6 +102,21 @@
         { wave: 'square', vol: 0.06, notes: 'E4:2 G4:2 C5:4 B4:2 G4:2 E4:4 | F4:2 A4:2 D5:4 C5:2 A4:2 F4:4 | E4:2 G4:2 C5:2 D5:2 E5:4 D5:2 C5:2 | B4:2 G4:2 A4:2 B4:2 C5:8 | A4:2 C5:2 A4:4 G4:2 E4:2 C4:4 | F4:2 G4:2 A4:4 G4:4 R:4 | E4:2 F4:2 G4:2 E4:2 D4:4 C4:2 D4:2 | E4:4 D4:4 C4:8' },
         { wave: 'triangle', vol: 0.15, notes: 'C3:4 G3:4 C3:4 G3:4 | F2:4 C3:4 F2:4 C3:4 | C3:4 G3:4 E3:4 G3:4 | G2:4 D3:4 G2:4 B2:4 | A2:4 E3:4 A2:4 E3:4 | F2:4 C3:4 F2:4 C3:4 | C3:4 G2:4 F2:4 G2:4 | C3:4 G2:4 C3:8' },
         { wave: 'noise', vol: 0.05, notes: 'k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:2 h:2 | k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:2 s:2 s:4' },
+      ],
+    },
+    fair: {
+      bpm: 132,
+      tracks: [
+        { wave: 'square', vol: 0.055, notes: 'C5:4 E5:2 G5:2 E5:2 C5:2 | D5:4 F5:2 A5:2 F5:2 D5:2 | E5:4 G5:2 C6:2 G5:2 E5:2 | D5:6 G4:6 | C5:4 E5:2 G5:2 E5:2 C5:2 | F5:4 A5:2 C6:2 A5:2 F5:2 | E5:2 D5:2 C5:2 D5:2 E5:2 F5:2 | C5:12' },
+        { wave: 'triangle', vol: 0.15, notes: 'C3:4 G3:4 G3:4 | D3:4 A3:4 A3:4 | C3:4 G3:4 G3:4 | G2:4 D3:4 D3:4 | C3:4 G3:4 G3:4 | F2:4 C3:4 C3:4 | C3:4 G3:4 G3:4 | C3:4 G2:4 C3:4' },
+      ],
+    },
+    arena: {
+      bpm: 150,
+      tracks: [
+        { wave: 'square', vol: 0.05, notes: 'E4:2 E4:2 G4:2 E4:2 A4:2 E4:2 B4:2 A4:2 | E4:2 E4:2 G4:2 E4:2 D5:4 B4:4 | E4:2 E4:2 G4:2 E4:2 A4:2 E4:2 B4:2 A4:2 | G4:4 F#4:4 E4:8' },
+        { wave: 'sawtooth', vol: 0.06, notes: 'E2:2 E2:2 E3:2 E2:2 E2:2 E2:2 D3:2 E2:2 | E2:2 E2:2 E3:2 E2:2 G2:2 G2:2 A2:2 B2:2 | E2:2 E2:2 E3:2 E2:2 E2:2 E2:2 D3:2 E2:2 | C3:4 B2:4 E2:8' },
+        { wave: 'noise', vol: 0.06, notes: 'k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 s:2 s:2 s:2' },
       ],
     },
     house: {
@@ -291,11 +316,95 @@
     yield G.say('Nate', 'Allegedly.');
   };
 
-  S.southRoad = function* () {
-    const p = P();
-    yield G.say('Nate', 'Chesapeake is this way. Hang on, Number One Ditch. I\'m coming.');
-    yield G.banner('TO BE CONTINUED...', 'The road south opens in the next update!', 300);
-    yield G.walkTo(p, p.x, p.y - 18, 1);
+  // The giant boulder blocking the road south.
+  S.boulderLook = function* () {
+    const f = flags();
+    if (f.boulderSeen) {
+      yield G.say(null, 'A massive glacial erratic. It\'s not going anywhere without some serious muscle.');
+      return;
+    }
+    f.boulderSeen = true;
+    yield G.say('Nate', 'Whoa. Is that... a {y}glacial erratic{/}?!');
+    yield G.say('Nate', 'A giant boulder dragged here by a glacier over ten thousand years ago. Granite, with pink feldspar. Gorgeous.');
+    yield G.say('Nate', '...It\'s also completely blocking the road to Chesapeake.');
+    yield G.say('Nate', 'My rock hammer won\'t even scratch this thing. I need someone {y}really{/} strong.');
+  };
+
+  S.boulderHit = function () {
+    const f = flags();
+    if (G.script.busy) return;
+    if (!f.boulderHitOnce) {
+      f.boulderHitOnce = true;
+      G.script.run((function* () {
+        yield G.wait(20);
+        yield G.say('Nate', 'Ow. OW. My hands are vibrating.');
+        yield* S.boulderLook();
+      })());
+    } else if (!f.boulderHint && (f.boulderHits = (f.boulderHits || 0) + 1) >= 4) {
+      f.boulderHint = true;
+      G.script.run((function* () { yield* S.boulderLook(); })());
+    }
+  };
+
+  // ---------------------------------------------------------------- fairgrounds
+  S.superfan = function* () {
+    yield G.say('Superfan', 'I\'ve been to every Micro Mayhem show for {r}six{/} years straight!');
+    yield G.say('Superfan', '...Oh. Was I not supposed to say that around you?');
+    yield G.say('Nate', 'You can say it. I just can\'t.');
+    yield G.say('Superfan', 'Weird rule, man.');
+  };
+
+  S.attendant = function* () {
+    yield G.say('Attendant', 'Careful, kid. The wrestlers are warming up out here, and they dropkick anything that moves.');
+    yield G.say('Attendant', 'Pro tip: when one of \'em slams into something, they get dizzy. That\'s your chance.');
+  };
+
+  S.ticketBooth = function* () {
+    yield G.say(null, 'TICKETS. {y}MICRO MAYHEM WRESTLING{/}: show starts at 7!');
+    yield G.say(null, 'A sign in the window: "Wrestlers are warming up around the fairgrounds. Enter at your own risk."');
+  };
+
+  S.lemonade = function* () {
+    const s = G.state;
+    const c = yield G.ask('Lemonade', 'Fresh-squeezed lemonade! {y}5 shark teeth{/}. Heals 2 hearts.', ['Buy one', 'No thanks']);
+    if (c !== 0) return;
+    if (s.teeth < 5) { yield G.say('Lemonade', 'Not enough teeth, hon.'); return; }
+    G.play.addTeeth(-5);
+    G.play.healQ += 4;
+    G.audio.sfx('gulp');
+    yield G.say('Nate', 'Ahh. Citric acid. A pH of about 2. Refreshing.');
+  };
+
+  S.funnelCake = function* () {
+    yield G.say(null, 'FUNNEL CAKE: {r}6{/} shark teeth.');
+    yield G.say('Nate', '...I can\'t order that. I\'d have to say the price out loud.');
+  };
+
+  S.cornDogs = function* () {
+    yield G.say(null, 'CORN DOGS: {r}SOLD OUT{/}. A sign reads: "The wrestlers ate all of them. Sorry."');
+  };
+
+  S.potty = function* () {
+    const f = flags();
+    f.pottyKnocks = (f.pottyKnocks || 0) + 1;
+    const lines = ['Occupied.', 'Still occupied.', 'A voice from inside: "GO AWAY."', 'Nate decides not to knock again.'];
+    yield G.say(null, lines[Math.min(f.pottyKnocks, lines.length) - 1]);
+  };
+
+  // ---------------------------------------------------------------- expo hall
+  S.lockerRoom = function* () {
+    yield G.say(null, 'LOCKER ROOM. {r}Wrestlers only.{/}');
+    yield G.say(null, 'You can hear someone inside doing very loud push-ups.');
+  };
+
+  S.nachos = function* () {
+    yield G.say(null, 'CONCESSIONS. Popcorn: {y}4 teeth{/}. Nachos: {r}6 teeth{/}.');
+    yield G.say('Nate', 'Popcorn it is. ...Actually, I\'m saving my teeth.');
+  };
+
+  S.ref = function* () {
+    yield G.say('Referee', 'No matches until tonight! ...Not that these guys care.');
+    yield G.say('Referee', 'If you pin one, I\'ll count it. One... two... three!');
   };
 
   // ================================================================ MAPS
@@ -354,8 +463,8 @@
       const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
       const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
       for (let i = 0; i < 90; i++) set(Math.floor(G.hash(i, 5) * W), Math.floor(G.hash(i, 6) * H), ',');
-      // paths
-      fill(2, 12, 36, 2, '=');
+      // paths (the main path runs off the east edge toward the fairgrounds)
+      fill(2, 12, 38, 2, '=');
       fill(19, 14, 2, 16, '=');
       fill(6, 7, 1, 5, '=');
       fill(19, 7, 1, 5, '=');
@@ -377,7 +486,7 @@
       fill(32, 15, 5, 1, 'f');
       // tree border with a gap for the south road
       for (let x = 0; x < W; x += 2) { set(x, 0, 'T'); if (x < 18 || x > 20) set(x, 28, 'T'); }
-      for (let y = 2; y < 28; y += 2) { set(0, y, 'T'); set(38, y, 'T'); }
+      for (let y = 2; y < 28; y += 2) { set(0, y, 'T'); if (y !== 12) set(38, y, 'T'); }
       // scattered trees
       [[3, 16], [4, 20], [24, 23], [34, 17], [13, 22]].forEach(([x, y]) => set(x, y, 'T'));
       return g.map((r) => r.join(''));
@@ -414,7 +523,97 @@
         flags().sixIntro = true;
         G.script.run(S.sixIntro());
       });
-      w.addTrigger(18, 29, 4, 1, () => G.script.run(S.southRoad()));
+      if (!flags().boulderGone) w.add(new G.Boulder(20 * 16, 28 * 16 + 15, S.boulderHit));
+      w.add(new G.Sign(37, 11, 'EAST: Easton Fairgrounds. Tonight: {y}MICRO MAYHEM WRESTLING{/}!'));
+      w.addWarp(39, 12, 1, 2, 'fair', 1, 12, 'right');
+    },
+  };
+
+  G.MAPS.fair = {
+    name: 'Easton Fairgrounds',
+    music: 'fair',
+    tiles() {
+      const W = 40, H = 32;
+      const g = Array.from({ length: H }, () => Array(W).fill('.'));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
+      for (let i = 0; i < 50; i++) set(Math.floor(G.hash(i, 15) * W), Math.floor(G.hash(i, 16) * H), ',');
+      // dirt paths
+      fill(0, 12, 34, 2, '=');
+      fill(20, 9, 2, 3, '=');
+      fill(20, 14, 2, 14, '=');
+      fill(22, 22, 14, 2, '=');
+      // parking lot with painted stalls
+      fill(2, 16, 16, 12, 'a');
+      fill(8, 14, 3, 2, 'a');
+      for (const y of [17, 18, 24, 25]) for (const x of [3, 6, 9, 12, 15]) set(x, y, 'l');
+      // tall grass in the east field
+      fill(28, 25, 8, 3, '"');
+      fill(31, 15, 5, 3, '"');
+      fill(3, 4, 4, 3, '"');
+      [[11, 9], [12, 9], [28, 9], [29, 9], [3, 10], [4, 10], [36, 18], [36, 20]].forEach(([x, y]) => set(x, y, 'b'));
+      // tree border (gap on the west edge for the road back to campus)
+      for (let x = 0; x < W; x += 2) { set(x, 0, 'T'); set(x, 30, 'T'); }
+      for (let y = 2; y < 30; y += 2) { if (y !== 12) set(0, y, 'T'); set(38, y, 'T'); }
+      [[8, 3], [32, 4], [24, 26], [34, 12]].forEach(([x, y]) => set(x, y, 'T'));
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      w.addBuilding({ x: 13, y: 2, w: 14, h: 7, door: 7, style: 'metal', wall: '#9aa4b4', roof: '#5a6474', banner: 'MICRO MAYHEM WRESTLING', to: { map: 'arena', x: 11, y: 16 } });
+      w.addProp({ img: G.spr.booth, tx: 16, ty: 9, h: 2, solid: [16, 9, 3, 2], hit: [16, 9, 3, 2], talk: S.ticketBooth });
+      w.addProp({ img: G.spr.standFunnel, tx: 23, ty: 19, h: 3, solid: [23, 20, 4, 2], hit: [23, 20, 4, 2], talk: S.funnelCake });
+      w.addProp({ img: G.spr.standCorn, tx: 28, ty: 19, h: 3, solid: [28, 20, 4, 2], hit: [28, 20, 4, 2], talk: S.cornDogs });
+      w.addProp({ img: G.spr.standLemon, tx: 33, ty: 19, h: 3, solid: [33, 20, 4, 2], hit: [33, 20, 4, 2], talk: S.lemonade });
+      for (const x of [30, 31, 32]) w.addProp({ img: G.spr.potty, tx: x, ty: 9, h: 2, solid: [x, 9, 1, 2], hit: [x, 9, 1, 2], talk: S.potty });
+      for (const [x, y] of [[23, 16], [24, 16], [23, 17], [35, 10], [36, 10], [6, 9]]) w.addProp({ img: G.spr.hay, tx: x, ty: y, solid: [x, y, 1, 1] });
+      for (const [x, y] of [[19, 15], [22, 21], [18, 11]]) w.addProp({ img: G.spr.trash, tx: x, ty: y, dx: 2, solid: [x, y, 1, 1] });
+      [[4, 17, 0], [10, 17, 1], [16, 17, 2], [7, 24, 3], [13, 24, 4], [16, 24, 5]].forEach(([x, y, c]) =>
+        w.addProp({ img: G.spr.cars[c], tx: x, ty: y, h: 2, dx: 4, solid: [x, y, 2, 2] }));
+
+      const npc = (sprite, name, tx, ty, talk, o = {}) =>
+        w.add(new G.NPC(Object.assign({ sprite, name, x: tx * 16 + 8, y: ty * 16 + 14, talk }, o)));
+      npc('superfan', 'Superfan', 23, 10, S.superfan, { wander: 14 });
+      npc('attendant', 'Attendant', 8, 15, S.attendant, { dir: 'right' });
+
+      w.add(new G.Sign(5, 11, ['EASTON FAIRGROUNDS', 'Tonight: {y}MICRO MAYHEM WRESTLING{/}! Doors at 7.']));
+      w.add(new G.Sign(18, 14, 'PARKING. Do not leave valuables in your car. Or near the wrestlers.'));
+
+      const styles = ['red', 'blue', 'gold', 'green'];
+      [[6, 21], [12, 21], [14, 26], [27, 24], [32, 26], [30, 13], [9, 6]].forEach(([x, y], i) =>
+        w.add(new G.Wrestler(x * 16 + 8, y * 16 + 14, styles[i % styles.length])));
+
+      w.addWarp(0, 12, 1, 2, 'campus', 38, 12, 'left');
+    },
+  };
+
+  G.MAPS.arena = {
+    name: 'Expo Hall',
+    music: 'arena',
+    tiles: (() => {
+      const rows = ['w'.repeat(24), 'w' + 'v'.repeat(22) + 'w'];
+      for (let y = 2; y <= 4; y++) rows.push('w' + 'B'.repeat(9) + 'CCCC' + 'B'.repeat(9) + 'w');
+      for (let y = 5; y <= 13; y++) rows.push('w' + 'BBB' + 'C'.repeat(16) + 'BBB' + 'w');
+      for (let y = 14; y <= 16; y++) rows.push('w' + 'C'.repeat(22) + 'w');
+      rows.push('w'.repeat(11) + 'xx' + 'w'.repeat(11));
+      return rows;
+    })(),
+    setup(w) {
+      // the ring: ropes block the edges except the steps on the south side
+      w.addProp({ img: G.spr.ring, tx: 8, ty: 6, h: 7, flat: true });
+      w.blockTiles(8, 6, 8, 1);
+      w.blockTiles(8, 7, 1, 5);
+      w.blockTiles(15, 7, 1, 5);
+      w.blockTiles(8, 12, 3, 1);
+      w.blockTiles(13, 12, 3, 1);
+      w.addProp({ img: G.spr.lockerDoor, tx: 11, ty: 1, flat: true, hit: [11, 1, 1, 1], talk: S.lockerRoom });
+      w.addProp({ img: G.spr.concession, tx: 2, ty: 15, h: 2, solid: [2, 15, 4, 2], hit: [2, 15, 4, 2], talk: S.nachos });
+
+      w.add(new G.NPC({ sprite: 'ref', name: 'Referee', x: 18 * 16 + 8, y: 15 * 16 + 14, talk: S.ref, wander: 20 }));
+
+      [[10, 8, 'gold'], [13, 10, 'red'], [5, 13, 'blue'], [18, 12, 'green']].forEach(([x, y, s]) =>
+        w.add(new G.Wrestler(x * 16 + 8, y * 16 + 14, s)));
+
+      w.addWarp(11, 17, 2, 1, 'fair', 20, 9, 'down');
     },
   };
 })();

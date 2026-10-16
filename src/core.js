@@ -174,6 +174,9 @@ G.audio = (function () {
     slip: (t) => { [62, 61, 60, 59].forEach((n, i) => tone(N(n), t + i * 0.22, i === 3 ? 0.6 : 0.2, 'sawtooth', 0.09)); },
     gulp: (t) => { [0, 0.12, 0.24].forEach((d) => tone(300, t + d, 0.08, 'sine', 0.2, sfxBus, 180)); },
     secret: (t) => { [72, 79, 84, 88].forEach((n, i) => tone(N(n), t + i * 0.08, 0.12, 'square', 0.07)); },
+    clank: (t) => { tone(1900, t, 0.12, 'square', 0.09); tone(2650, t, 0.18, 'triangle', 0.1); noise(t, 0.05, 0.3, sfxBus, 6000); },
+    dash: (t) => { noise(t, 0.2, 0.25, sfxBus, 1500); tone(180, t, 0.15, 'square', 0.1, sfxBus, 420); },
+    bell: (t) => { [0, 0.18, 0.36].forEach((d) => { tone(1568, t + d, 0.3, 'triangle', 0.14); tone(2349, t + d, 0.2, 'sine', 0.06); }); },
   };
 
   function sfx(name) {

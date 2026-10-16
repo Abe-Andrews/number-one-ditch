@@ -216,6 +216,7 @@
 
     // head
     HEAD.forEach(([a, b], i) => p.hline(a, b, y0 + i, c.skin));
+    if (c.mask) return maskHead(p, c, y0, back ? 'back' : 'front');
     if (back) {
       hairBack(p, c, y0, ty);
       hatBack(p, c, y0, ty);
@@ -247,6 +248,34 @@
     hatFront(p, c, y0, ty);
   }
 
+  // Luchador mask with contrasting trim around the eyes and mouth.
+  function maskHead(p, c, y0, view) {
+    const M = c.mask, T = c.maskTrim;
+    HEAD.forEach(([a, b], i) => p.hline(a, b, y0 + i, M));
+    if (view === 'back') {
+      for (let y = y0 + 2; y <= y0 + 7; y++) { p.set(7, y, y % 2 ? T : M); p.set(8, y, y % 2 ? M : T); }
+      p.hline(5, 10, y0 + 1, T);
+      return;
+    }
+    if (view === 'side') {
+      p.set(13, y0 + 6, M);
+      p.hline(5, 12, y0 + 1, T);
+      p.hline(9, 11, y0 + 4, T);
+      p.set(9, y0 + 5, T); p.set(11, y0 + 5, T); p.set(9, y0 + 6, T); p.set(11, y0 + 6, T);
+      p.set(10, y0 + 5, '#ffffff'); p.set(10, y0 + 6, c.eyes);
+      p.set(10, y0 + 8, T); p.set(11, y0 + 8, c.skin); p.set(12, y0 + 8, T);
+      p.vline(3, y0 + 3, y0 + 7, T);
+      return;
+    }
+    p.vline(7, y0 + 1, y0 + 3, T); p.vline(8, y0 + 1, y0 + 3, T); p.hline(6, 9, y0 + 2, T);
+    for (const ex of [5, 10]) {
+      p.hline(ex - 1, ex + 1, y0 + 4, T);
+      p.set(ex - 1, y0 + 5, T); p.set(ex + 1, y0 + 5, T); p.set(ex - 1, y0 + 6, T); p.set(ex + 1, y0 + 6, T);
+      p.set(ex, y0 + 5, '#ffffff'); p.set(ex, y0 + 6, c.eyes);
+    }
+    p.hline(6, 9, y0 + 8, T); p.hline(7, 8, y0 + 8, c.skin);
+  }
+
   function torsoPx(c, x, y, ty, edge) {
     if (c.pattern === 'plaid') {
       const vx = x % 3 === 1, hy = (y - ty) % 3 === 2;
@@ -254,6 +283,7 @@
       if (vx || hy) return c.plaidL;
       return edge ? c.shirtD : c.shirt;
     }
+    if (c.pattern === 'stripes') return x % 2 ? '#1c1c24' : c.shirt;
     if (c.pattern === 'floral') {
       const h = G.hash(x, y, 7);
       if (h < 0.18) return '#e27890';
@@ -497,6 +527,7 @@
 
     // head
     HEAD.forEach(([a, b], i) => p.hline(a, b, y0 + i, c.skin));
+    if (c.mask) return maskHead(p, c, y0, 'side');
     p.set(13, y0 + 6, c.skin);
     p.set(10, y0 + 5, c.eyes); p.set(10, y0 + 6, c.eyes);
     p.set(11, y0 + 8, c.smile ? c.smile : c.skinD);
@@ -920,6 +951,39 @@
       p.hline(5, 10, 8, '#5a4838'); p.hline(6, 9, 9, '#5a4838'); p.hline(7, 8, 10, '#5a4838');
     },
     void(p) { p.rect(0, 0, 16, 16, '#000000'); },
+    asphalt(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#4c4c56');
+      for (let i = 0; i < 12; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#5e5e6a' : '#3e3e48');
+      edgeFringe(p, mask, v, P.grass, '#3a3a44');
+    },
+    stall(p, r, v, mask) {
+      TILE_DRAW.asphalt(p, r, v, mask);
+      p.vline(7, 0, 15, '#e8e8e0'); p.vline(8, 0, 15, '#d0d0c8');
+    },
+    concrete(p, r) {
+      p.rect(0, 0, 16, 16, '#b4b4bc');
+      for (let i = 0; i < 6; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#c4c4cc' : '#a0a0aa');
+      p.hline(0, 15, 15, '#9c9ca6'); p.vline(15, 0, 15, '#9c9ca6');
+    },
+    bleacher(p, r, v) {
+      const fans = ['#d04848', '#4878c8', '#e8b840', '#58a848', '#a058c0', '#f0f0f0', '#8a2034'];
+      const skins = ['#f2c8a0', '#c88a60', '#8a5a3a', '#f8d8c0', '#5c3626'];
+      const hairs = ['#2a1a14', '#6a4028', '#c8a46c', '#141014', '#9a4a28', '#c0c0c8'];
+      for (let k = 0; k < 2; k++) {
+        const y = k * 8;
+        p.rect(0, y, 16, 3, '#d0d4dc'); p.hline(0, 15, y, '#f0f2f6');
+        p.rect(0, y + 3, 16, 5, '#50545e'); p.hline(0, 15, y + 3, '#3a3e48');
+        if (v >= 3) continue;
+        for (let n = 0; n < 2; n++) {
+          if (r() < 0.35) continue;
+          const x = 1 + n * 8 + Math.floor(r() * 3);
+          p.rect(x, y + 2, 5, 4, fans[Math.floor(r() * fans.length)]);
+          p.rect(x + 1, y - 1, 3, 3, skins[Math.floor(r() * skins.length)]);
+          p.hline(x + 1, x + 3, y - 1, hairs[Math.floor(r() * hairs.length)]);
+          if (r() < 0.3) { p.set(x - 1, y - 1, skins[0]); p.set(x - 1, y, p.get(x, y + 2)); }
+        }
+      }
+    },
   };
 
   // Grass creeping over the edge of path/sand tiles that border grass.
@@ -1000,6 +1064,9 @@
         } else if (def.style === 'stone') {
           const row = Math.floor(y / 6), off = row % 2 ? 6 : 0;
           if (y % 6 === 5 || (x + off) % 12 === 0) col = wallD;
+        } else if (def.style === 'metal') {
+          if (x % 4 === 3) col = wallD;
+          else if (x % 4 === 0) col = shade(wall, 0.18);
         } else if (y % 8 === 7) col = wallD;
         p.set(x, wy + y, col);
       }
@@ -1007,7 +1074,7 @@
     p.hline(0, W - 1, wy, wallD);
     // windows
     const doorPx = def.door * 16;
-    for (let x = 6; x + 10 < W; x += 24) {
+    for (let x = 6; x + 10 < W && def.style !== 'metal'; x += 24) {
       if (x + 12 > doorPx - 4 && x < doorPx + 20) continue;
       p.rect(x - 1, wy + 5, 12, 14, '#f4f0e8');
       p.rect(x, wy + 6, 10, 12, '#4a6aa0');
@@ -1042,7 +1109,18 @@
       p.rect(tx + 4, 30, 4, 8, '#4a6aa0'); p.rect(tx + 20, 30, 4, 8, '#4a6aa0');
     }
     p.outline();
-    return p.canvas();
+    const c = p.canvas();
+    if (def.banner) {
+      // marquee banner hung across the roof edge
+      const x = c.getContext('2d');
+      const tw = G.font.width(def.banner), bw = tw + 14, bx = Math.round((W - bw) / 2), by = extra + roofH - 15;
+      x.fillStyle = OUT; x.fillRect(bx - 1, by - 1, bw + 2, 15);
+      x.fillStyle = '#e8b830'; x.fillRect(bx, by, bw, 13);
+      x.fillStyle = '#c02030'; x.fillRect(bx + 1, by + 1, bw - 2, 11);
+      for (let i = 0; i < bw; i += 6) { x.fillStyle = (i / 6) % 2 ? '#fff4b0' : '#f8d040'; x.fillRect(bx + i + 2, by - 3, 2, 2); }
+      G.font.draw(x, def.banner, bx + 7, by + 2, '#fff4b0', { shadow: '#5a0c14' });
+    }
+    return c;
   }
 
   function labBench() {
@@ -1159,6 +1237,167 @@
     return p.canvas();
   }
 
+  // A glacial erratic: speckled granite (with pink feldspar), cracks and moss.
+  function boulder() {
+    const p = new Pix(64, 48);
+    for (let y = 0; y < 48; y++) {
+      for (let x = 0; x < 64; x++) {
+        const dx = (x + 0.5 - 32) / 30, dy = (y + 0.5 - 27) / 20;
+        const a = Math.atan2(dy, dx);
+        const wob = 1 + (G.hash(Math.floor((a + 4) * 3), 1, 9) - 0.5) * 0.14;
+        if (dx * dx + dy * dy > wob * wob) continue;
+        const s = dx * 0.5 + dy * 0.8 + (G.hash(x >> 1, y >> 1, 3) - 0.5) * 0.35;
+        p.set(x, y, s < -0.55 ? '#cac6c0' : s < 0.05 ? '#9c9892' : s < 0.5 ? '#78746e' : '#5a5650');
+      }
+    }
+    for (let i = 0; i < 140; i++) {
+      const x = Math.floor(G.hash(i, 1, 4) * 64), y = Math.floor(G.hash(i, 2, 4) * 48);
+      if (!p.get(x, y)) continue;
+      const h = G.hash(i, 3, 4);
+      p.set(x, y, h < 0.4 ? '#e8e4de' : h < 0.75 ? '#3e3a36' : '#c8948a');
+    }
+    for (const [x0, y0, len, dir] of [[20, 14, 9, 1], [40, 22, 8, -1], [30, 32, 7, 1]]) {
+      for (let t = 0; t < len; t++) p.set(x0 + t * dir, y0 + t + (t >> 2), '#2e2a28');
+    }
+    for (let y = 6; y < 18; y++) {
+      for (let x = 10; x < 54; x++) {
+        if (!p.get(x, y) || p.get(x, y - 2) || G.hash(x, y, 8) > 0.55) continue;
+        p.set(x, y, G.hash(x, y, 9) < 0.5 ? '#5a9a40' : '#3e7a30');
+        p.set(x, y + 1, '#3e7a30');
+      }
+    }
+    p.outline();
+    return p.canvas();
+  }
+
+  function car(color) {
+    const p = new Pix(24, 30);
+    const D = shade(color, -0.3), L = shade(color, 0.3), glass = '#34496a', glassL = '#8ab0d8';
+    for (const [x, y] of [[1, 5], [20, 5], [1, 20], [20, 20]]) p.rect(x, y, 3, 6, '#1e1e24');
+    p.rect(3, 1, 18, 28, color);
+    p.vline(20, 1, 28, D); p.hline(3, 20, 28, D); p.vline(3, 1, 28, L);
+    p.rect(5, 8, 14, 4, glass); p.hline(6, 9, 9, glassL);
+    p.rect(5, 12, 14, 8, L); p.hline(5, 18, 12, shade(color, 0.45));
+    p.rect(5, 20, 14, 3, glass);
+    p.set(4, 1, '#f8f0b0'); p.set(19, 1, '#f8f0b0');
+    p.set(4, 28, '#e03030'); p.set(19, 28, '#e03030');
+    p.outline();
+    return p.canvas();
+  }
+
+  function stand(awning, label, labelColor) {
+    const p = new Pix(64, 48);
+    p.rect(4, 12, 56, 14, '#5a3a28');
+    p.rect(2, 12, 2, 30, '#8a6040'); p.rect(60, 12, 2, 30, '#8a6040');
+    p.rect(4, 14, 56, 9, '#f8f0d8');
+    p.rect(2, 26, 60, 21, '#c08850');
+    p.rect(2, 26, 60, 3, '#e0b070');
+    for (let x = 10; x < 60; x += 12) p.vline(x, 29, 46, '#a06c3c');
+    for (let y = 2; y < 12; y++) for (let x = 0; x < 64; x++) p.set(x, y, Math.floor(x / 8) % 2 ? '#ffffff' : awning);
+    for (let x = 0; x < 64; x++) if (x % 8 > 0 && x % 8 < 7) p.set(x, 12, Math.floor(x / 8) % 2 ? '#ffffff' : awning);
+    p.hline(0, 63, 1, shade(awning, -0.25));
+    p.outline();
+    const c = p.canvas();
+    const x = c.getContext('2d');
+    G.font.draw(x, label, 32 - Math.round(G.font.width(label) / 2), 14, labelColor || '#c03030');
+    return c;
+  }
+
+  function booth() {
+    const p = new Pix(48, 44);
+    for (let y = 0; y < 10; y++) p.hline(10 - y, 37 + y, y, y % 3 === 2 ? '#a02428' : '#d03038');
+    p.rect(2, 10, 44, 33, '#f0e8d8'); p.vline(45, 10, 42, '#c8bca8');
+    p.rect(8, 22, 32, 11, '#34496a'); p.hline(10, 18, 24, '#8ab0d8');
+    p.rect(6, 33, 36, 3, '#a87848');
+    p.rect(2, 11, 44, 10, '#2a3a5a');
+    p.outline();
+    const c = p.canvas();
+    G.font.draw(c.getContext('2d'), 'TICKETS', 24 - Math.round(G.font.width('TICKETS') / 2), 12, '#f8d850');
+    return c;
+  }
+
+  function hayBale() {
+    const p = new Pix(16, 14);
+    p.rect(1, 2, 14, 11, '#e0c060');
+    p.hline(1, 14, 2, '#f4dc88');
+    for (let i = 0; i < 18; i++) p.set(1 + G.hash(i, 1, 5) * 14, 3 + G.hash(i, 2, 5) * 10, G.hash(i, 3, 5) < 0.5 ? '#c09838' : '#f8e8a0');
+    p.vline(5, 2, 12, '#8a6a30'); p.vline(11, 2, 12, '#8a6a30');
+    p.rect(1, 10, 14, 3, '#c8a448');
+    p.outline();
+    return p.canvas();
+  }
+
+  function potty() {
+    const p = new Pix(16, 30);
+    p.rect(1, 2, 14, 27, '#3a78c8');
+    p.rect(1, 0, 14, 3, '#f0f0f0'); p.hline(2, 13, 0, '#ffffff');
+    p.rect(3, 6, 10, 22, '#4a88d8');
+    p.hline(5, 10, 8, '#2a5898'); p.hline(5, 10, 10, '#2a5898');
+    p.rect(10, 15, 2, 4, '#e8e8e8');
+    p.set(5, 13, '#f8d040'); p.set(6, 13, '#f8d040');
+    p.vline(14, 2, 28, '#2a5898');
+    p.outline();
+    return p.canvas();
+  }
+
+  function trashCan() {
+    const p = new Pix(12, 16);
+    p.rect(1, 3, 10, 12, '#4a7a4a'); p.rect(0, 1, 12, 3, '#5a8a5a'); p.hline(1, 10, 1, '#7aaa7a');
+    for (const x of [3, 6, 9]) p.vline(x, 5, 13, '#3a5a3a');
+    p.outline();
+    return p.canvas();
+  }
+
+  // Wrestling ring seen from above: canvas, ropes, corner posts and steps.
+  function ring() {
+    const p = new Pix(128, 112);
+    p.rect(2, 4, 124, 92, '#ece8e0');
+    for (let i = 0; i < 60; i++) p.set(4 + G.hash(i, 1, 6) * 120, 6 + G.hash(i, 2, 6) * 88, '#dcd8ce');
+    for (let y = 0; y < 112; y++) for (let x = 0; x < 128; x++) {
+      const d = Math.hypot(x - 64, y - 50);
+      if (d > 15 && d < 18) p.set(x, y, '#d03040');
+      if (d <= 15 && Math.abs(x - 64) + Math.abs(y - 50) < 9) p.set(x, y, '#e8b830');
+    }
+    p.rect(0, 96, 128, 16, '#2848a8'); p.hline(0, 127, 96, '#4868c8'); p.hline(0, 127, 111, '#18307a');
+    for (let x = 4; x < 124; x += 10) p.vline(x, 99, 108, '#3858b8');
+    const ropes = ['#d03040', '#f8f8f8', '#3058c8'];
+    ropes.forEach((col, i) => {
+      const o = 6 + i * 3;
+      p.hline(6, 121, o, col); p.hline(6, 121, 92 - i * 3, col);
+      p.vline(o, 6, 92, col); p.vline(121 - i * 3, 6, 92, col);
+    });
+    for (const [x, y] of [[2, 2], [118, 2], [2, 86], [118, 86]]) { p.rect(x, y, 8, 8, '#9aa0aa'); p.rect(x + 2, y + 2, 4, 4, '#d03040'); }
+    p.rect(52, 97, 24, 15, '#80889a');
+    for (let y = 100; y < 112; y += 4) p.hline(52, 75, y, '#5a6274');
+    p.outline();
+    return p.canvas();
+  }
+
+  function concession() {
+    const p = new Pix(64, 30);
+    p.rect(4, 0, 18, 12, '#d8eef8'); p.rect(5, 6, 16, 6, '#f8e070');
+    for (let i = 0; i < 12; i++) p.set(6 + G.hash(i, 1, 7) * 14, 3 + G.hash(i, 2, 7) * 4, '#fff4c0');
+    p.rect(4, 0, 18, 1, '#d03038');
+    p.rect(34, 2, 12, 10, '#404858'); p.rect(36, 4, 3, 3, '#d03038'); p.rect(41, 4, 3, 3, '#3878d8');
+    p.rect(50, 6, 6, 6, '#e8e8f0'); p.rect(51, 4, 4, 2, '#d03038');
+    p.rect(0, 12, 64, 4, '#e8e0d0'); p.hline(0, 63, 12, '#ffffff');
+    p.rect(0, 16, 64, 14, '#c03040');
+    for (let x = 8; x < 64; x += 16) p.rect(x, 19, 8, 8, '#e04858');
+    p.outline();
+    return p.canvas();
+  }
+
+  function lockerDoor() {
+    const p = new Pix(16, 24);
+    p.rect(1, 2, 14, 22, '#7a8292');
+    p.rect(3, 5, 10, 5, '#a8c0d8');
+    p.rect(1, 0, 14, 2, '#c03040');
+    p.vline(13, 3, 23, '#5a6272');
+    p.set(11, 14, '#f8d040'); p.set(11, 15, '#f8d040');
+    p.outline();
+    return p.canvas();
+  }
+
   function shadowSprite(w) {
     const c = G.canvas(w, 4);
     const x = c.getContext('2d');
@@ -1242,5 +1481,17 @@
     S.shadowBig = shadowSprite(20);
     S.ditch = ditchScene();
     S.trees = [tree(1), tree(2), tree(3)];
+    S.boulder = boulder();
+    S.cars = ['#d03038', '#3878d8', '#f0f0f0', '#e8b830', '#38a048', '#303038'].map(car);
+    S.standFunnel = stand('#e04878', 'Funnel Cake');
+    S.standCorn = stand('#e8a020', 'Corn Dogs', '#a05010');
+    S.standLemon = stand('#e8d020', 'Lemonade', '#3a8a30');
+    S.booth = booth();
+    S.hay = hayBale();
+    S.potty = potty();
+    S.trash = trashCan();
+    S.ring = ring();
+    S.concession = concession();
+    S.lockerDoor = lockerDoor();
   };
 })();

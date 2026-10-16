@@ -20,7 +20,12 @@
     'r': { k: 'rug', edge: true },
     'x': { k: 'mat' },
     ' ': { k: 'void', solid: true },
+    'a': { k: 'asphalt', edge: true, group: 'asphalt' },
+    'l': { k: 'stall', edge: true, group: 'asphalt' },
+    'C': { k: 'concrete' },
+    'B': { k: 'bleacher', solid: true },
   };
+  const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 
   const overlap = (a, b) => a[0] < b[2] && a[2] > b[0] && a[1] < b[3] && a[3] > b[1];
   G.overlap = overlap;
@@ -40,6 +45,7 @@
       this.props = [];
       this.ents = [];
       this.fx = [];
+      this.texts = [];
       this.triggers = [];
       for (let y = 0; y < this.h; y++) {
         for (let x = 0; x < this.w; x++) {
@@ -184,6 +190,13 @@
         f.x += f.vx; f.y += f.vy; f.vy += f.g || 0; f.life--;
       }
       this.fx = this.fx.filter((f) => f.life > 0);
+      for (const t of this.texts) { t.y -= 0.35; t.t--; }
+      this.texts = this.texts.filter((t) => t.t > 0);
+    }
+
+    // Floating text (taunts, "CLANK!", etc.)
+    pop(x, y, text, color = '#f8d850') {
+      this.texts.push({ x, y, text, color, t: 60 });
     }
 
     burst(x, y, colors, n = 8, opt = {}) {
@@ -208,7 +221,8 @@
           const d = TD[ch] || TD['.'];
           let mask = 0;
           if (d.edge) {
-            const diff = (x, y) => { const n = this.tileAt(x, y); return n !== null && n !== ch; };
+            const g = group(ch);
+            const diff = (x, y) => { const n = this.tileAt(x, y); return n !== null && group(n) !== g; };
             if (diff(tx, ty - 1)) mask |= 1;
             if (diff(tx + 1, ty)) mask |= 2;
             if (diff(tx, ty + 1)) mask |= 4;
@@ -233,6 +247,11 @@
         ctx.fillStyle = f.color;
         const s = f.grow ? f.size * (1 + (1 - f.life / 30)) : f.size;
         ctx.fillRect(Math.round(f.x - s / 2 - cx), Math.round(f.y - s / 2 - cy), Math.round(s), Math.round(s));
+      }
+      for (const t of this.texts) {
+        if (t.t < 12 && (t.t >> 1) & 1) continue;
+        const w = G.font.width(t.text);
+        G.font.draw(ctx, t.text, Math.round(t.x - w / 2) - cx, Math.round(t.y) - cy, t.color, { shadow: '#1c1424' });
       }
     }
   }

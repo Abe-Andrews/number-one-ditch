@@ -123,10 +123,13 @@
     swingHits(w) {
       const r = this.swingRect();
       for (const e of w.ents) {
-        if (!e.enemy || e.dead || this.hitSet.has(e)) continue;
-        if (G.overlap(r, e.hurtBox())) {
+        if (e.dead || this.hitSet.has(e)) continue;
+        if (e.enemy && G.overlap(r, e.hurtBox())) {
           this.hitSet.add(e);
           e.hit(1, this.x, this.y);
+        } else if (e.onHammer && G.overlap(r, e.box())) {
+          this.hitSet.add(e);
+          e.onHammer(this);
         }
       }
       // cut grass and bushes (only the tile cells near the hammer head)
@@ -327,6 +330,165 @@
     }
   }
   G.Six = Six;
+
+  // ============================================================== WRESTLER (enemy)
+  // Wanders, winds up when Nate gets close, then dropkicks in a straight line.
+  // Charging into a wall (or missing) leaves them dizzy and open to a bonk.
+  const TAUNTS = ['DROPKICK!', 'OHHH YEAH!', 'FLYING ELBOW!', 'SUPLEX TIME!', 'BODY SLAM!', 'CLOTHESLINE!'];
+
+  class Wrestler extends Ent {
+    constructor(x, y, style) {
+      super(x, y);
+      this.enemy = true;
+      this.style = style;
+      this.hb = { w: 10, h: 6 };
+      this.hp = 3;
+      this.dir = 'down';
+      this.state = 'wander';
+      this.t = 40 + Math.random() * 60;
+      this.cool = 60;
+      this.anim = 0;
+      this.vx = 0; this.vy = 0;
+      this.hurtT = 0;
+      this.kb = { x: 0, y: 0 };
+    }
+
+    get S() { return G.sprites['wrestler_' + this.style]; }
+
+    hurtBox() { return [this.x - 7, this.y - 16, this.x + 7, this.y]; }
+
+    update(w) {
+      if (G.script.busy) return;
+      const p = G.play.player;
+      if (this.cool > 0) this.cool--;
+      if (this.hurtT > 0) {
+        this.hurtT--;
+        w.move(this, this.kb.x, 0);
+        w.move(this, 0, this.kb.y);
+        this.kb.x *= 0.85; this.kb.y *= 0.85;
+        return;
+      }
+      const dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+
+      if (this.state === 'wander') {
+        if (dist < 76 && this.cool <= 0) {
+          this.state = 'windup';
+          this.t = 30;
+          this.dir = G.dirToward(dx, dy);
+          return;
+        }
+        if (--this.t <= 0) {
+          const go = Math.random() < 0.7, a = Math.random() * Math.PI * 2;
+          this.vx = go ? Math.cos(a) * 0.45 : 0;
+          this.vy = go ? Math.sin(a) * 0.45 : 0;
+          this.t = 40 + Math.random() * 80;
+        }
+        if (this.vx || this.vy) {
+          this.dir = G.dirToward(this.vx, this.vy);
+          const h = w.move(this, this.vx, this.vy);
+          if (h.hitX) this.vx = -this.vx;
+          if (h.hitY) this.vy = -this.vy;
+          this.anim++;
+        }
+      } else if (this.state === 'windup') {
+        this.dir = G.dirToward(dx, dy);
+        if (--this.t <= 0) {
+          this.state = 'charge';
+          this.t = 42;
+          this.vx = (dx / dist) * 2.6;
+          this.vy = (dy / dist) * 2.6;
+          G.audio.sfx('dash');
+          w.pop(this.x, this.y - 26, TAUNTS[Math.floor(Math.random() * TAUNTS.length)], '#ffd860');
+        }
+      } else if (this.state === 'charge') {
+        this.anim += 2;
+        const h = w.move(this, this.vx, this.vy);
+        if (h.hitX || h.hitY) {
+          this.dizzy(w, true);
+        } else if (--this.t <= 0) {
+          this.dizzy(w, false);
+        }
+      } else if (this.state === 'dizzy') {
+        if (--this.t <= 0) { this.state = 'wander'; this.t = 30; this.cool = 70; }
+      }
+
+      // only the dropkick itself hurts, so it's readable: dodge the charge, then bonk
+      if (this.state === 'charge' && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(2, this.x, this.y);
+    }
+
+    dizzy(w, bonk) {
+      this.state = 'dizzy';
+      this.t = bonk ? 80 : 50;
+      this.vx = this.vy = 0;
+      if (bonk) {
+        G.audio.sfx('bump');
+        G.play.shake(6, 2);
+        w.burst(this.x, this.y - 10, ['#ffffff', '#c8c8d0'], 6, { speed: 1, life: 14 });
+      }
+    }
+
+    hit(dmg, sx, sy) {
+      this.hp -= dmg;
+      this.hurtT = 14;
+      const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
+      this.kb = { x: (dx / m) * 3, y: (dy / m) * 3 };
+      if (this.state === 'charge' || this.state === 'windup') { this.state = 'dizzy'; this.t = 40; }
+      G.audio.sfx('hit');
+      if (this.hp <= 0) {
+        this.dead = true;
+        G.audio.sfx('bell');
+        this.world.pop(this.x, this.y - 24, '1... 2... 3!', '#ffffff');
+        this.world.burst(this.x, this.y - 8, ['#ffffff', '#f8d850', '#e8e0f0'], 14, { speed: 1.3, life: 22, size: 3 });
+        G.play.maybeDrop(this.x, this.y, 0.75);
+        G.state.stats.pins = (G.state.stats.pins || 0) + 1;
+      }
+    }
+
+    draw(ctx, cx, cy) {
+      const S = this.S;
+      drawShadow(ctx, this.x, this.y, cx, cy);
+      let frame = 0;
+      if (this.state === 'charge') frame = 1 + ((this.anim >> 2) & 1);
+      else if (this.state === 'wander' && (this.vx || this.vy)) frame = walkFrame(this.anim, true);
+      let img = S[this.dir][frame];
+      if ((this.hurtT && (this.hurtT >> 1) & 1) || (this.state === 'windup' && (this.t >> 2) & 1)) img = G.art.flash(img);
+      const jx = this.state === 'windup' ? ((this.t >> 1) & 1 ? 1 : -1) : 0;
+      const sx = Math.round(this.x - 8 + jx) - cx, sy = Math.round(this.y - S.h + 2) - cy;
+      ctx.drawImage(img, sx, sy);
+      if (this.state === 'dizzy') {
+        for (let i = 0; i < 3; i++) {
+          const a = G.tick * 0.12 + (i * Math.PI * 2) / 3;
+          ctx.fillStyle = i ? '#f8d850' : '#ffffff';
+          ctx.fillRect(Math.round(this.x + Math.cos(a) * 6) - cx, Math.round(sy - 3 + Math.sin(a) * 2), 2, 2);
+        }
+      }
+    }
+  }
+  G.Wrestler = Wrestler;
+
+  // ============================================================== BOULDER
+  class Boulder extends Ent {
+    // No talk(): pressing Z next to it swings the hammer so you get the CLANK.
+    constructor(cx, by, onHammer) {
+      super(cx, by);
+      this.solid = true;
+      this.hb = { w: 66, h: 28 };
+      this.onHammerFn = onHammer;
+    }
+    onHammer(p) {
+      G.audio.sfx('clank');
+      G.play.shake(4, 1);
+      const [dx, dy] = G.DIRS[p.dir];
+      this.world.burst(p.x + dx * 14, p.y - 8 + dy * 10, ['#ffffff', '#f8d850', '#ffb040'], 8, { speed: 1.6, life: 12 });
+      this.world.pop(p.x + dx * 12, p.y - 30, 'CLANK!', '#e0e0e8');
+      this.onHammerFn();
+    }
+    draw(ctx, cx, cy) {
+      ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 34) - cx, Math.round(this.y - 4) - cy, 68, 6);
+      ctx.drawImage(G.spr.boulder, Math.round(this.x - 32) - cx, Math.round(this.y - 46) - cy);
+    }
+  }
+  G.Boulder = Boulder;
 
   // ============================================================== PICKUP
   class Pickup extends Ent {
