@@ -85,6 +85,9 @@
         return;
       }
 
+      // puffing Dad's pipe: Nate stands still, the world keeps going
+      if (this.state === 'pipe') { G.pipe.update(); return; }
+
       // walking
       const d = inp.dir();
       this.moving = !!(d.x || d.y);
@@ -162,6 +165,7 @@
 
     hurt(dmg, sx, sy) {
       if (this.inv > 0 || G.script.busy || this.state === 'dead') return;
+      if (this.state === 'pipe') G.pipe.stop(); // a hit knocks the pipe out of his mouth
       G.state.hp = Math.max(0, G.state.hp - dmg);
       G.audio.sfx('hurt');
       this.inv = 70;

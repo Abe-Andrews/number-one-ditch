@@ -63,6 +63,7 @@
 
     loadMap(id, x, y, dir, skipEnter) {
       this.camFocus = null;
+      G.pipe.active = false;
       this.world = new G.World(id);
       this.player = new G.Player(x, y, dir);
       this.world.add(this.player);
@@ -186,7 +187,7 @@
           G.script.run((function* () { yield G.say('Nate', 'Mmm. Doosh De Luche. Delicioso.'); })());
         }
       } else if (s.xItem === 'pipe') {
-        G.script.run(G.SCRIPTS.pipeSession());
+        G.pipe.start();
       } else if (s.xItem === 'package') {
         const w = this.world, p = this.player;
         if (!s.items.package || w.ents.filter((e) => e instanceof G.Package).length >= 2) { G.audio.sfx('bump'); return; }
@@ -234,6 +235,7 @@
     die() {
       if (this.dying) return;
       this.dying = 1;
+      G.pipe.stop();
       this.player.state = 'dead';
       G.audio.stop();
     },
@@ -318,6 +320,7 @@
         ctx.globalCompositeOperation = 'source-over';
       }
       G.hud.draw(ctx);
+      G.pipe.draw(ctx);
       const boss = this.world.ents.find((e) => e.boss && e.state !== 'defeated');
       if (boss) G.hud.bossBar(ctx, boss);
       G.areaBanner.draw(ctx);

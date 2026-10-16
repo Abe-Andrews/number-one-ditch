@@ -962,23 +962,19 @@
     yield G.say('Dad', 'Peace be with you, son.');
   };
 
-  S.pipeSession = function* () {
-    const id = yield G.pipeCmd();
-    const sig = id && G.SIGNALS.find((sg) => sg.id === id);
-    if (sig) yield* sig.effect();
-  };
-
-  // Smoke signal: calms every nearby enemy for about 10 seconds.
-  S.signalPeace = function* () {
-    yield G.banner('PEACE BE WITH YOU', 'Nearby enemies calm right down.', 110);
-    const p = P();
+  // Smoke signal: calms every nearby enemy for about 10 seconds. Instant and
+  // non-blocking (no banner), so the world never pauses for the pipe.
+  S.signalPeace = function () {
+    const p = P(), w = G.play.world;
+    w.fx.push({ x: p.x, y: p.y - 12, vx: 0, vy: 0, circle: true, r: 60, max: 24, life: 24, color: '#fff0a0' });
+    w.pop(p.x, p.y - 34, 'PEACE BE WITH YOU', '#f8e070');
     let n = 0;
-    for (const e of G.play.world.ents) {
+    for (const e of w.ents) {
       if (!e.enemy || e.boss || e.dead || Math.hypot(e.x - p.x, e.y - p.y) > 180) continue;
       e.calm = 600;
       n++;
     }
-    if (!n) yield G.say('Nate', 'Nobody around to calm down. Still a nice pipe, though.');
+    if (!n) w.pop(p.x, p.y - 24, '(nobody to calm down)', '#c8c8d0');
   };
 
   S.dadArena = function* () {
