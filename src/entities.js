@@ -52,7 +52,7 @@
       this.hitSet = new Set();
     }
 
-    get spr() { return G.sprites.nate; }
+    get spr() { return G.nateSprites(); }
 
     update(w) {
       if (this.inv > 0) this.inv--;
@@ -619,6 +619,18 @@
         this.world.burst(this.x, this.y - 8, ['#ffffff', '#e8e0f0', '#ff8878'], 12, { speed: 1.2, life: 20, size: 3 });
         G.play.maybeDrop(this.x, this.y, 0.6);
         G.state.stats.sixes = (G.state.stats.sixes || 0) + 1;
+        // progress on Gus's lawn job
+        const f = G.state.flags;
+        if (f.capQuest && !G.state.items.cap && !f.capDone) {
+          const n = G.capProgress();
+          if (n >= 10) {
+            f.capDone = true;
+            this.world.pop(this.x, this.y - 26, '10/10! Go see Gus!', '#78e070');
+            G.audio.sfx('secret');
+          } else {
+            this.world.pop(this.x, this.y - 26, G.sayable(n) + '/10', '#f8f8f0');
+          }
+        }
       }
     }
 

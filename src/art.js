@@ -1443,6 +1443,18 @@
     return p.canvas();
   }
 
+  // Nate's brown corduroy flat cap, for the item-get pose.
+  function capIcon() {
+    const p = new Pix(16, 10);
+    const cap = '#86683e', capL = '#a8885a', capD = '#5e4628';
+    for (let x = 3; x <= 12; x++) p.set(x, 2, cap);
+    for (let x = 2; x <= 13; x++) { p.set(x, 3, x % 2 ? capL : cap); p.set(x, 4, cap); p.set(x, 5, cap); }
+    p.hline(5, 9, 1, cap); p.hline(6, 8, 1, capL);
+    p.hline(1, 14, 6, capD); p.hline(10, 15, 7, capD);
+    p.outline();
+    return p.canvas();
+  }
+
   function ringLogo() {
     const p = new Pix(48, 48);
     for (let y = 0; y < 48; y++) for (let x = 0; x < 48; x++) {
@@ -1557,5 +1569,6 @@
     S.gift = gift(false);
     S.giftLit = gift(true);
     S.ringLogo = ringLogo();
+    S.cap = capIcon();
   };
 })();

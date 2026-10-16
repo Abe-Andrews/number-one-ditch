@@ -9,7 +9,7 @@
   function newState() {
     return {
       hp: 6, maxHp: 6, teeth: 0,
-      items: { hammer: false, doosh: 0 },
+      items: { hammer: false, doosh: 0, cap: false },
       xItem: null,
       flags: {},
       stats: { slips: 0, sixes: 0 },
@@ -448,7 +448,7 @@
     draw(ctx) {
       ctx.fillStyle = '#0c0814';
       ctx.fillRect(0, 0, G.W, G.H);
-      const S = G.sprites.nate;
+      const S = G.nateSprites();
       ctx.save();
       ctx.translate(120, 60);
       ctx.rotate(Math.PI / 2);
@@ -481,6 +481,8 @@
   G.art.init();
   G.sprites = {};
   for (const id in G.CAST) G.sprites[id] = G.art.person(G.CAST[id]);
+  // Nate only wears his flat cap once Groundskeeper Gus gives it back.
+  G.nateSprites = () => (G.state && G.state.items.cap ? G.sprites.nate : G.sprites.nate_nocap);
   G.fade = 0;
   G.state = newState();
   G.title.enter();

@@ -188,6 +188,7 @@
 
     // ---------------------------------------------------------- update
     update() {
+      if (this.def.tick) this.def.tick(this);
       for (const e of this.ents) if (!e.dead && e.update) e.update(this);
       this.ents = this.ents.filter((e) => !e.dead);
       for (const f of this.fx) {

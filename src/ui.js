@@ -146,7 +146,7 @@
       F().draw(ctx, 'PARTY', 146, 8, '#f8d850', { shadow: SH });
       const order = ['nate', 'lily', 'abe', 'hannah', 'doron'];
       order.forEach((id, i) => {
-        const S = G.sprites[id];
+        const S = id === 'nate' ? G.nateSprites() : G.sprites[id];
         const x = 146 + i * 17, y = 74 - S.h;
         const has = s.party.includes(id);
         ctx.drawImage(has ? S.down[0] : silhouette(S.down[0]), x, y);
@@ -159,9 +159,13 @@
       F().draw(ctx, 'ABE\'S RULES', 10, 92, '#ffa848', { shadow: SH });
       F().draw(ctx, '1. Nate and Lily may not say the sacred number.', 10, 104, '#f8f8f0', { shadow: SH });
       F().draw(ctx, '2. Abe is the Master. See rule 1.', 10, 114, '#f8f8f0', { shadow: SH });
-      F().draw(ctx, 'Sacred number slips: {r}' + s.stats.slips + '{/}   Sixes: {y}' + (s.stats.sixes || 0) + '{/}   Pins: {y}' + (s.stats.pins || 0), 10, 126, '#9890a8', { shadow: SH });
+      F().draw(ctx, 'Sacred number slips: {r}' + s.stats.slips + '{/}   Sixes: {y}' + (s.stats.sixes || 0) + '{/}   Pins: {y}' + (s.stats.pins || 0), 10, 124, '#9890a8', { shadow: SH });
+      if (s.flags.capQuest && !s.items.cap) {
+        const n = G.capProgress();
+        F().draw(ctx, 'Gus\'s lawn job: {y}' + G.sayable(n) + '/10{/} sacred numbers' + (n >= 10 ? ' {g}(go see Gus!){/}' : ''), 10, 134, '#78e8e8', { shadow: SH });
+      }
       const help = this.msgT > 0 ? '{g}' + this.msg : 'Z: set to X    X: save    ENTER: close';
-      F().draw(ctx, help, 10, 142, '#9890a8', { shadow: SH });
+      F().draw(ctx, help, 10, 145, '#9890a8', { shadow: SH });
     }
   }
   G.PauseMenu = PauseMenu;

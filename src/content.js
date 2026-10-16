@@ -78,6 +78,13 @@
     wrestler_green: { mask: '#38a048', maskTrim: '#ffffff', skin: '#f0c8a8', shirt: '#38a048', pants: '#38a048', neckline: true, sleeves: 0, shorts: true, boots: true, shoes: '#f0f0f0', wide: true, torso: 4, legs: 3 },
   };
 
+  // Nate before he gets his flat cap back from Groundskeeper Gus.
+  G.CAST.nate_nocap = Object.assign({}, G.CAST.nate, { hat: null, hatStyle: null });
+  G.CAST.gus = {
+    skin: '#e8b890', hair: '#b8b8c0', hairStyle: 'cap', hat: '#d8c088', hatStyle: 'ball', beard: '#c8c8d0',
+    shirt: '#4a7a48', collar: '#6a9a60', pants: '#8a7450', shoes: '#4a3428', boots: true, torso: 7, legs: 3,
+  };
+
   // Dad as El EEENGLISH: luchador mask over his glasses and beard, blazer on.
   G.CAST.elenglish = Object.assign({}, G.CAST.dad, { mask: '#1c2c6c', maskTrim: '#e8e8f0', maskEmblem: '#d03038' });
 
@@ -310,6 +317,56 @@
     s.items.doosh++;
     if (!s.xItem) s.xItem = 'doosh';
     yield G.itemGet(G.spr.doosh, 'You got a {y}Doosh De Luche{/}! Press {y}X{/} to eat it and heal 4 hearts.');
+  };
+
+  // Groundskeeper Gus found Nate's cap. He'll trade it for 10 bonked Sixes.
+  const CAP_GOAL = 10;
+  G.capProgress = () => Math.min(CAP_GOAL, G.state.stats.sixes || 0);
+  // Abe's Rule #1 applies to on-screen counters too: 6 is shown as "5+1".
+  G.sayable = (n) => (String(n).includes('6') ? (n - 1) + '+1' : String(n));
+
+  S.gus = function* () {
+    const f = flags(), s = G.state;
+    if (s.items.cap) {
+      yield G.say('Gus', 'Lawn\'s looking great. My petunias thank you.');
+      return;
+    }
+    if (!f.capQuest) {
+      yield G.say('Gus', 'Afternoon. Found this blowing around the quad this morning.');
+      yield G.say(null, 'Gus holds up a brown {y}corduroy flat cap{/}.');
+      yield G.say('Nate', 'MY CAP! That\'s mine!');
+      yield G.say('Gus', 'Is it now. Very distinguished. Tell you what...');
+      yield G.say('Gus', 'Those walking... uh... {r}sixes{/} have been tearing up my lawn all morning.');
+      yield G.say('Nate', 'The {r}sacred numbers{/}. I\'m not allowed to say it.');
+      yield G.say('Gus', '...Sure. Bonk {y}10{/} of your sacred numbers and the cap\'s all yours.');
+      f.capQuest = true;
+      const n = G.capProgress();
+      if (n > 0) yield G.say('Gus', 'I saw you already got ' + G.sayable(n) + '. Those count. ' + G.sayable(CAP_GOAL - n) + ' to go.');
+      else yield G.say('Gus', 'They\'re on the lawns south of the main path. Go get \'em.');
+      if (n < CAP_GOAL) return;
+    }
+    const n = G.capProgress();
+    if (n < CAP_GOAL) {
+      yield G.say('Gus', 'That\'s ' + G.sayable(n) + ' so far. I need ' + CAP_GOAL + '. Keep bonking.');
+      return;
+    }
+    yield G.say('Gus', 'Ten sacred numbers! My lawn is saved. A deal\'s a deal.');
+    s.items.cap = true;
+    yield G.itemGet(G.spr.cap, 'You got your {y}Flat Cap{/} back! Corduroy. Distinguished. Yours.');
+    yield G.say('Nate', 'Ahh. Now I can think clearly.');
+  };
+
+  // The way east is closed until Nate has a reason to go AND his cap back.
+  S.notEast = function* () {
+    const p = P(), f = flags();
+    if (!f.doronChat) {
+      yield G.say('Nate', 'The fairgrounds? No time for that. Chesapeake is {y}south{/}, not east.');
+    } else if (f.capQuest) {
+      yield G.say('Nate', 'I\'m not showing up anywhere without my flat cap. {y}Gus{/} has it. Ten sacred numbers, then it\'s mine.');
+    } else {
+      yield G.say('Nate', 'I\'m not going anywhere without my {y}flat cap{/}. Someone on the quad must have seen it.');
+    }
+    yield G.walkTo(p, p.x - 20, p.y, 1);
   };
 
   S.sixIntro = function* () {
@@ -657,6 +714,9 @@
   // ================================================================ MAPS
   G.MAPS = {};
 
+  // where Sixes appear on the campus lawns (first 7 at load, the rest for respawns)
+  const SIX_SPOTS = [[28, 20], [31, 21], [34, 20], [30, 25], [6, 22], [10, 24], [15, 26], [33, 24], [12, 21], [27, 26]];
+
   G.MAPS.lab = {
     name: 'Nate\'s Lab',
     music: 'house',
@@ -696,6 +756,8 @@
         G.state.items.hammer = true;
         yield G.itemGet(G.spr.hammer.up, 'You got the {y}Rock Hammer{/}! A geologist\'s best friend.');
         yield G.say(null, 'Press {y}Z{/} to swing it. Great for rocks, tall grass... and anything shaped like the sacred number.');
+        yield G.say('Nate', 'Hammer: check. Flat cap: ...wait. Where\'s my {y}flat cap{/}?!');
+        yield G.say('Nate', 'I never go anywhere without my cap. Maybe it blew away on the quad...');
       }));
       w.addTrigger(6, 8, 1, 1, S.labExit);
     },
@@ -763,7 +825,7 @@
         G.play.addTeeth(20);
       }));
 
-      [[28, 20], [31, 21], [34, 20], [30, 25], [6, 22], [10, 24], [15, 26]].forEach(([x, y]) => w.add(new G.Six(x * 16 + 8, y * 16 + 14)));
+      SIX_SPOTS.slice(0, 7).forEach(([x, y]) => w.add(new G.Six(x * 16 + 8, y * 16 + 14)));
 
       w.addTrigger(1, 15, 37, 1, () => {
         if (flags().sixIntro) return;
@@ -777,7 +839,25 @@
       });
       w.addTrigger(18, 29, 4, 1, () => G.script.run(S.southRoad()));
       w.add(new G.Sign(37, 11, 'EAST: Easton Fairgrounds. Tonight: {y}MICRO MAYHEM WRESTLING{/}!'));
-      w.addWarp(39, 12, 1, 2, 'fair', 1, 12, 'right');
+      // the fairgrounds only open up once the boulder (and Doron's text) gives Nate a reason to go
+      w.addTrigger(39, 12, 1, 2, () => {
+        if (flags().doronChat && G.state.items.cap) G.play.warp('fair', 1, 12, 'right');
+        else G.script.run(S.notEast());
+      });
+      npc('gus', 'Gus', 6, 15, S.gus, { wander: 12 });
+    },
+    // Sacred numbers keep wandering back onto the lawns, off-screen.
+    tick(w) {
+      if (G.script.busy) return;
+      w.spawnT = (w.spawnT || 0) + 1;
+      if (w.spawnT < 300) return;
+      w.spawnT = 0;
+      if (w.ents.filter((e) => e instanceof G.Six).length >= 7) return;
+      const p = G.play.player;
+      const spots = SIX_SPOTS.filter(([x, y]) => Math.hypot(x * 16 + 8 - p.x, y * 16 + 14 - p.y) > 150);
+      if (!spots.length) return;
+      const [x, y] = spots[Math.floor(Math.random() * spots.length)];
+      w.add(new G.Six(x * 16 + 8, y * 16 + 14));
     },
   };
 
