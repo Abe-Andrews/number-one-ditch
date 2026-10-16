@@ -1443,6 +1443,28 @@
     return p.canvas();
   }
 
+  function schoolDesk() {
+    const p = new Pix(16, 18);
+    p.rect(4, 12, 8, 5, '#6a7080'); p.hline(4, 11, 12, '#8a90a0');
+    p.rect(1, 3, 14, 7, '#c89058'); p.hline(1, 14, 3, '#e0b078'); p.hline(1, 14, 9, '#9a6838');
+    p.rect(5, 4, 6, 4, '#f8f8f0'); p.hline(6, 9, 5, '#9090a0'); p.hline(6, 8, 6, '#9090a0');
+    p.vline(2, 10, 16, '#5a5a64'); p.vline(13, 10, 16, '#5a5a64');
+    p.outline();
+    return p.canvas();
+  }
+
+  function chalkboard() {
+    const p = new Pix(80, 16);
+    p.rect(0, 0, 80, 16, '#7a5028');
+    p.rect(2, 2, 76, 11, '#2e5a3e');
+    for (let i = 0; i < 14; i++) p.hline(66 + (i % 3), 66 + (i % 3) + 4 + (i % 2) * 3, 3 + i % 9, '#c8dcc8');
+    p.hline(1, 78, 14, '#a07040'); p.set(10, 13, '#ffffff'); p.set(11, 13, '#ffffff');
+    p.outline();
+    const c = p.canvas();
+    G.font.draw(c.getContext('2d'), 'FINAL EXAM', 5, 3, '#eef6ee');
+    return c;
+  }
+
   // Nate's brown corduroy flat cap, for the item-get pose.
   function capIcon() {
     const p = new Pix(16, 10);
@@ -1570,5 +1592,8 @@
     S.giftLit = gift(true);
     S.ringLogo = ringLogo();
     S.cap = capIcon();
+    S.heartBig = scale2(S.heart.full);
+    S.schoolDesk = schoolDesk();
+    S.chalkboard = chalkboard();
   };
 })();

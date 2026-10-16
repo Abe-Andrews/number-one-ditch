@@ -85,6 +85,13 @@
     shirt: '#4a7a48', collar: '#6a9a60', pants: '#8a7450', shoes: '#4a3428', boots: true, torso: 7, legs: 3,
   };
 
+  // Science Center classroom
+  G.CAST.moles = {
+    skin: '#d8a078', hair: '#e0e0e8', hairStyle: 'receding', glasses: '#2a2a30',
+    coat: '#f4f4f4', shirt: '#6a4a8a', pants: '#3a3a44', shoes: '#2a2a2a', torso: 7, legs: 3,
+  };
+  G.CAST.priya = { skin: '#b07850', hair: '#1a1010', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 };
+
   // Dad as El EEENGLISH: luchador mask over his glasses and beard, blazer on.
   G.CAST.elenglish = Object.assign({}, G.CAST.dad, { mask: '#1c2c6c', maskTrim: '#e8e8f0', maskEmblem: '#d03038' });
 
@@ -354,9 +361,89 @@
     s.items.cap = true;
     yield G.itemGet(G.spr.cap, 'You got your {y}Flat Cap{/} back! Corduroy. Distinguished. Yours.');
     yield G.say('Nate', 'Ahh. Now I can think clearly.');
+    // the lucky cap comes with a heart container
+    s.maxHp += 2;
+    s.hp = s.maxHp;
+    f.capHeart = true;
+    yield G.itemGet(G.spr.heartBig, 'With his lucky cap back, Nate feels braver. You got a {r}Heart Container{/}! Max hearts +1.');
   };
 
   // The way east is closed until Nate has a reason to go AND his cap back.
+  // ---------------------------------------------------------------- the chem final
+  // Every answer is 6. Saying "6" still counts, but it's a sacred number slip.
+  const CHEM_FINAL = [
+    { q: 'How many carbon atoms are in a benzene ring?', opts: ['5', '6', 'Five plus one', '12'], safe: 2, note: 'Benzene is a ring of six carbons.' },
+    { q: 'What is the atomic number of carbon?', opts: ['6', '12', 'Half a dozen', '14'], safe: 2, note: 'Carbon has six protons.' },
+    { q: 'Quartz crystals grow as prisms with how many sides?', opts: ['4', 'One more than five', '6', '8'], safe: 1, note: 'Quartz is hexagonal. Six sides.' },
+    { q: 'If [H+] is 10 to the -6 molar, what is the pH?', opts: ['6', '8', 'Slightly acidic: 5+1', '-6'], safe: 2, note: 'The pH is six. You of all people should know that.' },
+    { q: 'Halite (rock salt) grows in cubes. How many faces does a cube have?', opts: ['8', '4', 'A number between 5 and 7', '6'], safe: 2, note: 'A cube has six faces.' },
+  ];
+
+  S.chemFinal = function* () {
+    const f = flags(), s = G.state;
+    if (f.chemPerfect) {
+      yield G.say('Dr. Moles', 'My star student! Go blow something up. Responsibly.');
+      return;
+    }
+    if (!f.chemMet) {
+      f.chemMet = true;
+      yield G.say('Dr. Moles', 'Nate! You\'re late for the chemistry final.');
+      yield G.say('Nate', 'Final? I have a ditch to save!');
+      yield G.say('Dr. Moles', 'Five questions. Fun fact: every answer on my final is the same number this year. Saves on grading.');
+      yield G.say('Nate', '...Which number?');
+      yield G.say('Dr. Moles', 'You\'ll figure it out.');
+    } else {
+      yield G.say('Dr. Moles', 'Back for a retake? Same five questions.');
+    }
+    const ready = yield G.ask('Dr. Moles', 'Ready to take the final?', ['Ready.', 'Not yet.']);
+    if (ready !== 0) { yield G.say('Dr. Moles', 'Come back when you\'re ready. Study your hexagons.'); return; }
+
+    let score = 0, slips = 0;
+    for (let i = 0; i < CHEM_FINAL.length; i++) {
+      const Q = CHEM_FINAL[i];
+      const a = yield G.ask('Dr. Moles', 'Question ' + (i + 1) + ': ' + Q.q, Q.opts);
+      if (a === Q.opts.indexOf('6')) {
+        score++; slips++;
+        yield G.say('Nate', '6.');
+        yield* slip();
+        yield G.say('Dr. Moles', '...Correct. Why are you crying?');
+      } else if (a === Q.safe) {
+        score++;
+        yield G.say('Dr. Moles', ['Correct!', 'Correct. Interesting phrasing.', 'Correct... I suppose.'][i % 3]);
+      } else {
+        yield G.say('Dr. Moles', 'Incorrect. ' + Q.note);
+      }
+    }
+
+    yield G.say('Dr. Moles', 'Final score: ' + G.sayable(score) + ' out of 5.');
+    if (score < 3) {
+      yield G.say('Dr. Moles', 'You need 3 to pass. Retake it whenever you\'re ready.');
+      return;
+    }
+    if (!f.chemPassed) {
+      f.chemPassed = true;
+      G.play.addTeeth(30);
+      G.audio.sfx('tooth');
+      yield G.say('Dr. Moles', 'You passed! Here, {y}30 shark teeth{/}. Don\'t ask why I have them.');
+    }
+    if (score === 5 && slips === 0) {
+      f.chemPerfect = true;
+      s.maxHp += 2;
+      s.hp = s.maxHp;
+      yield G.say('Dr. Moles', 'A perfect score, and you never said the number once. That deserves extra credit.');
+      yield G.itemGet(G.spr.heartBig, 'Extra credit! You got a {r}Heart Container{/}! Max hearts +1.');
+    } else if (score === 5) {
+      yield G.say('Dr. Moles', 'A perfect score! But you said the sacred number. Retake it without saying it for {y}extra credit{/}.');
+    } else {
+      yield G.say('Dr. Moles', 'Get a perfect score without saying the sacred number for {y}extra credit{/}.');
+    }
+  };
+
+  S.priya = function* () {
+    yield G.say('Priya', 'I think every answer on this test is the same number. Is that allowed?');
+    yield G.say('Priya', 'Also, why are there fire extinguishers on every single wall in here?');
+  };
+
   S.notEast = function* () {
     const p = P(), f = flags();
     if (!f.doronChat) {
@@ -378,11 +465,6 @@
   S.pardeeDoor = function* () {
     yield G.say(null, 'Locked. From inside, someone bellows: {y}"DO YOU SPEAK EEENGLISH?!"{/}');
     yield G.say('Nate', '...Dad?');
-  };
-
-  S.scienceDoor = function* () {
-    yield G.say(null, 'SCIENCE CENTER. Closed until further notice due to "an incident involving homemade fireworks."');
-    yield G.say('Nate', 'Allegedly.');
   };
 
   // The giant boulder blocking the road south.
@@ -803,7 +885,7 @@
     setup(w) {
       w.addBuilding({ x: 3, y: 3, w: 7, h: 4, door: 3, style: 'brick', roof: '#4a5070', sign: true, to: { map: 'lab', x: 6, y: 7 } });
       w.addBuilding({ x: 14, y: 2, w: 11, h: 5, door: 5, style: 'stone', wall: '#c8bc9c', roof: '#50607a', tower: true, locked: S.pardeeDoor });
-      w.addBuilding({ x: 29, y: 3, w: 9, h: 4, door: 4, style: 'modern', wall: '#d8c8a0', roof: '#6a4a40', locked: S.scienceDoor });
+      w.addBuilding({ x: 29, y: 3, w: 9, h: 4, door: 4, style: 'modern', wall: '#d8c8a0', roof: '#6a4a40', to: { map: 'science', x: 7, y: 9 } });
       w.addProp({ img: G.spr.cart, tx: 22, ty: 14, h: 2, dx: -2, solid: [22, 14, 2, 2], hit: [22, 14, 2, 2], talk: S.vendor });
 
       const npc = (sprite, name, tx, ty, talk, o = {}) =>
@@ -839,6 +921,7 @@
       });
       w.addTrigger(18, 29, 4, 1, () => G.script.run(S.southRoad()));
       w.add(new G.Sign(37, 11, 'EAST: Easton Fairgrounds. Tonight: {y}MICRO MAYHEM WRESTLING{/}!'));
+      w.add(new G.Sign(35, 8, ['SCIENCE CENTER. Reopened (mostly) after "an incident involving homemade fireworks."', 'Today: {y}CHEMISTRY FINAL{/} with Dr. Moles.']));
       // the fairgrounds only open up once the boulder (and Doron's text) gives Nate a reason to go
       w.addTrigger(39, 12, 1, 2, () => {
         if (flags().doronChat && G.state.items.cap) G.play.warp('fair', 1, 12, 'right');
@@ -858,6 +941,35 @@
       if (!spots.length) return;
       const [x, y] = spots[Math.floor(Math.random() * spots.length)];
       w.add(new G.Six(x * 16 + 8, y * 16 + 14));
+    },
+  };
+
+  G.MAPS.science = {
+    name: 'Science Center',
+    music: 'house',
+    tiles: [
+      'wwwwwwwwwwwwwww',
+      'wvvvvvvvvvvvvvw',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'wwwwwwwxwwwwwww',
+    ],
+    setup(w) {
+      w.addProp({ img: G.spr.chalkboard, tx: 5, ty: 1, flat: true, dy: -1 });
+      w.addProp({ img: G.spr.desk, tx: 10, ty: 2, solid: [10, 2, 2, 1] });
+      w.addProp({ img: G.spr.bench, tx: 1, ty: 2, solid: [1, 2, 3, 1] });
+      for (const y of [4, 6, 8]) {
+        for (const x of [2, 4, 10, 12]) w.addProp({ img: G.spr.schoolDesk, tx: x, ty: y, solid: [x, y, 1, 1] });
+      }
+      w.add(new G.NPC({ sprite: 'moles', name: 'Dr. Moles', x: 7 * 16 + 8, y: 3 * 16 + 14, dir: 'down', talk: S.chemFinal }));
+      w.add(new G.NPC({ sprite: 'priya', name: 'Priya', x: 13 * 16 + 8, y: 7 * 16 + 14, dir: 'left', talk: S.priya }));
+      w.addWarp(7, 10, 1, 1, 'campus', 33, 7, 'down');
     },
   };
 

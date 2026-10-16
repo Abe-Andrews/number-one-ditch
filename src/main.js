@@ -22,7 +22,12 @@
     try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; }
   };
   G.loadSave = () => {
-    try { return Object.assign(newState(), JSON.parse(localStorage.getItem(SAVE_KEY))); } catch (e) { return null; }
+    try {
+      const s = Object.assign(newState(), JSON.parse(localStorage.getItem(SAVE_KEY)));
+      // saves that got the cap before it came with a heart container get theirs now
+      if (s.items.cap && !s.flags.capHeart) { s.flags.capHeart = true; s.maxHp += 2; }
+      return s;
+    } catch (e) { return null; }
   };
   G.writeSave = () => {
     try { localStorage.setItem(SAVE_KEY, JSON.stringify(G.state)); } catch (e) { /* storage unavailable */ }
