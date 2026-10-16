@@ -40,6 +40,26 @@
     'k': { k: 'fabric' },
     'H': { k: 'hedge', solid: true },
     'W': { k: 'bridge', group: 'bridge' },
+    // inside the house
+    'o': { k: 'oakFloor' },
+    'z': { k: 'bathTile' },
+    'q': { k: 'rugNavy', edge: true },
+    'R': { k: 'rugRed', edge: true },
+    'i': { k: 'rugIkat', edge: true },
+    '1': { k: 'faceLiving', solid: true, edge: true },
+    '2': { k: 'faceSun', solid: true, edge: true },
+    '3': { k: 'faceDen', solid: true, edge: true },
+    '4': { k: 'faceKitchen', solid: true, edge: true },
+    '5': { k: 'facePanel', solid: true, edge: true },
+    '6': { k: 'faceCream', solid: true, edge: true },
+    '7': { k: 'faceBlue', solid: true, edge: true },
+    '8': { k: 'faceBath', solid: true, edge: true },
+    '9': { k: 'faceNate', solid: true, edge: true },
+    '0': { k: 'faceLily', solid: true, edge: true },
+    'G': { k: 'glassWall', solid: true },
+    'Q': { k: 'counter', solid: true },
+    'S': { k: 'stairsUp' },
+    'D': { k: 'stairsDown' },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 
@@ -83,7 +103,9 @@
     }
 
     addTree(x, y, kind) {
-      if (kind === 'pine') {
+      if (kind === 'pink' || kind === 'purple') {
+        this.props.push({ img: kind === 'pink' ? G.spr.pinkTree : G.spr.purpleTree, x: x * 16, y: y * 16 - 2, base: y * 16 + 31 });
+      } else if (kind === 'pine') {
         const img = G.spr.pines[(x + y) % G.spr.pines.length];
         this.props.push({ img, x: x * 16, y: y * 16 - 10, base: y * 16 + 31 });
       } else {

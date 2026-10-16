@@ -102,6 +102,14 @@
   };
   G.CAST.priya = { skin: '#b07850', hair: '#1a1010', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 };
 
+  // Badlands Chugs: bald, full beard, black "Don't Touch Dat" tee, white sneakers.
+  G.CAST.badlands = {
+    skin: '#6a4232', eyes: '#140c0a', hair: '#6a4232', hairStyle: 'bald', beard: '#24201e',
+    shirt: '#1c1c20', logo: '#a8a8b0', pants: '#2a2c34', shoes: '#f0f0f0', wide: true, torso: 8, legs: 4,
+  };
+  // ...right after chugging Nate's drink.
+  G.CAST.badlands_blue = Object.assign({}, G.CAST.badlands, { skin: '#4a6ad0', hair: '#4a6ad0', beard: '#1c2a5a' });
+
   // Dad as El EEENGLISH: luchador mask over his glasses and beard, blazer on.
   G.CAST.elenglish = Object.assign({}, G.CAST.dad, { mask: '#1c2c6c', maskTrim: '#e8e8f0', maskEmblem: '#d03038' });
 
@@ -150,6 +158,11 @@
         ? '5 out of 5, and not one sacred number. Gold star. In the margin: "Interesting phrasing."'
         : 'Passed! In the margin: "Retake it without saying the number for extra credit."'),
     },
+    // the refrigerator game ingredients (used up once Badlands is beaten)
+    milk: { kind: 'key', name: 'Milk', icon: () => G.spr.milk, has: () => !!st().items.milk && !fl().badlandsBeaten, desc: 'From Dad\'s garage fridge. The expiration date is a mystery.' },
+    dye: { kind: 'key', name: 'Blue Food Coloring', icon: () => G.spr.dye, has: () => !!st().items.dye && !fl().badlandsBeaten, desc: 'From Nate\'s old chemistry set. Turns anything the color of a smurf.' },
+    smoke: { kind: 'key', name: 'Liquid Smoke', icon: () => G.spr.liquidSmoke, has: () => !!st().items.smoke && !fl().badlandsBeaten, desc: 'Hickory flavor. From Dad\'s grill stuff. Never drink this.' },
+    vodka: { kind: 'key', name: 'Vodka Shooters', icon: () => G.spr.vodka, has: () => !!st().items.vodka && !fl().badlandsBeaten, desc: 'Three tiny bottles from inside a hollow copy of "War and Peace."' },
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
   G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bidet', null, null, null];
@@ -160,7 +173,7 @@
   G.SIGNALS = [
     { id: 'peace', name: 'Peace Be With You', seq: ['up', 'down', 'up'], known: () => !!fl().signal_peace, effect: () => G.SCRIPTS.signalPeace() },
   ];
-  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', null, null, null, null];
+  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', 'vodka'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -185,7 +198,7 @@
   G.PARTY_INFO = {
     nate: { name: 'Nate', bio: 'Geology major at Lafayette. Makes his own fireworks. Thinks about pH often.', skill: 'Rock hammer, chemistry, explosive presents' },
     doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Never skips leg day. Owns three luchador masks.', skill: 'Lifts and smashes heavy things' },
-    lily: { name: 'Lily', bio: '', skill: '' },
+    lily: { name: 'Lily', bio: 'Nate\'s sister. Survived a refrigerator. Still subscribed to Badlands Chugs.', skill: 'A "No." that pops balloons' },
     abe: { name: 'Abe', bio: '', skill: '' },
     hannah: { name: 'Hannah', bio: '', skill: '' },
   };
@@ -210,8 +223,18 @@
       bio: 'A plush Christmas Humpty Dumpty from a thrift store. Wants the Number One Ditch to be Number Two.',
     },
     {
-      id: 'mikey', name: 'Mikey', tag: '{p}Waiting for Lily', met: () => fl().mikeyMet,
-      bio: 'Showed up with flowers, balloons and a song. Won\'t let anyone drive to Chesapeake until he talks to Lily.',
+      id: 'badlands', name: 'Badlands Chugs', met: () => fl().badlandsMet,
+      tag: () => (fl().badlandsBeaten ? '{o}Boss: chugged!' : '{r}Boss'),
+      bio: () => (fl().badlandsBeaten
+        ? 'Famous chugger. Chugged Nate\'s blue smoky milk vodka in one go, then went through the roof. The video did great.'
+        : 'Famous chugger. Locked Lily in the kitchen fridge for a video. Challenged to the refrigerator game.'),
+    },
+    {
+      id: 'mikey', name: 'Mikey', met: () => fl().mikeyMet,
+      tag: () => (fl().mikeyBeaten ? '{o}Miniboss: told no' : '{p}Waiting for Lily'),
+      bio: () => (fl().mikeyBeaten
+        ? 'Sang Lily a song at golden hour, with heart balloons. She said no. He kept the flowers.'
+        : 'Showed up with flowers, heart balloons and a song. Won\'t let anyone drive to Chesapeake until he talks to Lily.'),
     },
     { id: 'gus', name: 'Gus', tag: '{y}Friend', met: () => fl().capQuest, bio: 'Lafayette\'s groundskeeper. Protector of petunias. Found Nate\'s hat.' },
     { id: 'moles', name: 'Dr. Moles', tag: '{y}Friend', met: () => fl().chemMet, bio: 'Chemistry professor. Nobody has ever gotten the last question on his final right.' },
@@ -255,8 +278,11 @@
     else if (!f.dadBeaten) goal = 'Watch the main event inside the Expo Hall.';
     else if (!f.boulderGone) goal = 'Bring Doron to the boulder on the south road.';
     else if (!f.homeArrived) goal = 'Take the south road to Rattlesnake Bridge Road. Home!';
-    else if (f.mikeyMet && !f.lilySaved) goal = 'Find Lily. Mikey won\'t let you drive to Chesapeake until he talks to her. (Coming soon!)';
-    else goal = 'Explore home. (More of the story is coming soon!)';
+    else if (!f.badlandsMet) goal = f.mikeyMet ? 'Find Lily. Mikey won\'t let anyone drive to Chesapeake until he talks to her. Try the house.' : 'Explore home. Go inside!';
+    else if (!f.badlandsBeaten && G.ingredientCount() < 4) goal = 'Beat Badlands Chugs at the refrigerator game. Find milk, blue food coloring, liquid smoke and vodka shooters. (' + G.sayable(G.ingredientCount()) + '/4)';
+    else if (!f.badlandsBeaten) goal = 'Bring the ingredients to Badlands Chugs in the kitchen. Time for the refrigerator game.';
+    else if (!f.mikeyBeaten) goal = 'Mikey is waiting at the end of the driveway. Lily has something to tell him.';
+    else goal = 'The road to Chesapeake is open! Leave from either end of Rattlesnake Bridge Rd. (More story soon!)';
     const side = [];
     if (f.capQuest || s.items.cap) side.push(['Gus\'s lawn job', s.items.cap ? '{g}Done!' : G.sayable(G.capProgress()) + '/10 sacred numbers']);
     if (f.chemMet) side.push(['The Chem Final', f.chemPerfect ? '{g}Perfect!' : f.chemPassed ? 'Passed! Retake for a heart' : 'Not passed yet']);
@@ -312,6 +338,24 @@
         { wave: 'square', vol: 0.055, notes: 'A4:2 A4:2 C5:2 A4:2 D5:2 A4:2 E5:2 D5:2 | C5:2 C5:2 E5:2 C5:2 F5:4 E5:4 | A4:2 A4:2 C5:2 A4:2 D5:2 A4:2 E5:2 G5:2 | F5:4 E5:4 D5:4 C5:4' },
         { wave: 'sawtooth', vol: 0.06, notes: 'A2:2 A2:2 A3:2 A2:2 A2:2 A2:2 G2:2 A2:2 | F2:2 F2:2 F3:2 F2:2 G2:2 G2:2 G3:2 G2:2 | A2:2 A2:2 A3:2 A2:2 A2:2 A2:2 G2:2 A2:2 | D3:4 E3:4 E2:8' },
         { wave: 'noise', vol: 0.06, notes: 'k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 s:2 s:2 s:2' },
+      ],
+    },
+    // Mikey's serenade (an original tune, not the song he's been practicing)
+    serenade: {
+      bpm: 104,
+      tracks: [
+        { wave: 'square', vol: 0.05, notes: 'F#4:4 A4:2 D5:4 C#5:2 B4:4 | A4:6 F#4:2 E4:8 | G4:4 B4:2 E5:4 D5:2 C#5:4 | B4:12 R:4 | F#4:4 A4:2 D5:4 E5:2 F#5:4 | E5:4 D5:4 B4:8 | G4:4 A4:4 B4:4 C#5:4 | D5:12 R:4' },
+        { wave: 'triangle', vol: 0.14, notes: 'D3:8 A2:8 | F#2:8 A2:8 | G2:8 E3:8 | A2:8 A2:8 | D3:8 F#3:8 | B2:8 G2:8 | E2:8 A2:8 | D3:16' },
+        { wave: 'noise', vol: 0.03, notes: 'h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4' },
+      ],
+    },
+    // Badlands' groove for the refrigerator game
+    chug: {
+      bpm: 96,
+      tracks: [
+        { wave: 'square', vol: 0.05, notes: 'E4:2 R:2 E4:2 G4:2 A4:4 G4:2 E4:2 | D4:2 R:2 D4:2 E4:2 G4:4 E4:4 | E4:2 R:2 E4:2 G4:2 A4:2 C5:2 B4:2 A4:2 | G4:4 E4:4 D4:4 E4:4' },
+        { wave: 'sawtooth', vol: 0.05, notes: 'E2:4 E2:2 G2:2 A2:4 G2:4 | D2:4 D2:2 E2:2 G2:4 E2:4 | E2:4 E2:2 G2:2 A2:4 C3:4 | B2:4 G2:4 D2:4 E2:4' },
+        { wave: 'noise', vol: 0.06, notes: 'k:4 h:2 h:2 s:4 h:4 | k:4 h:2 k:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:2 k:2 h:4 s:4 s:4' },
       ],
     },
     house: {
@@ -1049,7 +1093,7 @@
   };
 
   // ---------------------------------------------------------------- home
-  const inside = '(The inside is coming in a future update!)';
+  const inside = '(Dad\'s workshop opens up in a future update!)';
 
   // Mikey: flowers, balloons, a song he's been practicing, and one mission.
   S.mikeyIntro = function* () {
@@ -1073,6 +1117,7 @@
 
   S.mikey = function* (npc) {
     const f = flags();
+    if (f.lilySaved && !f.mikeyBeaten) { yield* S.mikeyGoldenHour(); return; }
     if (!f.mikeyMet) { yield* S.mikeyIntro(); return; }
     const lines = [
       'Have you found Lily yet? I\'ll wait. I\'m very good at waiting.',
@@ -1106,24 +1151,35 @@
     yield G.walkTo(m, m.home.x, m.home.y, 3);
     m.dir = 'down';
   };
-  S.homeFront = function* () {
-    yield G.say(null, 'The front door, with a wreath on it and a lantern on each side. Home sweet home.');
-    yield G.say(null, inside);
-  };
-  S.homePorch = function* () {
-    yield G.say(null, 'The covered porch and the sunroom: sliding glass doors, sheer curtains, and the white hutch.');
-    yield G.say(null, inside);
-  };
-  S.homeSideDoor = function* () {
-    yield G.say(null, 'The side door by the driveway. Nobody uses the front door. Everybody comes in this way.');
-    yield G.say(null, inside);
-  };
   S.homeGarage = function* () {
+    const f = flags(), s = G.state;
+    if (f.fridgeGame && !s.items.milk && !f.badlandsBeaten) {
+      yield G.say(null, 'The garage, with Dad\'s workshop inside. In the corner, the old garage fridge hums like a jet engine.');
+      yield G.say(null, 'Inside: pickles, a tub of fishing worms, and one carton of {y}milk{/}. Expiration date: unclear.');
+      yield* getIngredient('milk');
+      return;
+    }
     yield G.say(null, 'The garage, with Dad\'s workshop inside: pipe blanks, rasps, sandpaper, and about four hundred coffee cans full of screws.');
     yield G.say(null, inside);
   };
+  S.homeFlag = function* () {
+    yield G.say(null, 'The flag on its pole, snapping in the breeze. You can see it all the way from the road.');
+  };
+  S.homePoolSet = function* () {
+    yield G.say(null, 'A teak table under a dark green umbrella. Lunch by the pool hits different.');
+  };
+  S.homeLounger = function* () {
+    yield G.say(null, 'A teak lounge chair. Somebody left a towel on it to save their spot. In October.');
+  };
+  S.homeAdirondack = function* () {
+    yield G.say(null, 'A green Adirondack chair under the old oak. The best seat on the whole property.');
+  };
+  S.homeGatepost = function* () {
+    yield G.say(null, 'A white gatepost with a ball on top. There\'s one on each side of the driveway.');
+  };
   S.homePoolHouse = function* () {
-    yield G.say(null, 'The little white pool house. Towels, pool noodles, and a skimmer net.');
+    yield G.say(null, 'The little white pool house: a porch, a white rocking chair, and the flag on a bracket.');
+    yield G.say(null, 'Inside: towels, pool noodles, and a skimmer net.');
   };
   S.homeTruck = function* () {
     yield G.say(null, 'Dad\'s old teal Ford pickup. It runs. Mostly.');
@@ -1174,6 +1230,7 @@
     if (c === 0) { G.play.warp('campus', 19, 27, 'up'); return; }
     if (c === 1) {
       if (!flags().lilySaved) { yield* S.mikeyBlock(side); return; }
+      if (!flags().mikeyBeaten) { yield* S.mikeyGoldenHour(); return; }
       yield* S.homeEast(side);
       return;
     }
@@ -1190,6 +1247,349 @@
     const p = P();
     yield G.say('Nate', 'Past the bridge it\'s just woods, deer and ticks. Nothing out there... yet.');
     yield G.walkTo(p, p.x, p.y + 20, 1);
+  };
+
+  // ---------------------------------------------------------------- Badlands Chugs and the refrigerator game
+  // Lily is locked in the kitchen fridge. The only way to get her out: beat
+  // Badlands at the refrigerator game with the nastiest drink Nate can make.
+  const INGREDIENTS = [
+    { id: 'milk', name: 'Milk', icon: () => G.spr.milk },
+    { id: 'dye', name: 'Blue Food Coloring', icon: () => G.spr.dye },
+    { id: 'smoke', name: 'Liquid Smoke', icon: () => G.spr.liquidSmoke },
+    { id: 'vodka', name: 'Vodka Shooters', icon: () => G.spr.vodka },
+  ];
+  G.INGREDIENTS = INGREDIENTS;
+  G.ingredientCount = () => INGREDIENTS.filter((g) => G.state.items[g.id]).length;
+
+  function* getIngredient(id) {
+    const g = INGREDIENTS.find((x) => x.id === id);
+    G.state.items[id] = true;
+    yield G.itemGet(g.icon(), 'You got {y}' + g.name + '{/}! (' + G.sayable(G.ingredientCount()) + '/4 ingredients)');
+    if (G.ingredientCount() === 4) yield G.say('Nate', 'That\'s everything. Time to make the worst drink in New Jersey.');
+  }
+
+  // Lily thumping around inside the fridge.
+  function* fridgeThump() {
+    const fr = G.play.world.fridge;
+    if (fr) fr.shakeT = 30;
+    G.audio.sfx('bump');
+    yield G.wait(10);
+    G.audio.sfx('bump');
+    yield G.say('Lily', '{d}(from inside the fridge){/} MMMPH! MMMMPH!');
+  }
+
+  S.badlandsIntro = function* () {
+    const f = flags(), w = G.play.world, p = P(), b = w.badlands;
+    if (!b || f.badlandsMet) return;
+    f.badlandsMet = true;
+    G.audio.play('chug');
+    yield G.camFocus(b.x - 20, b.y - 10, 40);
+    b.dir = 'down';
+    yield G.say('Badlands Chugs', 'What\'s up, everybody! Badlands Chugs here. Today\'s video is a SPECIAL one.');
+    b.dir = 'left';
+    yield* fridgeThump();
+    b.dir = 'down';
+    yield G.say('Badlands Chugs', 'We got a girl in the fridge. We gonna put her in this blender... liquify her...');
+    G.audio.sfx('buzz');
+    yield G.shakeCmd(20, 1);
+    yield G.say('Badlands Chugs', '...and CHUG her. Ten million views. Easy.');
+    yield G.camFocus(null, null, 20);
+    yield G.emote(p, 'bang', 40);
+    yield G.say('Nate', 'LILY?! That\'s my SISTER in there!');
+    yield* fridgeThump();
+    b.dir = G.dirToward(p.x - b.x, p.y - b.y);
+    yield G.say('Badlands Chugs', 'Ayy, the brother! You can be in the video. Say hi to the people.');
+    yield G.say('Nate', 'You are NOT chugging my sister!');
+    yield G.say('Badlands Chugs', 'Who\'s gonna stop me? Ain\'t nobody ever out-chugged Badlands.');
+    if (G.state.party.includes('doron')) {
+      yield G.say('Doron', 'I could suplex him.');
+      yield G.say('Badlands Chugs', 'Don\'t touch dat.');
+      yield G.say('Doron', '...He said not to touch that.');
+    }
+    yield G.say('Nate', '...Then I challenge you. To the {y}refrigerator game{/}.');
+    yield G.emote(b, 'bang', 40);
+    G.audio.sfx('bell');
+    yield G.say('Badlands Chugs', '...The refrigerator game. Oh, you know the rules?');
+    yield G.say('Badlands Chugs', 'I make you a drink. You chug it, and you guess what\'s in it. Then you make me one, and I chug yours.');
+    yield G.say('Badlands Chugs', 'I finish yours, she goes in the blender. I CAN\'T finish yours... she\'s all yours.');
+    yield G.say('Badlands Chugs', 'Go find the nastiest stuff you can. I\'ll be right here. And don\'t touch dat fridge.');
+    yield G.say('Nate', 'Okay. Think like a chemist. Things that should never, ever be in the same glass.');
+    yield G.say('Nate', '{y}Milk{/}: Dad keeps some in the garage fridge. {y}Liquid smoke{/}: with the grill stuff out on the patio.');
+    yield G.say('Nate', '{y}Blue food coloring{/}: my old chemistry set, upstairs. And {y}vodka shooters{/}...');
+    yield G.say('Nate', 'Somebody in this house hides those in a book. Probably a book nobody would ever read.');
+    f.fridgeGame = true;
+    yield G.banner('THE REFRIGERATOR GAME', 'Find: Milk, Blue Food Coloring, Liquid Smoke, Vodka Shooters', 240);
+  };
+
+  S.badlands = function* () {
+    const f = flags(), n = G.ingredientCount();
+    if (!f.badlandsMet) { yield* S.badlandsIntro(); return; }
+    if (n >= 4) { yield* S.fridgeGame(); return; }
+    const lines = [
+      'Clock\'s ticking. The blender\'s warming up.',
+      'Nastiest stuff in the house. Don\'t come back here with no lemonade.',
+      'You got ' + G.sayable(n) + ' out of 4. I can count, young man.',
+      'Don\'t touch dat fridge.',
+    ];
+    f.badTalk = ((f.badTalk || 0) + 1) % lines.length;
+    yield G.say('Badlands Chugs', lines[f.badTalk]);
+  };
+
+  S.badlandsPhone = function* () {
+    if (flags().badlandsBeaten) {
+      yield G.say(null, 'Badlands\' phone, still on its tripod. Still recording.');
+      yield G.say(null, 'The upload is already live: "I CHUGGED THE WORST DRINK EVER (GONE WRONG)". 2.3 million views and climbing.');
+      return;
+    }
+    yield G.say(null, 'A phone on a tripod. The little red light means it\'s recording.');
+    yield G.say('Nate', 'Hi, Nani.');
+  };
+
+  S.fridgeTalk = function* () {
+    if (flags().badlandsBeaten) { yield G.say(null, 'The fridge. Lily refuses to go near it ever again.'); return; }
+    yield* fridgeThump();
+    if (G.play.world.badlands) yield G.say('Badlands Chugs', 'Ah-ah-ah. Don\'t touch dat.');
+  };
+
+  // ---- the ingredient hunt
+  S.chemDesk = function* () {
+    const f = flags(), s = G.state;
+    if (f.fridgeGame && !s.items.dye && !f.badlandsBeaten) {
+      yield G.say(null, 'Nate\'s old chemistry set. A flame test kit, a lava lamp, and a bottle of {y}blue food coloring{/} from the "make your own lava lamp" experiment.');
+      yield* getIngredient('dye');
+      const desk = G.play.world.chemDesk;
+      if (desk) desk.img = G.spr.chemDeskEmpty;
+      return;
+    }
+    yield G.say(null, 'Nate\'s old chemistry set. This is where it all began. The scorch mark on the ceiling is from 2017.');
+  };
+
+  S.denShelf = function* () {
+    const f = flags(), s = G.state;
+    if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten) {
+      yield G.say(null, 'Built-in shelves packed with books. One is a suspiciously light copy of "War and Peace."');
+      yield G.say(null, 'It\'s hollow! Inside: three {y}vodka shooters{/}.');
+      yield G.say('Nate', 'Nobody in this family has ever read "War and Peace." Now we know why.');
+      yield* getIngredient('vodka');
+      return;
+    }
+    yield G.say(null, 'Built-in shelves packed with books: thrillers, cookbooks, and seven different Bibles.');
+  };
+
+  S.homeGrill = function* () {
+    const f = flags(), s = G.state;
+    if (f.fridgeGame && !s.items.smoke && !f.badlandsBeaten) {
+      yield G.say(null, 'Dad\'s grill. Tongs, a wire brush, and a little bottle of {y}Liquid Smoke{/}.');
+      yield G.say('Nate', 'Hickory flavor. Perfect. Terrible. Perfect.');
+      yield* getIngredient('smoke');
+      return;
+    }
+    yield* S.homePatio();
+  };
+
+  // ---- the refrigerator game itself
+  const ROUNDS = [
+    {
+      taste: 'First taste: salty. Sour. Kind of... briny? And there are crunchy bits.',
+      hint: 'It tastes exactly like it came out of a jar with a dill on the label.',
+      options: ['Orange juice', 'Pickle juice', 'Maple syrup', 'Chocolate milk'], answer: 1,
+    },
+    {
+      taste: 'Next gulp: thick. Creamy. Eggy. It coats the inside of Nate\'s whole mouth.',
+      hint: 'It\'s the white stuff that goes on a turkey sandwich. Wobbly.',
+      options: ['Whipped cream', 'Yogurt', 'Mayonnaise', 'Pudding'], answer: 2,
+    },
+    {
+      taste: 'Last swallow: it BURNS. Vinegar and red pepper. Nate\'s eyes are watering.',
+      hint: 'It comes in a little bottle and you shake it onto eggs.',
+      options: ['Ketchup', 'Mustard', 'Horseradish', 'Hot sauce'], answer: 3,
+    },
+  ];
+
+  S.fridgeGame = function* () {
+    const f = flags(), w = G.play.world, p = P(), b = w.badlands;
+    G.audio.play('chug');
+    b.dir = G.dirToward(p.x - b.x, p.y - b.y);
+    yield G.say('Badlands Chugs', 'You got your ingredients? Aight. But the refrigerator game got rules. Guest goes first.');
+    yield G.say('Nate', 'Wait. I have to drink something TOO?');
+    yield G.say('Badlands Chugs', 'Every time. Don\'t worry. I made it special.');
+    b.dir = 'up';
+    w.blender.img = G.spr.blenderFull;
+    G.audio.sfx('buzz');
+    yield G.shakeCmd(40, 1);
+    yield G.wait(50);
+    w.boot.img = G.spr.bootSludge;
+    b.dir = G.dirToward(p.x - b.x, p.y - b.y);
+    yield G.say(null, 'Badlands pours a lumpy, gray-green sludge into the giant glass boot and slides it over.');
+    yield G.say('Badlands Chugs', 'Chug it. Then tell me what\'s in it.');
+    for (let i = 0; i < 3; i++) { G.audio.sfx('gulp'); yield G.wait(22); }
+    yield G.shakeCmd(24, 2);
+    yield G.emote(p, 'bang', 40);
+    yield G.say('Nate', 'BLEGH. Okay. Okay. I can figure this out. It\'s just chemistry.');
+    w.boot.img = G.spr.boot;
+    const right = ['Yup.', 'Mm-hm. Correct.', 'Dang. You got a tongue on you.'];
+    for (let r = 0; r < ROUNDS.length; r++) {
+      const R = ROUNDS[r];
+      for (let tries = 0; ; tries++) {
+        yield G.say('Nate', R.taste + (tries ? ' ' + R.hint : ''));
+        const pick = yield G.ask('Badlands Chugs', 'So what\'s in it?', R.options);
+        if (pick === R.answer) { G.audio.sfx('secret'); yield G.say('Badlands Chugs', right[r]); break; }
+        G.audio.sfx('buzz');
+        yield G.say('Badlands Chugs', 'NOPE. Take another sip.');
+        G.audio.sfx('gulp');
+        yield G.shakeCmd(16, 2);
+      }
+    }
+    yield G.say('Badlands Chugs', 'Pickle juice, mayo and hot sauce. ...Respect. You got a stomach of steel, young man.');
+    yield G.say('Badlands Chugs', 'Now. My turn. Whatchu got for me?');
+    // Nate mixes the worst drink in New Jersey
+    G.audio.play('house');
+    yield G.say(null, 'Nate pours in the {y}milk{/}...');
+    w.boot.img = G.spr.bootMilk; G.audio.sfx('menu');
+    yield G.say(null, '...squeezes in the whole bottle of {y}blue food coloring{/}...');
+    w.boot.img = G.spr.bootBlue; G.audio.sfx('menu');
+    yield G.say(null, '...a big glug of {y}liquid smoke{/}...');
+    w.burst(w.boot.x + 7, w.boot.y + 2, ['#8a8a94', '#b0b0b8', '#d8d8e0'], 10, { speed: 0.4, up: 0.6, life: 50, size: 3 });
+    G.audio.sfx('poof');
+    yield G.say(null, '...and all three {y}vodka shooters{/}.');
+    G.audio.sfx('gulp');
+    yield G.say('Nate', 'Milk, blue food coloring, liquid smoke and vodka. Chemically speaking, this should not exist.');
+    yield G.emote(b, 'huh', 40);
+    yield G.say('Badlands Chugs', 'It\'s blue. Why is it blue? And why is it... SMOKING?');
+    yield G.say('Badlands Chugs', '...Ain\'t nothing Badlands can\'t chug. Don\'t touch dat.');
+    // the chug
+    G.audio.play('chug');
+    w.boot.img = null;
+    b.held = G.spr.bootBlue;
+    b.dir = 'down';
+    for (let i = 0; i < 7; i++) { G.audio.sfx('gulp'); w.pop(b.x, b.y - 36 - i * 2, 'GLUG', '#78c8ff'); yield G.wait(16); }
+    b.held = G.spr.boot;
+    yield G.wait(30);
+    yield G.say('Badlands Chugs', '...Finished. Told y\'all. Ain\'t nothing I can\'t...');
+    b.held = null;
+    b.sprite = 'badlands_blue';
+    b.flashT = 60;
+    G.audio.stop();
+    G.audio.sfx('slip');
+    yield G.shakeCmd(60, 2);
+    yield G.wait(60);
+    yield G.say('Badlands Chugs', '...uh oh.');
+    yield G.wait(20);
+    // KABOOM
+    G.play.explode(b.x, b.y - 14, false);
+    w.burst(b.x, b.y - 14, ['#3a6ae8', '#78c8ff', '#ffffff', '#f4f4f0'], 30, { speed: 2.6, up: 1, g: 0.05, life: 50, size: 3 });
+    w.burst(b.x, b.y - 10, ['#8a8a94', '#b0b0b8', '#5a5a64'], 16, { speed: 0.8, up: 0.5, life: 70, size: 5 });
+    w.pop(b.x, b.y - 46, 'KA-BLOOEY!', '#78c8ff');
+    G.play.shake(50, 5);
+    yield G.walkTo(b, b.x, b.y - 240, 6);
+    b.dead = true;
+    yield G.wait(50);
+    w.pop(p.x, p.y - 56, '...LIKE AND SUBSCRIBE!', '#f8d850');
+    yield G.wait(80);
+    yield G.say('Nate', '...He went through the roof.');
+    f.badlandsBeaten = true;
+    yield* S.lilyRescue();
+  };
+
+  S.lilyRescue = function* () {
+    const f = flags(), w = G.play.world, p = P(), s = G.state;
+    yield G.walkTo(p, 25 * 16, 4 * 16 + 14, 1.2);
+    p.dir = 'up';
+    yield G.say('Nate', 'Hang on, Lily!');
+    G.audio.sfx('door');
+    w.fridge.img = G.spr.fridgeOpen;
+    w.burst(25 * 16, 3 * 16, ['#ffffff', '#d8f0ff', '#a8d8f8'], 24, { speed: 1.4, up: 0.4, life: 40, size: 2 });
+    const lily = w.add(new G.NPC({ sprite: 'lily', name: 'Lily', x: 25 * 16, y: 3 * 16 + 12, dir: 'down' }));
+    lily.flashT = 40;
+    yield G.walkTo(p, p.x + 18, p.y + 6, 1.4);
+    p.dir = 'left';
+    yield G.walkTo(lily, lily.x, 4 * 16 + 14, 0.8);
+    G.audio.play('home');
+    yield G.say('Lily', 'It is FREEZING in there. How long was I in the fridge?!');
+    yield G.say('Nate', 'Long enough. Are you okay?');
+    yield G.say('Lily', 'I\'m fine. I was next to the leftover lasagna the whole time. We bonded.');
+    yield G.say('Lily', 'Wait. Was that... Badlands Chugs? THE Badlands Chugs?');
+    yield G.say('Nate', 'He wanted to put you in a blender.');
+    yield G.say('Lily', '...I\'m still subscribed.');
+    if (s.party.includes('doron')) {
+      yield G.say('Doron', 'Lily! You\'re okay! Want to see my suplex?');
+      yield G.say('Lily', 'No.');
+    }
+    if (!s.party.includes('lily')) s.party.push('lily');
+    f.lilySaved = true;
+    G.audio.sfx('fanfare');
+    yield G.banner('LILY JOINED THE PARTY!', 'Her "No." can stop anything.', 220);
+    yield G.say('Lily', 'Wait. Is Mikey still outside? With the balloons?');
+    yield G.say('Nate', 'And a song.');
+    yield G.say('Lily', 'Ugh. Okay. Let\'s go get this over with.');
+    lily.dead = true;
+    const idx = s.party.filter((id) => id !== 'nate').indexOf('lily');
+    w.add(new G.Follower('lily', idx, lily.x, lily.y, 'down'));
+  };
+
+  // ---------------------------------------------------------------- Golden Hour (Lily vs. Mikey)
+  S.mikeyGoldenHour = function* () {
+    const f = flags(), w = G.play.world, m = w.mikey, p = P();
+    if (!m || f.mikeyBeaten || !f.lilySaved) return;
+    m.dir = G.dirToward(p.x - m.x, p.y - m.y);
+    yield G.emote(m, 'bang', 40);
+    yield G.say('Mikey', 'LILY! You\'re okay! I was so worried. I brought flowers. And balloons. Heart-shaped ones.');
+    yield G.say('Lily', 'Hi, Mikey.');
+    yield G.say('Mikey', 'I\'ve been practicing all week. This one\'s for you. It\'s about that hour... when the light gets all golden.');
+    yield G.say('Lily', 'Mikey, no.');
+    yield G.say('Mikey', 'I haven\'t even STARTED!');
+    G.audio.stop();
+    yield G.say('Nate', '...Lily. I think this one is yours.');
+    yield G.say('Lily', 'Fine. Hold my phone.');
+    G.state.playAs = 'lily';
+    G.play.warp('goldenHour', 3, 5, 'right');
+  };
+
+  S.goldenIntro = function* () {
+    G.state.hp = G.state.maxHp;
+    yield G.wait(20);
+    yield G.banner('GOLDEN HOUR', 'LILY  vs.  MIKEY', 170);
+    yield G.say('Mikey', 'Okay. Okay. Here goes. Ahem. {p}~ Laaa la la laaa... ~{/}');
+    yield G.say(null, 'You\'re playing as {p}Lily{/}! Press {y}Z{/} to say {y}"No."{/}');
+    yield G.say(null, 'Pop his heart balloons first. When they\'re all gone, tell HIM no.');
+  };
+
+  S.mikeyDefeated = function* (boss) {
+    const w = G.play.world, s = G.state;
+    G.audio.stop();
+    for (const e of w.ents) if (e instanceof G.Note || e instanceof G.HeartShot) { e.dead = true; w.burst(e.x, e.y - 6, ['#f8d040', '#ff98d0'], 4); }
+    G.audio.sfx('bell');
+    yield G.shakeCmd(30, 3);
+    w.pop(boss.x, boss.y - 44, 'NO.', '#ffffff');
+    yield G.wait(60);
+    yield G.banner('YOU WIN!', 'Lily said no.', 160);
+    const mikey = w.add(new G.NPC({ sprite: 'mikey', name: 'Mikey', x: boss.x, y: boss.y, dir: 'left' }));
+    mikey.held = G.spr.bouquet;
+    boss.dead = true;
+    yield G.say('Mikey', '...Was it the song?');
+    yield G.say('Lily', 'It wasn\'t the song, Mikey. It was the balloons, the roadblock, AND the song.');
+    yield G.say('Mikey', '...So that\'s a no.');
+    yield G.say('Lily', 'That\'s a no.');
+    yield G.say('Mikey', 'Okay. Okay. I respect that.');
+    yield G.say('Mikey', 'Can I at least keep the flowers?');
+    yield G.say('Lily', 'Keep the flowers, Mikey.');
+    yield G.walkTo(mikey, mikey.x + 140, mikey.y, 1.1);
+    mikey.dead = true;
+    flags().mikeyBeaten = true;
+    s.playAs = null;
+    yield G.say('Nate', 'That was the most powerful "No." I have ever witnessed.');
+    yield G.say('Lily', 'Thank you. Now can we go? The ditch isn\'t going to save itself.');
+    G.play.warp('home', 43, 50, 'down');
+  };
+
+  // ---------------------------------------------------------------- the 6 key
+  // Pressing 6 on the keyboard counts as saying the sacred number.
+  S.sixKey = function* () {
+    if (!flags().sixKey) {
+      flags().sixKey = true;
+      yield G.say(null, 'You pressed the {r}sacred number{/} on your keyboard. That counts.');
+    }
+    yield* slip();
   };
 
   S.partyTalk = function* (id) {
@@ -1465,6 +1865,295 @@
     },
   };
 
+  // ---------------------------------------------------------------- inside the house
+  // Laid out from the listing photos. Walls are two tiles tall; furniture that
+  // stands against a wall reaches up over it, and pictures hang on it.
+  function furnish(w) {
+    const center = (img, wt) => Math.round((wt * 16 - img.width) / 2);
+    return {
+      // a piece standing on floor row `ty`
+      stand(img, tx, ty, wt, talk, o = {}) {
+        const ht = o.ht || 1;
+        return w.addProp(Object.assign({ img, tx, ty, h: ht, dx: center(img, wt), solid: [tx, ty, wt, ht], hit: talk ? [tx, ty, wt, ht] : null, talk }, o));
+      },
+      // something hung on a wall face whose bottom row is `ty`
+      hang(img, tx, ty, wt, talk, lift = 5) {
+        return w.addProp({ img, tx, ty, flat: true, dx: center(img, wt), dy: -lift, hit: talk ? [tx, ty, wt, 1] : null, talk });
+      },
+      // something sitting on a countertop in row `ty`
+      onCounter(img, tx, ty, talk, dx = 0) {
+        return w.addProp({ img, tx, ty, dx: 8 - (img.width >> 1) + dx, dy: -10, hit: talk ? [tx, ty, 1, 1] : null, talk });
+      },
+    };
+  }
+  const look = (...pages) => function* () { for (const pg of pages) yield Array.isArray(pg) ? G.say(pg[0], pg[1]) : G.say(null, pg); };
+
+  G.MAPS.homeDown = {
+    name: 'Home: Downstairs',
+    music: 'house',
+    tiles() {
+      const W = 50, H = 18;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
+      const room = (x, y, w, h, face, floor) => { fill(x, y, w, 2, face); fill(x, y + 2, w, h - 2, floor); };
+      room(1, 1, 15, 9, '1', 'o');   // living room
+      room(17, 1, 6, 16, '5', 'o');  // front hall
+      room(24, 1, 12, 16, '4', 'o'); // kitchen
+      room(37, 1, 12, 9, '3', 'o');  // den
+      room(1, 11, 15, 6, '2', 'o');  // sunroom
+      room(37, 11, 5, 6, '6', 'o');  // mudroom
+      room(43, 11, 6, 6, '7', 'o');  // family room
+      // the powder room, tucked into the corner of the hall
+      fill(19, 1, 1, 5, 'w'); fill(19, 5, 4, 1, 'w');
+      room(20, 1, 3, 4, '5', 'z');
+      fill(19, 6, 4, 2, '5');
+      // doorways
+      const door = (x, y, w, h) => fill(x, y, w, h, 'o');
+      door(21, 5, 1, 3);   // powder room
+      door(16, 8, 1, 2);   // living room / hall
+      door(16, 14, 1, 2);  // sunroom / hall
+      door(10, 10, 3, 3);  // living room / sunroom
+      door(23, 11, 1, 2);  // hall / kitchen
+      door(36, 5, 1, 2);   // kitchen / den
+      door(36, 14, 1, 2);  // kitchen / mudroom
+      door(39, 10, 1, 3);  // den / mudroom
+      door(48, 10, 1, 3);  // den / family room
+      door(42, 14, 1, 2);  // mudroom / family room
+      fill(17, 3, 2, 5, 'S'); // stairs up
+      // south wall: windows, and the three doors out
+      fill(2, 17, 13, 1, 'G'); fill(27, 17, 6, 1, 'G'); fill(44, 17, 4, 1, 'G');
+      set(4, 17, 'x'); set(20, 17, 'x'); set(39, 17, 'x');
+      // rugs
+      fill(4, 5, 10, 5, 'q');
+      fill(3, 14, 8, 2, 'R');
+      fill(19, 9, 2, 6, 'R');
+      fill(27, 15, 6, 1, 'R');
+      fill(39, 5, 8, 4, 'i');
+      fill(44, 14, 4, 2, 'R');
+      // kitchen counters
+      fill(26, 3, 10, 1, 'Q');
+      fill(26, 16, 9, 1, 'Q');
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr, f = flags();
+      // ---- living room
+      F.stand(sp.curio, 1, 3, 1, look('A glass cabinet full of the good china. Nobody is allowed to use the good china.'));
+      F.hang(sp.frenchDoor, 3, 2, 1, look('French doors out to the side steps by the chimney.'), 1);
+      w.addProp({ img: sp.brickFireplace, tx: 5, ty: 1, h: 3, flat: true, solid: [5, 3, 2, 1], hit: [5, 3, 2, 1], talk: look('The brick fireplace, with a landscape hung over the mantel.', 'The chimney outside is older than everybody in the family put together.') });
+      F.hang(sp.frenchDoor, 8, 2, 1, look('More French doors. This house loves a French door.'), 1);
+      F.hang(sp.bayWindow, 10, 2, 4, null, 1);
+      F.stand(sp.tuftedSofa, 10, 3, 3, look('The tufted sofa under the big window. Prime napping real estate.'));
+      F.stand(sp.gingerLamp, 9, 3, 1, look('A blue-and-white ginger jar lamp. Very fancy. Do not throw a ball near it.'));
+      F.stand(sp.gingerLamp, 13, 3, 1, look('Another ginger jar lamp. They come in pairs, like Nate and Lily.'));
+      F.stand(sp.secretary, 15, 3, 1, look('A tall old secretary desk. The little drawers are full of rubber bands and mystery keys.'));
+      F.stand(sp.chairWhite, 6, 6, 1, look('A white armchair. Comfy. Nobody eats on it.'));
+      F.stand(sp.coffeeTable, 8, 6, 2, look('A coffee table with big books nobody reads and two candlesticks.'));
+      F.stand(sp.chairBlue, 11, 6, 1, look('A pale blue armchair with a view of the fire.'));
+      F.stand(sp.drumStool, 5, 8, 1, look('A red ceramic garden stool. Is it a table? A seat? Nobody knows.'));
+      F.stand(sp.sofaBack, 8, 8, 3, look('The red floral sofa. Somehow it goes with everything.'));
+      F.stand(sp.chairLeather, 2, 6, 1, look('A worn leather club chair. It squeaks when you sit down. Everyone pretends it doesn\'t.'));
+      // ---- sunroom
+      F.hang(sp.archMirror, 2, 12, 1, look('An arched mirror. Nate checks his hat. Still distinguished.'), 3);
+      F.hang(sp.louverDoor, 13, 12, 1, look('A closet full of board games with missing pieces.'), 1);
+      F.stand(sp.wingback, 2, 13, 1, look('A wingback chair. Perfect for reading by the windows.'));
+      F.stand(sp.xConsole, 4, 13, 2, look('A console on an X-shaped base, with a lamp and an orchid that refuses to die.'));
+      F.stand(sp.wingback, 7, 13, 1, look('The other wingback chair. Slightly more broken in.'));
+      F.stand(sp.tuftedOttoman, 6, 15, 1, look('A big round tufted ottoman. Feet up!'), { dx: -3 });
+      F.stand(sp.grandfatherClock, 15, 13, 1, look('The grandfather clock. It chimes on the hour. It has never once been on time.'));
+      F.stand(sp.plant, 13, 16, 1, look('A potted cactus soaking up the sun. It is doing better than all of us.'));
+      // ---- front hall and powder room
+      F.hang(sp.horsePrint, 20, 2, 1, look('An old print of a racehorse.'), 8);
+      F.hang(sp.ovalMirror, 21, 2, 1, null, 3);
+      F.hang(sp.horsePrint, 22, 2, 1, look('Another racehorse. This one is winning.'), 8);
+      F.stand(sp.demilune, 21, 3, 1, look('The powder room: white paneling, a dark wood vanity and horse prints. Fancy, for a bathroom.'));
+      F.stand(sp.toilet, 22, 4, 1, look('...It\'s a toilet, Nate.'));
+      F.hang(sp.giltMirror, 19, 7, 2, null, 3);
+      F.stand(sp.hallConsole, 19, 8, 2, look('A hall table with a lamp and a bowl for keys. The keys are never in the bowl.'));
+      F.stand(sp.hallBench, 22, 15, 1, look('A little bench by the front door for pulling off muddy boots.'));
+      // ---- kitchen
+      w.fridge = w.addProp({ img: sp.fridge, tx: 24, ty: 3, h: 1, solid: [24, 3, 2, 1], hit: [24, 3, 2, 1], talk: () => S.fridgeTalk() });
+      // while Lily is inside, the fridge rattles every few seconds
+      w.fridge.draw = function (ctx, cx, cy) {
+        if (this.shakeT > 0) this.shakeT--;
+        const rattle = this.shakeT > 0 || (!flags().badlandsBeaten && G.tick % 200 < 14);
+        const j = rattle ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
+        ctx.drawImage(this.img, this.x + j - cx, this.y - cy);
+      };
+      if (f.badlandsBeaten) w.fridge.img = sp.fridgeOpen;
+      F.stand(sp.wallOvens, 26, 3, 1, look('Double wall ovens. Thanksgiving headquarters.'));
+      F.hang(sp.upperCabs2, 27, 2, 2, null, 10);
+      F.hang(sp.upperCabsMicro, 29, 2, 3, null, 10);
+      F.hang(sp.upperCabs, 32, 2, 3, null, 10);
+      w.addProp({ img: sp.rangeTop, tx: 31, ty: 3, hit: [31, 3, 1, 1], talk: look('The range. Something is always simmering on it.') });
+      F.onCounter(sp.knifeBlock, 34, 3, look('A knife block. Badlands didn\'t touch it. Good.'));
+      F.onCounter(sp.counterTV, 35, 3, look('A little TV on the counter, permanently tuned to the weather.'));
+      w.boot = F.onCounter(sp.boot, 28, 3, look('A giant glass boot. The official vessel of chugging.'));
+      w.blender = F.onCounter(sp.blender, 30, 3, look('A blender. It looks... hungry.'));
+      w.addProp({ img: sp.sinkTop, tx: 29, ty: 16, flat: true, dy: -10, hit: [29, 16, 2, 1], talk: look('The big kitchen sink under a row of windows. You can see the whole backyard from here.') });
+      F.stand(sp.farmTable, 27, 9, 5, look('The long farmhouse table and the white Windsor chairs. Every family dinner happens right here.'), { ht: 2 });
+      w.props.push({ img: sp.chandelier, x: 28 * 16 + 4, y: 112, base: 11 * 16 + 1 });
+      F.stand(sp.ringLight, 32, 5, 1, look('Badlands\' ring light. It makes everything look like a music video.'));
+      F.stand(sp.tripodPhone, 30, 6, 1, () => S.badlandsPhone());
+      if (!f.badlandsBeaten) {
+        w.badlands = w.add(new G.NPC({ sprite: 'badlands', name: 'Badlands Chugs', x: 30 * 16 + 8, y: 4 * 16 + 14, dir: 'down', talk: S.badlands }));
+        w.addTrigger(24, 3, 12, 14, () => { if (!flags().badlandsMet) G.script.run(S.badlandsIntro()); });
+      }
+      // ---- den
+      F.stand(sp.floorLamp, 37, 3, 1, look('A floor lamp with a woven shade.'));
+      F.stand(sp.bookshelf2, 38, 3, 1, () => S.denShelf());
+      w.addProp({ img: sp.stoneFireplace, tx: 39, ty: 1, h: 3, flat: true, solid: [39, 3, 2, 1], hit: [39, 3, 2, 1], talk: look('The den: a stone fireplace with the TV right above it. Game nights happen here.') });
+      F.stand(sp.bookshelf2, 41, 3, 1, () => S.denShelf());
+      F.hang(sp.guitar, 43, 2, 1, look('An acoustic guitar on the wall. Somebody knows three chords on it.'), 3);
+      F.hang(sp.wallWindow.one, 45, 2, 1, null, 3);
+      F.hang(sp.barometer, 47, 2, 1, look('A barometer. It says CHANGE. It always says CHANGE.'), 8);
+      F.stand(sp.chairLeather, 43, 5, 1, look('A leather armchair angled at the TV.'));
+      F.stand(sp.writingDesk, 45, 8, 2, look('A writing desk buried in mail and old crossword puzzles.'));
+      // ---- mudroom
+      F.hang(sp.coatHooks, 37, 12, 2, look('Coat hooks, overloaded with coats from every season.'), 2);
+      F.stand(sp.bootBench, 37, 13, 2, look('Boots, sneakers, and one flip-flop with no partner.'));
+      F.stand(sp.washerDryer, 40, 13, 2, look('The washer and dryer. The dryer eats exactly one sock per load.'));
+      // ---- family room
+      F.hang(sp.bayWindow, 44, 12, 4, null, 1);
+      F.stand(sp.blueHutch, 43, 13, 1, look('A light blue painted hutch full of pretty plates.'));
+      F.stand(sp.trainTable, 45, 14, 2, look('An old wooden train table. Somebody built a whole little town on it.'));
+      // ---- ways out
+      w.addTrigger(17, 3, 2, 1, () => G.play.warp('homeUp', 13, 13, 'up'));
+      w.addWarp(4, 17, 1, 1, 'home', 14, 34, 'down');
+      w.addWarp(20, 17, 1, 1, 'home', 17, 34, 'down');
+      w.addWarp(39, 17, 1, 1, 'home', 23, 34, 'down');
+    },
+    onEnter() {
+      return (function* () {
+        const f = flags();
+        if (f.badlandsMet || f.heardBlender) return;
+        f.heardBlender = true;
+        yield G.wait(20);
+        yield G.say(null, '{d}From the kitchen: a muffled "MMMPH!" ...and a blender whirring.{/}');
+        yield G.say('Nate', 'Lily? ...Why is someone running the blender?');
+      })();
+    },
+  };
+
+  G.MAPS.homeUp = {
+    name: 'Home: Upstairs',
+    music: 'house',
+    tiles() {
+      const W = 36, H = 21;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
+      const room = (x, y, w, h, face, floor) => { fill(x, y, w, 2, face); fill(x, y + 2, w, h - 2, floor); };
+      room(1, 1, 12, 7, '6', 'o');   // Dad and Michelle's room
+      room(14, 1, 6, 7, '8', 'z');   // bathroom
+      room(21, 1, 7, 7, '9', 'o');   // Nate's room
+      room(29, 1, 6, 7, '7', 'o');   // the giraffe room
+      room(1, 9, 34, 4, '5', 'o');   // hallway
+      room(1, 14, 10, 6, '0', 'o');  // Lily's room
+      room(17, 14, 10, 6, '6', 'o'); // guest room
+      room(28, 14, 7, 6, '5', 'o');  // linen nook
+      fill(13, 13, 2, 7, 'D');       // stairs down
+      const door = (x, y, w, h) => fill(x, y, w, h, 'o');
+      door(6, 8, 1, 3); door(16, 8, 1, 3); door(24, 8, 1, 3); door(31, 8, 1, 3);
+      door(9, 13, 1, 3); door(25, 13, 1, 3); door(31, 13, 1, 3);
+      fill(3, 6, 8, 2, 'R');
+      fill(22, 6, 3, 2, 'q');
+      fill(30, 6, 4, 2, 'q');
+      fill(2, 11, 10, 2, 'R'); fill(16, 11, 18, 2, 'R');
+      fill(2, 18, 6, 2, 'R');
+      fill(18, 18, 6, 2, 'R');
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr, f = flags();
+      // ---- Dad and Michelle's room
+      F.hang(sp.wallWindow.shade, 2, 2, 1, null, 3);
+      F.hang(sp.paintLand, 9, 2, 1, look('A landscape: rolling hills, a big sky. Very New Jersey.'), 9);
+      F.hang(sp.louverDoor, 11, 2, 1, look('A closet with louvered doors.'), 1);
+      F.hang(sp.louverDoor, 12, 2, 1, look('More closet. It\'s mostly sweaters.'), 1);
+      F.stand(sp.nightRed, 4, 3, 1, look('A nightstand with a red lamp and a stack of library books.'));
+      F.stand(sp.bedKing, 5, 3, 3, look('Dad and Michelle\'s room. The bed is made perfectly. Do not sit on it.'), { ht: 3 });
+      F.stand(sp.nightRed, 8, 3, 1, look('The other nightstand. A reading lamp and Dad\'s glasses case.'));
+      F.stand(sp.chairBlue, 11, 6, 1, look('A comfy reading chair by the closet.'));
+      // ---- bathroom
+      F.stand(sp.doubleVanity, 14, 3, 3, look('A double vanity. One side is very tidy. The other side is not.'));
+      F.hang(sp.paintSunset, 18, 2, 1, look('A painting of the sun going down over the water.'), 8);
+      F.stand(sp.toilet, 19, 3, 1, look('It\'s a toilet. You\'ve seen one before.'));
+      F.stand(sp.tub, 18, 6, 2, look('A bathtub. Rubber duck not included.'), { ht: 2 });
+      // ---- Nate's room
+      F.hang(sp.poster, 21, 2, 1, look('The periodic table Nate memorized in seventh grade. Twice.'), 6);
+      F.hang(sp.fireworksPoster, 23, 2, 1, look('"FIREWORKS: A CHEMICAL HISTORY." Nate\'s most treasured possession.'), 5);
+      F.hang(sp.wallWindow.one, 25, 2, 1, null, 3);
+      w.chemDesk = F.stand(f.badlandsBeaten || G.state.items.dye ? sp.chemDeskEmpty : sp.chemDesk, 21, 3, 2, () => S.chemDesk());
+      F.stand(sp.bedNate, 26, 3, 1, look('Nate\'s old bed. The plaid quilt matches his shirt. It always has.'), { ht: 3 });
+      F.stand(sp.rocks, 27, 3, 1, look('Nate\'s first rock collection. Mostly gravel from the driveway. Labeled anyway.'));
+      // ---- the giraffe room
+      F.hang(sp.wallWindow.curtains, 31, 2, 1, null, 3);
+      F.stand(sp.glider, 29, 3, 1, look('A gray glider chair. It glides.'));
+      F.stand(sp.settee, 31, 3, 2, look('A floral settee under the window.'));
+      F.stand(sp.giraffe, 34, 3, 1, look('A giant stuffed giraffe. Nobody knows where it came from. Nobody dares move it.'), { ht: 2 });
+      // ---- hallway
+      F.hang(sp.familyPhotos, 3, 10, 2, look('Family photos all the way down the hall. School pictures, beach trips, one very bad haircut.'), 5);
+      F.hang(sp.familyPhotos, 19, 10, 2, look('More family photos. Somebody is always blinking.'), 5);
+      F.hang(sp.paintSmall, 28, 10, 1, look('A little painting of a flower pot.'), 8);
+      // ---- Lily's room
+      F.hang(sp.wallWindow.shade, 2, 15, 1, null, 3);
+      F.hang(sp.paintBarn, 6, 15, 2, look('A painting of a red barn and a white horse.'), 8);
+      F.stand(sp.hamper, 1, 16, 1, look('A wicker hamper. Full. Always full.'));
+      F.stand(sp.bedLily, 4, 16, 2, look('Lily\'s bed: a navy quilt, leopard print pillows, and a flowered quilt folded at the foot.'), { ht: 3 });
+      F.stand(sp.nightCream, 6, 16, 1, look('A nightstand with a little lamp and a phone charger.'));
+      F.stand(sp.dresser, 7, 16, 2, look('A dresser with a mirror and a jewelry box.'));
+      // ---- guest room
+      F.hang(sp.paintSea, 18, 15, 2, look('A painting of a sailboat out on the bay.'), 8);
+      F.hang(sp.wallWindow.shade, 23, 15, 1, null, 3);
+      F.stand(sp.nightBlack, 19, 16, 1, look('A nightstand with a black lamp.'));
+      F.stand(sp.bedGuest, 20, 16, 2, look('The guest room. White duvet, fluffy pillows. Guests never want to leave.'), { ht: 3 });
+      F.stand(sp.spindleChair, 24, 17, 1, look('A wooden chair with a woven seat.'));
+      // ---- linen nook
+      F.stand(sp.linenShelf, 28, 16, 1, look('Towels, sheets, and one beach towel shaped like a slice of watermelon.'));
+      F.stand(sp.linenShelf, 29, 16, 1, look('Even more towels. Nobody knows how there are this many towels.'));
+      F.hang(sp.wallWindow.two, 32, 15, 2, null, 3);
+      F.stand(sp.windowSeat, 32, 16, 2, look('A window seat with a view of the whole yard. The best seat in the house.'));
+      w.addTrigger(13, 19, 2, 1, () => G.play.warp('homeDown', 17, 8, 'down'));
+    },
+  };
+
+  // Golden hour at the end of the driveway: Lily vs. Mikey.
+  G.MAPS.goldenHour = {
+    name: 'Golden Hour',
+    music: 'serenade',
+    tiles() {
+      const W = 15, H = 10;
+      const g = Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => ((x >> 1) % 2 ? 'L' : 'M')));
+      for (let x = 0; x < W; x++) g[9][x] = 'f';
+      for (let y = 2; y < H; y++) { g[y][0] = 'f'; g[y][14] = 'f'; }
+      for (let x = 0; x < W; x += 2) g[0][x] = 'T';
+      [[3, 3], [11, 7], [6, 7], [9, 2], [2, 6], [12, 4]].forEach(([x, y]) => { g[y][x] = ','; });
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      w.addProp({ img: G.spr.gatePost, tx: 6, ty: 9, dx: 1 });
+      w.addProp({ img: G.spr.gatePost, tx: 8, ty: 9, dx: 1 });
+      if (!flags().mikeyBeaten) w.add(new G.MikeyBoss(11 * 16 + 8, 4 * 16 + 14));
+      const cheer = (sprite, name, x) => w.add(new G.NPC({ sprite, name, x: x * 16 + 8, y: 8 * 16 + 12, dir: 'up' }));
+      cheer('nate', 'Nate', 2);
+      if (G.state.party.includes('doron')) cheer('doron', 'Doron', 12);
+    },
+    tint(ctx) {
+      ctx.fillStyle = 'rgba(255,170,60,0.22)';
+      ctx.fillRect(0, 0, G.W, G.H);
+      const g = ctx.createLinearGradient(0, 0, 0, G.H);
+      g.addColorStop(0, 'rgba(255,120,80,0.18)'); g.addColorStop(1, 'rgba(255,220,120,0)');
+      ctx.fillStyle = g; ctx.fillRect(0, 0, G.W, G.H);
+    },
+    onEnter() {
+      return (function* () {
+        if (!flags().mikeyBeaten) yield* S.goldenIntro();
+      })();
+    },
+  };
+
   // Nate's childhood home on Rattlesnake Bridge Rd, Bedminster NJ, laid out
   // from the property survey and the family's photos: the road and board
   // fence along the bottom; a long gravel driveway up through the front
@@ -1514,6 +2203,7 @@
       fill(0, 54, W, 1, 'Y');
       fill(0, 52, W, 1, 'f');
       set(43, 52, 'g'); set(44, 52, 'g');
+      set(42, 52, 'L'); set(45, 52, 'L'); // the gateposts
       // wildflowers scattered across the front meadow
       for (let i = 0; i < 40; i++) {
         const x = Math.floor(G.hash(i, 71) * 52), y = 41 + Math.floor(G.hash(i, 72) * 10);
@@ -1525,9 +2215,6 @@
       fill(20, 34, 2, 1, 'H');
       fill(24, 34, 2, 1, 'H');
       fill(26, 35, 2, 1, 'H');
-      // the in-ground pool on its concrete deck, past the end of the parking area
-      fill(47, 29, 7, 5, 'C');
-      fill(48, 30, 5, 3, '~');
       // the garden: rustic X-braced fence, raised beds, snapdragons, paths
       fill(26, 15, 15, 1, 'X'); fill(26, 23, 15, 1, 'X');
       fill(26, 15, 1, 9, 'X'); fill(40, 15, 1, 9, 'X');
@@ -1538,32 +2225,40 @@
       [[28, 19], [29, 19], [28, 21], [29, 21], [37, 19], [38, 19], [37, 21], [38, 21]].forEach(([x, y]) => set(x, y, 'e'));
       fill(31, 19, 2, 3, 'F');
       // big oaks around the yard; woods along the west and east edges
-      [[8, 30], [5, 26], [24, 20], [14, 23], [48, 27], [0, 19], [0, 23], [0, 27], [0, 31],
+      [[8, 30], [5, 26], [24, 20], [14, 23], [0, 19], [0, 23], [0, 27], [0, 31],
         [56, 14], [58, 16], [56, 20], [58, 22], [56, 26], [58, 28], [56, 31], [58, 33],
-        [8, 40], [9, 35], [15, 45], [28, 46], [36, 42], [38, 46], [47, 42], [6, 47], [18, 49], [33, 49],
+        [8, 40], [9, 35], [15, 45], [28, 46], [38, 46], [47, 42], [6, 47], [18, 49], [33, 49],
         [57, 37], [57, 41], [57, 45], [0, 35], [0, 39], [0, 43], [0, 47]]
         .forEach(([x, y]) => set(x, y, 'T'));
       return g.map((r) => r.join(''));
     },
     setup(w) {
-      // the house; its doors and the porch are talkable
+      // the house; walk into the porch door, the front door or the side door to go inside
       w.addProp({ img: G.spr.farmhouse, tx: 11, ty: 27, h: 7 });
       w.blockTiles(11, 28, 12, 6);
       w.blockTiles(23, 30, 3, 4);
-      const door = (x, y, wd, talk) => w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [x * 16, y * 16, (x + wd) * 16, (y + 1) * 16], talk });
-      door(13, 33, 4, S.homePorch);
-      door(17, 33, 1, S.homeFront);
-      door(23, 33, 1, S.homeSideDoor);
+      for (const [x, tx] of [[14, 4], [17, 20], [23, 39]]) {
+        w.block[33 * w.w + x] = 0;
+        w.addWarp(x, 33, 1, 1, 'homeDown', tx, 16, 'up');
+      }
       // the raised stone patio off the porch: steps down at the chimney end
       w.addProp({ img: G.spr.patio, tx: 12, ty: 34, h: 3, flat: true });
       w.blockTiles(13, 36, 6, 1);
-      w.addProp({ img: G.spr.grill, tx: 13, ty: 34, solid: [13, 34, 1, 1], hit: [13, 34, 1, 1], talk: S.homePatio });
+      w.addProp({ img: G.spr.grill, tx: 13, ty: 34, solid: [13, 34, 1, 1], hit: [13, 34, 1, 1], talk: S.homeGrill });
       w.addProp({ img: G.spr.patioUmbrella, tx: 15, ty: 34, dx: 2, solid: [15, 34, 1, 1], hit: [15, 34, 1, 1], talk: S.homePatio });
       w.addProp({ img: G.spr.woodStack, tx: 18, ty: 34, solid: [18, 34, 1, 1], hit: [18, 34, 1, 1], talk: S.homeFirewood });
       // the lawn by the patio
       w.addProp({ img: G.spr.firePit, tx: 14, ty: 39, solid: [14, 39, 1, 1], hit: [14, 39, 1, 1], talk: S.homeFirePit });
       w.addProp({ img: G.spr.lawnSet, tx: 16, ty: 38, solid: [16, 38, 2, 1], hit: [16, 38, 2, 1], talk: S.homeLawnSet });
       w.addProp({ img: G.spr.sawhorses, tx: 5, ty: 38, dx: 2, solid: [5, 38, 3, 1] });
+      // the flag on its pole out front, and a green Adirondack chair under the old oak
+      w.props.push({ draw(ctx, cx, cy) { ctx.drawImage(G.spr.flag[(G.tick >> 4) & 1], 198 - cx, 41 * 16 + 16 - 60 - cy); }, base: 41 * 16 + 15, hit: [12 * 16, 41 * 16, 13 * 16, 42 * 16], talk: S.homeFlag });
+      w.blockTiles(12, 41, 1, 1);
+      w.addProp({ img: G.spr.adirondack, tx: 7, ty: 27, solid: [7, 27, 1, 1], hit: [7, 27, 1, 1], talk: S.homeAdirondack });
+      // flowering trees: a pink crabapple out front, wisteria by the pool
+      w.addTree(36, 42, 'pink');
+      w.addTree(24, 43, 'pink');
+      w.addTree(55, 29, 'purple');
       // the big double-trunk tree between the house and the parking area
       w.props.push({ img: G.spr.bigTree, x: 27 * 16 - 48, y: 35 * 16 - 120, base: 35 * 16 - 1 });
       w.blockTiles(26, 33, 2, 2);
@@ -1574,17 +2269,28 @@
       w.addProp({ img: G.spr.woodRack, tx: 31, ty: 34, solid: [31, 34, 3, 1], hit: [31, 34, 3, 1], talk: S.homeFirewood });
       w.addProp({ img: G.spr.woodPile, tx: 31, ty: 35, dx: 1, solid: [31, 35, 2, 1], hit: [31, 35, 2, 1], talk: S.homeFirewood });
       w.addProp({ img: G.spr.hoop, tx: 34, ty: 34, dx: -6, solid: [34, 34, 1, 1], hit: [34, 34, 1, 1], talk: S.homeHoop });
-      w.addBuilding({ x: 35, y: 30, w: 7, h: 4, door: 3, style: 'shake', wall: '#2f4a3e', roof: '#4a4c56', garageDoors: 3, weathervane: true, locked: S.homeGarage });
+      w.addBuilding({ x: 35, y: 30, w: 7, h: 4, door: 3, style: 'shake', wall: '#2f4a3e', roof: '#4a4c56', garageDoors: 3, cupola: true, weathervane: true, locked: S.homeGarage });
       w.addProp({ img: G.spr.truck, tx: 44, ty: 36, h: 3, dx: 2, solid: [44, 36, 2, 3], hit: [44, 36, 2, 3], talk: S.homeTruck });
       // across the driveway: the little white pool house on the pool's left, lined up with its middle
-      w.addBuilding({ x: 44, y: 30, w: 2, h: 3, door: 0, style: 'clapboard', wall: '#f4f2ec', roof: '#4a4c56', doorColor: '#f4f2ec', doorFrame: '#c8c8c8', locked: S.homePoolHouse });
-      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [48 * 16, 30 * 16, 53 * 16, 33 * 16], talk: S.homePool });
+      w.addProp({ img: G.spr.poolHouse, tx: 44, ty: 30, h: 3, dx: -4, solid: [44, 30, 2, 3], hit: [44, 30, 2, 3], talk: S.homePoolHouse });
+      w.addProp({ img: G.spr.porchFlag, tx: 45, ty: 31, dx: 14, base: 33 * 16 });
+      // the free-form pool on its stone deck, teak furniture and green market umbrellas
+      w.addProp({ img: G.spr.kidneyPool, tx: 46, ty: 27, h: 6, flat: true });
+      w.blockTiles(48, 28, 5, 1);
+      w.blockTiles(47, 29, 6, 3);
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [47 * 16, 28 * 16, 53 * 16, 32 * 16], talk: S.homePool });
+      w.addProp({ img: G.spr.teakSet, tx: 48, ty: 33, solid: [48, 33, 3, 1], hit: [48, 33, 3, 1], talk: S.homePoolSet });
+      w.props.push({ img: G.spr.marketUmbrella, x: 48 * 16 + 3, y: 33 * 16 - 30, base: 34 * 16 + 1 });
+      for (const x of [49, 51]) w.addProp({ img: G.spr.lounger, tx: x, ty: 26, solid: [x, 26, 1, 1], hit: [x, 26, 1, 1], talk: S.homeLounger });
+      w.props.push({ img: G.spr.marketUmbrella, x: 50 * 16 - 11, y: 26 * 16 - 32, base: 27 * 16 + 1 });
+      w.addProp({ img: G.spr.teakBench, tx: 52, ty: 33, solid: [52, 33, 2, 1], hit: [52, 33, 2, 1], talk: S.homeLounger });
       // behind it all: the picnic table and the garden
       w.addProp({ img: G.spr.picnicTable, tx: 29, ty: 24, solid: [29, 24, 2, 1], hit: [29, 24, 2, 1], talk: S.homePicnic });
       w.addProp({ img: G.spr.coop, tx: 28, ty: 16, h: 2, solid: [28, 16, 6, 2], hit: [28, 16, 6, 2], talk: S.homeCoop });
       w.addProp({ img: G.spr.greenhouse, tx: 36, ty: 16, h: 2, solid: [36, 16, 3, 2], hit: [36, 16, 3, 2], talk: S.homeGreenhouse });
       w.addProp({ img: G.spr.mailbox, tx: 46, ty: 51, dx: 2, solid: [46, 51, 1, 1], hit: [46, 51, 1, 1], talk: S.homeMailbox });
       w.addProp({ img: G.spr.streetSign, tx: 40, ty: 51, solid: [40, 51, 1, 1], hit: [40, 51, 1, 1], talk: S.homeStreetSign });
+      for (const x of [42, 45]) w.addProp({ img: G.spr.gatePost, tx: x, ty: 52, dx: 1, solid: [x, 52, 1, 1], hit: [x, 52, 1, 1], talk: S.homeGatepost });
       w.addTree(16, 19, 'pine');
       w.addTree(46, 23, 'pine');
       w.add(new G.Sign(53, 12, 'BRADY BROOK.'));
@@ -1599,13 +2305,21 @@
       w.addTrigger(59, 53, 1, 2, () => G.script.run(S.homeLeave('east')));
       w.addTrigger(51, 0, 2, 1, () => G.script.run(S.homeNorth()));
 
-      // Mikey, waiting at the start of the driveway with flowers and balloons
-      if (!flags().lilySaved) {
-        const mikey = w.add(new G.NPC({ sprite: 'mikey', name: 'Mikey', x: 42 * 16 + 8, y: 51 * 16 + 14, dir: 'down', talk: S.mikey, balloons: true }));
+      // Mikey, waiting at the start of the driveway with flowers and heart balloons.
+      // Once Lily is out of the fridge, walking by him starts his serenade.
+      if (!flags().mikeyBeaten) {
+        const mikey = w.add(new G.NPC({ sprite: 'mikey', name: 'Mikey', x: 41 * 16 + 8, y: 50 * 16 + 14, dir: 'down', talk: S.mikey, balloons: true }));
         mikey.held = G.spr.bouquet;
         w.mikey = mikey;
-        w.addTrigger(38, 51, 10, 4, () => { if (!flags().mikeyMet) G.script.run(S.mikeyIntro()); });
+        if (!flags().lilySaved) w.addTrigger(38, 50, 10, 5, () => { if (!flags().mikeyMet) G.script.run(S.mikeyIntro()); });
+        else w.addTrigger(35, 46, 15, 9, () => G.script.run(S.mikeyGoldenHour()));
       }
+    },
+    // now and then a rainbow hot air balloon drifts across the sky
+    tint(ctx) {
+      const t = G.tick % 5400;
+      if (t > 1500) return;
+      ctx.drawImage(G.spr.hotAirBalloon, Math.round(G.W + 20 - t * ((G.W + 60) / 1500)), Math.round(14 + Math.sin(t / 70) * 4));
     },
     // the flock's revenge: angry hens swoop in from off-screen for a few seconds
     tick(w) {

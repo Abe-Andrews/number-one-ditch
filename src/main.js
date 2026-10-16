@@ -71,7 +71,7 @@
       const [ddx, ddy] = G.DIRS[dir];
       this.trail = [];
       for (let i = 0; i < 90; i++) this.trail.push({ x: x - ddx * i * 0.6, y: y - ddy * i * 0.6, dir });
-      G.state.party.filter((p) => p !== 'nate').forEach((pid, i) => {
+      if (!G.state.playAs) G.state.party.filter((p) => p !== 'nate').forEach((pid, i) => {
         const t = this.trail[Math.min(89, (i + 1) * 14)];
         this.world.add(new G.Follower(pid, i, t.x, t.y, dir));
       });
@@ -260,6 +260,12 @@
         G.input.eat('start');
         this.menu = new G.PauseMenu();
         return;
+      }
+
+      // Pressing 6 counts as saying the sacred number.
+      if (G.input.hit('six')) {
+        G.input.eat('six');
+        G.script.run(G.SCRIPTS.sixKey());
       }
 
       G.script.update();
@@ -479,10 +485,11 @@
       ctx.rotate(Math.PI / 2);
       ctx.drawImage(S.down[0], -S.h / 2, -8);
       ctx.restore();
-      const t1 = 'Nate fainted...';
+      const lily = G.state.playAs === 'lily';
+      const t1 = (lily ? 'Lily' : 'Nate') + ' fainted...';
       F().draw(ctx, t1, Math.round((G.W - F().width(t1)) / 2), 84, '#f86858', { shadow: '#000' });
       if (this.t < 60) return;
-      const t2 = 'Lily: get up nate. the ditch needs you';
+      const t2 = lily ? 'Nate: get up lily. mikey is still singing' : 'Lily: get up nate. the ditch needs you';
       F().draw(ctx, t2, Math.round((G.W - F().width(t2)) / 2), 98, '#ff98d0', { shadow: '#000' });
       ['Continue', 'Back to Title'].forEach((o, i) => {
         F().draw(ctx, (i === this.sel ? '> ' : '  ') + o, 84, 118 + i * 12, i === this.sel ? '#f8d850' : '#f8f8f0', { shadow: '#000' });
@@ -507,7 +514,8 @@
   G.sprites = {};
   for (const id in G.CAST) G.sprites[id] = G.art.person(G.CAST[id]);
   // Nate only wears his flat cap once Groundskeeper Gus gives it back.
-  G.nateSprites = () => (G.state && G.state.items.cap ? G.sprites.nate : G.sprites.nate_nocap);
+  G.nateSprites = () => (G.state && G.state.playAs ? G.sprites[G.state.playAs]
+    : G.state && G.state.items.cap ? G.sprites.nate : G.sprites.nate_nocap);
   G.fade = 0;
   G.state = newState();
   G.title.enter();

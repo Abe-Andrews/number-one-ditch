@@ -66,7 +66,7 @@
   G.NAME_COLORS = {
     Nate: '#78e070', Lily: '#ff98d0', Abe: '#ffa848', Hannah: '#c898ff', Doron: '#68c8ff',
     Dad: '#f8d850', 'Father Eggmas': '#f86858', Tyler: '#78e8e8', Mikey: '#ff98d0',
-    Nani: '#ffb8e0', 'El EEENGLISH': '#f86858', 'Pyro Pete': '#ffa848',
+    Nani: '#ffb8e0', 'El EEENGLISH': '#f86858', 'Pyro Pete': '#ffa848', 'Badlands Chugs': '#ff9a28',
   };
 
   const BOX = { x: 6, w: 228, h: 44, lineH: 11, lines: 3 };

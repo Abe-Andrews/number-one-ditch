@@ -32,20 +32,20 @@
   }
   G.drawShadow = drawShadow;
 
-  // A bunch of bobbing balloons tied to someone's hand (Mikey's, for Lily).
-  function drawBalloons(ctx, x, top, seed) {
+  // A bunch of bobbing heart balloons tied to someone's hand (Mikey's, for Lily).
+  function drawBalloons(ctx, x, top, seed, n = 3) {
     const hand = [Math.round(x + 5), Math.round(top + 16)];
-    [[-7, -14, '#e83848'], [0, -20, '#f080b0'], [7, -15, '#f8d040']].forEach(([dx, dy, col], i) => {
+    [[-7, -14, 'heartRed'], [0, -21, 'heartPink'], [7, -15, 'heartRed']].slice(0, n).forEach(([dx, dy, key], i) => {
       const bx = Math.round(x + dx + Math.sin(G.tick / 40 + i * 2 + seed) * 1.5);
       const by = Math.round(top + dy + Math.sin(G.tick / 30 + i) * 1.5);
-      ctx.fillStyle = '#e8e8f0';
-      const n = Math.max(Math.abs(hand[0] - bx), Math.abs(hand[1] - by - 6));
-      for (let k = 0; k <= n; k += 1) ctx.fillRect(Math.round(bx + ((hand[0] - bx) * k) / n), Math.round(by + 6 + ((hand[1] - by - 6) * k) / n), 1, 1);
-      ctx.fillStyle = '#1c1424'; ctx.fillRect(bx - 3, by - 3, 7, 9); ctx.fillRect(bx - 4, by - 2, 9, 7);
-      ctx.fillStyle = col; ctx.fillRect(bx - 2, by - 2, 5, 7); ctx.fillRect(bx - 3, by - 1, 7, 5);
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(bx - 2, by - 1, 1, 2);
-      ctx.fillStyle = col; ctx.fillRect(bx, by + 5, 1, 1);
+      drawString(ctx, bx, by + 8, hand[0], hand[1]);
+      ctx.drawImage(G.spr[key], bx - 6, by - 4);
     });
+  }
+  function drawString(ctx, x0, y0, x1, y1) {
+    ctx.fillStyle = '#e8e8f0';
+    const n = Math.max(1, Math.abs(x1 - x0), Math.abs(y1 - y0));
+    for (let k = 0; k <= n; k++) ctx.fillRect(Math.round(x0 + ((x1 - x0) * k) / n), Math.round(y0 + ((y1 - y0) * k) / n), 1, 1);
   }
 
   // Little golden halo over enemies calmed by "Peace Be With You".
@@ -83,6 +83,7 @@
 
     update(w) {
       if (this.inv > 0) this.inv--;
+      if (this.noT > 0) this.noT--;
       if (G.script.busy) { if (!this.walking) this.moving = false; return; }
       const inp = G.input;
 
@@ -128,16 +129,26 @@
         if (!G.play.tryInteract()) this.startSwing();
       } else if (inp.hit('b')) {
         inp.eat('b');
-        G.play.useItem();
+        if (!G.state.playAs) G.play.useItem();
       }
     }
 
     startSwing() {
+      if (G.state.playAs === 'lily') { this.sayNo(); return; }
       if (!G.state.items.hammer) return;
       this.state = 'swing';
       this.t = 0;
       this.hitSet.clear();
       G.audio.sfx('swing');
+    }
+
+    // Lily's only move, and it is enough.
+    sayNo() {
+      if (this.noT > 0) return;
+      this.noT = 16;
+      const [dx, dy] = DIRS[this.dir];
+      this.world.add(new NoShot(this.x + dx * 8, this.y + dy * 6, this.dir));
+      G.audio.sfx('no');
     }
 
     swingRect() {
@@ -597,6 +608,251 @@
     }
   }
   G.ElEnglish = ElEnglish;
+
+  // ============================================================== LILY'S "NO."
+  class NoShot extends Ent {
+    constructor(x, y, dir) {
+      super(x, y);
+      const [dx, dy] = DIRS[dir];
+      this.vx = dx * 2.8; this.vy = dy * 2.8;
+      this.life = 48;
+    }
+    update(w) {
+      if (G.script.busy) return;
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0) { this.dead = true; return; }
+      const r = [this.x - 9, this.y - 18, this.x + 9, this.y - 4];
+      for (const e of w.ents) {
+        if (e.dead || !e.onNo) continue;
+        if (G.overlap(r, e.noBox ? e.noBox() : e.hurtBox()) && e.onNo(this)) { this.dead = true; return; }
+      }
+    }
+    draw(ctx, cx, cy) {
+      const t = 'NO.', w = G.font.bigWidth(t, 1);
+      G.font.drawBig(ctx, t, Math.round(this.x - w / 2) - cx, Math.round(this.y - 18) - cy, 1, '#ffffff', '#c83878');
+    }
+  }
+  G.NoShot = NoShot;
+
+  // ============================================================== MIKEY'S SERENADE
+  // Golden music notes: they sting, but a "No." swats them out of the air.
+  class Note extends Ent {
+    constructor(x, y, vx, vy) {
+      super(x, y);
+      Object.assign(this, { vx, vy, life: 260 });
+    }
+    hurtBox() { return [this.x - 4, this.y - 12, this.x + 4, this.y - 2]; }
+    onNo() { this.dead = true; this.world.burst(this.x, this.y - 6, ['#f8d040', '#ffffff'], 4); return false; }
+    update(w) {
+      if (G.script.busy) return;
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0 || w.tileSolid(Math.floor(this.x / 16), Math.floor((this.y - 6) / 16))) { this.dead = true; return; }
+      const p = G.play.player;
+      if (G.overlap(this.hurtBox(), p.hurtBox())) { this.dead = true; p.hurt(1, this.x, this.y); }
+    }
+    draw(ctx, cx, cy) {
+      ctx.drawImage(G.spr.note, Math.round(this.x - 4) - cx, Math.round(this.y - 12 + Math.sin((this.life + this.x) / 6) * 1.5) - cy);
+    }
+  }
+  G.Note = Note;
+
+  // A heart balloon that drifts after Lily and pops in her face.
+  class HeartShot extends Ent {
+    constructor(x, y) {
+      super(x, y);
+      this.life = 420;
+      this.vx = 0; this.vy = -0.4;
+      this.col = Math.random() < 0.5 ? 'heartRed' : 'heartPink';
+    }
+    hurtBox() { return [this.x - 6, this.y - 16, this.x + 6, this.y - 2]; }
+    onNo() { this.pop(); return false; }
+    pop() {
+      this.dead = true;
+      G.audio.sfx('poof');
+      this.world.burst(this.x, this.y - 10, ['#e83848', '#f080b0', '#ffffff'], 8, { speed: 1.2, life: 18 });
+      this.world.pop(this.x, this.y - 22, 'POP!', '#ff98d0');
+    }
+    update(w) {
+      if (G.script.busy) return;
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1;
+      this.vx += (dx / d) * 0.02; this.vy += (dy / d) * 0.02;
+      const sp = Math.hypot(this.vx, this.vy);
+      if (sp > 0.7) { this.vx *= 0.7 / sp; this.vy *= 0.7 / sp; }
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0) { this.pop(); return; }
+      if (G.overlap(this.hurtBox(), p.hurtBox())) { this.pop(); p.hurt(1, this.x, this.y); }
+    }
+    draw(ctx, cx, cy) {
+      const bob = Math.round(Math.sin(this.life / 10) * 1.5);
+      ctx.drawImage(G.spr[this.col], Math.round(this.x - 6) - cx, Math.round(this.y - 18 + bob) - cy);
+    }
+  }
+  G.HeartShot = HeartShot;
+
+  // ============================================================== MIKEY (miniboss)
+  // Three heart balloons orbit him and soak up Lily's "No."s. Pop them all and
+  // he's wide open; at half health the golden hour kicks in.
+  const MIKEY_OUCH = ['OOF.', 'BUT THE SONG...', 'NOT EVEN A MAYBE?', 'OUCH.', 'I PRACTICED!'];
+  class MikeyBoss extends Ent {
+    constructor(x, y) {
+      super(x, y);
+      this.enemy = true;
+      this.boss = true;
+      this.name = 'MIKEY';
+      this.hp = this.maxHp = 6;
+      this.hb = { w: 12, h: 8 };
+      this.state = 'stroll';
+      this.t = 80;
+      this.dir = 'left';
+      this.anim = 0;
+      this.shield = 3;
+      this.spin = 0;
+      this.hurtT = 0;
+      this.kb = { x: 0, y: 0 };
+      this.cycle = 0;
+      this.hitsOpen = 0;
+    }
+    get S() { return G.sprites.mikey; }
+    get golden() { return this.hp <= this.maxHp / 2; }
+    hurtBox() { return [this.x - 7, this.y - 22, this.x + 7, this.y]; }
+    noBox() { return this.shield > 0 ? [this.x - 20, this.y - 46, this.x + 20, this.y + 2] : [this.x - 11, this.y - 28, this.x + 11, this.y + 3]; }
+    balloonPos(i) {
+      const a = this.spin + (i * Math.PI * 2) / 3;
+      return [this.x + Math.cos(a) * 15, this.y - 30 + Math.sin(a) * 5];
+    }
+    hit() { G.audio.sfx('bump'); }
+
+    onNo(shot) {
+      if (this.state === 'defeated') return false;
+      const w = this.world;
+      if (this.shield > 0) {
+        this.shield--;
+        const [bx, by] = this.balloonPos(this.shield);
+        G.audio.sfx('poof');
+        w.burst(bx, by, ['#e83848', '#f080b0', '#ffffff'], 10, { speed: 1.3, life: 20 });
+        w.pop(bx, by - 8, 'POP!', '#ff98d0');
+        if (this.shield === 0) {
+          this.state = 'open';
+          this.t = 210;
+          this.hitsOpen = 0;
+          w.pop(this.x, this.y - 34, 'MY BALLOONS!', '#ffffff');
+        }
+        return true;
+      }
+      this.hp--;
+      this.hurtT = 14;
+      const dx = this.x - shot.x, dy = this.y - shot.y, m = Math.hypot(dx, dy) || 1;
+      this.kb = { x: (dx / m) * 2.2, y: (dy / m) * 2.2 };
+      G.audio.sfx('hit');
+      w.pop(this.x, this.y - 34, MIKEY_OUCH[(this.maxHp - this.hp) % MIKEY_OUCH.length], '#f8f8f0');
+      if (this.hp <= 0) {
+        this.state = 'defeated';
+        G.script.run(G.SCRIPTS.mikeyDefeated(this));
+      } else if (++this.hitsOpen >= 3) {
+        this.t = Math.min(this.t, 10);
+      }
+      return true;
+    }
+
+    update(w) {
+      if (G.script.busy || this.state === 'defeated') return;
+      this.spin += this.golden ? 0.07 : 0.05;
+      const p = G.play.player;
+      const dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      if (this.hurtT > 0) {
+        this.hurtT--;
+        w.move(this, this.kb.x, 0); w.move(this, 0, this.kb.y);
+        this.kb.x *= 0.8; this.kb.y *= 0.8;
+        return;
+      }
+      if (this.state !== 'open' && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
+
+      if (this.state === 'stroll') {
+        // keep a polite serenading distance from Lily
+        this.dir = G.dirToward(dx, dy);
+        const want = dist > 84 ? 1 : dist < 56 ? -1 : 0;
+        const side = Math.sin(this.spin * 0.7);
+        w.move(this, (dx / dist) * 0.5 * want - (dy / dist) * 0.45 * side, 0);
+        w.move(this, 0, (dy / dist) * 0.5 * want + (dx / dist) * 0.45 * side);
+        this.anim++;
+        if (--this.t <= 0) {
+          const moves = this.golden ? ['sing', 'hearts', 'golden', 'dash'] : ['sing', 'hearts', 'sing', 'dash'];
+          this.state = moves[this.cycle++ % moves.length];
+          this.t = { sing: 70, hearts: 40, golden: 90, dash: 36 }[this.state];
+          if (this.state === 'sing') w.pop(this.x, this.y - 40, '~ LA LA LAAA ~', '#f8d850');
+          if (this.state === 'golden') { w.pop(this.x, this.y - 40, '~ GOLDEN HOUR ~', '#ffb848'); G.audio.sfx('bell'); }
+          if (this.state === 'dash') w.pop(this.x, this.y - 40, 'LILY, WAIT!', '#ffffff');
+        }
+      } else if (this.state === 'sing') {
+        this.dir = G.dirToward(dx, dy);
+        if (this.t % 18 === 0) {
+          const n = this.golden ? 5 : 3, base = Math.atan2(dy, dx);
+          for (let i = 0; i < n; i++) {
+            const a = base + (i - (n - 1) / 2) * 0.32;
+            w.add(new Note(this.x, this.y - 6, Math.cos(a) * 1.2, Math.sin(a) * 1.2));
+          }
+          G.audio.sfx('blip');
+        }
+        if (--this.t <= 0) { this.state = 'stroll'; this.t = 70; }
+      } else if (this.state === 'hearts') {
+        if (this.t === 30 || (this.golden && this.t === 10)) {
+          w.add(new HeartShot(this.x - 10, this.y - 20));
+          w.add(new HeartShot(this.x + 10, this.y - 20));
+          G.audio.sfx('heart');
+        }
+        if (--this.t <= 0) { this.state = 'stroll'; this.t = 80; }
+      } else if (this.state === 'golden') {
+        if (this.t === 70 || this.t === 35) {
+          const off = this.t === 35 ? Math.PI / 12 : 0;
+          for (let i = 0; i < 12; i++) {
+            const a = off + (i / 12) * Math.PI * 2;
+            w.add(new Note(this.x, this.y - 6, Math.cos(a) * 1.05, Math.sin(a) * 1.05));
+          }
+        }
+        if (--this.t <= 0) { this.state = 'stroll'; this.t = 70; }
+      } else if (this.state === 'dash') {
+        if (this.t > 20) { this.dir = G.dirToward(dx, dy); this.vx = (dx / dist) * 2.6; this.vy = (dy / dist) * 2.6; this.t--; return; }
+        this.anim += 2;
+        const h = w.move(this, this.vx, this.vy);
+        if (h.hitX || h.hitY || --this.t <= 0) { this.state = 'stroll'; this.t = 60; if (h.hitX || h.hitY) G.audio.sfx('bump'); }
+      } else if (this.state === 'open') {
+        // no balloons: he just stands there, crushed, until he blows up more
+        if (--this.t <= 0) {
+          this.shield = 3;
+          this.state = 'stroll';
+          this.t = 50;
+          w.pop(this.x, this.y - 40, 'I BROUGHT MORE BALLOONS!', '#ff98d0');
+          G.audio.sfx('heart');
+        }
+      }
+    }
+
+    draw(ctx, cx, cy) {
+      const S = this.S;
+      drawShadow(ctx, this.x, this.y, cx, cy);
+      const moving = this.state === 'stroll' || this.state === 'dash';
+      let img = S[this.dir][walkFrame(this.anim, moving)];
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2) - cy;
+      const back = [], front = [];
+      for (let i = 0; i < this.shield; i++) (Math.sin(this.spin + (i * Math.PI * 2) / 3) < 0 ? back : front).push(i);
+      const balloon = (i) => {
+        const [bx, by] = this.balloonPos(i);
+        drawString(ctx, Math.round(bx) - cx, Math.round(by + 8) - cy, sx + 13, sy + 15);
+        ctx.drawImage(G.spr[i === 1 ? 'heartPink' : 'heartRed'], Math.round(bx - 6) - cx, Math.round(by - 4) - cy);
+      };
+      back.forEach(balloon);
+      ctx.drawImage(img, sx, sy);
+      ctx.drawImage(G.spr.bouquet, Math.round(this.x - G.spr.bouquet.width / 2) - cx, sy + 8);
+      front.forEach(balloon);
+      if (this.state === 'open') {
+        ctx.fillStyle = '#78c8ff';
+        const ty = (G.tick >> 2) % 6;
+        ctx.fillRect(sx + 4, sy + 7 + ty, 1, 2); ctx.fillRect(sx + 11, sy + 7 + ((ty + 3) % 6), 1, 2);
+      }
+    }
+  }
+  G.MikeyBoss = MikeyBoss;
 
   // ============================================================== SIX (enemy)
   class Six extends Ent {

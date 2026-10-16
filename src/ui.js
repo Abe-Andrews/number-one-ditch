@@ -39,8 +39,15 @@
       // item buttons
       const xi = s.xItem && G.ITEMS[s.xItem];
       const xCount = xi && typeof s.items[s.xItem] === 'number' ? s.items[s.xItem] : null;
-      itemBox(ctx, G.W - 52, 5, 'X', xi ? xi.icon() : null, xCount);
-      itemBox(ctx, G.W - 27, 5, 'Z', s.items.hammer ? G.ITEMS.hammer.icon() : null);
+      if (s.playAs) {
+        // playing as Lily: no items, just her "No."
+        itemBox(ctx, G.W - 52, 5, 'X', null);
+        itemBox(ctx, G.W - 27, 5, 'Z', null);
+        F().draw(ctx, 'NO.', G.W - 24, 13, '#ffffff', { shadow: '#c83878' });
+      } else {
+        itemBox(ctx, G.W - 52, 5, 'X', xi ? xi.icon() : null, xCount);
+        itemBox(ctx, G.W - 27, 5, 'Z', s.items.hammer ? G.ITEMS.hammer.icon() : null);
+      }
       // shark teeth
       ctx.drawImage(G.spr.tooth, 5, G.H - 14);
       F().draw(ctx, String(s.teeth).padStart(3, '0'), 15, G.H - 13, '#f8f8f0', { shadow: SH });
