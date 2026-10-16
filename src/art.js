@@ -1724,33 +1724,31 @@
   }
 
   // ---------------------------------------------------------------- home props
-  // Dad's workshop: the open covered area behind the garage. String lights,
-  // a workbench covered in pipe blanks, folding chairs, a wheelbarrow.
-  function workshop() {
+  // The covered area: an open lean-to built onto the back of the garage
+  // (same dark green shake and roof), with string lights, folding chairs,
+  // a little table, a wheelbarrow and buckets.
+  function coveredArea() {
     const W = 80, H = 64, p = new Pix(W, H);
     const roof = '#4a4c56', roofD = '#34363e', green = '#2f4a3e';
-    for (let y = 0; y < 20; y++) for (let x = 0; x < W; x++) p.set(x, y, y % 4 === 3 || (x + (Math.floor(y / 4) % 2) * 4) % 8 === 0 ? roofD : roof);
-    p.hline(0, W - 1, 0, '#6a6c76');
-    p.rect(0, 20, W, 4, green); p.hline(0, W - 1, 23, '#f0f0f0');
-    p.rect(0, 24, W, 34, '#3a3028');
-    // back wall boards
-    for (let x = 0; x < W; x += 6) p.vline(x, 24, 57, '#2e261e');
-    // workbench with pipe blanks
-    p.rect(6, 34, 46, 4, '#c09058'); p.hline(6, 51, 34, '#d8a868'); p.rect(8, 38, 2, 10, '#8a6038'); p.rect(48, 38, 2, 10, '#8a6038');
-    for (const x of [12, 22, 32, 42]) { p.rect(x, 31, 3, 3, '#7a3a20'); p.hline(x - 4, x - 1, 32, '#1c1c22'); }
-    p.rect(26, 30, 2, 4, '#9a9aa4');
-    // folding chairs
-    for (const x of [56, 63]) { p.rect(x, 40, 5, 4, '#f0f0f0'); p.vline(x, 36, 47, '#d8d8d8'); p.vline(x + 4, 44, 47, '#d8d8d8'); }
+    for (let y = 0; y < 32; y++) for (let x = 0; x < W; x++) p.set(x, y, y % 4 === 3 || (x + (Math.floor(y / 4) % 2) * 4) % 8 === 0 ? roofD : roof);
+    p.hline(0, W - 1, 0, '#6a6c76'); p.hline(0, W - 1, 1, '#6a6c76');
+    p.rect(0, 32, W, 3, green); p.hline(0, W - 1, 34, '#f0f0f0');
+    // open inside: the garage's shake wall at the back
+    p.rect(0, 35, W, 25, '#3a3028');
+    for (let y = 35; y < 60; y += 5) p.hline(0, W - 1, y, '#2a2420');
+    p.rect(W - 4, 35, 4, 25, green);
+    // little table and folding chairs
+    p.rect(30, 44, 14, 3, '#c09058'); p.vline(36, 47, 53, '#8a6038'); p.rect(35, 41, 3, 3, '#f8d878');
+    for (const x of [22, 47]) { p.rect(x, 45, 5, 4, '#f0f0f0'); p.vline(x + (x < 30 ? 0 : 4), 41, 53, '#d8d8d8'); }
     // white buckets and a wheelbarrow
-    p.rect(14, 46, 5, 7, '#f4f4f4'); p.hline(14, 18, 46, '#d8d8d8');
-    p.rect(66, 49, 11, 5, '#1c1c22'); p.rect(70, 54, 3, 3, '#3a3a40'); p.hline(64, 66, 51, '#8a8a90');
-    // posts and floor slab
-    for (const x of [1, 39, 77]) p.rect(x, 24, 2, 34, '#a07040');
-    p.rect(0, 58, W, 6, '#a8a8b0'); p.hline(0, W - 1, 58, '#c8c8d0');
+    p.rect(6, 49, 5, 7, '#f4f4f4'); p.hline(6, 10, 49, '#d8d8d8'); p.rect(12, 50, 5, 6, '#f4f4f4');
+    p.rect(58, 50, 11, 5, '#1c1c22'); p.rect(62, 55, 3, 3, '#3a3a40'); p.hline(56, 58, 52, '#8a8a90');
+    // posts and the slab
+    for (const x of [1, 38, 72]) p.rect(x, 35, 2, 25, '#a07040');
+    p.rect(0, 60, W, 4, '#a8a8b0'); p.hline(0, W - 1, 60, '#c8c8d0');
     p.outline();
     const c = p.canvas(), ctx = c.getContext('2d');
-    // string lights under the eave
-    for (let x = 3; x < W; x += 5) { ctx.fillStyle = (x / 5) % 2 ? '#fff4c0' : '#ffe080'; ctx.fillRect(x, 25 + ((x / 5) % 2), 2, 2); }
+    for (let x = 3; x < W - 4; x += 5) { ctx.fillStyle = (x / 5) % 2 ? '#fff4c0' : '#ffe080'; ctx.fillRect(x, 36 + ((x / 5) % 2), 2, 2); }
     return c;
   }
 
@@ -2010,7 +2008,7 @@
     S.schoolDesk = schoolDesk();
     S.bouquet = bouquet();
     // home
-    S.workshop = workshop();
+    S.coveredArea = coveredArea();
     S.truck = truck();
     S.coop = coop();
     S.greenhouse = greenhouse();
