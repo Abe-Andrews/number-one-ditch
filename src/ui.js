@@ -38,12 +38,21 @@
       }
       // item buttons
       const xi = s.xItem && G.ITEMS[s.xItem];
-      const xCount = s.xItem === 'doosh' ? s.items.doosh : null;
+      const xCount = xi && typeof s.items[s.xItem] === 'number' ? s.items[s.xItem] : null;
       itemBox(ctx, G.W - 52, 5, 'X', xi ? xi.icon() : null, xCount);
       itemBox(ctx, G.W - 27, 5, 'Z', s.items.hammer ? G.ITEMS.hammer.icon() : null);
       // shark teeth
       ctx.drawImage(G.spr.tooth, 5, G.H - 14);
       F().draw(ctx, String(s.teeth).padStart(3, '0'), 15, G.H - 13, '#f8f8f0', { shadow: SH });
+    },
+
+    bossBar(ctx, b) {
+      const w = 120, x = Math.round((G.W - w) / 2), y = G.H - 14;
+      F().draw(ctx, b.name, Math.round((G.W - F().width(b.name)) / 2), y - 10, '#f8d850', { shadow: SH });
+      ctx.fillStyle = SH; ctx.fillRect(x - 1, y - 1, w + 2, 7);
+      ctx.fillStyle = '#4a2030'; ctx.fillRect(x, y, w, 5);
+      ctx.fillStyle = '#e83848'; ctx.fillRect(x, y, Math.round((w * b.hp) / b.maxHp), 5);
+      ctx.fillStyle = '#ff8890'; ctx.fillRect(x, y, Math.round((w * b.hp) / b.maxHp), 1);
     },
   };
 
@@ -120,7 +129,7 @@
         if (own) {
           const ic = G.ITEMS[id].icon();
           ctx.drawImage(ic, x + 11 - Math.floor(ic.width / 2), y + 11 - Math.floor(ic.height / 2));
-          if (id === 'doosh') F().draw(ctx, String(s.items.doosh), x + 15, y + 13, '#f8f8f0', { shadow: SH });
+          if (typeof s.items[id] === 'number') F().draw(ctx, String(s.items[id]), x + 15, y + 13, '#f8f8f0', { shadow: SH });
           if (s.xItem === id) F().draw(ctx, 'X', x + 2, y + 2, '#f8d850', { shadow: SH });
         } else {
           F().draw(ctx, '?', x + 9, y + 7, '#5a4e70');

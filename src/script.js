@@ -66,6 +66,7 @@
   G.NAME_COLORS = {
     Nate: '#78e070', Lily: '#ff98d0', Abe: '#ffa848', Hannah: '#c898ff', Doron: '#68c8ff',
     Dad: '#f8d850', 'Father Eggmas': '#f86858', Tyler: '#78e8e8', Mikey: '#ff98d0',
+    Nani: '#ffb8e0', 'El EEENGLISH': '#f86858', 'Pyro Pete': '#ffa848',
   };
 
   const BOX = { x: 6, w: 228, h: 44, lineH: 11, lines: 3 };
@@ -79,7 +80,8 @@
     return {
       pages, page: 0, chars: 0, blipT: 0, choice: 0, result: undefined, wait: 0,
       start() {
-        this.top = opts.top != null ? opts.top : (G.play && G.play.player && G.play.player.y - G.play.cam.y > 96);
+        const pl = G.play && G.play.player;
+        this.top = opts.top != null ? opts.top : (!G.play.camFocus && pl && pl.y - G.play.cam.y > 96);
       },
       pageLen() { return this.pages[this.page].reduce((n, l) => n + F().visibleLength(l), 0); },
       update() {
@@ -172,6 +174,12 @@
   });
 
   G.face = (ent, dir) => ({ start() { ent.dir = dir; }, update() { return true; } });
+
+  // Point the camera somewhere for a cutscene (null = back to Nate).
+  G.camFocus = (x, y, n = 40) => ({
+    start() { G.play.camFocus = x == null ? null : { x, y }; this.t = n; },
+    update() { return --this.t <= 0; },
+  });
 
   // Walk an entity to (x, y) ignoring collision.
   G.walkTo = (ent, x, y, speed = 1) => ({

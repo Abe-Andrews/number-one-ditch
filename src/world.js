@@ -24,6 +24,10 @@
     'l': { k: 'stall', edge: true, group: 'asphalt' },
     'C': { k: 'concrete' },
     'B': { k: 'bleacher', solid: true },
+    'n': { k: 'canvas' },
+    'h': { k: 'ropeH', solid: true },
+    'j': { k: 'ropeV', solid: true },
+    'P': { k: 'post', solid: true },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 
@@ -244,6 +248,16 @@
         else ctx.drawImage(d.img, d.x - cx, d.y - cy);
       }
       for (const f of this.fx) {
+        if (f.circle) {
+          // explosion flash: an expanding disc that fades out
+          ctx.globalAlpha = Math.min(1, f.life / 8);
+          ctx.fillStyle = f.color;
+          ctx.beginPath();
+          ctx.arc(Math.round(f.x - cx), Math.round(f.y - cy), f.r * (1 - f.life / f.max) + 6, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          continue;
+        }
         ctx.fillStyle = f.color;
         const s = f.grow ? f.size * (1 + (1 - f.life / 30)) : f.size;
         ctx.fillRect(Math.round(f.x - s / 2 - cx), Math.round(f.y - s / 2 - cy), Math.round(s), Math.round(s));

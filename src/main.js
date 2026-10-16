@@ -46,25 +46,66 @@
       this.dying = 0;
       this.healQ = 0;
       const s = G.state;
-      this.loadMap(s.map, s.x, s.y, s.dir);
-      const self = this;
+      this.loadMap(s.map, s.x, s.y, s.dir, true);
+      const def = this.world.def;
       G.script.run((function* () {
         yield G.fadeIn(24);
         if (fresh) yield* G.SCRIPTS.labIntro();
+        if (def.onEnter) yield* def.onEnter();
       })());
       G.scene = this;
     },
 
-    loadMap(id, x, y, dir) {
+    loadMap(id, x, y, dir, skipEnter) {
+      this.camFocus = null;
       this.world = new G.World(id);
       this.player = new G.Player(x, y, dir);
       this.world.add(this.player);
+      // party members trail behind Nate
+      const [ddx, ddy] = G.DIRS[dir];
+      this.trail = [];
+      for (let i = 0; i < 90; i++) this.trail.push({ x: x - ddx * i * 0.6, y: y - ddy * i * 0.6, dir });
+      G.state.party.filter((p) => p !== 'nate').forEach((pid, i) => {
+        const t = this.trail[Math.min(89, (i + 1) * 14)];
+        this.world.add(new G.Follower(pid, i, t.x, t.y, dir));
+      });
       for (const t of this.world.triggers) t.inside = G.overlap(t.rect, this.feet());
       const s = G.state;
       s.map = id; s.x = x; s.y = y; s.dir = dir;
       G.audio.play(this.world.def.music);
       G.areaBanner.show(this.world.def.name);
       this.snapCam();
+      if (this.world.def.onEnter && !skipEnter) G.script.run(this.world.def.onEnter());
+    },
+
+    // Booby-trapped package explosion (also used for the gift prank, harmless).
+    explode(x, y, harmful) {
+      const w = this.world;
+      G.audio.sfx('boom');
+      this.shake(14, 3);
+      w.fx.push({ x, y, vx: 0, vy: 0, circle: true, r: 26, max: 14, life: 14, color: '#fff4c0' });
+      w.burst(x, y, ['#ffffff', '#f8d850', '#ff9a28', '#e83848'], 18, { speed: 2.2, life: 18, size: 3 });
+      w.burst(x, y, ['#d83038', '#3878d8', '#38a048', '#f8d040', '#ffffff'], 16, { speed: 1.6, up: 1.5, g: 0.06, life: 42, size: 2 });
+      w.burst(x, y, ['#8a8a94', '#b0b0b8', '#6a6a74'], 10, { speed: 0.6, up: 0.4, life: 34, size: 4 });
+      w.pop(x, y - 22, 'BANG!', '#ff9a28');
+      if (!harmful) return;
+      const R = 28;
+      for (const e of w.ents) {
+        if (e.dead || Math.hypot(e.x - x, e.y - y) > R) continue;
+        if (e.bomb) e.bomb(x, y);
+        else if (e.enemy) e.hit(2, x, y);
+      }
+      const p = this.player;
+      if (Math.hypot(p.x - x, p.y - y) < R - 4) p.hurt(1, x, y);
+      for (let ty = Math.floor((y - R) / 16); ty <= Math.floor((y + R) / 16); ty++) {
+        for (let tx = Math.floor((x - R) / 16); tx <= Math.floor((x + R) / 16); tx++) {
+          const ch = w.tileAt(tx, ty), d = ch && G.TILE_DEFS[ch];
+          if (!d || !d.cut || w.block[ty * w.w + tx]) continue;
+          if (Math.hypot(tx * 16 + 8 - x, ty * 16 + 8 - y) > R) continue;
+          w.setTile(tx, ty, 'c');
+          this.maybeDrop(tx * 16 + 8, ty * 16 + 12, 0.25);
+        }
+      }
     },
 
     warp(map, tx, ty, dir) {
@@ -137,6 +178,13 @@
           s.flags.ateDoosh = true;
           G.script.run((function* () { yield G.say('Nate', 'Mmm. Doosh De Luche. Delicioso.'); })());
         }
+      } else if (s.xItem === 'package') {
+        const w = this.world, p = this.player;
+        if (!s.items.package || w.ents.filter((e) => e instanceof G.Package).length >= 2) { G.audio.sfx('bump'); return; }
+        const [dx, dy] = G.DIRS[p.dir];
+        w.add(new G.Package(p.x + dx * 12, p.y + dy * 10));
+        s.items.package--;
+        G.audio.sfx('menu');
       } else {
         G.audio.sfx('bump');
       }
@@ -200,6 +248,13 @@
       G.script.update();
       this.world.update();
 
+      // remember Nate's footsteps for the party to follow
+      const pl = this.player, t0 = this.trail[0];
+      if (pl.x !== t0.x || pl.y !== t0.y) {
+        this.trail.unshift({ x: pl.x, y: pl.y, dir: pl.dir });
+        if (this.trail.length > 90) this.trail.pop();
+      }
+
       // heal over time
       if (this.healQ > 0 && G.tick % 5 === 0) {
         const s = G.state;
@@ -218,9 +273,9 @@
         }
       }
 
-      // camera follows Nate
-      const w = this.world, p = this.player;
-      const tx = p.x - G.W / 2, ty = p.y - 12 - G.H / 2;
+      // camera follows Nate (or a cutscene focus point)
+      const w = this.world, p = this.player, f = this.camFocus;
+      const tx = (f ? f.x : p.x) - G.W / 2, ty = (f ? f.y : p.y - 12) - G.H / 2;
       if (w.pw > G.W) this.cam.x += (G.clamp(tx, 0, w.pw - G.W) - this.cam.x) * 0.2;
       if (w.ph > G.H) this.cam.y += (G.clamp(ty, 0, w.ph - G.H) - this.cam.y) * 0.2;
     },
@@ -235,6 +290,8 @@
       }
       this.world.draw(ctx, cam);
       G.hud.draw(ctx);
+      const boss = this.world.ents.find((e) => e.boss && e.state !== 'defeated');
+      if (boss) G.hud.bossBar(ctx, boss);
       G.areaBanner.draw(ctx);
       G.script.draw(ctx);
       if (this.menu) this.menu.draw(ctx);

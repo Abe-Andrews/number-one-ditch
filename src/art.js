@@ -258,22 +258,35 @@
       return;
     }
     if (view === 'side') {
+      const rim = c.glasses || T;
       p.set(13, y0 + 6, M);
-      p.hline(5, 12, y0 + 1, T);
-      p.hline(9, 11, y0 + 4, T);
-      p.set(9, y0 + 5, T); p.set(11, y0 + 5, T); p.set(9, y0 + 6, T); p.set(11, y0 + 6, T);
+      p.hline(5, 12, y0 + 1, c.maskEmblem || T);
+      p.hline(9, 11, y0 + 4, rim);
+      p.set(9, y0 + 5, rim); p.set(11, y0 + 5, rim); p.set(9, y0 + 6, rim); p.set(11, y0 + 6, rim);
       p.set(10, y0 + 5, '#ffffff'); p.set(10, y0 + 6, c.eyes);
-      p.set(10, y0 + 8, T); p.set(11, y0 + 8, c.skin); p.set(12, y0 + 8, T);
+      if (c.glasses) p.hline(6, 8, y0 + 5, c.glasses);
+      if (c.beard) { p.hline(8, 12, y0 + 8, c.beard); p.set(11, y0 + 8, c.smile || c.skin); p.hline(7, 11, y0 + 9, c.beard); }
+      else { p.set(10, y0 + 8, T); p.set(11, y0 + 8, c.skin); p.set(12, y0 + 8, T); }
       p.vline(3, y0 + 3, y0 + 7, T);
       return;
     }
-    p.vline(7, y0 + 1, y0 + 3, T); p.vline(8, y0 + 1, y0 + 3, T); p.hline(6, 9, y0 + 2, T);
+    const E = c.maskEmblem || T;
+    p.vline(7, y0 + 1, y0 + 3, E); p.vline(8, y0 + 1, y0 + 3, E); p.hline(6, 9, y0 + 2, E);
     for (const ex of [5, 10]) {
-      p.hline(ex - 1, ex + 1, y0 + 4, T);
-      p.set(ex - 1, y0 + 5, T); p.set(ex + 1, y0 + 5, T); p.set(ex - 1, y0 + 6, T); p.set(ex + 1, y0 + 6, T);
+      const rim = c.glasses || T;
+      p.hline(ex - 1, ex + 1, y0 + 4, rim);
+      p.set(ex - 1, y0 + 5, rim); p.set(ex + 1, y0 + 5, rim); p.set(ex - 1, y0 + 6, rim); p.set(ex + 1, y0 + 6, rim);
       p.set(ex, y0 + 5, '#ffffff'); p.set(ex, y0 + 6, c.eyes);
     }
-    p.hline(6, 9, y0 + 8, T); p.hline(7, 8, y0 + 8, c.skin);
+    if (c.glasses) { p.hline(7, 8, y0 + 5, c.glasses); p.set(3, y0 + 5, c.glasses); p.set(12, y0 + 5, c.glasses); }
+    if (c.beard) {
+      // the beard pokes out under the mask
+      p.hline(4, 6, y0 + 8, c.beard); p.hline(9, 11, y0 + 8, c.beard);
+      p.hline(7, 8, y0 + 8, c.smile || c.skin);
+      p.hline(5, 10, y0 + 9, c.beard);
+    } else {
+      p.hline(6, 9, y0 + 8, T); p.hline(7, 8, y0 + 8, c.skin);
+    }
   }
 
   function torsoPx(c, x, y, ty, edge) {
@@ -960,6 +973,23 @@
       TILE_DRAW.asphalt(p, r, v, mask);
       p.vline(7, 0, 15, '#e8e8e0'); p.vline(8, 0, 15, '#d0d0c8');
     },
+    canvas(p, r) {
+      p.rect(0, 0, 16, 16, '#ece8e0');
+      for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#dcd8ce');
+    },
+    ropeH(p) {
+      p.rect(0, 0, 16, 16, '#ece8e0');
+      ['#d03040', '#f8f8f8', '#3058c8'].forEach((col, i) => { p.hline(0, 15, 4 + i * 3, col); p.hline(0, 15, 5 + i * 3, '#bcb8b0'); });
+    },
+    ropeV(p) {
+      p.rect(0, 0, 16, 16, '#ece8e0');
+      ['#d03040', '#f8f8f8', '#3058c8'].forEach((col, i) => { p.vline(4 + i * 3, 0, 15, col); p.vline(5 + i * 3, 0, 15, '#bcb8b0'); });
+    },
+    post(p) {
+      p.rect(0, 0, 16, 16, '#ece8e0');
+      p.rect(3, 2, 10, 12, OUT); p.rect(4, 3, 8, 10, '#9aa0aa');
+      p.rect(5, 4, 6, 8, '#d03040'); p.hline(5, 10, 4, '#f06070');
+    },
     concrete(p, r) {
       p.rect(0, 0, 16, 16, '#b4b4bc');
       for (let i = 0; i < 6; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#c4c4cc' : '#a0a0aa');
@@ -1398,6 +1428,37 @@
     return p.canvas();
   }
 
+  // The booby-trapped Christmas present: red paper, gold ribbon, a bow on top.
+  function gift(lit) {
+    const p = new Pix(14, 14);
+    p.rect(1, 4, 12, 9, '#d83038');
+    p.rect(1, 4, 12, 2, '#e85a60');
+    p.vline(12, 6, 12, '#a82028');
+    p.vline(6, 4, 12, '#f8d040'); p.vline(7, 4, 12, '#f8d040');
+    p.hline(1, 12, 8, '#f8d040');
+    p.set(4, 2, '#f8d040'); p.set(5, 3, '#f8d040'); p.set(3, 3, '#f8d040');
+    p.set(9, 2, '#f8d040'); p.set(8, 3, '#f8d040'); p.set(10, 3, '#f8d040');
+    p.outline();
+    if (lit) { p.set(7, 0, '#ffffff'); p.set(6, 1, '#f8d040'); p.set(8, 1, '#ff9a28'); p.set(7, 1, '#f8d040'); }
+    return p.canvas();
+  }
+
+  function ringLogo() {
+    const p = new Pix(48, 48);
+    for (let y = 0; y < 48; y++) for (let x = 0; x < 48; x++) {
+      const d = Math.hypot(x + 0.5 - 24, y + 0.5 - 24);
+      if (d > 17 && d < 21) p.set(x, y, '#d03040');
+      if (Math.abs(x + 0.5 - 24) + Math.abs(y + 0.5 - 24) < 12) p.set(x, y, '#e8b830');
+    }
+    return p.canvas();
+  }
+
+  function scale2(src) {
+    const c = G.canvas(src.width * 2, src.height * 2);
+    c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+    return c;
+  }
+
   function shadowSprite(w) {
     const c = G.canvas(w, 4);
     const x = c.getContext('2d');
@@ -1451,7 +1512,7 @@
 
   // ================================================================ EXPORTS
   G.art = {
-    OUT, shade, Pix, fromRows, mirror, flash, person, P,
+    OUT, shade, Pix, fromRows, mirror, flash, person, P, scale2,
     tile, tree, building,
   };
 
@@ -1493,5 +1554,8 @@
     S.ring = ring();
     S.concession = concession();
     S.lockerDoor = lockerDoor();
+    S.gift = gift(false);
+    S.giftLit = gift(true);
+    S.ringLogo = ringLogo();
   };
 })();

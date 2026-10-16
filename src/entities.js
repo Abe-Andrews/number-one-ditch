@@ -224,6 +224,7 @@
     get S() { return G.sprites[this.sprite]; }
 
     update(w) {
+      if (this.flashT > 0) this.flashT--;
       if (G.script.busy) { if (!this.walking) this.moving = false; return; }
       if (!this.wander) return;
       if (--this.wt <= 0) {
@@ -254,12 +255,280 @@
     draw(ctx, cx, cy) {
       const S = this.S;
       drawShadow(ctx, this.x, this.y, cx, cy, S.h > 24);
-      const img = S[this.dir][walkFrame(this.anim, this.moving)];
+      let img = S[this.dir][walkFrame(this.anim, this.moving)];
+      if (this.flashT > 0 && (this.flashT >> 1) & 1) img = G.art.flash(img);
       ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
+      if (this.held) ctx.drawImage(this.held, Math.round(this.x - this.held.width / 2) - cx, Math.round(this.y - S.h + 10) - cy);
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, Math.round(this.y - S.h - 10) - cy);
     }
   }
   G.NPC = NPC;
+
+  // ============================================================== FOLLOWER
+  // A party member trailing behind Nate, Minish Cap style.
+  class Follower extends Ent {
+    constructor(id, idx, x, y, dir) {
+      super(x, y);
+      this.id = id;
+      this.idx = idx;
+      this.dir = dir;
+      this.anim = 0;
+      this.moving = false;
+    }
+
+    get S() { return G.sprites[this.id]; }
+
+    talk() { return G.SCRIPTS.partyTalk(this.id); }
+
+    update() {
+      if (this.walking || this.hold) return;
+      const tr = G.play.trail;
+      const tgt = tr[Math.min(tr.length - 1, (this.idx + 1) * 14)];
+      const dx = tgt.x - this.x, dy = tgt.y - this.y, d = Math.hypot(dx, dy);
+      if (d > 0.6) {
+        const sp = Math.min(d, Math.max(1.35, d * 0.2));
+        this.x += (dx / d) * sp;
+        this.y += (dy / d) * sp;
+        this.dir = tgt.dir;
+        this.moving = true;
+        this.anim++;
+      } else {
+        this.moving = false;
+      }
+    }
+
+    draw(ctx, cx, cy) {
+      const S = this.S;
+      drawShadow(ctx, this.x, this.y, cx, cy, S.h > 24);
+      ctx.drawImage(S[this.dir][walkFrame(this.anim, this.moving)], Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
+      if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, Math.round(this.y - S.h - 10) - cy);
+    }
+  }
+  G.Follower = Follower;
+
+  // ============================================================== PACKAGE (bomb)
+  // A booby-trapped Christmas present. Set it down, run, BANG.
+  class Package extends Ent {
+    constructor(x, y) {
+      super(x, y);
+      this.t = 110;
+      this.hb = { w: 10, h: 6 };
+    }
+    update() {
+      if (G.script.busy) return;
+      this.t--;
+      if (this.t % 14 === 0) G.audio.sfx('fuse');
+      if (this.t <= 0) {
+        this.dead = true;
+        G.play.explode(this.x, this.y - 5, true);
+      }
+    }
+    draw(ctx, cx, cy) {
+      ctx.drawImage(G.spr.shadow, Math.round(this.x - 6) - cx, Math.round(this.y - 3) - cy);
+      let img = (this.t >> 2) & 1 ? G.spr.giftLit : G.spr.gift;
+      if (this.t < 40 && (this.t >> 1) & 1) img = G.art.flash(img);
+      const jx = this.t < 40 ? ((this.t >> 1) & 1 ? 1 : -1) : 0;
+      ctx.drawImage(img, Math.round(this.x - 7 + jx) - cx, Math.round(this.y - 14) - cy);
+    }
+  }
+  G.Package = Package;
+
+  // ============================================================== LETTER (boss projectile)
+  class Letter extends Ent {
+    constructor(x, y, vx, vy, ch) {
+      super(x, y);
+      Object.assign(this, { vx, vy, ch, life: 240 });
+      this.hb = { w: 6, h: 6 };
+    }
+    update(w) {
+      if (G.script.busy) return;
+      this.x += this.vx;
+      this.y += this.vy;
+      if (--this.life <= 0 || w.tileSolid(Math.floor(this.x / 16), Math.floor(this.y / 16))) { this.dead = true; return; }
+      const p = G.play.player;
+      if (G.overlap([this.x - 3, this.y - 16, this.x + 3, this.y - 8], p.hurtBox())) {
+        this.dead = true;
+        p.hurt(1, this.x, this.y);
+      }
+    }
+    draw(ctx, cx, cy) {
+      G.font.drawBig(ctx, this.ch, Math.round(this.x - 2) - cx, Math.round(this.y - 18) - cy, 1, '#f8d850', '#5a1020');
+    }
+  }
+  G.Letter = Letter;
+
+  // ============================================================== EL EEENGLISH (boss)
+  // Dad, brainwashed by Father Eggmas, in a luchador mask (glasses and beard on
+  // the outside). Hammer only lands while he's dizzy; packages always stun him.
+  let bossSprites = null;
+  function bigSprites() {
+    if (bossSprites) return bossSprites;
+    const S = G.sprites.elenglish;
+    bossSprites = { h: S.h * 2 };
+    for (const d of ['down', 'up', 'left', 'right']) bossSprites[d] = S[d].map(G.art.scale2);
+    return bossSprites;
+  }
+
+  class ElEnglish extends Ent {
+    constructor(x, y) {
+      super(x, y);
+      this.enemy = true;
+      this.boss = true;
+      this.name = 'EL EEENGLISH';
+      this.hp = this.maxHp = 12;
+      this.hb = { w: 18, h: 8 };
+      this.state = 'strut';
+      this.t = 70;
+      this.dir = 'left';
+      this.anim = 0;
+      this.next = 'yell';
+      this.summoned = false;
+      this.hurtT = 0;
+      this.kb = { x: 0, y: 0 };
+      this.bounces = 0;
+    }
+
+    hurtBox() { return [this.x - 11, this.y - 40, this.x + 11, this.y]; }
+    get angry() { return this.hp <= this.maxHp / 2; }
+
+    update(w) {
+      if (G.script.busy || this.state === 'defeated') return;
+      const p = G.play.player;
+      const dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      if (this.hurtT > 0) {
+        this.hurtT--;
+        w.move(this, this.kb.x, 0);
+        w.move(this, 0, this.kb.y);
+        this.kb.x *= 0.8; this.kb.y *= 0.8;
+        return;
+      }
+      if (!this.summoned && this.angry) this.summon(w);
+
+      if (this.state === 'strut') {
+        this.dir = G.dirToward(dx, dy);
+        const sp = this.angry ? 0.75 : 0.55;
+        w.move(this, (dx / dist) * sp, 0);
+        w.move(this, 0, (dy / dist) * sp);
+        this.anim++;
+        if (--this.t <= 0) {
+          this.state = this.next;
+          this.next = this.next === 'yell' ? 'windup' : 'yell';
+          this.t = this.state === 'yell' ? 56 : 34;
+          if (this.state === 'yell') w.pop(this.x, this.y - 54, 'DO YOU SPEAK...', '#ffffff');
+        }
+      } else if (this.state === 'yell') {
+        this.t--;
+        if (this.t === 30) { w.pop(this.x, this.y - 46, 'EEENGLISH?!', '#f8d850'); this.fire(w, this.angry ? 12 : 9, 0); }
+        if (this.angry && this.t === 8) this.fire(w, 12, Math.PI / 12);
+        if (this.t <= 0) { this.state = 'strut'; this.t = 80; }
+      } else if (this.state === 'windup') {
+        this.dir = G.dirToward(dx, dy);
+        if (--this.t <= 0) {
+          const sp = this.angry ? 3.4 : 3.0;
+          this.state = 'charge';
+          this.t = 90;
+          this.vx = (dx / dist) * sp;
+          this.vy = (dy / dist) * sp;
+          this.bounces = this.angry ? 1 : 0;
+          G.audio.sfx('dash');
+          w.pop(this.x, this.y - 50, ['FLYING ELBOW!', 'BODY SLAM!', 'DROPKICK!'][Math.floor(Math.random() * 3)], '#ffd860');
+        }
+      } else if (this.state === 'charge') {
+        this.anim += 2;
+        this.dir = G.dirToward(this.vx, this.vy);
+        const h = w.move(this, this.vx, this.vy);
+        if (h.hitX || h.hitY) {
+          if (this.bounces > 0) {
+            this.bounces--;
+            const sp = Math.hypot(this.vx, this.vy);
+            this.vx = (dx / dist) * sp;
+            this.vy = (dy / dist) * sp;
+            G.audio.sfx('bump');
+            w.pop(this.x, this.y - 50, 'OFF THE ROPES!', '#ffd860');
+          } else {
+            this.dizzy(100);
+            G.audio.sfx('bump');
+            G.play.shake(10, 3);
+          }
+        } else if (--this.t <= 0) {
+          this.dizzy(60);
+        }
+        if (G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(2, this.x, this.y);
+      } else if (this.state === 'dizzy') {
+        if (--this.t <= 0) { this.state = 'strut'; this.t = 60; }
+      }
+    }
+
+    dizzy(n) { this.state = 'dizzy'; this.t = n; this.vx = this.vy = 0; }
+
+    fire(w, n, off) {
+      const word = 'EEENGLISH';
+      G.audio.sfx('yell');
+      for (let i = 0; i < n; i++) {
+        const a = off + (i / n) * Math.PI * 2;
+        w.add(new Letter(this.x, this.y - 4, Math.cos(a) * 1.25, Math.sin(a) * 1.25, word[i % word.length]));
+      }
+    }
+
+    summon(w) {
+      this.summoned = true;
+      w.pop(this.x, this.y - 54, 'TAG TEAM!', '#ff9a28');
+      G.audio.sfx('bell');
+      w.add(new Wrestler(2 * 16 + 8, 2 * 16 + 14, 'red'));
+      w.add(new Wrestler(12 * 16 + 8, 8 * 16 + 12, 'blue'));
+    }
+
+    // hammer
+    hit(dmg, sx, sy) {
+      if (this.state !== 'dizzy') {
+        G.audio.sfx('clank');
+        this.world.pop(this.x, this.y - 48, 'BLOCKED!', '#c8c8d0');
+        const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, m = Math.hypot(dx, dy) || 1;
+        p.state = 'hurt'; p.t = 8; p.kb = { x: (dx / m) * 2.4, y: (dy / m) * 2.4 };
+        return;
+      }
+      this.damage(1, sx, sy);
+    }
+
+    // booby-trapped package
+    bomb(sx, sy) {
+      this.damage(3, sx, sy);
+      if (this.hp > 0) { this.state = 'dizzy'; this.t = 120; this.world.pop(this.x, this.y - 50, 'WHAT WAS IN THAT?!', '#ffffff'); }
+    }
+
+    damage(n, sx, sy) {
+      this.hp = Math.max(0, this.hp - n);
+      this.hurtT = 12;
+      const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
+      this.kb = { x: (dx / m) * 2, y: (dy / m) * 2 };
+      G.audio.sfx('hit');
+      if (this.hp <= 0) {
+        this.state = 'defeated';
+        G.script.run(G.SCRIPTS.dadDefeated(this));
+      }
+    }
+
+    draw(ctx, cx, cy) {
+      const S = bigSprites();
+      ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 12) - cx, Math.round(this.y - 4) - cy, 24, 6);
+      let frame = 0;
+      if (this.state === 'charge') frame = 1 + ((this.anim >> 2) & 1);
+      else if (this.state === 'strut') frame = walkFrame(this.anim, true);
+      let img = S[this.dir][frame];
+      if ((this.hurtT && (this.hurtT >> 1) & 1) || (this.state === 'windup' && (this.t >> 2) & 1)) img = G.art.flash(img);
+      const jx = this.state === 'windup' || this.state === 'yell' ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
+      const sx = Math.round(this.x - 16 + jx) - cx, sy = Math.round(this.y - S.h + 4) - cy;
+      ctx.drawImage(img, sx, sy);
+      if (this.state === 'dizzy') {
+        for (let i = 0; i < 4; i++) {
+          const a = G.tick * 0.12 + (i * Math.PI) / 2;
+          ctx.fillStyle = i % 2 ? '#f8d850' : '#ffffff';
+          ctx.fillRect(Math.round(this.x + Math.cos(a) * 11) - cx, Math.round(sy - 4 + Math.sin(a) * 3), 3, 3);
+        }
+      }
+    }
+  }
+  G.ElEnglish = ElEnglish;
 
   // ============================================================== SIX (enemy)
   class Six extends Ent {
@@ -485,7 +754,8 @@
     }
     draw(ctx, cx, cy) {
       ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 34) - cx, Math.round(this.y - 4) - cy, 68, 6);
-      ctx.drawImage(G.spr.boulder, Math.round(this.x - 32) - cx, Math.round(this.y - 46) - cy);
+      const lift = this.lift || 0, jx = this.shakeT > 0 ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
+      ctx.drawImage(G.spr.boulder, Math.round(this.x - 32 + jx) - cx, Math.round(this.y - 46 - lift) - cy);
     }
   }
   G.Boulder = Boulder;

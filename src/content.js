@@ -70,6 +70,7 @@
     attendant: { skin: '#c88a60', hair: '#2a1a14', hairStyle: 'short', shirt: '#f08020', collar: '#f8e040', pants: '#3a3a44', shoes: '#202024', torso: 7, legs: 3 },
     lemonade: { skin: '#f8d8c0', hair: '#e8c060', hairStyle: 'shoulder', shirt: '#f8e040', pants: '#5878b8', shoes: '#f0f0f0', torso: 5, legs: 3, blush: true, smile: '#ffffff' },
     ref: { skin: '#e8b890', hair: '#3a2418', hairStyle: 'buzz', shirt: '#f0f0f0', pattern: 'stripes', pants: '#1c1c24', shoes: '#1c1c24', torso: 6, legs: 3 },
+    pete: { skin: '#e8b890', hair: '#6a4028', hairStyle: 'cap', hat: '#e05020', hatStyle: 'ball', beard: '#6a4028', shirt: '#2a2a30', pants: '#4a4038', shoes: '#3a2818', boots: true, torso: 7, legs: 3 },
     // Luchador-style wrestlers: masks, singlets, boots.
     wrestler_red: { mask: '#d83038', maskTrim: '#f8d040', skin: '#e8b08a', shirt: '#d83038', pants: '#d83038', neckline: true, sleeves: 0, shorts: true, boots: true, shoes: '#f0f0f0', wide: true, torso: 4, legs: 3 },
     wrestler_blue: { mask: '#3058c8', maskTrim: '#e8e8f0', skin: '#c88a60', shirt: '#3058c8', pants: '#3058c8', neckline: true, sleeves: 0, shorts: true, boots: true, shoes: '#2a3a8a', wide: true, torso: 4, legs: 3 },
@@ -77,15 +78,18 @@
     wrestler_green: { mask: '#38a048', maskTrim: '#ffffff', skin: '#f0c8a8', shirt: '#38a048', pants: '#38a048', neckline: true, sleeves: 0, shorts: true, boots: true, shoes: '#f0f0f0', wide: true, torso: 4, legs: 3 },
   };
 
+  // Dad as El EEENGLISH: luchador mask over his glasses and beard, blazer on.
+  G.CAST.elenglish = Object.assign({}, G.CAST.dad, { mask: '#1c2c6c', maskTrim: '#e8e8f0', maskEmblem: '#d03038' });
+
   // ================================================================ ITEMS
   G.ITEMS = {
     hammer: { name: 'Rock Hammer', icon: () => G.spr.hammer.up, desc: 'A geologist\'s best friend. Swing it with Z.' },
     doosh: { name: 'Doosh De Luche', icon: () => G.spr.doosh, desc: 'Heals 4 hearts. (It\'s pronounced dulce de leche.)', equip: true },
-    fireworks: { name: 'Fireworks', icon: () => null, desc: '' },
+    package: { name: 'Booby-Trapped Package', icon: () => G.spr.gift, desc: 'Press X to set one down. BANG in a few seconds. Merry Christmas!', equip: true },
     bidet: { name: 'Portable Bidet', icon: () => null, desc: '' },
     mystery: { name: '???', icon: () => null, desc: '' },
   };
-  G.ITEM_SLOTS = ['hammer', 'doosh', 'fireworks', 'bidet', 'mystery'];
+  G.ITEM_SLOTS = ['hammer', 'doosh', 'package', 'bidet', 'mystery'];
 
   // ================================================================ MUSIC (original tunes)
   G.SONGS = {
@@ -117,6 +121,14 @@
         { wave: 'square', vol: 0.05, notes: 'E4:2 E4:2 G4:2 E4:2 A4:2 E4:2 B4:2 A4:2 | E4:2 E4:2 G4:2 E4:2 D5:4 B4:4 | E4:2 E4:2 G4:2 E4:2 A4:2 E4:2 B4:2 A4:2 | G4:4 F#4:4 E4:8' },
         { wave: 'sawtooth', vol: 0.06, notes: 'E2:2 E2:2 E3:2 E2:2 E2:2 E2:2 D3:2 E2:2 | E2:2 E2:2 E3:2 E2:2 G2:2 G2:2 A2:2 B2:2 | E2:2 E2:2 E3:2 E2:2 E2:2 E2:2 D3:2 E2:2 | C3:4 B2:4 E2:8' },
         { wave: 'noise', vol: 0.06, notes: 'k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 s:2 s:2 s:2' },
+      ],
+    },
+    boss: {
+      bpm: 160,
+      tracks: [
+        { wave: 'square', vol: 0.055, notes: 'A4:2 A4:2 C5:2 A4:2 D5:2 A4:2 E5:2 D5:2 | C5:2 C5:2 E5:2 C5:2 F5:4 E5:4 | A4:2 A4:2 C5:2 A4:2 D5:2 A4:2 E5:2 G5:2 | F5:4 E5:4 D5:4 C5:4' },
+        { wave: 'sawtooth', vol: 0.06, notes: 'A2:2 A2:2 A3:2 A2:2 A2:2 A2:2 G2:2 A2:2 | F2:2 F2:2 F3:2 F2:2 G2:2 G2:2 G3:2 G2:2 | A2:2 A2:2 A3:2 A2:2 A2:2 A2:2 G2:2 A2:2 | D3:4 E3:4 E2:8' },
+        { wave: 'noise', vol: 0.06, notes: 'k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 s:2 s:2 s:2' },
       ],
     },
     house: {
@@ -328,11 +340,241 @@
     yield G.say('Nate', 'A giant boulder dragged here by a glacier over ten thousand years ago. Granite, with pink feldspar. Gorgeous.');
     yield G.say('Nate', '...It\'s also completely blocking the road to Chesapeake.');
     yield G.say('Nate', 'My rock hammer won\'t even scratch this thing. I need someone {y}really{/} strong.');
+    if (!f.doronChat) yield* S.doronChat();
+  };
+
+  // Doron invites the family to Micro Mayhem. Again. Nobody answers. Again.
+  S.doronChat = function* () {
+    flags().doronChat = true;
+    yield G.wait(30);
+    G.audio.sfx('buzz');
+    yield G.emote(P(), 'bang', 30);
+    yield G.say(null, 'Bzzt! Bzzt! The family group chat again.');
+    yield G.text('Doron', 'MICRO MAYHEM WRESTLING. TONIGHT. easton fairgrounds');
+    yield G.text('Doron', 'i have 6 tickets. who\'s coming');
+    yield G.say(null, '{d}Seen by Lily, Abe, Hannah, Dad and Nani.{/}');
+    yield G.text('Nani', 'Doron, you are a bright light in this world. Keep shining! Love, Nani');
+    yield G.text('Doron', 'nani are you coming');
+    yield G.say(null, '{d}Seen by Nani.{/}');
+    yield G.say('Nate', '...Doron is basically a human forklift. If anyone can move this boulder, it\'s him.');
+    yield G.say('Nate', 'The fairgrounds are {y}east{/} of campus. Looks like I\'m going to Micro Mayhem.');
+  };
+
+  // Doron at the fairgrounds: the pitch, the deal, and the exploding present.
+  S.doron = function* (npc) {
+    const f = flags(), s = G.state, w = G.play.world;
+    if (f.doronDeal) {
+      yield G.say('Doron', 'Main event\'s about to start! Get in there!');
+      return;
+    }
+    yield G.say('Doron', 'NATE?! You came? You actually came to Micro Mayhem?!');
+    yield G.say('Doron', 'I\'ve been inviting the family for YEARS. Nobody ever comes.');
+    const c = yield G.ask('Doron', 'So you\'re coming to the show, right?', ['No.', 'Absolutely not.', 'I\'m only here for the boulder.']);
+    yield G.say('Doron', c === 2 ? 'Boulder? ...I\'ll take that as a yes.' : 'I\'ll take that as a maybe.');
+    yield G.say('Nate', 'There\'s a glacial erratic blocking the road to Chesapeake. I need someone who can lift a school bus.');
+    yield G.say('Doron', 'Say less. I\'ll move your boulder...');
+    yield G.say('Doron', '...AFTER the show. One match. That\'s the deal.');
+    yield G.say('Doron', 'Oh, and get this: {y}Dad{/} actually said yes! First time EVER!');
+    yield G.say('Doron', 'But he went to find seats an hour ago and never came back. Weird.');
+    yield G.say('Nate', 'Fine. One match. Oh, and... I got you something.');
+
+    // the present
+    yield G.say(null, 'Nate hands Doron a beautifully wrapped present.');
+    npc.held = G.spr.gift;
+    npc.dir = 'down';
+    yield G.wait(30);
+    yield G.say('Doron', '...');
+    yield G.say('Doron', 'The last time you gave me a present, it EXPLODED.');
+    yield G.say('Nate', 'That was one time. This one\'s a peace offering.');
+    yield G.say('Doron', '...Okay. Thanks, man. That\'s actually really sweet.');
+    yield G.say(null, '*rip*');
+    npc.held = null;
+    G.play.explode(npc.x, npc.y - 12, false);
+    npc.flashT = 40;
+    w.pop(npc.x, npc.y - 34, 'AAAGH!!', '#ffffff');
+    yield G.wait(70);
+    yield G.say('Doron', 'EVERY. SINGLE. TIME.');
+    yield G.say('Nate', 'Hehehe. Gets you every time.');
+
+    // the pyro guy saw the whole thing
+    const pete = w.add(new G.NPC({ sprite: 'pete', name: 'Pyro Pete', x: 28 * 16 + 8, y: 10 * 16 + 14, talk: S.pete }));
+    yield G.walkTo(pete, 24 * 16 + 8, 10 * 16 + 14, 1.2);
+    pete.dir = 'left';
+    yield G.say('Pyro Pete', 'Whoa, whoa! Who rigged that?!');
+    yield G.say('Nate', 'Me. Chemistry. And a LOT of wrapping paper.');
+    yield G.say('Pyro Pete', 'Kid, that was beautiful. I run the pyro for tonight\'s show.');
+    yield G.say('Pyro Pete', 'I\'ve got a whole crate of gift boxes backstage. Here, let\'s wrap you a few.');
+    s.items.package = (s.items.package || 0) + 5;
+    s.xItem = 'package';
+    yield G.itemGet(G.spr.gift, 'You got {y}5 Booby-Trapped Packages{/}! Press {y}X{/} to set one down. It goes BANG a few seconds later.');
+    yield G.say('Pyro Pete', 'Need more? I\'ll wrap you {y}5 for 10 shark teeth{/}. I\'ll be right here.');
+    yield G.say('Doron', 'Can we PLEASE go watch wrestling now?');
+    f.doronDeal = true;
+  };
+
+  S.pete = function* () {
+    const s = G.state;
+    const c = yield G.ask('Pyro Pete', 'Booby-Trapped Packages! {y}5 for 10 shark teeth{/}.', ['Buy 5', 'No thanks']);
+    if (c !== 0) { yield G.say('Pyro Pete', 'Stay explosive, kid.'); return; }
+    if ((s.items.package || 0) >= 10) { yield G.say('Pyro Pete', 'You\'re already carrying 10. Any more and you\'re a fire hazard.'); return; }
+    if (s.teeth < 10) { yield G.say('Pyro Pete', 'Ten teeth, kid. Go bonk some wrestlers.'); return; }
+    G.play.addTeeth(-10);
+    s.items.package = Math.min(10, (s.items.package || 0) + 5);
+    if (!s.xItem) s.xItem = 'package';
+    G.audio.sfx('tooth');
+    yield G.say(null, 'Got {y}5 Booby-Trapped Packages{/}!');
+  };
+
+  // The main event: Dad has become El EEENGLISH.
+  S.mainEvent = function* () {
+    const f = flags(), w = G.play.world, p = P();
+    if (f.mainEvent) {
+      // already volunteered (e.g. continuing a save): straight back to the ring
+      G.play.warp('ring', 4, 5, 'right');
+      return;
+    }
+    const doron = w.add(new G.NPC({ sprite: 'doron', name: 'Doron', x: p.x + 18, y: p.y, dir: 'up', talk: S.doron }));
+    yield G.wait(20);
+    yield G.say('Doron', 'We made it! Front row! Well... standing room. Same thing.');
+    yield G.camFocus(12 * 16, 9 * 16 + 8, 40);
+    G.audio.stop();
+    G.audio.sfx('bell');
+    yield G.wait(30);
+    yield G.say('Referee', 'LADIES AND GENTLEMEN! It is time for tonight\'s... {y}MAIN EVENT{/}!');
+    yield G.say('Referee', 'Making his debut... from parts unknown... weighing in at one dad...');
+    yield G.say('Referee', 'EL... {r}EEENGLISHHHHH{/}!!!');
+    G.audio.play('arena');
+    const dad = w.add(new G.NPC({ sprite: 'elenglish', name: 'El EEENGLISH', x: 11 * 16 + 8, y: 2 * 16 + 10, dir: 'down' }));
+    yield G.walkTo(dad, 11 * 16 + 8, 5 * 16 + 14, 0.9);
+    yield G.walkTo(dad, 11 * 16 + 8, 9 * 16 + 14, 0.9);
+    dad.dir = 'down';
+    yield G.shakeCmd(24, 2);
+    G.audio.sfx('yell');
+    yield G.say('El EEENGLISH', 'DO YOU SPEAK... {y}EEEEENGLISH{/}?!');
+    yield G.emote(p, 'huh', 40);
+    yield G.say('Nate', '...Is that DAD?');
+    doron.dir = 'up';
+    yield G.say('Doron', 'DAD?! I\'ve been looking for you for an hour!');
+    yield G.say('Nate', 'Look at his eyes. They\'re all swirly. {r}Father Eggmas{/} got to him!');
+    yield G.say('El EEENGLISH', 'Ho... ho... ho... I mean... DO YOU SPEAK EEENGLISH?!');
+    yield G.say('Referee', 'We need a challenger from the audience! Any volunteers?');
+    yield G.say('Doron', 'MY BROTHER WILL DO IT!');
+    yield G.say('Nate', 'Doron, NO--');
+    yield G.say('Doron', 'You came to Micro Mayhem. Now you\'re IN Micro Mayhem.');
+    f.mainEvent = true;
+    G.play.warp('ring', 4, 5, 'right');
+  };
+
+  S.ringIntro = function* () {
+    G.state.hp = G.state.maxHp; // start the main event fresh
+    yield G.wait(20);
+    G.audio.sfx('bell');
+    yield G.banner('MAIN EVENT', 'NATE  vs.  EL EEENGLISH', 170);
+    yield G.say('El EEENGLISH', 'DO YOU SPEAK EEENGLISH?!');
+    yield G.say(null, 'He only flinches when he\'s {y}dizzy{/}. A {y}Booby-Trapped Package{/} (press X) should do the trick.');
+  };
+
+  S.dadDefeated = function* (boss) {
+    const w = G.play.world, p = P();
+    G.audio.stop();
+    for (const e of w.ents) if (e.enemy && e !== boss) { e.dead = true; w.burst(e.x, e.y - 8, ['#ffffff', '#e8e0f0'], 8); }
+    for (const e of w.ents) if (e instanceof G.Letter) e.dead = true;
+    G.audio.sfx('bell');
+    yield G.shakeCmd(30, 3);
+    yield G.wait(40);
+    w.burst(boss.x, boss.y - 40, ['#1c2c6c', '#e8e8f0', '#d03038'], 14, { speed: 1.6, up: 1.2, g: 0.08, life: 40, size: 3 });
+    w.pop(boss.x, boss.y - 50, 'THE MASK IS OFF!', '#ffffff');
+    boss.dead = true;
+    const dad = w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: boss.x, y: boss.y, dir: 'down' }));
+    dad.flashT = 30;
+    yield G.wait(50);
+    yield G.banner('YOU WIN!', '1... 2... 3!', 150);
+    dad.dir = G.dirToward(p.x - dad.x, p.y - dad.y);
+    yield G.say('Dad', 'Do you speak... oh. Hello, boys.');
+    yield G.say('Dad', 'Why am I wearing a mask?');
+    const doron = w.add(new G.NPC({ sprite: 'doron', name: 'Doron', x: 7 * 16 + 8, y: 8 * 16 + 14, dir: 'up' }));
+    yield G.walkTo(doron, dad.x - 20, dad.y + 6, 1.2);
+    yield G.say('Nate', 'Father Eggmas brainwashed you, Dad.');
+    yield G.say('Dad', 'The last thing I remember is a little egg man offering me a free ticket. He spoke excellent EEENGLISH.');
+    yield G.say('Doron', 'Dad. You came to Micro Mayhem. You were the MAIN EVENT.');
+    yield G.say('Dad', '...Was I good?');
+    yield G.say('Doron', 'You were incredible.');
+    yield G.say('Doron', 'Okay, Nate. A deal\'s a deal. Let\'s go move your boulder.');
+    const s = G.state;
+    if (!s.party.includes('doron')) s.party.push('doron');
+    flags().dadBeaten = true;
+    G.audio.sfx('fanfare');
+    yield G.banner('DORON JOINED THE PARTY!', 'He can lift and smash heavy things.', 220);
+    yield G.say('Dad', 'You boys go on. I\'m staying for the nachos.');
+    G.play.warp('arena', 11, 14, 'down');
+  };
+
+  S.dadArena = function* () {
+    yield G.say('Dad', 'The nachos here are excellent. Very EEENGLISH.');
+    yield G.say('Dad', 'If your mother asks, I was at a book club.');
+  };
+
+  // Doron suplexes the glacial erratic.
+  S.boulderSmash = function* () {
+    const f = flags(), w = G.play.world;
+    const b = w.ents.find((e) => e instanceof G.Boulder);
+    const d = w.ents.find((e) => e instanceof G.Follower && e.id === 'doron');
+    if (!b || !d || f.boulderGone) return;
+    yield G.say('Doron', 'This the rock?');
+    yield G.say('Nate', 'It\'s a glacial erratic. It weighs about as much as a school bus.');
+    yield G.say('Doron', 'Stand back.');
+    const p = P();
+    yield G.walkTo(p, b.x - 48, b.y - 40, 1.2);
+    p.dir = 'right';
+    d.hold = true;
+    yield G.walkTo(d, b.x, b.y - 26, 1.2);
+    d.dir = 'down';
+    yield G.say('Doron', 'ARMY...');
+    b.shakeT = 1;
+    // hoist it overhead
+    yield { start() { G.audio.sfx('dash'); }, update() { b.lift = (b.lift || 0) + 1; G.play.shake(2, 1); return b.lift >= 62; } };
+    yield G.wait(20);
+    yield G.say('Doron', '...SUPLEX!!!');
+    yield { update() { b.lift -= 10; return b.lift <= 0; } };
+    b.lift = 0;
+    b.dead = true;
+    f.boulderGone = true;
+    G.play.explode(b.x, b.y - 16, false);
+    G.play.shake(30, 4);
+    w.burst(b.x, b.y - 16, ['#9c9892', '#cac6c0', '#5a5650', '#c8948a'], 24, { speed: 2.4, up: 1.5, g: 0.1, life: 45, size: 4 });
+    yield G.wait(60);
+    yield G.say('Nate', '...That rock survived the ice age.');
+    yield G.say('Doron', 'It didn\'t survive leg day.');
+    yield G.say('Nate', 'The road to Chesapeake is open!');
+    d.hold = false;
+  };
+
+  S.southRoad = function* () {
+    const p = P();
+    yield G.say('Nate', 'Chesapeake is this way. Hang on, Number One Ditch. We\'re coming.');
+    yield G.banner('TO BE CONTINUED...', 'The road south opens in the next update!', 300);
+    yield G.walkTo(p, p.x, p.y - 18, 1);
+  };
+
+  S.partyTalk = function* (id) {
+    const lines = {
+      doron: [
+        'Leg day is every day.',
+        'Still can\'t believe Dad was the main event.',
+        'Nobody else wanted to come to Micro Mayhem. Their loss.',
+        'If you hand me a present, I\'m opening it from twenty feet away.',
+      ],
+    }[id] || ['...'];
+    const f = flags();
+    f['talk_' + id] = ((f['talk_' + id] || 0) + 1) % lines.length;
+    const name = id[0].toUpperCase() + id.slice(1);
+    yield G.say(name, lines[f['talk_' + id]]);
   };
 
   S.boulderHit = function () {
     const f = flags();
     if (G.script.busy) return;
+    if (G.state.party.includes('doron')) { G.script.run(S.boulderSmash()); return; }
     if (!f.boulderHitOnce) {
       f.boulderHitOnce = true;
       G.script.run((function* () {
@@ -524,6 +766,11 @@
         G.script.run(S.sixIntro());
       });
       if (!flags().boulderGone) w.add(new G.Boulder(20 * 16, 28 * 16 + 15, S.boulderHit));
+      // with Doron along, walking up to the boulder starts the suplex
+      w.addTrigger(17, 25, 6, 2, () => {
+        if (!flags().boulderGone && G.state.party.includes('doron')) G.script.run(S.boulderSmash());
+      });
+      w.addTrigger(18, 29, 4, 1, () => G.script.run(S.southRoad()));
       w.add(new G.Sign(37, 11, 'EAST: Easton Fairgrounds. Tonight: {y}MICRO MAYHEM WRESTLING{/}!'));
       w.addWarp(39, 12, 1, 2, 'fair', 1, 12, 'right');
     },
@@ -572,8 +819,10 @@
 
       const npc = (sprite, name, tx, ty, talk, o = {}) =>
         w.add(new G.NPC(Object.assign({ sprite, name, x: tx * 16 + 8, y: ty * 16 + 14, talk }, o)));
-      npc('superfan', 'Superfan', 23, 10, S.superfan, { wander: 14 });
+      npc('superfan', 'Superfan', 14, 11, S.superfan, { wander: 10 });
       npc('attendant', 'Attendant', 8, 15, S.attendant, { dir: 'right' });
+      if (!flags().dadBeaten) npc('doron', 'Doron', 22, 10, S.doron);
+      if (flags().doronDeal) npc('pete', 'Pyro Pete', 24, 10, S.pete, { dir: 'left' });
 
       w.add(new G.Sign(5, 11, ['EASTON FAIRGROUNDS', 'Tonight: {y}MICRO MAYHEM WRESTLING{/}! Doors at 7.']));
       w.add(new G.Sign(18, 14, 'PARKING. Do not leave valuables in your car. Or near the wrestlers.'));
@@ -609,11 +858,42 @@
       w.addProp({ img: G.spr.concession, tx: 2, ty: 15, h: 2, solid: [2, 15, 4, 2], hit: [2, 15, 4, 2], talk: S.nachos });
 
       w.add(new G.NPC({ sprite: 'ref', name: 'Referee', x: 18 * 16 + 8, y: 15 * 16 + 14, talk: S.ref, wander: 20 }));
+      if (flags().dadBeaten) w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 7 * 16 + 8, y: 15 * 16 + 14, dir: 'left', talk: S.dadArena }));
 
-      [[10, 8, 'gold'], [13, 10, 'red'], [5, 13, 'blue'], [18, 12, 'green']].forEach(([x, y, s]) =>
-        w.add(new G.Wrestler(x * 16 + 8, y * 16 + 14, s)));
+      // before the main event, wrestlers are warming up in here
+      if (!flags().doronDeal || flags().dadBeaten) {
+        [[10, 8, 'gold'], [13, 10, 'red'], [5, 13, 'blue'], [18, 12, 'green']].forEach(([x, y, s]) =>
+          w.add(new G.Wrestler(x * 16 + 8, y * 16 + 14, s)));
+      }
 
       w.addWarp(11, 17, 2, 1, 'fair', 20, 9, 'down');
+    },
+    onEnter() {
+      const f = flags();
+      return (function* () {
+        if (f.doronDeal && !f.dadBeaten) yield* S.mainEvent();
+      })();
+    },
+  };
+
+  // The ring for the boss fight: one screen, ropes all around, crowd up top.
+  G.MAPS.ring = {
+    name: 'Main Event',
+    music: 'boss',
+    tiles: (() => {
+      const rows = ['B'.repeat(15), 'P' + 'h'.repeat(13) + 'P'];
+      for (let y = 2; y <= 8; y++) rows.push('j' + 'n'.repeat(13) + 'j');
+      rows.push('P' + 'h'.repeat(13) + 'P');
+      return rows;
+    })(),
+    setup(w) {
+      w.addProp({ img: G.spr.ringLogo, tx: 6, ty: 4, h: 3, flat: true });
+      if (!flags().dadBeaten) w.add(new G.ElEnglish(10 * 16 + 8, 5 * 16 + 14));
+    },
+    onEnter() {
+      return (function* () {
+        if (!flags().dadBeaten) yield* S.ringIntro();
+      })();
     },
   };
 })();
