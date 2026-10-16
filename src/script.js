@@ -67,6 +67,7 @@
     Nate: '#78e070', Lily: '#ff98d0', Abe: '#ffa848', Hannah: '#c898ff', Doron: '#68c8ff',
     Dad: '#f8d850', 'Father Eggmas': '#f86858', Tyler: '#78e8e8', Mikey: '#ff98d0',
     Nani: '#ffb8e0', 'El EEENGLISH': '#f86858', 'Pyro Pete': '#ffa848', 'Badlands Chugs': '#ff9a28', 'Little Nate': '#a8f098',
+    Michelle: '#e8a0d8', Globglogabgalab: '#f8a8c8',
   };
 
   const BOX = { x: 6, w: 228, h: 44, lineH: 11, lines: 3 };
@@ -174,6 +175,23 @@
   });
 
   G.face = (ent, dir) => ({ start() { ent.dir = dir; }, update() { return true; } });
+
+  // Tween the camera zoom (1 = normal) over n frames.
+  G.zoomTo = (z, n = 30) => ({
+    start() { this.from = G.play.zoom || 1; this.t = 0; },
+    update() { this.t++; const k = Math.min(1, this.t / n); G.play.zoom = this.from + (z - this.from) * k * k * (3 - 2 * k); return this.t >= n; },
+  });
+
+  // Huge shaking text across the middle of the screen.
+  G.bigText = (text, n = 90, color = '#78c8ff') => ({
+    start() { this.t = 0; },
+    update() { return ++this.t >= n; },
+    draw(ctx) {
+      const sc = this.t < 8 ? 4 - Math.floor(this.t / 4) : 2, w = G.font.bigWidth(text, sc);
+      const j = this.t < 30 ? Math.round((Math.random() * 2 - 1) * 2) : 0;
+      G.font.drawBig(ctx, text, Math.round((G.W - w) / 2) + j, 60 - sc * 3 + j, sc, color, '#1c1424');
+    },
+  });
 
   // Point the camera somewhere for a cutscene (null = back to Nate).
   G.camFocus = (x, y, n = 40) => ({

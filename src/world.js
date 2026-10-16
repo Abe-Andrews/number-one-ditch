@@ -65,6 +65,9 @@
     'm': { k: 'shopFloor' },
     'u': { k: 'garageDoor', solid: true },
     'O': { k: 'openBay' },
+    // the basement
+    'N': { k: 'faceStone', solid: true, edge: true },
+    'd': { k: 'basementFloor' },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 
@@ -97,6 +100,7 @@
         }
       }
       if (def.setup) def.setup(this);
+      if (G.spawnNotes) G.spawnNotes(this);
     }
 
     // ---------------------------------------------------------- building
@@ -306,6 +310,15 @@
           ctx.globalAlpha = 1;
           continue;
         }
+        if (f.shock) {
+          // shockwave: a thick ring racing outward
+          const r = f.r * (1 - f.life / f.max) + 4;
+          ctx.globalAlpha = Math.min(1, f.life / 10);
+          ctx.strokeStyle = f.color; ctx.lineWidth = 3;
+          ctx.beginPath(); ctx.arc(Math.round(f.x - cx), Math.round(f.y - cy), r, 0, Math.PI * 2); ctx.stroke();
+          ctx.globalAlpha = 1;
+          continue;
+        }
         if (f.circle) {
           // explosion flash: an expanding disc that fades out
           ctx.globalAlpha = Math.min(1, f.life / 8);
@@ -323,7 +336,9 @@
       for (const t of this.texts) {
         if (t.t < 12 && (t.t >> 1) & 1) continue;
         const w = G.font.width(t.text);
-        G.font.draw(ctx, t.text, Math.round(t.x - w / 2) - cx, Math.round(t.y) - cy, t.color, { shadow: '#1c1424' });
+        // (kept on screen, so long lines near the edge don't get cut off)
+        const sx = G.clamp(Math.round(t.x - w / 2) - cx, 2, Math.max(2, G.W - w - 2));
+        G.font.draw(ctx, t.text, sx, Math.round(t.y) - cy, t.color, { shadow: '#1c1424' });
       }
     }
   }

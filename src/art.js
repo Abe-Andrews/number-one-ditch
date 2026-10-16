@@ -1187,6 +1187,18 @@
       }
       p.vline(0, 0, 15, '#f6f4ee'); p.vline(15, 0, 15, '#f6f4ee');
     },
+    // ---- the basement
+    faceStone(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#6a6a72');
+      for (let y = 0; y < 16; y += 5) { p.hline(0, 15, y, '#4a4a52'); for (let x = (y % 10 ? 3 : 8); x < 16; x += 9) p.vline(x, y, y + 4, '#4a4a52'); }
+      for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#8a8a92');
+      if (mask & 4) { p.rect(0, 14, 16, 2, '#3a3a42'); }
+    },
+    basementFloor(p, r) {
+      p.rect(0, 0, 16, 16, '#7a7670');
+      for (let i = 0; i < 7; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#6a6660' : '#8a8680');
+      if (r() < 0.3) p.rect(r() * 12, r() * 12, 3, 2, '#5a5650');
+    },
     // ---- Dad's workshop
     faceBoards(p, r, v, mask) {
       // dark stained board walls between the studs
@@ -3481,6 +3493,126 @@
     return finish(p);
   }
 
+  // ================================================================ MORE HOME + FAIR BITS
+  function router() {
+    const p = new Pix(16, 12);
+    p.vline(3, 0, 5, '#2a2a30'); p.vline(12, 0, 5, '#2a2a30');
+    p.rect(1, 5, 14, 6, '#1c1c22'); p.hline(1, 14, 5, '#3a3a44');
+    for (const x of [4, 6, 8]) p.set(x, 8, '#58e078'); p.set(10, 8, '#f8d040');
+    return finish(p);
+  }
+  // A cardboard protest sign on a stick, lettered with the game font.
+  // (one line per | in the text, each centered)
+  function protestSign(text, board) {
+    const rows = text.split('|'), tw = Math.max(...rows.map((r) => G.font.width(r)));
+    const W = tw + 6, H = rows.length * 9 + 3;
+    const c = G.canvas(W + 2, H + 10), x = c.getContext('2d');
+    x.fillStyle = '#7a5a3a'; x.fillRect(Math.floor(W / 2), H, 2, 10);
+    x.fillStyle = '#1c1424'; x.fillRect(0, 0, W + 2, H + 1);
+    x.fillStyle = board || '#e8d8b0'; x.fillRect(1, 1, W, H - 1);
+    rows.forEach((r, i) => G.font.draw(x, r, 1 + Math.round((W - G.font.width(r)) / 2), 2 + i * 9, '#2a1a10'));
+    return c;
+  }
+  // Michelle's flower stand: a wooden cart with buckets of cut flowers.
+  function flowerStand() {
+    const p = new Pix(48, 36);
+    p.rect(0, 0, 48, 5, '#e8c8d8'); for (let x = 0; x < 48; x += 8) p.rect(x, 0, 4, 5, '#f4f4f0'); p.hline(0, 47, 5, '#a87a98');
+    p.vline(2, 5, 18, '#8a5a30'); p.vline(45, 5, 18, '#8a5a30');
+    const cols = ['#e83878', '#f8d040', '#c858e8', '#f8f8f0', '#f08030', '#e84848'];
+    for (let i = 0; i < 5; i++) {
+      const x = 4 + i * 8;
+      p.rect(x, 22, 7, 6, '#b8bcc4'); p.hline(x, x + 6, 22, '#d8dce0');
+      for (let k = 0; k < 6; k++) { const fx = x + (k % 3) * 2 + 1, fy = 15 + Math.floor(k / 3) * 3; p.vline(fx, fy + 1, 22, '#3a8a30'); p.set(fx, fy, cols[(i + k) % cols.length]); }
+    }
+    p.rect(0, 28, 48, 6, '#9a6a3a'); p.hline(0, 47, 28, '#c88a50');
+    p.rect(2, 34, 3, 2, '#5a3a20'); p.rect(43, 34, 3, 2, '#5a3a20');
+    return finish(p);
+  }
+  // Heavy old door to the basement.
+  function basementDoor() {
+    const p = new Pix(16, 28);
+    p.rect(0, 0, 16, 28, '#f4f4f0'); p.rect(2, 2, 12, 26, '#6a4a30');
+    for (let y = 4; y < 26; y += 7) p.hline(3, 12, y, '#5a3a24');
+    p.set(11, 15, '#d8b050'); p.set(11, 16, '#d8b050');
+    return finish(p);
+  }
+
+  // ================================================================ THE BASEMENT
+  function bookPile(seed, n) {
+    const p = new Pix(24, 18);
+    const cols = ['#a83a3a', '#2a4a7a', '#3a6a3a', '#e8c060', '#6a3a6a', '#c86a28', '#f0f0e8', '#1c1c22'];
+    for (let i = 0; i < n; i++) {
+      const w = 10 + Math.floor(G.hash(i, seed, 1) * 8), x = 2 + Math.floor(G.hash(i, seed, 2) * (20 - w)), y = 15 - i * 3;
+      const c = cols[Math.floor(G.hash(i, seed, 3) * cols.length)];
+      p.rect(x, y, w, 3, c); p.hline(x, x + w - 1, y, shade(c, 0.25)); p.vline(x + w - 1, y, y + 2, '#f4ecd8');
+    }
+    return finish(p);
+  }
+  function furnace() {
+    const p = new Pix(24, 40);
+    p.rect(9, 0, 6, 10, '#7a7c84'); p.rect(2, 10, 20, 28, '#8a8c94'); p.hline(2, 21, 10, '#a8aab2');
+    p.rect(6, 22, 12, 8, '#3a3a40'); p.hline(7, 16, 27, '#f88020'); p.set(9, 25, '#f8c040'); p.set(14, 26, '#f8c040');
+    p.rect(1, 37, 22, 3, '#5a5a62');
+    return finish(p);
+  }
+  function storageBoxes() {
+    const p = new Pix(28, 24);
+    for (const [x, y, w, h] of [[0, 8, 14, 16], [13, 10, 15, 14], [5, 0, 14, 10]]) { p.rect(x, y, w, h, '#c8a070'); p.hline(x, x + w - 1, y, '#e0c090'); p.vline(x + (w >> 1), y, y + 3, '#a07a48'); }
+    p.rect(7, 3, 9, 3, '#f4f4f0'); p.set(9, 4, '#c83030'); p.set(11, 4, '#3a8a30'); p.set(13, 4, '#c83030');
+    return finish(p);
+  }
+  // A book flapping through the air like a bird (two frames).
+  function flyingBook(open) {
+    const p = new Pix(14, 10);
+    if (open) { p.rect(0, 2, 6, 6, '#a83a3a'); p.rect(8, 2, 6, 6, '#a83a3a'); p.rect(6, 3, 2, 5, '#f4ecd8'); p.hline(1, 5, 4, '#f4ecd8'); p.hline(8, 12, 4, '#f4ecd8'); }
+    else { p.rect(3, 0, 8, 10, '#2a4a7a'); p.vline(3, 0, 9, '#1c3058'); p.rect(5, 2, 5, 2, '#e8c060'); }
+    return finish(p);
+  }
+  // The Globglogabgalab: a pink, sagging bookworm with a little bald head.
+  // Frames sway left/right for his dance.
+  function globglog(lean) {
+    const W = 40, H = 48, p = new Pix(W, H), skin = '#e8a898', sd = '#c88070', sl = '#f8c8b8';
+    const off = lean;
+    for (let y = 14; y < 46; y++) {
+      const t = (y - 14) / 32, half = Math.round(9 + Math.sin(t * Math.PI) * 6 + t * 3);
+      const cx = 20 + Math.round(off * (1 - t) * 2);
+      for (let x = cx - half; x <= cx + half; x++) p.set(x, y, (y % 6 === 0) ? sd : x > cx + half - 3 ? sd : x < cx - half + 3 ? sl : skin);
+    }
+    for (let k = 0; k < 8; k++) { p.set(30 + k, 42 + (k >> 2), skin); p.set(30 + k, 43 + (k >> 2), sd); }
+    const hx = 20 + off * 2;
+    for (let y = 0; y < 15; y++) for (let x = hx - 6; x <= hx + 6; x++) if ((x - hx) ** 2 / 36 + (y - 7) ** 2 / 50 <= 1) p.set(x, y, skin);
+    p.set(hx - 3, 6, '#f4f4f0'); p.set(hx - 2, 6, '#1c1424'); p.set(hx + 2, 6, '#f4f4f0'); p.set(hx + 3, 6, '#1c1424');
+    p.hline(hx - 4, hx - 1, 4, '#8a5a50'); p.hline(hx + 1, hx + 4, 4, '#8a5a50');
+    for (let y = 6; y < 12; y++) p.set(hx + (y > 9 ? 1 : 0), y, sd); p.rect(hx, 10, 3, 2, sd);
+    p.hline(hx - 2, hx + 2, 12, '#a85a58');
+    p.vline(hx - 7 - off, 18, 28, skin); p.vline(hx - 8 - off, 26, 30, skin);
+    p.vline(hx + 8 - off, 20, 30, skin); p.set(hx + 9 - off, 30, skin);
+    return finish(p);
+  }
+  // One of Nani's sticky notes: a little square with a curled corner, a scribble and a heart.
+  function stickyNote(col, ink) {
+    const p = new Pix(9, 9);
+    p.rect(0, 0, 9, 9, col); p.hline(0, 8, 0, shade(col, 0.2));
+    p.set(8, 8, shade(col, -0.35)); p.set(7, 8, shade(col, -0.2)); p.set(8, 7, shade(col, -0.2));
+    p.hline(1, 5, 2, ink); p.hline(1, 6, 4, ink);
+    p.set(2, 6, '#e83848'); p.set(4, 6, '#e83848'); p.hline(2, 4, 7, '#e83848'); p.set(3, 8, '#e83848');
+    return finish(p);
+  }
+  // Mom's green watering can.
+  function wateringCan() {
+    const p = new Pix(12, 9);
+    p.rect(3, 3, 6, 6, '#4a8a48'); p.hline(3, 8, 3, '#6aaa60');
+    p.vline(2, 4, 7, '#3a6a38'); p.set(1, 3, '#3a6a38'); p.set(0, 2, '#3a6a38');
+    for (let i = 0; i < 3; i++) p.set(9 + i, 5 - i, '#3a6a38');
+    p.hline(4, 7, 1, '#3a6a38'); p.set(4, 2, '#3a6a38'); p.set(7, 2, '#3a6a38');
+    return finish(p);
+  }
+  function eggShot() {
+    const p = new Pix(6, 7);
+    p.rect(1, 1, 4, 5, '#f8f4e8'); p.set(2, 0, '#f8f4e8'); p.set(3, 0, '#f8f4e8'); p.set(1, 2, '#ffffff');
+    return finish(p);
+  }
+
   function mailbox() {
     const p = new Pix(12, 24);
     p.rect(5, 8, 2, 16, '#8a6038');
@@ -3687,6 +3819,18 @@
     S.gourd = [gourd(false), gourd(true)];
     S.bird = [birdFrame(true), birdFrame(false)]; S.birdL = S.bird.map(mirror);
     S.beanCan = beanCan();
+    // more home + fair bits
+    S.router = router(); S.flowerStand = flowerStand(); S.basementDoor = basementDoor();
+    S.signs = {
+      people: protestSign('RESPECT|LITTLE|PEOPLE', '#f8e8a0'), grass: protestSign('SAVE THE|GRASS', '#c8e8b0'),
+      money: protestSign('WASTE OF|MONEY', '#f0d0c0'), quad: protestSign('GIVE BACK|THE QUAD', '#d0e0f0'),
+      who: protestSign('WHO|APPROVED|THIS?', '#f4f0e0'), pizza: protestSign('FREE|PIZZA?', '#f8d8e8'),
+    };
+    S.bookPiles = [bookPile(1, 5), bookPile(2, 4), bookPile(3, 6)]; S.furnace = furnace(); S.storageBoxes = storageBoxes();
+    S.flyingBook = [flyingBook(true), flyingBook(false)];
+    S.globglog = [globglog(-1), globglog(0), globglog(1)]; S.egg = eggShot();
+    S.stickyNote = stickyNote('#f8e868', '#5a6ab8'); S.stickyPink = stickyNote('#f8a8c8', '#5a3a78');
+    S.wateringCan = wateringCan();
     // Dad's workshop
     S.convertible = convertible(); S.workbench = workbench(); S.bassOnBench = bassOnBench(); S.bassSwing = bassSwing(); S.bassIcon = bassIcon();
     S.shopShelves = shopShelves(false); S.shopShelvesPlane = shopShelves(true); S.sepiaPhoto = sepiaPhoto(); S.toolChest = toolChest(); S.lumberPile = lumberPile();

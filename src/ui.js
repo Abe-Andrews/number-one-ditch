@@ -46,6 +46,9 @@
         F().draw(ctx, 'NO.', G.W - 24, 13, '#ffffff', { shadow: '#c83878' });
       } else {
         itemBox(ctx, G.W - 52, 5, 'X', xi ? xi.icon() : null, xCount);
+        // the chicken needs a moment between eggs
+        const cool = s.xItem === 'chicken' && G.play.eggCool > 0 ? G.play.eggCool / 40 : 0;
+        if (cool) { ctx.fillStyle = 'rgba(12,8,20,0.6)'; ctx.fillRect(G.W - 50, 7 + Math.round(18 * (1 - cool)), 18, Math.round(18 * cool)); }
         itemBox(ctx, G.W - 27, 5, 'Z', s.items.hammer ? G.ITEMS.hammer.icon() : null);
       }
       // shark teeth
@@ -85,7 +88,7 @@
   // Q/E switch tabs (or press up into the tab bar and use left/right).
   const TABS = ['ITEMS', 'KEY ITEMS', 'PEOPLE', 'JOURNAL', 'SAVE'];
   const SAVE_TAB = 4;
-  const COLS = 4, ROWS = 2;
+  const COLS = 4, ROWS = 3;
   const SEL = { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' };
   const TXT = (ctx, str, x, y, col) => F().draw(ctx, str, x, y, col || '#f8f8f0', { shadow: SH });
 
@@ -146,7 +149,14 @@
         if (inp.hit('up')) { if (row > 0) this.move(-COLS, COLS * ROWS); else { this.onTabs = true; G.audio.sfx('menu'); } }
         if (inp.hit('a')) return this.activate();
       } else if (this.tab === 2) {
-        const n = G.people().length;
+        const list = G.people(), n = list.length;
+        if (inp.hit('a')) {
+          inp.eat('a');
+          const p = list[this.sel];
+          if (p.id === 'nate') { G.play.setFollower(null, true); G.audio.sfx('select'); this.flash('Nate goes solo.'); }
+          else if (G.state.party.includes(p.id)) { G.play.setFollower(p.id, true); G.audio.sfx('select'); this.flash(p.name + ' is following Nate.'); }
+          else G.audio.sfx('bump');
+        }
         if (inp.hit('down')) this.move(1, n);
         if (inp.hit('up')) { if (this.sel > 0) this.move(-1, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
       } else if (this.tab === SAVE_TAB) {
@@ -207,7 +217,7 @@
       else if (this.tab === 2) this.drawPeople(ctx);
       else if (this.tab === SAVE_TAB) this.drawSave(ctx);
       else this.drawJournal(ctx);
-      let help = ['Z: set to X   X: save', 'Z: use   X: save', 'X: save', 'X: save', 'Z: save to this file'][this.tab];
+      let help = ['Z: set to X   X: save', 'Z: use   X: save', 'Z: bring along   X: save', 'X: save', 'Z: save to this file'][this.tab];
       help += '   Q/E: tabs   ENTER: close';
       if (this.confirm) help = '{r}Save over File ' + this.confirm + '?{/}  Z: yes  X: no';
       TXT(ctx, this.msgT > 0 && !this.confirm ? '{g}' + this.msg : help, 8, 146, '#9890a8');
@@ -254,14 +264,14 @@
       // bottom-left summary
       if (this.tab === 0) {
         const xi = s.xItem && G.ITEMS[s.xItem];
-        TXT(ctx, 'Z: {y}Rock Hammer', 12, 80);
-        TXT(ctx, 'X: ' + (xi ? '{y}' + (xi.short || xi.name) : '{d}(nothing)'), 12, 92);
+        TXT(ctx, 'Z: {y}Rock Hammer', 12, 100);
+        TXT(ctx, 'X: ' + (xi ? '{y}' + (xi.short || xi.name) : '{d}(nothing)'), 12, 110);
       } else {
-        TXT(ctx, 'Party: {y}' + s.party.length + '/5', 12, 80);
+        TXT(ctx, 'Party: {y}' + s.party.length + '/5', 12, 105);
       }
-      ctx.drawImage(G.spr.tooth, 12, 104);
-      TXT(ctx, 'Shark teeth: {y}' + s.teeth, 24, 105);
-      TXT(ctx, 'Hearts: {r}' + s.maxHp / 2, 12, 117);
+      ctx.drawImage(G.spr.tooth, 12, 119);
+      TXT(ctx, 'Shark teeth: {y}' + G.sayable(s.teeth), 24, 120);
+      TXT(ctx, 'Hearts: {r}' + G.sayable(s.maxHp / 2), 12, 130);
 
       // details panel
       const id = slots[this.sel];
@@ -320,13 +330,13 @@
       F().wrap(j.goal, 214).slice(0, 2).forEach((l, i) => TXT(ctx, l, 12, 33 + i * 10));
       TXT(ctx, 'SIDE QUESTS', 12, 55, '#f8d850');
       if (!j.side.length) TXT(ctx, '{d}None yet. Talk to people!', 12, 65);
-      j.side.slice(0, 3).forEach(([name, status], i) => {
-        TXT(ctx, name, 12, 65 + i * 10, '#78e8e8');
-        TXT(ctx, status, 228 - F().width(status), 65 + i * 10);
+      j.side.slice(0, 4).forEach(([name, status], i) => {
+        TXT(ctx, name, 12, 65 + i * 9, '#78e8e8');
+        TXT(ctx, status, 228 - F().width(status), 65 + i * 9);
       });
-      TXT(ctx, 'ABE\'S RULES', 12, 97, '#ffa848');
-      TXT(ctx, '1. Nate and Lily may not say the sacred number.', 12, 107);
-      TXT(ctx, '2. Abe is the Master. See rule 1.', 12, 117);
+      TXT(ctx, 'ABE\'S RULES', 12, 101, '#ffa848');
+      TXT(ctx, '1. Nate and Lily may not say the sacred number.', 12, 110);
+      TXT(ctx, '2. Abe is the Master. See rule 1.', 12, 119);
       TXT(ctx, 'Slips: {r}' + s.stats.slips + '{/}   Sixes bonked: {y}' + (s.stats.sixes || 0) + '{/}   Pins: {y}' + (s.stats.pins || 0), 12, 128, '#9890a8');
     }
   }

@@ -18,6 +18,17 @@
     };
   }
 
+  // The party member following Nate right now (older saves: the newest recruit).
+  G.activeFollower = () => {
+    const s = G.state;
+    if (s.follower === undefined) {
+      const r = s.party.filter((p) => p !== 'nate');
+      s.follower = r.length ? r[r.length - 1] : null;
+    }
+    return s.follower && s.party.includes(s.follower) ? s.follower : null;
+  };
+  G.with = (id) => G.activeFollower() === id;
+
   // Three save files. File 1 keeps the original key, so older saves show up there.
   G.SAVE_FILES = 3;
   const fileKey = (n) => (n === 1 ? SAVE_KEY : SAVE_KEY + '-' + n);
@@ -89,10 +100,12 @@
       const [ddx, ddy] = G.DIRS[dir];
       this.trail = [];
       for (let i = 0; i < 90; i++) this.trail.push({ x: x - ddx * i * 0.6, y: y - ddy * i * 0.6, dir });
-      if (!G.state.playAs) G.state.party.filter((p) => p !== 'nate').forEach((pid, i) => {
-        const t = this.trail[Math.min(89, (i + 1) * 14)];
-        this.world.add(new G.Follower(pid, i, t.x, t.y, dir));
-      });
+      // one party member at a time trails behind Nate (picked in the PEOPLE menu)
+      const fid = G.activeFollower();
+      if (fid && !G.state.playAs) {
+        const t = this.trail[14];
+        this.world.add(new G.Follower(fid, 0, t.x, t.y, dir));
+      }
       for (const t of this.world.triggers) t.inside = G.overlap(t.rect, this.feet());
       const s = G.state;
       s.map = id; s.x = x; s.y = y; s.dir = dir;
@@ -100,6 +113,22 @@
       G.areaBanner.show(this.world.def.name);
       this.snapCam();
       if (this.world.def.onEnter && !skipEnter) G.script.run(this.world.def.onEnter());
+    },
+
+    // Swap who's following Nate (null = nobody); poof = with a little puff.
+    setFollower(id, poof) {
+      const w = this.world, p = this.player;
+      G.state.follower = id || null;
+      for (const e of w.ents) {
+        if (!(e instanceof G.Follower) || e.dead) continue;
+        e.dead = true;
+        if (poof) w.burst(e.x, e.y - 8, ['#ffffff', '#e8e0f0'], 8);
+      }
+      if (id && !G.state.playAs) {
+        const t = this.trail[Math.min(this.trail.length - 1, 14)];
+        const f = w.add(new G.Follower(id, 0, t.x, t.y, p.dir));
+        if (poof) w.burst(f.x, f.y - 8, ['#ffffff', '#f8d850'], 10);
+      }
     },
 
     // Booby-trapped package explosion (also used for the gift prank, harmless).
@@ -214,6 +243,14 @@
         G.pipe.start();
       } else if (s.xItem === 'bass') {
         this.player.startBass();
+      } else if (s.xItem === 'chicken') {
+        // the chicken lays... fires... an egg (with a cooldown)
+        if (this.eggCool > 0) { G.audio.sfx('bump'); return; }
+        const p = this.player, [dx, dy] = G.DIRS[p.dir];
+        this.world.add(new G.EggShot(p.x + dx * 8, p.y + dy * 6, p.dir));
+        this.eggCool = 40;
+        p.chickenT = 20;
+        G.audio.sfx('bawk');
       } else if (s.xItem === 'package') {
         const w = this.world, p = this.player;
         if (!s.items.package || w.ents.filter((e) => e instanceof G.Package).length >= 2) { G.audio.sfx('bump'); return; }
@@ -278,6 +315,8 @@
       }
 
       G.state.playTime = (G.state.playTime || 0) + 1;
+      if (this.eggCool > 0) this.eggCool--;
+      if (this.whiteout > 0) this.whiteout -= 0.03;
 
       if (this.menu) {
         if (this.menu.update()) this.menu = null;
@@ -339,7 +378,15 @@
         cam.x += (Math.random() * 2 - 1) * this.shakeMag;
         cam.y += (Math.random() * 2 - 1) * this.shakeMag;
       }
+      // cutscene zoom, anchored on whatever the camera is looking at
+      const z = this.zoom || 1;
+      if (z !== 1) {
+        const f = this.camFocus;
+        const ax = f ? G.clamp(f.x - cam.x, 0, G.W) : G.W / 2, ay = f ? G.clamp(f.y - cam.y, 0, G.H) : G.H / 2;
+        ctx.save(); ctx.translate(ax, ay); ctx.scale(z, z); ctx.translate(-ax, -ay);
+      }
       this.world.draw(ctx, cam);
+      if (z !== 1) ctx.restore();
       // time-of-day tint, then glowing bulbs on top of it
       if (this.world.def.tint) this.world.def.tint(ctx);
       if (this.world.glows.length) {
@@ -352,6 +399,11 @@
         }
         ctx.globalAlpha = 1;
         ctx.globalCompositeOperation = 'source-over';
+      }
+      // white flash (explosions)
+      if (this.whiteout > 0) {
+        ctx.fillStyle = `rgba(255,255,255,${Math.min(1, this.whiteout)})`;
+        ctx.fillRect(0, 0, G.W, G.H);
       }
       // old-photo look for flashbacks
       if (G.flashback) {

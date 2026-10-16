@@ -113,6 +113,18 @@
       // puffing Dad's pipe: Nate stands still, the world keeps going
       if (this.state === 'pipe') { G.pipe.update(); return; }
 
+      // Lily winding up a "No.": she plants her feet while Z is held
+      if (this.state === 'charge') {
+        this.t++;
+        this.moving = false; this.anim = 0;
+        if (this.t === NO_FULL) {
+          G.audio.sfx('select');
+          w.burst(this.x, this.y - 22, ['#ffffff', '#ff98d0', '#c83878'], 8, { speed: 1, life: 16, size: 1 });
+        }
+        if (!inp.down('a')) this.releaseNo();
+        return;
+      }
+
       // walking
       const d = inp.dir();
       this.moving = !!(d.x || d.y);
@@ -142,7 +154,7 @@
     }
 
     startSwing() {
-      if (G.state.playAs === 'lily') { this.sayNo(); return; }
+      if (G.state.playAs === 'lily') { this.chargeNo(); return; }
       if (!G.state.items.hammer) return;
       this.state = 'swing';
       this.t = 0;
@@ -150,13 +162,24 @@
       G.audio.sfx('swing');
     }
 
-    // Lily's only move, and it is enough.
-    sayNo() {
+    // Lily's only move, and it is enough: hold Z to wind it up (she can't
+    // move while she does), let go to say it. Let go too early and it comes
+    // out as a mumbled "no..." that Mikey hears as a maybe.
+    chargeNo() {
       if (this.noT > 0) return;
-      this.noT = 16;
+      this.state = 'charge';
+      this.t = 0;
+      G.audio.sfx('blip');
+    }
+
+    releaseNo() {
+      const full = this.t >= NO_FULL;
+      this.state = 'walk';
+      this.noT = 8;
       const [dx, dy] = DIRS[this.dir];
-      this.world.add(new NoShot(this.x + dx * 8, this.y + dy * 6, this.dir));
-      G.audio.sfx('no');
+      this.world.add(new NoShot(this.x + dx * 8, this.y + dy * 6, this.dir, !full));
+      G.audio.sfx(full ? 'no' : 'blip');
+      if (full) G.play.shake(4, 1);
     }
 
     swingRect() {
@@ -243,7 +266,15 @@
       const swinging = this.state === 'swing', bassing = this.state === 'bass';
       if (swinging && this.dir === 'up') this.drawHammer(ctx, cx, cy);
       if (bassing && this.dir === 'up') this.drawBass(ctx, cx, cy);
-      ctx.drawImage(this.state === 'hurt' && (this.t >> 1) & 1 ? G.art.flash(img) : img, sx, sy);
+      const charged = this.state === 'charge' && this.t >= NO_FULL && (G.tick >> 2) & 1;
+      ctx.drawImage((this.state === 'hurt' && (this.t >> 1) & 1) || charged ? G.art.flash(img) : img, sx, sy);
+      if (this.state === 'charge') {
+        // wind-up meter over Lily's head
+        const k = Math.min(1, this.t / NO_FULL), bx = Math.round(this.x - 8) - cx, by = sy - 6;
+        ctx.fillStyle = '#1c1424'; ctx.fillRect(bx - 1, by - 1, 18, 4);
+        ctx.fillStyle = k >= 1 ? ((G.tick >> 2) & 1 ? '#ffffff' : '#ff98d0') : '#c83878';
+        ctx.fillRect(bx, by, Math.round(16 * k), 2);
+      }
       if (swinging && this.dir !== 'up') this.drawHammer(ctx, cx, cy);
       if (bassing && this.dir !== 'up') this.drawBass(ctx, cx, cy);
       if (this.pose === 'hold' && this.holdIcon) {
@@ -251,6 +282,11 @@
         ctx.drawImage(ic, Math.round(this.x - ic.width / 2) - cx, sy - ic.height - 1);
       }
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, sy - 12);
+      if (this.chickenT > 0) {
+        this.chickenT--;
+        const ch = G.spr.chickens.white[this.dir === 'left' ? 'left' : 'right'][(this.chickenT >> 2) & 1];
+        ctx.drawImage(ch, Math.round(this.x - ch.width / 2) - cx, sy - ch.height + 2);
+      }
       if (this.pipeOut && this.dir !== 'up') {
         const pos = { right: [11, 7], left: [-3, 7], down: [8, 8] }[this.dir];
         ctx.drawImage(this.dir === 'left' ? G.spr.pipeSmallL : G.spr.pipeSmall, sx + pos[0], sy + pos[1]);
@@ -346,6 +382,13 @@
       let img = S[this.dir][walkFrame(this.anim, this.moving)];
       if (this.flashT > 0 && (this.flashT >> 1) & 1) img = G.art.flash(img);
       if (this.balloons) drawBalloons(ctx, this.x - cx, this.y - S.h - cy, this.x);
+      if (this.sign) ctx.drawImage(this.sign, Math.round(this.x - this.sign.width / 2 + 4) - cx, Math.round(this.y - S.h - this.sign.height + 14) - cy);
+      if (this.scale && this.scale !== 1) {
+        // swelling up (Badlands, right before the end)
+        const k = this.scale, w2 = Math.round(16 * k), h2 = Math.round(S.h * k);
+        ctx.drawImage(img, Math.round(this.x - w2 / 2) - cx, Math.round(this.y + 2 - h2) - cy, w2, h2);
+        return;
+      }
       ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
       if (this.held) ctx.drawImage(this.held, Math.round(this.x - this.held.width / 2) - cx, Math.round(this.y - S.h + 10) - cy);
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, Math.round(this.y - S.h - 10) - cy);
@@ -653,26 +696,34 @@
   G.ElEnglish = ElEnglish;
 
   // ============================================================== LILY'S "NO."
+  const NO_FULL = 34;
   class NoShot extends Ent {
-    constructor(x, y, dir) {
+    constructor(x, y, dir, weak) {
       super(x, y);
       const [dx, dy] = DIRS[dir];
-      this.vx = dx * 2.8; this.vy = dy * 2.8;
-      this.life = 48;
+      const sp = weak ? 1.8 : 3;
+      this.vx = dx * sp; this.vy = dy * sp;
+      this.life = weak ? 24 : 52;
+      this.weak = !!weak;
     }
     update(w) {
       if (G.script.busy) return;
       this.x += this.vx; this.y += this.vy;
       if (--this.life <= 0) { this.dead = true; return; }
-      const r = [this.x - 9, this.y - 18, this.x + 9, this.y - 4];
+      const r = this.weak ? [this.x - 7, this.y - 14, this.x + 7, this.y - 4] : [this.x - 15, this.y - 26, this.x + 15, this.y - 2];
       for (const e of w.ents) {
         if (e.dead || !e.onNo) continue;
         if (G.overlap(r, e.noBox ? e.noBox() : e.hurtBox()) && e.onNo(this)) { this.dead = true; return; }
       }
     }
     draw(ctx, cx, cy) {
-      const t = 'NO.', w = G.font.bigWidth(t, 1);
-      G.font.drawBig(ctx, t, Math.round(this.x - w / 2) - cx, Math.round(this.y - 18) - cy, 1, '#ffffff', '#c83878');
+      if (this.weak) {
+        const t = 'no...', w = G.font.width(t);
+        G.font.draw(ctx, t, Math.round(this.x - w / 2) - cx, Math.round(this.y - 14) - cy, '#c8b8d0', { shadow: '#3a2a48' });
+        return;
+      }
+      const t = 'NO.', w = G.font.bigWidth(t, 2);
+      G.font.drawBig(ctx, t, Math.round(this.x - w / 2) - cx, Math.round(this.y - 28) - cy, 2, '#ffffff', '#c83878');
     }
   }
   G.NoShot = NoShot;
@@ -735,6 +786,17 @@
   // ============================================================== MIKEY (miniboss)
   // Three heart balloons orbit him and soak up Lily's "No."s. Pop them all and
   // he's wide open; at half health the golden hour kicks in.
+  // Mikey's song: his own, written for Lily, sung until she beats him.
+  const MIKEY_SONG = [
+    '~ Oh Lily, it\'s golden hour ~', '~ The sun is setting just for you ~',
+    '~ I blew up these balloons myself ~', '~ I\'m a little light-headed ~',
+    '~ Your hair is like a sunset ~', '~ Or a penny. A nice penny. ~',
+    '~ I practiced this all week ~', '~ In my car. In your driveway. ~',
+    '~ Say yes, or say maybe ~', '~ Just please don\'t say no ~',
+    '~ It\'s still golden hour ~', '~ For like four more minutes ~',
+    '~ KEY CHANGE! ~', '~ OH LILYYYY ~',
+  ];
+  const MIKEY_MAYBE = ['WAS THAT A MAYBE?', 'I HEARD "MAYBE"!', 'SO... A YES?', 'SHE\'S WARMING UP!'];
   const MIKEY_OUCH = ['OOF.', 'BUT THE SONG...', 'NOT EVEN A MAYBE?', 'OUCH.', 'I PRACTICED!'];
   class MikeyBoss extends Ent {
     constructor(x, y) {
@@ -768,6 +830,12 @@
     onNo(shot) {
       if (this.state === 'defeated') return false;
       const w = this.world;
+      if (shot.weak) {
+        // a mumbled no is basically a yes, as far as Mikey is concerned
+        w.pop(this.x, this.y - 44, MIKEY_MAYBE[this.maybe = ((this.maybe || 0) + 1) % MIKEY_MAYBE.length], '#ff98d0');
+        G.audio.sfx('heart');
+        return true;
+      }
       if (this.shield > 0) {
         this.shield--;
         const [bx, by] = this.balloonPos(this.shield);
@@ -800,6 +868,12 @@
     update(w) {
       if (G.script.busy || this.state === 'defeated') return;
       this.spin += this.golden ? 0.07 : 0.05;
+      // he never stops singing
+      this.songT = (this.songT || 0) + 1;
+      if (this.songT % 80 === 1) {
+        this.verse = ((this.verse == null ? -1 : this.verse) + 1) % MIKEY_SONG.length;
+        w.pop(this.x, this.y - 52, MIKEY_SONG[this.verse], this.golden ? '#ffb848' : '#f8d850');
+      }
       const p = G.play.player;
       const dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
       if (this.hurtT > 0) {
@@ -822,8 +896,7 @@
           const moves = this.golden ? ['sing', 'hearts', 'golden', 'dash'] : ['sing', 'hearts', 'sing', 'dash'];
           this.state = moves[this.cycle++ % moves.length];
           this.t = { sing: 70, hearts: 40, golden: 90, dash: 36 }[this.state];
-          if (this.state === 'sing') w.pop(this.x, this.y - 40, '~ LA LA LAAA ~', '#f8d850');
-          if (this.state === 'golden') { w.pop(this.x, this.y - 40, '~ GOLDEN HOUR ~', '#ffb848'); G.audio.sfx('bell'); }
+          if (this.state === 'golden') G.audio.sfx('bell');
           if (this.state === 'dash') w.pop(this.x, this.y - 40, 'LILY, WAIT!', '#ffffff');
         }
       } else if (this.state === 'sing') {
@@ -1274,6 +1347,170 @@
     draw(ctx, cx, cy) { if (this.img) ctx.drawImage(this.img, Math.round(this.x - this.img.width / 2) - cx, Math.round(this.y - this.img.height) - cy); }
   }
   G.Thing = Thing;
+
+
+  // ============================================================== THE CHICKEN (egg launcher)
+  class EggShot extends Ent {
+    constructor(x, y, dir) {
+      super(x, y);
+      const [dx, dy] = DIRS[dir];
+      this.vx = dx * 3.2; this.vy = dy * 3.2;
+      this.life = 55;
+    }
+    splat(w) {
+      this.dead = true;
+      w.burst(this.x, this.y - 8, ['#f8f4e8', '#f8d040', '#ffffff'], 8, { speed: 1.1, life: 18, size: 2 });
+      w.pop(this.x, this.y - 18, 'SPLAT!', '#f8e070');
+    }
+    update(w) {
+      if (G.script.busy) return;
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0) { this.dead = true; return; }
+      if (w.tileSolid(Math.floor(this.x / 16), Math.floor(this.y / 16))) { this.splat(w); return; }
+      const r = [this.x - 4, this.y - 12, this.x + 4, this.y - 2];
+      for (const t of w.ents) {
+        if (t.dead || !t.enemy || !t.hurtBox) continue;
+        if (G.overlap(r, t.hurtBox())) { t.hit(1, this.x - this.vx * 4, this.y - this.vy * 4); this.splat(w); return; }
+      }
+    }
+    draw(ctx, cx, cy) {
+      ctx.drawImage(G.spr.egg, Math.round(this.x - 3) - cx, Math.round(this.y - 12) - cy);
+    }
+  }
+  G.EggShot = EggShot;
+
+  // ============================================================== THE GLOBGLOGABGALAB (boss)
+  // Lives in the basement, eats Michelle's books, and never stops dancing.
+  class BookShot extends Ent {
+    constructor(x, y, vx, vy) { super(x, y); Object.assign(this, { vx, vy, life: 200 }); }
+    hurtBox() { return [this.x - 5, this.y - 14, this.x + 5, this.y - 4]; }
+    update(w) {
+      if (G.script.busy) return;
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0 || w.tileSolid(Math.floor(this.x / 16), Math.floor(this.y / 16))) { this.dead = true; return; }
+      const p = G.play.player;
+      if (G.overlap(this.hurtBox(), p.hurtBox())) { this.dead = true; p.hurt(1, this.x, this.y); }
+    }
+    draw(ctx, cx, cy) {
+      ctx.drawImage(G.spr.flyingBook[(this.life >> 2) & 1], Math.round(this.x - 7) - cx, Math.round(this.y - 16) - cy);
+    }
+  }
+  G.BookShot = BookShot;
+
+  class Globglog extends Ent {
+    constructor(x, y) {
+      super(x, y);
+      this.enemy = true;
+      this.boss = true;
+      this.name = 'THE GLOBGLOGABGALAB';
+      this.hp = this.maxHp = 14;
+      this.hb = { w: 24, h: 8 };
+      this.home = { x, y };
+      this.t = 0;
+      this.state = 'dance';
+      this.st = 120;
+      this.hurtT = 0;
+      this.kb = { x: 0, y: 0 };
+      this.cycle = 0;
+    }
+    hurtBox() { return [this.x - 13, this.y - 40, this.x + 13, this.y]; }
+    get angry() { return this.hp <= this.maxHp / 2; }
+    update(w) {
+      if (G.script.busy || this.state === 'defeated') return;
+      this.t++;
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      if (this.hurtT > 0) {
+        this.hurtT--;
+        w.move(this, this.kb.x, 0); w.move(this, 0, this.kb.y);
+        this.kb.x *= 0.8; this.kb.y *= 0.8;
+      }
+      if (G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
+      if (this.state === 'dance') {
+        // a lopsided little waltz around the middle of the room
+        const sp = this.angry ? 0.034 : 0.024;
+        const tx = this.home.x + Math.sin(this.t * sp) * 72, ty = this.home.y + Math.sin(this.t * sp * 2) * 26;
+        w.move(this, (tx - this.x) * 0.06, 0); w.move(this, 0, (ty - this.y) * 0.06);
+        if (this.t % 40 === 0) w.pop(this.x + (Math.random() * 30 - 15), this.y - 52, ['~ hmm hmm ~', 'MMMM. BOOKS.', '*twirl*', '~ doo dee doo ~'][Math.floor(Math.random() * 4)], '#f8a8c8');
+        if (--this.st <= 0) {
+          const moves = this.angry ? ['toss', 'storm', 'toss', 'shimmy'] : ['toss', 'toss', 'storm'];
+          this.state = moves[this.cycle++ % moves.length];
+          this.st = { toss: 60, storm: 90, shimmy: 60 }[this.state];
+        }
+      } else if (this.state === 'toss') {
+        // flings books at Nate in a fan
+        if (this.st % 20 === 0) {
+          const a = Math.atan2(dy, dx), n = this.angry ? 5 : 3;
+          for (let i = 0; i < n; i++) { const b = a + (i - (n - 1) / 2) * 0.28; w.add(new BookShot(this.x, this.y - 10, Math.cos(b) * 1.5, Math.sin(b) * 1.5)); }
+          G.audio.sfx('swing');
+        }
+        if (--this.st <= 0) { this.state = 'dance'; this.st = 100; }
+      } else if (this.state === 'storm') {
+        // spins in place and books fly off him in a ring
+        if (this.st % 30 === 0) {
+          const off = (this.st / 30) * 0.3;
+          for (let i = 0; i < 10; i++) { const a = off + (i / 10) * Math.PI * 2; w.add(new BookShot(this.x, this.y - 10, Math.cos(a) * 1.2, Math.sin(a) * 1.2)); }
+          G.audio.sfx('dash');
+          w.pop(this.x, this.y - 52, '*TWIRL*', '#f8a8c8');
+        }
+        if (--this.st <= 0) { this.state = 'dance'; this.st = 110; }
+      } else if (this.state === 'shimmy') {
+        // shimmies straight at Nate
+        if (this.st === 60) { this.vx = (dx / dist) * 2.2; this.vy = (dy / dist) * 2.2; w.pop(this.x, this.y - 52, 'SHIMMY!', '#f8a8c8'); G.audio.sfx('dash'); }
+        const h = w.move(this, this.vx, this.vy);
+        if (h.hitX || h.hitY || --this.st <= 0) { this.state = 'dance'; this.st = 90; }
+      }
+    }
+    hit(dmg, sx, sy) {
+      if (this.state === 'defeated') return;
+      this.hp = Math.max(0, this.hp - dmg);
+      this.hurtT = 12;
+      const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
+      this.kb = { x: (dx / m) * 1.6, y: (dy / m) * 1.6 };
+      G.audio.sfx('hit');
+      this.world.burst(this.x, this.y - 20, ['#a83a3a', '#2a4a7a', '#f4ecd8', '#e8c060'], 5, { speed: 1.4, up: 0.6, g: 0.06, life: 26, size: 2 });
+      if (this.hp <= 0) {
+        this.state = 'defeated';
+        G.script.run(G.SCRIPTS.globDefeated(this));
+      }
+    }
+    bomb(sx, sy) { this.hit(3, sx, sy); }
+    draw(ctx, cx, cy) {
+      const frames = G.spr.globglog;
+      // sways left and right on the beat
+      const beat = Math.floor(this.t / (this.angry ? 9 : 12)) % 4;
+      let img = frames[[0, 1, 2, 1][beat]];
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      const bob = Math.abs(Math.sin(this.t * 0.15)) * 3;
+      ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 14) - cx, Math.round(this.y - 4) - cy, 28, 6);
+      ctx.drawImage(img, Math.round(this.x - 20) - cx, Math.round(this.y - 47 - bob) - cy);
+    }
+  }
+  G.Globglog = Globglog;
+
+  // ============================================================== NANI'S STICKY NOTES
+  // A secret collectible: walk over it to pick it up. Twinkles now and then.
+  class StickyNote extends Ent {
+    constructor(n) {
+      super(n.x * 16 + 8, n.y * 16 + 12);
+      this.n = n;
+      this.t = Math.floor(Math.random() * 120);
+    }
+    update(w) {
+      this.t++;
+      if (G.script.busy) return;
+      if (this.t % 120 === 0) w.burst(this.x + 3, this.y - 10, ['#ffffff', '#f8e868'], 2, { speed: 0.4, up: 0.4, life: 16, size: 1 });
+      const p = G.play.player;
+      if (p && !G.state.playAs && G.overlap([this.x - 6, this.y - 10, this.x + 6, this.y + 2], p.hurtBox())) {
+        this.dead = true;
+        G.script.run(G.SCRIPTS.noteFound(this.n));
+      }
+    }
+    draw(ctx, cx, cy) {
+      const img = this.n.pink ? G.spr.stickyPink : G.spr.stickyNote;
+      ctx.drawImage(img, Math.round(this.x - 4) - cx, Math.round(this.y - 10 + Math.sin(this.t / 16)) - cy);
+    }
+  }
+  G.StickyNote = StickyNote;
 
   // ============================================================== SIX (enemy)
   class Six extends Ent {

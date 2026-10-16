@@ -102,6 +102,23 @@
   };
   G.CAST.priya = { skin: '#b07850', hair: '#1a1010', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 };
 
+  // Mom: long brown hair, tortoiseshell glasses, freckles, gold earrings,
+  // a mauve puffer, jeans and green garden boots.
+  G.CAST.michelle = {
+    skin: '#f4c8aa', hair: '#5a3624', hairStyle: 'long', glasses: '#7a5434', blush: true, smile: '#ffffff', earring: '#e8c060',
+    coat: '#a88aa0', shirt: '#e8dce4', pants: '#4a6aa8', shoes: '#4a7a3a', boots: true, torso: 6, legs: 3,
+  };
+
+  // Lafayette students, protesting the event village on the quad.
+  Object.assign(G.CAST, {
+    protest1: { skin: '#e8b890', hair: '#c86a30', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 },
+    protest2: { skin: '#8a5a3a', hair: '#1a1010', hairStyle: 'short', glasses: '#202020', shirt: '#3a6a3a', pants: '#2a2a30', shoes: '#c8c8c8', torso: 6, legs: 3 },
+    protest3: { skin: '#f0c8a8', hair: '#e0c070', hairStyle: 'shoulder', shirt: '#f0f0f0', pants: '#5878b8', shoes: '#a03030', torso: 5, legs: 3, blush: true },
+    protest4: { skin: '#c88a60', hair: '#2a1a14', hairStyle: 'cap', hat: '#8a2034', hatStyle: 'ball', shirt: '#8a2034', pants: '#4a4038', shoes: '#f0f0f0', torso: 6, legs: 3 },
+    protest5: { skin: '#f2c8a0', hair: '#5a3a20', hairStyle: 'buzz', beard: '#5a3a20', shirt: '#4a5a8a', sleeves: 'long', pants: '#3a3a44', shoes: '#3a2818', torso: 7, legs: 3 },
+    protest6: { skin: '#b07850', hair: '#3a2418', hairStyle: 'long', shirt: '#e8a030', pants: '#2a2a30', shoes: '#f0f0f0', torso: 5, legs: 3, smile: '#ffffff' },
+  });
+
   // Badlands Chugs: bald, full beard, black "Don't Touch Dat" tee, white sneakers.
   G.CAST.badlands = {
     skin: '#6a4232', eyes: '#140c0a', hair: '#6a4232', hairStyle: 'bald', beard: '#24201e',
@@ -155,7 +172,7 @@
     },
     hat: {
       kind: 'key', name: 'Hat', icon: () => G.spr.cap, has: () => !!st().items.cap,
-      desc: 'Brown corduroy. Distinguished. Lucky. Nate never goes anywhere without it.',
+      desc: 'Corduroy. Distinguished. Lucky. Everyone says it\'s brown. Nate insists it\'s green.',
     },
     tickets: {
       kind: 'key', name: 'Micro Mayhem Tickets', icon: () => G.spr.ticket,
@@ -172,10 +189,23 @@
     milk: { kind: 'key', name: 'Milk', icon: () => G.spr.milk, has: () => !!st().items.milk && !fl().badlandsBeaten, desc: 'From Dad\'s garage fridge. The expiration date is a mystery.' },
     dye: { kind: 'key', name: 'Blue Food Coloring', icon: () => G.spr.dye, has: () => !!st().items.dye && !fl().badlandsBeaten, desc: 'From Nate\'s old chemistry set. Turns anything the color of a smurf.' },
     smoke: { kind: 'key', name: 'Liquid Smoke', icon: () => G.spr.liquidSmoke, has: () => !!st().items.smoke && !fl().badlandsBeaten, desc: 'Hickory flavor. From Dad\'s grill stuff. Never drink this.' },
-    vodka: { kind: 'key', name: 'Vodka Shooters', icon: () => G.spr.vodka, has: () => !!st().items.vodka && !fl().badlandsBeaten, desc: 'Three tiny bottles from inside a hollow copy of "War and Peace."' },
+    vodka: { kind: 'key', name: 'Vodka Shooters', icon: () => G.spr.vodka, has: () => !!st().items.vodka && !fl().badlandsBeaten, desc: 'Three tiny bottles. Mom confiscated them from a hollow "War and Peace" years ago, then sold them back to Nate.' },
+    chicken: {
+      kind: 'gear', equip: true, name: 'The Chicken', short: 'Chicken', icon: () => G.spr.chickens.white.right[0], has: () => !!st().items.chicken,
+      desc: 'Henrietta, from Mom\'s flower stand. Press X and she fires an egg. She needs a second to lay the next one.',
+    },
+    books: {
+      kind: 'key', name: 'Mom\'s Books', icon: () => G.spr.flyingBook[1], has: () => !!st().items.books && !fl().shopOpen,
+      desc: 'Gardening books, devotionals and mystery novels, rescued from the Globglogabgalab. Slightly chewed.',
+    },
+    notes: {
+      kind: 'key', name: 'Nani\'s Sticky Notes', icon: () => G.spr.stickyNote, has: () => G.notesFound() > 0, count: () => G.notesFound(),
+      desc: () => 'Nani hid these all over the place. Found ' + G.sayable(G.notesFound()) + ' of ' + G.NOTES.length + '. Press Z to reread one.',
+      use: () => G.SCRIPTS.rereadNote(),
+    },
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
-  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bidet', 'bass', null, null];
+  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bidet', 'bass', 'chicken', null, null, null, null, null];
 
   // ================================================================ SMOKE SIGNALS (Dad's pipe)
   // Like ocarina songs: learn a sequence, puff it with the pipe, something
@@ -183,7 +213,7 @@
   G.SIGNALS = [
     { id: 'peace', name: 'Peace Be With You', seq: ['up', 'down', 'up'], known: () => !!fl().signal_peace, effect: () => G.SCRIPTS.signalPeace() },
   ];
-  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', 'vodka'];
+  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', 'vodka', 'books', 'notes', null, null];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -222,6 +252,10 @@
       bio: 'Christian. A pastor who carves pipes in his workshop. Asks everyone if they speak EEENGLISH.',
     },
     {
+      id: 'michelle', name: 'Michelle', tag: '{c}Family', met: () => fl().michelleMet,
+      bio: () => 'Mom. Flower farmer. Works at the church. NOT "the pastor\'s wife." Yells "Jamie Lee Curtis" when startled.' + (fl().shopOpen ? ' Runs the flower stand.' : ''),
+    },
+    {
       id: 'elenglish', name: 'El EEENGLISH', met: () => fl().mainEvent,
       tag: () => (fl().dadBeaten ? '{o}Boss: defeated!' : '{r}Boss'),
       bio: () => (fl().dadBeaten
@@ -246,6 +280,13 @@
         ? 'Sang Lily a song at golden hour, with heart balloons. She said no. He kept the flowers.'
         : 'Showed up with flowers, heart balloons and a song. Won\'t let anyone drive to Chesapeake until he talks to Lily.'),
     },
+    {
+      id: 'globglog', name: 'Globglogabgalab', met: () => fl().globMet, img: () => G.spr.globglog[1],
+      tag: () => (fl().globBeaten ? '{o}Boss: sings quietly' : '{r}Boss'),
+      bio: () => (fl().globBeaten
+        ? 'A bookworm who lived in the basement and ate Mom\'s books. Lost a dance battle to Nate. Now sings quietly.'
+        : 'Something pink in the basement, eating Mom\'s books and singing a song she can\'t stand. Never stops dancing.'),
+    },
     { id: 'gus', name: 'Gus', tag: '{y}Friend', met: () => fl().capQuest, bio: 'Lafayette\'s groundskeeper. Protector of petunias. Found Nate\'s hat.' },
     { id: 'moles', name: 'Dr. Moles', tag: '{y}Friend', met: () => fl().chemMet, bio: 'Chemistry professor. Nobody has ever gotten the last question on his final right.' },
     { id: 'pete', name: 'Pyro Pete', tag: '{y}Friend', met: () => fl().doronDeal, bio: 'Runs the pyro for Micro Mayhem. Thinks Nate\'s exploding present was beautiful.' },
@@ -259,7 +300,7 @@
       const has = s.party.includes(id), info = G.PARTY_INFO[id];
       return {
         id, known: has, name: has ? info.name : '???',
-        tag: has ? '{g}In the party' : '{d}Not found yet',
+        tag: !has ? '{d}Not found yet' : id === 'nate' ? '{y}Leader' : G.with(id) ? '{y}Following Nate' : '{g}In the party',
         bio: has ? info.bio : '', skill: has ? info.skill : '',
       };
     });
@@ -289,7 +330,7 @@
     else if (!f.boulderGone) goal = 'Bring Doron to the boulder on the south road.';
     else if (!f.homeArrived) goal = 'Take the south road to Rattlesnake Bridge Road. Home!';
     else if (!f.badlandsMet) goal = f.mikeyMet ? 'Find Lily. Mikey won\'t let anyone drive to Chesapeake until he talks to her. Try the house.' : 'Explore home. Go inside!';
-    else if (!f.badlandsBeaten && G.ingredientCount() < 4) goal = 'Beat Badlands Chugs at the refrigerator game. Find milk, blue food coloring, liquid smoke and vodka shooters. (' + G.sayable(G.ingredientCount()) + '/4)';
+    else if (!f.badlandsBeaten && G.ingredientCount() < 4) goal = 'Find milk, blue food coloring, liquid smoke and vodka shooters (ask Mom?) for the refrigerator game. (' + G.sayable(G.ingredientCount()) + '/4)';
     else if (!f.badlandsBeaten) goal = 'Bring the ingredients to Badlands Chugs in the kitchen. Time for the refrigerator game.';
     else if (!f.mikeyBeaten) goal = 'Mikey is waiting at the end of the driveway. Lily has something to tell him.';
     else goal = 'The road to Chesapeake is open! Leave from either end of Rattlesnake Bridge Rd. (More story soon!)';
@@ -300,6 +341,10 @@
       const left = s.items.tickets || 0;
       side.push(['Doron\'s spare tickets', f.ticketsDone ? '{g}Done!' : f.dadBeaten ? 'The show\'s over' : left ? G.sayable(left) + ' left' : 'Go tell Doron!']);
     }
+    if (f.booksQuest) side.push(['Mom\'s missing books', f.shopOpen ? '{g}Done!' : s.items.books ? 'Bring them to Mom' : 'Check the basement']);
+    if (G.notesFound()) side.push(['Nani\'s sticky notes', G.notesFound() >= G.NOTES.length ? '{g}All found!' : G.sayable(G.notesFound()) + '/' + G.NOTES.length]);
+    // unfinished ones first
+    side.sort((a, b) => (a[1].startsWith('{g}') ? 1 : 0) - (b[1].startsWith('{g}') ? 1 : 0));
     return { goal, side };
   };
 
@@ -359,6 +404,15 @@
         { wave: 'noise', vol: 0.03, notes: 'h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4' },
       ],
     },
+    // the basement: a slinky little minor-key waltz (original; Mom still hates it)
+    bookworm: {
+      bpm: 138,
+      tracks: [
+        { wave: 'square', vol: 0.05, notes: 'D4:3 F4:1 A4:4 G#4:2 A4:2 R:4 | C5:3 A4:1 F4:4 E4:4 R:4 | D4:3 F4:1 A4:4 A#4:2 A4:2 G4:4 | F4:2 E4:2 D4:8 R:4 | A#4:3 A4:1 G4:4 F4:2 G4:2 A4:4 | C5:2 A#4:2 A4:4 G4:8 | F4:2 G4:2 A4:2 F4:2 E4:2 C#4:2 E4:4 | D4:12 R:4' },
+        { wave: 'triangle', vol: 0.15, notes: 'D3:4 A2:4 D3:4 A2:4 | F2:4 C3:4 F2:4 C3:4 | D3:4 A2:4 G2:4 A2:4 | D3:4 A2:4 D3:8 | A#2:4 F3:4 A#2:4 F3:4 | C3:4 G3:4 C3:4 E3:4 | A2:4 E3:4 A2:4 C#3:4 | D3:8 A2:8' },
+        { wave: 'noise', vol: 0.04, notes: 'k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:2 s:2 s:4' },
+      ],
+    },
     // Badlands' groove for the refrigerator game
     chug: {
       bpm: 96,
@@ -407,6 +461,7 @@
     'You are braver than you believe and smarter than you think!',
     'Today is a gift. That is why they call it the present. (Not the exploding kind, Nate.)',
     'Did you eat? Nani loves you!',
+    'I left you some little notes! Keep your eyes peeled! Love, Nani',
     'Be the light you wish to see in the world. Also wear a jacket.',
   ];
   S.naniMessage = function* () {
@@ -598,9 +653,16 @@
       yield G.say('Gus', 'That\'s ' + G.sayable(n) + ' so far. I need ' + CAP_GOAL + '. Keep bonking.');
       return;
     }
-    yield G.say('Gus', 'Ten sacred numbers! My lawn is saved. A deal\'s a deal.');
+    yield G.say('Gus', 'Ten sacred numbers! My lawn is saved. A deal\'s a deal. Here\'s your brown hat.');
+    // it is a brown hat. Nate disagrees.
+    yield G.say('Nate', 'Green.');
+    yield G.say('Gus', '...What?');
+    yield G.say('Nate', 'It\'s a GREEN hat, Gus.');
+    yield G.say('Gus', 'Son, that hat is brown. I have been looking at it all morning.');
+    yield G.say('Nate', 'It\'s green. It has always been green.');
+    yield G.say('Gus', '...Just take your hat.');
     s.items.cap = true;
-    yield G.itemGet(G.spr.cap, 'You got your {y}Hat{/} back! Corduroy. Distinguished. Yours.');
+    yield G.itemGet(G.spr.cap, 'You got your {y}Hat{/} back! Corduroy. Distinguished. Green, according to Nate.');
     yield G.say('Nate', 'Ahh. Now I can think clearly.');
     // the lucky cap comes with a heart container
     s.maxHp += 2;
@@ -1009,6 +1071,7 @@
     yield G.say('Doron', 'Okay, Nate. A deal\'s a deal. Let\'s go move your boulder.');
     const s = G.state;
     if (!s.party.includes('doron')) s.party.push('doron');
+    s.follower = 'doron';
     flags().dadBeaten = true;
     G.audio.sfx('fanfare');
     yield G.banner('DORON JOINED THE PARTY!', 'He can lift and smash heavy things.', 220);
@@ -1116,7 +1179,7 @@
     yield G.say('Mikey', 'They\'re for Lily. So are the flowers. I\'ve also been practicing a song.');
     yield G.say('Mikey', 'Have you seen her? I really, really need to talk to her. It\'s important.');
     yield G.say('Nate', 'I just got here. I haven\'t seen her.');
-    if (G.state.party.includes('doron')) {
+    if (G.with('doron')) {
       yield G.say('Doron', 'Who\'s the kid with the balloons?');
       yield G.say('Nate', 'Mikey. He has a... thing for Lily.');
       yield G.say('Doron', 'Oh no.');
@@ -1186,8 +1249,8 @@
     if (w.bassProp) w.bassProp.img = null;
     yield G.itemGet(G.spr.bassIcon, 'You got the {y}Half-Finished Bass{/}! No strings, all heft. It\'s on {y}X{/}: swing it in a huge arc. (Switch X items in the menu.)');
     yield G.say('Nate', 'It can\'t play a single note. But it can absolutely hit things.');
-    if (s.party.includes('doron')) yield G.say('Doron', 'Now THAT is a weapon.');
-    if (s.party.includes('lily')) yield G.say('Lily', 'Please don\'t hit me with the bass.');
+    if (G.with('doron')) yield G.say('Doron', 'Now THAT is a weapon.');
+    if (G.with('lily')) yield G.say('Lily', 'Please don\'t hit me with the bass.');
   };
 
   S.homeFlag = function* () {
@@ -1216,8 +1279,8 @@
     yield G.say(null, 'The little white pool house: a porch, a white rocking chair, and the flag on a bracket.');
     yield G.say(null, 'Inside: towels, pool noodles, a skimmer net... and a bucket of chlorine that is somehow ALWAYS half empty.');
     yield G.say('Nate', '...I borrow it. For experiments.');
-    if (party.includes('doron')) yield G.say('Doron', 'So THAT\'S where it all went.');
-    if (party.includes('lily')) yield G.say('Lily', 'That\'s why the pool turned green every summer, Nate.');
+    if (G.with('doron')) yield G.say('Doron', 'So THAT\'S where it all went.');
+    if (G.with('lily')) yield G.say('Lily', 'That\'s why the pool turned green every summer, Nate.');
     yield G.say('Nate', 'Science requires sacrifices. Mostly the pool.');
   };
   S.homeTruck = function* () {
@@ -1337,7 +1400,7 @@
     yield G.say('Badlands Chugs', 'Ayy, the brother! You can be in the video. Say hi to the people.');
     yield G.say('Nate', 'You are NOT chugging my sister!');
     yield G.say('Badlands Chugs', 'Who\'s gonna stop me? Ain\'t nobody ever out-chugged Badlands.');
-    if (G.state.party.includes('doron')) {
+    if (G.with('doron')) {
       yield G.say('Doron', 'I could suplex him.');
       yield G.say('Badlands Chugs', 'Don\'t touch dat.');
       yield G.say('Doron', '...He said not to touch that.');
@@ -1352,7 +1415,7 @@
     yield G.say('Nate', 'Okay. Think like a chemist. Things that should never, ever be in the same glass.');
     yield G.say('Nate', '{y}Milk{/}: Dad keeps some in the garage fridge. {y}Liquid smoke{/}: with the grill stuff out on the patio.');
     yield G.say('Nate', '{y}Blue food coloring{/}: my old chemistry set, upstairs. And {y}vodka shooters{/}...');
-    yield G.say('Nate', 'Somebody in this house hides those in a book. Probably a book nobody would ever read.');
+    yield G.say('Nate', 'Mom confiscated a whole stash of those once. If anybody still has them, it\'s Mom. She\'s usually out in the garden.');
     f.fridgeGame = true;
     yield G.banner('THE REFRIGERATOR GAME', 'Find: Milk, Blue Food Coloring, Liquid Smoke, Vodka Shooters', 240);
   };
@@ -1400,13 +1463,330 @@
     yield G.say(null, 'Nate\'s old chemistry set. This is where it all began. The scorch mark on the ceiling is from 2017.');
   };
 
+  // ================================================================ MOM (Michelle)
+  // First seen watering the dahlias. Nate sneaks up on her, she yells the
+  // first name that comes into her head, and hands him the missing-books quest.
+  S.michelleStartle = function* () {
+    const f = flags(), w = G.play.world, p = P(), m = w.michelle;
+    f.michelleMet = true;
+    yield G.camFocus(m.x, m.y - 10, 30);
+    yield G.say(null, 'Mom is out in the garden, humming to herself and watering the dahlias. She hasn\'t noticed Nate.');
+    yield G.camFocus(null, null, 20);
+    yield G.walkTo(p, m.x + 15, m.y + 2, 0.5);
+    p.dir = 'left';
+    // whoever's tagging along hangs back a step
+    const fol = w.ents.find((e) => e instanceof G.Follower && !e.dead);
+    if (fol) { fol.hold = true; Object.assign(fol, { x: p.x + 18, y: p.y + 6, dir: 'left', moving: false }); }
+    yield G.wait(20);
+    yield G.say('Nate', 'Hey, Mom.');
+    // !!!
+    m.dir = 'right';
+    m.held = null;
+    G.audio.sfx('yell');
+    G.play.shake(24, 3);
+    w.burst(m.x - 6, m.y - 10, ['#78c8ff', '#a8e0ff', '#ffffff'], 10, { speed: 1.4, up: 1, g: 0.08, life: 26, size: 2 });
+    yield G.walkTo(m, m.x, m.y - 10, 3);
+    yield G.walkTo(m, m.x, m.y + 10, 3);
+    yield G.bigText('JAMIE LEE CURTIS!!!', 70, '#f8d850');
+    yield G.say('Michelle', 'JAMIE LEE CURTIS!!!');
+    yield G.emote(p, 'bang', 30);
+    yield G.say('Nate', '...Hi, Mom.');
+    yield G.say('Michelle', 'NATE! Don\'t sneak up on me like that! I almost watered you!');
+    yield G.say('Nate', 'Why Jamie Lee Curtis?');
+    yield G.say('Michelle', 'It\'s just what came out!');
+    if (G.with('lily')) {
+      yield G.say('Lily', 'She yelled that in the middle of a conversation once. Nobody was talking about Jamie Lee Curtis.');
+      yield G.say('Michelle', 'It was relevant in my HEAD.');
+    } else if (G.with('doron')) {
+      yield G.say('Doron', 'Still yelling celebrities, Mom?');
+      yield G.say('Michelle', 'Only the good ones.');
+    } else {
+      yield G.say('Nate', 'You yelled that in the middle of a conversation once. Nobody was talking about Jamie Lee Curtis.');
+      yield G.say('Michelle', 'It was relevant in my HEAD.');
+    }
+    m.held = G.spr.wateringCan;
+    yield G.say('Michelle', 'Anyway! Look at these dahlias. Three weddings this month, plus the altar flowers for Sunday.');
+    yield G.say('Michelle', 'Speaking of Sunday. A new family visited church. Guess how I got introduced.');
+    yield G.say('Nate', '...As Michelle?');
+    yield G.say('Michelle', '"And THIS is the pastor\'s wife!"');
+    yield G.say('Michelle', 'I WORK there, Nate. I have a job. I have a flower farm. I have a NAME.');
+    yield G.say('Nate', 'Michelle.');
+    yield G.say('Michelle', 'THANK you.');
+    yield G.say('Michelle', 'Also, something strange is going on. My books keep disappearing.');
+    yield G.say('Michelle', 'First my gardening books. Then my devotionals. Then a whole stack of mystery novels. Gone!');
+    yield G.say('Michelle', 'And at night I hear... singing. Coming up through the floor vents. From the BASEMENT.');
+    yield G.say('Nate', 'Singing?');
+    yield G.say('Michelle', 'A slithery, horrible little song. It gets stuck in my head for DAYS. I cannot STAND it.');
+    yield G.say('Michelle', 'Be a dear and check the basement? The door is in the front hall. Find my books and I\'ll make it worth your while.');
+    f.booksQuest = true;
+    if (f.fridgeGame && !G.state.items.vodka && !f.badlandsBeaten) yield* askMomForVodka();
+    if (fol) fol.hold = false;
+  };
+
+  function* askMomForVodka() {
+    flags().vodkaAsked = true;
+    yield G.say('Nate', 'Also... hypothetically... do you still have any vodka shooters?');
+    yield G.say('Michelle', 'The ones I found in a hollowed-out "War and Peace"? Maybe I do. Maybe I don\'t.');
+    yield G.say('Michelle', 'Find my books first. Then we\'ll talk.');
+  }
+
+  const MOM_LINES = [
+    'Any luck with my books? The basement door is in the front hall.',
+    'I heard the singing again last night. I put a pillow over my head. I could STILL hear it.',
+    'If one more person calls me "the pastor\'s wife" I\'m going to plant them in a raised bed.',
+    'Watch out for the snapdragons. These ones bite. I don\'t know where they came from.',
+  ];
+  S.michelle = function* () {
+    const f = flags(), s = G.state;
+    if (!f.michelleMet) { yield* S.michelleStartle(); return; }
+    if (s.items.books && !f.shopOpen) { yield* returnBooks(); return; }
+    if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten && !f.vodkaAsked) { yield* askMomForVodka(); return; }
+    f.momLine = ((f.momLine || 0) + 1) % MOM_LINES.length;
+    yield G.say('Michelle', f.globBeaten ? 'You found my books? Bring them here!' : MOM_LINES[f.momLine]);
+  };
+
+  // Books back: Mom finally opens the flower stand she's always wanted.
+  function* returnBooks() {
+    const f = flags(), s = G.state, w = G.play.world, p = P(), m = w.michelle;
+    yield G.say('Nate', 'Mom. I got your books back.');
+    yield G.emote(m, 'bang', 30);
+    yield G.say('Michelle', 'My BOOKS! Oh, Nate, thank you!');
+    yield G.say('Michelle', '...Why are they all chewed?');
+    yield G.say('Nate', 'There was a Globglogabgalab living in the basement.');
+    yield G.say('Michelle', '...');
+    yield G.say('Michelle', 'THAT was the singing?! I KNEW it. I can\'t stand that song. I can\'t stand HIM.');
+    yield G.say('Nate', 'He said he\'d sing quietly from now on.');
+    yield G.say('Michelle', 'He\'d better.');
+    yield G.say('Michelle', 'Okay. A deal\'s a deal. I\'ve wanted to do this for years. Give me one minute.');
+    s.items.books = false;
+    f.shopOpen = true;
+    yield G.fadeOut(24);
+    w.addProp({ img: G.spr.flowerStand, tx: 35, ty: 25, solid: [35, 25, 3, 1], hit: [35, 25, 3, 1], talk: S.michelleShop });
+    Object.assign(m, { x: 34 * 16 + 4, y: 25 * 16 + 14, dir: 'down', talk: S.michelleShop, held: null });
+    m.home = { x: m.x, y: m.y };
+    Object.assign(p, { x: 36 * 16 + 8, y: 27 * 16 + 6, dir: 'up' });
+    G.play.trail = G.play.trail.map((_, i) => ({ x: p.x, y: p.y + i * 0.6, dir: 'up' }));
+    G.play.setFollower(G.activeFollower());
+    yield G.wait(10);
+    yield G.fadeIn(24);
+    G.audio.sfx('secret');
+    yield G.banner('MICHELLE\'S FLOWERS', 'now open!', 130);
+    yield G.say('Michelle', 'Welcome to {p}Michelle\'s Flower Stand{/}! Not "the pastor\'s wife\'s flower stand." MICHELLE\'s.');
+    yield G.say('Michelle', 'Fresh flowers, Doosh for the road... and one very special hen.');
+    yield* S.michelleShop();
+  }
+
+  // Shark teeth for prices (no sacred numbers on the price tags, of course).
+  function* momPay(n) {
+    if (G.state.teeth >= n) { G.play.addTeeth(-n); G.audio.sfx('tooth'); return true; }
+    yield G.say('Michelle', 'You\'re a little short, hon. Shark teeth don\'t grow on trees. They grow on SHARKS.');
+    return false;
+  }
+  const MOM_CHAT = [
+    'If anybody asks, this is MICHELLE\'s Flower Stand. Not the pastor\'s wife\'s flower stand.',
+    'Dahlias, zinnias, cosmos, snapdragons... well. Not the snapdragons. Those bite.',
+    'I can still hear that song sometimes. Faintly. Through the vents. I\'m going to need a vacation.',
+    'People keep asking why I yelled "Jamie Lee Curtis." I don\'t KNOW why. She just lives in my head.',
+    'Who do you think does the altar flowers every Sunday? Not "the pastor\'s wife." ME.',
+  ];
+  S.michelleShop = function* () {
+    const f = flags(), s = G.state;
+    const menu = [];
+    if (!s.items.chicken) menu.push(['The Chicken: 30', function* () {
+      if (!(yield* momPay(30))) return;
+      s.items.chicken = true;
+      s.xItem = 'chicken';
+      yield G.itemGet(G.spr.chickens.white.right[0], 'You got {y}The Chicken{/}! Press {y}X{/} to fire an egg.');
+      yield G.say('Michelle', 'Her name is Henrietta. She needs a second between eggs. Don\'t rush her.');
+      yield G.say('Nate', 'A chicken that shoots eggs. Mom. This is the best thing you\'ve ever sold.');
+      yield G.say('Michelle', 'It\'s the only thing I\'ve ever sold that isn\'t a flower.');
+    }]);
+    if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten) menu.push(['Vodka Shooters: 10', function* () {
+      yield G.say('Michelle', 'Vodka shooters. Who exactly are these for?');
+      yield G.say('Nate', 'Badlands Chugs. He locked Lily in the fridge. It\'s for the refrigerator game.');
+      yield G.say('Michelle', '...I\'m not even going to ask.');
+      yield G.say('Michelle', 'I found these in a hollowed-out "War and Peace" years ago. I\'ve been saving them for a special occasion.');
+      yield G.say('Michelle', 'This is a special occasion.');
+      if (s.teeth >= 10) G.play.addTeeth(-10);
+      else yield G.say('Michelle', 'You\'re short? ...Just take them. Don\'t tell your father.');
+      yield* getIngredient('vodka');
+    }]);
+    menu.push(['Doosh De Luche: 10', function* () {
+      if ((s.items.doosh || 0) >= 3) { yield G.say('Michelle', 'Your pockets are already full of Doosh, hon.'); return; }
+      if (!(yield* momPay(10))) return;
+      s.items.doosh = (s.items.doosh || 0) + 1;
+      f.hadDoosh = true;
+      if (!s.xItem) s.xItem = 'doosh';
+      yield G.itemGet(G.spr.doosh, 'You got a {y}Doosh De Luche{/}! Heals 4 hearts.');
+      yield G.say('Michelle', 'I keep a cooler of these for the farmers market crowd. It\'s pronounced dulce de leche, by the way.');
+    }]);
+    menu.push(['Bouquet: 5 (heals)', function* () {
+      if (s.hp >= s.maxHp) { yield G.say('Michelle', 'You look perfectly healthy. Save your teeth.'); return; }
+      if (!(yield* momPay(5))) return;
+      s.hp = s.maxHp;
+      G.audio.sfx('heart');
+      yield G.say(null, 'Nate buries his face in a bouquet of dahlias. Hearts fully restored!');
+    }]);
+    menu.push(['Just chatting', function* () {
+      f.momChat = ((f.momChat || 0) + 1) % MOM_CHAT.length;
+      yield G.say('Michelle', MOM_CHAT[f.momChat]);
+    }]);
+    menu.push(['Never mind', null]);
+    const c = yield G.ask('Michelle', 'What can I get you? Prices are in shark teeth.', menu.map((x) => x[0]));
+    if (menu[c][1]) yield* menu[c][1]();
+    else yield G.say('Michelle', 'Come back anytime! Tell your friends whose stand it is.');
+  };
+
+  // ================================================================ THE BASEMENT
+  S.basementDoor = function* () {
+    const f = flags();
+    if (!f.booksQuest) {
+      yield G.say(null, 'The basement door. From somewhere below: a low, slithery humming.');
+      yield G.say('Nate', 'Nope. Not without a really good reason.');
+      return;
+    }
+    G.play.warp('basement', 18, 6, 'down');
+  };
+
+  S.globIntro = function* () {
+    const f = flags(), w = G.play.world, g = w.glob;
+    yield G.wait(20);
+    if (!f.globMet) {
+      f.globMet = true;
+      yield G.camFocus(g.x, g.y - 20, 50);
+      yield G.say(null, 'Chewed-up books everywhere. And in the middle of it all, something pink is... dancing.');
+      w.pop(g.x, g.y - 54, '*munch munch*', '#f8a8c8');
+      yield G.wait(50);
+      yield G.say('Globglogabgalab', 'Mmm. A gardening book. Notes of tomato. A hint of mulch. Exquisite.');
+      yield G.say('Globglogabgalab', 'Ah! A visitor! Have you come to share in my... literature?');
+      yield G.say('Nate', 'You\'re the Globglogabgalab.');
+      yield G.say('Globglogabgalab', 'In the flesh. Such as it is.');
+      yield G.say('Nate', 'My mom can\'t STAND you.');
+      yield G.say('Globglogabgalab', 'Yes, she bangs on the ceiling every time I sing. No appreciation for the arts.');
+      yield G.say('Globglogabgalab', 'The devotionals are so nourishing. And the mystery novels! I eat the last chapter first. I never know who did it.');
+      yield G.say('Nate', 'Those are my mom\'s books. I\'m taking them back.');
+      yield G.say('Globglogabgalab', 'Then you\'ll have to keep up with me, little bookmark. I never. Stop. DANCING.');
+      yield G.camFocus(null, null, 30);
+    } else {
+      yield G.say('Globglogabgalab', 'Back for an encore? Wonderful! Take it from the top!');
+    }
+    yield G.banner('THE GLOBGLOGABGALAB', 'he never stops dancing', 150);
+  };
+
+  S.globDefeated = function* (boss) {
+    const f = flags(), w = G.play.world, s = G.state;
+    G.audio.stop();
+    for (const e of w.ents) if (e instanceof G.BookShot) { e.dead = true; w.burst(e.x, e.y - 8, ['#f4ecd8', '#a83a3a'], 4); }
+    G.audio.sfx('bell');
+    yield G.shakeCmd(30, 3);
+    yield G.wait(40);
+    yield G.banner('YOU WIN!', 'the music stops', 150);
+    yield G.say('Globglogabgalab', 'Oof. Ohh. My spine. ...Do I have a spine?');
+    yield G.say('Globglogabgalab', 'Very well. Take the books. I only nibbled the corners. Mostly.');
+    yield G.say('Nate', 'And no more singing at night. Mom can hear you through the vents.');
+    yield G.say('Globglogabgalab', '...I shall sing QUIETLY.');
+    yield G.say('Globglogabgalab', 'Farewell, little bookmark! I go to find a library that appreciates me!');
+    w.pop(boss.x, boss.y - 54, '*shimmy shimmy*', '#f8a8c8');
+    yield G.walkTo(boss, 3 * 16 + 8, 4 * 16 + 8, 1.6);
+    G.audio.sfx('poof');
+    w.burst(boss.x, boss.y - 20, ['#e8a898', '#f8c8b8', '#8a8c94'], 14, { speed: 1.2, life: 26, size: 3 });
+    boss.dead = true;
+    yield G.say(null, 'He squeezes into the furnace ductwork and is gone. Faintly, from somewhere in the walls: humming.');
+    f.globBeaten = true;
+    s.items.books = true;
+    yield G.itemGet(G.spr.flyingBook[1], 'You got {y}Mom\'s Books{/}! Slightly chewed. Bring them to Mom in the garden.');
+    G.audio.play('house');
+  };
+
+  // ================================================================ NANI'S STICKY NOTES
+  // Secret collectibles: little notes Nani stuck in out-of-the-way spots.
+  // Find them all for an extra heart.
+  G.NOTES = [
+    { id: 'lab', map: 'lab', x: 1, y: 7, text: 'You are a shining star! Never stop shining! Love, Nani' },
+    { id: 'campus1', map: 'campus', x: 2, y: 4, text: 'Lafayette is SO lucky to have you! Love, Nani' },
+    { id: 'campus2', map: 'campus', x: 37, y: 27, pink: true, text: 'Remember to drink water! Rocks do not count as food! Love, Nani' },
+    { id: 'science', map: 'science', x: 13, y: 2, text: 'You are braver than you believe and smarter than your chemistry final! Love, Nani' },
+    { id: 'fair1', map: 'fair', x: 37, y: 10, pink: true, text: 'Wear sunscreen at the fair! And a hat. The GREEN one. Love, Nani' },
+    { id: 'fair2', map: 'fair', x: 30, y: 8, text: 'Every day is a gift. That is why they call it the present! Love, Nani' },
+    { id: 'home1', map: 'home', x: 38, y: 29, pink: true, text: 'God made the ditches AND the mountains. Both are beautiful. Love, Nani' },
+    { id: 'home2', map: 'home', x: 56, y: 4, text: 'Did you eat? There are leftovers in the fridge. Check for your sister first. Love, Nani' },
+    { id: 'homeDown', map: 'homeDown', x: 14, y: 3, pink: true, text: 'Be the light! (And call your mother. She is right outside.) Love, Nani' },
+    { id: 'homeUp', map: 'homeUp', x: 34, y: 16, text: 'I am so proud of you I could burst! Love, Nani' },
+    { id: 'garage', map: 'garage', x: 15, y: 3, pink: true, text: 'Finish that bass! I want to hear you play it! Love, Nani' },
+    { id: 'basement', map: 'basement', x: 1, y: 3, text: 'Smile! Somebody loves you. It is me. Love, Nani' },
+  ];
+  const notesHad = () => G.state.notes || (G.state.notes = {});
+  G.notesFound = () => G.NOTES.filter((n) => notesHad()[n.id]).length;
+  G.spawnNotes = (w) => {
+    for (const n of G.NOTES) if (n.map === w.id && !notesHad()[n.id]) w.add(new G.StickyNote(n));
+  };
+  S.noteFound = function* (n) {
+    const s = G.state;
+    notesHad()[n.id] = true;
+    const k = G.notesFound();
+    yield G.itemGet(n.pink ? G.spr.stickyPink : G.spr.stickyNote, 'You found one of {p}Nani\'s sticky notes{/}! (' + G.sayable(k) + '/' + G.NOTES.length + ')');
+    yield G.say('Nani', n.text);
+    if (k === 1) yield G.say('Nate', 'Nani hid sticky notes for me? ...There have to be more of these.');
+    if (k === G.NOTES.length) {
+      yield G.say('Nate', 'That\'s every single one. I\'m keeping all of them. Forever.');
+      s.maxHp += 2;
+      s.hp = s.maxHp;
+      G.audio.sfx('heart');
+      yield G.say(null, 'Nani\'s love fills Nate right up. {r}+1 heart!{/}');
+    }
+  };
+  S.rereadNote = function* () {
+    const got = G.NOTES.filter((n) => notesHad()[n.id]);
+    yield G.say('Nani', got[Math.floor(Math.random() * got.length)].text);
+  };
+
+  // The WiFi router on the den desk.
+  S.wifi = function* () {
+    const f = flags();
+    if (f.wifi) {
+      yield G.say(null, 'The router. Still {y}ShoolbyBonesLumpSucker{/}. Every capital letter matters.');
+      return;
+    }
+    f.wifi = true;
+    yield G.say(null, 'The WiFi router. Its little lights blink like it\'s thinking very hard.');
+    yield G.say(null, 'There\'s a label taped to the bottom. Network: {y}THE DITCH 5G{/}');
+    yield G.say(null, 'Password: {y}ShoolbyBonesLumpSucker{/}');
+    yield G.say('Nate', 'Shoolby. Lily and I made that word up.');
+    yield G.say('Nate', 'It doesn\'t mean anything.');
+    yield G.say('Nate', '...It means everything.');
+    if (G.with('lily')) {
+      yield G.say('Lily', 'You told Mom "Shoolby" was in the dictionary.');
+      yield G.say('Nate', 'It\'s in OUR dictionary.');
+    } else if (G.with('doron')) {
+      yield G.say('Doron', 'I\'ve been typing "SchoolbyBones" for three years.');
+      yield G.say('Nate', 'There\'s no C, Doron.');
+    }
+  };
+
+  // Students protesting Lafayette's event village (and whatever else).
+  const PROTEST = {
+    people: [['Sophomore', 'It\'s NOT okay to make fun of little people. Those wrestlers are athletes.'], ['Sophomore', 'Did you see the guy do a moonsault off the turnbuckle? I can\'t do a moonsault. YOU can\'t do a moonsault.'], ['Nate', 'I can barely do a cartwheel.']],
+    grass: [['Junior', 'Lafayette ripped up the whole quad to build their arena.'], ['Junior', 'That grass was older than me. It had seen THINGS.'], ['Nate', 'Rest in peace, grass.']],
+    money: [['Senior', 'Do you know how much they spent on a TEMPORARY event village?'], ['Senior', 'Me neither. Nobody will tell us. That\'s how you know it\'s a lot.']],
+    quad: [['Freshman', 'The event village blocks the ENTIRE quad.'], ['Freshman', 'I have to walk all the way around it to get to class. It adds four minutes. FOUR.'], ['Nate', 'That\'s eight minutes round trip.'], ['Freshman', 'THANK you.']],
+    who: [['Grad Student', 'We have some questions for the president of Lafayette.'], ['Grad Student', 'Mostly "why." Also "why the quad." Also... "why."']],
+    pizza: [['Junior', 'Honestly? I don\'t know what we\'re protesting.'], ['Junior', 'Somebody said there\'d be free pizza.'], ['Nate', 'Is there free pizza?'], ['Junior', 'There is NOT free pizza.']],
+  };
+  S.protester = (sign) => function* () {
+    for (const [who, line] of PROTEST[sign]) yield G.say(who, line);
+  };
+  const CHANTS = ['GIVE BACK THE QUAD!', 'SAVE THE GRASS!', 'WHO APPROVED THIS?!', 'RESPECT LITTLE PEOPLE!', 'WHERE\'S THE MONEY?!', 'PIZZA?'];
+
   S.denShelf = function* () {
     const f = flags(), s = G.state;
     if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten) {
-      yield G.say(null, 'Built-in shelves packed with books. One is a suspiciously light copy of "War and Peace."');
-      yield G.say(null, 'It\'s hollow! Inside: three {y}vodka shooters{/}.');
-      yield G.say('Nate', 'Nobody in this family has ever read "War and Peace." Now we know why.');
-      yield* getIngredient('vodka');
+      yield G.say(null, 'Built-in shelves packed with books. There\'s a hollow copy of "War and Peace" up top. Empty.');
+      yield G.say('Nate', 'This is where the stash used to be. Mom found it years ago. She definitely still has it.');
+      return;
+    }
+    if (f.booksQuest && !f.globBeaten) {
+      yield G.say(null, 'Built-in shelves with big gaps everywhere. A few books left behind have little bite marks in them.');
+      yield G.say('Nate', 'Bite marks. Great.');
       return;
     }
     yield G.say(null, 'Built-in shelves packed with books: thrillers, cookbooks, and seven different Bibles.');
@@ -1493,36 +1873,101 @@
     yield G.emote(b, 'huh', 40);
     yield G.say('Badlands Chugs', 'It\'s blue. Why is it blue? And why is it... SMOKING?');
     yield G.say('Badlands Chugs', '...Ain\'t nothing Badlands can\'t chug. Don\'t touch dat.');
-    // the chug
+    // the chug, in glorious close-up
     G.audio.play('chug');
     w.boot.img = null;
     b.held = G.spr.bootBlue;
     b.dir = 'down';
-    for (let i = 0; i < 7; i++) { G.audio.sfx('gulp'); w.pop(b.x, b.y - 36 - i * 2, 'GLUG', '#78c8ff'); yield G.wait(16); }
+    yield G.camFocus(b.x, b.y - 18, 30);
+    yield G.zoomTo(1.5, 40);
+    const gaps = [26, 22, 18, 15, 12, 10, 8, 7, 6, 5, 5, 4, 4, 4];
+    for (let i = 0; i < gaps.length; i++) {
+      G.audio.sfx('gulp');
+      w.pop(b.x + (i % 2 ? 10 : -10), b.y - 38 - (i % 4) * 3, 'GLUG', '#78c8ff');
+      G.play.shake(6, 1 + (i >> 2));
+      yield G.wait(gaps[i]);
+    }
     b.held = G.spr.boot;
-    yield G.wait(30);
+    G.audio.stop();
+    yield G.wait(40);
     yield G.say('Badlands Chugs', '...Finished. Told y\'all. Ain\'t nothing I can\'t...');
     b.held = null;
+    yield G.wait(30);
+    // something is very, very wrong
     b.sprite = 'badlands_blue';
-    b.flashT = 60;
-    G.audio.stop();
+    b.flashT = 40;
     G.audio.sfx('slip');
-    yield G.shakeCmd(60, 2);
-    yield G.wait(60);
+    yield G.zoomTo(2, 30);
     yield G.say('Badlands Chugs', '...uh oh.');
-    yield G.wait(20);
-    // KABOOM
-    G.play.explode(b.x, b.y - 14, false);
-    w.burst(b.x, b.y - 14, ['#3a6ae8', '#78c8ff', '#ffffff', '#f4f4f0'], 30, { speed: 2.6, up: 1, g: 0.05, life: 50, size: 3 });
-    w.burst(b.x, b.y - 10, ['#8a8a94', '#b0b0b8', '#5a5a64'], 16, { speed: 0.8, up: 0.5, life: 70, size: 5 });
-    w.pop(b.x, b.y - 46, 'KA-BLOOEY!', '#78c8ff');
-    G.play.shake(50, 5);
-    yield G.walkTo(b, b.x, b.y - 240, 6);
+    // he swells up and steams while the whole house rumbles
+    yield {
+      start() { this.t = 0; },
+      update() {
+        const k = ++this.t / 160;
+        b.scale = 1 + k * 0.55 + Math.sin(this.t * 0.7) * 0.04 * k;
+        if (this.t % 5 === 0) w.burst(b.x + (Math.random() * 24 - 12), b.y - 28 * b.scale, ['#8a8a94', '#b0b0b8', '#d8d8e0', '#78c8ff'], 2, { speed: 0.6, up: 1.1, life: 40, size: 3 });
+        if (this.t % 18 === 0) G.audio.sfx('bump');
+        if (this.t % 32 === 0) w.pop(b.x, b.y - 30 - 26 * b.scale, ['*gurgle*', '*GURGLE*', '*BLORP*', '*hissss*', '*WHEEEEE*'][this.t / 32 - 1], '#78c8ff');
+        if (this.t > 110) b.flashT = 2;
+        G.play.shake(2, 1 + Math.floor(this.t / 50));
+        return this.t >= 160;
+      },
+    };
+    yield G.say('Lily', '{d}(from inside the fridge){/} IS HE GONNA BLOW?!');
+    yield G.say('Nate', 'EVERYBODY GET DOWN!');
+    // KA-BLOOEY
+    yield G.wait(10);
+    const bx = b.x, by = b.y - 22;
+    G.play.whiteout = 1.5;
+    G.play.zoom = 1;
+    b.scale = 1;
+    b.held = null;
+    for (let k = 0; k < 3; k++) {
+      const ox = k ? Math.random() * 50 - 25 : 0, oy = k ? Math.random() * 24 - 12 : 0;
+      G.audio.sfx('boom');
+      w.fx.push({ x: bx + ox, y: by + oy, vx: 0, vy: 0, circle: true, r: 40 + k * 10, max: 18, life: 18, color: k === 1 ? '#78c8ff' : '#fff4c0' });
+      w.fx.push({ x: bx, y: by, vx: 0, vy: 0, shock: true, r: 150 + k * 50, max: 44, life: 44, color: k === 1 ? '#78c8ff' : '#ffffff' });
+      w.burst(bx + ox, by + oy, ['#3a6ae8', '#78c8ff', '#ffffff', '#f4f4f0'], 34, { speed: 3, up: 1.2, g: 0.05, life: 60, size: 3 });
+      w.burst(bx + ox, by + oy, ['#8a8a94', '#b0b0b8', '#5a5a64'], 14, { speed: 1, up: 0.5, life: 90, size: 6 });
+      G.play.shake(70, 6 - k);
+      yield G.wait(k ? 16 : 12);
+    }
+    // ...and Badlands goes up through the ceiling, still blue
+    yield (() => {
+      const txt = G.bigText('KA-BLOOEY!!!', 120, '#78c8ff');
+      let vy = -1, holed = false;
+      return {
+        start() { txt.start(); },
+        update() {
+          vy -= 0.2;
+          b.y += vy;
+          if (G.tick % 2 === 0) w.burst(b.x, b.y - 10, ['#78c8ff', '#ffffff', '#8a8a94'], 2, { speed: 0.5, life: 30, size: 3 });
+          if (!holed && b.y < 3 * 16) {
+            holed = true;
+            G.audio.sfx('clank');
+            w.burst(b.x, 2 * 16, ['#f4f0e4', '#d8d4c8', '#8a7a68'], 26, { speed: 2, up: 0.4, g: 0.1, life: 50, size: 3 });
+          }
+          return txt.update();
+        },
+        draw(ctx) { txt.draw(ctx); },
+      };
+    })();
     b.dead = true;
-    yield G.wait(50);
-    w.pop(p.x, p.y - 56, '...LIKE AND SUBSCRIBE!', '#f8d850');
-    yield G.wait(80);
+    yield G.camFocus(null, null, 30);
+    // plaster rains down from the hole in the ceiling
+    for (let i = 0; i < 4; i++) {
+      w.burst(bx + Math.random() * 30 - 15, 2 * 16 + 8, ['#f4f0e4', '#d8d4c8', '#b8b0a0'], 6, { speed: 0.4, up: 0, g: 0.12, life: 40, size: 2 });
+      G.play.shake(6, 1);
+      yield G.wait(14);
+    }
+    // a twinkle in the sky, far, far away
+    G.audio.sfx('bell');
+    w.burst(bx, G.play.cam.y + 6, ['#ffffff', '#f8e868'], 8, { speed: 0.8, life: 24, size: 2 });
+    yield G.wait(40);
+    w.pop(bx, G.play.cam.y + 24, '...LIKE AND SUBSCRIBE!', '#f8d850');
+    yield G.wait(90);
     yield G.say('Nate', '...He went through the roof.');
+    yield G.say('Lily', '{d}(from inside the fridge){/} Did he just say "like and subscribe"?!');
     f.badlandsBeaten = true;
     yield* S.lilyRescue();
   };
@@ -1547,7 +1992,7 @@
     yield G.say('Lily', 'Wait. Was that... Badlands Chugs? THE Badlands Chugs?');
     yield G.say('Nate', 'He wanted to put you in a blender.');
     yield G.say('Lily', '...I\'m still subscribed.');
-    if (s.party.includes('doron')) {
+    if (G.with('doron')) {
       yield G.say('Doron', 'Lily! You\'re okay! Want to see my suplex?');
       yield G.say('Lily', 'No.');
     }
@@ -1559,14 +2004,15 @@
     yield G.say('Nate', 'And a song.');
     yield G.say('Lily', 'Ugh. Okay. Let\'s go get this over with.');
     lily.dead = true;
-    const idx = s.party.filter((id) => id !== 'nate').indexOf('lily');
-    w.add(new G.Follower('lily', idx, lily.x, lily.y, 'down'));
+    G.play.setFollower('lily');
+    yield G.say(null, 'Lily is following you now. Swap who tags along in the {y}PEOPLE{/} menu.');
   };
 
   // ---------------------------------------------------------------- Golden Hour (Lily vs. Mikey)
   S.mikeyGoldenHour = function* () {
     const f = flags(), w = G.play.world, m = w.mikey, p = P();
     if (!m || f.mikeyBeaten || !f.lilySaved) return;
+    yield* S.callIn('lily', 'Is that... Mikey? Ugh. I\'ll handle this.');
     m.dir = G.dirToward(p.x - m.x, p.y - m.y);
     yield G.emote(m, 'bang', 40);
     yield G.say('Mikey', 'LILY! You\'re okay! I was so worried. I brought flowers. And balloons. Heart-shaped ones.');
@@ -1585,8 +2031,11 @@
     G.state.hp = G.state.maxHp;
     yield G.wait(20);
     yield G.banner('GOLDEN HOUR', 'LILY  vs.  MIKEY', 170);
-    yield G.say('Mikey', 'Okay. Okay. Here goes. Ahem. {p}~ Laaa la la laaa... ~{/}');
-    yield G.say(null, 'You\'re playing as {p}Lily{/}! Press {y}Z{/} to say {y}"No."{/}');
+    yield G.say('Mikey', 'Okay. Okay. Here goes. I wrote this myself. Ahem.');
+    yield G.say('Mikey', '{y}~ Oh Lily, it\'s golden hour... ~{/}');
+    yield G.say(null, 'You\'re playing as {p}Lily{/}! {y}Hold Z{/} to wind up a {y}"No."{/} and let go to say it.');
+    yield G.say(null, 'She has to plant her feet to wind up, so she can\'t move. Let go too soon and it comes out as a mumbled "no..."');
+    yield G.say('Lily', 'And Mikey hears a mumbled "no" as a maybe.');
     yield G.say(null, 'Pop his heart balloons first. When they\'re all gone, tell HIM no.');
   };
 
@@ -1618,6 +2067,18 @@
     G.play.warp('home', 43, 50, 'down');
   };
 
+  // Some jokes need a particular person: swap them in as Nate's companion for it.
+  // Returns whether they're there now.
+  S.callIn = function* (id, line) {
+    if (!G.state.party.includes(id)) return false;
+    if (G.with(id)) return true;
+    G.play.setFollower(id, true);
+    G.audio.sfx('select');
+    yield G.wait(14);
+    if (line) yield G.say(G.PARTY_INFO[id].name, line);
+    return true;
+  };
+
   // ---------------------------------------------------------------- home critters
   const CRITTER_LINES = {
     corn: [['Nate', 'My CORN?! I kept a bunch of corn on the cob in my room and now it\'s ALIVE.'], ['Nate', 'Father Eggmas, you monster.']],
@@ -1632,7 +2093,7 @@
     if (f['met_' + kind]) return;
     f['met_' + kind] = true;
     const lines = CRITTER_LINES[kind].slice();
-    if (kind === 'bear' && G.state.party.includes('doron')) lines.push(['Doron', 'I could take him.'], ['Nate', 'Do NOT suplex the bear.']);
+    if (kind === 'bear' && G.with('doron')) lines.push(['Doron', 'I could take him.'], ['Nate', 'Do NOT suplex the bear.']);
     G.script.run((function* () { for (const [who, text] of lines) yield G.say(who, text); })());
   };
 
@@ -1649,7 +2110,7 @@
     f.beans = true;
     yield G.say(null, 'The steel fire pit. There\'s a jagged hole blown clean through the bottom.');
     yield G.say('Nate', '...Ah. The Bean Incident.');
-    if (s.party.includes('doron')) yield G.say('Doron', 'ABE.');
+    if (G.with('doron')) yield G.say('Doron', 'ABE.');
     yield G.say('Nate', 'Abe wanted to know what happens if you put a can of beans in the fire. Unopened.');
     // flashback
     yield G.fadeOut(20);
@@ -1714,7 +2175,7 @@
     yield G.say(null, 'The upstairs toilet.');
     yield G.emote(p, 'bang', 30);
     yield G.say('Nate', '...I don\'t like this toilet.');
-    const doron = s.party.includes('doron');
+    const doron = yield* S.callIn('doron', 'Wait. Is this THE toilet?');
     if (doron) {
       yield G.say('Doron', 'HA! Nate. Remember the alligator?');
       yield G.say('Nate', 'Don\'t.');
@@ -1760,7 +2221,7 @@
     } else {
       yield G.say('Nate', 'It had teeth. I know what I saw.');
     }
-    if (s.party.includes('lily')) yield G.say('Lily', 'Still the best story this family has.');
+    if (G.with('lily')) yield G.say('Lily', 'Still the best story this family has.');
   };
 
   // ---------------------------------------------------------------- the 6 key
@@ -1788,10 +2249,16 @@
     yield G.say(name, lines[f['talk_' + id]]);
   };
 
+  // Doron always comes running for a suplex, whoever Nate brought along.
+  S.suplexTime = function* () {
+    yield* S.callIn('doron', 'Did somebody say ROCK?');
+    yield* S.boulderSmash();
+  };
+
   S.boulderHit = function () {
     const f = flags();
     if (G.script.busy) return;
-    if (G.state.party.includes('doron')) { G.script.run(S.boulderSmash()); return; }
+    if (G.state.party.includes('doron')) { G.script.run(S.suplexTime()); return; }
     if (!f.boulderHitOnce) {
       f.boulderHitOnce = true;
       G.script.run((function* () {
@@ -1990,7 +2457,7 @@
       if (!flags().boulderGone) w.add(new G.Boulder(20 * 16, 28 * 16 + 15, S.boulderHit));
       // with Doron along, walking up to the boulder starts the suplex
       w.addTrigger(17, 25, 6, 2, () => {
-        if (!flags().boulderGone && G.state.party.includes('doron')) G.script.run(S.boulderSmash());
+        if (!flags().boulderGone && G.state.party.includes('doron')) G.script.run(S.suplexTime());
       });
       w.addTrigger(18, 29, 4, 1, () => G.play.warp('home', 1, 53, 'right'));
       w.add(new G.Sign(37, 11, 'EAST: Easton Fairgrounds. Tonight: {y}MICRO MAYHEM WRESTLING{/}!'));
@@ -2151,6 +2618,7 @@
       F.stand(sp.demilune, 21, 3, 1, look('The powder room: white paneling, a dark wood vanity and horse prints. Fancy, for a bathroom.'));
       F.stand(sp.toilet, 22, 4, 1, look('...It\'s a toilet, Nate.'));
       F.hang(sp.giltMirror, 19, 7, 2, null, 3);
+      w.addProp({ img: sp.basementDoor, tx: 22, ty: 7, flat: true, hit: [22, 7, 1, 1], talk: S.basementDoor });
       F.stand(sp.hallConsole, 19, 8, 2, look('A hall table with a lamp and a bowl for keys. The keys are never in the bowl.'));
       F.stand(sp.hallBench, 22, 15, 1, look('A little bench by the front door for pulling off muddy boots.'));
       // ---- kitchen
@@ -2190,6 +2658,7 @@
       F.hang(sp.wallWindow.one, 45, 2, 1, null, 3);
       F.hang(sp.barometer, 47, 2, 1, look('A barometer. It says CHANGE. It always says CHANGE.'), 8);
       F.stand(sp.chairLeather, 43, 5, 1, look('A leather armchair angled at the TV.'));
+      w.addProp({ img: sp.router, tx: 46, ty: 8, dy: -16, base: 8 * 16 + 16, hit: [46, 8, 1, 1], talk: S.wifi });
       F.stand(sp.writingDesk, 45, 8, 2, look('A writing desk buried in mail and old crossword puzzles.'));
       // ---- mudroom
       F.hang(sp.coatHooks, 37, 12, 2, look('Coat hooks, overloaded with coats from every season.'), 2);
@@ -2549,6 +3018,16 @@
       [[30, 20, 'white'], [33, 20, 'brown'], [36, 20, 'white'], [34, 22, 'brown'], [30, 22, 'white']]
         .forEach(([x, y, c]) => w.add(new G.Chicken(x * 16 + 8, y * 16 + 12, c, pen)));
 
+      // Mom: watering the dahlias, or running her flower stand once her books are back
+      if (flags().shopOpen) {
+        w.addProp({ img: G.spr.flowerStand, tx: 35, ty: 25, solid: [35, 25, 3, 1], hit: [35, 25, 3, 1], talk: S.michelleShop });
+        w.michelle = w.add(new G.NPC({ sprite: 'michelle', name: 'Michelle', x: 34 * 16 + 4, y: 25 * 16 + 14, dir: 'down', talk: S.michelleShop }));
+      } else {
+        w.michelle = w.add(new G.NPC({ sprite: 'michelle', name: 'Michelle', x: 33 * 16 + 8, y: 20 * 16 + 14, dir: 'left', talk: S.michelle }));
+        w.michelle.held = G.spr.wateringCan;
+        if (!flags().michelleMet) w.addTrigger(32, 21, 4, 2, () => { if (!flags().michelleMet) G.script.run(S.michelleStartle()); });
+      }
+
       // leaving: either end of the road asks where to; north past the bridge is a dead end for now
       w.addTrigger(0, 53, 1, 2, () => G.script.run(S.homeLeave('west')));
       w.addTrigger(59, 53, 1, 2, () => G.script.run(S.homeLeave('east')));
@@ -2566,6 +3045,10 @@
     },
     // the flock's revenge: angry hens swoop in from off-screen for a few seconds
     tick(w) {
+      const m = w.michelle;
+      if (m && m.held === G.spr.wateringCan && !G.script.busy && G.tick % 24 === 0) {
+        w.burst(m.x - 12, m.y - 10, ['#78c8ff', '#a8e0ff'], 2, { speed: 0.3, up: -0.2, g: 0.08, life: 14, size: 1 });
+      }
       if (!w.swarmT || G.script.busy) return;
       w.swarmT--;
       if (w.swarmT % 22 !== 0) return;
@@ -2582,7 +3065,7 @@
         flags().homeArrived = true;
         yield G.wait(30);
         yield G.say('Nate', 'Rattlesnake Bridge Road. Home sweet home.');
-        if (G.state.party.includes('doron')) yield G.say('Doron', 'Smells like woodsmoke and chickens. Feels like home.');
+        if (G.with('doron')) yield G.say('Doron', 'Smells like woodsmoke and chickens. Feels like home.');
         const m = G.play.world.mikey;
         if (m && !flags().mikeyMet) {
           yield G.camFocus(m.x, m.y - 10, 60);
@@ -2592,6 +3075,35 @@
         }
       })();
     },
+  };
+
+  // Under the house: stone walls, a furnace, storage boxes, and the
+  // Globglogabgalab's nest of half-eaten books.
+  G.MAPS.basement = {
+    name: 'Home: Basement',
+    get music() { return flags().globBeaten ? 'house' : 'bookworm'; },
+    tiles() {
+      const W = 22, H = 14;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 20, 2, 'N');
+      fill(1, 3, 20, 10, 'd');
+      fill(18, 3, 2, 3, 'S');
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr, f = flags();
+      const pile = look('A pile of chewed-up books. Bite marks on every cover.');
+      F.stand(sp.furnace, 2, 3, 2, look('The furnace. The ductwork goes up into every room of the house. That explains how Mom heard the singing.'));
+      F.stand(sp.storageBoxes, 5, 3, 2, look('Storage boxes: CHRISTMAS, BABY CLOTHES, and one labeled "DO NOT OPEN (LILY)."'));
+      F.stand(sp.bookshelf2, 14, 3, 1, look('An old bookshelf. Completely empty. Licked clean.'));
+      F.stand(sp.bookshelf2, 15, 3, 1, look('Another empty bookshelf. There\'s a little bite out of the shelf itself.'));
+      F.stand(sp.storageBoxes, 1, 11, 2, look('More boxes. One is full of old VHS tapes. Somebody labeled one "DO NOT RECORD OVER." It was recorded over.'));
+      for (const [x, y, k] of [[8, 4, 0], [3, 7, 1], [17, 11, 2], [12, 12, 0]]) F.stand(sp.bookPiles[k], x, y, 1, pile);
+      w.addTrigger(18, 3, 2, 1, () => G.play.warp('homeDown', 22, 8, 'down'));
+      if (!f.globBeaten) w.glob = w.add(new G.Globglog(10 * 16 + 8, 8 * 16 + 14));
+    },
+    onEnter() { return (function* () { if (!flags().globBeaten) yield* S.globIntro(); })(); },
   };
 
   G.MAPS.fair = {
@@ -2670,6 +3182,9 @@
       if (flags().doronDeal) npc('pete', 'Pyro Pete', 24, 10, S.pete, { dir: 'left' });
       npc('rose', 'Grandma Rose', 27, 23, S.rose, { wander: 10 });
       npc('earl', 'Big Earl', 25, 13, S.earl);
+      // a protest by the parking lot (Lafayette's event village took the quad)
+      w.protesters = [[2, 14, 'protest1', 'people'], [6, 14, 'protest2', 'grass'], [12, 14, 'protest3', 'money'], [16, 14, 'protest4', 'quad'], [7, 11, 'protest5', 'who'], [10, 11, 'protest6', 'pizza']]
+        .map(([x, y, spr, sign]) => npc(spr, 'Protester', x, y, S.protester(sign), { sign: G.spr.signs[sign] }));
 
       w.add(new G.Sign(5, 11, ['EASTON FAIRGROUNDS', 'Tonight: {y}MICRO MAYHEM WRESTLING{/}! Doors at 7.']));
       w.add(new G.Sign(18, 14, 'PARKING. Do not leave valuables in your car. Or near the wrestlers.'));
@@ -2679,6 +3194,12 @@
         w.add(new G.Wrestler(x * 16 + 8, y * 16 + 14, styles[i % styles.length])));
 
       w.addWarp(0, 12, 1, 2, 'campus', 38, 12, 'left');
+    },
+    // the protesters chant every so often
+    tick(w) {
+      if (G.script.busy || !w.protesters || G.tick % 150) return;
+      const p = w.protesters[Math.floor(Math.random() * w.protesters.length)];
+      w.pop(p.x, p.y - 52, CHANTS[Math.floor(Math.random() * CHANTS.length)], '#f8f8f0');
     },
   };
 
