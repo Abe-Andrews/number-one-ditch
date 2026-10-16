@@ -144,6 +144,10 @@
       },
     },
     bidet: { kind: 'gear', name: 'Portable Bidet', icon: () => null, desc: '', has: () => !!st().items.bidet },
+    bass: {
+      kind: 'gear', equip: true, name: 'Half-Finished Bass', short: 'Bass', icon: () => G.spr.bassIcon, has: () => !!st().items.bass,
+      desc: 'Nate\'s homemade bass: walnut body, maple neck, no strings. Press X to swing it in a huge arc. Hits twice as hard as the hammer.',
+    },
     phone: {
       kind: 'key', name: 'Nate\'s Phone', icon: () => G.spr.phone, has: () => true,
       desc: 'The family group chat. 147 unread, mostly Nani. Press Z to read one.',
@@ -171,7 +175,7 @@
     vodka: { kind: 'key', name: 'Vodka Shooters', icon: () => G.spr.vodka, has: () => !!st().items.vodka && !fl().badlandsBeaten, desc: 'Three tiny bottles from inside a hollow copy of "War and Peace."' },
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
-  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bidet', null, null, null];
+  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bidet', 'bass', null, null];
 
   // ================================================================ SMOKE SIGNALS (Dad's pipe)
   // Like ocarina songs: learn a sequence, puff it with the pipe, something
@@ -1099,7 +1103,6 @@
   };
 
   // ---------------------------------------------------------------- home
-  const inside = '(Dad\'s workshop opens up in a future update!)';
 
   // Mikey: flowers, balloons, a song he's been practicing, and one mission.
   S.mikeyIntro = function* () {
@@ -1157,17 +1160,36 @@
     yield G.walkTo(m, m.home.x, m.home.y, 3);
     m.dir = 'down';
   };
-  S.homeGarage = function* () {
+  // The old garage fridge in Dad's workshop (the milk for the refrigerator game).
+  S.garageFridge = function* () {
     const f = flags(), s = G.state;
     if (f.fridgeGame && !s.items.milk && !f.badlandsBeaten) {
-      yield G.say(null, 'The garage, with Dad\'s workshop inside. In the corner, the old garage fridge hums like a jet engine.');
+      yield G.say(null, 'The old garage fridge, humming like a jet engine.');
       yield G.say(null, 'Inside: pickles, a tub of fishing worms, and one carton of {y}milk{/}. Expiration date: unclear.');
       yield* getIngredient('milk');
       return;
     }
-    yield G.say(null, 'The garage, with Dad\'s workshop inside: pipe blanks, rasps, sandpaper, and about four hundred coffee cans full of screws.');
-    yield G.say(null, inside);
+    yield G.say(null, 'The old garage fridge. Pickles, a tub of fishing worms, and a lot of hope.');
   };
+
+  // Nate's half-finished bass, waiting on the workbench.
+  S.bassBench = function* () {
+    const s = G.state, w = G.play.world;
+    if (s.items.bass) {
+      yield G.say(null, 'Nate\'s end of the workbench: fret files, sandpaper, and a jar of screws that is mostly not screws.');
+      return;
+    }
+    yield G.say(null, 'On the workbench: a walnut bass body and a maple neck with the frets already in. No strings. No finish.');
+    yield G.say('Nate', 'My bass! I\'ve been building it out here in Dad\'s workshop. It\'s... not done yet.');
+    s.items.bass = true;
+    s.xItem = 'bass';
+    if (w.bassProp) w.bassProp.img = null;
+    yield G.itemGet(G.spr.bassIcon, 'You got the {y}Half-Finished Bass{/}! No strings, all heft. It\'s on {y}X{/}: swing it in a huge arc. (Switch X items in the menu.)');
+    yield G.say('Nate', 'It can\'t play a single note. But it can absolutely hit things.');
+    if (s.party.includes('doron')) yield G.say('Doron', 'Now THAT is a weapon.');
+    if (s.party.includes('lily')) yield G.say('Lily', 'Please don\'t hit me with the bass.');
+  };
+
   S.homeFlag = function* () {
     yield G.say(null, 'The flag on its pole, snapping in the breeze. You can see it all the way from the road.');
   };
@@ -2288,6 +2310,58 @@
     },
   };
 
+  // Dad's workshop: the inside of the garage, from the family's photos.
+  G.MAPS.garage = {
+    name: 'Dad\'s Workshop',
+    music: 'house',
+    tiles() {
+      const W = 22, H = 13;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 20, 2, 'K');
+      fill(1, 3, 20, 9, 'm');
+      fill(1, 12, 6, 1, 'u'); fill(15, 12, 6, 1, 'u');
+      fill(8, 12, 6, 1, 'O');
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr, s = G.state;
+      F.stand(sp.oldFridge, 1, 3, 1, () => S.garageFridge());
+      F.stand(sp.shopShelves, 2, 3, 1, look('Shelves of jars, wood glue, stain, and mystery cans.'));
+      F.stand(sp.shopShelvesPlane, 3, 3, 1, look('More shelves, with a model airplane parked up top.'));
+      F.hang(sp.sepiaPhoto, 4, 2, 2, look('A big old sepia photograph of a crowded room from about a hundred years ago. Nobody knows who any of these people are.'), 4);
+      // (the bass goes in first so talking to that end of the bench finds it)
+      w.bassProp = w.addProp({ img: s.items.bass ? null : sp.bassOnBench, tx: 9, ty: 3, dx: -2, dy: -12, base: 4 * 16, hit: [9, 3, 3, 1], talk: () => S.bassBench() });
+      F.stand(sp.workbench, 7, 3, 6, look('Dad\'s workbench: pegboard full of tools, and every one of them is exactly where he left it.'));
+      F.hang(sp.wallWindow.one, 13, 2, 1, null, 3);
+      F.stand(sp.toolChest, 14, 3, 1, look('A big red rolling tool chest. Every drawer is a different kind of mess.'));
+      F.stand(sp.lumberPile, 16, 3, 3, look('A stack of good lumber. It\'s for "a project." It has been for a project for years.'));
+      F.stand(sp.bandsaw, 20, 3, 1, look('A bandsaw for cutting curves. Like the curves of a bass body.'));
+      F.stand(sp.convertible, 2, 6, 3, look('The old red convertible, under a blanket of sawdust.', 'The trunk is covered in little handprints and a message nobody will admit to writing.'), { ht: 4 });
+      F.stand(G.spr.hay, 1, 8, 1, look('A bale of straw for the chicken coop.'));
+      F.stand(sp.feedBags, 1, 10, 2, look('Bags of layer feed. The hens know exactly where these are.'));
+      F.stand(sp.drillPress, 8, 6, 1, look('A drill press older than Nate. It works better than Nate.'));
+      F.stand(sp.lathe, 10, 7, 3, look('Dad\'s lathe. This is where the pipe bowls get turned. There are wood shavings in places wood shavings should never be.'));
+      F.stand(sp.sander, 15, 6, 1, look('Drum and belt sanders. Everything in here is sanded. Even the air.'), { dx: -5 });
+      F.stand(sp.tableSaw, 17, 6, 2, look('The table saw. Dad\'s rule: ten fingers in, ten fingers out.'));
+      F.stand(sp.planer, 19, 9, 1, look('A yellow thickness planer. It is the loudest thing in New Jersey.'));
+      F.stand(sp.miterSaw, 16, 9, 2, look('A miter saw on a rolling stand.'));
+      F.stand(sp.dustCollector, 13, 10, 2, look('The dust collector. It is losing the war.'));
+      F.stand(sp.shopVac, 7, 10, 1, look('An orange shop vac, also losing the war.'));
+      F.stand(sp.buckets, 20, 11, 1, look('Five-gallon buckets. Every garage has somewhere between four and four hundred.'));
+      // out through the open middle bay
+      w.addWarp(8, 12, 6, 1, 'home', 38, 34, 'down');
+    },
+    onEnter() {
+      return (function* () {
+        if (flags().workshop) return;
+        flags().workshop = true;
+        yield G.wait(20);
+        yield G.say('Nate', 'Dad\'s workshop. It smells like sawdust and pipe tobacco. It always has.');
+      })();
+    },
+  };
+
   // Golden hour at the end of the driveway: Lily vs. Mikey.
   G.MAPS.goldenHour = {
     name: 'Golden Hour',
@@ -2438,7 +2512,7 @@
       w.addProp({ img: G.spr.woodRack, tx: 31, ty: 34, solid: [31, 34, 3, 1], hit: [31, 34, 3, 1], talk: S.homeFirewood });
       w.addProp({ img: G.spr.woodPile, tx: 31, ty: 35, dx: 1, solid: [31, 35, 2, 1], hit: [31, 35, 2, 1], talk: S.homeFirewood });
       w.addProp({ img: G.spr.hoop, tx: 34, ty: 34, dx: -6, solid: [34, 34, 1, 1], hit: [34, 34, 1, 1], talk: S.homeHoop });
-      w.addBuilding({ x: 35, y: 30, w: 7, h: 4, door: 3, style: 'shake', wall: '#2f4a3e', roof: '#4a4c56', garageDoors: 3, cupola: true, weathervane: true, locked: S.homeGarage });
+      w.addBuilding({ x: 35, y: 30, w: 7, h: 4, door: 3, style: 'shake', wall: '#2f4a3e', roof: '#4a4c56', garageDoors: 3, cupola: true, weathervane: true, to: { map: 'garage', x: 10, y: 11 } });
       w.addProp({ img: G.spr.truck, tx: 44, ty: 36, h: 3, dx: 2, solid: [44, 36, 2, 3], hit: [44, 36, 2, 3], talk: S.homeTruck });
       // across the driveway: the little white pool house on the pool's left, lined up with its middle
       w.addProp({ img: G.spr.poolHouse, tx: 44, ty: 30, h: 3, dx: -4, solid: [44, 30, 2, 3], hit: [44, 30, 2, 3], talk: S.homePoolHouse });

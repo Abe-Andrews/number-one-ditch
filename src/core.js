@@ -184,6 +184,7 @@ G.audio = (function () {
     boom: (t) => { noise(t, 0.6, 0.6, sfxBus, 400); noise(t, 0.25, 0.4, sfxBus, 2500); tone(110, t, 0.45, 'sine', 0.35, sfxBus, 35); },
     fuse: (t) => noise(t, 0.05, 0.07, sfxBus, 7000),
     yell: (t) => { tone(330, t, 0.35, 'sawtooth', 0.08, sfxBus, 520); tone(247, t, 0.35, 'square', 0.05, sfxBus, 392); },
+    bass: (t) => { tone(110, t + 0.05, 0.3, 'sawtooth', 0.16, sfxBus, 55); tone(220, t + 0.05, 0.08, 'square', 0.06); noise(t, 0.18, 0.22, sfxBus, 700); },
     no: (t) => { tone(659, t, 0.06, 'square', 0.08, sfxBus, 523); tone(440, t + 0.07, 0.12, 'square', 0.08, sfxBus, 330); },
     bell: (t) => { [0, 0.18, 0.36].forEach((d) => { tone(1568, t + d, 0.3, 'triangle', 0.14); tone(2349, t + d, 0.2, 'sine', 0.06); }); },
   };

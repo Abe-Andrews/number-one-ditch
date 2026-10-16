@@ -60,6 +60,11 @@
     'Q': { k: 'counter', solid: true },
     'S': { k: 'stairsUp' },
     'D': { k: 'stairsDown' },
+    // Dad's workshop
+    'K': { k: 'faceBoards', solid: true, edge: true },
+    'm': { k: 'shopFloor' },
+    'u': { k: 'garageDoor', solid: true },
+    'O': { k: 'openBay' },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 

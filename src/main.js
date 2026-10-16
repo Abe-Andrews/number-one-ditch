@@ -171,10 +171,15 @@
       const p = this.player, [dx, dy] = G.DIRS[p.dir];
       const px = p.x + dx * 12, py = p.y - 4 + dy * 12;
       const pt = [px - 1, py - 1, px + 1, py + 1];
+      // Party members only chat when no enemies are around (so Z always swings
+      // mid-fight), and anything else in front of Nate comes first.
+      const fighting = this.world.ents.some((e) => e.enemy && !e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 128);
+      let partner = null;
       for (const e of this.world.ents) {
         if (!e.talk || e === p) continue;
         const b = e.box();
         if (!G.overlap([b[0] - 2, b[1] - 6, b[2] + 2, b[3] + 2], pt)) continue;
+        if (e instanceof G.Follower) { if (!fighting && !partner) partner = e; continue; }
         if (e instanceof G.NPC) e.dir = G.dirToward(p.x - e.x, p.y - e.y);
         // while Nate is handing out Doron's spare tickets, people get offered one first
         const offer = e instanceof G.NPC && G.SCRIPTS.ticketReaction(e);
@@ -186,6 +191,7 @@
         G.script.run(pr.talk());
         return true;
       }
+      if (partner) { G.script.run(partner.talk()); return true; }
       return false;
     },
 
@@ -206,6 +212,8 @@
         }
       } else if (s.xItem === 'pipe') {
         G.pipe.start();
+      } else if (s.xItem === 'bass') {
+        this.player.startBass();
       } else if (s.xItem === 'package') {
         const w = this.world, p = this.player;
         if (!s.items.package || w.ents.filter((e) => e instanceof G.Package).length >= 2) { G.audio.sfx('bump'); return; }

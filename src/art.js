@@ -1187,6 +1187,32 @@
       }
       p.vline(0, 0, 15, '#f6f4ee'); p.vline(15, 0, 15, '#f6f4ee');
     },
+    // ---- Dad's workshop
+    faceBoards(p, r, v, mask) {
+      // dark stained board walls between the studs
+      p.rect(0, 0, 16, 16, '#4a3424');
+      for (const x of [0, 5, 10, 15]) p.vline(x, 0, 15, '#2e2018');
+      for (let i = 0; i < 5; i++) p.set(r() * 16, r() * 16, '#5e4430');
+      if (mask & 1) { p.rect(0, 0, 16, 3, '#6a4a30'); p.hline(0, 15, 0, '#8a6a48'); p.hline(0, 15, 3, '#2e2018'); }
+      if (mask & 4) { p.rect(0, 13, 16, 3, '#8a8680'); p.hline(0, 15, 13, '#a8a49c'); }
+    },
+    shopFloor(p, r, v) {
+      // concrete with sawdust drifting around
+      p.rect(0, 0, 16, 16, '#a8a49c');
+      for (let i = 0; i < 8; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#9a968e' : '#b8b4ac');
+      if (v % 2 === 0) for (let i = 0; i < 14; i++) { const x = 3 + r() * 10, y = 3 + r() * 10; p.set(x, y, '#e0c890'); p.set(x + 1, y, '#d8bc80'); }
+    },
+    garageDoor(p) {
+      // a roll-up door seen from inside
+      p.rect(0, 0, 16, 16, '#e8e8e4'); for (const y of [3, 7, 11]) p.hline(0, 15, y, '#c8c8c4');
+      p.hline(0, 15, 0, '#9aa0a8'); p.hline(0, 15, 15, '#9aa0a8');
+    },
+    openBay(p, r) {
+      // the open middle bay: daylight on the concrete
+      p.rect(0, 0, 16, 16, '#c8c4b8');
+      for (let i = 0; i < 6; i++) p.set(r() * 16, r() * 16, '#d8d4c8');
+      p.hline(0, 15, 15, '#9aa0a8');
+    },
     bridge(p) {
       // wooden plank bridge running north-south, rails on both sides
       p.rect(0, 0, 16, 16, '#a07848');
@@ -3264,6 +3290,197 @@
     return finish(p);
   }
 
+  // ================================================================ DAD'S WORKSHOP (the garage)
+  // Drawn from the family's photos: dark board walls, sawdust everywhere,
+  // the woodworking machines, the dusty red convertible, and Nate's bass.
+  function convertible() {
+    const p = new Pix(48, 74), red = '#b82a2a', redD = '#8a1c1c', redL = '#d84848', dust = '#c88070';
+    for (const [x, y] of [[0, 10], [42, 10], [0, 52], [42, 52]]) p.rect(x, y, 6, 12, '#1c1c22');
+    for (let y = 2; y < 72; y++) {
+      const inset = y < 8 ? 8 - y : y > 66 ? y - 66 : 0;
+      p.hline(4 + inset, 43 - inset, y, red);
+    }
+    p.vline(4, 8, 66, redL); p.vline(43, 8, 66, redD);
+    p.rect(10, 4, 28, 2, '#e8e8e8'); p.set(8, 6, '#f8f0b0'); p.set(39, 6, '#f8f0b0');
+    p.hline(14, 33, 14, redD); p.hline(14, 33, 15, redL);
+    p.rect(8, 24, 32, 5, '#34496a'); p.hline(9, 18, 25, '#8ab0d8');
+    p.rect(7, 29, 34, 22, '#8a8c94'); for (let y = 31; y < 50; y += 3) p.hline(8, 39, y, '#7a7c84'); p.hline(7, 40, 29, '#a8aab2');
+    p.rect(9, 50, 30, 4, '#34496a');
+    for (let i = 0; i < 70; i++) p.set(6 + Math.floor(G.hash(i, 1, 81) * 36), 54 + Math.floor(G.hash(i, 2, 81) * 15), dust);
+    for (const [hx, hy] of [[13, 58], [30, 60]]) { p.rect(hx, hy, 4, 4, redD); for (let k = 0; k < 4; k++) p.set(hx + k, hy - 2 + (k % 2), redD); }
+    p.hline(18, 27, 64, '#9a2020'); p.hline(19, 25, 66, '#9a2020');
+    p.rect(14, 70, 20, 2, '#d8d8d8');
+    return finish(p);
+  }
+
+  // The long workbench on the back wall: pegboard with hanging tools above it.
+  function workbench() {
+    const W = 96, p = new Pix(W, 44);
+    p.rect(0, 0, W, 22, '#a8865c');
+    for (let y = 2; y < 22; y += 4) for (let x = 2 + (y % 8 ? 2 : 0); x < W; x += 4) p.set(x, y, '#7a5c3c');
+    const tool = (x, h, c) => { p.vline(x, 3, 3 + h, c); p.set(x - 1, 3, c); p.set(x + 1, 3, c); };
+    [[6, 10, '#2a2a30'], [12, 7, '#c83030'], [17, 12, '#5a5a62'], [24, 8, '#e8c040'], [30, 10, '#2a2a30'], [64, 9, '#3a7ac8'], [70, 12, '#5a5a62'], [77, 8, '#c83030'], [84, 10, '#2a2a30'], [90, 7, '#e8c040']].forEach(([x, h, c]) => tool(x, h, c));
+    p.rect(40, 4, 18, 14, '#6a4a2a'); for (let y = 6; y < 18; y += 4) for (let x = 42; x < 56; x += 5) { p.rect(x, y, 4, 3, '#8a6a42'); p.set(x + 2, y + 1, '#d8b060'); }
+    p.rect(0, 22, W, 6, '#9a7a52'); p.hline(0, W - 1, 22, '#c8a878'); for (let i = 0; i < 14; i++) p.set(Math.floor(G.hash(i, 3, 82) * W), 23 + Math.floor(G.hash(i, 4, 82) * 4), '#6a4a2a');
+    p.rect(0, 28, W, 3, '#5a3e24');
+    for (const x of [2, 46, 90]) p.rect(x, 31, 4, 13, '#5a3e24');
+    p.rect(8, 34, 10, 6, '#3a7a3a'); p.rect(24, 35, 8, 5, '#c8c0b0'); p.rect(60, 34, 12, 6, '#e8c040'); p.rect(76, 36, 8, 4, '#c83030');
+    return finish(p);
+  }
+  // Nate's bass lying on the bench, neck and body side by side like in the photo.
+  function bassOnBench() {
+    const p = new Pix(52, 16);
+    p.rect(0, 5, 7, 7, '#d8b47c'); for (const [x, y] of [[2, 6], [4, 10], [1, 9], [5, 7]]) p.set(x, y, '#5a3e28');
+    p.rect(7, 7, 24, 4, '#e0c08a'); for (let x = 10; x < 31; x += 3) p.vline(x, 7, 10, '#f4f4f0');
+    for (let y = 0; y < 16; y++) for (let x = 28; x < 52; x++) {
+      const body = (x - 40) ** 2 / 130 + (y - 8) ** 2 / 64 <= 1;
+      const horn = (x - 31) ** 2 / 12 + (y - 2) ** 2 / 6 <= 1 || (x - 31) ** 2 / 12 + (y - 14) ** 2 / 6 <= 1;
+      if (body || horn) p.set(x, y, (x + y * 3) % 7 ? '#7a5638' : '#6a4a30');
+    }
+    p.rect(31, 7, 12, 4, '#e0c08a'); p.rect(44, 6, 3, 6, '#3a2a1c');
+    return finish(p);
+  }
+  // The bass Nate swings: body at the far end, held by the neck.
+  function bassSwing() {
+    const p = new Pix(14, 34);
+    for (let y = 0; y < 15; y++) for (let x = 0; x < 14; x++) {
+      const body = (x - 6.5) ** 2 / 36 + (y - 8) ** 2 / 46 <= 1;
+      const horn = (x - 2) ** 2 / 4 + (y - 1.5) ** 2 / 6 <= 1 || (x - 11) ** 2 / 4 + (y - 1.5) ** 2 / 6 <= 1;
+      if (body || horn) p.set(x, y, (x * 3 + y) % 7 ? '#7a5638' : '#6a4a30');
+    }
+    p.rect(5, 4, 4, 30, '#e0c08a'); for (let y = 15; y < 30; y += 3) p.hline(5, 8, y, '#f4f4f0');
+    p.rect(4, 29, 6, 5, '#d8b47c'); p.set(5, 30, '#5a3e28'); p.set(8, 32, '#5a3e28');
+    return finish(p);
+  }
+  function bassIcon() {
+    const p = new Pix(16, 16);
+    for (let k = 0; k < 9; k++) { p.set(3 + k, 12 - k, '#e0c08a'); p.set(4 + k, 12 - k, '#e0c08a'); }
+    for (let y = 9; y < 16; y++) for (let x = 0; x < 8; x++) if ((x - 3.5) ** 2 / 14 + (y - 12.5) ** 2 / 10 <= 1) p.set(x, y, '#7a5638');
+    p.rect(12, 0, 4, 4, '#d8b47c');
+    return finish(p);
+  }
+  function shopShelves(plane) {
+    const p = new Pix(16, 44);
+    p.rect(0, 0, 16, 44, '#8a6a42'); p.rect(2, 2, 12, 40, '#4a3424');
+    const items = ['#e8e8e8', '#e8c040', '#c83030', '#3a7ac8', '#5a8a3a', '#c8a878', '#f4f4f0'];
+    for (const y0 of [3, 13, 23, 33]) {
+      p.hline(2, 13, y0 + 8, '#8a6a42');
+      for (let x = 3; x < 13; x += 3) { const c = items[Math.floor(G.hash(x, y0, 83) * items.length)]; const h = 3 + Math.floor(G.hash(x, y0, 84) * 4); p.rect(x, y0 + 8 - h, 2, h, c); }
+    }
+    if (plane) { p.hline(0, 15, 1, '#f4f4f0'); p.rect(6, 0, 4, 3, '#f4f4f0'); p.set(7, 0, '#c83030'); p.set(1, 2, '#c83030'); }
+    return finish(p);
+  }
+  function sepiaPhoto() {
+    const p = new Pix(30, 22);
+    p.rect(0, 0, 30, 22, '#3a2a1c'); p.rect(2, 2, 26, 18, '#c8b088');
+    p.rect(3, 12, 24, 7, '#a88a62');
+    for (let x = 4; x < 27; x += 3) { p.rect(x, 8 + (x % 2), 2, 5, '#5a4630'); p.set(x, 7 + (x % 2), '#7a6248'); }
+    p.rect(12, 3, 6, 5, '#e8d8b0');
+    return finish(p);
+  }
+  function toolChest() {
+    const p = new Pix(16, 36);
+    p.rect(0, 0, 16, 12, '#c83030'); p.hline(0, 15, 0, '#e85050'); p.rect(2, 2, 12, 3, '#a02020');
+    p.rect(0, 12, 16, 20, '#c83030');
+    for (let y = 14; y < 31; y += 4) { p.hline(1, 14, y + 3, '#8a1818'); p.hline(5, 10, y + 1, '#d8d8d8'); }
+    p.rect(1, 32, 3, 3, '#1c1c22'); p.rect(12, 32, 3, 3, '#1c1c22');
+    return finish(p);
+  }
+  function lumberPile() {
+    const p = new Pix(48, 24);
+    for (let k = 0; k < 6; k++) {
+      const y = 18 - k * 3, x0 = (k % 2) * 3, c = k % 3 === 0 ? '#c8a070' : k % 3 === 1 ? '#a87a4a' : '#d8b888';
+      p.rect(x0, y, 45, 3, c); p.hline(x0, x0 + 44, y, shade(c, 0.15)); p.vline(x0 + 44, y, y + 2, shade(c, -0.3));
+    }
+    p.rect(2, 21, 4, 3, '#5a3e24'); p.rect(40, 21, 4, 3, '#5a3e24');
+    return finish(p);
+  }
+  // Woodworking machines.
+  function drillPress() {
+    const p = new Pix(16, 42);
+    p.rect(2, 2, 12, 9, '#e8e4d8'); p.rect(3, 0, 9, 3, '#3a3a40'); p.hline(2, 13, 10, '#c8c4b8'); p.rect(12, 5, 4, 2, '#1c1c22');
+    p.rect(6, 11, 4, 4, '#9aa0a8'); p.vline(8, 15, 20, '#c8ccd2');
+    p.rect(7, 11, 2, 29, '#c8ccd2'); p.vline(8, 11, 39, '#eef0f4');
+    p.rect(2, 22, 12, 3, '#e8e4d8'); p.rect(1, 38, 14, 4, '#3a3a40');
+    return finish(p);
+  }
+  function lathe() {
+    const p = new Pix(48, 28);
+    p.rect(2, 8, 44, 5, '#e8e4d8'); p.hline(2, 45, 8, '#f8f4e8');
+    p.rect(0, 0, 12, 13, '#e8e4d8'); p.rect(1, 1, 10, 4, '#c8c4b8'); p.set(3, 3, '#c83030'); p.set(4, 3, '#1c1c22');
+    p.rect(12, 4, 3, 4, '#5a5a62'); p.rect(15, 3, 14, 6, '#c8a070'); p.hline(15, 28, 3, '#e0c090'); p.rect(29, 4, 3, 4, '#5a5a62');
+    p.rect(36, 2, 8, 11, '#e8e4d8');
+    p.rect(8, 13, 32, 6, '#a87a4a'); for (let x = 10; x < 38; x += 4) p.hline(x, x + 2, 15, '#5a5a62');
+    for (const x of [3, 41]) p.rect(x, 13, 4, 15, '#d8d4c8');
+    return finish(p);
+  }
+  function bandsaw() {
+    const p = new Pix(16, 44);
+    p.rect(1, 0, 14, 30, '#e8e4d8'); p.rect(2, 2, 12, 10, '#3a8a5a'); p.rect(2, 16, 12, 10, '#3a8a5a');
+    p.rect(5, 5, 6, 3, '#e8e4d8'); p.vline(8, 12, 16, '#c8ccd2');
+    p.rect(0, 28, 16, 3, '#9aa0a8'); p.rect(3, 31, 10, 13, '#3a8a5a'); p.hline(3, 12, 31, '#5aaa7a');
+    return finish(p);
+  }
+  function tableSaw() {
+    const p = new Pix(32, 28);
+    p.rect(0, 0, 32, 12, '#9aa0a8'); p.hline(0, 31, 0, '#c8ccd2'); for (let x = 2; x < 32; x += 6) p.vline(x, 1, 11, '#8a9098');
+    p.rect(14, 3, 3, 6, '#5a5a62'); p.set(15, 4, '#e8e8e8'); p.rect(24, 0, 2, 12, '#e8c040');
+    p.rect(2, 12, 28, 6, '#5a5a62'); p.rect(12, 13, 8, 3, '#c83030');
+    for (const [x0, x1] of [[3, 0], [28, 31]]) for (let y = 18; y < 28; y++) p.set(x0 + Math.round((x1 - x0) * (y - 18) / 10), y, '#3a3a40');
+    p.rect(10, 20, 8, 6, '#c8a070'); p.rect(11, 18, 6, 2, '#e0c090');
+    return finish(p);
+  }
+  function planer() {
+    const p = new Pix(18, 30);
+    p.rect(1, 0, 16, 10, '#f0c020'); p.hline(1, 16, 0, '#f8d850'); p.rect(3, 3, 12, 3, '#1c1c22'); p.set(4, 4, '#f0c020');
+    p.rect(2, 10, 14, 3, '#3a3a40');
+    p.rect(1, 13, 16, 17, '#8a6a42'); p.hline(1, 16, 13, '#a88a5c'); for (let y = 16; y < 30; y += 5) p.hline(2, 15, y, '#6a4a2a');
+    return finish(p);
+  }
+  function sander() {
+    const p = new Pix(26, 30);
+    p.rect(4, 0, 18, 14, '#c8ccd2'); p.hline(4, 21, 0, '#eef0f4');
+    p.rect(6, 4, 14, 6, '#d88878'); for (let x = 7; x < 20; x += 3) p.vline(x, 4, 9, '#c87868');
+    p.rect(2, 14, 22, 16, '#3a7a5a'); p.hline(2, 23, 14, '#5a9a7a'); p.rect(8, 18, 10, 6, '#2a6a4a'); p.set(12, 20, '#e8e8e8');
+    return finish(p);
+  }
+  function miterSaw() {
+    const p = new Pix(28, 28);
+    p.rect(9, 0, 10, 10, '#c83030'); p.hline(9, 18, 0, '#e85050'); for (let y = 2; y < 12; y++) for (let x = 8; x < 20; x++) if ((x - 14) ** 2 + (y - 7) ** 2 <= 30 && (x - 14) ** 2 + (y - 7) ** 2 >= 20) p.set(x, y, '#c8ccd2');
+    p.rect(4, 12, 20, 4, '#5a5a62');
+    p.rect(0, 16, 28, 3, '#2a5ab8'); for (const [x0, x1] of [[2, 0], [25, 27]]) for (let y = 19; y < 28; y++) p.set(x0 + Math.round((x1 - x0) * (y - 19) / 9), y, '#2a4a8a');
+    return finish(p);
+  }
+  function dustCollector() {
+    const p = new Pix(26, 28);
+    p.rect(0, 6, 18, 22, '#e8e8e8'); p.hline(0, 17, 6, '#ffffff'); for (let y = 10; y < 16; y += 2) p.hline(3, 14, y, '#9aa0a8');
+    p.rect(19, 0, 7, 28, '#c8ccd2'); p.rect(19, 0, 7, 4, '#9aa0a8'); p.vline(20, 4, 27, '#eef0f4');
+    return finish(p);
+  }
+  function shopVac() {
+    const p = new Pix(14, 18);
+    p.rect(1, 2, 12, 14, '#e86a20'); p.hline(1, 12, 2, '#f88a40'); p.rect(3, 0, 8, 3, '#2a2a30'); p.rect(0, 15, 14, 3, '#2a2a30');
+    p.vline(12, 4, 12, '#2a2a30'); p.set(13, 4, '#2a2a30');
+    return finish(p);
+  }
+  function feedBags() {
+    const p = new Pix(28, 18);
+    for (const [x, y] of [[0, 6], [13, 6], [6, 0]]) { p.rect(x, y, 15, 11, '#e8c040'); p.hline(x, x + 14, y, '#f8d860'); p.rect(x + 3, y + 4, 9, 3, '#c83030'); p.set(x + 5, y + 5, '#f4f4f0'); }
+    return finish(p);
+  }
+  function buckets() {
+    const p = new Pix(18, 16);
+    for (const x of [0, 9]) { p.rect(x, 3, 9, 13, '#f4f4f0'); p.rect(x, 2, 9, 2, '#d8d8d4'); p.hline(x + 1, x + 7, 6, '#d8d8d4'); }
+    return finish(p);
+  }
+  function oldFridge() {
+    const p = new Pix(16, 38);
+    p.rect(0, 2, 16, 36, '#ece4cc'); for (let y = 0; y < 3; y++) p.hline(2 - y + 1, 13 + y - 1, y, '#ece4cc');
+    p.hline(0, 15, 14, '#c8bca0'); p.rect(12, 6, 2, 6, '#c8ccd2'); p.rect(12, 18, 2, 10, '#c8ccd2');
+    p.set(3, 4, '#f8f4e8'); p.rect(0, 36, 16, 2, '#9a9080');
+    return finish(p);
+  }
+
   function mailbox() {
     const p = new Pix(12, 24);
     p.rect(5, 8, 2, 16, '#8a6038');
@@ -3470,6 +3687,11 @@
     S.gourd = [gourd(false), gourd(true)];
     S.bird = [birdFrame(true), birdFrame(false)]; S.birdL = S.bird.map(mirror);
     S.beanCan = beanCan();
+    // Dad's workshop
+    S.convertible = convertible(); S.workbench = workbench(); S.bassOnBench = bassOnBench(); S.bassSwing = bassSwing(); S.bassIcon = bassIcon();
+    S.shopShelves = shopShelves(false); S.shopShelvesPlane = shopShelves(true); S.sepiaPhoto = sepiaPhoto(); S.toolChest = toolChest(); S.lumberPile = lumberPile();
+    S.drillPress = drillPress(); S.lathe = lathe(); S.bandsaw = bandsaw(); S.tableSaw = tableSaw(); S.planer = planer(); S.sander = sander();
+    S.miterSaw = miterSaw(); S.dustCollector = dustCollector(); S.shopVac = shopVac(); S.feedBags = feedBags(); S.buckets = buckets(); S.oldFridge = oldFridge();
     S.note = noteSprite(); S.heartRed = heartBalloon('#e83848'); S.heartPink = heartBalloon('#f080b0');
     S.farmhouse = farmhouse();
     S.grill = grill();
