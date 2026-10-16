@@ -707,42 +707,71 @@
     return fromRows(rows, pal).canvas();
   }
 
-  // Father Eggmas (placeholder until there's a photo of the real doll).
-  function eggmas(scale = 1) {
-    const p = new Pix(26, 32);
-    const cx = 13, cy = 19;
-    for (let y = 0; y < 32; y++) {
-      for (let x = 0; x < 26; x++) {
-        const dx = (x - cx) / 9.5, dy = (y - cy) / 11;
+  // Father Eggmas, from the real thrift-store doll: bald muslin egg head with a
+  // seam, beady eyes, red bead nose, long stringy white beard, burgundy paisley
+  // suit, cream mittens with ribbon ties, cream slippers with black toes.
+  function eggmas() {
+    const W = 28, H = 34, p = new Pix(W, H);
+    const cream = '#f2ead6', creamD = '#d4c8ac', creamL = '#fffaf0';
+    const red = '#7a1e2c', redD = '#561420', green = '#3e6a44', gold = '#c8984c';
+    const white = '#fbfbf8', whiteD = '#c4c4cc', black = '#1e2230', ribbon = '#c02848';
+    const paisley = (x, y) => {
+      const h = G.hash(x, y, 21);
+      return h < 0.09 ? green : h < 0.15 ? gold : h < 0.3 ? redD : red;
+    };
+    const mirror = (x) => W - 1 - x;
+    const both = (x, y, c) => { p.set(x, y, c); p.set(mirror(x), y, c); };
+
+    // arms reaching out and down, mittens on the ends
+    [[7, 21], [6, 22], [5, 23]].forEach(([x, y]) => { both(x, y, paisley(x, y)); both(x + 1, y, paisley(x + 1, y)); });
+    both(4, 24, ribbon); both(5, 24, ribbon);
+    for (let y = 25; y <= 27; y++) for (let x = 2; x <= 5; x++) both(x, y, x === 2 || y === 27 ? creamD : cream);
+    // legs and slippers
+    for (let y = 27; y <= 29; y++) for (let x = 9; x <= 12; x++) both(x, y, paisley(x, y));
+    for (let x = 8; x <= 12; x++) { both(x, 29, cream); both(x, 30, x > 9 ? creamD : cream); }
+    for (let y = 30; y <= 32; y++) for (let x = 4; x <= 9; x++) {
+      if (y === 32 && (x === 4 || x === 9)) continue;
+      both(x, y, y === 30 && x > 7 ? cream : black);
+    }
+    // body: turtleneck onesie
+    for (let y = 18; y <= 27; y++) {
+      const inset = y === 18 || y === 27 ? 1 : 0;
+      for (let x = 8 + inset; x <= 19 - inset; x++) p.set(x, y, y <= 19 ? (y === 19 ? redD : red) : paisley(x, y));
+    }
+    // egg head
+    const cx = 14, cy = 9.5, rx = 9.6, ry = 9.4;
+    for (let y = 0; y < 20; y++) {
+      for (let x = 0; x < W; x++) {
+        const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry;
         if (dx * dx + dy * dy > 1) continue;
-        let col = '#f6eedc';
-        if (dx * 0.6 + dy * 0.8 > 0.55) col = '#d8ccb0';
-        if (dx * -0.6 + dy * -0.8 > 0.6) col = '#ffffff';
-        if (y >= 23) col = y === 23 ? '#ffffff' : '#d03030';
-        if (y === 26) col = '#2a2028';
-        p.set(x, y, col);
+        const s = dx * 0.5 + dy * 0.75;
+        p.set(x, y, s > 0.55 ? creamD : s < -0.6 ? creamL : cream);
       }
     }
-    p.set(13, 26, '#f8d040'); p.set(12, 26, '#f8d040');
+    p.vline(14, 1, 8, creamD); // the seam
     // face
-    p.rect(9, 16, 1, 2, '#201820'); p.rect(16, 16, 1, 2, '#201820');
-    p.hline(8, 10, 15, '#6a4030'); p.hline(15, 17, 15, '#6a4030');
-    p.set(7, 19, '#f09090'); p.set(18, 19, '#f09090');
-    p.hline(10, 15, 20, '#ffffff'); p.hline(9, 11, 21, '#ffffff'); p.hline(14, 16, 21, '#ffffff');
-    p.hline(11, 14, 22, '#7a2030');
-    // santa hat
-    for (let y = 2; y <= 10; y++) {
-      const half = Math.floor((y - 1) * 0.9);
-      p.hline(13 - half, 13 + half - 1, y, '#d83030');
-      p.set(13 + half - 1, y, '#a02020');
+    p.set(11, 10, black); p.set(11, 11, black); p.set(17, 10, black); p.set(17, 11, black);
+    p.set(10, 10, white); p.set(18, 10, white);
+    p.set(9, 8, '#8a7c70'); p.set(10, 8, '#8a7c70'); p.set(11, 9, '#8a7c70');
+    p.set(19, 8, '#8a7c70'); p.set(18, 8, '#8a7c70'); p.set(17, 9, '#8a7c70');
+    p.set(14, 13, '#b8203a');
+    p.set(9, 13, '#f0c4b8'); p.set(19, 13, '#f0c4b8');
+    // white wisps at the sides of the head
+    for (let y = 9; y <= 15; y++) {
+      if ((y + 1) % 3) { p.set(4, y, y % 2 ? white : whiteD); p.set(mirror(4), y, y % 2 ? white : whiteD); }
+      if (y > 11) { p.set(5, y, white); p.set(mirror(5), y, white); }
     }
-    p.hline(5, 21, 10, '#ffffff'); p.hline(4, 22, 11, '#ffffff'); p.hline(5, 21, 12, '#e8e8f0');
-    p.hline(14, 17, 1, '#d83030'); p.hline(17, 20, 2, '#d83030');
-    p.rect(20, 1, 3, 3, '#ffffff');
-    // arms and boots
-    p.rect(2, 20, 2, 3, '#d03030'); p.rect(1, 23, 2, 2, '#ffffff');
-    p.rect(22, 20, 2, 3, '#d03030'); p.rect(23, 23, 2, 2, '#ffffff');
-    p.rect(9, 29, 3, 2, '#2a2028'); p.rect(14, 29, 3, 2, '#2a2028');
+    // long stringy beard
+    p.hline(12, 16, 15, white);
+    p.hline(10, 18, 16, white); p.set(13, 16, whiteD); p.set(15, 16, whiteD);
+    p.hline(9, 11, 17, white); p.hline(17, 19, 17, white);
+    p.set(8, 18, whiteD); p.set(20, 18, whiteD); p.set(7, 19, white); p.set(21, 19, white);
+    for (let y = 17; y <= 28; y++) {
+      const wave = (y >> 1) % 2;
+      p.set(13 + wave, y, white);
+      p.set(14 + wave, y, y % 3 ? white : whiteD);
+    }
+    p.set(12, 18, white); p.set(16, 19, whiteD); p.set(12, 21, whiteD);
     p.outline();
     return p.canvas();
   }

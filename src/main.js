@@ -348,7 +348,7 @@
         const egg = G.spr.eggmas, sc = pg.pic === 'eggmas' ? 3 : 2;
         const jx = pg.shake ? Math.round((Math.random() * 2 - 1) * 2) : 0;
         ctx.globalAlpha = pg.pic === 'dark' ? 0.35 : 1;
-        ctx.drawImage(egg, 120 - (egg.width * sc) / 2 + jx, 14 + (pg.pic === 'dark' ? 20 : 0), egg.width * sc, egg.height * sc);
+        ctx.drawImage(egg, 120 - (egg.width * sc) / 2 + jx, 6 + (pg.pic === 'dark' ? 24 : 0), egg.width * sc, egg.height * sc);
         ctx.globalAlpha = 1;
       }
       this.d.draw(ctx);
