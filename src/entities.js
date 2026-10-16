@@ -838,7 +838,18 @@
   }
   G.FerrisWheel = FerrisWheel;
 
-  // A sagging string of bulbs between two poles; drawn overhead.
+  // A wooden light pole; depth-sorted like everything else on the ground.
+  class LightPole {
+    constructor(x, y) { this.x = x; this.y = y; this.base = y; }
+    draw(ctx, cx, cy) {
+      const H = 30;
+      ctx.fillStyle = '#2a2030'; ctx.fillRect(this.x - 2 - cx, this.y - H - cy, 4, H + 1);
+      ctx.fillStyle = '#7a5a3a'; ctx.fillRect(this.x - 1 - cx, this.y - H - cy, 2, H);
+    }
+  }
+  G.LightPole = LightPole;
+
+  // A sagging string of bulbs between two pole tops; drawn overhead.
   class LightString {
     constructor(x1, y1, x2, y2) {
       Object.assign(this, { x1, y1, x2, y2 });
@@ -846,10 +857,6 @@
     }
     draw(ctx, cx, cy) {
       const lit = G.fairLit(), H = 30, sag = 12;
-      for (const [x, y] of [[this.x1, this.y1], [this.x2, this.y2]]) {
-        ctx.fillStyle = '#2a2030'; ctx.fillRect(x - 2 - cx, y - H - cy, 4, H + 1);
-        ctx.fillStyle = '#7a5a3a'; ctx.fillRect(x - 1 - cx, y - H - cy, 2, H);
-      }
       const n = Math.max(8, Math.round(Math.abs(this.x2 - this.x1) / 2));
       for (let i = 0; i <= n; i++) {
         const t = i / n;

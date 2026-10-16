@@ -230,7 +230,7 @@
     hairFront(p, c, y0, ty);
     if (c.beard) {
       const b = c.beard;
-      p.set(3, y0 + 6, b); p.set(12, y0 + 6, b);
+      if (!c.beardLow) { p.set(3, y0 + 6, b); p.set(12, y0 + 6, b); }
       p.hline(3, 4, y0 + 7, b); p.hline(11, 12, y0 + 7, b);
       p.hline(4, 6, y0 + 8, b); p.hline(9, 11, y0 + 8, b);
       p.hline(5, 10, y0 + 9, b);
@@ -379,7 +379,9 @@
       top(3);
       p.hline(4, 11, y0 + 3, H);
       p.set(4, y0 + 3, D); p.set(11, y0 + 3, D);
-      for (let y = y0 + 3; y <= y0 + 5; y++) { p.set(3, y, y > y0 + 4 ? D : H); p.set(12, y, y > y0 + 4 ? D : H); }
+      // short sideburns only, so the hair doesn't run down into the beard
+      p.set(3, y0 + 3, H); p.set(12, y0 + 3, H);
+      p.set(3, y0 + 4, D); p.set(12, y0 + 4, D);
       for (let x = 4; x <= 11; x += 2) p.set(x, y0 + 1, L);
       p.set(5, y0, L); p.set(8, y0, L);
       p.set(6, y0 + 3, D); p.set(9, y0 + 3, D);

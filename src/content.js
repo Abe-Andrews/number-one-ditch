@@ -40,7 +40,7 @@
     },
     // Christian: round glasses, beard, cream blazer.
     dad: {
-      skin: '#f0c0a0', hair: '#a88a62', hairStyle: 'cropped', beard: '#8a7058', glasses: '#4a4248', smile: '#ffffff',
+      skin: '#f0c0a0', hair: '#a88a62', hairStyle: 'cropped', beard: '#8a7058', beardLow: true, glasses: '#4a4248', smile: '#ffffff',
       coat: '#ece4d0', shirt: '#283044', pants: '#4a4a58', shoes: '#4a3020',
       wide: true, torso: 7, legs: 4,
     },
@@ -172,6 +172,53 @@
     lily: { name: 'Lily', bio: '', skill: '' },
     abe: { name: 'Abe', bio: '', skill: '' },
     hannah: { name: 'Hannah', bio: '', skill: '' },
+  };
+
+  // ================================================================ PEOPLE (menu tab)
+  // The party first (unfound family as silhouettes), then everyone important
+  // Nate has met. Unmet characters stay hidden.
+  const CHARACTERS = [
+    {
+      id: 'dad', name: 'Dad', tag: '{c}Family', met: () => fl().readChat,
+      bio: 'Christian. Cream blazer, round glasses. Asks everyone if they speak EEENGLISH.',
+    },
+    {
+      id: 'elenglish', name: 'El EEENGLISH', met: () => fl().mainEvent,
+      tag: () => (fl().dadBeaten ? '{o}Boss: defeated!' : '{r}Boss'),
+      bio: () => (fl().dadBeaten
+        ? 'Dad, brainwashed by Father Eggmas into a luchador. The main event. Unmasked by a present.'
+        : 'Dad?! Brainwashed by Father Eggmas. Fires EEENGLISH letters and dropkicks off the ropes.'),
+    },
+    {
+      id: 'eggmas', name: 'Father Eggmas', tag: '{r}Villain', met: () => true, img: () => G.spr.eggmas,
+      bio: 'A plush Christmas Humpty Dumpty from a thrift store. Wants the Number One Ditch to be Number Two.',
+    },
+    { id: 'gus', name: 'Gus', tag: '{y}Friend', met: () => fl().capQuest, bio: 'Lafayette\'s groundskeeper. Protector of petunias. Found Nate\'s hat.' },
+    { id: 'moles', name: 'Dr. Moles', tag: '{y}Friend', met: () => fl().chemMet, bio: 'Chemistry professor. Every answer on his final is the same number. Saves on grading.' },
+    { id: 'pete', name: 'Pyro Pete', tag: '{y}Friend', met: () => fl().doronDeal, bio: 'Runs the pyro for Micro Mayhem. Thinks Nate\'s exploding present was beautiful.' },
+    { id: 'prof', name: 'Prof. Schist', tag: '{y}Friend', met: () => fl().profTalk, bio: 'Geology professor. Finds coastal plain ditches fascinating. Flat. Wet. Ditchy.' },
+    { id: 'devin', name: 'Devin', tag: '{y}Friend', met: () => fl().phDone, bio: 'Nate\'s lab partner. Was paid in shark teeth to ask about the pH of rainwater.' },
+  ];
+
+  G.people = () => {
+    const s = st();
+    const list = G.PARTY_ORDER.map((id) => {
+      const has = s.party.includes(id), info = G.PARTY_INFO[id];
+      return {
+        id, known: has, name: has ? info.name : '???',
+        tag: has ? '{g}In the party' : '{d}Not found yet',
+        bio: has ? info.bio : '', skill: has ? info.skill : '',
+      };
+    });
+    for (const c of CHARACTERS) {
+      if (!c.met()) continue;
+      list.push({
+        id: c.id, known: true, name: c.name, img: c.img,
+        tag: typeof c.tag === 'function' ? c.tag() : c.tag,
+        bio: typeof c.bio === 'function' ? c.bio() : c.bio,
+      });
+    }
+    return list;
   };
 
   // ================================================================ JOURNAL
@@ -902,6 +949,10 @@
     yield G.wait(60);
     yield G.say('Nate', '...That rock survived the ice age.');
     yield G.say('Doron', 'It didn\'t survive leg day.');
+    yield G.say('Nate', 'Where did you even learn that?');
+    yield G.say('Doron', 'The Army. We suplexed boulders every morning before breakfast.');
+    yield G.say('Nate', 'I don\'t think that\'s true.');
+    yield G.say('Doron', 'You weren\'t there.');
     yield G.say('Nate', 'The road to Chesapeake is open!');
     d.hold = false;
   };
@@ -1243,10 +1294,13 @@
       // Ferris wheel in the corner and strings of lights over the paths
       w.props.push(new G.FerrisWheel(33 * 16, 8 * 16 + 14));
       w.blockTiles(31, 8, 4, 1);
-      for (const [a, b] of [[[12, 11], [19, 11]], [[22, 11], [29, 11]], [[22, 21], [37, 21]]]) {
+      // (the middle string starts at x=25 so its pole isn't where Nate talks to Doron)
+      for (const [a, b] of [[[12, 11], [19, 11]], [[25, 11], [29, 11]], [[22, 21], [37, 21]]]) {
         w.props.push(new G.LightString(a[0] * 16 + 8, a[1] * 16 + 14, b[0] * 16 + 8, b[1] * 16 + 14));
-        w.blockTiles(a[0], a[1], 1, 1);
-        w.blockTiles(b[0], b[1], 1, 1);
+        for (const [tx, ty] of [a, b]) {
+          w.props.push(new G.LightPole(tx * 16 + 8, ty * 16 + 14));
+          w.blockTiles(tx, ty, 1, 1);
+        }
       }
       [[4, 17, 0], [10, 17, 1], [16, 17, 2], [7, 24, 3], [13, 24, 4], [16, 24, 5]].forEach(([x, y, c]) =>
         w.addProp({ img: G.spr.cars[c], tx: x, ty: y, h: 2, dx: 4, solid: [x, y, 2, 2] }));

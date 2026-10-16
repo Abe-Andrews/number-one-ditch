@@ -74,9 +74,9 @@
   };
 
   // ------------------------------------------------------------ pause menu
-  // Tabbed, Minish Cap style: ITEMS / KEY ITEMS / PARTY / JOURNAL.
+  // Tabbed, Minish Cap style: ITEMS / KEY ITEMS / PEOPLE / JOURNAL.
   // Q/E switch tabs (or press up into the tab bar and use left/right).
-  const TABS = ['ITEMS', 'KEY ITEMS', 'PARTY', 'JOURNAL'];
+  const TABS = ['ITEMS', 'KEY ITEMS', 'PEOPLE', 'JOURNAL'];
   const COLS = 4, ROWS = 2;
   const SEL = { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' };
   const TXT = (ctx, str, x, y, col) => F().draw(ctx, str, x, y, col || '#f8f8f0', { shadow: SH });
@@ -96,6 +96,7 @@
     switchTab(d) {
       this.tab = (this.tab + d + TABS.length) % TABS.length;
       this.sel = 0;
+      this.scroll = 0;
       G.audio.sfx('menu');
     }
 
@@ -135,8 +136,9 @@
         if (inp.hit('up')) { if (row > 0) this.move(-COLS, COLS * ROWS); else { this.onTabs = true; G.audio.sfx('menu'); } }
         if (inp.hit('a')) return this.activate();
       } else if (this.tab === 2) {
-        if (inp.hit('down')) this.move(1, G.PARTY_ORDER.length);
-        if (inp.hit('up')) { if (this.sel > 0) this.move(-1, G.PARTY_ORDER.length); else { this.onTabs = true; G.audio.sfx('menu'); } }
+        const n = G.people().length;
+        if (inp.hit('down')) this.move(1, n);
+        if (inp.hit('up')) { if (this.sel > 0) this.move(-1, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
       } else if (inp.hit('up')) {
         this.onTabs = true;
         G.audio.sfx('menu');
@@ -173,7 +175,7 @@
       this.drawTabs(ctx);
       G.box(ctx, 4, 18, 232, 122);
       if (this.tab <= 1) this.drawGrid(ctx);
-      else if (this.tab === 2) this.drawParty(ctx);
+      else if (this.tab === 2) this.drawPeople(ctx);
       else this.drawJournal(ctx);
       let help = ['Z: set to X', 'Z: use', '', ''][this.tab];
       help = (help ? help + '   ' : '') + 'X: save   Q/E: tabs   ENTER: close';
@@ -234,29 +236,43 @@
       F().wrap(G.itemDesc(id), 112).slice(0, 5).forEach((l, i) => TXT(ctx, l, 116, 86 + i * 10));
     }
 
-    drawParty(ctx) {
-      const s = G.state;
-      G.PARTY_ORDER.forEach((pid, i) => {
-        const y = 24 + i * 22, has = s.party.includes(pid);
-        const sel = i === this.sel && !this.onTabs;
-        if (sel) { ctx.fillStyle = '#3a3058'; ctx.fillRect(8, y, 86, 21); ctx.fillStyle = '#f8d850'; ctx.fillRect(8, y, 2, 21); }
-        const S = pid === 'nate' ? G.nateSprites() : G.sprites[pid];
-        const img = S.down[0];
-        // head-and-shoulders crop for the list
-        ctx.drawImage(has ? img : silhouette(img), 0, 0, 16, 20, 14, y + 1, 16, 20);
-        TXT(ctx, has ? G.PARTY_INFO[pid].name : '???', 36, y + 7, has ? '#f8f8f0' : '#5a4e70');
+    // Party members plus every key character met so far; scrolls 5 at a time.
+    drawPeople(ctx) {
+      const list = G.people(), VIS = 5;
+      this.sel = Math.min(this.sel, list.length - 1);
+      this.scroll = this.scroll || 0;
+      if (this.sel < this.scroll) this.scroll = this.sel;
+      if (this.sel >= this.scroll + VIS) this.scroll = this.sel - VIS + 1;
+      const portrait = (p) => (p.img ? p.img() : (p.id === 'nate' ? G.nateSprites() : G.sprites[p.id]).down[0]);
+
+      list.slice(this.scroll, this.scroll + VIS).forEach((p, k) => {
+        const i = this.scroll + k, y = 24 + k * 22;
+        if (i === this.sel && !this.onTabs) {
+          ctx.fillStyle = '#3a3058'; ctx.fillRect(8, y, 88, 21);
+          ctx.fillStyle = '#f8d850'; ctx.fillRect(8, y, 2, 21);
+        }
+        const img = portrait(p), face = p.known ? img : silhouette(img);
+        // head-and-shoulders crop (centered for wider sprites like Eggmas)
+        ctx.drawImage(face, Math.max(0, Math.round((img.width - 16) / 2)), 0, 16, 20, 13, y + 1, 16, 20);
+        TXT(ctx, p.name, 33, y + 7, p.known ? '#f8f8f0' : '#5a4e70');
       });
-      const pid = G.PARTY_ORDER[this.sel], has = s.party.includes(pid), info = G.PARTY_INFO[pid];
+      ctx.fillStyle = '#9890a8';
+      if (this.scroll > 0) { ctx.fillRect(90, 25, 5, 1); ctx.fillRect(91, 24, 3, 1); ctx.fillRect(92, 23, 1, 1); }
+      if (this.scroll + VIS < list.length) { ctx.fillRect(90, 133, 5, 1); ctx.fillRect(91, 134, 3, 1); ctx.fillRect(92, 135, 1, 1); }
+
+      const p = list[this.sel];
       ctx.fillStyle = '#2a2240';
       ctx.fillRect(100, 24, 130, 112);
-      const S = pid === 'nate' ? G.nateSprites() : G.sprites[pid];
-      const img = has ? S.down[0] : silhouette(S.down[0]);
-      ctx.drawImage(img, 106, 80 - img.height * 2 + 2, img.width * 2, img.height * 2);
-      TXT(ctx, has ? info.name : '???', 142, 30, '#f8d850');
-      TXT(ctx, has ? '{g}In the party' : '{d}Not found yet', 142, 42);
-      if (!has) return;
-      F().wrap(info.bio, 122).slice(0, 3).forEach((l, i) => TXT(ctx, l, 104, 86 + i * 10));
-      F().wrap('{o}Ability:{/} ' + info.skill, 122).slice(0, 2).forEach((l, i) => TXT(ctx, l, 104, 118 + i * 10));
+      const img = portrait(p), big = p.known ? img : silhouette(img);
+      if (p.img) ctx.drawImage(big, 104, 80 - img.height + 2);
+      else ctx.drawImage(big, 106, 80 - img.height * 2 + 2, img.width * 2, img.height * 2);
+      const nameLines = F().wrap(p.name, 86).slice(0, 2);
+      nameLines.forEach((l, i) => TXT(ctx, l, 142, 30 + i * 10, '#f8d850'));
+      TXT(ctx, p.tag, 142, 32 + nameLines.length * 10);
+      if (!p.known) return;
+      const bioLines = p.skill ? 3 : 5;
+      F().wrap(p.bio, 122).slice(0, bioLines).forEach((l, i) => TXT(ctx, l, 104, 86 + i * 10));
+      if (p.skill) F().wrap('{o}Ability:{/} ' + p.skill, 122).slice(0, 2).forEach((l, i) => TXT(ctx, l, 104, 118 + i * 10));
     }
 
     drawJournal(ctx) {
