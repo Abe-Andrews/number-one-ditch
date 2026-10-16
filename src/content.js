@@ -471,7 +471,12 @@
     G.audio.sfx('bell');
     yield G.banner('MAIN EVENT', 'NATE  vs.  EL EEENGLISH', 170);
     yield G.say('El EEENGLISH', 'DO YOU SPEAK EEENGLISH?!');
-    yield G.say(null, 'He only flinches when he\'s {y}dizzy{/}. A {y}Booby-Trapped Package{/} (press X) should do the trick.');
+    yield G.say(null, 'Your hammer only works while he\'s {y}dizzy{/}. {y}Booby-Trapped Packages{/} (press X) stun him anytime.');
+  };
+
+  S.finishHint = function* () {
+    yield G.say('Doron', 'He\'s on the ropes! Your hammer can\'t finish him!');
+    yield G.say('Doron', 'Give him a {y}present{/}, Nate! Set down a {y}Booby-Trapped Package{/} (press X)!');
   };
 
   S.dadDefeated = function* (boss) {

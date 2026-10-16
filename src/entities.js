@@ -386,6 +386,7 @@
       this.hurtT = 0;
       this.kb = { x: 0, y: 0 };
       this.bounces = 0;
+      this.supplyT = 90;
     }
 
     hurtBox() { return [this.x - 11, this.y - 40, this.x + 11, this.y]; }
@@ -395,6 +396,7 @@
       if (G.script.busy || this.state === 'defeated') return;
       const p = G.play.player;
       const dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      this.resupply(w);
       if (this.hurtT > 0) {
         this.hurtT--;
         w.move(this, this.kb.x, 0);
@@ -478,7 +480,27 @@
       w.add(new Wrestler(12 * 16 + 8, 8 * 16 + 12, 'blue'));
     }
 
-    // hammer
+    // If Nate is out of packages, Pyro Pete tosses one in from the crowd so the
+    // fight can always be finished.
+    resupply(w) {
+      const s = G.state;
+      const supplied = (s.items.package || 0) > 0 ||
+        w.ents.some((e) => !e.dead && (e instanceof G.Package || (e instanceof G.Pickup && e.kind === 'package')));
+      if (supplied) { this.supplyT = 120; return; }
+      if (--this.supplyT > 0) return;
+      this.supplyT = 300;
+      let x, y, tries = 0;
+      do {
+        x = 32 + Math.random() * 176;
+        y = 48 + Math.random() * 80;
+      } while (Math.hypot(x - this.x, y - this.y) < 48 && ++tries < 10);
+      const pk = w.add(new G.Pickup(x, y, 'package'));
+      pk.life = 900;
+      w.pop(x, y - 20, 'CATCH, KID!', '#ffa848');
+      G.audio.sfx('menu');
+    }
+
+    // hammer: only lands while he's dizzy, and can't deliver the final blow
     hit(dmg, sx, sy) {
       if (this.state !== 'dizzy') {
         G.audio.sfx('clank');
@@ -487,16 +509,26 @@
         p.state = 'hurt'; p.t = 8; p.kb = { x: (dx / m) * 2.4, y: (dy / m) * 2.4 };
         return;
       }
-      this.damage(1, sx, sy);
+      this.damage(1, sx, sy, false);
     }
 
     // booby-trapped package
     bomb(sx, sy) {
-      this.damage(3, sx, sy);
+      this.damage(3, sx, sy, true);
       if (this.hp > 0) { this.state = 'dizzy'; this.t = 120; this.world.pop(this.x, this.y - 50, 'WHAT WAS IN THAT?!', '#ffffff'); }
     }
 
-    damage(n, sx, sy) {
+    damage(n, sx, sy, fromBomb) {
+      if (!fromBomb && this.hp - n < 1) {
+        // last sliver of health: only a package can finish him
+        n = this.hp - 1;
+        if (!G.state.flags.bossFinishHint) {
+          G.state.flags.bossFinishHint = true;
+          G.script.run(G.SCRIPTS.finishHint());
+        } else {
+          this.world.pop(this.x, this.y - 50, 'USE A PACKAGE!', '#ffa848');
+        }
+      }
       this.hp = Math.max(0, this.hp - n);
       this.hurtT = 12;
       const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
@@ -772,7 +804,7 @@
     }
 
     get img() {
-      return { tooth: G.spr.tooth, tooth5: G.spr.toothGold, heart: G.spr.heart.full, doosh: G.spr.doosh }[this.kind];
+      return { tooth: G.spr.tooth, tooth5: G.spr.toothGold, heart: G.spr.heart.full, doosh: G.spr.doosh, package: G.spr.gift }[this.kind];
     }
 
     update() {

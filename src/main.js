@@ -214,6 +214,12 @@
       if (kind === 'tooth') { this.addTeeth(1); G.audio.sfx('tooth'); }
       else if (kind === 'tooth5') { this.addTeeth(5); G.audio.sfx('tooth'); }
       else if (kind === 'heart') { this.healQ += 2; G.audio.sfx('heart'); }
+      else if (kind === 'package') {
+        const s = G.state;
+        s.items.package = Math.min(10, (s.items.package || 0) + 1);
+        s.xItem = 'package';
+        G.audio.sfx('tooth');
+      }
     },
 
     die() {
