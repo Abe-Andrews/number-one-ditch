@@ -194,7 +194,7 @@
       bio: 'A plush Christmas Humpty Dumpty from a thrift store. Wants the Number One Ditch to be Number Two.',
     },
     { id: 'gus', name: 'Gus', tag: '{y}Friend', met: () => fl().capQuest, bio: 'Lafayette\'s groundskeeper. Protector of petunias. Found Nate\'s hat.' },
-    { id: 'moles', name: 'Dr. Moles', tag: '{y}Friend', met: () => fl().chemMet, bio: 'Chemistry professor. Every answer on his final is the same number. Saves on grading.' },
+    { id: 'moles', name: 'Dr. Moles', tag: '{y}Friend', met: () => fl().chemMet, bio: 'Chemistry professor. Nobody has ever gotten the last question on his final right.' },
     { id: 'pete', name: 'Pyro Pete', tag: '{y}Friend', met: () => fl().doronDeal, bio: 'Runs the pyro for Micro Mayhem. Thinks Nate\'s exploding present was beautiful.' },
     { id: 'prof', name: 'Prof. Schist', tag: '{y}Friend', met: () => fl().profTalk, bio: 'Geology professor. Finds coastal plain ditches fascinating. Flat. Wet. Ditchy.' },
     { id: 'devin', name: 'Devin', tag: '{y}Friend', met: () => fl().phDone, bio: 'Nate\'s lab partner. Was paid in shark teeth to ask about the pH of rainwater.' },
@@ -528,13 +528,21 @@
 
   // The way east is closed until Nate has a reason to go AND his cap back.
   // ---------------------------------------------------------------- the chem final
-  // Every answer is 6. Saying "6" still counts, but it's a sacred number slip.
+  // Questions 1-4: the answer is always 6, so Nate has to answer the
+  // roundabout way ("6" still counts, but it's a sacred number slip).
+  // Question 5 is brutally hard and the answer is NOT 6: anyone coasting on
+  // the pattern with "Half a dozen" gets it wrong.
   const CHEM_FINAL = [
-    { q: 'How many carbon atoms are in a benzene ring?', opts: ['5', '6', 'Five plus one', '12'], safe: 2, note: 'Benzene is a ring of six carbons.' },
-    { q: 'What is the atomic number of carbon?', opts: ['6', '12', 'Half a dozen', '14'], safe: 2, note: 'Carbon has six protons.' },
-    { q: 'Quartz crystals grow as prisms with how many sides?', opts: ['4', 'One more than five', '6', '8'], safe: 1, note: 'Quartz is hexagonal. Six sides.' },
-    { q: 'If [H+] is 10 to the -6 molar, what is the pH?', opts: ['6', '8', 'Slightly acidic: 5+1', '-6'], safe: 2, note: 'The pH is six. You of all people should know that.' },
-    { q: 'Halite (rock salt) grows in cubes. How many faces does a cube have?', opts: ['8', '4', 'A number between 5 and 7', '6'], safe: 2, note: 'A cube has six faces.' },
+    { q: 'How many carbon atoms are in a benzene ring?', opts: ['5', '6', 'Five plus one', '12'], answer: 2, note: 'Benzene is a ring of six carbons.' },
+    { q: 'What is the atomic number of carbon?', opts: ['6', '12', 'Half a dozen', '14'], answer: 2, note: 'Carbon has six protons.' },
+    { q: 'Quartz crystals grow as prisms with how many sides?', opts: ['4', 'One more than five', '6', '8'], answer: 1, note: 'Quartz is hexagonal. Six sides.' },
+    { q: 'If [H+] is 10 to the -6 molar, what is the pH?', opts: ['6', '8', 'Slightly acidic: 5+1', '-6'], answer: 2, note: 'The pH is six. You of all people should know that.' },
+    {
+      hard: true, trap: 1,
+      q: 'How many unpaired electrons does a gadolinium(III) ion have?',
+      opts: ['6', 'Half a dozen', '7', '14'], answer: 2,
+      note: 'Gadolinium(III) is 4f7. Seven unpaired electrons.',
+    },
   ];
 
   S.chemFinal = function* () {
@@ -547,9 +555,8 @@
       f.chemMet = true;
       yield G.say('Dr. Moles', 'Nate! You\'re late for the chemistry final.');
       yield G.say('Nate', 'Final? I have a ditch to save!');
-      yield G.say('Dr. Moles', 'Five questions. Fun fact: every answer on my final is the same number this year. Saves on grading.');
-      yield G.say('Nate', '...Which number?');
-      yield G.say('Dr. Moles', 'You\'ll figure it out.');
+      yield G.say('Dr. Moles', 'Five questions. Answer carefully.');
+      yield G.say('Nate', 'How hard can it be?');
     } else {
       yield G.say('Dr. Moles', 'Back for a retake? Same five questions.');
     }
@@ -559,17 +566,28 @@
     let score = 0, slips = 0;
     for (let i = 0; i < CHEM_FINAL.length; i++) {
       const Q = CHEM_FINAL[i];
+      if (Q.hard) yield G.say('Dr. Moles', 'And now... the final question. Nobody has ever gotten this one right.');
       const a = yield G.ask('Dr. Moles', 'Question ' + (i + 1) + ': ' + Q.q, Q.opts);
       if (a === Q.opts.indexOf('6')) {
-        score++; slips++;
+        slips++;
         yield G.say('Nate', '6.');
         yield* slip();
-        yield G.say('Dr. Moles', '...Correct. Why are you crying?');
-      } else if (a === Q.safe) {
+        if (Q.hard) {
+          yield G.say('Dr. Moles', 'Incorrect. AND you said the number. ' + Q.note);
+        } else {
+          score++;
+          yield G.say('Dr. Moles', '...Correct. Why are you crying?');
+        }
+      } else if (a === Q.answer) {
         score++;
-        yield G.say('Dr. Moles', ['Correct!', 'Correct. Interesting phrasing.', 'Correct... I suppose.'][i % 3]);
+        if (Q.hard) yield G.say('Dr. Moles', '...Correct?! Nobody has EVER gotten that right!');
+        else yield G.say('Dr. Moles', ['Correct!', 'Correct. Interesting phrasing.', 'Correct... I suppose.'][i % 3]);
       } else {
         yield G.say('Dr. Moles', 'Incorrect. ' + Q.note);
+        if (Q.hard && a === Q.trap) {
+          yield G.say('Nate', '...I just assumed it was the same as the others.');
+          yield G.say('Dr. Moles', 'Never assume. That\'s the first rule of chemistry.');
+        }
       }
     }
 
@@ -598,7 +616,7 @@
   };
 
   S.priya = function* () {
-    yield G.say('Priya', 'I think every answer on this test is the same number. Is that allowed?');
+    yield G.say('Priya', 'I heard nobody has EVER gotten the last question on this final right.');
     yield G.say('Priya', 'Also, why are there fire extinguishers on every single wall in here?');
   };
 
@@ -735,7 +753,7 @@
     'Maya': { lines: [['', 'I have a thing tonight.'], ['', '...The thing is not going to wrestling.']] },
     'Jordan': { lines: [['', 'Is that the show with the guy who yells about English? Hard pass.']] },
     'Vendor': { lines: [['', 'And leave my Doosh unattended? Never.']] },
-    'Dr. Moles': { lines: [['', 'I have 200 finals to grade. They all have the same answer.']] },
+    'Dr. Moles': { lines: [['', 'I have 200 finals to grade. Nobody got the last question right. Again.']] },
     'Priya': { lines: [['', 'I\'m literally in the middle of an exam.']] },
     'Referee': { lines: [['', 'I\'m already going. I\'m the REFEREE.']] },
   };
