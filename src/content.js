@@ -1090,7 +1090,7 @@
     if (!m) return;
     f.mikeyMet = true;
     const back = side === 'west' ? 1 : -1;
-    yield G.walkTo(m, 54 * 16 + 8, 53 * 16 + 10, 4);
+    yield G.walkTo(m, 43 * 16 + 8, 53 * 16 + 10, 4);
     yield G.walkTo(m, G.clamp(p.x - back * 16, 8, w.pw - 8), p.y, 4);
     m.dir = G.dirToward(p.x - m.x, p.y - m.y);
     if (!f.mikeyBlocked) {
@@ -1102,25 +1102,25 @@
       yield G.say('Mikey', ['Lily first. Then you can drive to Chesapeake.', 'Nope. Not until I see Lily.', 'The balloons and I are not moving.'][Math.floor(Math.random() * 3)]);
     }
     yield G.walkTo(p, p.x + back * 28, p.y, 1.4);
-    yield G.walkTo(m, 54 * 16 + 8, 53 * 16 + 10, 4);
+    yield G.walkTo(m, 43 * 16 + 8, 53 * 16 + 10, 4);
     yield G.walkTo(m, m.home.x, m.home.y, 3);
     m.dir = 'down';
   };
   S.homeFront = function* () {
-    yield G.say(null, 'The front door, with a wreath on it. Home sweet home.');
+    yield G.say(null, 'The front door, with a wreath on it and a lantern on each side. Home sweet home.');
     yield G.say(null, inside);
   };
-  S.homeWing = function* () {
-    yield G.say(null, 'The French doors by the old brick chimney.');
+  S.homePorch = function* () {
+    yield G.say(null, 'The covered porch and the sunroom: sliding glass doors, sheer curtains, and the white hutch.');
+    yield G.say(null, inside);
+  };
+  S.homeSideDoor = function* () {
+    yield G.say(null, 'The side door by the driveway. Nobody uses the front door. Everybody comes in this way.');
     yield G.say(null, inside);
   };
   S.homeGarage = function* () {
     yield G.say(null, 'The garage, with Dad\'s workshop inside: pipe blanks, rasps, sandpaper, and about four hundred coffee cans full of screws.');
     yield G.say(null, inside);
-  };
-  S.homeCovered = function* () {
-    yield G.say(null, 'The covered area behind the garage. String lights, folding chairs, and a wheelbarrow that has seen things.');
-    yield G.say(null, 'It\'s where everybody ends up on summer nights.');
   };
   S.homePoolHouse = function* () {
     yield G.say(null, 'The little white pool house. Towels, pool noodles, and a skimmer net.');
@@ -1143,6 +1143,21 @@
   };
   S.homePool = function* () {
     yield G.say(null, 'The pool. Nate learned to swim here. (Swimming not included.)');
+  };
+  S.homeFirePit = function* () {
+    yield G.say(null, 'The fire pit. S\'mores, ghost stories, and arguing about who gets to poke the logs.');
+  };
+  S.homeLawnSet = function* () {
+    yield G.say(null, 'White wrought-iron chairs and a yellow lawn chair. Comfy for about four minutes.');
+  };
+  S.homeSUV = function* () {
+    yield G.say(null, 'A navy SUV, parked in its usual spot by the house.');
+  };
+  S.homeHoop = function* () {
+    yield G.say(null, 'The driveway hoop. Countless games of H-O-R-S-E were lost here.');
+  };
+  S.homePicnic = function* () {
+    yield G.say(null, 'The picnic table. Every summer cookout ends up right here.');
   };
   S.homeMailbox = function* () {
     yield G.say(null, 'The mailbox. Inside: a catalog, a bill, and a postcard from Nani that just says "SHINE!"');
@@ -1451,14 +1466,15 @@
   };
 
   // Nate's childhood home on Rattlesnake Bridge Rd, Bedminster NJ, laid out
-  // from the property survey (plus the family's corrections): the road and
-  // board fence along the bottom; the white farmhouse near the road with its
-  // patio on the left by the chimney; the garage (Dad's workshop inside) with
-  // the covered area built onto its back; the asphalt driveway; the little
-  // white pool house to the right of the house and the pool behind it; a long
-  // stone driveway that comes in from the road on the far east, runs north to
-  // a bridge over Brady Brook, and curves back west to the house; and the
-  // fenced garden with the chicken coop. (No house number: the game is public.)
+  // from the property survey and the family's photos: the road and board
+  // fence along the bottom; a long gravel driveway up through the front
+  // meadow into the asphalt parking area, then on north past the garage and
+  // the pool to a bridge over Brady Brook; the white farmhouse (chimney end on
+  // the left, raised stone patio off the porch, side door onto the parking
+  // area); the big double-trunk tree; firewood racks, the basketball hoop and
+  // the garage (Dad's workshop inside); the pool with the pool house on its
+  // left; and the fenced garden with the chicken coop behind it all. (No house
+  // number: the game is public.)
   G.MAPS.home = {
     name: 'Rattlesnake Bridge Rd',
     music: 'home',
@@ -1467,89 +1483,115 @@
       const g = Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => ((x >> 1) % 2 ? 'L' : 'M')));
       const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
       const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
-      // the long stone driveway: in from the road on the far east, north to the brook...
-      fill(54, 44, 2, 9, 'g');
-      fill(55, 36, 2, 8, 'g');
-      fill(54, 27, 2, 9, 'g');
-      fill(53, 18, 2, 9, 'g');
-      fill(52, 11, 2, 7, 'g');
-      fill(51, 0, 2, 11, 'g');
-      // ...and the long branch curving back west to the house
-      fill(25, 25, 16, 2, 'g');
-      fill(41, 24, 7, 2, 'g');
-      fill(48, 23, 6, 2, 'g');
+      // the long gravel driveway: up from the road into the parking area...
+      fill(43, 46, 2, 7, 'g');
+      fill(42, 41, 2, 6, 'g');
+      // ...and on north between the garage and the pool, then over the brook
+      fill(42, 18, 2, 18, 'g');
+      fill(43, 16, 2, 3, 'g');
+      fill(44, 15, 2, 2, 'g');
+      fill(45, 14, 2, 2, 'g');
+      fill(46, 13, 2, 2, 'g');
+      fill(47, 12, 3, 2, 'g');
+      fill(49, 11, 2, 2, 'g');
+      fill(51, 0, 2, 12, 'g');
       // Brady Brook runs diagonally across the top; the driveway crosses on a bridge
       const brook = (x) => Math.round(1 + x * 0.15);
       for (let x = 0; x < W; x++) { set(x, brook(x), '~'); set(x, brook(x) + 1, '~'); }
       for (let y = 0; y < H; y++) for (const x of [51, 52]) if (g[y][x] === '~') g[y][x] = 'W';
       // woods along both banks (the conservation easement)
       for (let x = 0; x < W - 1; x += 2) {
-        if (x >= 49 && x <= 54) continue;
+        if (x >= 44 && x <= 54) continue;
         const c = brook(x);
         if (c >= 4) set(x, c - 3, 'T');
         if (x % 4 === 0 || x > 18) set(x, c + 3, 'T');
       }
-      // asphalt driveway in front of the garage
-      fill(9, 25, 16, 3, 'a');
+      // the asphalt parking area in front of the house, and the garage apron
+      fill(20, 36, 26, 5, 'a');
+      fill(35, 34, 7, 2, 'a');
       // Rattlesnake Bridge Road and the board fence along it (gap for the driveway)
       fill(0, 53, W, 1, 'a');
       fill(0, 54, W, 1, 'Y');
       fill(0, 52, W, 1, 'f');
-      set(54, 52, 'g'); set(55, 52, 'g');
+      set(43, 52, 'g'); set(44, 52, 'g');
       // wildflowers scattered across the front meadow
-      for (let i = 0; i < 40; i++) set(Math.floor(G.hash(i, 71) * 52), 36 + Math.floor(G.hash(i, 72) * 15), ',');
-      // pavers from the driveway down the side of the house to the front door
-      fill(29, 27, 1, 8, 'p');
-      fill(25, 34, 4, 1, 'p');
-      // boxwood hedges along the front of the house
-      fill(19, 34, 5, 1, 'H');
-      // in-ground pool on a concrete deck, behind the pool house
-      fill(33, 17, 7, 5, 'C');
-      fill(34, 18, 5, 3, '~');
+      for (let i = 0; i < 40; i++) {
+        const x = Math.floor(G.hash(i, 71) * 52), y = 41 + Math.floor(G.hash(i, 72) * 10);
+        if (g[y][x] === 'L' || g[y][x] === 'M') set(x, y, ',');
+      }
+      // brick paver walk from the parking area to the side door
+      fill(23, 34, 1, 2, 'p');
+      // boxwood under the window band, round shrubs by the side door, boxwoods under the big tree
+      fill(20, 34, 2, 1, 'H');
+      fill(24, 34, 2, 1, 'H');
+      fill(26, 35, 2, 1, 'H');
+      // the in-ground pool on its concrete deck, past the end of the parking area
+      fill(47, 29, 7, 5, 'C');
+      fill(48, 30, 5, 3, '~');
       // the garden: rustic X-braced fence, raised beds, snapdragons, paths
-      fill(2, 9, 15, 1, 'X'); fill(2, 17, 15, 1, 'X');
-      fill(2, 9, 1, 9, 'X'); fill(16, 9, 1, 9, 'X');
-      set(9, 17, 'k');
-      fill(3, 12, 13, 1, '=');
-      fill(10, 13, 1, 4, '=');
-      fill(11, 13, 1, 4, 'k');
-      [[4, 13], [5, 13], [4, 15], [5, 15], [13, 13], [14, 13], [13, 15], [14, 15]].forEach(([x, y]) => set(x, y, 'e'));
-      fill(7, 13, 2, 3, 'F');
-      // big oaks around the yard; woods between the lot and the driveway and on the east edge
-      [[10, 31], [5, 28], [33, 30], [38, 28], [43, 19], [24, 20], [0, 19], [0, 23], [0, 27], [0, 31],
-        [48, 27], [48, 31], [56, 14], [58, 16], [56, 20], [58, 22], [56, 26], [58, 28], [56, 31], [58, 33],
-        [8, 40], [15, 44], [22, 39], [28, 46], [36, 41], [42, 46], [47, 39], [6, 47], [18, 49], [33, 49], [11, 36],
+      fill(26, 15, 15, 1, 'X'); fill(26, 23, 15, 1, 'X');
+      fill(26, 15, 1, 9, 'X'); fill(40, 15, 1, 9, 'X');
+      set(33, 23, 'k');
+      fill(27, 18, 13, 1, '=');
+      fill(34, 19, 1, 4, '=');
+      fill(35, 19, 1, 4, 'k');
+      [[28, 19], [29, 19], [28, 21], [29, 21], [37, 19], [38, 19], [37, 21], [38, 21]].forEach(([x, y]) => set(x, y, 'e'));
+      fill(31, 19, 2, 3, 'F');
+      // big oaks around the yard; woods along the west and east edges
+      [[8, 30], [5, 26], [24, 20], [14, 23], [48, 27], [0, 19], [0, 23], [0, 27], [0, 31],
+        [56, 14], [58, 16], [56, 20], [58, 22], [56, 26], [58, 28], [56, 31], [58, 33],
+        [8, 40], [9, 35], [15, 45], [28, 46], [36, 42], [38, 46], [47, 42], [6, 47], [18, 49], [33, 49],
         [57, 37], [57, 41], [57, 45], [0, 35], [0, 39], [0, 43], [0, 47]]
         .forEach(([x, y]) => set(x, y, 'T'));
       return g.map((r) => r.join(''));
     },
     setup(w) {
-      // garage with Dad's workshop inside, and the covered area built onto its back
-      w.addBuilding({ x: 9, y: 21, w: 7, h: 4, door: 3, style: 'shake', wall: '#2f4a3e', roof: '#4a4c56', garageDoors: 3, weathervane: true, locked: S.homeGarage });
-      w.addProp({ img: G.spr.coveredArea, tx: 4, ty: 21, h: 4, solid: [4, 21, 5, 4], hit: [4, 21, 5, 4], talk: S.homeCovered });
-      // the house: chimney wing on the left, two-story main block, patio on the left side
-      w.addBuilding({ x: 17, y: 29, w: 4, h: 5, door: 1, style: 'clapboard', wall: '#f2f0ea', roof: '#4a4c56', shutters: '#1c2226', glass: '#3a4a6a', doorColor: '#c8dce8', doorFrame: '#ffffff', chimney: { x: 2, w: 10 }, locked: S.homeWing });
-      w.addBuilding({ x: 21, y: 28, w: 8, h: 6, door: 4, style: 'clapboard', stories: 2, wallH: 48, wall: '#f2f0ea', roof: '#4a4c56', shutters: '#1c2226', glass: '#3a4a6a', doorColor: '#1c3a2c', wreath: true, locked: S.homeFront });
-      w.addProp({ img: G.spr.patio, tx: 14, ty: 31, h: 3, solid: [14, 32, 3, 2], hit: [14, 31, 3, 3], talk: S.homePatio });
-      // the little white pool house, to the right of the house and a bit behind it
-      w.addBuilding({ x: 31, y: 22, w: 2, h: 3, door: 0, style: 'clapboard', wall: '#f4f2ec', roof: '#4a4c56', doorColor: '#f4f2ec', doorFrame: '#c8c8c8', locked: S.homePoolHouse });
-      // the yard
-      w.addProp({ img: G.spr.truck, tx: 18, ty: 25, h: 3, dx: 2, solid: [18, 25, 2, 3], hit: [18, 25, 2, 3], talk: S.homeTruck });
-      w.addProp({ img: G.spr.coop, tx: 4, ty: 10, h: 2, solid: [4, 10, 6, 2], hit: [4, 10, 6, 2], talk: S.homeCoop });
-      w.addProp({ img: G.spr.greenhouse, tx: 12, ty: 10, h: 2, solid: [12, 10, 3, 2], hit: [12, 10, 3, 2], talk: S.homeGreenhouse });
-      w.addProp({ img: G.spr.firewood, tx: 17, ty: 21, solid: [17, 21, 2, 1], hit: [17, 21, 2, 1], talk: S.homeFirewood });
-      w.addProp({ img: G.spr.firewood, tx: 2, ty: 25, solid: [2, 25, 2, 1], hit: [2, 25, 2, 1], talk: S.homeFirewood });
-      w.addProp({ img: G.spr.sawhorses, tx: 35, ty: 27, dx: 2, solid: [35, 27, 3, 1] });
-      w.addProp({ img: G.spr.mailbox, tx: 57, ty: 51, dx: 2, solid: [57, 51, 1, 1], hit: [57, 51, 1, 1], talk: S.homeMailbox });
-      w.addProp({ img: G.spr.streetSign, tx: 51, ty: 51, solid: [51, 51, 1, 1], hit: [51, 51, 1, 1], talk: S.homeStreetSign });
-      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [34 * 16, 18 * 16, 39 * 16, 21 * 16], talk: S.homePool });
+      // the house; its doors and the porch are talkable
+      w.addProp({ img: G.spr.farmhouse, tx: 11, ty: 27, h: 7 });
+      w.blockTiles(11, 28, 12, 6);
+      w.blockTiles(23, 30, 3, 4);
+      const door = (x, y, wd, talk) => w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [x * 16, y * 16, (x + wd) * 16, (y + 1) * 16], talk });
+      door(13, 33, 4, S.homePorch);
+      door(17, 33, 1, S.homeFront);
+      door(23, 33, 1, S.homeSideDoor);
+      // the raised stone patio off the porch: steps down at the chimney end
+      w.addProp({ img: G.spr.patio, tx: 12, ty: 34, h: 3, flat: true });
+      w.blockTiles(13, 36, 6, 1);
+      w.addProp({ img: G.spr.grill, tx: 13, ty: 34, solid: [13, 34, 1, 1], hit: [13, 34, 1, 1], talk: S.homePatio });
+      w.addProp({ img: G.spr.patioUmbrella, tx: 15, ty: 34, dx: 2, solid: [15, 34, 1, 1], hit: [15, 34, 1, 1], talk: S.homePatio });
+      w.addProp({ img: G.spr.woodStack, tx: 18, ty: 34, solid: [18, 34, 1, 1], hit: [18, 34, 1, 1], talk: S.homeFirewood });
+      // the lawn by the patio
+      w.addProp({ img: G.spr.firePit, tx: 14, ty: 39, solid: [14, 39, 1, 1], hit: [14, 39, 1, 1], talk: S.homeFirePit });
+      w.addProp({ img: G.spr.lawnSet, tx: 16, ty: 38, solid: [16, 38, 2, 1], hit: [16, 38, 2, 1], talk: S.homeLawnSet });
+      w.addProp({ img: G.spr.sawhorses, tx: 5, ty: 38, dx: 2, solid: [5, 38, 3, 1] });
+      // the big double-trunk tree between the house and the parking area
+      w.props.push({ img: G.spr.bigTree, x: 27 * 16 - 48, y: 35 * 16 - 120, base: 35 * 16 - 1 });
+      w.blockTiles(26, 33, 2, 2);
+      w.addProp({ img: G.spr.suv, tx: 20, ty: 37, h: 3, dx: 3, solid: [20, 38, 2, 2], hit: [20, 38, 2, 2], talk: S.homeSUV });
+      // firewood racks, a fresh pile and the hoop beside the garage (Dad's workshop
+      // inside), which opens onto the parking area
+      w.addProp({ img: G.spr.woodRack, tx: 28, ty: 34, solid: [28, 34, 3, 1], hit: [28, 34, 3, 1], talk: S.homeFirewood });
+      w.addProp({ img: G.spr.woodRack, tx: 31, ty: 34, solid: [31, 34, 3, 1], hit: [31, 34, 3, 1], talk: S.homeFirewood });
+      w.addProp({ img: G.spr.woodPile, tx: 31, ty: 35, dx: 1, solid: [31, 35, 2, 1], hit: [31, 35, 2, 1], talk: S.homeFirewood });
+      w.addProp({ img: G.spr.hoop, tx: 34, ty: 34, dx: -6, solid: [34, 34, 1, 1], hit: [34, 34, 1, 1], talk: S.homeHoop });
+      w.addBuilding({ x: 35, y: 30, w: 7, h: 4, door: 3, style: 'shake', wall: '#2f4a3e', roof: '#4a4c56', garageDoors: 3, weathervane: true, locked: S.homeGarage });
+      w.addProp({ img: G.spr.truck, tx: 44, ty: 36, h: 3, dx: 2, solid: [44, 36, 2, 3], hit: [44, 36, 2, 3], talk: S.homeTruck });
+      // across the driveway: the little white pool house on the pool's left, lined up with its middle
+      w.addBuilding({ x: 44, y: 30, w: 2, h: 3, door: 0, style: 'clapboard', wall: '#f4f2ec', roof: '#4a4c56', doorColor: '#f4f2ec', doorFrame: '#c8c8c8', locked: S.homePoolHouse });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [48 * 16, 30 * 16, 53 * 16, 33 * 16], talk: S.homePool });
+      // behind it all: the picnic table and the garden
+      w.addProp({ img: G.spr.picnicTable, tx: 29, ty: 24, solid: [29, 24, 2, 1], hit: [29, 24, 2, 1], talk: S.homePicnic });
+      w.addProp({ img: G.spr.coop, tx: 28, ty: 16, h: 2, solid: [28, 16, 6, 2], hit: [28, 16, 6, 2], talk: S.homeCoop });
+      w.addProp({ img: G.spr.greenhouse, tx: 36, ty: 16, h: 2, solid: [36, 16, 3, 2], hit: [36, 16, 3, 2], talk: S.homeGreenhouse });
+      w.addProp({ img: G.spr.mailbox, tx: 46, ty: 51, dx: 2, solid: [46, 51, 1, 1], hit: [46, 51, 1, 1], talk: S.homeMailbox });
+      w.addProp({ img: G.spr.streetSign, tx: 40, ty: 51, solid: [40, 51, 1, 1], hit: [40, 51, 1, 1], talk: S.homeStreetSign });
       w.addTree(16, 19, 'pine');
-      w.addTree(41, 21, 'pine');
-      w.add(new G.Sign(54, 12, 'BRADY BROOK.'));
+      w.addTree(46, 23, 'pine');
+      w.add(new G.Sign(53, 12, 'BRADY BROOK.'));
 
       // the hens, free-ranging inside the garden fence
-      const pen = [3 * 16 + 6, 13 * 16 + 4, 16 * 16 - 6, 17 * 16 - 2];
-      [[6, 14, 'white'], [9, 14, 'brown'], [12, 14, 'white'], [10, 16, 'brown'], [6, 16, 'white']]
+      const pen = [27 * 16 + 6, 19 * 16 + 4, 40 * 16 - 6, 23 * 16 - 2];
+      [[30, 20, 'white'], [33, 20, 'brown'], [36, 20, 'white'], [34, 22, 'brown'], [30, 22, 'white']]
         .forEach(([x, y, c]) => w.add(new G.Chicken(x * 16 + 8, y * 16 + 12, c, pen)));
 
       // leaving: either end of the road asks where to; north past the bridge is a dead end for now
@@ -1559,10 +1601,10 @@
 
       // Mikey, waiting at the start of the driveway with flowers and balloons
       if (!flags().lilySaved) {
-        const mikey = w.add(new G.NPC({ sprite: 'mikey', name: 'Mikey', x: 53 * 16 + 8, y: 51 * 16 + 14, dir: 'down', talk: S.mikey, balloons: true }));
+        const mikey = w.add(new G.NPC({ sprite: 'mikey', name: 'Mikey', x: 42 * 16 + 8, y: 51 * 16 + 14, dir: 'down', talk: S.mikey, balloons: true }));
         mikey.held = G.spr.bouquet;
         w.mikey = mikey;
-        w.addTrigger(49, 51, 10, 4, () => { if (!flags().mikeyMet) G.script.run(S.mikeyIntro()); });
+        w.addTrigger(38, 51, 10, 4, () => { if (!flags().mikeyMet) G.script.run(S.mikeyIntro()); });
       }
     },
     // the flock's revenge: angry hens swoop in from off-screen for a few seconds
