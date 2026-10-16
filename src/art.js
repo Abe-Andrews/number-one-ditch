@@ -712,7 +712,7 @@
   // suit, cream mittens with ribbon ties, cream slippers with black toes.
   function eggmas() {
     const W = 28, H = 34, p = new Pix(W, H);
-    const cream = '#f2ead6', creamD = '#d4c8ac', creamL = '#fffaf0';
+    const cream = '#f2ead6', creamD = '#d4c8ac';
     const red = '#7a1e2c', redD = '#561420', green = '#3e6a44', gold = '#c8984c';
     const white = '#fbfbf8', whiteD = '#c4c4cc', black = '#1e2230', ribbon = '#c02848';
     const paisley = (x, y) => {
@@ -745,7 +745,7 @@
         const dx = (x + 0.5 - cx) / rx, dy = (y + 0.5 - cy) / ry;
         if (dx * dx + dy * dy > 1) continue;
         const s = dx * 0.5 + dy * 0.75;
-        p.set(x, y, s > 0.55 ? creamD : s < -0.6 ? creamL : cream);
+        p.set(x, y, s > 0.55 ? creamD : cream);
       }
     }
     // face
