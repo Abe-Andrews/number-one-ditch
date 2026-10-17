@@ -3340,35 +3340,55 @@
     return finish(p);
   }
   // Nate's bass lying on the bench, neck and body side by side like in the photo.
+  // Nate's half-finished bass (from the user's photo): raw walnut body with
+  // long horns reaching toward the neck, a maple neck that runs right through
+  // the body, silver frets, empty pickup routs, a rounded paddle headstock.
+  const BWAL = '#8a7062', BWALD = '#6a5446', BWALL = '#a68c7c', BMAP = '#e6cc9a', BMAPD = '#c8aa78', BMAPL = '#f6e2b8', BFRET = '#ecece6', BROUT = '#3a2c24';
   function bassOnBench() {
     const p = new Pix(52, 16);
-    p.rect(0, 5, 7, 7, '#d8b47c'); for (const [x, y] of [[2, 6], [4, 10], [1, 9], [5, 7]]) p.set(x, y, '#5a3e28');
-    p.rect(7, 7, 24, 4, '#e0c08a'); for (let x = 10; x < 31; x += 3) p.vline(x, 7, 10, '#f4f4f0');
-    for (let y = 0; y < 16; y++) for (let x = 28; x < 52; x++) {
-      const body = (x - 40) ** 2 / 130 + (y - 8) ** 2 / 64 <= 1;
-      const horn = (x - 31) ** 2 / 12 + (y - 2) ** 2 / 6 <= 1 || (x - 31) ** 2 / 12 + (y - 14) ** 2 / 6 <= 1;
-      if (body || horn) p.set(x, y, (x + y * 3) % 7 ? '#7a5638' : '#6a4a30');
+    for (let y = 0; y < 16; y++) for (let x = 26; x < 52; x++) {
+      const body = (x - 42) ** 2 / 88 + (y - 7.5) ** 2 / 60 <= 1;
+      const hornU = (x - 33) ** 2 / 26 + (y - 2) ** 2 / 4 <= 1;
+      const hornL = (x - 35) ** 2 / 20 + (y - 13.5) ** 2 / 4 <= 1;
+      if (body || hornU || hornL) p.set(x, y, y < 3 ? BWALL : y > 12 ? BWALD : (x * 7 + y * 3) % 11 ? BWAL : BWALD);
     }
-    p.rect(31, 7, 12, 4, '#e0c08a'); p.rect(44, 6, 3, 6, '#3a2a1c');
+    for (let y = 2; y < 14; y++) for (let x = 0; x < 9; x++) {
+      if ((x - 4.5) ** 2 / 20 + (y - 7.5) ** 2 / 26 <= 1 || (x >= 5 && y >= 5 && y <= 10)) p.set(x, y, y < 5 ? BMAPL : BMAP);
+    }
+    for (const [x, y] of [[3, 5], [6, 5], [3, 10], [6, 10]]) p.set(x, y, BROUT);
+    p.rect(8, 6, 44, 4, BMAP); p.hline(8, 51, 6, BMAPL); p.hline(8, 51, 9, BMAPD);
+    let fx = 10, gap = 3.2;
+    while (fx < 38) { p.vline(Math.round(fx), 6, 9, BFRET); fx += gap; gap = Math.max(1.6, gap * 0.93); }
+    p.rect(41, 5, 3, 6, BROUT); p.rect(47, 5, 3, 6, BROUT);
     return finish(p);
   }
-  // The bass Nate swings: body at the far end, held by the neck.
+  // The bass Nate swings: body at the far end, held down by the headstock.
   function bassSwing() {
     const p = new Pix(14, 34);
-    for (let y = 0; y < 15; y++) for (let x = 0; x < 14; x++) {
-      const body = (x - 6.5) ** 2 / 36 + (y - 8) ** 2 / 46 <= 1;
-      const horn = (x - 2) ** 2 / 4 + (y - 1.5) ** 2 / 6 <= 1 || (x - 11) ** 2 / 4 + (y - 1.5) ** 2 / 6 <= 1;
-      if (body || horn) p.set(x, y, (x * 3 + y) % 7 ? '#7a5638' : '#6a4a30');
+    for (let y = 0; y < 22; y++) for (let x = 0; x < 14; x++) {
+      const body = (x - 6.5) ** 2 / 42 + (y - 7) ** 2 / 50 <= 1;
+      const hornL = (x - 1.8) ** 2 / 3 + (y - 15) ** 2 / 20 <= 1;
+      const hornR = (x - 11.5) ** 2 / 3 + (y - 13.5) ** 2 / 14 <= 1;
+      if (body || hornL || hornR) p.set(x, y, x < 3 ? BWALL : x > 10 ? BWALD : (x * 3 + y * 5) % 11 ? BWAL : BWALD);
     }
-    p.rect(5, 4, 4, 30, '#e0c08a'); for (let y = 15; y < 30; y += 3) p.hline(5, 8, y, '#f4f4f0');
-    p.rect(4, 29, 6, 5, '#d8b47c'); p.set(5, 30, '#5a3e28'); p.set(8, 32, '#5a3e28');
+    p.rect(5, 1, 4, 29, BMAP); p.vline(5, 1, 29, BMAPL); p.vline(8, 1, 29, BMAPD);
+    p.rect(4, 4, 6, 2, BROUT); p.rect(4, 9, 6, 2, BROUT);
+    let fy = 15, gap = 1.8;
+    while (fy < 29) { p.hline(5, 8, Math.round(fy), BFRET); fy += gap; gap *= 1.07; }
+    for (let y = 28; y < 34; y++) for (let x = 2; x < 12; x++) if ((x - 7) ** 2 / 20 + (y - 31) ** 2 / 9 <= 1) p.set(x, y, BMAP);
+    p.set(5, 30, BROUT); p.set(9, 30, BROUT); p.set(5, 32, BROUT); p.set(9, 32, BROUT);
     return finish(p);
   }
   function bassIcon() {
     const p = new Pix(16, 16);
-    for (let k = 0; k < 9; k++) { p.set(3 + k, 12 - k, '#e0c08a'); p.set(4 + k, 12 - k, '#e0c08a'); }
-    for (let y = 9; y < 16; y++) for (let x = 0; x < 8; x++) if ((x - 3.5) ** 2 / 14 + (y - 12.5) ** 2 / 10 <= 1) p.set(x, y, '#7a5638');
-    p.rect(12, 0, 4, 4, '#d8b47c');
+    for (let y = 6; y < 16; y++) for (let x = 0; x < 10; x++) {
+      const body = (x - 3.8) ** 2 / 13 + (y - 11.8) ** 2 / 12 <= 1;
+      const horn = (x - 7.2) ** 2 / 2.5 + (y - 8.4) ** 2 / 2.5 <= 1;
+      if (body || horn) p.set(x, y, (x + y) % 5 ? BWAL : BWALD);
+    }
+    for (let k = -1; k < 10; k++) { p.set(3 + k, 12 - k, BMAP); p.set(4 + k, 12 - k, BMAPD); if (k >= 4 && k % 2 === 0) p.set(4 + k, 12 - k, BFRET); }
+    p.set(3, 12, BROUT); p.set(5, 10, BROUT);
+    p.rect(12, 1, 3, 3, BMAP); p.set(11, 2, BMAP); p.set(13, 0, BMAP); p.set(13, 2, BROUT);
     return finish(p);
   }
   function shopShelves(plane) {

@@ -192,7 +192,8 @@
     vodka: { kind: 'key', name: 'Vodka Shooters', icon: () => G.spr.vodka, has: () => !!st().items.vodka && !fl().badlandsBeaten, desc: 'Three tiny bottles. Mom confiscated them from a hollow "War and Peace" years ago, then sold them back to Nate.' },
     chicken: {
       kind: 'gear', equip: true, name: 'The Chicken', short: 'Chicken', icon: () => G.spr.chickens.white.right[0], has: () => !!st().items.chicken,
-      desc: 'Henrietta, from Mom\'s flower stand. Press X and she fires an egg. She needs a second to lay the next one.',
+      count: () => st().items.eggs || 0,
+      desc: 'Henrietta, from Mom\'s flower stand. Press X and she fires an egg. Eggs sold separately (Mom\'s stand, by the dozen).',
     },
     books: {
       kind: 'key', name: 'Mom\'s Books', icon: () => G.spr.flyingBook[1], has: () => !!st().items.books && !fl().shopOpen,
@@ -1589,10 +1590,27 @@
       if (!(yield* momPay(30))) return;
       s.items.chicken = true;
       s.xItem = 'chicken';
-      yield G.itemGet(G.spr.chickens.white.right[0], 'You got {y}The Chicken{/}! Press {y}X{/} to fire an egg.');
+      yield G.itemGet(G.spr.chickens.white.right[0], 'You got {y}The Chicken{/}! Load her with eggs, then press {y}X{/} to fire one.');
       yield G.say('Michelle', 'Her name is Henrietta. She needs a second between eggs. Don\'t rush her.');
       yield G.say('Nate', 'A chicken that shoots eggs. Mom. This is the best thing you\'ve ever sold.');
-      yield G.say('Michelle', 'It\'s the only thing I\'ve ever sold that isn\'t a flower.');
+      yield G.say('Michelle', 'Eggs are sold separately.');
+      yield G.say('Nate', '...She\'s a CHICKEN.');
+      yield G.say('Michelle', 'And I\'m a small business. A dozen for 10 teeth.');
+    }]);
+    if (s.items.chicken) menu.push(['Eggs (a dozen): 10', function* () {
+      if ((s.items.eggs || 0) >= 40) { yield G.say('Michelle', 'Henrietta can\'t hold any more eggs, hon. Nobody can.'); return; }
+      if (!(yield* momPay(10))) return;
+      s.items.eggs = Math.min(40, (s.items.eggs || 0) + 12);
+      yield G.itemGet(G.spr.egg, 'You got {y}a dozen eggs{/}! (' + G.sayable(s.items.eggs) + ' loaded)');
+      if (!f.eggJoke) { f.eggJoke = true; yield G.say('Michelle', 'Fresh from the coop this morning. Henrietta\'s cousins.'); }
+    }]);
+    if (!f.momHeart) menu.push(['Heart Container: 100', function* () {
+      if (!(yield* momPay(100))) return;
+      f.momHeart = true;
+      s.maxHp += 2;
+      s.hp = s.maxHp;
+      yield G.itemGet(G.spr.heartBig, 'You got a {r}Heart Container{/}! Max hearts +1.');
+      yield G.say('Michelle', 'Pressed flowers in a little heart-shaped frame. It\'s good for you. Don\'t ask how.');
     }]);
     if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten) menu.push(['Vodka Shooters: 10', function* () {
       yield G.say('Michelle', 'Vodka shooters. Who exactly are these for?');
@@ -1824,11 +1842,16 @@
     yield G.emote(b, 'huh', 40);
     yield G.say('Badlands Chugs', 'It\'s blue. Why is it blue? And why is it... SMOKING?');
     yield G.say('Badlands Chugs', '...Ain\'t nothing Badlands can\'t chug. Don\'t touch dat.');
-    // the chug, in glorious close-up
+    // the chug, in glorious close-up (Nate and whoever's with him step aside so nobody blocks the shot)
     G.audio.play('chug');
     w.boot.img = null;
     b.held = G.spr.bootBlue;
     b.dir = 'down';
+    const fol = w.ents.find((e) => e instanceof G.Follower && !e.dead);
+    if (fol) fol.hold = true;
+    yield G.together(G.walkTo(p, 26 * 16 + 8, 7 * 16 + 14, 1.6), fol && G.walkTo(fol, 34 * 16 + 8, 7 * 16 + 14, 1.6));
+    p.dir = 'right';
+    if (fol) fol.dir = 'left';
     yield G.camFocus(b.x, b.y - 18, 30);
     yield G.zoomTo(1.5, 40);
     const gaps = [26, 22, 18, 15, 12, 10, 8, 7, 6, 5, 5, 4, 4, 4];
@@ -1920,6 +1943,7 @@
     yield G.say('Nate', '...He went through the roof.');
     yield G.say('Lily', '{d}(from inside the fridge){/} Did he just say "like and subscribe"?!');
     f.badlandsBeaten = true;
+    if (fol) fol.hold = false;
     yield* S.lilyRescue();
   };
 
@@ -1982,8 +2006,8 @@
     G.state.hp = G.state.maxHp;
     yield G.wait(20);
     yield G.banner('GOLDEN HOUR', 'LILY  vs.  MIKEY', 170);
-    yield G.say('Mikey', 'Okay. Okay. Here goes. I wrote this myself. Ahem.');
-    yield G.say('Mikey', '{y}~ Oh Lily, it\'s golden hour... ~{/}');
+    yield G.say('Mikey', 'Okay. Okay. Here goes. Ahem.');
+    yield G.say(null, 'Mikey closes his eyes and starts to sing. Loudly.');
     yield G.say(null, 'You\'re playing as {p}Lily{/}! {y}Hold Z{/} to wind up a {y}"No."{/} and let go to say it.');
     yield G.say(null, 'She has to plant her feet to wind up, so she can\'t move. Let go too soon and it comes out as a mumbled "no..."');
     yield G.say('Lily', 'And Mikey hears a mumbled "no" as a maybe.');

@@ -199,6 +199,16 @@
     update() { return --this.t <= 0; },
   });
 
+  // Run several commands at once; done when all of them are (nulls are skipped).
+  G.together = (...cmds) => {
+    const list = cmds.filter(Boolean);
+    return {
+      start() { list.forEach((c) => c.start && c.start()); this.done = list.map(() => false); },
+      update() { list.forEach((c, i) => { if (!this.done[i]) this.done[i] = c.update(); }); return this.done.every(Boolean); },
+      draw(ctx) { list.forEach((c) => c.draw && c.draw(ctx)); },
+    };
+  };
+
   // Walk an entity to (x, y) ignoring collision.
   G.walkTo = (ent, x, y, speed = 1) => ({
     start() { ent.walking = true; },

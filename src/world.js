@@ -334,10 +334,13 @@
       }
       for (const t of this.texts) {
         if (t.t < 12 && (t.t >> 1) & 1) continue;
-        const w = G.font.width(t.text);
-        // (kept on screen, so long lines near the edge don't get cut off)
-        const sx = G.clamp(Math.round(t.x - w / 2) - cx, 2, Math.max(2, G.W - w - 2));
-        G.font.draw(ctx, t.text, sx, Math.round(t.y) - cy, t.color, { shadow: '#1c1424' });
+        // kept on screen; lines too wide for it wrap onto a second row
+        const rows = G.font.width(t.text) > G.W - 8 ? G.font.wrap(t.text, G.W - 8) : [t.text];
+        rows.forEach((row, i) => {
+          const w = G.font.width(row);
+          const sx = G.clamp(Math.round(t.x - w / 2) - cx, 2, Math.max(2, G.W - w - 2));
+          G.font.draw(ctx, row, sx, Math.round(t.y) - cy - (rows.length - 1 - i) * 9, t.color, { shadow: '#1c1424' });
+        });
       }
     }
   }

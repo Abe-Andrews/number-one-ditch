@@ -38,7 +38,7 @@
       }
       // item buttons
       const xi = s.xItem && G.ITEMS[s.xItem];
-      const xCount = xi && typeof s.items[s.xItem] === 'number' ? s.items[s.xItem] : null;
+      const xCount = xi && xi.count ? xi.count() : xi && typeof s.items[s.xItem] === 'number' ? s.items[s.xItem] : null;
       if (s.playAs) {
         // playing as Lily: no items, just her "No."
         itemBox(ctx, G.W - 52, 5, 'X', null);

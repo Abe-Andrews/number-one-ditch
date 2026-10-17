@@ -247,6 +247,9 @@
         // the chicken lays... fires... an egg (with a cooldown)
         if (this.eggCool > 0) { G.audio.sfx('bump'); return; }
         const p = this.player, [dx, dy] = G.DIRS[p.dir];
+        // eggs are sold separately (Mom's flower stand)
+        if (!(s.items.eggs > 0)) { G.audio.sfx('bump'); this.world.pop(p.x, p.y - 30, 'OUT OF EGGS!', '#f8f8f0'); this.eggCool = 20; return; }
+        s.items.eggs--;
         this.world.add(new G.EggShot(p.x + dx * 8, p.y + dy * 6, p.dir));
         this.eggCool = 40;
         p.chickenT = 20;

@@ -786,15 +786,26 @@
   // ============================================================== MIKEY (miniboss)
   // Three heart balloons orbit him and soak up Lily's "No."s. Pop them all and
   // he's wide open; at half health the golden hour kicks in.
-  // Mikey's song: his own, written for Lily, sung until she beats him.
+  // Mikey's song: golden hour (lyrics added by the user), sung until she beats him.
   const MIKEY_SONG = [
-    '~ Oh Lily, it\'s golden hour ~', '~ The sun is setting just for you ~',
-    '~ I blew up these balloons myself ~', '~ I\'m a little light-headed ~',
-    '~ Your hair is like a sunset ~', '~ Or a penny. A nice penny. ~',
-    '~ I practiced this all week ~', '~ In my car. In your driveway. ~',
-    '~ Say yes, or say maybe ~', '~ Just please don\'t say no ~',
-    '~ It\'s still golden hour ~', '~ For like four more minutes ~',
-    '~ KEY CHANGE! ~', '~ OH LILYYYY ~',
+      '~ It was just two lovers ~', '~ Sittin\' in the car, listening to Blonde ~',
+      '~ Fallin\' for each other ~', '~ Pink and orange skies, feelin\' super childish ~',
+      '~ No Donald Glover ~', '~ Missed call from my mother ~',
+      '~ Like, "Where you at tonight?" Got no alibi ~', '~ I was all alone with the love of my life ~',
+      '~ She\'s got glitter for skin ~', '~ My radiant beam in the night ~',
+      '~ I don\'t need no light to see you ~', '~ SHINE! ~',
+      '~ It\'s your golden hour (oh) ~', '~ You slow down time ~',
+      '~ In your golden hour (oh) ~', '~ WE WERE JUST TWO LOVERS! ~',
+      '~ Feet up on the dash, drivin\' nowhere fast ~', '~ Burnin\' through the summer ~',
+      '~ Radio on blast, make the moment last ~', '~ She got solar power ~',
+      '~ Minutes feel like hours ~', '~ She knew she was the baddest, can you even imagine ~',
+      '~ Fallin\' like I did? ~', '~ FOR THE LOVE OF MY LIFE! ~',
+      '~ She\'s got glow on her face ~', '~ A glorious look in her eyes ~',
+      '~ My angel of light ~', '~ I was all alone with the love of my life ~',
+      '~ She\'s got glitter for skin ~', '~ My radiant beam in the night ~',
+      '~ I don\'t need no light to see you ~', '~ SHINE! ~',
+      '~ It\'s your golden hour (oh) ~', '~ You slow down time ~',
+      '~ In your golden hour (oh) ~',
   ];
   const MIKEY_MAYBE = ['WAS THAT A MAYBE?', 'I HEARD "MAYBE"!', 'SO... A YES?', 'SHE\'S WARMING UP!'];
   const MIKEY_OUCH = ['OOF.', 'BUT THE SONG...', 'NOT EVEN A MAYBE?', 'OUCH.', 'I PRACTICED!'];
