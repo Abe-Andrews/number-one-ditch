@@ -226,6 +226,7 @@
     if (c.mask) return maskHead(p, c, y0, back ? 'back' : 'front');
     if (back) {
       hairBack(p, c, y0, ty);
+      headExtras(p, c, y0, 'back');
       hatBack(p, c, y0, ty);
       return;
     }
@@ -253,7 +254,29 @@
       p.hline(7, 8, y0 + 5, g);
     }
     if (c.earring) p.set(13, y0 + 7, c.earring);
+    headExtras(p, c, y0, 'front');
     hatFront(p, c, y0, ty);
+  }
+
+  // Extras drawn over the head: messy tufts, sport sunglasses pushed up on the
+  // forehead (Tyler), and hypnotized spiral eyes (whoever Father Eggmas got to).
+  function headExtras(p, c, y0, view) {
+    if (c.messy) {
+      const H = c.hair, D = c.hairD;
+      for (const [x, d] of [[4, 0], [6, 1], [8, 0], [10, 1], [11, 0]]) p.set(x, y0 - 1 + d, d ? D : H);
+      p.set(3, y0 + 1, H); p.set(12, y0 + 1, D);
+    }
+    if (c.shades) {
+      const g = c.shades;
+      if (view === 'back') { p.hline(3, 12, y0 + 3, g); return; }
+      if (view === 'side') { p.hline(5, 13, y0 + 2, g); p.hline(9, 12, y0 + 3, g); p.set(11, y0 + 2, '#5a7088'); return; }
+      p.hline(3, 12, y0 + 2, g); p.hline(4, 6, y0 + 3, g); p.hline(9, 11, y0 + 3, g);
+      p.set(5, y0 + 2, '#5a7088'); p.set(10, y0 + 2, '#5a7088');
+    }
+    if (c.swirl && view === 'front') {
+      for (const ex of [5, 10]) { p.set(ex - 1, y0 + 5, '#f8f8f8'); p.set(ex + 1, y0 + 6, '#f8f8f8'); p.set(ex, y0 + 4, c.eyes); }
+    }
+    if (c.swirl && view === 'side') { p.set(9, y0 + 5, '#f8f8f8'); p.set(11, y0 + 6, '#f8f8f8'); }
   }
 
   // Luchador mask with contrasting trim around the eyes and mouth.
@@ -616,6 +639,7 @@
       p.hline(7, 8, y0 + 5, g);
     }
     if (c.earring) p.set(7, y0 + 7, c.earring);
+    headExtras(p, c, y0, 'side');
     if (c.hood) {
       for (let i = 0; i < 2; i++) p.hline(HEAD[i][0], HEAD[i][1], y0 + i, c.hood);
       for (let y = y0 + 2; y <= y0 + 10; y++) p.hline(2, 6, y, y > y0 + 7 ? shade(c.hood, -0.25) : c.hood);
@@ -4159,6 +4183,79 @@
     return p.canvas();
   }
 
+  // ---- the old fisherman's surf rod: an inventory icon, the rod in his hands,
+  // a red-and-white lure and a bobber
+  function rodIcon() {
+    const p = new Pix(16, 16);
+    for (let i = 0; i < 14; i++) p.set(1 + i, 14 - i, i < 4 ? '#2a2a30' : '#3a5a8a');
+    for (let i = 4; i < 14; i += 3) p.set(2 + i, 14 - i, '#c8c8d0');
+    p.rect(3, 9, 3, 3, '#8a8a94'); p.set(4, 10, '#d8d8e0'); p.set(6, 10, '#2a2a30');
+    p.set(15, 1, '#e83030'); p.set(15, 2, '#f8f8f8'); p.vline(15, 3, 6, '#e8e8f0');
+    return finish(p);
+  }
+  function rodHeld() {
+    const p = new Pix(22, 24);
+    for (let i = 0; i < 22; i++) p.set(i, 23 - i, i < 5 ? '#2a2a30' : '#3a5a8a');
+    p.rect(3, 17, 3, 3, '#8a8a94'); p.set(4, 18, '#d8d8e0');
+    return finish(p);
+  }
+  function lure() {
+    const p = new Pix(6, 6);
+    p.rect(1, 1, 4, 2, '#e83030'); p.rect(1, 3, 4, 2, '#f8f8f8'); p.set(5, 4, '#c8c8d0'); p.set(0, 2, '#101010');
+    return finish(p);
+  }
+  // an old brass gate key with a paper tag
+  function gateKey() {
+    const p = new Pix(16, 14);
+    for (let y = 1; y < 8; y++) for (let x = 1; x < 8; x++) if ((x - 4) ** 2 + (y - 4) ** 2 <= 9 && (x - 4) ** 2 + (y - 4) ** 2 > 2) p.set(x, y, '#d8b040');
+    p.set(3, 2, '#f8e088'); p.hline(7, 14, 4, '#d8b040'); p.hline(7, 14, 5, '#a88828');
+    p.vline(12, 6, 8, '#d8b040'); p.vline(14, 6, 9, '#d8b040');
+    p.rect(2, 9, 6, 4, '#f4ecd8'); p.hline(3, 6, 10, '#c83030'); p.set(5, 8, '#8a8a94');
+    return finish(p);
+  }
+  function bobber() {
+    const p = new Pix(5, 6);
+    p.rect(1, 0, 3, 3, '#e83030'); p.rect(1, 3, 3, 2, '#f8f8f8'); p.set(2, 5, '#2a2a30');
+    return finish(p);
+  }
+
+  // ---- Tyler's fight: a mosasaur skull bursting up out of the road (jaws open,
+  // then snapped shut), a pebble of sifted gravel, and his sifting screen
+  function mosasaurSkull(open) {
+    const W = 32, H = 36, p = new Pix(W, H), bone = '#e8e0c8', boneD = '#b8ac90', tooth = '#fffaf0', dark = '#3a2a24';
+    // the back of the skull, down in the water
+    for (let y = 24; y < H; y++) for (let x = 6; x < 26; x++) if ((x - 15.5) ** 2 / 100 + (y - 32) ** 2 / 64 <= 1) p.set(x, y, y > 30 ? boneD : bone);
+    p.rect(9, 27, 3, 3, dark); p.rect(20, 27, 3, 3, dark);
+    if (open) {
+      // two long jaws flaring up into a V, lined with conical teeth
+      for (let i = 0; i < 24; i++) {
+        const y = 26 - i, lx = 12 - Math.round(i * 0.42), rx = 19 + Math.round(i * 0.42);
+        p.hline(lx - 2, lx + 1, y, i % 5 === 0 ? boneD : bone); p.hline(rx - 1, rx + 2, y, i % 5 === 0 ? boneD : bone);
+        if (i % 3 === 1) { p.set(lx + 2, y, tooth); p.set(lx + 3, y - 1, tooth); p.set(rx - 2, y, tooth); p.set(rx - 3, y - 1, tooth); }
+      }
+      for (let y = 6; y < 26; y++) for (let x = 13; x < 19; x++) if (p.d[y * W + x] == null && Math.abs(x - 15.5) < (26 - y) * 0.42 + 1) p.set(x, y, '#5a1c1c');
+    } else {
+      // snapped shut: one long narrow snout, the teeth interlocked down the middle
+      for (let y = 2; y < 27; y++) { const half = 2 + Math.round((y - 2) * 0.18); p.hline(15 - half, 16 + half, y, y % 6 === 0 ? boneD : bone); }
+      for (let y = 6; y < 26; y += 2) { p.set(15, y, tooth); p.set(16, y + 1, tooth); }
+      p.vline(15, 3, 26, boneD);
+    }
+    return finish(p);
+  }
+  function pebble() {
+    const p = new Pix(7, 6);
+    p.rect(1, 1, 5, 4, '#8a8c90'); p.hline(1, 5, 1, '#c0c0c8'); p.hline(2, 5, 4, '#5a5a64'); p.set(4, 2, '#b8624e');
+    return finish(p);
+  }
+  function sifter() {
+    const p = new Pix(18, 10);
+    p.rect(0, 0, 18, 10, '#9a7444'); p.rect(2, 2, 14, 6, '#5a5a62');
+    for (let x = 2; x < 16; x += 2) p.vline(x, 2, 7, '#8a8a94');
+    for (let y = 2; y < 8; y += 2) p.hline(2, 15, y, '#8a8a94');
+    p.set(6, 4, '#f8f8f0'); p.set(11, 5, '#3a3a40'); p.set(9, 3, '#b8624e');
+    return finish(p);
+  }
+
   // ---- the deep stope: the DO NOT OPEN (LILY) box, an ore cart, timbers, lanterns
   function fcCrate(open) {
     const p = new Pix(20, 17);
@@ -4605,6 +4702,8 @@
     S.gull = [false, true].map((l) => ({ sit: gullFrame(l, 'sit'), up: gullFrame(l, 'up'), down: gullFrame(l, 'down') }));
     S.tunnelPortal = tunnelPortal(); S.containerShip = containerShip(); S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
     S.bayViewer = bayViewer(); S.tunnelLight = tunnelLight(); S.tunnelSign = tunnelSign();
+    S.gateKey = gateKey(); S.rodIcon = rodIcon(); S.rodHeld = rodHeld(); S.lure = lure(); S.bobber = bobber();
+    S.mosasaur = [mosasaurSkull(true), mosasaurSkull(false)]; S.pebble = pebble(); S.sifter = sifter();
     S.fcCrate = fcCrate(false); S.fcCrateOpen = fcCrate(true); S.mineCart = mineCart(); S.timberSet = timberSet(); S.mineLantern = mineLantern();
     S.ornaments = [ornament('#d83030'), ornament('#2e9a4a'), ornament('#d8b040')]; S.candyCane = candyCane(); S.giftBomb = giftBomb();
     S.mineralCases = {}; for (const k of ['quartz', 'garnet', 'fluor', 'fossil', 'pyrite']) S.mineralCases[k] = mineralCase(k);

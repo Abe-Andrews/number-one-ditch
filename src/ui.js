@@ -103,7 +103,8 @@
       G.audio.sfx('select');
     }
 
-    slots() { return this.tab === 0 ? G.GEAR_SLOTS : G.KEY_SLOTS; }
+    // shared slots ([a, b]) show whichever item Nate has (or the last one, still unfound)
+    slots() { return (this.tab === 0 ? G.GEAR_SLOTS : G.KEY_SLOTS).map((e) => (Array.isArray(e) ? e.find((id) => G.itemHas(id)) || e[e.length - 1] : e)); }
 
     switchTab(d) {
       this.tab = (this.tab + d + TABS.length) % TABS.length;

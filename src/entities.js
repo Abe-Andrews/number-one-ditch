@@ -2216,6 +2216,71 @@
   }
   G.Bat = Bat;
 
+  // ============================================================== SURF ROD (cast + reel)
+  // X casts a lure in the direction Nate faces. It flies out over land or
+  // water; anything it hooks gets reeled back toward Nate: enemies take a
+  // hit and get yanked closer (gulls come right out of the sky), pickups get
+  // dragged in, and some things (Tyler) have their own idea of what happens.
+  const isWater = (w, x, y) => { const d = G.TILE_DEFS[w.tileAt(Math.floor(x / 16), Math.floor(y / 16))]; return !!(d && (d.k === 'bay' || d.k === 'water')); };
+  class Lure extends Ent {
+    constructor(p) {
+      super(p.x, p.y);
+      const [dx, dy] = DIRS[p.dir];
+      Object.assign(this, { owner: p, dir: p.dir, vx: dx * 4.5, vy: dy * 4.5, state: 'out', dist: 0, max: 104 });
+      this.x = p.x + dx * 10; this.y = p.y + dy * 6;
+    }
+    hookBox() { return [this.x - 5, this.y - 14, this.x + 5, this.y - 2]; }
+    update(w) {
+      if (G.script.busy) return;
+      const p = this.owner;
+      if (this.state === 'out') {
+        this.x += this.vx; this.y += this.vy; this.dist += 4.5;
+        for (const e of w.ents) {
+          if (e.dead || e === p || e === this || !e.hurtBox) continue;
+          if (e.enemy && G.overlap(this.hookBox(), e.hurtBox())) { this.hook(w, e); return; }
+        }
+        for (const e of w.ents) {
+          if (!e.dead && e instanceof G.Pickup && G.overlap(this.hookBox(), e.box())) { this.carry = e; this.state = 'back'; G.audio.sfx('blip'); return; }
+        }
+        const tx = Math.floor(this.x / 16), ty = Math.floor((this.y - 4) / 16);
+        if (this.dist >= this.max || (w.tileSolid(tx, ty) && !isWater(w, this.x, this.y - 4))) {
+          this.state = 'back';
+          if (isWater(w, this.x, this.y - 4)) w.burst(this.x, this.y - 4, ['#a8d0e0', '#ffffff'], 4, { speed: 0.6, up: 0.6, g: 0.06, life: 14, size: 1 });
+        }
+      } else {
+        // reel in
+        const dx = p.x - this.x, dy = p.y - 6 - this.y, d = Math.hypot(dx, dy);
+        if (d < 8) {
+          this.dead = true;
+          if (this.carry && !this.carry.dead) { this.carry.x = p.x; this.carry.y = p.y; }
+          return;
+        }
+        this.x += (dx / d) * 5.5; this.y += (dy / d) * 5.5;
+        if (this.carry && !this.carry.dead) { this.carry.x = this.x; this.carry.y = this.y + 6; }
+      }
+    }
+    hook(w, e) {
+      this.state = 'back';
+      G.audio.sfx('select');
+      w.pop(this.x, this.y - 22, 'HOOKED!', '#f8f8f0');
+      const p = this.owner;
+      if (e.onHook) e.onHook(p);
+      else e.hit(1, e.x * 2 - p.x, e.y * 2 - p.y); // (knocked back TOWARD Nate)
+    }
+    draw(ctx, cx, cy) {
+      const p = this.owner, [dx, dy] = DIRS[p.dir];
+      const hx = Math.round(p.x + dx * 4) - cx, hy = Math.round(p.y - 10) - cy;
+      const tx = Math.round(p.x + dx * 15 + (dy ? 4 : 0)) - cx, ty = Math.round(p.y - 22 + dy * 6) - cy;
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#2a3a5a';
+      ctx.beginPath(); ctx.moveTo(hx + 0.5, hy + 0.5); ctx.lineTo(tx + 0.5, ty + 0.5); ctx.stroke();
+      ctx.strokeStyle = 'rgba(240,240,248,0.85)';
+      ctx.beginPath(); ctx.moveTo(tx + 0.5, ty + 0.5); ctx.lineTo(Math.round(this.x) - cx + 0.5, Math.round(this.y - 8) - cy + 0.5); ctx.stroke();
+      ctx.drawImage(G.spr.lure, Math.round(this.x - 3) - cx, Math.round(this.y - 11) - cy);
+    }
+  }
+  G.Lure = Lure;
+
   // ============================================================== SEAGULL (the bridge-tunnel)
   // Sits on top of a light pole, out of reach. When Nate wanders close it
   // screeches, dives at the spot where he's standing, overshoots, and flaps
@@ -2270,6 +2335,10 @@
         this.z = k < f ? Math.max(2, this.from.z * ((f - k) / f) ** 2) : 2 + 26 * ((k - f) / (1 - f));
         if (this.z < 10 && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
         if (k >= 1) this.rise();
+      } else if (this.state === 'grounded') {
+        // hooked and yanked down: flapping on the ground, easy to bonk
+        this.z = 2 + Math.abs(Math.sin(this.t * 0.4)) * 3;
+        if (--this.st <= 0) this.rise();
       } else if (this.state === 'rise') {
         // back up to its light
         const k = ++this.k / this.dur;
@@ -2279,6 +2348,17 @@
         if (k >= 1) { this.state = 'perch'; this.st = 90 + Math.random() * 90; this.x = this.home.x; this.y = this.home.y; }
       }
     }
+    onHook(p) {
+      if (this.dead) return;
+      this.hp--;
+      G.audio.sfx('hit');
+      if (this.hp <= 0) { this.die(); return; }
+      // out of the sky and onto the ground, right in front of Nate
+      const dx = this.x - p.x, dy = this.y - p.y, d = Math.hypot(dx, dy) || 1;
+      this.x = p.x + (dx / d) * 22; this.y = p.y + (dy / d) * 18;
+      Object.assign(this, { state: 'grounded', st: 80, z: 3, hurtT: 0 });
+      this.world.pop(this.x, this.y - 20, this.laughing ? 'HA-- HUH?!' : 'SKRAWK!', '#f8f8f0');
+    }
     rise() {
       this.state = 'rise';
       this.from = { x: this.x, y: this.y, z: this.z };
@@ -2287,8 +2367,13 @@
     die() {
       this.dead = true;
       G.audio.sfx('poof');
-      const w = this.world;
+      const w = this.world, f = G.state.flags;
       w.burst(this.x, this.y - this.z - 6, this.bits, 14, { speed: 1.2, up: 0.6, g: 0.05, life: 30, size: 2 });
+      // the old fisherman is counting
+      if (f.rodQuest && !G.state.items.rod) {
+        f.gullBonks = (f.gullBonks || 0) + 1;
+        w.pop(this.x, this.y - this.z - 30, f.gullBonks >= 5 ? 'THAT\'S FIVE!' : G.sayable(f.gullBonks) + '/5', '#78e8e8');
+      }
       if (this.laughing) w.pop(this.x, this.y - this.z - 20, 'ha... ha.', '#c8c8d0');
       // drop the loot somewhere Nate can reach it (not out over the water)
       let x = this.x, y = this.y;
@@ -2299,7 +2384,7 @@
     }
     draw(ctx, cx, cy) {
       const set = G.spr.gull[this.laughing ? 1 : 0];
-      let img = this.state === 'perch' ? set.sit : (this.t >> 2) & 1 ? set.up : set.down;
+      let img = this.state === 'perch' ? set.sit : (this.t >> (this.state === 'grounded' ? 1 : 2)) & 1 ? set.up : set.down;
       if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
       if (this.z < 40) { ctx.globalAlpha = 0.5; ctx.drawImage(G.spr.shadow, Math.round(this.x - 6) - cx, Math.round(this.y - 3) - cy); ctx.globalAlpha = 1; }
       const flip = this.state !== 'perch' && (this.state === 'dive' ? this.to.x > this.from.x : this.home.x > this.x);
@@ -2310,6 +2395,256 @@
     }
   }
   G.Seagull = Seagull;
+
+  // ============================================================== TYLER (boss)
+  // Hypnotized by Father Eggmas, collecting a "toll" in the Chesapeake Channel
+  // Tunnel. He throws the toll back at Nate (shark teeth), sifts gravel down on
+  // him, flips his shades down and charges (then he's dizzy), and when he
+  // screams about his mosasaur tooth, a mosasaur skull bursts up out of the road.
+  class FallingRock extends Ent {
+    constructor(x, y, delay) { super(x, y); this.t = -(delay || 0); this.fall = 34; }
+    update(w) {
+      if (G.script.busy) return;
+      if (++this.t < 0) return;
+      if (this.t === this.fall) {
+        G.audio.sfx('bump');
+        w.burst(this.x, this.y - 3, ['#8a8c90', '#c8c0a8', '#5a5a64'], 6, { speed: 1, up: 0.5, g: 0.1, life: 16, size: 2 });
+        const p = G.play.player;
+        if (Math.hypot(p.x - this.x, (p.y - this.y) * 1.3) < 10) p.hurt(1, this.x, this.y);
+      }
+      if (this.t > this.fall + 30) this.dead = true;
+    }
+    draw(ctx, cx, cy) {
+      if (this.t < 0) return;
+      if (this.t < this.fall) {
+        const k = this.t / this.fall;
+        ctx.globalAlpha = 0.3 + 0.5 * k;
+        ctx.drawImage(G.spr.shadow, Math.round(this.x - 6) - cx, Math.round(this.y - 3) - cy);
+        ctx.globalAlpha = 1;
+        ctx.drawImage(G.spr.pebble, Math.round(this.x - 3) - cx, Math.round(this.y - 5 - (1 - k) * 90) - cy);
+      } else if (this.t < this.fall + 20 || (this.t >> 2) & 1) {
+        ctx.drawImage(G.spr.pebble, Math.round(this.x - 3) - cx, Math.round(this.y - 5) - cy);
+      }
+    }
+  }
+  G.FallingRock = FallingRock;
+
+  class MosasaurJaws extends Ent {
+    constructor(x, y) { super(x, y); this.t = 0; this.warn = 44; }
+    update(w) {
+      if (G.script.busy) return;
+      this.t++;
+      if (this.t === this.warn) {
+        G.audio.sfx('boom');
+        G.play.shake(10, 3);
+        w.burst(this.x, this.y - 6, ['#2e6a8a', '#5a9ab8', '#e8f4f8'], 14, { speed: 1.6, up: 1.2, g: 0.1, life: 26, size: 2 });
+        w.pop(this.x, this.y - 44, 'CHOMP!', '#e8e0c8');
+        const p = G.play.player;
+        if (Math.hypot(p.x - this.x, (p.y - this.y) * 1.3) < 15) p.hurt(2, this.x, this.y);
+      }
+      if (this.t > this.warn + 40) this.dead = true;
+    }
+    draw(ctx, cx, cy) {
+      const x = Math.round(this.x) - cx, y = Math.round(this.y) - cy;
+      if (this.t < this.warn) {
+        // a dark swirl spreading in the road: get out of the way
+        const r = 4 + (this.t / this.warn) * 12;
+        ctx.fillStyle = 'rgba(20,40,60,0.55)';
+        ctx.beginPath(); ctx.ellipse(x, y - 3, r, r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+        if ((this.t >> 2) & 1) {
+          ctx.strokeStyle = 'rgba(160,220,255,0.7)'; ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.ellipse(x, y - 3, r * 0.6, r * 0.33, this.t * 0.2, 0, Math.PI * 2); ctx.stroke();
+        }
+        return;
+      }
+      const k = this.t - this.warn, rise = Math.min(1, k / 6), sink = Math.max(0, (k - 26) / 14);
+      const img = G.spr.mosasaur[k < 5 ? 0 : 1], h = Math.round(img.height * Math.max(0, rise - sink));
+      ctx.fillStyle = 'rgba(20,40,60,0.55)';
+      ctx.beginPath(); ctx.ellipse(x, y - 3, 16, 9, 0, 0, Math.PI * 2); ctx.fill();
+      if (h > 0) ctx.drawImage(img, 0, 0, img.width, h, x - (img.width >> 1), y - 2 - h, img.width, h);
+    }
+  }
+  G.MosasaurJaws = MosasaurJaws;
+
+  const TYLER_YELLS = ['THE MOSASAUR TOOTH!', 'WHERE IS IT, NATE?', 'FIVE INCHES! SERRATED!', 'GIVE IT BACK!', 'I KNOW YOU HAVE IT!'];
+  class TylerBoss extends Ent {
+    constructor(x, y) {
+      super(x, y);
+      Object.assign(this, { enemy: true, boss: true, name: 'TYLER', hp: 26, maxHp: 26, hb: { w: 12, h: 8 }, t: 0,
+        state: 'pace', st: 60, dir: 'down', anim: 0, hurtT: 0, kb: { x: 0, y: 0 }, cycle: 0, phase: 1, goal: { x, y } });
+    }
+    get S() { return G.sprites.tylerHypno; }
+    hurtBox() { return [this.x - 7, this.y - 24, this.x + 7, this.y]; }
+    toPace() { this.state = 'pace'; this.st = this.phase === 2 ? 50 : 75; this.shadesDown = false; }
+    get open() { return this.state === 'reeled'; }
+    // hooked with the surf rod: yanked down the tunnel to Nate, screen dropped
+    onHook(p) {
+      if (this.state === 'defeated' || this.state === 'yank' || this.state === 'reeled') return;
+      const ty = Math.max(3 * 16, Math.min(21 * 16, p.y - 22));
+      Object.assign(this, { state: 'yank', k: 0, from: { x: this.x, y: this.y }, to: { x: Math.max(5 * 16 + 8, Math.min(11 * 16 - 8, p.x)), y: ty }, shadesDown: false });
+      this.world.pop(this.x, this.y - 34, 'WHOA-OA-OA!', '#78e8e8');
+    }
+    pick() {
+      const order = this.phase === 2 ? ['mosasaur', 'teeth', 'aim', 'sift', 'mosasaur', 'aim'] : ['teeth', 'sift', 'aim', 'teeth', 'mosasaur'];
+      const m = order[this.cycle++ % order.length];
+      if (m === 'teeth') Object.assign(this, { state: 'teeth', reps: 3, st: 3 * 18 + 8 });
+      else if (m === 'sift') Object.assign(this, { state: 'sift', st: 70 });
+      else if (m === 'aim') Object.assign(this, { state: 'aim', st: 30 });
+      else { const n = this.phase === 2 ? 3 : 1; Object.assign(this, { state: 'mosasaur', reps: n, st: n * 32 + 50, mT: n * 32 + 50 }); }
+    }
+    update(w) {
+      if (G.script.busy || this.state === 'defeated') return;
+      this.t++;
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1, hot = this.phase === 2;
+      if (this.hurtT > 0) {
+        this.hurtT--;
+        w.move(this, this.kb.x, 0); w.move(this, 0, this.kb.y);
+        this.kb.x *= 0.8; this.kb.y *= 0.8;
+      }
+      if (this.phase === 1 && this.hp <= this.maxHp / 2) {
+        this.phase = 2;
+        this.toPace();
+        G.script.run(G.SCRIPTS.tylerPhase(this));
+        return;
+      }
+      if (this.state !== 'dizzy' && this.state !== 'reeled' && this.state !== 'yank' && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(this.state === 'charge' ? 2 : 1, this.x, this.y);
+      this.moving = false;
+      switch (this.state) {
+        case 'yank': {
+          const k = Math.min(1, ++this.k / 14);
+          this.x = this.from.x + (this.to.x - this.from.x) * k; this.y = this.from.y + (this.to.y - this.from.y) * k;
+          this.dir = 'down';
+          if (k >= 1) {
+            Object.assign(this, { state: 'reeled', st: hot ? 80 : 100 });
+            G.audio.sfx('bump'); G.play.shake(6, 2);
+            w.pop(this.x, this.y - 34, 'REELED IN!', '#f8d850');
+          }
+          break;
+        }
+        case 'reeled':
+          // flat on his face, screen dropped: now's the time
+          if (--this.st <= 0) { this.toPace(); w.pop(this.x, this.y - 34, 'SCREEN UP!', '#78e8e8'); }
+          break;
+        case 'pace': {
+          // stays up the tunnel from Nate, sidestepping across the lanes
+          if (this.t % 40 === 0 || Math.abs(this.goal.x - this.x) + Math.abs(this.goal.y - this.y) < 4) {
+            this.goal = { x: 5 * 16 + 8 + Math.random() * 80, y: Math.max(3 * 16, Math.min(9 * 16, p.y - 70 - Math.random() * 20)) };
+          }
+          const gx = this.goal.x - this.x, gy = this.goal.y - this.y;
+          const mx = Math.sign(gx) * Math.min(hot ? 1.5 : 1.1, Math.abs(gx)), my = Math.sign(gy) * Math.min(0.9, Math.abs(gy));
+          w.move(this, mx, 0); w.move(this, 0, my);
+          this.moving = Math.abs(mx) + Math.abs(my) > 0.2;
+          if (this.moving) this.anim++;
+          this.dir = Math.abs(mx) > 0.5 && Math.abs(mx) > Math.abs(my) ? (mx < 0 ? 'left' : 'right') : 'down';
+          if (this.t % 120 === 0) w.pop(this.x, this.y - 34, TYLER_YELLS[Math.floor(Math.random() * TYLER_YELLS.length)], '#78e8e8');
+          if (--this.st <= 0) this.pick();
+          break;
+        }
+        case 'teeth': {
+          // throws the toll back at Nate, a fan at a time
+          this.dir = 'down';
+          if (this.st % 18 === 0 && this.reps > 0) {
+            this.reps--;
+            const a = Math.atan2(dy, dx), n = hot ? 5 : 3, sp = hot ? 1.9 : 1.6;
+            for (let i = 0; i < n; i++) { const b = a + (i - (n - 1) / 2) * 0.24; w.add(new Shot(this.x, this.y - 10, Math.cos(b) * sp, Math.sin(b) * sp, G.spr.tooth, { life: 200, z: 4 })); }
+            G.audio.sfx('swing');
+          }
+          if (--this.st <= 0) this.toPace();
+          break;
+        }
+        case 'sift': {
+          // shakes his sifting screen: gravel rains down around Nate
+          this.dir = 'down';
+          if (this.st === 70) {
+            w.pop(this.x, this.y - 34, 'SIFT! SIFT! SIFT!', '#78e8e8');
+            const n = hot ? 9 : 6;
+            for (let i = 0; i < n; i++) {
+              const x = i === 0 ? p.x : 5 * 16 + 4 + Math.random() * 88, y = i === 0 ? p.y : Math.max(3 * 16, Math.min(21 * 16, p.y + (Math.random() * 2 - 1) * 44));
+              w.add(new FallingRock(x, y, i * 7));
+            }
+          }
+          if (this.st % 6 === 0) G.audio.sfx('blip');
+          if (--this.st <= 0) this.toPace();
+          break;
+        }
+        case 'aim': {
+          // SHADES DOWN. then a charge straight at Nate
+          if (this.st === 30) { w.pop(this.x, this.y - 34, 'SHADES DOWN.', '#78e8e8'); G.audio.sfx('select'); this.shadesDown = true; }
+          this.dir = G.dirToward(dx, dy);
+          if (--this.st <= 0) {
+            const sp = hot ? 4.2 : 3.4;
+            Object.assign(this, { state: 'charge', st: 50, vx: (dx / dist) * sp, vy: (dy / dist) * sp });
+            G.audio.sfx('dash');
+          }
+          break;
+        }
+        case 'charge': {
+          this.moving = true; this.anim += 2;
+          const h = w.move(this, this.vx, this.vy);
+          if (h.hitX || h.hitY || --this.st <= 0) {
+            Object.assign(this, { state: 'dizzy', st: hot ? 50 : 70, shadesDown: false });
+            G.audio.sfx('bump');
+            G.play.shake(8, 2);
+            w.pop(this.x, this.y - 34, 'OOF.', '#78e8e8');
+          }
+          break;
+        }
+        case 'dizzy':
+          if (--this.st <= 0) this.toPace();
+          break;
+        case 'mosasaur': {
+          this.dir = 'down';
+          if (this.st === this.mT) { G.audio.sfx('yell'); G.play.shake(16, 2); w.pop(this.x, this.y - 36, 'THE MOSASAUR TOOTH!!!', '#ff6a5a'); }
+          if (this.st % 32 === 0 && this.reps > 0) { this.reps--; w.add(new MosasaurJaws(p.x, p.y)); }
+          if (--this.st <= 0) this.toPace();
+          break;
+        }
+      }
+    }
+    hit(dmg, sx, sy) {
+      if (this.state === 'defeated') return;
+      // anything but a reeled-in Tyler just clanks off the sifting screen
+      if (!this.open) {
+        G.audio.sfx('clank');
+        if (G.tick - (this.blockT || -99) > 20) { this.blockT = G.tick; this.world.pop(this.x, this.y - 34, 'BLOCKED!', '#c8c8d0'); }
+        if (!G.state.flags.tylerBlockHint) { G.state.flags.tylerBlockHint = true; G.script.run(G.SCRIPTS.tylerBlockHint()); }
+        return;
+      }
+      this.hp = Math.max(0, this.hp - dmg);
+      this.hurtT = 12;
+      G.audio.sfx('hit');
+      this.world.burst(this.x, this.y - 16, ['#5a5c3a', '#3a2a20', '#f8f8f8'], 5, { speed: 1.3, up: 0.6, g: 0.06, life: 24, size: 2 });
+      if (this.hp <= 0) { this.state = 'defeated'; G.script.run(G.SCRIPTS.tylerDefeated(this)); }
+    }
+    bomb(sx, sy) { this.hit(3, sx, sy); }
+    draw(ctx, cx, cy) {
+      const S = this.S;
+      drawShadow(ctx, this.x, this.y, cx, cy);
+      let img = S[this.dir][walkFrame(this.anim, this.moving)];
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2) - cy;
+      ctx.drawImage(img, sx, sy);
+      // shades flipped down over the swirly eyes
+      if (this.shadesDown && this.dir !== 'up') {
+        const side = this.dir === 'left' || this.dir === 'right';
+        ctx.fillStyle = '#141418';
+        ctx.fillRect(sx + (side ? (this.dir === 'right' ? 8 : 3) : 3), sy + 6, side ? 5 : 10, 2);
+        ctx.fillStyle = '#5a7088'; ctx.fillRect(sx + (this.dir === 'left' ? 4 : 10), sy + 6, 1, 1);
+      }
+      // the sifting screen: shaken during a sift, dropped when reeled in, otherwise held up as a shield
+      if (this.state === 'sift') ctx.drawImage(G.spr.sifter, sx - 1 + ((this.t >> 1) & 1 ? 1 : -1), sy + S.h - 15);
+      else if (this.open || this.state === 'yank') ctx.drawImage(G.spr.sifter, sx + 12, sy + S.h - 8);
+      else if (this.dir !== 'up') ctx.drawImage(G.spr.sifter, sx - 1 + (this.dir === 'left' ? -5 : this.dir === 'right' ? 5 : 0), sy + S.h - 17);
+      if (this.state === 'dizzy' || this.open) {
+        ctx.fillStyle = '#d040f0';
+        for (let i = 0; i < 3; i++) {
+          const a = this.t * 0.15 + (i * Math.PI * 2) / 3;
+          ctx.fillRect(Math.round(this.x + Math.cos(a) * 9) - cx, Math.round(this.y - S.h - 2 + Math.sin(a) * 3) - cy, 2, 2);
+        }
+      }
+    }
+  }
+  G.TylerBoss = TylerBoss;
 
   // ============================================================== SIX (enemy)
   class Six extends Ent {

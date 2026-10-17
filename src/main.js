@@ -256,6 +256,11 @@
         this.eggCool = 40;
         p.chickenT = 20;
         G.audio.sfx('bawk');
+      } else if (s.xItem === 'rod') {
+        // cast the surf rod (one line out at a time)
+        if (this.world.ents.some((e) => e instanceof G.Lure && !e.dead)) return;
+        this.world.add(new G.Lure(this.player));
+        G.audio.sfx('swing');
       } else if (s.xItem === 'package') {
         const w = this.world, p = this.player;
         if (!s.items.package || w.ents.filter((e) => e instanceof G.Package).length >= 2) { G.audio.sfx('bump'); return; }

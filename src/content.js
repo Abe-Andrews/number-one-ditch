@@ -44,15 +44,26 @@
       coat: '#ece4d0', shirt: '#283044', pants: '#4a4a58', shoes: '#4a3020',
       wide: true, torso: 7, legs: 4,
     },
-    // Placeholders until reference photos arrive.
+    // Tyler (from his photo): messy dark hair, black sport sunglasses pushed up on
+    // his forehead, stubble, an olive zip-up jacket and a black backpack.
     tyler: {
-      skin: '#e8b890', hair: '#e0c070', hairStyle: 'cap', hat: '#3a7ab0', hatStyle: 'ball',
-      shirt: '#f0d040', pants: '#c8a878', shorts: true, shoes: '#606060', torso: 7, legs: 4,
+      skin: '#e2b48e', hair: '#3a2a20', hairStyle: 'short', messy: true, shades: '#141418', beard: '#9a7660',
+      coat: '#5a5c3a', shirt: '#2a2a2c', straps: '#1c1c20', pants: '#3a3e4a', shoes: '#2e2a28', torso: 7, legs: 4,
+    },
+    // ...and hypnotized by Father Eggmas: spiral eyes, glowing purple.
+    tylerHypno: {
+      skin: '#e2b48e', hair: '#3a2a20', hairStyle: 'short', messy: true, shades: '#141418', beard: '#9a7660', eyes: '#d040f0', swirl: true,
+      coat: '#5a5c3a', shirt: '#2a2a2c', straps: '#1c1c20', pants: '#3a3e4a', shoes: '#2e2a28', torso: 7, legs: 4,
     },
     // Mikey: short brown hair, dark rectangular glasses, black polo.
     mikey: {
       skin: '#f4cdb0', hair: '#7a4a28', hairStyle: 'short', glasses: '#2a2e48', smile: '#f0e0d8',
       shirt: '#1c1c24', collar: '#34343e', logo: '#d03038', pants: '#5a6478', shoes: '#2a2a30', torso: 5, legs: 3,
+    },
+    // The old fisherman on the bridge-tunnel island: ball cap, gray beard, tackle vest.
+    fisherman: {
+      skin: '#e0ac84', hair: '#d0d0d4', hairStyle: 'cap', hat: '#c8b890', hatStyle: 'ball', beard: '#d8d8dc',
+      shirt: '#3a6a8a', coat: '#b89a68', pants: '#5a5a48', shoes: '#3a3028', torso: 7, legs: 4,
     },
     // The toll-taker in the Chesapeake Channel Tunnel: a deep hood, no face, two glowing eyes.
     hooded: {
@@ -177,6 +188,14 @@
       kind: 'gear', equip: true, name: 'Half-Finished Bass', short: 'Bass', icon: () => G.spr.bassIcon, has: () => !!st().items.bass,
       desc: 'Nate\'s homemade bass: walnut body, maple neck, no strings. Press X to swing it in a huge arc. Hits twice as hard as the hammer.',
     },
+    rod: {
+      kind: 'gear', equip: true, name: 'Surf Rod', short: 'Surf Rod', icon: () => G.spr.rodIcon, has: () => !!st().items.rod,
+      desc: 'The old fisherman\'s spare, from the bridge-tunnel island. Press X to cast. Whatever you hook gets reeled in: fish, gulls, teeth... people.',
+    },
+    andoverKey: {
+      kind: 'key', name: 'Andover Mines Key', icon: () => G.spr.gateKey, has: () => !!st().items.andoverKey,
+      desc: 'Opens the gate at the old Andover iron mines. The tag says "FOR THE ROCK BOY" in Mom\'s church friend\'s handwriting.',
+    },
     phone: {
       kind: 'key', name: 'Nate\'s Phone', icon: () => G.spr.phone, has: () => true,
       desc: 'The family group chat. 147 unread, mostly Nani. Press Z to read one.',
@@ -225,7 +244,7 @@
     },
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
-  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bidet', 'bass', 'chicken', null, null, null, null, null];
+  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bidet', 'bass', 'chicken', 'rod', null, null, null, null];
 
   // ================================================================ SMOKE SIGNALS (Dad's pipe)
   // Like ocarina songs: learn a sequence, puff it with the pipe, something
@@ -234,7 +253,9 @@
     { id: 'peace', name: 'Peace Be With You', seq: ['up', 'down', 'up'], known: () => !!fl().signal_peace, effect: () => G.SCRIPTS.signalPeace() },
     { id: 'icy', name: 'Stay Icy', seq: ['left', 'right', 'up'], known: () => !!fl().signal_icy, effect: () => G.SCRIPTS.signalIcy() },
   ];
-  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', 'vodka', 'books', 'basementKey', 'bait', 'earplugs'];
+  // (a slot can be shared by items that are never held at the same time: the
+  // basement key is used up before Mom's stand sells the Andover key)
+  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', 'vodka', 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -309,11 +330,16 @@
         : 'Something pink in the basement, eating Mom\'s books and singing a song she can\'t stand. Never stops dancing.'),
     },
     {
-      id: 'hooded', name: '???', met: () => fl().hoodedMet,
-      tag: () => (fl().tollPaid ? '{o}Toll paid' : '{r}Toll: 500 teeth'),
-      bio: () => (fl().tollPaid
-        ? 'Took 500 teeth in a bag far too small to hold them, then vanished into fog. He knew Nate\'s name.'
-        : 'Hooded. No face, just glowing eyes. Blocks the Chesapeake Channel Tunnel. Toll: 500 shark teeth.'),
+      // the hooded figure in the tunnel, until the hood comes down
+      get id() { return fl().tylerBeaten ? 'tyler' : fl().tollPaid ? 'tylerHypno' : 'hooded'; },
+      get name() { return fl().tollPaid ? 'Tyler' : '???'; },
+      met: () => fl().hoodedMet,
+      tag: () => (fl().tylerBeaten ? '{o}Boss: shades up' : fl().tollPaid ? '{r}Boss' : '{r}Toll: 500 teeth'),
+      bio: () => (fl().tylerBeaten
+        ? 'Shark tooth hunter. Screams about mosasaurs. Snapped out of it, gave back the toll, ran for the ditch.'
+        : fl().tollPaid
+          ? 'Tyler, hypnotized by Father Eggmas. Thinks Nate stole his mosasaur tooth. Throws shark teeth. Hard.'
+          : 'Hooded. No face, just glowing eyes. Blocks the Chesapeake Channel Tunnel. Toll: 500 shark teeth.'),
     },
     {
       id: 'fc', name: 'Father Christmas', met: () => fl().fcMet, img: () => (fl().fcBeaten ? G.spr.fc.sweater : G.spr.fc.idle),
@@ -376,8 +402,10 @@
     else if (!f.badlandsBeaten) goal = 'Bring the ingredients to Badlands Chugs in the kitchen. Time for the refrigerator game.';
     else if (!f.mikeyBeaten) goal = 'Mikey is waiting at the end of the driveway. Lily has something to tell him.';
     else if (!f.cbbtArrived) goal = 'The road to Chesapeake is open! Leave from either end of Rattlesnake Bridge Rd.';
+    else if (!f.tollPaid && f.hoodedNotReady && !s.items.rod) goal = 'The hooded figure says you\'re not ready. Find the old man fishing on the rocks of the island.';
     else if (!f.tollPaid) goal = f.hoodedMet ? 'A hooded figure in the tunnel wants 500 shark teeth to let you through. (' + G.sayable(s.teeth) + '/500)' : 'Cross the Chesapeake Bay Bridge-Tunnel. Chesapeake is on the other side of the tunnel.';
-    else goal = 'The toll is paid. Chesapeake is through the tunnel! (More story soon!)';
+    else if (!f.tylerBeaten) goal = 'The hooded figure is Tyler, hypnotized by Father Eggmas! Snap him out of it.';
+    else goal = 'Tyler says Father Eggmas is at the Number One Ditch. Chesapeake is through the tunnel! (More story soon!)';
     const side = [];
     if (f.capQuest || s.items.cap) side.push(['Gus\'s lawn job', s.items.cap ? '{g}Done!' : G.sayable(G.capProgress()) + '/10 sacred numbers']);
     if (f.chemMet) side.push(['The Chem Final', f.chemPerfect ? '{g}Perfect!' : f.chemPassed ? 'Passed! Retake for a heart' : 'Not passed yet']);
@@ -386,6 +414,8 @@
       side.push(['Doron\'s spare tickets', f.ticketsDone ? '{g}Done!' : left ? G.sayable(left) + ' left' + (f.dadBeaten ? ' (next show)' : '') : 'Go tell Doron!']);
     }
     if (G.rocksFound()) side.push(['Nate\'s rocks', G.rocksFound() >= G.ROCKS.length ? '{g}All found!' : G.sayable(G.rocksFound()) + '/' + G.ROCKS.length]);
+    if (f.andoverLocked) side.push(['The Andover mines', s.items.andoverKey ? '{g}Key in hand!' : f.shopOpen ? 'Mom\'s stand sells a key' : 'Need a key to the gate']);
+    if (f.rodQuest || s.items.rod) side.push(['The old fisherman', s.items.rod ? '{g}Done!' : 'Gulls: ' + G.sayable(f.gullBonks || 0) + '/5']);
     if (f.fcAwake) side.push(['Father Christmas', f.fcBeaten ? '{g}Done!' : 'Deep in the Andover mines']);
     else if (f.homeArrived) { const c = G.completion(); side.push(['100%', G.sayable(c.filter((x) => x[1]).length) + '/' + c.length + ' done']); }
     if (f.jjMet) side.push(['Ice JJ Fish', f.jjBeaten ? '{g}Done!' : 'North of the bridge']);
@@ -490,6 +520,15 @@
         { wave: 'triangle', vol: 0.14, notes: 'E2:16 | F2:16 | E2:16 | D#2:16' },
         { wave: 'sine', vol: 0.05, notes: 'R:8 B4:8 | R:8 C5:8 | R:8 B4:8 | R:8 A#4:8' },
         { wave: 'noise', vol: 0.012, notes: 'h:8 R:8 | h:8 R:8 | h:8 R:8 | h:8 h:4 R:4' },
+      ],
+    },
+    // Tyler: fast surf rock for a shark tooth hunter, in E minor (original)
+    tyler: {
+      bpm: 160,
+      tracks: [
+        { wave: 'square', vol: 0.045, notes: 'E4:2 G4:2 A4:2 B4:2 D5:2 B4:2 A4:2 G4:2 | E4:2 G4:2 A4:2 B4:4 A4:2 G4:2 E4:2 | A4:2 C5:2 D5:2 E5:2 D5:2 C5:2 A4:2 G4:2 | B4:4 A4:2 G4:2 F#4:4 E4:4' },
+        { wave: 'triangle', vol: 0.15, notes: 'E2:2 E3:2 E2:2 E3:2 E2:2 E3:2 E2:2 E3:2 | E2:2 E3:2 E2:2 E3:2 G2:2 G3:2 G2:2 G3:2 | A2:2 A3:2 A2:2 A3:2 C3:2 C4:2 C3:2 C4:2 | B2:2 B3:2 B2:2 B3:2 B2:2 B3:2 B2:2 B3:2' },
+        { wave: 'noise', vol: 0.05, notes: 'k:2 h:2 s:2 h:2 k:2 h:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 h:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 h:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 s:2 s:2 s:2' },
       ],
     },
     // Father Christmas: a music box gone wrong, in D minor, with sleigh bells (original)
@@ -1833,6 +1872,15 @@
       yield G.itemGet(G.spr.egg, 'You got {y}a dozen eggs{/}! (' + G.sayable(s.items.eggs) + ' loaded)');
       if (!f.eggJoke) { f.eggJoke = true; yield G.say('Michelle', 'Fresh from the coop this morning. Henrietta\'s cousins.'); }
     }]);
+    if (!s.items.andoverKey) menu.push(['Andover Mines Key: 40', function* () {
+      if (!(yield* momPay(40))) return;
+      s.items.andoverKey = true;
+      yield G.say('Michelle', 'The Andover mines? The man who owns that land goes to my church. He gave me a key to the gate years ago. "For the rock boy."');
+      yield G.say('Nate', 'The rock boy?');
+      yield G.say('Michelle', 'You, hon. Everyone at church calls you the rock boy.');
+      yield G.itemGet(G.spr.gateKey, 'You got the {y}Andover Mines Key{/}! Pick {y}The Andover mines{/} when you leave home.');
+      yield G.say('Michelle', 'The forty teeth go to the flower fund. And wear a HELMET.');
+    }]);
     if (!f.momHeart) menu.push(['Heart Container: 100', function* () {
       if (!(yield* momPay(100))) return;
       f.momHeart = true;
@@ -2006,6 +2054,7 @@
   // up, deep in the Andover mines, in a box labeled DO NOT OPEN (LILY). Lily is
   // terrified of him.
   G.SONGS.fc2 = Object.assign({}, G.SONGS.fc, { bpm: 160 });
+  G.SONGS.tyler2 = Object.assign({}, G.SONGS.tyler, { bpm: 190 });
   G.SONGS.fc3 = Object.assign({}, G.SONGS.fc, { bpm: 184 });
   const FC_BOUNDS = [2 * 16 + 8, 5 * 16, 22 * 16 - 8, 13 * 16 + 8];
   const fcJunk = (e) => e instanceof G.FCOrnament || e instanceof G.FCGift || e instanceof G.FCCandyCane;
@@ -2025,7 +2074,8 @@
       ['Mom\'s missing books', !!f.shopOpen],
       ['The protesters', !!f.protestReward],
       ['Ice JJ Fish', !!f.jjBeaten],
-      ['The bridge-tunnel toll', !!f.tollPaid],
+      ['The old fisherman', !!s.items.rod],
+      ['Tyler', !!f.tylerBeaten],
       ['Every rock', G.rocksFound() >= G.ROCKS.length],
     ];
   };
@@ -2572,7 +2622,15 @@
 
   // ---- getting there: the "Where to?" menu at either end of the road
   S.driveAndover = function* () {
-    yield G.say('Nate', 'Andover. The old iron mines. I\'ve read every book about them. Twice.');
+    const f = flags();
+    if (!G.state.items.andoverKey) {
+      f.andoverLocked = true;
+      yield G.say('Nate', 'The old Andover mines. I\'ve read every book about them. But they\'re on private land, behind a locked gate.');
+      if (f.shopOpen) yield G.say('Nate', 'Mom knows everybody at church. Maybe she can get me a key. Her flower stand has everything else.');
+      else yield G.say('Nate', 'I need a key to that gate. Mom knows everybody at church. One of them HAS to own it.');
+      return;
+    }
+    yield G.say('Nate', 'Andover. Key in hand. Helmet... somewhere.');
     G.play.warp('andover', 27, 15, 'left');
   };
   S.andoverCar = function* () {
@@ -2599,9 +2657,10 @@
     { name: 'Basement: Globglogabgalab', map: 'homeDown', at: [22, 8, 'up'], flags: { clue_den: true, clue_nightstand: true, clue_mudroom: true, cluesDone: true, momReport: true }, items: { basementKey: true, earplugs: true, bait: true } },
     { name: 'Return Mom\'s books (shop)', map: 'home', at: [34, 20, 'left'], flags: { globMet: true, globBeaten: true, baitPlaced: true, basementOpened: true }, items: { books: true, bait: false } },
     { name: 'Ice JJ Fish (north)', map: 'north', at: [10, 13, 'up'], flags: { shopOpen: true }, items: { books: false }, teeth: 120 },
-    { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, momHeart: true, phDone: true, chemMet: true, chemPassed: true, chemPerfect: true, ticketQuest: true, ticketsGiven: true, ticketsDone: true, protestReward: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10, tickets: 0 }, maxHp: 10, teeth: 300 },
+    { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, momHeart: true, phDone: true, chemMet: true, chemPassed: true, chemPerfect: true, ticketQuest: true, ticketsGiven: true, ticketsDone: true, protestReward: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10, tickets: 0, andoverKey: true }, maxHp: 10, teeth: 300 },
     { name: 'Bay Bridge-Tunnel (the toll)', map: 'cbbt', at: [21, 20, 'left'], teeth: 520 },
-    { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, rockHound: true, fcAwake: true }, rocks: true },
+    { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
+    { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
   G.ADMIN_PLACES = [
@@ -2631,7 +2690,7 @@
   // Admin: hand over every item and song.
   G.adminAllItems = () => {
     const s = G.state, f = s.flags;
-    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true });
+    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, andoverKey: true });
     s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40;
     f.signal_peace = true; f.signal_icy = true; f.doronDeal = true; f.hadDoosh = true; f.capHeart = true;
   };
@@ -4154,7 +4213,7 @@
       w.addProp({ img: G.spr.furnaceRuin, tx: 19, ty: 16, dx: -2, solid: [19, 16, 2, 1], hit: [19, 16, 2, 1], talk: look('The ruins of the old Andover iron furnace, first fired in the 1760s.', 'During the Revolution, the Continental Congress took it over and made cannonballs and steel for the army here.') });
       w.addProp({ img: G.spr.suv, tx: 24, ty: 11, h: 3, dx: 3, solid: [24, 12, 2, 2], hit: [24, 12, 2, 2], talk: S.andoverCar });
       w.add(new G.Sign(21, 12, ['ANDOVER IRON MINE', 'The biggest hematite deposit in New Jersey. Worked before the Revolution, seized by the Continental Congress, reopened 1848, closed 1880.']));
-      w.add(new G.Sign(26, 15, ['PRIVATE PROPERTY', '(Nate called the owner ahead of time. He always calls ahead.)']));
+      w.add(new G.Sign(26, 15, ['PRIVATE PROPERTY', '(Nate has a key. The tag says "FOR THE ROCK BOY.")']));
       const at = (x, y, zone) => { const v = w.add(new G.OreVein(x * 16 + 8, y * 16 + 14, zone)); return v; };
       for (const [x, y] of [[9, 6], [13, 7], [16, 6], [20, 8], [22, 6], [6, 11], [10, 12], [14, 11]]) at(x, y, 'dump');
       for (const [x, y] of [[17, 17], [21, 17], [16, 16]]) at(x, y, 'slag');
@@ -4376,11 +4435,49 @@
     yield G.say(null, 'And seagulls. So, so many seagulls.');
   };
 
+  // ---- the old fisherman on the rocks: knock five gulls out of the sky and his
+  // spare surf rod is yours (and you'll need it for whatever's in that tunnel)
+  const GULLS_NEEDED = 5;
+  S.fisherman = function* () {
+    const f = flags(), s = G.state;
+    if (s.items.rod) {
+      f.fishLine = ((f.fishLine || 0) + 1) % 4;
+      yield G.say('Old Fisherman', [
+        'Catch anything yet? Stripers run in the fall. Flounder off the islands all summer.',
+        'Thirty years out here. Best fishing on the whole East Coast, and nobody believes me.',
+        'Cast it at whatever you can\'t reach. Then let the reel do the work.',
+        'Still haven\'t found my hat. If you see a gull wearing it, bonk him twice.',
+      ][f.fishLine]);
+      return;
+    }
+    if (!f.rodQuest) {
+      yield G.say('Old Fisherman', 'Thirty years I been fishing off these rocks. Stripers, flounder, cobia. You name it.');
+      yield G.say('Old Fisherman', 'Then these gulls figured out where I keep my bait. Now they take the bait, the sandwich, the hat off my HEAD.');
+      yield G.say('Nate', 'They took your hat?');
+      yield G.say('Old Fisherman', '...They took my hat.');
+      yield G.say('Old Fisherman', 'Tell you what. Knock five of those gulls out of the sky and my spare rod is yours. You can only bonk \'em when they swoop down low.');
+      f.rodQuest = true;
+      f.gullBonks = 0;
+      return;
+    }
+    const n = f.gullBonks || 0;
+    if (n < GULLS_NEEDED) { yield G.say('Old Fisherman', 'That\'s ' + G.sayable(n) + '. Five gulls, son. Get \'em when they swoop.'); return; }
+    yield G.say('Old Fisherman', 'Ha! Look at \'em scatter. All right. Here. My spare.');
+    s.items.rod = true;
+    s.xItem = 'rod';
+    yield G.itemGet(G.spr.rodIcon, 'You got the {y}Surf Rod{/}! Press {y}X{/} to cast. Whatever you hook gets reeled right in.');
+    yield G.say('Old Fisherman', 'Works on fish. Works on gulls. Works on anything too far away to bonk.');
+    yield G.say('Old Fisherman', 'And son? Whatever\'s down in that tunnel... it\'s been taking a toll on folks.');
+    yield G.say('Nate', '...Was that a pun?');
+    yield G.say('Old Fisherman', 'Thirty years out here. You get punny.');
+  };
+
   // the far end of the tunnel: a hooded figure, and his toll
   S.hooded = function* () {
     const f = flags(), w = G.play.world, p = P(), h = w.hooded, s = G.state;
-    if (!h || h.dead || f.tollPaid) return;
+    if (!h || h.dead || f.tylerBeaten || w.tylerFight) return;
     p.dir = 'up';
+    if (f.tollPaid) { yield* S.tylerRematch(); return; }
     if (!f.hoodedMet) {
       f.hoodedMet = true;
       G.audio.stop();
@@ -4410,26 +4507,136 @@
       yield G.walkTo(p, p.x, p.y + 20, 1.2);
       return;
     }
+    if (!s.items.rod) {
+      f.hoodedNotReady = true;
+      yield G.say('Hooded Figure', 'You have the teeth. But you are not ready.');
+      yield G.say('Hooded Figure', 'A hammer will not be enough down here. Find the old man fishing on the rocks.');
+      yield G.say('Nate', '...How do you know about him?');
+      yield G.say('Hooded Figure', '...');
+      yield G.walkTo(p, p.x, p.y + 20, 1.2);
+      return;
+    }
     const c = yield G.ask('Hooded Figure', 'Five hundred shark teeth. Pay the toll?', ['Pay 500 teeth', 'Not yet']);
     if (c) { yield G.walkTo(p, p.x, p.y + 20, 1.2); return; }
     s.teeth -= TOLL;
     G.audio.sfx('tooth');
     yield G.say(null, 'Nate pours five hundred shark teeth into a little velvet bag. The bag is much smaller than five hundred shark teeth. They all fit.');
     yield G.say('Hooded Figure', 'The toll is paid.');
-    yield G.say('Hooded Figure', 'The Number One Ditch is waiting for you, Nate. It always has been.');
+    yield* S.tylerReveal();
+  };
+
+  // ---- the hooded figure was Tyler all along, hypnotized by Father Eggmas
+  const tylerJunk = (e) => e instanceof G.Shot || e instanceof G.FallingRock || e instanceof G.MosasaurJaws;
+  S.tylerReveal = function* () {
+    const f = flags(), w = G.play.world, p = P(), h = w.hooded;
+    f.tollPaid = true;
+    yield G.say('Hooded Figure', 'Five hundred shark teeth...');
+    yield G.say('Hooded Figure', '...and not ONE of them is a MOSASAUR TOOTH.');
+    yield G.camFocus(h.x, h.y - 12, 30);
+    // the hood comes down
     G.audio.sfx('poof');
-    w.burst(h.x, h.y - 14, ['#c8c4d8', '#8a849c', '#ffffff'], 26, { speed: 0.9, up: 0.6, life: 50, size: 4 });
+    w.burst(h.x, h.y - 20, ['#2e2840', '#4a4260', '#c8c4d8'], 12, { speed: 0.8, up: 0.5, life: 30, size: 3 });
+    h.sprite = 'tylerHypno'; h.name = 'Tyler'; h.flashT = 20;
+    yield G.wait(30);
+    yield G.emote(p, 'bang', 30);
+    yield G.say('Nate', 'TYLER?!');
+    yield G.say('Tyler', 'You know what I want, Nate.');
+    yield G.say('Tyler', 'THE. MOSASAUR. TOOTH.');
+    yield G.say('Nate', 'What mosasaur tooth?');
+    yield G.say('Tyler', 'MY mosasaur tooth! Five inches! Serrated! The best fossil I ever found!');
+    yield G.say('Tyler', 'A little egg in a Santa hat told me everything. A guy in a flat cap took it. A guy with a ROCK HAMMER.');
+    yield G.say('Nate', '...Father Eggmas. Tyler, I didn\'t take your tooth! Look at your eyes, they\'re all swirly!');
+    if (G.with('doron')) yield G.say('Doron', 'Same swirly eyes Dad had at Micro Mayhem. Eggmas got to him.');
+    else if (G.with('lily')) yield G.say('Lily', 'his eyes are doing the swirly thing. i hate it here');
+    yield G.say('Tyler', 'Fine. Then you can have your toll back... ONE TOOTH AT A TIME!');
+    f.tylerMet = true;
+    G.play.autosave();
+    yield* S.tylerFightStart();
+  };
+  S.tylerRematch = function* () {
+    yield G.say('Tyler', 'Back for more? You know what I want. THE MOSASAUR TOOTH.');
+    yield* S.tylerFightStart();
+  };
+  S.tylerFightStart = function* () {
+    const f = flags(), w = G.play.world, h = w.hooded;
+    yield G.camFocus(null, null, 20);
+    if (!f.tylerTutorial) {
+      f.tylerTutorial = true;
+      yield G.say(null, 'Tyler blocks everything with his {y}sifting screen{/}. Hook him with the {y}Surf Rod{/} (X) to reel him in, then let him have it.');
+      yield G.say(null, 'Watch the road: a {y}dark swirl{/} means something is coming up from below. When he flips his {y}shades down{/}, he charges, and he\'s dizzy afterward. Easy to hook.');
+    }
+    // the fight takes the end of the tunnel: closed off above and below
     h.dead = true;
     for (let x = 5; x <= 10; x++) w.block[4 * w.w + x] = 0;
-    f.tollPaid = true;
+    w.blockTiles(5, 1, 6, 1); w.blockTiles(5, 22, 6, 1);
+    for (const e of w.ents) if (e instanceof G.Seagull && e.y < 24 * 16) e.dead = true;
+    w.tyler = w.add(new G.TylerBoss(h.x, h.y));
+    w.tylerFight = true;
+    yield G.banner('TYLER', 'THE MOSASAUR TOOTH!', 150);
+    G.audio.play('tyler');
+  };
+  // (the first time Nate whacks his sifting screen)
+  S.tylerBlockHint = function* () {
+    yield G.say('Tyler', 'Ha! You can\'t get through the SCREEN, Nate!');
+    if (G.state.xItem !== 'rod') yield G.say(null, 'Set the {y}Surf Rod{/} to X in the menu, then cast it at Tyler to reel him in.');
+  };
+  S.tylerPhase = function* () {
+    const w = G.play.world;
+    for (const e of w.ents) if (tylerJunk(e)) e.dead = true;
+    G.audio.stop();
+    yield G.shakeCmd(16, 2);
+    yield G.say('Tyler', 'You think this is a GAME, Nate?');
+    yield G.say('Nate', 'It... kind of is?');
+    yield G.bigText('THE MOSASAUR TOOTH!!!', 70, '#ff6a5a');
+    // a couple of hearts come rolling down the tunnel
+    for (const dx of [-14, 14]) w.add(new G.Pickup(8 * 16 + dx, 14 * 16 + 14, 'heart'));
+    G.audio.play('tyler2');
+  };
+  S.tylerDefeated = function* (boss) {
+    const f = flags(), w = G.play.world, p = P();
+    G.audio.stop();
+    for (const e of w.ents) if (tylerJunk(e)) e.dead = true;
+    G.audio.sfx('bell');
+    yield G.shakeCmd(30, 3);
+    yield G.wait(40);
+    w.burst(boss.x, boss.y - 18, ['#d040f0', '#f8f8f8', '#a8e0ff'], 16, { speed: 1.4, up: 1, g: 0.06, life: 36, size: 2 });
+    w.pop(boss.x, boss.y - 36, 'SNAP!', '#ffffff');
+    boss.dead = true;
+    const t = w.add(new G.NPC({ sprite: 'tyler', name: 'Tyler', x: boss.x, y: boss.y, dir: 'down' }));
+    t.flashT = 30;
+    w.tylerFight = false;
     yield G.wait(50);
-    yield G.say('Nate', '...Did anyone else see that?');
-    if (G.with('doron')) yield G.say('Doron', 'See what?');
-    else if (G.with('lily')) yield G.say('Lily', 'i saw it. i will be seeing it forever');
+    yield G.banner('YOU WIN!', 'shades up', 150);
+    t.dir = G.dirToward(p.x - t.x, p.y - t.y);
+    yield G.say('Tyler', '...Nate? What are you doing under the bay?');
+    yield G.say('Tyler', 'Why am I wearing a CLOAK?');
+    yield G.say('Nate', 'Father Eggmas hypnotized you. You were charging a toll. Five hundred shark teeth.');
+    yield G.say('Tyler', '...Did anybody pay it?');
+    yield G.say('Nate', 'I paid it.');
+    yield G.say('Tyler', 'Oh no. Oh, Nate. Here.');
+    G.play.addTeeth(TOLL);
+    G.audio.sfx('tooth');
+    yield G.itemGet(G.spr.toothGold, 'Tyler hands back the velvet bag: {y}500 shark teeth{/}. Every single one.');
+    yield G.say('Tyler', 'Last thing I remember, I was hunting shark teeth at the Number One Ditch. Best ditch in the world.');
+    yield G.say('Tyler', 'Then a little egg in a Santa hat walked up and said, "Nate has your mosasaur tooth." And everything went swirly.');
+    yield G.say('Nate', 'Father Eggmas is AT the Number One Ditch.');
+    if (G.with('doron')) yield G.say('Doron', 'Then that\'s where we\'re going.');
+    else if (G.with('lily')) yield G.say('Lily', 'nate i want to go home');
+    yield G.say('Tyler', 'Go. I\'m right behind you.');
+    yield G.say('Tyler', 'And Nate? If you see my mosasaur tooth...');
+    yield G.say('Nate', 'I KNOW, Tyler.');
+    // off he runs toward daylight, still yelling about it
+    for (let x = 5; x <= 10; x++) { w.block[1 * w.w + x] = 0; w.block[22 * w.w + x] = 0; }
+    w.pop(t.x, t.y - 34, 'THE MOSASAUR TOOTH!', '#78e8e8');
+    yield G.walkTo(t, 8 * 16, 0, 2.2);
+    t.dead = true;
+    f.tylerBeaten = true;
+    G.audio.play('tunnel');
+    G.play.autosave();
   };
   S.tunnelEnd = function* () {
     const p = P();
-    if (!flags().tollPaid) { yield* S.hooded(); return; }
+    if (!flags().tylerBeaten) { yield G.walkTo(p, p.x, p.y + 24, 1); return; }
     yield G.say('Nate', 'Daylight! Chesapeake is right on the other side.');
     yield G.banner('TO BE CONTINUED...', 'Chesapeake and the Number One Ditch: next update!', 240);
     yield G.walkTo(p, p.x, p.y + 24, 1);
@@ -4484,6 +4691,21 @@
       for (const [x, y, flip, line] of [[3, 17, false, 'A brown pelican. It stares at Nate like he owes it money.'], [26, 13, true, 'A brown pelican, eyes closed, napping on the rocks. Living the dream.'], [8, 27, false, 'A brown pelican. It opens its pouch, considers Nate, and closes it again.']]) {
         w.addProp({ img: flip ? G.spr.pelicanL : G.spr.pelican, tx: x, ty: y, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: look(line) });
       }
+      // the old fisherman on the rocks at the south end, line in the water
+      const fish = w.add(new G.NPC({ sprite: 'fisherman', name: 'Old Fisherman', x: 9 * 16 + 8, y: 24 * 16 + 14, dir: 'down', talk: S.fisherman }));
+      w.props.push({
+        base: 29 * 16,
+        draw(ctx, cx, cy) {
+          const bob = Math.round(Math.sin(G.tick * 0.06) * 1.5), hx = fish.x + 3, hy = fish.y - 9, tx = fish.x + 15, ty = fish.y - 36, bx = fish.x + 20, by = 29 * 16 + 6 + bob;
+          ctx.lineWidth = 1;
+          ctx.strokeStyle = '#2a3a5a';
+          ctx.beginPath(); ctx.moveTo(hx - cx + 0.5, hy - cy + 0.5); ctx.lineTo(tx - cx + 0.5, ty - cy + 0.5); ctx.stroke();
+          ctx.fillStyle = '#8a8a94'; ctx.fillRect(hx + 1 - cx, hy - 4 - cy, 3, 3);
+          ctx.strokeStyle = 'rgba(240,240,248,0.8)';
+          ctx.beginPath(); ctx.moveTo(tx - cx + 0.5, ty - cy + 0.5); ctx.lineTo(bx - cx + 0.5, by - cy + 0.5); ctx.stroke();
+          ctx.drawImage(G.spr.bobber, bx - 2 - cx, by - cy);
+        },
+      });
       // Nate's car in the lot
       w.addProp({ img: G.spr.suv, tx: 20, ty: 17, h: 3, dx: 3, solid: [20, 18, 2, 2], hit: [20, 18, 2, 2], talk: S.cbbtCar });
       w.add(new G.Chest(23, 12, 'cbbt_teeth', function* () {
@@ -4521,11 +4743,12 @@
         const tx = side ? 11 : 4;
         w.addProp({ img: G.spr.tunnelSign, tx, ty, dx: side ? -4 : -4, flat: true, hit: [tx, ty, 1, 1], talk: look(...text) });
       }
-      // the toll-taker
-      if (!flags().tollPaid) {
-        w.hooded = w.add(new G.NPC({ sprite: 'hooded', name: 'Hooded Figure', x: 8 * 16, y: 4 * 16 + 14, dir: 'down', talk: S.hooded }));
+      // the toll-taker (after the reveal: Tyler, still hypnotized, waiting for a rematch)
+      if (!flags().tylerBeaten) {
+        const hyp = flags().tollPaid;
+        w.hooded = w.add(new G.NPC({ sprite: hyp ? 'tylerHypno' : 'hooded', name: hyp ? 'Tyler' : 'Hooded Figure', x: 8 * 16, y: 4 * 16 + 14, dir: 'down', talk: S.hooded }));
         w.blockTiles(5, 4, 6, 1);
-        w.addTrigger(5, 6, 6, 2, () => { if (!flags().tollPaid) G.script.run(S.hooded()); });
+        w.addTrigger(5, 6, 6, 2, () => { if (!flags().tylerBeaten && !w.tylerFight) G.script.run(S.hooded()); });
       }
       w.addTrigger(5, 0, 6, 1, () => G.script.run(S.tunnelEnd()));
       w.addTrigger(5, 63, 6, 1, () => G.play.warp('cbbt', 14, 10, 'down'));
