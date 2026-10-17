@@ -215,6 +215,7 @@
   // happens. Add new ones here as the story teaches them.
   G.SIGNALS = [
     { id: 'peace', name: 'Peace Be With You', seq: ['up', 'down', 'up'], known: () => !!fl().signal_peace, effect: () => G.SCRIPTS.signalPeace() },
+    { id: 'icy', name: 'Stay Icy', seq: ['left', 'right', 'up'], known: () => !!fl().signal_icy, effect: () => G.SCRIPTS.signalIcy() },
   ];
   G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', 'vodka', 'books', null, null, null];
 
@@ -294,7 +295,7 @@
       id: 'icejj', name: 'Ice JJ Fish', met: () => fl().jjMet,
       tag: () => (fl().jjBeaten ? '{o}Boss: beaten' : '{r}Boss'),
       bio: () => (fl().jjBeaten
-        ? 'Sang "I Pray to Jesus" on the frozen pond north of the bridge until Nate knocked the mic out of his hands. Stays icy.'
+        ? 'Sang "I Pray to Jesus" on the frozen pond north of the bridge until Nate knocked the mic out of his hands. Taught Nate "Stay Icy" on the pipe.'
         : 'Singing "I Pray to Jesus" on a frozen pond north of the bridge. It snows there and nowhere else.'),
     },
     { id: 'gus', name: 'Gus', tag: '{y}Friend', met: () => fl().capQuest, bio: 'Lafayette\'s groundskeeper. Protector of petunias. Found Nate\'s hat.' },
@@ -1128,6 +1129,23 @@
     if (!n) w.pop(p.x, p.y - 24, '(nobody to calm down)', '#c8c8d0');
   };
 
+  // Stay Icy (taught by Ice JJ Fish): nearby enemies freeze solid for 5 seconds.
+  // Frozen enemies can't move or hurt anyone, but they can still be hit.
+  const ICY_RADIUS = 72;
+  S.signalIcy = function () {
+    const p = P(), w = G.play.world;
+    w.fx.push({ x: p.x, y: p.y - 6, vx: 0, vy: 0, circle: true, r: ICY_RADIUS - 6, max: 24, life: 24, color: '#c8ecff' });
+    w.burst(p.x, p.y - 10, ['#ffffff', '#d8f4ff', '#a8e0ff'], 16, { speed: 1.6, life: 30, size: 2 });
+    w.pop(p.x, p.y - 34, 'STAY ICY', '#a8e0ff');
+    let n = 0;
+    for (const e of w.ents) {
+      if (!e.enemy || e.boss || e.dead || Math.hypot(e.x - p.x, e.y - p.y) > ICY_RADIUS) continue;
+      e.frozen = 300;
+      n++;
+    }
+    if (!n) w.pop(p.x, p.y - 24, '(nothing to freeze)', '#c8c8d0');
+  };
+
   S.dadArena = function* () {
     if (!G.state.items.pipe) {
       yield G.say('Dad', 'Nate! Before you go, I made you something in my workshop.');
@@ -1765,9 +1783,10 @@
     yield G.say('Ice JJ Fish', 'That was a vibe though. You felt it, right?');
     yield G.say('Nate', '...I did feel something.');
     yield G.say('Ice JJ Fish', 'That\'s the song, bro. Stay icy.');
-    s.maxHp += 2;
-    s.hp = s.maxHp;
-    yield G.itemGet(G.spr.heartBig, 'Ice JJ Fish gives Nate a frosty fist bump. You got a {r}Heart Container{/}!');
+    yield G.say('Ice JJ Fish', 'Hold up. Is that a pipe? Lemme teach you a little something. Three notes. Real smooth.');
+    f.signal_icy = true;
+    yield G.itemGet(G.spr.pipe, 'You learned a new pipe song: {c}Stay Icy{/}  ' + G.arrows(['left', 'right', 'up']));
+    yield G.say(null, 'Puff it on Dad\'s pipe and nearby enemies freeze solid for a few seconds. Frozen enemies can still be bonked.');
     w.pop(boss.x, boss.y - 36, '~ I PRAY TO JESUUUS ~', '#a8e0ff');
     yield G.walkTo(boss, boss.x + 200, boss.y - 10, 1.6);
     boss.dead = true;

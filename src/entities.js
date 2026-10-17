@@ -92,6 +92,7 @@
         w.move(this, 0, this.kb.y);
         this.kb.x *= 0.82; this.kb.y *= 0.82;
         if (--this.t <= 0) this.state = 'walk';
+        this.waterCheck(w);
         return;
       }
 
@@ -151,6 +152,7 @@
         this.ivx = d.x * sp; this.ivy = d.y * sp;
         if (this.moving) { w.move(this, d.x * sp, 0, true); w.move(this, 0, d.y * sp, true); }
       }
+      if (this.waterCheck(w)) return;
 
       if (inp.hit('a')) {
         inp.eat('a');
@@ -159,6 +161,28 @@
         inp.eat('b');
         if (!G.state.playAs) G.play.useItem();
       }
+    }
+
+    // Cracked ice: step (or slide) into open water and Nate falls in, loses half
+    // a heart and climbs back out where he last stood safely.
+    waterCheck(w) {
+      const haz = (x, y) => { const d = G.TILE_DEFS[w.tileAt(Math.floor(x / 16), Math.floor(y / 16))]; return !!(d && d.hazard); };
+      if (haz(this.x, this.y - 3)) {
+        G.audio.sfx('poof');
+        w.burst(this.x, this.y - 4, ['#3a7ab0', '#a8d8f0', '#ffffff'], 14, { speed: 1.6, up: 1, g: 0.1, life: 24, size: 2 });
+        w.pop(this.x, this.y - 26, 'SPLASH!', '#a8e0ff');
+        const s = this.safe || { x: this.x, y: this.y + 24 };
+        this.x = s.x; this.y = s.y; this.ivx = this.ivy = 0;
+        this.state = 'walk';
+        G.state.hp = Math.max(0, G.state.hp - 1);
+        G.audio.sfx('hurt');
+        this.inv = 70;
+        G.play.shake(6, 2);
+        if (G.state.hp <= 0) G.play.die();
+        return true;
+      }
+      if (!haz(this.x - 7, this.y - 6) && !haz(this.x + 7, this.y - 6) && !haz(this.x - 7, this.y + 2) && !haz(this.x + 7, this.y + 2)) this.safe = { x: this.x, y: this.y };
+      return false;
     }
 
     startSwing() {
@@ -1510,8 +1534,26 @@
   // ============================================================== ICE JJ FISH (boss)
   // Sings on the frozen pond north of the bridge: snowflake notes, a huge held
   // high note, a slide across the ice (then he's dizzy), and later, icicles.
-  const JJ_SONG = ['~ I PRAY TO JESUS ~', '~ ooooOOOOH ~', '~ yeahhh ~', '~ (a very high note) ~', '~ I PRAY TO JESUUUS ~', '~ mmmm ~', '~ OHHHHH ~', '~ hallelujah ~'];
-  const JJ_OUCH = ['OUCH, BRO!', 'NOT THE MIC!', 'STILL ON KEY!', 'AYO?!', 'I\'M ICY!', 'THAT WAS FLAT!'];
+  const JJ_SONG = [
+      '~ I pray to Jesus ~', '~ (Jesus) ~',
+      '~ I pray to Jesus Christ ~', '~ (Jesus) ~',
+      '~ I pray to Jesus Christ ~', '~ (Jesus) ~',
+      '~ I pray to Jesus ~',
+      '~ When I\'m stuck and don\'t know what to do ~', '~ (Don\'t know what to do, don\'t know what to do) ~',
+      '~ You\'re the only one I can go and count on, too ~', '~ (Count on too, count on too) ~',
+      '~ If it weren\'t for you I wouldn\'t know what to do ~', '~ (What to do, what to do) ~',
+      '~ You\'ve always been there for me, that\'s why I love you ~', '~ (I love you, that\'s why I love you) ~',
+      '~ I\'m sorry to you for breaking all your rules ~', '~ (All your rules, all your rules) ~',
+      '~ I don\'t know what was wrong with me for acting such a fool ~', '~ (Such a fool, acting such a fool) ~',
+      '~ All my life I went and put my trust into you ~', '~ (Trust in you, trust in you) ~',
+      '~ I owe you for everything you\'ve done for me, that\'s true ~', '~ (That is true, that is very true) ~',
+      '~ I hope you accept my apology for what I do ~', '~ (What I do, what I do) ~',
+      '~ I promise to you, God, I will make it up to you ~', '~ (Up to you, make it up to you) ~',
+      '~ I pray to Jesus ~', '~ (Jesus) ~',
+      '~ I pray to Jesus Christ ~', '~ (Jesus) ~',
+      '~ I pray to Jesus Christ ~', '~ (Jesus) ~',
+      '~ I pray to Jesus Christ ~', '~ (Jesus) ~',
+  ];  const JJ_OUCH = ['OUCH, BRO!', 'NOT THE MIC!', 'STILL ON KEY!', 'AYO?!', 'I\'M ICY!', 'THAT WAS FLAT!'];
   class Icicle extends Ent {
     constructor(x, y) { super(x, y); this.t = 50; this.land = 0; }
     update(w) {
@@ -1558,6 +1600,35 @@
     get hyped() { return this.hp <= this.maxHp / 2; }
     hurtBox() { return [this.x - 7, this.y - 22, this.x + 7, this.y]; }
     snow(w, a, sp) { w.add(new Shot(this.x, this.y - 2, Math.cos(a) * sp, Math.sin(a) * sp, G.spr.snowflake, { life: 220, z: 9 })); }
+    // he skates around the holes (they count as walls for him)
+    skate(w, dx, dy) {
+      const hole = (x, y) => { const d = G.TILE_DEFS[w.tileAt(Math.floor(x / 16), Math.floor((y - 3) / 16))]; return !!(d && d.hazard); };
+      let hitX = false, hitY = false;
+      if (dx) hitX = hole(this.x + dx + Math.sign(dx) * 7, this.y) || w.move(this, dx, 0).hitX;
+      if (dy) hitY = hole(this.x, this.y + dy + Math.sign(dy) * 4) || w.move(this, 0, dy).hitY;
+      return { hitX, hitY };
+    }
+    // the high note cracks the pond open in a few spots (never right under Nate)
+    crackIce(w, n) {
+      const p = G.play.player, spots = [];
+      for (let ty = 0; ty < w.h; ty++) for (let tx = 0; tx < w.w; tx++) {
+        if (w.tileAt(tx, ty) !== 'I') continue;
+        const cx = tx * 16 + 8, cy = ty * 16 + 8;
+        if (Math.hypot(cx - p.x, cy - (p.y - 6)) < 40 || Math.hypot(cx - this.x, cy - (this.y - 6)) < 28) continue;
+        spots.push([tx, ty]);
+      }
+      w.holes = w.holes || 0;
+      for (let k = 0; k < n && spots.length && w.holes < 10; k++) {
+        const [tx, ty] = spots.splice(Math.floor(Math.random() * spots.length), 1)[0];
+        w.setTile(tx, ty, 'U');
+        if (Math.random() < 0.6 && w.tileAt(tx + 1, ty) === 'I') w.setTile(tx + 1, ty, 'U');
+        w.holes++;
+        w.burst(tx * 16 + 8, ty * 16 + 8, ['#e8f8ff', '#a8d8f0', '#ffffff'], 10, { speed: 1.6, up: 0.8, g: 0.1, life: 24, size: 2 });
+        w.pop(tx * 16 + 8, ty * 16 - 4, 'CRACK!', '#ffffff');
+      }
+      G.audio.sfx('boom');
+      G.play.shake(16, 3);
+    }
     update(w) {
       if (G.script.busy || this.state === 'defeated') return;
       // he never stops singing
@@ -1566,8 +1637,8 @@
       if (this.hurtT > 0) {
         // knocked back across the ice
         this.hurtT--;
-        if (w.move(this, this.kb.x, 0).hitX) this.kb.x = -this.kb.x;
-        if (w.move(this, 0, this.kb.y).hitY) this.kb.y = -this.kb.y;
+        if (this.skate(w, this.kb.x, 0).hitX) this.kb.x = -this.kb.x;
+        if (this.skate(w, 0, this.kb.y).hitY) this.kb.y = -this.kb.y;
         this.kb.x *= 0.93; this.kb.y *= 0.93;
         return;
       }
@@ -1576,7 +1647,7 @@
         // a lazy figure skate around the pond
         this.t--;
         const tx = this.home.x + Math.cos(this.songT * 0.02) * 64, ty = this.home.y + Math.sin(this.songT * 0.02) * 22;
-        w.move(this, (tx - this.x) * 0.04, 0); w.move(this, 0, (ty - this.y) * 0.04);
+        this.skate(w, (tx - this.x) * 0.04, 0); this.skate(w, 0, (ty - this.y) * 0.04);
         this.dir = G.dirToward(dx, dy);
         this.anim++;
         if (this.t <= 0) {
@@ -1601,13 +1672,24 @@
           const n = 14, gap = Math.floor(Math.random() * n);
           for (let i = 0; i < n; i++) if (i !== gap && i !== (gap + 1) % n) this.snow(w, (i / n) * Math.PI * 2 + this.t * 0.02, 1.1);
           w.fx.push({ x: this.x, y: this.y - 10, vx: 0, vy: 0, shock: true, r: 50, max: 22, life: 22, color: '#d8f4ff' });
+          // once the pond has cracked, every high note opens another hole
+          if (this.t === 22 && this.hyped) this.crackIce(w, 1);
         }
         if (--this.t <= 0) { this.state = 'glide'; this.t = 90; }
+      } else if (this.state === 'crack') {
+        // half health: a note so high the pond gives way
+        this.dir = 'down';
+        G.play.shake(2, this.t < 50 ? 2 : 1);
+        if (this.t === 88) { w.pop(this.x, this.y - 48, '~ OOOOOOOOOOOOOOOOOH ~', '#ffffff'); G.audio.sfx('bell'); }
+        if (this.t === 66) w.pop(this.x, this.y - 40, '*creeeak*', '#a8e0ff');
+        if (this.t === 60 || this.t === 44) G.audio.sfx('clank');
+        if (this.t === 30) this.crackIce(w, 5);
+        if (--this.t <= 0) { this.state = 'glide'; this.t = 60; }
       } else if (this.state === 'slide') {
         // a knee slide right across the ice
         if (this.t === 60) { this.vx = (dx / dist) * 3.2; this.vy = (dy / dist) * 3.2; w.pop(this.x, this.y - 36, 'WHOOOO!', '#ffffff'); G.audio.sfx('dash'); this.dir = G.dirToward(dx, dy); }
-        if (w.move(this, this.vx, 0).hitX) { this.vx = -this.vx; G.audio.sfx('bump'); }
-        if (w.move(this, 0, this.vy).hitY) { this.vy = -this.vy; G.audio.sfx('bump'); }
+        if (this.skate(w, this.vx, 0).hitX) { this.vx = -this.vx; G.audio.sfx('bump'); }
+        if (this.skate(w, 0, this.vy).hitY) { this.vy = -this.vy; G.audio.sfx('bump'); }
         this.vx *= 0.985; this.vy *= 0.985;
         if (--this.t <= 0) { this.state = 'dizzy'; this.t = this.hyped ? 50 : 70; w.pop(this.x, this.y - 36, '...whoa.', '#ffffff'); }
       } else if (this.state === 'dizzy') {
@@ -1623,8 +1705,10 @@
     }
     hit(dmg, sx, sy) {
       if (this.state === 'defeated') return;
+      const wasHyped = this.hyped;
       this.hp = Math.max(0, this.hp - dmg);
       this.hurtT = 16;
+      if (this.hyped && !wasHyped && this.hp > 0) { this.state = 'crack'; this.t = 90; this.vx = this.vy = 0; }
       const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
       this.kb = { x: (dx / m) * 3, y: (dy / m) * 3 };
       G.audio.sfx('hit');

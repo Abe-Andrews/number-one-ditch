@@ -1206,6 +1206,11 @@
       for (let i = 0; i < 6; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#c8d2e0' : '#eef2f8');
       if (r() < 0.6) { const x = 3 + Math.floor(r() * 8), y = 2 + Math.floor(r() * 9); p.rect(x, y, 2, 3, '#c4cedc'); p.rect(x + 3, y + 3, 2, 3, '#c4cedc'); }
     },
+    iceHole(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#1e4a78');
+      for (let i = 0; i < 4; i++) { const x = Math.floor(r() * 12), y = 2 + Math.floor(r() * 12); p.hline(x, x + 3, y, '#3a7ab0'); }
+      edgeFringe(p, mask, v, '#a8d8f0', '#e8f8ff');
+    },
     ice(p, r, v, mask) {
       p.rect(0, 0, 16, 16, '#a8d8f0');
       for (let i = 0; i < 3; i++) { const x = Math.floor(r() * 14), y = Math.floor(r() * 14); for (let k = 0; k < 4; k++) p.set(x + k, y + (k >> 1), '#d8f0fc'); }

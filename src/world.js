@@ -71,6 +71,7 @@
     'J': { k: 'snow' },
     'A': { k: 'snowPath' },
     'I': { k: 'ice', edge: true, ice: true },
+    'U': { k: 'iceHole', edge: true, hazard: true },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 
@@ -240,7 +241,11 @@
     // ---------------------------------------------------------- update
     update() {
       if (this.def.tick) this.def.tick(this);
-      for (const e of this.ents) if (!e.dead && e.update) e.update(this);
+      for (const e of this.ents) {
+        if (e.dead || !e.update) continue;
+        if (e.frozen > 0) { e.frozen--; if (e.hurtT > 0) e.hurtT--; continue; }
+        e.update(this);
+      }
       this.ents = this.ents.filter((e) => !e.dead);
       for (const f of this.fx) {
         f.x += f.vx; f.y += f.vy; f.vy += f.g || 0; f.life--;
@@ -299,6 +304,13 @@
       for (const d of list) {
         if (d.draw) d.draw(ctx, cx, cy);
         else ctx.drawImage(d.img, d.x - cx, d.y - cy);
+        if (d.frozen > 0 && d.hurtBox && (d.frozen > 60 || (d.frozen >> 2) & 1)) {
+          // frozen solid: a block of ice around the enemy
+          const r = d.hurtBox(), x = Math.round(r[0]) - 3 - cx, y = Math.round(r[1]) - 3 - cy, bw = Math.round(r[2] - r[0]) + 6, bh = Math.round(r[3] - r[1]) + 5;
+          ctx.fillStyle = 'rgba(168,224,255,0.45)'; ctx.fillRect(x, y, bw, bh);
+          ctx.strokeStyle = '#e8f8ff'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, bw - 1, bh - 1);
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 2, y + 2, 2, 4);
+        }
       }
       for (const f of this.fx) {
         if (f.ring) {
