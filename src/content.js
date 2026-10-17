@@ -192,6 +192,11 @@
       kind: 'gear', equip: true, name: 'Surf Rod', short: 'Surf Rod', icon: () => G.spr.rodIcon, has: () => !!st().items.rod,
       desc: 'The old fisherman\'s spare, from the bridge-tunnel island. Press X to cast. Whatever you hook gets reeled in: fish, gulls, teeth... people.',
     },
+    mikeyNote: {
+      kind: 'key', name: 'Mikey\'s Note', icon: () => G.spr.noteIcon, has: () => !!st().items.mikeyNote,
+      desc: 'Folded into a very small square. Mikey gave it to Lily on his way out. Lily can\'t look at it. Press Z to read it.',
+      use: () => G.SCRIPTS.readMikeyNote(),
+    },
     andoverKey: {
       kind: 'key', name: 'Andover Mines Key', icon: () => G.spr.gateKey, has: () => !!st().items.andoverKey,
       desc: 'Opens the gate at the old Andover iron mines. The tag says "FOR THE ROCK BOY" in Mom\'s church friend\'s handwriting.',
@@ -254,8 +259,8 @@
     { id: 'icy', name: 'Stay Icy', seq: ['left', 'right', 'up'], known: () => !!fl().signal_icy, effect: () => G.SCRIPTS.signalIcy() },
   ];
   // (a slot can be shared by items that are never held at the same time: the
-  // basement key is used up before Mom's stand sells the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', 'vodka', 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs'];
+  // vodka is used up before Mikey's note, the basement key before the Andover key)
+  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -415,6 +420,7 @@
     }
     if (G.rocksFound()) side.push(['Nate\'s rocks', G.rocksFound() >= G.ROCKS.length ? '{g}All found!' : G.sayable(G.rocksFound()) + '/' + G.ROCKS.length]);
     if (f.andoverLocked) side.push(['The Andover mines', s.items.andoverKey ? '{g}Key in hand!' : f.shopOpen ? 'Mom\'s stand sells a key' : 'Need a key to the gate']);
+    if (f.roseRocks) side.push(['Grandma Rose\'s funnel cake', f.roseTraded ? '{g}Done!' : s.items.funnelCake ? 'Bring it to her' : 'Someone has to order it']);
     if (f.rodQuest || s.items.rod) side.push(['The old fisherman', s.items.rod ? '{g}Done!' : 'Gulls: ' + G.sayable(f.gullBonks || 0) + '/5']);
     if (f.fcAwake) side.push(['Father Christmas', f.fcBeaten ? '{g}Done!' : 'Deep in the Andover mines']);
     else if (f.homeArrived) { const c = G.completion(); side.push(['100%', G.sayable(c.filter((x) => x[1]).length) + '/' + c.length + ' done']); }
@@ -1099,10 +1105,12 @@
   };
 
   S.rose = function* () {
-    if (G.state.items.hammer && (!flags().roseRocks || G.rocksHave('cementrock') >= 3)) { yield* S.roseTrade(); return; }
-    if (flags()['ticket_Grandma Rose'] === 'yes') yield G.say('Grandma Rose', 'Thank you for the ticket, dear. I\'ll be ringside!');
+    const f = flags();
+    if (G.state.items.hammer && !f.roseTraded && (!f.roseRocks || G.state.items.funnelCake)) { yield* S.roseTrade(); return; }
+    if (f['ticket_Grandma Rose'] === 'yes') yield G.say('Grandma Rose', 'Thank you for the ticket, dear. I\'ll be ringside!');
+    else if (f.roseTraded) yield G.say('Grandma Rose', 'Best funnel cake I\'ve had in years. Take care of that eastonite, dear.');
     else yield G.say('Grandma Rose', 'I come to the fair every year for the funnel cake. Six teeth! Can you believe it?');
-    if (flags().roseRocks) yield* S.roseTrade();
+    if (f.roseRocks && !f.roseTraded) yield* S.roseTrade();
   };
 
   S.earl = function* () {
@@ -1270,6 +1278,9 @@
       e.frozen = 300;
       n++;
     }
+    // some places have water worth freezing
+    const def = G.MAPS[w.id];
+    if (def && def.onIcy && def.onIcy(w, p)) n++;
     if (!n) w.pop(p.x, p.y - 24, '(nothing to freeze)', '#c8c8d0');
   };
 
@@ -2377,15 +2388,15 @@
     { id: 'lodestone', name: 'Lodestone', area: 'andover', r: 3, crush: { heart: 1 }, fact: 'Magnetite that\'s a natural magnet. Iron filings bristle off it. People used lodestones as the first compasses.' },
     { id: 'cannonball', name: 'Continental Cannonball', area: 'andover', r: 4, crush: null, fact: 'An iron cannonball, maybe cast from Andover ore when the Continental Congress ran the mine for the American army. It belongs in a museum. Nate is the museum.' },
     // Lafayette (College Hill, Easton PA)
-    { id: 'dolomite', area: 'lafayette', name: 'Allentown Dolomite', r: 0, crush: { teeth: 5 }, how: 'Hammer the gray rock outcrops around campus.', fact: 'The most common bedrock in the Lehigh Valley: dolostone from a warm, shallow sea about 500 million years ago.' },
+    { id: 'dolomite', area: 'lafayette', name: 'Allentown Dolomite', r: 0, crush: { teeth: 5 }, how: 'Dr. Moles left a tray of gray rocks in the Science Center. Only one of them is dolomite.', fact: 'The most common bedrock in the Lehigh Valley: dolostone from a warm, shallow sea about 500 million years ago.' },
     { id: 'gneiss', area: 'lafayette', name: 'The Nicest Gneiss', r: 1, crush: { teeth: 15 }, how: 'Prof. Schist gives one out for a right answer.', fact: 'Banded Precambrian gneiss of the Reading Prong, over a billion years old. Easton\'s arts trail has a sign about it called "The Nicest Gneiss."' },
     { id: 'stromatolite', area: 'lafayette', name: 'Stromatolite', r: 2, crush: { teeth: 30 }, how: 'Something big and strong could crack the dolomite ledge.', fact: 'Fossil mats of ancient microbes, layered like a cabbage, from the Allentown Formation. Some of the oldest life you can hold.' },
     // Easton (the fairgrounds)
-    { id: 'cementrock', area: 'easton', name: 'Cement Rock', r: 0, crush: { teeth: 5 }, how: 'Hammer the dark outcrops around the fairgrounds.', fact: 'Shaly limestone from the Jacksonburg Formation. The Lehigh Valley ground it into Portland cement and was once the cement capital of America.' },
+    { id: 'cementrock', area: 'easton', name: 'Cement Rock', r: 0, crush: { teeth: 5 }, how: 'Top prize at the balloon game. Nobody can pop those balloons. Not with darts, anyway.', fact: 'Shaly limestone from the Jacksonburg Formation. The Lehigh Valley ground it into Portland cement and was once the cement capital of America.' },
     { id: 'serpentine', area: 'easton', name: 'Serpentine', r: 1, crush: { package: 2 }, how: 'That pile of old quarry rubble is too solid to hammer. Maybe something explosive?', fact: 'Green "verdolite" from the Chestnut Hill quarries in Easton, cut for ornamental stone. Smooth, waxy and mottled like a snake.' },
-    { id: 'eastonite', area: 'easton', name: 'Eastonite', r: 2, crush: { teeth: 30 }, how: 'Grandma Rose collects rocks. Maybe she\'d trade?', fact: 'A mica named after Easton itself, found in the Chestnut Hill quarry. Collectors still find it there.' },
+    { id: 'eastonite', area: 'easton', name: 'Eastonite', r: 2, crush: { teeth: 30 }, how: 'Grandma Rose would trade for a funnel cake. Somebody has to order it, though.', fact: 'A mica named after Easton itself, found in the Chestnut Hill quarry. Collectors still find it there.' },
     // Bedminster (home)
-    { id: 'shale', area: 'bedminster', name: 'Passaic Red Shale', r: 0, crush: { teeth: 5 }, how: 'Hammer the red rock ledges around the yard.', fact: 'Red mud from the Newark Basin, Triassic and Jurassic. Dinosaurs left footprints in mud like this all over New Jersey.' },
+    { id: 'shale', area: 'bedminster', name: 'Passaic Red Shale', r: 0, crush: { teeth: 5 }, how: 'Red rock out on the little island in Brady Brook. If only the water would hold still.', fact: 'Red mud from the Newark Basin, Triassic and Jurassic. Dinosaurs left footprints in mud like this all over New Jersey.' },
     { id: 'basalt', area: 'bedminster', name: 'Watchung Basalt', r: 1, crush: { teeth: 15 }, how: 'The big black boulder by Brady Brook is way too heavy for Nate. Doron, though...', fact: 'Jurassic lava flows that built the Watchung Mountains just east of Bedminster.' },
     { id: 'prehnite', area: 'bedminster', name: 'Prehnite', r: 2, crush: { heart: 1 }, how: 'Try sifting the gravel in Brady Brook.', fact: 'Pale green crystals that grow in the gas bubbles of New Jersey basalt. Mindat lists prehnite in Bedminster Township.' },
   ];
@@ -2408,8 +2419,6 @@
     tunnel: [['hematite', 20], ['magnetite', 20], ['quartz', 10], ['calcite', 8], ['jasper', 11], ['garnet', 12], ['pyrite', 11], ['specular', 4], ['lodestone', 1]],
     deep: [['pyrite', 12], ['sphalerite', 15], ['galena', 12], ['chalcopyrite', 10], ['garnet', 9], ['specular', 7], ['lodestone', 3], ['magnetite', 8], ['hematite', 8]],
     cannon: [['cannonball', 1]],
-    laf: [['dolomite', 40], ['stromatolite', 1]],
-    eas: [['cementrock', 1]],
     bed: [['shale', 1]],
   };
   // Break a vein: roll a specimen, add it, and announce it.
@@ -2512,10 +2521,8 @@
     if (roll < 0.3 || (f.siftTries >= 3 && !G.rocksHave('prehnite') && !(G.state.rocksFound || {}).prehnite)) {
       yield* S.rockGive('prehnite');
       if (G.rocksHave('prehnite') === 1) yield G.say('Nate', 'Prehnite! It grows in the gas bubbles inside basalt. This came all the way down the brook.');
-    } else if (roll < 0.75) {
-      yield* S.rockGive('shale');
     } else {
-      yield G.say(null, 'Just pebbles. And a crawfish. He seems upset about it.');
+      yield G.say(null, ['Just pebbles. And a crawfish. He seems upset about it.', 'Just pebbles. Nice ones, but pebbles.', 'A bottle cap, three pebbles and a very cold hand.'][Math.floor(roll * 10) % 3]);
     }
   };
 
@@ -2548,21 +2555,19 @@
 
   // Grandma Rose trades her eastonite for three pieces of cement rock.
   S.roseTrade = function* () {
-    const f = flags();
+    const f = flags(), s = G.state;
     if (!f.roseRocks) {
       f.roseRocks = true;
       yield G.say('Grandma Rose', 'Is that a rock hammer, dear? I collect rocks too. Have since I was a girl.');
-      yield G.say('Grandma Rose', 'Bring me three pieces of cement rock, and I\'ll trade you something special. Something named after this very town.');
-      if (G.rocksHave('cementrock') < 3) return;
+      yield G.say('Grandma Rose', 'I have a piece of eastonite in my purse. Named after this very town. I\'d trade it for one thing.');
+      yield G.say('Grandma Rose', 'A funnel cake. I can\'t stand in that line, and I can\'t bring myself to SAY that price out loud.');
+      if (!s.items.funnelCake) return;
     }
-    if (G.rocksHave('cementrock') < 3) {
-      yield G.say('Grandma Rose', 'Three pieces of cement rock, dear. Those dark outcrops around the fairgrounds are full of it.');
-      return;
-    }
-    const c = yield G.ask('Grandma Rose', 'Ooh, cement rock! Three of those for my eastonite?', ['Trade', 'Not yet']);
-    if (c) return;
-    G.state.rocks.cementrock -= 3;
-    yield G.say('Grandma Rose', 'I found it in the old quarry up on Chestnut Hill when I was your age. Take good care of it.');
+    if (!s.items.funnelCake) { yield G.say('Grandma Rose', 'A funnel cake, dear. From the stand by the path. Powdered sugar, please.'); return; }
+    s.items.funnelCake = false;
+    f.roseTraded = true;
+    yield G.say('Grandma Rose', 'Oh, it\'s still WARM. You\'re a good boy.');
+    yield G.say('Grandma Rose', 'I found this in the old quarry up on Chestnut Hill when I was your age. Take good care of it.');
     yield* S.rockGive('eastonite');
   };
 
@@ -2652,7 +2657,7 @@
     { name: 'Badlands Chugs (kitchen)', map: 'homeDown', at: [20, 15, 'up'], flags: { homeArrived: true, mikeyMet: true } },
     { name: 'Refrigerator game', map: 'homeDown', at: [29, 4, 'right'], flags: { badlandsMet: true, heardBlender: true, fridgeGame: true }, items: { milk: true, dye: true, smoke: true, vodka: true } },
     { name: 'Golden Hour: play as Lily', map: 'home', at: [43, 44, 'down'], flags: { badlandsBeaten: true, lilySaved: true }, party: ['lily'], follower: 'lily' },
-    { name: 'Michelle in the garden', map: 'home', at: [33, 25, 'up'], flags: { mikeyBeaten: true } },
+    { name: 'Michelle in the garden', map: 'home', at: [33, 25, 'up'], flags: { mikeyBeaten: true }, items: { mikeyNote: true } },
     { name: 'Mom\'s books: clue hunt', map: 'homeDown', at: [38, 4, 'up'], flags: { michelleMet: true, booksQuest: true } },
     { name: 'Basement: Globglogabgalab', map: 'homeDown', at: [22, 8, 'up'], flags: { clue_den: true, clue_nightstand: true, clue_mudroom: true, cluesDone: true, momReport: true }, items: { basementKey: true, earplugs: true, bait: true } },
     { name: 'Return Mom\'s books (shop)', map: 'home', at: [34, 20, 'left'], flags: { globMet: true, globBeaten: true, baitPlaced: true, basementOpened: true }, items: { books: true, bait: false } },
@@ -2690,7 +2695,7 @@
   // Admin: hand over every item and song.
   G.adminAllItems = () => {
     const s = G.state, f = s.flags;
-    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, andoverKey: true });
+    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, andoverKey: true, mikeyNote: true });
     s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40;
     f.signal_peace = true; f.signal_icy = true; f.doronDeal = true; f.hadDoosh = true; f.capHeart = true;
   };
@@ -3081,13 +3086,36 @@
     yield G.say('Mikey', 'Okay. Okay. I respect that.');
     yield G.say('Mikey', 'Can I at least keep the flowers?');
     yield G.say('Lily', 'Keep the flowers, Mikey.');
+    yield G.say('Mikey', 'Okay. One more thing.');
+    yield G.say(null, 'Mikey pulls a piece of notebook paper out of his pocket, folded into a very small square, and holds it out.');
+    yield G.say('Mikey', 'Read it later. When I\'m gone. Like, GONE gone.');
+    yield G.say('Lily', '...Okay, Mikey.');
+    G.state.items.mikeyNote = true;
+    yield G.itemGet(G.spr.noteIcon, 'Lily got {p}Mikey\'s Note{/}. It\'s folded into a very small square.');
     yield G.walkTo(mikey, mikey.x + 140, mikey.y, 1.1);
     mikey.dead = true;
     flags().mikeyBeaten = true;
     s.playAs = null;
     yield G.say('Nate', 'That was the most powerful "No." I have ever witnessed.');
-    yield G.say('Lily', 'Thank you. Now can we go? The ditch isn\'t going to save itself.');
+    yield G.say('Lily', 'Thank you. Here. Hold this. I can\'t look at it.');
+    yield G.say(null, 'Lily hands Nate {p}Mikey\'s Note{/}. (Find it in KEY ITEMS and press Z to read it.)');
+    yield G.say('Lily', 'Now can we go? The ditch isn\'t going to save itself.');
     G.play.warp('home', 43, 50, 'down');
+  };
+
+  // Mikey's note (from KEY ITEMS): two pages, then whoever's around reacts
+  S.readMikeyNote = function* () {
+    const f = flags();
+    yield G.noteView(G.spr.mikeyNote);
+    f.noteReads = (f.noteReads || 0) + 1;
+    if (G.with('lily')) {
+      yield G.say('Lily', ['Why do you still have that.', 'Stop reading it out loud. I can hear you reading it in your head.', 'The drawing is actually kind of good. That makes it worse.'][(f.noteReads - 1) % 3]);
+      if (f.noteReads === 1) yield G.say('Nate', 'It\'s a historical document, Lily.');
+    } else if (G.with('doron')) {
+      yield G.say('Doron', f.noteReads === 1 ? '"R.I.P. Me." Mikey, buddy.' : 'He spelled "embarrassed" with two Ms. Respect the commitment.');
+    } else if (f.noteReads === 1) {
+      yield G.say('Nate', '..."R.I.P. Me." Mikey. Buddy.');
+    }
   };
 
   // Some jokes need a particular person: swap them in as Nate's companion for it.
@@ -3325,8 +3353,80 @@
   };
 
   S.funnelCake = function* () {
+    const f = flags(), s = G.state;
     yield G.say(null, 'FUNNEL CAKE: {r}6{/} shark teeth.');
-    yield G.say('Nate', '...I can\'t order that. I\'d have to say the price out loud.');
+    if (s.items.funnelCake) { yield G.say('Nate', 'I already have one. It\'s for Grandma Rose. I am NOT eating it. ...Much.'); return; }
+    if (!G.with('doron')) {
+      yield G.say('Nate', '...I can\'t order that. I\'d have to say the price out loud.');
+      if (G.with('lily')) yield G.say('Lily', 'Don\'t look at me. I can\'t say it either.');
+      else if (f.roseRocks && !f.roseTraded) yield G.say('Nate', 'Doron could order it. Doron isn\'t afraid of anything.');
+      return;
+    }
+    if (s.teeth < 6) { yield G.say('Doron', 'We\'re short a few teeth, Nate.'); return; }
+    yield G.say('Doron', 'One funnel cake, please. That\'s six teeth, right?');
+    yield G.say('Nate', 'HOW CAN YOU JUST SAY IT LIKE THAT.');
+    yield G.say('Doron', 'Say what? Six?');
+    yield G.say('Nate', '...');
+    G.play.addTeeth(-6);
+    s.items.funnelCake = true;
+    yield G.itemGet(G.spr.funnelCake, 'Doron hands you a {y}funnel cake{/}. Powdered sugar everywhere.');
+    if (f.roseRocks && !f.roseTraded) yield G.say('Nate', 'This is for Grandma Rose. Don\'t eat it.');
+    else yield G.say('Doron', 'Somebody around here would probably trade you something for that.');
+  };
+
+  // Dr. Moles' tray of three gray rocks: which one is dolomite? (the acid test)
+  S.acidTest = function* () {
+    const f = flags();
+    if (f.acidDone) { yield G.say(null, 'The tray of gray rocks. Nate already found the dolomite. Rock C. Obviously.'); return; }
+    yield G.say(null, 'A tray of three gray rocks, labeled A, B and C, and a dropper bottle of dilute acid. A sticky note: "WHICH ONE IS DOLOMITE? - Dr. M."');
+    yield G.say(null, 'Nate drips a little acid on each one.');
+    yield G.say(null, '{y}A{/} fizzes like crazy. {y}B{/} does nothing at all. {y}C{/} does nothing... until Nate scratches some into powder. Then the powder fizzes, a little.');
+    const c = yield G.ask('Nate', 'Which one is dolomite?', ['A: fizzes a lot', 'B: no fizz at all', 'C: fizzes as powder']);
+    if (c !== 2) {
+      yield G.say('Nate', c === 0 ? '...No. Fizzing like that is calcite. That\'s limestone.' : '...No. Nothing at all? That\'s quartzite. Acid doesn\'t touch quartz.');
+      yield G.say('Nate', 'Think, Nate. You think about this stuff OFTEN.');
+      return;
+    }
+    f.acidDone = true;
+    yield G.say('Nate', 'C. Dolomite barely reacts to cold acid, until you powder it. Calcite fizzes right away. Quartz never does.');
+    yield G.say('Dr. Moles', 'Correct! Keep it. You\'re the first student all week who didn\'t try to lick them.');
+    yield* S.rockGive('dolomite');
+  };
+
+  // the balloon game: darts bounce off; Lily's "No." pops every balloon
+  S.balloonGame = function* () {
+    const f = flags(), s = G.state, w = G.play.world;
+    if (f.balloonWon) { yield G.say('Carny', 'You again. The young lady popped every balloon I own. I had to order more.'); return; }
+    yield G.say('Carny', 'Step right up! Pop every balloon, win the TOP PRIZE!');
+    yield G.say(null, 'The top prize sits on a velvet pillow: a chunk of gray rock. The tag says "GENUINE LEHIGH VALLEY CEMENT ROCK."');
+    if (!f.balloonSeen) { f.balloonSeen = true; yield G.say('Nate', 'I NEED that.'); }
+    if (!G.with('lily')) {
+      const c = yield G.ask('Carny', 'Three darts, five teeth. Whaddaya say?', ['Play (5 teeth)', 'No thanks']);
+      if (c) return;
+      if (s.teeth < 5) { yield G.say('Carny', 'Come back with five teeth, pal.'); return; }
+      G.play.addTeeth(-5);
+      G.audio.sfx('swing');
+      yield G.say(null, 'Nate throws three darts. Thunk. Thunk. Thunk. The balloons bounce them right off.');
+      yield G.say('Nate', 'These balloons are made of TIRE.');
+      yield G.say('Carny', 'Nobody\'s ever popped \'em. Nobody ever will.');
+      if (!f.balloonHint) { f.balloonHint = true; yield G.say('Nate', 'I need something that pops balloons. ...Or someone.'); }
+      return;
+    }
+    yield G.say('Carny', 'How about you, young lady? Wanna try?');
+    yield G.say('Lily', 'No.');
+    // every balloon on the board, all at once
+    G.audio.sfx('no');
+    G.play.shake(12, 2);
+    const b = w.balloonBooth;
+    for (let i = 0; i < 12; i++) w.burst(b.x + 10 + (i % 4) * 8, b.y + 10 + Math.floor(i / 4) * 7, ['#e83030', '#f8d040', '#3878d8', '#38a048', '#ffffff'], 4, { speed: 1.4, life: 20, size: 2 });
+    w.pop(b.x + 24, b.y - 4, 'POP POP POP POP!', '#f8f8f0');
+    b.img = G.spr.balloonBoothEmpty;
+    yield G.wait(40);
+    yield G.say('Carny', '...');
+    yield G.say('Carny', 'That... counts, I guess.');
+    f.balloonWon = true;
+    yield* S.rockGive('cementrock');
+    yield G.say('Lily', 'You\'re welcome.');
   };
 
   S.cornDogs = function* () {
@@ -3408,7 +3508,6 @@
     },
   };
 
-  const LAF_OUTCROPS = [[2, 9], [8, 26], [10, 14], [13, 10]];
   G.MAPS.campus = {
     name: 'Lafayette College',
     music: 'field',
@@ -3462,11 +3561,8 @@
         w.addProp({ img: G.spr.boulders[k], tx: x, ty: y, dx: -2, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: () => S.rockGarden(k)() });
       }
       w.addProp({ img: G.spr.cart, tx: 22, ty: 14, h: 2, dx: -2, solid: [22, 14, 2, 2], hit: [22, 14, 2, 2], talk: S.vendor });
-      // bedrock poking up through the lawns: Allentown dolomite (and a big ledge only Doron can crack)
-      if (G.state.items.hammer) {
-        for (const [x, y] of LAF_OUTCROPS) w.add(new G.OreVein(x * 16 + 8, y * 16 + 14, 'laf'));
-        w.add(new G.BigRock(28 * 16, 22 * 16 + 12, 'dolomite', (r) => G.script.run(S.bigRockLift(r))));
-      }
+      // a big dolomite ledge by Van Wickle that only Doron can crack
+      if (G.state.items.hammer) w.add(new G.BigRock(28 * 16, 22 * 16 + 12, 'dolomite', (r) => G.script.run(S.bigRockLift(r))));
 
       const npc = (sprite, name, tx, ty, talk, o = {}) =>
         w.add(new G.NPC(Object.assign({ sprite, name, x: tx * 16 + 8, y: ty * 16 + 14, talk }, o)));
@@ -3543,7 +3639,8 @@
     setup(w) {
       w.addProp({ img: G.spr.chalkboard, tx: 5, ty: 1, flat: true, dy: -1 });
       w.addProp({ img: G.spr.desk, tx: 10, ty: 2, solid: [10, 2, 2, 1] });
-      w.addProp({ img: G.spr.bench, tx: 1, ty: 2, solid: [1, 2, 3, 1] });
+      w.addProp({ img: G.spr.bench, tx: 1, ty: 2, solid: [1, 2, 3, 1], hit: [1, 2, 3, 1], talk: S.acidTest });
+      w.addProp({ img: G.spr.rockTray, tx: 1, ty: 2, dx: 15, dy: -10, base: 3 * 16 });
       for (const y of [4, 6, 8]) {
         for (const x of [2, 4, 10, 12]) w.addProp({ img: G.spr.schoolDesk, tx: x, ty: y, solid: [x, y, 1, 1] });
       }
@@ -3952,12 +4049,14 @@
       const brook = (x) => Math.round(1 + x * 0.15);
       for (let x = 0; x < W; x++) { set(x, brook(x), '~'); set(x, brook(x) + 1, '~'); }
       for (let y = 0; y < H; y++) for (const x of [51, 52]) if (g[y][x] === '~') g[y][x] = 'W';
+      // where the brook widens into a pool, with a little island of red shale in the middle
+      fill(4, 1, 8, 5, '~'); fill(7, 2, 2, 2, ',');
       // woods along both banks (the conservation easement)
       for (let x = 0; x < W - 1; x += 2) {
         if (x >= 44 && x <= 54) continue;
         const c = brook(x);
         if (c >= 4) set(x, c - 3, 'T');
-        if (x % 4 === 0 || x > 18) set(x, c + 3, 'T');
+        if ((x % 4 === 0 || x > 18) && (x < 3 || x > 12)) set(x, c + 3, 'T');
       }
       // the asphalt parking area in front of the house, and the garage apron
       fill(20, 36, 26, 5, 'a');
@@ -4058,8 +4157,9 @@
       w.addTree(16, 19, 'pine');
       w.addTree(46, 23, 'pine');
       w.add(new G.Sign(53, 12, 'BRADY BROOK.'));
-      // red Passaic shale ledges, a basalt boulder by the brook, and a gravel bar to sift
-      for (const [x, y] of [[6, 7], [20, 9], [3, 36], [54, 47]]) w.add(new G.OreVein(x * 16 + 8, y * 16 + 14, 'bed'));
+      // a red shale ledge out on the island in the brook pool, a basalt boulder by the brook, a gravel bar to sift
+      w.add(new G.OreVein(8 * 16, 2 * 16 + 14, 'bed'));
+      w.addTrigger(4, 6, 8, 1, () => { if (!flags().poolHint) G.script.run(S.poolHint()); });
       w.add(new G.BigRock(45 * 16, 11 * 16 + 12, 'basalt', (r) => G.script.run(S.bigRockLift(r))));
       w.addProp({ img: G.spr.gravelBar, tx: 47, ty: 9, dx: 2, dy: -1, flat: true, hit: [47, 9, 2, 1], talk: S.brookSift });
 
@@ -4098,6 +4198,15 @@
         if (!flags().lilySaved) w.addTrigger(38, 50, 10, 5, () => { if (!flags().mikeyMet) G.script.run(S.mikeyIntro()); });
         else w.addTrigger(35, 46, 15, 9, () => G.script.run(S.mikeyGoldenHour()));
       }
+    },
+    // "Stay Icy" on the pipe, near the pool: it freezes over (for this visit)
+    onIcy(w, p) {
+      if (w.poolFrozen || Math.hypot(p.x - 8 * 16, p.y - 4 * 16) > 110) return false;
+      w.poolFrozen = true;
+      for (let y = 1; y <= 5; y++) for (let x = 4; x <= 11; x++) if (w.tileAt(x, y) === '~') w.setTile(x, y, 'I');
+      w.burst(8 * 16, 3 * 16, ['#ffffff', '#d8f4ff', '#a8e0ff'], 24, { speed: 1.8, life: 34, size: 2 });
+      w.pop(8 * 16, 2 * 16, 'THE POOL FROZE!', '#a8e0ff');
+      return true;
     },
     // the flock's revenge: angry hens swoop in from off-screen for a few seconds
     tick(w) {
@@ -4433,6 +4542,16 @@
     yield G.say(null, 'A coin-op viewer. Nate puts in a quarter.');
     yield G.say(null, 'East: the open Atlantic. West: the bay, all the way to the horizon. A cargo ship lining up for the channel.');
     yield G.say(null, 'And seagulls. So, so many seagulls.');
+  };
+
+  // walking up to the brook pool at home
+  S.poolHint = function* () {
+    const f = flags(), w = G.play.world;
+    f.poolHint = true;
+    yield G.say('Nate', 'Red rock out on that little island in the brook. Passaic shale!');
+    if (w.poolFrozen) return;
+    yield G.say('Nate', 'No way across, though. If only the water would hold still.');
+    if (G.state.items.pipe && f.signal_icy) yield G.say('Nate', '...Hm. I know a song that makes things hold still.');
   };
 
   // ---- the old fisherman on the rocks: knock five gulls out of the sky and his
@@ -4938,11 +5057,9 @@
         w.add(new G.Wrestler(x * 16 + 8, y * 16 + 14, styles[i % styles.length])));
 
       w.addWarp(0, 12, 1, 2, 'campus', 38, 12, 'left');
-      // Jacksonburg cement rock in the grass, and a pile of old quarry rubble (serpentine)
-      if (G.state.items.hammer) {
-        for (const [x, y] of [[2, 8], [37, 15], [10, 29], [26, 15]]) w.add(new G.OreVein(x * 16 + 8, y * 16 + 14, 'eas'));
-        w.add(new G.QuarryRubble(3 * 16, 28 * 16 + 12));
-      }
+      // a pile of old quarry rubble (serpentine) tucked in the corner, and the balloon game
+      if (G.state.items.hammer) w.add(new G.QuarryRubble(3 * 16, 28 * 16 + 12));
+      w.balloonBooth = w.addProp({ img: flags().balloonWon ? G.spr.balloonBoothEmpty : G.spr.balloonBooth, tx: 27, ty: 14, h: 2, solid: [27, 14, 3, 2], hit: [27, 14, 3, 2], talk: S.balloonGame });
     },
     // the protesters chant every so often
     tick(w) {

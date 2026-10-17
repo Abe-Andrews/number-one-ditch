@@ -67,7 +67,7 @@
     Nate: '#78e070', Lily: '#ff98d0', Abe: '#ffa848', Hannah: '#c898ff', Doron: '#68c8ff',
     Dad: '#f8d850', 'Father Eggmas': '#f86858', Tyler: '#78e8e8', Mikey: '#ff98d0',
     Nani: '#ffb8e0', 'El EEENGLISH': '#f86858', 'Pyro Pete': '#ffa848', 'Badlands Chugs': '#ff9a28', 'Little Nate': '#a8f098',
-    Michelle: '#e8a0d8', Globglogabgalab: '#f8a8c8', 'Ice JJ Fish': '#a8e0ff', 'Father Christmas': '#ff6a5a', 'Hooded Figure': '#b8a8e8', 'Old Fisherman': '#a8d0e0',
+    Michelle: '#e8a0d8', Globglogabgalab: '#f8a8c8', 'Ice JJ Fish': '#a8e0ff', 'Father Christmas': '#ff6a5a', 'Hooded Figure': '#b8a8e8', 'Old Fisherman': '#a8d0e0', Carny: '#f8d040',
   };
 
   const BOX = { x: 6, w: 228, h: 44, lineH: 11, lines: 3 };
@@ -190,6 +190,27 @@
       const sc = this.t < 8 ? 4 - Math.floor(this.t / 4) : 2, w = G.font.bigWidth(text, sc);
       const j = this.t < 30 ? Math.round((Math.random() * 2 - 1) * 2) : 0;
       G.font.drawBig(ctx, text, Math.round((G.W - w) / 2) + j, 60 - sc * 3 + j, sc, color, '#1c1424');
+    },
+  });
+
+  // Full-screen pages of paper (a note, a letter): Z turns the page, and Z on
+  // the last one puts it away.
+  G.noteView = (pages) => ({
+    start() { this.i = 0; this.t = 0; G.audio.sfx('menu'); },
+    update() {
+      const inp = G.input;
+      if (++this.t > 14 && (inp.hit('a') || inp.hit('b'))) {
+        inp.eat('a'); inp.eat('b');
+        G.audio.sfx('menu');
+        this.t = 0;
+        if (++this.i >= pages.length) return true;
+      }
+      return false;
+    },
+    draw(ctx) {
+      ctx.drawImage(pages[Math.min(this.i, pages.length - 1)], 0, 0);
+      const hint = this.i < pages.length - 1 ? 'Z: turn it over' : 'Z: fold it back up';
+      G.font.draw(ctx, hint, G.W - G.font.width(hint) - 4, G.H - 9, '#f8f8f0', { shadow: '#000' });
     },
   });
 

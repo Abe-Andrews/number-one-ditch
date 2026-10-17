@@ -4086,6 +4086,172 @@
     return finish(p);
   }
 
+  // ---- secret rocks: the carnival balloon booth (full, and after Lily), a
+  // funnel cake, and Dr. Moles' tray of three gray rocks with a dropper bottle
+  function balloonBooth(popped) {
+    const W = 48, H = 44, p = new Pix(W, H);
+    p.rect(0, 0, W, 8, '#e83030');
+    for (let x = 0; x < W; x += 8) p.rect(x, 0, 4, 8, '#f8f8f0');
+    for (let x = 0; x < W; x += 4) p.set(x + 1, 8, x % 8 ? '#f8f8f0' : '#e83030');
+    p.rect(1, 9, 2, 35, '#8a5a34'); p.rect(W - 3, 9, 2, 35, '#8a5a34');
+    p.rect(4, 10, W - 8, 22, '#5a3a24'); p.hline(4, W - 5, 10, '#7a5434');
+    const cols = ['#e83030', '#f8d040', '#3878d8', '#38a048'];
+    for (let i = 0; i < 12; i++) {
+      const bx = 9 + (i % 4) * 9, by = 13 + Math.floor(i / 4) * 6;
+      if (popped) { p.set(bx + 1, by + 3, cols[(i + 1) % 4]); p.set(bx + 2, by + 4, cols[(i + 1) % 4]); continue; }
+      p.rect(bx, by, 4, 4, cols[(i + 1) % 4]); p.set(bx + 1, by + 1, '#ffffff'); p.set(bx + 2, by + 4, '#3a2a20');
+    }
+    // the counter with the top prize on its velvet pillow
+    p.rect(3, 32, W - 6, 12, '#c8a070'); p.hline(3, W - 4, 32, '#e0c090'); p.hline(3, W - 4, 43, '#8a6a48');
+    if (!popped) { p.rect(19, 28, 10, 4, '#8a2848'); p.rect(21, 25, 6, 4, '#6a6c74'); p.set(22, 26, '#8a8c94'); p.rect(30, 30, 4, 2, '#f8f8f0'); }
+    else p.rect(19, 30, 10, 2, '#8a2848');
+    for (const x of [8, 12, 38]) { p.vline(x, 34, 38, '#3a3a40'); p.set(x, 33, '#e83030'); }
+    return finish(p);
+  }
+  function funnelCake() {
+    const p = new Pix(16, 12);
+    for (let y = 4; y < 12; y++) for (let x = 0; x < 16; x++) if ((x - 7.5) ** 2 / 60 + (y - 8) ** 2 / 14 <= 1) p.set(x, y, '#f4f4f0');
+    for (let i = 0; i < 18; i++) { const a = i * 0.9, r = 1 + i * 0.32; p.set(Math.round(7.5 + Math.cos(a) * r * 1.4), Math.round(6 + Math.sin(a) * r * 0.6), i % 3 ? '#d8a050' : '#b87830'); }
+    for (const [x, y] of [[5, 4], [9, 5], [7, 7], [11, 6], [4, 6]]) p.set(x, y, '#ffffff');
+    return finish(p);
+  }
+  function rockTray() {
+    const p = new Pix(26, 10);
+    p.rect(0, 5, 20, 5, '#8a8a94'); p.hline(0, 19, 5, '#b8b8c0');
+    for (const [x, c] of [[2, '#9a9aa0'], [8, '#8a8890'], [14, '#a8a49a']]) { p.rect(x, 3, 4, 3, c); p.hline(x, x + 3, 3, '#c8c8d0'); }
+    for (const [x, ch] of [[3, '#f4f2ec'], [9, '#f4f2ec'], [15, '#f4f2ec']]) p.set(x + 1, 8, ch);
+    p.rect(21, 3, 4, 7, '#a86a30'); p.rect(22, 0, 2, 3, '#3a3a40'); p.set(22, 5, '#f4f2ec');
+    return finish(p);
+  }
+
+  // ================================================================ MIKEY'S NOTE
+  // Recreated from the real note Mikey gave Lily after she said no: page 1 is
+  // the letter (torn out of a spiral notebook, misspellings, scribbles and all,
+  // with a crying self-portrait and a heart turning into a broken heart);
+  // page 2 is his pencil drawing of her on loose-leaf. Full-screen pages.
+  function mikeyNotePages() {
+    const px = (x, X, Y, c, w = 1, h = 1) => { x.fillStyle = c; x.fillRect(Math.round(X), Math.round(Y), w, h); };
+    const line = (x, x0, y0, x1, y1, c) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1; for (let i = 0; i <= n; i++) px(x, x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, c); };
+    const ring = (x, cx, cy, rx, ry, c, a0 = 0, a1 = Math.PI * 2) => { for (let a = a0; a <= a1; a += 0.08) px(x, cx + Math.cos(a) * rx, cy + Math.sin(a) * ry, c); };
+    const heart = (x, cx, cy, r, c, fill) => {
+      for (let y = -r; y <= r * 1.3; y++) for (let X = -r * 1.3; X <= r * 1.3; X++) {
+        const u = X / r, v = -y / r, k = (u * u + v * v - 1) ** 3 - u * u * v * v * v;
+        if (fill ? k <= 0 : k <= 0 && k > -0.12) px(x, cx + X, cy + y, c);
+      }
+    };
+    const INK = '#1c1c2c';
+    // ---- page 1: the letter
+    const c1 = G.canvas(240, 160), a = c1.getContext('2d');
+    px(a, 0, 0, '#1c1424', 240, 160);
+    const L = 30, T = 3, W = 184, H = 154;
+    px(a, L, T, '#f4f2ec', W, H);
+    for (let y = T + 12; y < T + H - 2; y += 9) px(a, L + 3, y, '#c8ccd8', W - 5, 1);
+    // ragged edge where it tore off the spiral, with little tabs hanging on
+    for (let y = T; y < T + H; y += 3) px(a, L, y, '#1c1424', 1 + Math.floor(G.hash(y, 1, 77) * 3), 3);
+    for (let y = T + 8; y < T + H - 4; y += 15) px(a, L - 3, y, '#f4f2ec', 4, 4);
+    // fold creases
+    px(a, L + (W >> 1), T, 'rgba(0,0,0,0.07)', 1, H); px(a, L, T + 52, 'rgba(0,0,0,0.07)', W, 1); px(a, L, T + 104, 'rgba(0,0,0,0.07)', W, 1);
+    px(a, L + W - 1, T, '#d8d4c8', 1, H); px(a, L, T + H - 1, '#d8d4c8', W, 1);
+    // the handwriting: word by word, a little wobbly; {x:n} is a scribbled-out word
+    const LINES = [
+      [14, 'Dear', 'Lily,', 'I', 'love', 'you', 'so', 'much.'],
+      [4, 'I', 'know', 'you', "don't", 'like', 'me.'],
+      [4, 'And', 'it', 'broke', 'my', { x: 'heart' }],
+      [4, 'when', '(you', 'know', 'what)', 'happened.'],
+      [4, 'And', "I'm", 'sorry,', 'because', 'I'],
+      [4, 'feel', 'like', 'I', 'made', 'you', 'emmbar-'],
+      [4, 'essed', 'and', { x: 16 }, "I'm", 'very'],
+      [4, 'sorry.'],
+      [4, 'And', 'if', 'you', { x: 20 }, "don't", 'like', 'me'],
+      [4, 'than', 'R.I.P', 'Me.', 'Sorry.'],
+    ];
+    const scribble = (X, Y, w) => { for (let i = 0; i < w; i += 1) { const h = (i * 7) % 5; line(a, X + i, Y + 1 + h % 3, X + i + 1, Y + 6 - h % 4, INK); } };
+    LINES.forEach(([indent, ...words], i) => {
+      let X = L + 6 + indent;
+      const Y = T + 5 + i * 9;
+      words.forEach((wd, j) => {
+        const wob = Math.round(G.hash(i, j, 33) * 2) - 1;
+        if (typeof wd === 'object') {
+          if (typeof wd.x === 'string') { G.font.draw(a, wd.x, X, Y + wob, INK); scribble(X - 1, Y + wob, G.font.width(wd.x) + 2); X += G.font.width(wd.x) + 5; }
+          else { scribble(X, Y + wob, wd.x); X += wd.x + 4; }
+          return;
+        }
+        G.font.draw(a, wd, X, Y + wob, INK);
+        // a little heart dotting the i in "Lily"
+        if (wd === 'Lily,') { const ix = X + G.font.width('L') + 1; px(a, ix - 1, Y + wob, '#f4f2ec', 3, 2); heart(a, ix, Y + wob - 1, 2, '#c83050', true); }
+        X += G.font.width(wd) + 4;
+      });
+    });
+    // the doodles: a crying Mikey with scribbly hair, a heart, "to", a broken heart
+    const fy = T + 99;
+    ring(a, L + 46, fy + 12, 9, 10, INK);
+    for (let i = 0; i < 26; i++) line(a, L + 37 + (i % 13) * 1.5, fy + 1 + (i % 3), L + 38 + (i % 13) * 1.5, fy + 7 - (i % 4), INK);
+    for (const ex of [L + 42, L + 50]) { px(a, ex - 1, fy + 10, INK, 3, 3); px(a, ex - 1, fy + 10, '#f4f2ec'); px(a, ex, fy + 13, '#5a7ab0', 1, 5); }
+    ring(a, L + 46, fy + 21, 3, 2, INK, Math.PI * 1.15, Math.PI * 1.85);
+    for (const [dx, dy] of [[-4, 25], [2, 29], [-1, 35]]) { px(a, L + 46 + dx, fy + dy, '#5a7ab0', 1, 2); px(a, L + 46 + dx - 1, fy + dy + 2, '#5a7ab0', 3, 2); }
+    ring(a, L + 46, fy + 44, 10, 3, INK);
+    heart(a, L + 76, fy + 12, 7, INK, false);
+    G.font.draw(a, 'to', L + 90, fy + 9, INK);
+    // the broken heart: split down a jagged crack, a tiny sad face across the halves
+    heart(a, L + 120, fy + 12, 9, INK, false);
+    for (let y = fy + 2; y < fy + 24; y++) { const z = L + 120 + (((y - fy) >> 2) % 2 ? 2 : -1); px(a, z, y, '#f4f2ec', 2, 1); px(a, z - 1, y, INK); px(a, z + 2, y, INK); }
+    px(a, L + 114, fy + 10, INK); px(a, L + 126, fy + 10, INK); px(a, L + 114, fy + 12, '#5a7ab0', 1, 3);
+    ring(a, L + 120, fy + 18, 4, 2, INK, Math.PI * 1.15, Math.PI * 1.85);
+    // ---- page 2: his drawing of her
+    const c2 = G.canvas(240, 160), b = c2.getContext('2d');
+    px(b, 0, 0, '#1c1424', 240, 160);
+    const L2 = 34, W2 = 172;
+    px(b, L2, 2, '#f8f8f4', W2, 156);
+    for (let y = 18; y < 158; y += 8) px(b, L2 + 1, y, '#b4cce4', W2 - 2, 1);
+    px(b, L2 + 20, 2, '#e09090', 1, 156);
+    for (let y = 0; y < 7; y++) for (let x = 0; x < 7; x++) if ((x - 3) ** 2 + (y - 3) ** 2 <= 9) px(b, L2 + 6 + x, 20 + y, '#1c1424');
+    px(b, L2 + (W2 >> 1), 2, 'rgba(0,0,0,0.06)', 1, 156); px(b, L2, 60, 'rgba(0,0,0,0.06)', W2, 1);
+    const G1 = '#3e3e46', G2 = '#6a6a72', G3 = '#9a9aa2', cx = 120;
+    G.font.draw(b, 'Lily', cx - 8, 10, G2);
+    // hair: diagonal pencil strokes on top, flowing down into long strands past her shoulders
+    for (let y = 30; y < 64; y++) for (let x = cx - 30; x <= cx + 30; x++) {
+      if (((x - cx) / 29) ** 2 + ((y - 57) / 27) ** 2 > 1) continue;
+      const d = (((x - y) % 3) + 3) % 3;
+      if (d === 0) px(b, x, y, y < 44 ? G1 : G2);
+      else if (d === 1 && y < 40) px(b, x, y, G2);
+    }
+    ring(b, cx, 57, 29, 27, G1, Math.PI * 1.08, Math.PI * 1.92);
+    for (const side of [-1, 1]) for (let k = 0; k < 6; k++) {
+      const x0 = cx + side * (29 - k * 2.5), bottom = 132 - k * 7 + (k % 2) * 5;
+      for (let y = 50; y < bottom; y++) {
+        const t = (y - 50) / (bottom - 50), x = x0 + side * (Math.round(Math.sin(y / 10 + k * 1.3) * 2) + t * 6);
+        px(b, x, y, k % 2 ? G2 : G1, t > 0.85 ? 1 : 2, 1);
+      }
+    }
+    // face: jaw down to a pointed chin
+    line(b, cx - 20, 82, cx - 12, 98, G2); line(b, cx - 12, 98, cx, 106, G2); line(b, cx, 106, cx + 12, 98, G2); line(b, cx + 12, 98, cx + 20, 82, G2);
+    // bangs, falling to just above her eyes
+    for (let i = 0; i < 9; i++) {
+      const bx = cx - 24 + i * 6, len = 18 + ((i * 5) % 3) * 3;
+      for (let y = 0; y < len; y++) { const w = Math.max(1, Math.round(4 * (1 - y / len))); px(b, bx - (w >> 1) + (y >> 3) * (i < 4 ? -1 : 1), 52 + y, i % 3 ? G1 : G2, w, 1); }
+    }
+    // big eyes: a heavy upper lash, dark irises, two highlights
+    for (const ex of [cx - 12, cx + 12]) {
+      px(b, ex - 5, 76, G1, 11, 2); px(b, ex + (ex < cx ? -7 : 6), 75, G1, 2, 1);
+      px(b, ex - 3, 78, G1, 7, 7); px(b, ex - 2, 83, G2, 5, 2); px(b, ex - 2, 79, '#f8f8f4', 2, 2); px(b, ex + 2, 83, '#f8f8f4');
+      px(b, ex - 3, 86, G3, 7, 1);
+    }
+    // blush (little hatch marks), freckles, a tiny nose and a small smile
+    for (const bx of [cx - 18, cx + 12]) { for (let i = 0; i < 4; i++) line(b, bx + i * 2, 93, bx + i * 2 + 1, 91, G3); for (const [fx, fy2] of [[1, 89], [4, 90], [6, 88]]) px(b, bx + fx, fy2, G2); }
+    px(b, cx, 91, G3); px(b, cx + 1, 92, G3);
+    px(b, cx - 3, 97, G2); px(b, cx - 2, 98, G2, 4, 1); px(b, cx + 2, 97, G2);
+    return [c1, c2];
+  }
+  // the key item: a little square of folded notebook paper
+  function noteIcon() {
+    const p = new Pix(14, 14);
+    p.rect(1, 2, 12, 10, '#f4f2ec'); p.vline(7, 2, 11, '#d0ccc0'); p.hline(1, 12, 7, '#d0ccc0');
+    for (const y of [4, 9]) p.hline(2, 12, y, '#b8c4d8');
+    p.set(3, 4, '#c83050'); p.set(5, 4, '#c83050'); p.hline(3, 5, 5, '#c83050'); p.set(4, 6, '#c83050');
+    for (let y = 2; y < 12; y += 2) p.set(1, y, '#c8c4b8');
+    return finish(p);
+  }
+
   // ================================================================ THE CHESAPEAKE BAY BRIDGE-TUNNEL
   // A highway light, its arm reaching out over the road (gulls sit on these).
   // Drawn with the arm pointing right; the left-pointing one is the mirror.
@@ -4698,6 +4864,8 @@
     S.outcrops = { laf: outcrop('laf'), eas: outcrop('eas'), bed: outcrop('bed') };
     S.quarryRubble = quarryRubble(); S.bigBasalt = bigRock('basalt'); S.bigDolomite = bigRock('dolomite'); S.gravelBar = gravelBar();
     S.fc = { idle: fatherChristmas(false, false), up: fatherChristmas(true, false), idleRage: fatherChristmas(false, true), upRage: fatherChristmas(true, true), sweater: fatherChristmas(false, false, true) };
+    S.balloonBooth = balloonBooth(false); S.balloonBoothEmpty = balloonBooth(true); S.funnelCake = funnelCake(); S.rockTray = rockTray();
+    S.mikeyNote = mikeyNotePages(); S.noteIcon = noteIcon();
     S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);
     S.gull = [false, true].map((l) => ({ sit: gullFrame(l, 'sit'), up: gullFrame(l, 'up'), down: gullFrame(l, 'down') }));
     S.tunnelPortal = tunnelPortal(); S.containerShip = containerShip(); S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
