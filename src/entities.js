@@ -149,29 +149,17 @@
         if (!G.play.tryInteract()) this.startSwing();
       } else if (inp.hit('b')) {
         inp.eat('b');
-        if (!G.state.playAs && !G.state.jam) G.play.useItem();
+        if (!G.state.playAs) G.play.useItem();
       }
     }
 
     startSwing() {
-      if (G.state.jam) { this.strum(); return; }
       if (G.state.playAs === 'lily') { this.chargeNo(); return; }
       if (!G.state.items.hammer) return;
       this.state = 'swing';
       this.t = 0;
       this.hitSet.clear();
       G.audio.sfx('swing');
-    }
-
-    // The jam off: Z strums the Olsen. On the beat = a power chord.
-    strum() {
-      if (this.noT > 0) return;
-      this.noT = 10;
-      this.strumT = 10;
-      const power = G.onBeat(), [dx, dy] = DIRS[this.dir];
-      this.world.add(new ChordShot(this.x + dx * 10, this.y + dy * 6, this.dir, power));
-      G.audio.sfx(power ? 'power' : 'strum');
-      if (power) this.world.pop(this.x, this.y - 30, 'ON BEAT!', '#f8d850');
     }
 
     // Lily's only move, and it is enough: hold Z to wind it up (she can't
@@ -277,7 +265,6 @@
       const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2) - cy;
       const swinging = this.state === 'swing', bassing = this.state === 'bass';
       if (swinging && this.dir === 'up') this.drawHammer(ctx, cx, cy);
-      if (G.state.jam && this.dir === 'up') this.drawOlsen(ctx, sx, sy);
       if (bassing && this.dir === 'up') this.drawBass(ctx, cx, cy);
       const charged = this.state === 'charge' && this.t >= NO_FULL && (G.tick >> 2) & 1;
       ctx.drawImage((this.state === 'hurt' && (this.t >> 1) & 1) || charged ? G.art.flash(img) : img, sx, sy);
@@ -290,7 +277,6 @@
       }
       if (swinging && this.dir !== 'up') this.drawHammer(ctx, cx, cy);
       if (bassing && this.dir !== 'up') this.drawBass(ctx, cx, cy);
-      if (G.state.jam && this.dir !== 'up') this.drawOlsen(ctx, sx, sy);
       if (this.pose === 'hold' && this.holdIcon) {
         const ic = this.holdIcon;
         ctx.drawImage(ic, Math.round(this.x - ic.width / 2) - cx, sy - ic.height - 1);
@@ -304,18 +290,6 @@
       if (this.pipeOut && this.dir !== 'up') {
         const pos = { right: [11, 7], left: [-3, 7], down: [8, 8] }[this.dir];
         ctx.drawImage(this.dir === 'left' ? G.spr.pipeSmallL : G.spr.pipeSmall, sx + pos[0], sy + pos[1]);
-      }
-    }
-
-    // The Olsen, slung across Nate (a little bounce while he strums).
-    drawOlsen(ctx, sx, sy) {
-      if (this.strumT > 0) this.strumT--;
-      const left = this.dir === 'left', img = left ? G.spr.olsenL : G.spr.olsen;
-      const bump = this.strumT > 5 ? 1 : 0;
-      ctx.drawImage(img, sx + (left ? -5 : -1), sy + 13 + bump);
-      if (this.strumT > 4) {
-        ctx.fillStyle = '#f8f0c8';
-        ctx.fillRect(sx + (left ? 11 : 4), sy + 10 - bump, 1, 2); ctx.fillRect(sx + (left ? 13 : 2), sy + 11, 1, 2);
       }
     }
 
@@ -1513,231 +1487,6 @@
   }
   G.Globglog = Globglog;
 
-
-  // ============================================================== THE JAM OFF (Berk)
-  // Only real walls stop sound: notes fly over keyboards and amps.
-  const wallAt = (w, x, y) => { const ch = w.tileAt(Math.floor(x / 16), Math.floor(y / 16)); return ch === null || !!(G.TILE_DEFS[ch] && G.TILE_DEFS[ch].solid); };
-
-  // A strum from the Olsen: rings of sound. Power chords are bigger, hit
-  // twice as hard, and knock Berk's notes out of the air.
-  class ChordShot extends Ent {
-    constructor(x, y, dir, power) {
-      super(x, y);
-      const [dx, dy] = DIRS[dir];
-      this.vx = dx * 3; this.vy = dy * 3;
-      this.ang = Math.atan2(dy, dx);
-      this.power = power;
-      this.life = power ? 60 : 40;
-    }
-    update(w) {
-      if (G.script.busy) return;
-      this.x += this.vx; this.y += this.vy;
-      if (--this.life <= 0 || wallAt(w, this.x, this.y - 8)) { this.dead = true; return; }
-      const s = this.power ? 12 : 7, r = [this.x - s, this.y - 10 - s, this.x + s, this.y - 10 + s];
-      for (const e of w.ents) {
-        if (e.dead) continue;
-        if (this.power && e instanceof PunkNote && G.overlap(r, e.hurtBox())) { e.pop(); continue; }
-        if (e.enemy && e.hurtBox && G.overlap(r, e.hurtBox())) {
-          e.hit(this.power ? 2 : 1, this.x - this.vx * 4, this.y - this.vy * 4);
-          w.burst(this.x, this.y - 10, this.power ? ['#f8d850', '#ffffff', '#ff9a28'] : ['#c8e8ff', '#ffffff'], this.power ? 10 : 5, { speed: 1.2, life: 18, size: 2 });
-          this.dead = true;
-          return;
-        }
-      }
-    }
-    draw(ctx, cx, cy) {
-      const x = Math.round(this.x) - cx, y = Math.round(this.y - 10) - cy;
-      ctx.strokeStyle = this.power ? '#f8d850' : '#c8e8ff';
-      ctx.lineWidth = this.power ? 2 : 1;
-      const n = this.power ? 3 : 2, grow = (this.power ? 60 : 40) - this.life;
-      for (let i = 0; i < n; i++) {
-        ctx.globalAlpha = 1 - i * 0.25;
-        ctx.beginPath();
-        ctx.arc(x - Math.cos(this.ang) * i * 4, y - Math.sin(this.ang) * i * 4, 4 + i * 2 + Math.min(4, grow / 8) + (this.power ? 3 : 0), this.ang - 0.9, this.ang + 0.9);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-    }
-  }
-  G.ChordShot = ChordShot;
-
-  // Berk's ammo: punk-rock eighth notes.
-  class PunkNote extends Ent {
-    constructor(x, y, vx, vy) { super(x, y); Object.assign(this, { vx, vy, life: 260 }); }
-    hurtBox() { return [this.x - 4, this.y - 12, this.x + 4, this.y - 2]; }
-    pop() { this.dead = true; this.world.burst(this.x, this.y - 8, ['#e83848', '#ffffff'], 5, { speed: 1, life: 14, size: 2 }); }
-    update(w) {
-      if (G.script.busy) return;
-      this.x += this.vx; this.y += this.vy;
-      if (--this.life <= 0 || wallAt(w, this.x, this.y - 4)) { this.dead = true; return; }
-      const p = G.play.player;
-      if (G.overlap(this.hurtBox(), p.hurtBox())) { this.pop(); p.hurt(1, this.x, this.y); G.jamCrowd(); }
-    }
-    draw(ctx, cx, cy) {
-      ctx.drawImage(G.spr.punkNote, Math.round(this.x - 4) - cx, Math.round(this.y - 14 + Math.sin((this.life + this.x) / 5)) - cy);
-    }
-  }
-  G.PunkNote = PunkNote;
-
-  // Berk is drawn at Doron's height (1 = normal size).
-  G.BERK_SCALE = 1;
-  // BERK: behind a red stage keyboard. Everything he does
-  // lands on the beat: note fans, a keyboard smash (a ring of notes with a gap),
-  // and a stage dive that leaves him dazed and wide open.
-  const BERK_OUCH = ['NICE RIFF!', 'OK OK OK!', 'THAT\'S AN OLSEN?!', 'MY EARS!', 'TOO CLEAN!', 'ACOUSTIC?!', 'WHO TAUGHT YOU THAT?'];
-  class BerkBoss extends Ent {
-    constructor(x, y) {
-      super(x, y);
-      this.enemy = true;
-      this.boss = true;
-      this.name = 'BERK';
-      this.hp = this.maxHp = 24;
-      this.hb = { w: 24, h: 10 };
-      this.home = { x, y };
-      this.state = 'play';
-      this.beatN = null;
-      this.z = 0;
-      this.hurtT = 0;
-      this.cycle = 0;
-      this.t = 0;
-    }
-    get S() { return G.sprites.berk; }
-    get punk() { return this.hp <= this.maxHp / 2; }
-    hurtBox() { return [this.x - 9, this.y - 25 - this.z, this.x + 9, this.y - this.z]; }
-    fire(w, n, sp, spread) {
-      const p = G.play.player, a = Math.atan2(p.y - (this.y - 30), p.x - this.x);
-      for (let i = 0; i < n; i++) {
-        const b = a + (i - (n - 1) / 2) * spread;
-        w.add(new PunkNote(this.x, this.y - 12, Math.cos(b) * sp, Math.sin(b) * sp));
-      }
-    }
-    ring(w, n, sp) {
-      const gap = Math.floor(Math.random() * n);
-      for (let i = 0; i < n; i++) {
-        if (i === gap || i === (gap + 1) % n) continue;
-        const a = (i / n) * Math.PI * 2;
-        w.add(new PunkNote(this.x, this.y - 12, Math.cos(a) * sp, Math.sin(a) * sp));
-      }
-    }
-    onBeat(w, n) {
-      if (this.state !== 'play') return;
-      const b = n % 16, sp = this.punk ? 1.6 : 1.25;
-      if (b === 14 && (this.punk || this.cycle % 2)) { this.startDive(w); return; }
-      if (b === 15) this.cycle++;
-      if (b === 8 || b === 14 || (this.punk && b === 12)) {
-        // KEYBOARD SMASH
-        this.ring(w, this.punk ? 14 : 12, sp * 0.85);
-        w.pop(this.x, this.y - 36, 'SMASH!', '#e83848');
-        G.audio.sfx('clank');
-        G.play.shake(8, 2);
-        return;
-      }
-      if (this.punk || b % 2 === 0) this.fire(w, this.punk ? 5 : 3, sp, 0.3);
-    }
-    startDive(w) {
-      this.state = 'rise';
-      this.st = 0;
-      w.pop(this.x, this.y - 36, 'STAGE DIVE!!!', '#f8d850');
-      G.audio.sfx('dash');
-    }
-    update(w) {
-      if (G.script.busy || this.state === 'defeated') return;
-      this.t++;
-      if (this.hurtT > 0) this.hurtT--;
-      const beat = G.jamBeat();
-      if (beat.n !== this.beatN) { if (this.beatN !== null) this.onBeat(w, beat.n); this.beatN = beat.n; }
-      const p = G.play.player;
-      if (this.state === 'rise') {
-        // up, up and over the keyboard...
-        this.st++;
-        this.z = Math.min(70, this.z + 4);
-        if (this.st >= 18) { this.state = 'hang'; this.st = 0; }
-      } else if (this.state === 'hang') {
-        // ...the shadow hunts for Nate...
-        this.st++;
-        const dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1, sp = this.punk ? 2.6 : 2.1;
-        if (d > 2) { this.x += (dx / d) * Math.min(sp, d); this.y += (dy / d) * Math.min(sp, d); }
-        this.y = Math.max(4 * 16, Math.min(8 * 16 + 10, this.y));
-        if (this.st >= (this.punk ? 34 : 44)) { this.state = 'fall'; this.st = 0; }
-      } else if (this.state === 'fall') {
-        this.z = Math.max(0, this.z - 9);
-        if (this.z === 0) {
-          // CRASH
-          this.state = 'dazed'; this.st = this.punk ? 70 : 90;
-          G.audio.sfx('boom');
-          G.play.shake(24, 4);
-          w.fx.push({ x: this.x, y: this.y - 4, vx: 0, vy: 0, shock: true, r: 60, max: 26, life: 26, color: '#e83848' });
-          w.burst(this.x, this.y - 6, ['#e83848', '#ffffff', '#8a8a94'], 16, { speed: 2, up: 0.6, g: 0.1, life: 30, size: 3 });
-          w.pop(this.x, this.y - 34, 'CRASH!', '#ffffff');
-          if (Math.hypot(p.x - this.x, p.y - this.y) < 30) { p.hurt(2, this.x, this.y); G.jamCrowd(); }
-          this.ring(w, 10, 1.2);
-        }
-      } else if (this.state === 'dazed') {
-        // flat on his back, wide open (double damage)
-        if (--this.st <= 0) { this.state = 'hop'; this.st = 0; this.from = { x: this.x, y: this.y }; G.audio.sfx('dash'); }
-      } else if (this.state === 'hop') {
-        // one big hop back behind the keys
-        this.st++;
-        const k = Math.min(1, this.st / 34);
-        this.x = this.from.x + (this.home.x - this.from.x) * k;
-        this.y = this.from.y + (this.home.y - this.from.y) * k;
-        this.z = Math.sin(k * Math.PI) * 60;
-        if (k >= 1) { this.z = 0; this.state = 'play'; }
-      }
-      if (this.state !== 'dazed' && this.z < 10 && G.overlap([this.x - 12, this.y - 10, this.x + 12, this.y], p.hurtBox())) p.hurt(1, this.x, this.y);
-    }
-    hit(dmg, sx, sy) {
-      if (this.state === 'defeated') return;
-      const wasPunk = this.punk, w = this.world;
-      if (this.state === 'dazed') dmg *= 2;
-      this.hp = Math.max(0, this.hp - dmg);
-      this.hurtT = 12;
-      G.audio.sfx('hit');
-      w.pop(this.x, this.y - 34 - this.z, BERK_OUCH[Math.floor(Math.random() * BERK_OUCH.length)], '#f8f8f0');
-      if (this.hp <= 0) {
-        this.state = 'defeated';
-        this.z = 0;
-        G.script.run(G.SCRIPTS.berkDefeated(this));
-        return;
-      }
-      if (this.punk && !wasPunk) {
-        // half health: PUNK MODE
-        G.play.whiteout = 0.7;
-        G.play.shake(30, 3);
-        G.audio.play('punk2');
-        G.play.jamSong = 'punk2';
-        this.beatN = null;
-        w.pop(this.x, this.y - 40, 'PUNK MODE!!!', '#e83848');
-      }
-    }
-    bomb(sx, sy) { this.hit(2, sx, sy); }
-    draw(ctx, cx, cy) {
-      const S = this.S, ph = G.jamBeat().phase;
-      // big shadow on the floor (shrinks while he's in the air)
-      const sw = Math.max(8, 18 - this.z / 5);
-      ctx.drawImage(G.spr.shadowBig, Math.round(this.x - sw / 2) - cx, Math.round(this.y - 4) - cy, sw, 7);
-      if (this.state === 'hang' || this.state === 'fall') {
-        // landing zone warning
-        ctx.strokeStyle = (G.tick >> 2) & 1 ? '#e83848' : '#f8d850'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.ellipse(Math.round(this.x) - cx, Math.round(this.y - 1) - cy, 18, 7, 0, 0, Math.PI * 2); ctx.stroke();
-      }
-      let img = S.down[this.state === 'play' || this.state === 'dazed' ? 0 : 1];
-      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
-      // he bobs his head to the beat
-      const bob = this.state === 'play' ? Math.round(Math.max(0, 1 - ph * 3) * 2) : 0;
-      const W2 = Math.round(16 * G.BERK_SCALE), H2 = Math.round(S.h * G.BERK_SCALE);
-      ctx.drawImage(img, Math.round(this.x - W2 / 2) - cx, Math.round(this.y + 4 - H2 - this.z + bob) - cy, W2, H2);
-      if (this.state === 'dazed') {
-        ctx.fillStyle = '#f8d850';
-        for (let i = 0; i < 3; i++) {
-          const a = this.t * 0.12 + (i * Math.PI * 2) / 3;
-          ctx.fillRect(Math.round(this.x + Math.cos(a) * 10) - cx, Math.round(this.y - 30 + Math.sin(a) * 3) - cy, 2, 2);
-        }
-      }
-    }
-  }
-  G.BerkBoss = BerkBoss;
-
   // ============================================================== SIX (enemy)
   class Six extends Ent {
     constructor(x, y) {
@@ -1797,8 +1546,6 @@
         this.world.burst(this.x, this.y - 8, ['#ffffff', '#e8e0f0', '#ff8878'], 12, { speed: 1.2, life: 20, size: 3 });
         G.play.maybeDrop(this.x, this.y, 0.6);
         G.state.stats.sixes = (G.state.stats.sixes || 0) + 1;
-        // easter egg: 30 sacred numbers bonked = Berk shows up for a jam off
-        if (G.state.stats.sixes >= 30 && !G.state.flags.berkMet && !G.state.playAs) G.script.run(G.SCRIPTS.berkArrives());
         // progress on Gus's lawn job
         const f = G.state.flags;
         if (f.capQuest && !G.state.items.cap && !f.capDone) {

@@ -109,14 +109,6 @@
     coat: '#a88aa0', shirt: '#e8dce4', pants: '#4a6aa8', shoes: '#4a7a3a', boots: true, torso: 6, legs: 3,
   };
 
-  // Berk (Christian Berkley): ball cap, over-ear headphones, glasses, full beard,
-  // charcoal pocket tee. Doron's height and build.
-  G.CAST.berk = {
-    skin: '#a8724e', eyes: '#1c120c', hair: '#1c1410', hairStyle: 'cap', hat: '#1c1c24', hatStyle: 'ball', patch: '#e8e8e8',
-    glasses: '#1c1c22', beard: '#1c1410', headphones: '#2a2a30',
-    shirt: '#4a4e5c', logo: '#e89040', pants: '#5a5c66', shoes: '#2a2a30', wide: true, torso: 7, legs: 4,
-  };
-
   // Lafayette students, protesting the event village on the quad.
   Object.assign(G.CAST, {
     protest1: { skin: '#e8b890', hair: '#c86a30', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 },
@@ -413,17 +405,6 @@
         { wave: 'square', vol: 0.05, notes: 'D4:3 F4:1 A4:4 G#4:2 A4:2 R:4 | C5:3 A4:1 F4:4 E4:4 R:4 | D4:3 F4:1 A4:4 A#4:2 A4:2 G4:4 | F4:2 E4:2 D4:8 R:4 | A#4:3 A4:1 G4:4 F4:2 G4:2 A4:4 | C5:2 A#4:2 A4:4 G4:8 | F4:2 G4:2 A4:2 F4:2 E4:2 C#4:2 E4:4 | D4:12 R:4' },
         { wave: 'triangle', vol: 0.15, notes: 'D3:4 A2:4 D3:4 A2:4 | F2:4 C3:4 F2:4 C3:4 | D3:4 A2:4 G2:4 A2:4 | D3:4 A2:4 D3:8 | A#2:4 F3:4 A#2:4 F3:4 | C3:4 G3:4 C3:4 E3:4 | A2:4 E3:4 A2:4 C#3:4 | D3:8 A2:8' },
         { wave: 'noise', vol: 0.04, notes: 'k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:2 s:2 s:4' },
-      ],
-    },
-    // Berk's jam: fast, loud, original punk (I-V-vi-IV in E)
-    punk: {
-      bpm: 168,
-      tracks: [
-        { wave: 'square', vol: 0.05, notes: 'E5:2 E5:2 D5:2 E5:4 B4:2 A4:2 B4:2 | E5:2 E5:2 D5:2 E5:4 G#5:2 F#5:4 | E5:2 E5:2 D5:2 E5:4 B4:2 A4:2 B4:2 | C#5:4 B4:4 A4:4 B4:4 | A4:2 A4:2 B4:2 C#5:4 E5:2 C#5:2 B4:2 | A4:2 A4:2 B4:2 C#5:4 E5:6 | F#5:2 E5:2 C#5:2 B4:4 A4:2 G#4:2 A4:2 | B4:8 B4:4 R:4' },
-        { wave: 'sawtooth', vol: 0.03, notes: 'E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 | B2:2 B2:2 B2:2 B2:2 B2:2 B2:2 B2:2 B2:2 | C#3:2 C#3:2 C#3:2 C#3:2 C#3:2 C#3:2 C#3:2 C#3:2 | A2:2 A2:2 A2:2 A2:2 A2:2 A2:2 A2:2 A2:2 | A2:2 A2:2 A2:2 A2:2 A2:2 A2:2 A2:2 A2:2 | B2:2 B2:2 B2:2 B2:2 B2:2 B2:2 B2:2 B2:2 | E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 | B2:2 B2:2 B2:2 B2:2 B2:8' },
-        { wave: 'sawtooth', vol: 0.025, notes: 'B3:2 B3:2 B3:2 B3:2 B3:2 B3:2 B3:2 B3:2 | F#3:2 F#3:2 F#3:2 F#3:2 F#3:2 F#3:2 F#3:2 F#3:2 | G#3:2 G#3:2 G#3:2 G#3:2 G#3:2 G#3:2 G#3:2 G#3:2 | E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 | E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 E3:2 | F#3:2 F#3:2 F#3:2 F#3:2 F#3:2 F#3:2 F#3:2 F#3:2 | B3:2 B3:2 B3:2 B3:2 B3:2 B3:2 B3:2 B3:2 | F#3:2 F#3:2 F#3:2 F#3:2 F#3:8' },
-        { wave: 'triangle', vol: 0.16, notes: 'E2:2 E2:2 E2:2 E2:2 E2:2 E2:2 E2:2 E2:2 | B1:2 B1:2 B1:2 B1:2 B1:2 B1:2 B1:2 B1:2 | C#2:2 C#2:2 C#2:2 C#2:2 C#2:2 C#2:2 C#2:2 C#2:2 | A1:2 A1:2 A1:2 A1:2 A1:2 A1:2 A1:2 A1:2 | A1:2 A1:2 A1:2 A1:2 A1:2 A1:2 A1:2 A1:2 | B1:2 B1:2 B1:2 B1:2 B1:2 B1:2 B1:2 B1:2 | E2:2 E2:2 E2:2 E2:2 E2:2 E2:2 E2:2 E2:2 | B1:2 B1:2 B1:2 B1:2 B1:8' },
-        { wave: 'noise', vol: 0.06, notes: 'k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 s:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | s:2 s:2 s:2 s:2 k:4 s:4' },
       ],
     },
     // Badlands' groove for the refrigerator game
@@ -1708,130 +1689,6 @@
     s.items.books = true;
     yield G.itemGet(G.spr.flyingBook[1], 'You got {y}Mom\'s Books{/}! Slightly chewed. Bring them to Mom in the garden.');
     G.audio.play('house');
-  };
-
-  // ================================================================ THE JAM OFF (easter egg)
-  // Bonk 30 sacred numbers and Berk (keys, headphones, punk rock) runs in and
-  // challenges Nate to a jam off: Nate's Olsen acoustic vs. Berk's keyboard.
-  G.SONGS.punk2 = Object.assign({}, G.SONGS.punk, { bpm: 196 });
-
-  // The beat: from the audio clock when music is playing, else from the frame count.
-  G.jamBeat = () => {
-    const b = G.audio.beat();
-    if (b) return b;
-    const name = (G.play && G.play.jamSong) || 'punk', fpb = 3600 / G.SONGS[name].bpm, t = G.tick / fpb;
-    return { n: Math.floor(t), phase: t - Math.floor(t) };
-  };
-  // On the beat = within about a quarter beat (nudged a hair late, the way people play).
-  G.onBeat = () => {
-    let ph = G.jamBeat().phase - 0.04;
-    if (ph < 0) ph += 1;
-    return Math.min(ph, 1 - ph) < 0.25;
-  };
-  // Every time Nate gets hit, the crowd cheers for Berk and he gets a little back.
-  G.jamCrowd = () => {
-    const b = G.play.world.ents.find((e) => e instanceof G.BerkBoss);
-    if (!b || b.state === 'defeated' || G.tick - (b.crowdT || -99) < 40) return;
-    b.crowdT = G.tick;
-    b.hp = Math.min(b.maxHp, b.hp + 1);
-    G.audio.sfx('crowd');
-    G.play.world.pop(b.x, b.y - 40, 'THE CROWD LOVES IT!', '#ff98d0');
-  };
-
-  S.berkArrives = function* () {
-    const f = flags(), w = G.play.world, p = P(), s = G.state;
-    if (f.berkMet || s.playAs || s.jam) return;
-    f.berkMet = true;
-    G.audio.stop();
-    yield G.wait(20);
-    w.pop(p.x, p.y - 34, 'THIRTY!', '#f8d850');
-    // something BIG is coming
-    for (let i = 0; i < 4; i++) { G.audio.sfx('bump'); G.play.shake(10, 2 + i); yield G.wait(16); }
-    yield G.say('???', 'HOLD UP. HOLD UP HOLD UP HOLD UP.');
-    const cam = G.play.cam;
-    const right = p.x - cam.x < G.W / 2;
-    const berk = w.add(new G.NPC({ sprite: 'berk', name: 'Berk', x: right ? cam.x + G.W + 24 : cam.x - 24, y: p.y, dir: right ? 'left' : 'right', scale: G.BERK_SCALE }));
-    yield G.walkTo(berk, p.x + (right ? 40 : -40), p.y, 2.4);
-    berk.dir = right ? 'left' : 'right';
-    p.dir = right ? 'right' : 'left';
-    G.play.shake(10, 2);
-    yield G.emote(p, 'bang', 30);
-    yield G.say('Berk', 'THIRTY sacred numbers?! I could hear you bonking from across the quad.');
-    yield G.say('Nate', '...Who are you?');
-    yield G.say('Berk', 'Berk. Keys. Headphones. Punk rock.');
-    yield G.say('Berk', 'And you, my friend, have RHYTHM. Bonk. Bonk. Bonk. Right on the beat.');
-    yield G.say('Nate', 'It\'s a rock hammer. It\'s for rocks.');
-    yield G.say('Berk', 'Nah. That\'s a musician\'s soul. You play anything?');
-    yield G.say('Nate', '...I\'ve got my Olsen.');
-    yield G.itemGet(G.spr.olsen, 'Nate pulls out his {y}Olsen acoustic guitar{/}. Where was he keeping that?');
-    yield G.say('Berk', 'An ACOUSTIC. To a PUNK fight.');
-    yield G.say('Berk', 'I respect it. JAM OFF. Right now. Me on keys, you on the campfire guitar. Loser carries the gear.');
-    yield G.say('Nate', 'You\'re on.');
-    s.jamFrom = { map: w.id, x: Math.floor(p.x / 16), y: Math.floor(p.y / 16), dir: p.dir };
-    s.jam = true;
-    berk.dead = true;
-    G.play.warp('jamStage', 3, 6, 'right');
-  };
-
-  S.jamIntro = function* () {
-    const w = G.play.world, b = w.berk;
-    G.state.hp = G.state.maxHp;
-    yield G.wait(30);
-    G.audio.sfx('crowd');
-    yield G.camFocus(b.x, b.y - 30, 40);
-    yield G.say('Berk', 'LADIES AND GENTLEMEN... are you ready... to ROCK?!');
-    G.audio.sfx('crowd');
-    yield G.camFocus(null, null, 30);
-    yield G.banner('JAM OFF!', 'NATE  vs.  BERK', 150);
-    if (!flags().jamTutorial) {
-      flags().jamTutorial = true;
-      yield G.say(null, 'Press {y}Z{/} to strum the Olsen. Strum {y}on the beat{/} (when the ring closes) for a {y}power chord{/}: double damage, and it knocks Berk\'s notes out of the air.');
-      yield G.say(null, 'Every time Berk hits you, the crowd cheers him back up. When he stage dives, he\'s wide open.');
-    }
-    yield G.say('Berk', 'One, two... ONE TWO THREE FOUR!');
-    G.play.jamSong = 'punk';
-    G.audio.play('punk');
-  };
-
-  S.berkDefeated = function* (boss) {
-    const f = flags(), w = G.play.world, s = G.state;
-    G.audio.stop();
-    for (const e of w.ents) if (e instanceof G.PunkNote) e.pop();
-    G.audio.sfx('crowd');
-    yield G.shakeCmd(30, 3);
-    yield G.wait(30);
-    yield G.banner('NATE WINS!', 'the crowd goes wild', 150);
-    const p = P();
-    p.dir = G.dirToward(boss.x - p.x, boss.y - p.y);
-    yield G.say('Berk', '...Okay. OKAY.');
-    yield G.say('Berk', 'Beat by an acoustic. At my own punk show.');
-    yield G.say('Nate', 'It\'s an Olsen. It does that.');
-    yield G.say('Berk', 'Respect. Real respect.');
-    yield G.say('Berk', 'Fine. Loser carries the gear. ...Right after one more stage dive.');
-    // he dives into the crowd and surfs away, still playing air keys
-    const from = { x: boss.x, y: boss.y };
-    yield {
-      start() { this.t = 0; G.audio.sfx('dash'); },
-      update() {
-        const k = Math.min(1, ++this.t / 50);
-        boss.y = from.y + (10 * 16 + 20 - from.y) * k;
-        boss.z = Math.sin(k * Math.PI) * 50;
-        return k >= 1;
-      },
-    };
-    G.audio.sfx('crowd');
-    boss.dead = true;
-    w.pop(boss.x, 9 * 16, 'WOOOOO!', '#f8d850');
-    yield G.wait(40);
-    yield G.say('Nate', '...He left the keyboard.');
-    f.berkBeaten = true;
-    s.jam = false;
-    G.play.jamSong = null;
-    G.play.addTeeth(50);
-    G.audio.sfx('tooth');
-    yield G.say(null, 'Berk left {y}50 shark teeth{/} on the merch table. And the keyboard.');
-    const r = s.jamFrom || { map: 'campus', x: 20, y: 10, dir: 'down' };
-    G.play.warp(r.map, r.x, r.y, r.dir);
   };
 
   // The WiFi router on the den desk.
@@ -3169,79 +3026,6 @@
         }
       })();
     },
-  };
-
-  // The stage: an LED wall, a red keyboard, amps, and a crowd down front.
-  G.MAPS.jamStage = {
-    name: 'The Jam Off',
-    music: null,
-    tiles() {
-      const rows = [];
-      for (let y = 0; y < 3; y++) rows.push('w'.repeat(15));
-      for (let y = 3; y < 9; y++) rows.push('w' + 'Z'.repeat(13) + 'w');
-      rows.push('w'.repeat(15));
-      return rows;
-    },
-    setup(w) {
-      // the LED wall: rippling color with scanlines; red in punk mode
-      w.props.push({
-        base: 0,
-        draw(ctx, cx, cy) {
-          const t = G.tick, b = w.berk, punk = b && !b.dead && b.punk, ph = G.jamBeat().phase;
-          const flash = Math.max(0, 1 - ph * 4) * 12;
-          for (let y = 0; y < 48; y += 2) {
-            for (let x = 0; x < 240; x += 4) {
-              const hue = (punk ? 0 : 190) + Math.sin(x * 0.03 + t * 0.03) * (punk ? 18 : 25) + y * 0.4;
-              const light = 28 + Math.sin(x * 0.06 - t * 0.08 + y * 0.15) * 10 + flash + (y % 4 ? 0 : 6);
-              ctx.fillStyle = `hsl(${hue},75%,${light}%)`;
-              ctx.fillRect(x - cx, y - cy, 4, 2);
-            }
-          }
-          // stage lights along the top, sweeping beams
-          ctx.globalCompositeOperation = 'lighter';
-          for (let i = 0; i < 5; i++) {
-            const lx = 24 + i * 48, sway = Math.sin(t * 0.03 + i) * 40;
-            ctx.fillStyle = punk ? 'rgba(255,90,60,0.07)' : 'rgba(255,240,180,0.07)';
-            ctx.beginPath(); ctx.moveTo(lx - 3 - cx, 4 - cy); ctx.lineTo(lx + sway - 22 - cx, 150 - cy); ctx.lineTo(lx + sway + 22 - cx, 150 - cy); ctx.lineTo(lx + 3 - cx, 4 - cy); ctx.fill();
-          }
-          ctx.globalCompositeOperation = 'source-over';
-          for (let i = 0; i < 5; i++) { ctx.fillStyle = i % 2 ? '#fff4c0' : '#e8f0ff'; ctx.fillRect(22 + i * 48 - cx, 2 - cy, 5, 4); }
-        },
-      });
-      // amps on both sides
-      for (const [x, y] of [[0, 3], [0, 6], [14, 3], [14, 6]]) w.addProp({ img: G.spr.ampStack, tx: x, ty: y + 1, h: 1, dy: 8 });
-      // Berk behind his keyboard
-      w.addProp({ img: G.spr.stageKeys, tx: 10, ty: 4, dx: 4, dy: -2, solid: [10, 4, 3, 1] });
-      if (G.state.jam) w.berk = w.add(new G.BerkBoss(11 * 16 + 8, 3 * 16 + 8));
-      // the crowd down front, bouncing on the beat
-      w.props.push({
-        base: 10 * 16 + 40,
-        draw(ctx, cx, cy) {
-          const ph = G.jamBeat().phase, jump = Math.max(0, 1 - ph * 2.5);
-          ctx.fillStyle = '#140e1c';
-          ctx.fillRect(0 - cx, 150 - cy, 240, 10);
-          for (let i = 0; i < 15; i++) {
-            const x = i * 16 + 8, up = Math.round(jump * ((i % 3) + 1) * 1.5), y = 148 - up;
-            ctx.fillStyle = '#1c1428';
-            ctx.fillRect(x - 4 - cx, y - cy, 8, 12);
-            ctx.fillRect(x - 3 - cx, y - 5 - cy, 6, 5);
-            if (i % 2) { ctx.fillRect(x + 4 - cx, y - 10 - cy, 2, 9); if (i % 4 === 1) { ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x + 4 - cx, y - 12 - cy, 2, 2); } }
-          }
-        },
-      });
-    },
-    // the beat ring: strum when the shrinking ring meets the circle
-    tint(ctx) {
-      if (!G.state.jam || !G.play.jamSong) return;
-      const ph = G.jamBeat().phase, x = G.W - 26, y = 136, on = G.onBeat();
-      ctx.fillStyle = on ? 'rgba(248,216,80,0.85)' : 'rgba(20,14,28,0.6)';
-      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI * 2); ctx.stroke();
-      ctx.strokeStyle = on ? '#f8d850' : 'rgba(255,255,255,0.7)';
-      ctx.beginPath(); ctx.arc(x, y, 6 + (1 - ph) * 16, 0, Math.PI * 2); ctx.stroke();
-    },
-    onEnter() { return (function* () { if (G.state.jam) yield* S.jamIntro(); })(); },
   };
 
   // Under the house: stone walls, a furnace, storage boxes, and the

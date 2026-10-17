@@ -68,7 +68,6 @@
     // the basement
     'N': { k: 'faceStone', solid: true, edge: true },
     'd': { k: 'basementFloor' },
-    'Z': { k: 'stageFloor' },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 

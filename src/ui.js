@@ -37,7 +37,7 @@
         ctx.drawImage(img, 5 + (i % 10) * 8, 5 + Math.floor(i / 10) * 8);
       }
       // item buttons
-      const xi = !s.jam && s.xItem && G.ITEMS[s.xItem];
+      const xi = s.xItem && G.ITEMS[s.xItem];
       const xCount = xi && typeof s.items[s.xItem] === 'number' ? s.items[s.xItem] : null;
       if (s.playAs) {
         // playing as Lily: no items, just her "No."
@@ -49,7 +49,7 @@
         // the chicken needs a moment between eggs
         const cool = s.xItem === 'chicken' && G.play.eggCool > 0 ? G.play.eggCool / 40 : 0;
         if (cool) { ctx.fillStyle = 'rgba(12,8,20,0.6)'; ctx.fillRect(G.W - 50, 7 + Math.round(18 * (1 - cool)), 18, Math.round(18 * cool)); }
-        itemBox(ctx, G.W - 27, 5, 'Z', s.jam ? G.spr.olsen : s.items.hammer ? G.ITEMS.hammer.icon() : null);
+        itemBox(ctx, G.W - 27, 5, 'Z', s.items.hammer ? G.ITEMS.hammer.icon() : null);
       }
       // shark teeth
       ctx.drawImage(G.spr.tooth, 5, G.H - 14);
