@@ -1510,7 +1510,7 @@
       yield G.say('Lily', 'She yelled that in the middle of a conversation once. Nobody was talking about Jamie Lee Curtis.');
       yield G.say('Michelle', 'It was relevant in my HEAD.');
     } else if (G.with('doron')) {
-      yield G.say('Doron', 'Still yelling celebrities, Mom?');
+      yield G.say('Doron', 'Still yelling celebrities, Michelle?');
       yield G.say('Michelle', 'Only the good ones.');
     } else {
       yield G.say('Nate', 'You yelled that in the middle of a conversation once. Nobody was talking about Jamie Lee Curtis.');
