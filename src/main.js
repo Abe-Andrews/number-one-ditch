@@ -92,6 +92,7 @@
 
     loadMap(id, x, y, dir, skipEnter) {
       this.camFocus = null;
+      this.earworm = 0;
       G.pipe.active = false;
       this.world = new G.World(id);
       this.player = new G.Player(x, y, dir);
@@ -319,6 +320,7 @@
 
       G.state.playTime = (G.state.playTime || 0) + 1;
       if (this.eggCool > 0) this.eggCool--;
+      if (this.earworm > 0 && !G.script.busy) this.earworm--;
       if (this.whiteout > 0) this.whiteout -= 0.03;
 
       if (this.menu) {

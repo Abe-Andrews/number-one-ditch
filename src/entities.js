@@ -126,8 +126,9 @@
         return;
       }
 
-      // walking (on ice, Nate slides: he speeds up and slows down gradually)
-      const d = inp.dir();
+      // walking (on ice, Nate slides: he speeds up and slows down gradually).
+      // With a song stuck in his head (the Globglogabgalab, no earplugs), left is right and up is down.
+      const d0 = inp.dir(), d = G.play.earworm > 0 ? { x: -d0.x, y: -d0.y } : d0;
       this.moving = !!(d.x || d.y);
       const under = G.TILE_DEFS[w.tileAt(Math.floor(this.x / 16), Math.floor((this.y - 3) / 16))];
       const sp = d.x && d.y ? 1.0 : 1.35;
@@ -314,6 +315,14 @@
         ctx.drawImage(ic, Math.round(this.x - ic.width / 2) - cx, sy - ic.height - 1);
       }
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, sy - 12);
+      if (G.play.earworm > 0) {
+        // little pink notes circling his head
+        ctx.fillStyle = '#f8a8c8';
+        for (let i = 0; i < 3; i++) {
+          const a = G.tick * 0.1 + (i * Math.PI * 2) / 3, nx = Math.round(this.x + Math.cos(a) * 9) - cx, ny = Math.round(sy - 2 + Math.sin(a) * 3);
+          ctx.fillRect(nx, ny, 2, 2); ctx.fillRect(nx + 1, ny - 3, 1, 3);
+        }
+      }
       if (this.chickenT > 0) {
         this.chickenT--;
         const ch = G.spr.chickens.white[this.dir === 'left' ? 'left' : 'right'][(this.chickenT >> 2) & 1];
@@ -1477,6 +1486,11 @@
         if (--this.st <= 0) {
           const moves = this.angry ? ['toss', 'storm', 'toss', 'shimmy'] : ['toss', 'toss', 'storm'];
           this.state = moves[this.cycle++ % moves.length];
+          // no earplugs? his twirls get the song stuck in Nate's head (controls flip)
+          if ((this.state === 'storm' || this.state === 'shimmy') && !G.state.items.earplugs) {
+            G.play.earworm = 170;
+            w.pop(p.x, p.y - 30, 'SONG STUCK IN HEAD!', '#f8a8c8');
+          }
           this.st = { toss: 60, storm: 90, shimmy: 60 }[this.state];
         }
       } else if (this.state === 'toss') {
@@ -1518,6 +1532,7 @@
     }
     bomb(sx, sy) { this.hit(3, sx, sy); }
     draw(ctx, cx, cy) {
+      if (this.hidden) return;
       const frames = G.spr.globglog;
       // sways left and right on the beat
       const beat = Math.floor(this.t / (this.angry ? 9 : 12)) % 4;

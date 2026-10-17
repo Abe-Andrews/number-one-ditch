@@ -206,6 +206,18 @@
       kind: 'key', name: 'Mom\'s Books', icon: () => G.spr.flyingBook[1], has: () => !!st().items.books && !fl().shopOpen,
       desc: 'Gardening books, devotionals and mystery novels, rescued from the Globglogabgalab. Slightly chewed.',
     },
+    basementKey: {
+      kind: 'key', name: 'Dad\'s Keyring', icon: () => G.spr.keyring, has: () => !!st().items.basementKey && !fl().globBeaten,
+      desc: 'Found in the truck\'s cupholder, under a sermon outline. One of these opens the basement. Probably the rusty one.',
+    },
+    bait: {
+      kind: 'key', name: '"Being a Wonderful Pastor\'s Wife"', short: 'The Bait', icon: () => G.spr.pastorBook, has: () => !!st().items.bait,
+      desc: 'A gift to Mom from the church ladies. Mom has been waiting YEARS to get rid of it. Bait for whatever eats books.',
+    },
+    earplugs: {
+      kind: 'key', name: 'Earplugs', icon: () => G.spr.earplugs, has: () => !!st().items.earplugs,
+      desc: 'Cotton balls rolled in Lily\'s vanilla candle wax. A song can\'t get stuck in your head if you can\'t hear it.',
+    },
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
   G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bidet', 'bass', 'chicken', null, null, null, null, null];
@@ -217,7 +229,7 @@
     { id: 'peace', name: 'Peace Be With You', seq: ['up', 'down', 'up'], known: () => !!fl().signal_peace, effect: () => G.SCRIPTS.signalPeace() },
     { id: 'icy', name: 'Stay Icy', seq: ['left', 'right', 'up'], known: () => !!fl().signal_icy, effect: () => G.SCRIPTS.signalIcy() },
   ];
-  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', 'vodka', 'books', null, null, null];
+  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', 'vodka', 'books', 'basementKey', 'bait', 'earplugs'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -353,7 +365,11 @@
       side.push(['Doron\'s spare tickets', f.ticketsDone ? '{g}Done!' : f.dadBeaten ? 'The show\'s over' : left ? G.sayable(left) + ' left' : 'Go tell Doron!']);
     }
     if (f.jjMet) side.push(['Ice JJ Fish', f.jjBeaten ? '{g}Done!' : 'North of the bridge']);
-    if (f.booksQuest) side.push(['Mom\'s missing books', f.shopOpen ? '{g}Done!' : s.items.books ? 'Bring them to Mom' : 'Check the basement']);
+    if (f.booksQuest) {
+      side.push(['Mom\'s missing books', f.shopOpen ? '{g}Done!' : s.items.books ? 'Bring them to Mom'
+        : !f.cluesDone ? 'Clues: ' + G.sayable(G.clueCount()) + '/' + CLUES_NEEDED
+        : !f.momReport ? 'Tell Mom' : !s.items.basementKey && !f.globBeaten ? 'Find Dad\'s keys' : 'The basement']);
+    }
     // unfinished ones first
     side.sort((a, b) => (a[1].startsWith('{g}') ? 1 : 0) - (b[1].startsWith('{g}') ? 1 : 0));
     return { goal, side };
@@ -1321,6 +1337,7 @@
     yield G.say('Nate', 'Science requires sacrifices. Mostly the pool.');
   };
   S.homeTruck = function* () {
+    if (needKey()) { yield* S.keyHuntTruck(); return; }
     yield G.say(null, 'Dad\'s old teal Ford pickup. It runs. Mostly.');
   };
   S.homeCoop = function* () {
@@ -1548,7 +1565,7 @@
     yield G.say('Michelle', 'And at night I hear... singing. Coming up through the floor vents. From the BASEMENT.');
     yield G.say('Nate', 'Singing?');
     yield G.say('Michelle', 'A slithery, horrible little song. It gets stuck in my head for DAYS. I cannot STAND it.');
-    yield G.say('Michelle', 'Be a dear and check the basement? The door is in the front hall. Find my books and I\'ll make it worth your while.');
+    yield G.say('Michelle', 'Be a dear and look around the house? Whatever is taking them can\'t be tidy about it. Find me some clues, and I\'ll make it worth your while.');
     f.booksQuest = true;
     if (f.fridgeGame && !G.state.items.vodka && !f.badlandsBeaten) yield* askMomForVodka();
     if (fol) fol.hold = false;
@@ -1571,9 +1588,109 @@
     const f = flags(), s = G.state;
     if (!f.michelleMet) { yield* S.michelleStartle(); return; }
     if (s.items.books && !f.shopOpen) { yield* returnBooks(); return; }
+    if (f.cluesDone && !f.momReport) { yield* momReport(); return; }
     if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten && !f.vodkaAsked) { yield* askMomForVodka(); return; }
+    if (!f.cluesDone) { yield G.say('Michelle', 'Find anything? Look around the house. Whatever it is, it leaves a mess.'); return; }
+    if (!s.items.basementKey && !f.globBeaten) { yield G.say('Michelle', 'Any luck with your father\'s keys? Garage, truck, grill. Anywhere he\'s ever held a sandwich.'); return; }
+    if (!s.items.earplugs && !f.globBeaten) { yield G.say('Michelle', 'Earplugs, Nate. Cotton balls in the upstairs bathroom, wax from Lily\'s candle. Trust me.'); return; }
     f.momLine = ((f.momLine || 0) + 1) % MOM_LINES.length;
     yield G.say('Michelle', f.globBeaten ? 'You found my books? Bring them here!' : MOM_LINES[f.momLine]);
+  };
+
+  // The clues point to the basement: Mom explains the key, the earplugs, and the bait.
+  function* momReport() {
+    const f = flags(), s = G.state;
+    f.momReport = true;
+    yield G.say('Nate', 'Mom. I found chewed-up pages all over the house. Bite marks. Slime. And they all smell like the basement.');
+    yield G.say('Michelle', 'The BASEMENT? That\'s where the singing comes from!');
+    yield G.say('Michelle', 'That door has been locked for years. Your father has the only key. On his keyring.');
+    yield G.say('Nate', 'Where\'s his keyring?');
+    yield G.say('Michelle', 'Not in the bowl. It is NEVER in the bowl. Try the garage, the truck, the grill... anywhere he\'s ever held a sandwich.');
+    yield G.say('Michelle', 'And Nate. If you hear that song down there, it gets stuck in your head for DAYS. Wear earplugs.');
+    yield G.say('Michelle', 'Cotton balls are in the upstairs bathroom. Roll them in candle wax. Lily has a candle.');
+    yield G.say('Michelle', 'One more thing. Whatever is down there eats books. So bring it a book.');
+    s.items.bait = true;
+    yield G.itemGet(G.spr.pastorBook, 'Michelle hands over {y}"Being a Wonderful Pastor\'s Wife"{/}. A gift from the church ladies.');
+    yield G.say('Michelle', 'I have been waiting YEARS for a reason to get rid of that.');
+  }
+
+  // ---- the clue hunt: chewed pages around the house (any 3 of 4)
+  const CLUES = ['den', 'nightstand', 'mudroom', 'lily'];
+  const CLUES_NEEDED = 3;
+  G.clueCount = () => CLUES.filter((k) => fl()['clue_' + k]).length;
+  // A spot in the house: a clue while the hunt is on, otherwise its usual line.
+  const clueSpot = (id, normal, found) => function* () {
+    const f = flags();
+    if (!f.booksQuest || f.cluesDone || f['clue_' + id] || f.globBeaten) { if (normal) yield G.say(null, normal); return; }
+    f['clue_' + id] = true;
+    yield* found();
+    const n = G.clueCount();
+    yield G.itemGet(G.spr.chewedPage, 'You found a {y}chewed page{/}! (' + G.sayable(n) + '/' + CLUES_NEEDED + ' clues)');
+    if (n >= CLUES_NEEDED) {
+      f.cluesDone = true;
+      yield G.say('Nate', 'Bite marks. Slime. And every page smells like... the basement.');
+      yield G.say('Nate', 'I should tell Mom.');
+    }
+  };
+  S.clueNightstand = clueSpot('nightstand', 'A nightstand with a red lamp and a stack of library books.', function* () {
+    yield G.say(null, 'Mom\'s nightstand. A mystery novel with the whole last chapter bitten off.');
+    yield G.say('Nate', 'Whoever did this ate the ending first. That\'s just evil.');
+  });
+  S.clueMudroom = clueSpot('mudroom', 'Boots, sneakers, and one flip-flop with no partner.', function* () {
+    yield G.say(null, 'Under the boot bench: a stack of church bulletins, nibbled into lace.');
+    yield G.say('Nate', 'Even the announcements. Nothing is safe.');
+  });
+  S.clueLily = clueSpot('lily', 'A nightstand with a little lamp and a phone charger.', function* () {
+    yield G.say(null, 'On Lily\'s nightstand: a bookmark. It\'s slimy.');
+    if (G.with('lily')) yield G.say('Lily', 'That\'s not mine. That\'s DEFINITELY not mine.');
+    else yield G.say('Nate', 'Lily doesn\'t even use bookmarks. She dog-ears. Like a monster.');
+  });
+  S.clueDen = clueSpot('den', null, function* () {
+    yield G.say(null, 'Built-in shelves with big gaps everywhere. A half-eaten cookbook is still wedged in the corner.');
+    yield G.say('Nate', 'Bite marks. Great.');
+  });
+
+  // ---- Dad's keys (the truck has them; the grill and the workbench don't)
+  const needKey = () => flags().momReport && !G.state.items.basementKey && !flags().globBeaten;
+  S.keyHuntTruck = function* () {
+    G.audio.sfx('door');
+    yield G.say(null, 'Nate checks the cupholder of Dad\'s truck. Receipts. A sermon outline. A pipe cleaner...');
+    G.state.items.basementKey = true;
+    yield G.itemGet(G.spr.keyring, 'You found {y}Dad\'s keyring{/}! One of these opens the basement.');
+    yield G.say('Nate', 'Not in the bowl. Never in the bowl.');
+  };
+  S.keyHuntMiss = (where) => function* () {
+    flags()['key_' + where] = true;
+    if (where === 'grill') yield G.say(null, 'Nate checks the grill for Dad\'s keys. Tongs. A wire brush. No keys. ...There is half a hot dog, though.');
+    else yield G.say(null, 'Nate checks the workbench for Dad\'s keys. Sawdust, a pencil, and three different tape measures. No keys.');
+  };
+
+  // ---- earplugs: cotton balls + Lily's candle wax
+  function* craftEarplugs() {
+    const s = G.state;
+    if (!s.items.cotton || !s.items.wax) { yield G.say('Nate', s.items.cotton ? 'Now I need some wax. Lily has a candle.' : 'Now I need cotton balls. Upstairs bathroom.'); return; }
+    s.items.cotton = false; s.items.wax = false; s.items.earplugs = true;
+    yield G.itemGet(G.spr.earplugs, 'Nate rolls the cotton balls in candle wax. {y}Earplugs{/}! No song can get stuck in his head now.');
+  }
+  const wantPlugs = () => flags().momReport && !G.state.items.earplugs && !flags().globBeaten;
+  S.vanity = function* () {
+    if (wantPlugs() && !G.state.items.cotton) {
+      G.state.items.cotton = true;
+      yield G.say(null, 'On the messy side of the vanity: a bag of cotton balls. Nate grabs a handful.');
+      yield* craftEarplugs();
+      return;
+    }
+    yield G.say(null, 'A double vanity. One side is very tidy. The other side is not.');
+  };
+  S.lilyDresser = function* () {
+    if (wantPlugs() && !G.state.items.wax) {
+      G.state.items.wax = true;
+      yield G.say(null, 'On Lily\'s dresser: a candle called "Vanilla Cupcake." Nate scrapes off a little wax.');
+      if (G.with('lily')) yield G.say('Lily', 'That\'s my GOOD candle.');
+      yield* craftEarplugs();
+      return;
+    }
+    yield G.say(null, 'A dresser with a mirror, a jewelry box, and a candle that smells like a cupcake.');
   };
 
   // Books back: Mom finally opens the flower stand she's always wanted.
@@ -1588,6 +1705,10 @@
     yield G.say('Michelle', 'THAT was the singing?! I KNEW it. I can\'t stand that song. I can\'t stand HIM.');
     yield G.say('Nate', 'He said he\'d sing quietly from now on.');
     yield G.say('Michelle', 'He\'d better.');
+    yield G.say('Michelle', 'Gardening books... devotionals... the mysteries... wait.');
+    yield G.say('Michelle', 'Where\'s "Being a Wonderful Pastor\'s Wife"?');
+    yield G.say('Nate', 'That was the bait. He ate it. I could go back down and see if there\'s anything left?');
+    yield G.say('Michelle', 'Keep it.');
     yield G.say('Michelle', 'Okay. A deal\'s a deal. I\'ve wanted to do this for years. Give me one minute.');
     s.items.books = false;
     f.shopOpen = true;
@@ -1688,24 +1809,74 @@
   // ================================================================ THE BASEMENT
   S.basementDoor = function* () {
     const f = flags();
+    const s = G.state;
     if (!f.booksQuest) {
       yield G.say(null, 'The basement door. From somewhere below: a low, slithery humming.');
       yield G.say('Nate', 'Nope. Not without a really good reason.');
       return;
     }
+    if (!s.items.basementKey && !f.globBeaten) {
+      yield G.say(null, 'The basement door. Locked. From somewhere below: humming.');
+      yield G.say('Nate', !f.cluesDone ? 'Mom\'s books... I need more clues first.' : !f.momReport ? 'I should tell Mom what I found.' : 'Dad has the key. Somewhere. Not in the bowl.');
+      return;
+    }
+    if (!f.basementOpened) {
+      f.basementOpened = true;
+      G.audio.sfx('door');
+      yield G.say(null, 'Nate tries every key on Dad\'s keyring. The rustiest one turns. The humming gets louder.');
+    }
+    if (!f.globBeaten && !s.items.earplugs) {
+      const c = yield G.ask('Nate', 'Mom said to wear earplugs. Go down without them?', ['Go down anyway', 'Not yet']);
+      if (c !== 0) return;
+    }
     G.play.warp('basement', 18, 6, 'down');
   };
 
   S.globIntro = function* () {
-    const f = flags(), w = G.play.world, g = w.glob;
+    const f = flags(), w = G.play.world, g = w.glob, p = P(), s = G.state;
+    const doron = w.ents.find((e) => e instanceof G.Follower && e.id === 'doron' && !e.dead);
     yield G.wait(20);
-    if (!f.globMet) {
-      f.globMet = true;
-      yield G.camFocus(g.x, g.y - 20, 50);
-      yield G.say(null, 'Chewed-up books everywhere. And in the middle of it all, something pink is... dancing.');
+    if (!f.globMet && s.items.bait) {
+      // nothing here but chewed books and humming in the ducts: time for the bait
+      g.hidden = true;
+      yield G.say(null, 'Chewed-up books everywhere. But nothing\'s down here... just humming, coming out of the furnace ducts.');
+      if (doron) yield G.say('Doron', 'I\'m not scared of a worm.');
+      yield G.say('Nate', 'Time for the bait.');
+      const bx = 10 * 16 + 8, by = 8 * 16 + 12;
+      yield G.walkTo(p, bx, by + 16, 1.2);
+      p.dir = 'up';
+      s.items.bait = false;
+      f.baitPlaced = true;
+      const book = { img: G.spr.pastorBook, x: bx - 6, y: by - 15, base: by };
+      w.props.push(book);
+      G.audio.sfx('menu');
+      yield G.say(null, 'Nate sets "Being a Wonderful Pastor\'s Wife" in the middle of the floor and backs away slowly.');
+      yield G.walkTo(p, bx, by + 44, 0.8);
+      p.dir = 'up';
+      yield G.wait(40);
+      // he dances out of the furnace duct
+      G.audio.sfx('clank');
+      G.play.shake(10, 2);
+      Object.assign(g, { x: 3 * 16 + 8, y: 4 * 16 + 14, hidden: false });
+      w.burst(g.x, g.y - 30, ['#8a8c94', '#c8c8d0', '#f8a8c8'], 12, { speed: 1.4, life: 24, size: 2 });
+      w.pop(g.x, g.y - 54, '~ doo dee doo ~', '#f8a8c8');
+      yield G.camFocus(g.x, g.y - 20, 20);
+      if (doron) {
+        // Doron is very brave. Doron is behind the furnace.
+        doron.hold = true;
+        yield G.say('Doron', '...');
+        yield G.walkTo(doron, 2 * 16 + 26, 3 * 16 + 9, 3);
+        doron.dir = 'down';
+        w.pop(doron.x, doron.y - 30, '*hides*', '#68c8ff');
+      }
+      yield G.walkTo(g, bx, by - 2, 1.2);
+      w.props = w.props.filter((pr) => pr !== book);
+      G.audio.sfx('gulp');
+      w.burst(bx, by - 8, ['#e8a0b8', '#f4ecd8', '#e8c060'], 12, { speed: 1.2, up: 0.6, g: 0.06, life: 24, size: 2 });
       w.pop(g.x, g.y - 54, '*munch munch*', '#f8a8c8');
-      yield G.wait(50);
-      yield G.say('Globglogabgalab', 'Mmm. A gardening book. Notes of tomato. A hint of mulch. Exquisite.');
+      yield G.wait(40);
+      f.globMet = true;
+      yield G.say('Globglogabgalab', 'Mmm. "Being a Wonderful Pastor\'s Wife." Bland. A little preachy. Needs salt.');
       yield G.say('Globglogabgalab', 'Ah! A visitor! Have you come to share in my... literature?');
       yield G.say('Nate', 'You\'re the Globglogabgalab.');
       yield G.say('Globglogabgalab', 'In the flesh. Such as it is.');
@@ -1718,6 +1889,8 @@
     } else {
       yield G.say('Globglogabgalab', 'Back for an encore? Wonderful! Take it from the top!');
     }
+    if (s.items.earplugs) yield G.say(null, 'Nate pops in his earplugs. He can\'t hear a thing.');
+    else yield G.say(null, 'No earplugs! When he sings, the song gets stuck in Nate\'s head and {r}his controls get scrambled{/}.');
     yield G.banner('THE GLOBGLOGABGALAB', 'he never stops dancing', 150);
   };
 
@@ -1740,6 +1913,14 @@
     w.burst(boss.x, boss.y - 20, ['#e8a898', '#f8c8b8', '#8a8c94'], 14, { speed: 1.2, life: 26, size: 3 });
     boss.dead = true;
     yield G.say(null, 'He squeezes into the furnace ductwork and is gone. Faintly, from somewhere in the walls: humming.');
+    G.play.earworm = 0;
+    const doron = w.ents.find((e) => e instanceof G.Follower && e.id === 'doron' && e.hold);
+    if (doron) {
+      yield G.walkTo(doron, doron.x + 18, doron.y + 14, 1);
+      yield G.say('Doron', 'I was guarding the furnace.');
+      yield G.say('Nate', 'Sure you were.');
+      doron.hold = false;
+    }
     f.globBeaten = true;
     s.items.books = true;
     yield G.itemGet(G.spr.flyingBook[1], 'You got {y}Mom\'s Books{/}! Slightly chewed. Bring them to Mom in the garden.');
@@ -1851,9 +2032,9 @@
       yield G.say('Nate', 'This is where the stash used to be. Mom found it years ago. She definitely still has it.');
       return;
     }
+    if (f.booksQuest && !f.cluesDone && !f.clue_den) { yield* S.clueDen(); return; }
     if (f.booksQuest && !f.globBeaten) {
       yield G.say(null, 'Built-in shelves with big gaps everywhere. A few books left behind have little bite marks in them.');
-      yield G.say('Nate', 'Bite marks. Great.');
       return;
     }
     yield G.say(null, 'Built-in shelves packed with books: thrillers, cookbooks, and seven different Bibles.');
@@ -1867,6 +2048,7 @@
       yield* getIngredient('smoke');
       return;
     }
+    if (needKey() && !f.key_grill) { yield* S.keyHuntMiss('grill')(); return; }
     yield* S.homePatio();
   };
 
@@ -2735,7 +2917,7 @@
       F.stand(sp.writingDesk, 45, 8, 2, look('A writing desk buried in mail and old crossword puzzles.'));
       // ---- mudroom
       F.hang(sp.coatHooks, 37, 12, 2, look('Coat hooks, overloaded with coats from every season.'), 2);
-      F.stand(sp.bootBench, 37, 13, 2, look('Boots, sneakers, and one flip-flop with no partner.'));
+      F.stand(sp.bootBench, 37, 13, 2, () => S.clueMudroom());
       F.stand(sp.washerDryer, 40, 13, 2, look('The washer and dryer. The dryer eats exactly one sock per load.'));
       // ---- family room
       F.hang(sp.bayWindow, 44, 12, 4, null, 1);
@@ -2800,12 +2982,12 @@
       F.hang(sp.paintLand, 9, 2, 1, look('A landscape: rolling hills, a big sky. Very New Jersey.'), 9);
       F.hang(sp.louverDoor, 11, 2, 1, look('A closet with louvered doors.'), 1);
       F.hang(sp.louverDoor, 12, 2, 1, look('More closet. It\'s mostly sweaters.'), 1);
-      F.stand(sp.nightRed, 4, 3, 1, look('A nightstand with a red lamp and a stack of library books.'));
+      F.stand(sp.nightRed, 4, 3, 1, () => S.clueNightstand());
       F.stand(sp.bedKing, 5, 3, 3, look('Dad and Michelle\'s room. The bed is made perfectly. Do not sit on it.'), { ht: 3 });
       F.stand(sp.nightRed, 8, 3, 1, look('The other nightstand. A reading lamp and Dad\'s glasses case.'));
       F.stand(sp.chairBlue, 11, 6, 1, look('A comfy reading chair by the closet.'));
       // ---- bathroom
-      F.stand(sp.doubleVanity, 14, 3, 3, look('A double vanity. One side is very tidy. The other side is not.'));
+      F.stand(sp.doubleVanity, 14, 3, 3, () => S.vanity());
       F.hang(sp.paintSunset, 18, 2, 1, look('A painting of the sun going down over the water.'), 8);
       F.stand(sp.toilet, 19, 3, 1, () => S.alligatorToilet());
       F.stand(sp.tub, 18, 6, 2, look('A bathtub. Rubber duck not included.'), { ht: 2 });
@@ -2830,8 +3012,8 @@
       F.hang(sp.paintBarn, 6, 15, 2, look('A painting of a red barn and a white horse.'), 8);
       F.stand(sp.hamper, 1, 16, 1, look('A wicker hamper. Full. Always full.'));
       F.stand(sp.bedLily, 4, 16, 2, look('Lily\'s bed: a navy quilt, leopard print pillows, and a flowered quilt folded at the foot.'), { ht: 3 });
-      F.stand(sp.nightCream, 6, 16, 1, look('A nightstand with a little lamp and a phone charger.'));
-      F.stand(sp.dresser, 7, 16, 2, look('A dresser with a mirror and a jewelry box.'));
+      F.stand(sp.nightCream, 6, 16, 1, () => S.clueLily());
+      F.stand(sp.dresser, 7, 16, 2, () => S.lilyDresser());
       // ---- guest room
       F.hang(sp.paintSea, 18, 15, 2, look('A painting of a sailboat out on the bay.'), 8);
       F.hang(sp.wallWindow.shade, 23, 15, 1, null, 3);
@@ -2874,7 +3056,10 @@
       F.hang(sp.sepiaPhoto, 4, 2, 2, look('A big old sepia photograph of a crowded room from about a hundred years ago. Nobody knows who any of these people are.'), 4);
       // (the bass goes in first so talking to that end of the bench finds it)
       w.bassProp = w.addProp({ img: s.items.bass ? null : sp.bassOnBench, tx: 9, ty: 3, dx: -2, dy: -12, base: 4 * 16, hit: [9, 3, 3, 1], talk: () => S.bassBench() });
-      F.stand(sp.workbench, 7, 3, 6, look('Dad\'s workbench: pegboard full of tools, and every one of them is exactly where he left it.'));
+      F.stand(sp.workbench, 7, 3, 6, function* () {
+        if (needKey() && !flags().key_bench) { yield* S.keyHuntMiss('bench')(); return; }
+        yield G.say(null, 'Dad\'s workbench: pegboard full of tools, and every one of them is exactly where he left it.');
+      });
       F.hang(sp.wallWindow.one, 13, 2, 1, null, 3);
       F.stand(sp.toolChest, 14, 3, 1, look('A big red rolling tool chest. Every drawer is a different kind of mess.'));
       F.stand(sp.lumberPile, 16, 3, 3, look('A stack of good lumber. It\'s for "a project." It has been for a project for years.'));

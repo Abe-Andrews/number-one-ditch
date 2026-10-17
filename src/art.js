@@ -3678,6 +3678,42 @@
     return finish(p);
   }
 
+  // ================================================================ MOM'S MISSING BOOKS (quest items)
+  // A book page with a bite out of the corner.
+  function chewedPage() {
+    const p = new Pix(11, 13);
+    p.rect(0, 0, 11, 13, '#f4ecd8');
+    for (let y = 2; y < 12; y += 2) p.hline(1, 8, y, '#b8ac98');
+    for (const [x, y] of [[8, 0], [9, 0], [10, 0], [9, 1], [10, 1], [10, 2], [7, 0]]) p.d[y * p.w + x] = null; // the bite
+    p.set(8, 1, '#c8bca4'); p.set(9, 2, '#c8bca4');
+    p.set(2, 10, '#9ac878'); p.set(3, 11, '#9ac878');
+    return finish(p);
+  }
+  // "Being a Wonderful Pastor's Wife": pastel pink, a white heart, gold lettering.
+  function pastorBook() {
+    const p = new Pix(12, 15);
+    p.rect(0, 0, 12, 15, '#e8a0b8'); p.vline(0, 0, 14, '#c87898'); p.hline(0, 11, 14, '#c87898');
+    p.hline(3, 9, 2, '#e8c060'); p.hline(3, 8, 4, '#e8c060');
+    for (const [x, y] of [[4, 8], [5, 7], [7, 7], [8, 8], [6, 8], [5, 9], [6, 10], [7, 9], [4, 7], [8, 7]]) p.set(x, y, '#ffffff');
+    p.hline(3, 9, 12, '#e8c060');
+    return finish(p);
+  }
+  // Dad's keyring: a ring, a few keys, one rusty.
+  function keyring() {
+    const p = new Pix(14, 12);
+    for (let a = 0; a < 16; a++) p.set(4 + Math.round(Math.cos(a / 16 * Math.PI * 2) * 3), 4 + Math.round(Math.sin(a / 16 * Math.PI * 2) * 3), '#c8c8d0');
+    p.rect(6, 6, 6, 2, '#d8b040'); p.set(12, 8, '#d8b040'); p.set(10, 8, '#d8b040');
+    p.rect(3, 7, 2, 4, '#c8c8d0'); p.set(5, 10, '#c8c8d0');
+    p.rect(7, 2, 5, 2, '#a85a28'); p.set(12, 3, '#a85a28'); p.set(11, 4, '#a85a28');
+    return finish(p);
+  }
+  function earplugs() {
+    const p = new Pix(12, 8);
+    for (const x0 of [0, 7]) { p.rect(x0 + 1, 1, 3, 6, '#f0c040'); p.vline(x0 + 1, 1, 6, '#f8d870'); p.hline(x0 + 1, x0 + 3, 6, '#c89a28'); }
+    p.hline(4, 7, 3, '#4a8ac8');
+    return finish(p);
+  }
+
   // Mom's green watering can.
   function wateringCan() {
     const p = new Pix(12, 9);
@@ -3910,6 +3946,7 @@
     S.flyingBook = [flyingBook(true), flyingBook(false)];
     S.globglog = [globglog(-1), globglog(0), globglog(1)]; S.egg = eggShot();
     S.wateringCan = wateringCan();
+    S.chewedPage = chewedPage(); S.pastorBook = pastorBook(); S.keyring = keyring(); S.earplugs = earplugs();
     // Dad's workshop
     S.convertible = convertible(); S.workbench = workbench(); S.bassOnBench = bassOnBench(); S.bassSwing = bassSwing(); S.bassIcon = bassIcon();
     S.shopShelves = shopShelves(false); S.shopShelvesPlane = shopShelves(true); S.sepiaPhoto = sepiaPhoto(); S.toolChest = toolChest(); S.lumberPile = lumberPile();
