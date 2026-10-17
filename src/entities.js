@@ -175,7 +175,7 @@
         const s = this.safe || { x: this.x, y: this.y + 24 };
         this.x = s.x; this.y = s.y; this.ivx = this.ivy = 0;
         this.state = 'walk';
-        G.state.hp = Math.max(0, G.state.hp - 1);
+        if (!G.state.god) G.state.hp = Math.max(0, G.state.hp - 1);
         G.audio.sfx('hurt');
         this.inv = 70;
         G.play.shake(6, 2);
@@ -272,7 +272,7 @@
     }
 
     hurt(dmg, sx, sy) {
-      if (this.inv > 0 || G.script.busy || this.state === 'dead') return;
+      if (this.inv > 0 || G.script.busy || this.state === 'dead' || G.state.god) return;
       if (this.state === 'pipe') G.pipe.stop(); // a hit knocks the pipe out of his mouth
       G.state.hp = Math.max(0, G.state.hp - dmg);
       G.audio.sfx('hurt');
@@ -1540,7 +1540,7 @@
       if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
       const bob = Math.abs(Math.sin(this.t * 0.15)) * 3;
       ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 14) - cx, Math.round(this.y - 4) - cy, 28, 6);
-      ctx.drawImage(img, Math.round(this.x - 20) - cx, Math.round(this.y - 47 - bob) - cy);
+      ctx.drawImage(img, Math.round(this.x - 26) - cx, Math.round(this.y - 47 - bob) - cy);
     }
   }
   G.Globglog = Globglog;

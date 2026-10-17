@@ -51,6 +51,7 @@
         if (cool) { ctx.fillStyle = 'rgba(12,8,20,0.6)'; ctx.fillRect(G.W - 50, 7 + Math.round(18 * (1 - cool)), 18, Math.round(18 * cool)); }
         itemBox(ctx, G.W - 27, 5, 'Z', s.items.hammer ? G.ITEMS.hammer.icon() : null);
       }
+      if (s.admin) F().draw(ctx, s.god ? 'ADMIN (INVINCIBLE)' : 'ADMIN', 5, 15 + Math.floor((s.maxHp / 2 - 1) / 10) * 8, '#ff98d0', { shadow: SH });
       // shark teeth
       ctx.drawImage(G.spr.tooth, 5, G.H - 14);
       F().draw(ctx, String(s.teeth).padStart(3, '0'), 15, G.H - 13, '#f8f8f0', { shadow: SH });
@@ -106,6 +107,7 @@
 
     switchTab(d) {
       this.tab = (this.tab + d + TABS.length) % TABS.length;
+      this.admList = null;
       this.sel = 0;
       this.scroll = 0;
       G.audio.sfx('menu');
@@ -131,7 +133,7 @@
       if (inp.hit('start')) { G.audio.sfx('cancel'); return true; }
       if (inp.hit('l')) this.switchTab(-1);
       if (inp.hit('r')) this.switchTab(1);
-      if (inp.hit('b')) this.saveTo(G.state.slot || 1);
+      if (inp.hit('b') && !G.state.admin) this.saveTo(G.state.slot || 1);
 
       if (this.onTabs) {
         if (inp.hit('left')) this.switchTab(-1);
@@ -159,6 +161,8 @@
         }
         if (inp.hit('down')) this.move(1, n);
         if (inp.hit('up')) { if (this.sel > 0) this.move(-1, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
+      } else if (this.tab === SAVE_TAB && G.state.admin) {
+        return this.updateAdmin(inp);
       } else if (this.tab === SAVE_TAB) {
         if (inp.hit('down')) this.move(1, G.SAVE_FILES);
         if (inp.hit('up')) { if (this.sel > 0) this.move(-1, G.SAVE_FILES); else { this.onTabs = true; G.audio.sfx('menu'); } }
@@ -215,12 +219,63 @@
       G.box(ctx, 4, 18, 232, 122);
       if (this.tab <= 1) this.drawGrid(ctx);
       else if (this.tab === 2) this.drawPeople(ctx);
+      else if (this.tab === SAVE_TAB && G.state.admin) this.drawAdmin(ctx);
       else if (this.tab === SAVE_TAB) this.drawSave(ctx);
       else this.drawJournal(ctx);
       let help = ['Z: set to X   X: save', 'Z: use   X: save', 'Z: bring along   X: save', 'X: save', 'Z: save to this file'][this.tab];
+      if (G.state.admin) help = ['Z: set to X', 'Z: use', 'Z: bring along', '', this.admList ? 'Z: go   X: back' : 'Z: do it'][this.tab];
       help += '   Q/E: tabs   ENTER: close';
       if (this.confirm) help = '{r}Save over File ' + this.confirm + '?{/}  Z: yes  X: no';
       TXT(ctx, this.msgT > 0 && !this.confirm ? '{g}' + this.msg : help, 8, 146, '#9890a8');
+    }
+
+    // ---- ADMIN (testing): replaces the SAVE tab in admin runs
+    adminMain() {
+      const s = G.state;
+      return ['Jump to a checkpoint...', 'Go to a place...', 'Heal fully', '+100 shark teeth', 'Give every item and song', 'Invincible: ' + (s.god ? '{g}ON' : '{r}OFF'), 'Quit to title'];
+    }
+    adminRows() {
+      if (this.admList === 'cp') return G.ADMIN_CHECKPOINTS.map((c, i) => G.sayable(i + 1) + '. ' + c.name);
+      if (this.admList === 'place') return G.ADMIN_PLACES.map((p) => p.name);
+      return this.adminMain();
+    }
+    updateAdmin(inp) {
+      const rows = this.adminRows(), n = rows.length, s = G.state;
+      if (inp.hit('down')) this.move(1, n);
+      if (inp.hit('up')) { if (this.sel > 0) this.move(-1, n); else if (!this.admList) { this.onTabs = true; G.audio.sfx('menu'); } }
+      if (inp.hit('b')) { inp.eat('b'); if (this.admList) { this.sel = this.admList === 'cp' ? 0 : 1; this.admList = null; this.scroll = 0; G.audio.sfx('cancel'); } return false; }
+      if (!inp.hit('a')) return false;
+      inp.eat('a');
+      if (this.admList === 'cp') { G.adminStart(this.sel); return true; }
+      if (this.admList === 'place') {
+        const pl = G.ADMIN_PLACES[this.sel];
+        G.play.warp(pl.map, pl.at[0], pl.at[1], pl.at[2]);
+        return true;
+      }
+      G.audio.sfx('select');
+      switch (this.sel) {
+        case 0: this.admList = 'cp'; this.sel = s.adminCp || 0; this.scroll = 0; break;
+        case 1: this.admList = 'place'; this.sel = 0; this.scroll = 0; break;
+        case 2: s.hp = s.maxHp; this.flash('Hearts refilled.'); break;
+        case 3: G.play.addTeeth(100); this.flash('+100 shark teeth.'); break;
+        case 4: G.adminAllItems(); this.flash('Every item and song unlocked.'); break;
+        case 5: s.god = !s.god; this.flash(s.god ? 'Invincible.' : 'Mortal again.'); break;
+        case 6: G.play.menu = null; G.title.enter(); return true;
+      }
+      return false;
+    }
+    drawAdmin(ctx) {
+      const rows = this.adminRows(), VIS = 10;
+      this.scroll = this.scroll || 0;
+      if (this.sel < this.scroll) this.scroll = this.sel;
+      if (this.sel >= this.scroll + VIS) this.scroll = this.sel - VIS + 1;
+      const head = this.admList === 'cp' ? 'JUMP TO A CHECKPOINT' : this.admList === 'place' ? 'GO TO A PLACE' : 'ADMIN (TESTING) - NOTHING IS SAVED';
+      TXT(ctx, head, 12, 23, '#ff98d0');
+      rows.slice(this.scroll, this.scroll + VIS).forEach((r, k) => {
+        const i = this.scroll + k, y = 35 + k * 10, on = i === this.sel && !this.onTabs;
+        if (on) { ctx.fillStyle = '#3a3058'; ctx.fillRect(8, y - 1, 224, 10); ctx.fillStyle = '#f8d850'; ctx.fillRect(8, y - 1, 2, 10); }
+        TXT(ctx, r, 14, y, on ? '#f8d850' : '#f8f8f0');
+      });
     }
 
     // three save files; the one being played is marked
@@ -232,14 +287,15 @@
     }
 
     drawTabs(ctx) {
-      const ws = TABS.map((t) => F().width(t) + 6);
+      const names = TABS.map((n, i) => (i === SAVE_TAB && G.state.admin ? 'ADMIN' : n));
+      const ws = names.map((t) => F().width(t) + 6);
       let x = Math.round((G.W - ws.reduce((a, b) => a + b, 0) - (TABS.length - 1) * 2) / 2);
       TXT(ctx, 'Q', x - 10, 6, '#9890a8');
       TABS.forEach((t, i) => {
         const active = i === this.tab;
         const style = active ? (this.onTabs && (G.tick >> 4) & 1 ? { bg: '#5a4878', border: '#ffffff', inner: '#7a6a30' } : SEL) : undefined;
         G.box(ctx, x, 2, ws[i], 14, style);
-        TXT(ctx, t, x + 5, 5, active ? '#f8d850' : '#9890a8');
+        TXT(ctx, names[i], x + 5, 5, active ? '#f8d850' : '#9890a8');
         x += ws[i] + 2;
       });
       TXT(ctx, 'E', x + 2, 6, '#9890a8');

@@ -3614,22 +3614,33 @@
   // The Globglogabgalab: a pink, sagging bookworm with a little bald head.
   // Frames sway left/right for his dance.
   function globglog(lean) {
-    const W = 40, H = 48, p = new Pix(W, H), skin = '#e8a898', sd = '#c88070', sl = '#f8c8b8';
+    // 52 wide so his skinny arms can stick out past the body
+    const W = 52, H = 48, p = new Pix(W, H), skin = '#e8a898', sd = '#c88070', sl = '#f8c8b8', crease = '#b06858';
     const off = lean;
     for (let y = 14; y < 46; y++) {
       const t = (y - 14) / 32, half = Math.round(9 + Math.sin(t * Math.PI) * 6 + t * 3);
-      const cx = 20 + Math.round(off * (1 - t) * 2);
+      const cx = 26 + Math.round(off * (1 - t) * 2);
       for (let x = cx - half; x <= cx + half; x++) p.set(x, y, (y % 6 === 0) ? sd : x > cx + half - 3 ? sd : x < cx - half + 3 ? sl : skin);
     }
-    for (let k = 0; k < 8; k++) { p.set(30 + k, 42 + (k >> 2), skin); p.set(30 + k, 43 + (k >> 2), sd); }
-    const hx = 20 + off * 2;
+    for (let k = 0; k < 8; k++) { p.set(36 + k, 42 + (k >> 2), skin); p.set(36 + k, 43 + (k >> 2), sd); }
+    const hx = 26 + off * 2;
     for (let y = 0; y < 15; y++) for (let x = hx - 6; x <= hx + 6; x++) if ((x - hx) ** 2 / 36 + (y - 7) ** 2 / 50 <= 1) p.set(x, y, skin);
     p.set(hx - 3, 6, '#f4f4f0'); p.set(hx - 2, 6, '#1c1424'); p.set(hx + 2, 6, '#f4f4f0'); p.set(hx + 3, 6, '#1c1424');
     p.hline(hx - 4, hx - 1, 4, '#8a5a50'); p.hline(hx + 1, hx + 4, 4, '#8a5a50');
     for (let y = 6; y < 12; y++) p.set(hx + (y > 9 ? 1 : 0), y, sd); p.rect(hx, 10, 3, 2, sd);
     p.hline(hx - 2, hx + 2, 12, '#a85a58');
-    p.vline(hx - 7 - off, 18, 28, skin); p.vline(hx - 8 - off, 26, 30, skin);
-    p.vline(hx + 8 - off, 20, 30, skin); p.set(hx + 9 - off, 30, skin);
+    // skinny arms out from the shoulders, waving as he sways; a crease where they cross the body
+    const arm = (x0, y0, x1, y1) => {
+      const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+      for (let i = 0; i <= n; i++) {
+        const x = Math.round(x0 + ((x1 - x0) * i) / n), y = Math.round(y0 + ((y1 - y0) * i) / n);
+        p.set(x, y - 1, crease); p.set(x, y, sl); p.set(x, y + 1, skin); p.set(x, y + 2, crease);
+      }
+    };
+    const hand = (x, y) => { p.rect(x - 1, y - 1, 3, 3, skin); p.set(x - 2, y + 1, skin); p.set(x, y + 2, sd); p.set(x + 1, y + 2, sd); };
+    const lh = 28 - off * 3, rh = 30 + off * 3;
+    arm(hx - 8, 17, hx - 15, 22 - off); arm(hx - 15, 22 - off, hx - 21, lh); hand(hx - 21, lh + 1);
+    arm(hx + 8, 17, hx + 15, 23 + off); arm(hx + 15, 23 + off, hx + 20, rh); hand(hx + 20, rh + 1);
     return finish(p);
   }
   // ================================================================ THE FROZEN POND (Ice JJ Fish)

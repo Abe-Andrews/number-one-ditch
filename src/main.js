@@ -57,6 +57,7 @@
   // Write the game to file n (default: the file being played).
   G.writeSave = (n) => {
     const s = G.state;
+    if (s.admin) return true; // admin (testing) runs never touch the save files
     s.slot = n || s.slot || 1;
     s.savedAt = Date.now();
     try { localStorage.setItem(fileKey(s.slot), JSON.stringify(s)); return true; } catch (e) { return false; }
@@ -433,7 +434,7 @@
       G.fade = 0;
       this.t = 0;
       this.sel = 0;
-      this.opts = G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game'];
+      this.opts = (G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game']).concat('Admin');
       G.audio.play('title');
     },
     update() {
@@ -449,6 +450,8 @@
           G.play.enter(false);
         } else if (opt === 'Load File') {
           G.files.enter('load');
+        } else if (opt === 'Admin') {
+          G.adminPick.enter();
         } else if (G.hasSave()) {
           G.files.enter('new');
         } else {
@@ -473,15 +476,70 @@
       // Nate looking on
       ctx.drawImage(G.sprites.nate.right[(this.t >> 4) % 2 ? 0 : 0], 34, 104);
       // menu
-      const w = 84, h = this.opts.length * 12 + 8, x = Math.round((G.W - w) / 2), y = this.opts.length > 2 ? 108 : 114;
+      const w = 84, h = this.opts.length * 12 + 8, x = Math.round((G.W - w) / 2), y = this.opts.length > 3 ? 100 : this.opts.length > 2 ? 108 : 114;
       G.box(ctx, x, y, w, h);
       this.opts.forEach((o, i) => {
-        F().draw(ctx, o, x + 18, y + 5 + i * 12, i === this.sel ? '#f8d850' : '#f8f8f0', { shadow: '#0c0814' });
+        F().draw(ctx, o, x + 18, y + 5 + i * 12, i === this.sel ? '#f8d850' : o === 'Admin' ? '#9890a8' : '#f8f8f0', { shadow: '#0c0814' });
       });
       const cy = y + 6 + this.sel * 12, b = (this.t >> 3) & 1;
       ctx.fillStyle = '#f8d850';
       ctx.fillRect(x + 8 + b, cy, 1, 5); ctx.fillRect(x + 9 + b, cy + 1, 1, 3); ctx.fillRect(x + 10 + b, cy + 2, 1, 1);
       F().draw(ctx, 'Z: select', 4, G.H - 10, '#ffffff', { shadow: '#1c1424' });
+    },
+  };
+
+  // ================================================================ ADMIN MODE (testing)
+  // Start any story checkpoint (see G.ADMIN_CHECKPOINTS in content.js).
+  G.adminStart = (i) => {
+    const cps = G.ADMIN_CHECKPOINTS, s = newState();
+    s.admin = true;
+    s.adminCp = i;
+    s.teeth = 100;
+    for (let j = 0; j <= i; j++) {
+      const c = cps[j];
+      Object.assign(s.flags, c.flags || {});
+      Object.assign(s.items, c.items || {});
+      for (const id of c.party || []) if (!s.party.includes(id)) s.party.push(id);
+      if (c.follower !== undefined) s.follower = c.follower;
+      if (c.maxHp) s.maxHp = c.maxHp;
+      if (c.teeth) s.teeth = c.teeth;
+    }
+    const c = cps[i];
+    Object.assign(s, { map: c.map, x: c.at[0] * 16 + 8, y: c.at[1] * 16 + 14, dir: c.at[2] });
+    s.hp = s.maxHp;
+    G.script.reset();
+    G.state = s;
+    G.play.menu = null;
+    G.play.warping = false;
+    G.play.enter(!!c.fresh);
+  };
+
+  G.adminPick = {
+    VIS: 11,
+    enter() { G.scene = this; G.fade = 0; this.sel = 0; this.scroll = 0; this.t = 0; },
+    update() {
+      this.t++;
+      const inp = G.input, n = G.ADMIN_CHECKPOINTS.length;
+      if (inp.hit('up')) { this.sel = (this.sel + n - 1) % n; G.audio.sfx('menu'); }
+      if (inp.hit('down')) { this.sel = (this.sel + 1) % n; G.audio.sfx('menu'); }
+      if (this.sel < this.scroll) this.scroll = this.sel;
+      if (this.sel >= this.scroll + this.VIS) this.scroll = this.sel - this.VIS + 1;
+      if (inp.hit('b') || inp.hit('start')) { inp.eat('b'); inp.eat('start'); G.audio.sfx('cancel'); G.title.enter(); return; }
+      if (inp.hit('a')) { inp.eat('a'); G.audio.sfx('select'); G.adminStart(this.sel); }
+    },
+    draw(ctx) {
+      ctx.drawImage(G.spr.ditch, 0, 0);
+      ctx.fillStyle = 'rgba(12,8,20,0.82)';
+      ctx.fillRect(0, 0, G.W, G.H);
+      const title = 'ADMIN MODE: JUMP TO...';
+      F().draw(ctx, title, Math.round((G.W - F().width(title)) / 2), 5, '#f8d850', { shadow: '#0c0814' });
+      G.box(ctx, 8, 16, 224, this.VIS * 11 + 6);
+      G.ADMIN_CHECKPOINTS.slice(this.scroll, this.scroll + this.VIS).forEach((c, k) => {
+        const i = this.scroll + k, y = 20 + k * 11, on = i === this.sel;
+        if (on) { ctx.fillStyle = '#3a3058'; ctx.fillRect(10, y - 1, 220, 11); }
+        F().draw(ctx, (i + 1 < 10 ? ' ' : '') + G.sayable(i + 1) + '. ' + c.name, 16, y, on ? '#f8d850' : '#f8f8f0', { shadow: '#0c0814' });
+      });
+      F().draw(ctx, 'Z: go   X: back   (admin runs never save)', 8, G.H - 11, '#c8c0d8', { shadow: '#0c0814' });
     },
   };
 
@@ -623,6 +681,7 @@
         inp.eat('a'); inp.eat('start');
         G.audio.sfx('select');
         if (this.sel === 0) {
+          if (G.state.admin) { G.adminStart(G.state.adminCp || 0); return; }
           G.state = G.loadSave(G.state.slot) || newState();
           G.state.hp = G.state.maxHp;
           G.play.enter(false);

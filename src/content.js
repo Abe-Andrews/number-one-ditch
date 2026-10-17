@@ -1927,6 +1927,49 @@
     G.audio.play('house');
   };
 
+  // ================================================================ ADMIN MODE (testing)
+  // Story checkpoints in play order. Starting one applies every checkpoint up to
+  // it (flags, items, party), then drops Nate at its spot. Admin runs never save.
+  G.ADMIN_CHECKPOINTS = [
+    { name: 'Nate\'s lab (new game)', map: 'lab', at: [3, 3, 'up'], fresh: true },
+    { name: 'Lafayette campus', map: 'campus', at: [6, 7, 'down'], flags: { readChat: true, phoneBuzz: true }, items: { hammer: true } },
+    { name: 'Hat back: fair road open', map: 'campus', at: [34, 12, 'right'], flags: { boulderSeen: true, boulderHitOnce: true, capQuest: true, capDone: true, capHeart: true, sixIntro: true }, items: { cap: true }, maxHp: 8 },
+    { name: 'Easton Fairgrounds', map: 'fair', at: [1, 12, 'right'], flags: { doronChat: true } },
+    { name: 'Main event: El EEENGLISH', map: 'arena', at: [11, 15, 'up'], flags: { doronDeal: true, ticketQuest: true }, items: { package: 5, tickets: 4 } },
+    { name: 'Boulder: Doron\'s suplex', map: 'campus', at: [20, 25, 'down'], flags: { mainEvent: true, dadBeaten: true, signal_peace: true }, items: { pipe: true, tickets: 0 }, party: ['doron'], follower: 'doron' },
+    { name: 'Arrive home', map: 'home', at: [1, 53, 'right'], flags: { boulderGone: true } },
+    { name: 'Badlands Chugs (kitchen)', map: 'homeDown', at: [20, 15, 'up'], flags: { homeArrived: true, mikeyMet: true } },
+    { name: 'Refrigerator game', map: 'homeDown', at: [29, 4, 'right'], flags: { badlandsMet: true, heardBlender: true, fridgeGame: true }, items: { milk: true, dye: true, smoke: true, vodka: true } },
+    { name: 'Golden Hour: play as Lily', map: 'home', at: [43, 44, 'down'], flags: { badlandsBeaten: true, lilySaved: true }, party: ['lily'], follower: 'lily' },
+    { name: 'Michelle in the garden', map: 'home', at: [33, 25, 'up'], flags: { mikeyBeaten: true } },
+    { name: 'Mom\'s books: clue hunt', map: 'homeDown', at: [38, 4, 'up'], flags: { michelleMet: true, booksQuest: true } },
+    { name: 'Basement: Globglogabgalab', map: 'homeDown', at: [22, 8, 'up'], flags: { clue_den: true, clue_nightstand: true, clue_mudroom: true, cluesDone: true, momReport: true }, items: { basementKey: true, earplugs: true, bait: true } },
+    { name: 'Return Mom\'s books (shop)', map: 'home', at: [34, 20, 'left'], flags: { globMet: true, globBeaten: true, baitPlaced: true, basementOpened: true }, items: { books: true, bait: false } },
+    { name: 'Ice JJ Fish (north)', map: 'north', at: [10, 13, 'up'], flags: { shopOpen: true }, items: { books: false }, teeth: 120 },
+    { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, momHeart: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10 }, maxHp: 10, teeth: 300 },
+  ];
+  // Places the admin menu can warp to (with whatever the story state is).
+  G.ADMIN_PLACES = [
+    { name: 'Nate\'s lab', map: 'lab', at: [3, 4, 'down'] },
+    { name: 'Lafayette campus', map: 'campus', at: [20, 10, 'down'] },
+    { name: 'Science Center', map: 'science', at: [7, 8, 'up'] },
+    { name: 'Easton Fairgrounds', map: 'fair', at: [9, 12, 'down'] },
+    { name: 'Expo Hall', map: 'arena', at: [11, 15, 'up'] },
+    { name: 'Home: the yard', map: 'home', at: [42, 38, 'down'] },
+    { name: 'Home: downstairs', map: 'homeDown', at: [20, 15, 'up'] },
+    { name: 'Home: upstairs', map: 'homeUp', at: [13, 12, 'down'] },
+    { name: 'Dad\'s workshop', map: 'garage', at: [10, 10, 'up'] },
+    { name: 'The basement', map: 'basement', at: [18, 6, 'down'] },
+    { name: 'The frozen pond', map: 'north', at: [10, 13, 'up'] },
+  ];
+  // Admin: hand over every item and song.
+  G.adminAllItems = () => {
+    const s = G.state, f = s.flags;
+    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true });
+    s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40;
+    f.signal_peace = true; f.signal_icy = true; f.doronDeal = true; f.hadDoosh = true; f.capHeart = true;
+  };
+
   // ================================================================ ICE JJ FISH (north of the bridge)
   S.jjIntro = function* () {
     const f = flags(), w = G.play.world, g = w.jj;
