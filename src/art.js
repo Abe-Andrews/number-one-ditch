@@ -1196,6 +1196,22 @@
       for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#8a8a92');
       if (mask & 4) { p.rect(0, 14, 16, 2, '#3a3a42'); }
     },
+    hallTile(p, r) {
+      p.rect(0, 0, 16, 16, '#e4dac4');
+      p.hline(0, 15, 0, '#cbbfa6'); p.vline(0, 0, 15, '#cbbfa6'); p.hline(0, 15, 8, '#d4c8b0'); p.vline(8, 0, 15, '#d4c8b0');
+      for (let i = 0; i < 3; i++) p.set(1 + r() * 14, 1 + r() * 14, '#d8ceb6');
+    },
+    faceOak(p, r, v, mask) {
+      const oak = '#9a6234', oakD = '#6a4220', oakL = '#b8804a';
+      p.rect(0, 0, 16, 16, '#eadfc4');
+      for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#dccfae');
+      if (mask & 1) { p.rect(0, 0, 16, 3, oakD); p.hline(0, 15, 3, oakL); }
+      if (mask & 4) {
+        p.rect(0, 2, 16, 14, oak); p.hline(0, 15, 2, oakL); p.hline(0, 15, 3, oakD);
+        p.rect(2, 5, 12, 6, oakL); p.rect(3, 6, 10, 4, oak);
+        p.rect(0, 13, 16, 3, oakD);
+      }
+    },
     snow(p, r) {
       p.rect(0, 0, 16, 16, '#eef2f8');
       for (let i = 0; i < 7; i++) p.set(r() * 16, r() * 16, r() < 0.6 ? '#d4deec' : '#ffffff');
@@ -1860,7 +1876,7 @@
     return p.canvas();
   }
 
-  function chalkboard() {
+  function chalkboard(text = 'FINAL EXAM') {
     const p = new Pix(80, 16);
     p.rect(0, 0, 80, 16, '#7a5028');
     p.rect(2, 2, 76, 11, '#2e5a3e');
@@ -1868,7 +1884,7 @@
     p.hline(1, 78, 14, '#a07040'); p.set(10, 13, '#ffffff'); p.set(11, 13, '#ffffff');
     p.outline();
     const c = p.canvas();
-    G.font.draw(c.getContext('2d'), 'FINAL EXAM', 5, 3, '#eef6ee');
+    G.font.draw(c.getContext('2d'), text, 5, 3, '#eef6ee');
     return c;
   }
 
@@ -3643,6 +3659,209 @@
     arm(hx + 8, 17, hx + 15, 23 + off); arm(hx + 15, 23 + off, hx + 20, rh); hand(hx + 20, rh + 1);
     return finish(p);
   }
+  // ================================================================ VAN WICKLE HALL (geology, from photos)
+  // Romanesque Revival, 1900: tan brick, terra-cotta trim, a steep front gable
+  // with three arched windows and a crest, a lettered band, a big round-arched
+  // entrance up stone steps, and a long wing with arched windows and a gray roof.
+  function vanWickle() {
+    const W = 128, H = 96, p = new Pix(W, H);
+    const brick = '#c8885a', brickD = '#b07446', brickL = '#d89a6a', tc = '#a85030', tcL = '#c8704a';
+    const glass = '#34424e', glassL = '#5a7080', stone = '#cfc6ae', stoneD = '#a8a08c', roof = '#6a6460', roofD = '#55504c';
+    const brickFill = (x0, y0, x1, y1) => {
+      for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+        const course = (y - y0) % 3 === 2, joint = (x + (Math.floor((y - y0) / 3) % 2) * 3) % 6 === 0;
+        p.set(x, y, course ? brickD : joint && G.hash(x, y, 77) < 0.7 ? brickD : G.hash(x, y, 78) < 0.08 ? brickL : brick);
+      }
+    };
+    const archWin = (cx, top, w, h) => {
+      // round-arched window with a terra-cotta surround
+      const r = Math.floor(w / 2);
+      for (let y = top - 1; y <= top + h + 1; y++) for (let x = cx - r - 1; x <= cx + r + 1; x++) {
+        const dy = y - (top + r), inArch = y < top + r ? (x - cx) ** 2 + dy ** 2 <= (r + 1) ** 2 : true;
+        if (inArch) p.set(x, y, tc);
+      }
+      for (let y = top; y <= top + h; y++) for (let x = cx - r; x <= cx + r; x++) {
+        const dy = y - (top + r), inArch = y < top + r ? (x - cx) ** 2 + dy ** 2 <= r * r : true;
+        if (inArch) p.set(x, y, (x === cx - r + 1 && y > top + r) ? glassL : glass);
+      }
+      p.vline(cx, top + r, top + h, '#5a4a40');
+      p.hline(cx - r - 1, cx + r + 1, top + h + 1, stone);
+    };
+    // the long wing: hipped gray roof, frieze, five arched windows
+    for (let y = 34; y <= 50; y++) {
+      const inset = Math.max(0, 50 - y) * 0;
+      const right = 126 - Math.max(0, (50 - y) - 8);
+      for (let x = 48 + inset; x <= right; x++) p.set(x, y, (y - 34) % 3 === 0 ? roofD : roof);
+    }
+    p.hline(48, 126, 50, '#4a4440'); p.hline(52, 118, 34, roofD);
+    p.rect(116, 24, 5, 11, '#7a5040'); p.hline(115, 121, 24, '#5a3a30');
+    brickFill(48, 51, 126, 87);
+    p.rect(48, 52, 79, 3, tc); for (let x = 50; x < 126; x += 4) p.set(x, 53, tcL);
+    for (const cx of [57, 71, 85, 99, 113]) archWin(cx, 60, 9, 16);
+    p.rect(48, 88, 79, 8, stone); p.hline(48, 126, 88, '#e0d8c4'); for (let x = 52; x < 126; x += 9) p.vline(x, 89, 95, stoneD);
+    // the front gable pavilion
+    brickFill(2, 34, 50, 89);
+    for (let y = 4; y <= 36; y++) {
+      const half = Math.round(((y - 4) / 32) * 26);
+      for (let x = 26 - half; x <= 26 + half; x++) if (x >= 0 && x < 53) {
+        const course = (y - 4) % 3 === 2;
+        p.set(x, y, course ? brickD : brick);
+      }
+      // terra-cotta coping down both slopes
+      for (const x of [26 - half, 26 + half]) { p.set(x, y, tc); p.set(x + (x < 26 ? 1 : -1), y, tcL); }
+    }
+    // the crest at the peak
+    p.rect(23, 1, 7, 5, tc); p.set(26, 0, '#5a3a30'); p.hline(24, 28, 2, tcL); p.set(25, 4, '#5a3a30'); p.set(27, 4, '#5a3a30');
+    // three arched windows in the gable
+    for (const cx of [17, 26, 35]) archWin(cx, 17, 7, 11);
+    // the lettered band (VAN WICKLE MEMORIAL LIBRARY)
+    p.rect(3, 38, 47, 5, '#e2d4ac'); p.hline(3, 49, 38, '#f0e4c4'); p.hline(3, 49, 42, '#b8a880');
+    for (let x = 6; x < 48; x += 2) if (G.hash(x, 7, 3) < 0.75) p.vline(x, 39, 41, '#8a7a5a');
+    // narrow windows either side of the entrance
+    for (const x0 of [5, 43]) { p.rect(x0, 58, 5, 14, glass); p.hline(x0 - 1, x0 + 5, 57, tc); p.hline(x0 - 1, x0 + 5, 72, stone); p.set(x0 + 1, 60, glassL); }
+    // the big round-arched entrance
+    for (let y = 47; y <= 91; y++) for (let x = 11; x <= 41; x++) {
+      const d = (x - 26) ** 2 + (y - 62) ** 2;
+      if (y < 62 ? d <= 15 * 15 : Math.abs(x - 26) <= 15) {
+        const inner = y < 62 ? d <= 11 * 11 : Math.abs(x - 26) <= 11;
+        p.set(x, y, inner ? '#2a1c18' : (y < 62 && d > 13.5 * 13.5) || Math.abs(x - 26) > 13.5 ? tcL : tc);
+      }
+    }
+    for (let a = 0; a < 7; a++) { const ang = Math.PI + (a / 6) * Math.PI; p.set(26 + Math.round(Math.cos(ang) * 8), 62 + Math.round(Math.sin(ang) * 8), '#6a4a30'); }
+    p.rect(17, 66, 18, 24, '#5a3a24'); p.vline(26, 66, 89, '#3a2418'); p.rect(19, 70, 5, 8, '#6a4a30'); p.rect(28, 70, 5, 8, '#6a4a30');
+    p.set(24, 79, '#d8b050'); p.set(28, 79, '#d8b050');
+    // stone base and the steps up to the door
+    p.rect(2, 88, 49, 8, stone); p.hline(2, 50, 88, '#e0d8c4');
+    p.rect(13, 90, 27, 6, '#d6d0c6'); p.hline(13, 39, 90, '#eeeae2'); p.hline(13, 39, 93, '#b8b2a8'); p.hline(15, 37, 94, '#eeeae2');
+    return finish(p);
+  }
+  // A glass-topped oak display case of minerals on blue felt, with little white labels.
+  function mineralCase(kind) {
+    const p = new Pix(32, 24), oak = '#9a6234', oakD = '#6a4220', felt = kind === 'fluor' ? '#1c1830' : '#3a5a9a';
+    p.rect(0, 0, 32, 12, '#c8e0e8'); p.rect(1, 1, 30, 10, felt);
+    const gems = {
+      quartz: ['#f4f4f8', '#c8a8e8', '#8a6ab8', '#a8a0a0'],
+      garnet: ['#8a1828', '#b02838', '#6a1020', '#d84858'],
+      fluor: ['#58f878', '#f85858', '#58f878', '#f8f858'],
+      fossil: ['#d8c8a8', '#a89878', '#c8b898', '#8a7a68'],
+      pyrite: ['#d8b848', '#f0d870', '#b89838', '#f8e898'],
+    }[kind];
+    for (let i = 0; i < 8; i++) {
+      const x = 3 + (i % 4) * 7, y = 2 + Math.floor(i / 4) * 5, c = gems[i % gems.length];
+      p.rect(x, y, 3 + (i % 2), 3, c); p.set(x + 1, y, '#ffffff');
+      if (kind === 'fossil' && i % 2) { p.set(x + 1, y + 1, '#6a5a48'); }
+      p.hline(x, x + 2, y + 4, kind === 'fluor' ? '#8a8aa8' : '#f4f4f0');
+    }
+    p.hline(0, 31, 0, '#e8f4f8'); p.set(4, 2, '#ffffff'); p.set(5, 1, '#ffffff');
+    p.rect(0, 12, 32, 9, oak); p.hline(0, 31, 12, '#b8804a'); p.rect(3, 14, 12, 5, oakD); p.rect(17, 14, 12, 5, oakD);
+    p.rect(1, 21, 2, 3, oakD); p.rect(29, 21, 2, 3, oakD);
+    return finish(p);
+  }
+  // The cross-section rock wall: slices of Eastern PA stacked oldest (bottom) to youngest (top).
+  function rockWallSection() {
+    const W = 96, H = 26, p = new Pix(W, H);
+    const layers = [['#a85a48', '#c87060'], ['#a8a090', '#c0b8a4'], ['#8a8a90', '#a4a4aa'], ['#c8c0a8', '#ded6c0'], ['#5a5a62', '#7a7a84']];
+    let y = 0;
+    layers.forEach(([c, cl], li) => {
+      const h = li === 4 ? 6 : 5;
+      for (let x = 0; x < W;) {
+        const w = 6 + Math.floor(G.hash(x, li, 5) * 9);
+        p.rect(x, y, Math.min(w, W - x), h, G.hash(x, li, 6) < 0.3 ? cl : c);
+        p.hline(x, Math.min(W - 1, x + w - 1), y, '#3a3a40'); p.vline(x, y, y + h - 1, '#3a3a40');
+        if (li === 4) for (let k = x + 2; k < x + w - 1; k += 3) p.set(k, y + 3, '#d8d8e0'); // gneiss banding
+        x += w;
+      }
+      y += h;
+    });
+    p.hline(0, W - 1, 0, '#2a2a30');
+    return finish(p);
+  }
+  // An arched stained glass window (Van Wickle was the library, 1900-63).
+  function stainedGlass() {
+    const p = new Pix(16, 26), lead = '#2a2420', cols = ['#d8a040', '#58a058', '#4a7ac8', '#c84848', '#e8d070', '#8a5ab8'];
+    for (let y = 0; y < 26; y++) for (let x = 0; x < 16; x++) {
+      if (y < 8 && (x - 7.5) ** 2 + (y - 8) ** 2 > 64) continue;
+      const edge = x === 0 || x === 15 || y === 25 || (y < 8 && (x - 7.5) ** 2 + (y - 8) ** 2 > 50);
+      p.set(x, y, edge ? '#8a6a48' : (x % 5 === 2 || y % 6 === 3) ? lead : cols[(Math.floor(x / 5) + Math.floor(y / 6) * 2) % cols.length]);
+    }
+    p.set(7, 4, '#ffffff'); p.set(8, 4, '#f8f0c8');
+    return finish(p);
+  }
+  // The lab jaw crusher: green steel, a hopper on top, two flywheels, a catch tray,
+  // and Nate's signed permission slip taped to the front.
+  function jawCrusher() {
+    const p = new Pix(30, 34), g = '#3a7a4a', gD = '#2a5a36', gL = '#5a9a68', steel = '#5a5a64';
+    p.rect(3, 26, 24, 6, steel); p.hline(3, 26, 26, '#7a7a84'); p.rect(4, 32, 3, 2, '#3a3a40'); p.rect(23, 32, 3, 2, '#3a3a40');
+    p.rect(7, 8, 16, 18, g); p.vline(7, 8, 25, gL); p.vline(22, 8, 25, gD);
+    // hopper
+    for (let y = 0; y < 8; y++) { const half = 9 - Math.floor(y / 2); p.hline(15 - half, 14 + half, y, y === 0 ? '#9a9aa4' : '#7a7a84'); }
+    p.rect(11, 1, 8, 4, '#2a2a30'); p.set(12, 2, '#8a8a90'); p.set(15, 3, '#a8a090');
+    // flywheels
+    for (const cx of [3, 26]) for (let a = 0; a < 24; a++) { const ang = (a / 24) * Math.PI * 2; p.set(cx + Math.round(Math.cos(ang) * 4), 15 + Math.round(Math.sin(ang) * 4), '#3a3a40'); }
+    for (const cx of [3, 26]) { p.hline(cx - 3, cx + 3, 15, '#5a5a64'); p.vline(cx, 12, 18, '#5a5a64'); p.set(cx, 15, '#c8c8d0'); }
+    // the jaw opening and the catch tray full of gravel
+    p.rect(11, 20, 8, 3, '#1c1c22'); p.rect(9, 23, 12, 3, '#8a8a90'); for (let x = 10; x < 20; x += 2) p.set(x, 23, '#c8c0b0');
+    // hazard stripes and the permission slip
+    for (let x = 8; x < 22; x++) p.set(x, 8, (x >> 1) % 2 ? '#f8d040' : '#1c1c22');
+    p.rect(9, 11, 7, 7, '#f4f4f0'); p.hline(10, 14, 13, '#8a8a90'); p.hline(10, 13, 15, '#8a8a90'); p.set(14, 16, '#4a6ac8'); p.set(15, 16, '#4a6ac8');
+    p.set(9, 11, '#c8c8a0'); p.set(15, 11, '#c8c8a0');
+    return finish(p);
+  }
+  // A diamond-blade rock saw in a water tray.
+  function rockSaw() {
+    const p = new Pix(28, 20);
+    p.rect(1, 8, 26, 8, '#4a5a7a'); p.hline(1, 26, 8, '#6a7a9a'); p.rect(3, 10, 22, 4, '#3a7ab0');
+    for (let a = 0; a < 28; a++) { const ang = (a / 28) * Math.PI * 2; p.set(14 + Math.round(Math.cos(ang) * 6), 8 + Math.round(Math.sin(ang) * 6), '#c8c8d0'); }
+    p.set(14, 8, '#5a5a64'); p.rect(2, 16, 2, 4, '#3a3a40'); p.rect(24, 16, 2, 4, '#3a3a40');
+    return finish(p);
+  }
+  // A black-topped lab bench with two petrographic microscopes.
+  function microscopeBench() {
+    const p = new Pix(44, 24);
+    p.rect(0, 12, 44, 3, '#2a2a30'); p.hline(0, 43, 12, '#4a4a54'); p.rect(0, 15, 44, 7, '#9a6234'); p.rect(2, 22, 3, 2, '#6a4220'); p.rect(39, 22, 3, 2, '#6a4220');
+    for (const x0 of [8, 28]) {
+      p.rect(x0, 9, 8, 3, '#e8e8ec'); p.rect(x0 + 2, 1, 3, 9, '#d8d8e0'); p.rect(x0 + 2, 0, 3, 2, '#2a2a30');
+      p.rect(x0 + 1, 6, 5, 1, '#5a5a64'); p.set(x0 + 6, 8, '#d8a040'); p.set(x0 + 7, 8, '#4a7ac8');
+    }
+    for (const x of [19, 21, 23]) { p.rect(x, 11, 1, 1, '#a8c8f0'); }
+    return finish(p);
+  }
+  // The department's prized conglomerate: a gray rock full of other rocks.
+  function conglomerate() {
+    const p = new Pix(16, 12);
+    for (let y = 2; y < 12; y++) for (let x = 0; x < 16; x++) if ((x - 7.5) ** 2 / 56 + (y - 7) ** 2 / 25 <= 1) p.set(x, y, '#8a8a8e');
+    for (const [x, y, c] of [[4, 6, '#c8b898'], [8, 5, '#5a5a62'], [11, 7, '#a85a48'], [6, 9, '#d8d8d8'], [10, 9, '#6a6a70'], [3, 8, '#7a6a5a']]) { p.set(x, y, c); p.set(x + 1, y, c); }
+    return finish(p);
+  }
+  // A meteorite on a white pedestal under a glass dome.
+  function meteoritePedestal() {
+    const p = new Pix(16, 26);
+    p.rect(3, 14, 10, 12, '#ecece8'); p.hline(3, 12, 14, '#ffffff'); p.vline(12, 14, 25, '#c8c8c0');
+    for (let y = 8; y < 14; y++) for (let x = 4; x < 12; x++) if ((x - 7.5) ** 2 / 12 + (y - 11) ** 2 / 6 <= 1) p.set(x, y, (x + y) % 3 ? '#3a3632' : '#5a524a');
+    p.set(6, 10, '#8a8a90'); p.set(9, 11, '#2a2420');
+    for (let a = 0; a < 20; a++) { const ang = Math.PI + (a / 19) * Math.PI; p.set(8 + Math.round(Math.cos(ang) * 6), 13 + Math.round(Math.sin(ang) * 9), '#c8e4ec'); }
+    p.set(5, 6, '#ffffff');
+    return finish(p);
+  }
+  // Rock garden boulders (oldest to youngest in Eastern PA).
+  function gardenRock(kind) {
+    const p = new Pix(20, 14);
+    const c = { gneiss: ['#6a6a72', '#d8d8e0'], limestone: ['#a8a8a4', '#c8c8c0'], conglomerate: ['#9a9284', '#c8b898'], sandstone: ['#a85a48', '#c87868'] }[kind];
+    for (let y = 1; y < 14; y++) for (let x = 0; x < 20; x++) if ((x - 9.5) ** 2 / 90 + (y - 8) ** 2 / 40 <= 1) p.set(x, y, y < 5 ? c[1] : c[0]);
+    if (kind === 'gneiss') for (let y = 5; y < 13; y += 3) for (let x = 2; x < 18; x++) if ((x - 9.5) ** 2 / 90 + (y - 8) ** 2 / 40 <= 1) p.set(x, y + (x % 4 < 2 ? 0 : 1), c[1]);
+    if (kind === 'conglomerate') for (let i = 0; i < 9; i++) p.set(3 + (i * 5) % 14, 5 + (i * 3) % 7, ['#d8d8d8', '#5a5a62', '#a85a48'][i % 3]);
+    if (kind === 'limestone') for (let i = 0; i < 4; i++) p.set(4 + i * 4, 9, '#8a8a84');
+    if (kind === 'sandstone') for (let y = 6; y < 13; y += 2) p.hline(4, 15, y, '#94503e');
+    return finish(p);
+  }
+  // A black campus lamppost with a maroon Lafayette banner.
+  function lamppost() {
+    const p = new Pix(12, 40);
+    p.rect(5, 6, 2, 34, '#1c1c22'); p.rect(3, 0, 6, 6, '#2a2a30'); p.rect(4, 1, 4, 4, '#f8e8a0'); p.rect(3, 38, 6, 2, '#1c1c22');
+    p.rect(7, 10, 5, 12, '#8a1c2c'); p.hline(7, 11, 10, '#a83040'); p.vline(9, 13, 18, '#f4f0e8'); p.hline(9, 10, 18, '#f4f0e8');
+    return finish(p);
+  }
+
   // ================================================================ THE FROZEN POND (Ice JJ Fish)
   // Snow piled on every branch of a pine (white on each top edge).
   function snowCap(src) {
@@ -3985,6 +4204,11 @@
     S.streetSign = streetSign();
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
+    S.vanWickle = vanWickle();
+    S.mineralCases = {}; for (const k of ['quartz', 'garnet', 'fluor', 'fossil', 'pyrite']) S.mineralCases[k] = mineralCase(k);
+    S.rockWall = rockWallSection(); S.stainedGlass = stainedGlass(); S.jawCrusher = jawCrusher(); S.rockSaw = rockSaw();
+    S.microscopeBench = microscopeBench(); S.conglomerate = conglomerate(); S.meteorite = meteoritePedestal(); S.lamppost = lamppost();
+    S.boulders = {}; for (const k of ['gneiss', 'limestone', 'conglomerate', 'sandstone']) S.boulders[k] = gardenRock(k);
     S.mic = micSprite(); S.snowflake = snowflake(); S.icicle = icicle(); S.snowman = snowman();
     S.chickens = {};
     for (const [k, col] of [['white', '#f4f2ec'], ['brown', '#b8683a']]) {
@@ -3998,5 +4222,6 @@
     S.pipeSmallL = mirror(S.pipeSmall);
     S.paper = paperIcon();
     S.chalkboard = chalkboard();
+    S.chalkboardGeo = chalkboard('CRYSTALS!');
   };
 })();

@@ -69,6 +69,8 @@
     'N': { k: 'faceStone', solid: true, edge: true },
     'd': { k: 'basementFloor' },
     'J': { k: 'snow' },
+    'E': { k: 'hallTile' },
+    'V': { k: 'faceOak', solid: true, edge: true },
     'A': { k: 'snowPath' },
     'I': { k: 'ice', edge: true, ice: true },
     'U': { k: 'iceHole', edge: true, hazard: true },

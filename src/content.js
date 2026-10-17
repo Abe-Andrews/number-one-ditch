@@ -1927,6 +1927,82 @@
     G.audio.play('house');
   };
 
+  // ================================================================ VAN WICKLE HALL (geology)
+  // Nate's favorite building on campus: rocks, minerals, and a rock crusher he
+  // has written permission to use.
+  const GARDEN = {
+    gneiss: ['Banded gneiss from the Reading Prong. Over a billion years old: the oldest rock in the garden.', 'Older than the dinosaurs. Older than the sacred number.'],
+    limestone: ['Jacksonburg limestone, from the Ordovician. Gray, a little fizzy if you put acid on it.', 'Nate has put acid on it.'],
+    conglomerate: ['Shawangunk conglomerate. Silurian. Quartz pebbles cemented together, hard as nails.', 'The cliffs at the Gunks are made of this. Rock climbers love it. So does Nate.'],
+    sandstone: ['Catskill red sandstone. Devonian, the youngest rock in the garden. It\'s red because of the iron in it.', 'Iron oxide. Rust, basically. A rusty rock.'],
+  };
+  S.rockGarden = (k) => function* () {
+    if (!flags().rockGarden) { flags().rockGarden = true; yield G.say(null, 'Van Wickle\'s rock garden: big specimens from all over Eastern Pennsylvania, lined up oldest to youngest.'); }
+    for (const line of GARDEN[k]) yield G.say(null, line);
+  };
+  S.vwCase = (k) => function* () {
+    const L = {
+      quartz: ['Quartz, amethyst and a big chunk of smoky quartz, laid out on blue felt with tiny labels.', ['Nate', 'I could stare at these for hours. I have.']],
+      garnet: ['Garnets: deep red, almost purple, each one a perfect little twelve-sided crystal.', ['Nate', 'Rhombic dodecahedron. My favorite crystal shape to say out loud.']],
+      fluor: ['The fluorescent case, under a black light: willemite glowing green, calcite glowing red.', 'From Franklin, New Jersey: the fluorescent mineral capital of the world.'],
+      fossil: ['Fossils: a trilobite, a fern frond, an ammonite. Half a billion years old, give or take.', ['Nate', 'Give or take a few million. Geologists round generously.']],
+      pyrite: ['Pyrite cubes so perfect they look machined. Fool\'s gold.', ['Nate', 'I am no fool. I have a whole jar of it at home.']],
+    }[k];
+    for (const l of L) yield Array.isArray(l) ? G.say(l[0], l[1]) : G.say(null, l);
+  };
+  S.vwRockWall = function* () {
+    yield G.say(null, 'The cross-section rock wall: slices of rock from eleven spots around Eastern Pennsylvania, stacked oldest to youngest. 1.2 billion years, about twenty feet long.');
+    yield G.say(null, 'Every slice sits the way it did in the ground.');
+    yield G.say('Nate', 'Gneiss on the bottom. Then limestone, then the Shawangunk, then the Catskill red beds on top. I could recite it in my sleep.');
+    if (G.with('doron')) yield G.say('Doron', 'You DO recite it in your sleep.');
+  };
+  S.crusher = function* () {
+    const f = flags(), w = G.play.world, s = G.state;
+    if (!f.crusherIntro) {
+      f.crusherIntro = true;
+      yield G.say(null, 'The jaw crusher: two steel jaws that chew rocks into gravel. Taped to the front is a permission slip.');
+      yield G.say(null, '{d}"Nate is authorized to operate the rock crusher. Please supervise him anyway. - Prof. Schist"{/}');
+      yield G.say('Nate', 'I have a permission slip. For the rock crusher. This is the best day of my life.');
+      if (G.with('doron')) { yield G.say('Doron', 'Can I put something in it?'); yield G.say('Nate', 'No.'); }
+    }
+    if (w.crushed) { yield G.say('Nate', 'It needs to cool down. One rock per visit. Safety first.'); return; }
+    const c = yield G.ask('Nate', 'Feed it a rock?', ['Crush a rock', 'Not right now']);
+    if (c !== 0) return;
+    w.crushed = true;
+    const cx = 2 * 16 + 16, cy = 3 * 16 + 8;
+    yield G.say(null, 'Nate grabs a field sample from the bucket, puts on his safety glasses, and drops it in the hopper.');
+    yield {
+      start() { this.t = 0; },
+      update() {
+        this.t++;
+        if (this.t % 7 === 0) { G.audio.sfx('clank'); w.burst(cx, cy, ['#8a8a90', '#c8c0b0', '#5a5a62', '#a85a48'], 4, { speed: 1.1, up: 0.8, g: 0.1, life: 22, size: 2 }); }
+        G.play.shake(2, 1);
+        if (this.t === 21) w.pop(cx, cy - 24, 'CRUNCH!', '#ffffff');
+        if (this.t === 42) w.pop(cx, cy - 24, 'GRIND!', '#ffffff');
+        return this.t >= 60;
+      },
+    };
+    const FINDS = [
+      [4, 'Just gravel. Very fine, very gray gravel.', 0],
+      [3, 'Hidden inside: a pocket of clear quartz crystals!', 5],
+      [2, 'Garnets! A little cluster of deep red crystals.', 10],
+      [2, 'A fossil: a tiny brachiopod shell, about 400 million years old.', 10],
+      [1, 'Pyrite! A perfect gold cube, right in the middle of the rock.', 15],
+      [1, 'A GEODE. Hollow, sparkling, purple inside. Nate needs a minute.', 25],
+    ];
+    let roll = Math.random() * FINDS.reduce((n, x) => n + x[0], 0), find = FINDS[0];
+    for (const x of FINDS) { roll -= x[0]; if (roll < 0) { find = x; break; } }
+    s.stats.crushed = (s.stats.crushed || 0) + 1;
+    yield G.say(null, find[1]);
+    if (find[2]) {
+      G.play.addTeeth(find[2]);
+      G.audio.sfx('tooth');
+      yield G.say(null, 'A geology major trades Nate {y}' + G.sayable(find[2]) + ' shark teeth{/} for it on the spot.');
+    } else {
+      yield G.say('Nate', 'Still worth it.');
+    }
+  };
+
   // ================================================================ ADMIN MODE (testing)
   // Story checkpoints in play order. Starting one applies every checkpoint up to
   // it (flags, items, party), then drops Nate at its spot. Admin runs never save.
@@ -1953,6 +2029,7 @@
     { name: 'Nate\'s lab', map: 'lab', at: [3, 4, 'down'] },
     { name: 'Lafayette campus', map: 'campus', at: [20, 10, 'down'] },
     { name: 'Science Center', map: 'science', at: [7, 8, 'up'] },
+    { name: 'Van Wickle Hall (geology)', map: 'geology', at: [10, 12, 'up'] },
     { name: 'Easton Fairgrounds', map: 'fair', at: [9, 12, 'down'] },
     { name: 'Expo Hall', map: 'arena', at: [11, 15, 'up'] },
     { name: 'Home: the yard', map: 'home', at: [42, 38, 'down'] },
@@ -2635,7 +2712,7 @@
   G.MAPS = {};
 
   // where Sixes appear on the campus lawns (first 7 at load, the rest for respawns)
-  const SIX_SPOTS = [[28, 20], [31, 21], [34, 20], [30, 25], [6, 22], [10, 24], [15, 26], [33, 24], [12, 21], [27, 26]];
+  const SIX_SPOTS = [[23, 17], [31, 23], [36, 25], [30, 25], [6, 22], [10, 24], [15, 26], [33, 24], [12, 21], [27, 26]];
 
   G.MAPS.lab = {
     name: 'Nate\'s Lab',
@@ -2702,7 +2779,6 @@
       fill(8, 16, 7, 5, '#');
       fill(9, 17, 5, 3, '~');
       // tall grass
-      fill(27, 18, 4, 3, '"');
       fill(32, 22, 4, 3, '"');
       fill(33, 25, 3, 2, '"');
       fill(4, 23, 4, 3, '"');
@@ -2710,9 +2786,10 @@
       // bushes
       [[17, 15], [17, 17], [17, 19], [23, 18], [23, 20], [11, 9], [12, 9], [25, 9], [26, 9], [28, 23], [29, 23], [15, 23], [16, 23]]
         .forEach(([x, y]) => set(x, y, 'b'));
-      // fence along the top of the east lawn, with a gap
-      fill(26, 15, 4, 1, 'f');
+      // fence along the top of the east lawn
       fill(32, 15, 5, 1, 'f');
+      // the gravel bed of Van Wickle's rock garden (east side, like the real one)
+      fill(34, 20, 4, 2, 'g');
       // tree border with a gap for the south road
       for (let x = 0; x < W; x += 2) { set(x, 0, 'T'); if (x < 18 || x > 20) set(x, 28, 'T'); }
       for (let y = 2; y < 28; y += 2) { set(0, y, 'T'); if (y !== 12) set(38, y, 'T'); }
@@ -2724,6 +2801,17 @@
       w.addBuilding({ x: 3, y: 3, w: 7, h: 4, door: 3, style: 'brick', roof: '#4a5070', sign: true, to: { map: 'lab', x: 6, y: 7 } });
       w.addBuilding({ x: 14, y: 2, w: 11, h: 5, door: 5, style: 'stone', wall: '#c8bc9c', roof: '#50607a', tower: true, locked: S.pardeeDoor });
       w.addBuilding({ x: 29, y: 3, w: 9, h: 4, door: 4, style: 'modern', wall: '#d8c8a0', roof: '#6a4a40', to: { map: 'science', x: 7, y: 9 } });
+      // Van Wickle Hall: the geology building (walk into the arched front door)
+      w.addProp({ img: G.spr.vanWickle, tx: 26, ty: 17, h: 4 });
+      w.blockTiles(26, 17, 8, 4);
+      w.block[20 * w.w + 27] = 0;
+      w.addWarp(27, 20, 1, 1, 'geology', 10, 12, 'up');
+      w.add(new G.Sign(25, 21, ['VAN WICKLE HALL', 'Geology & Environmental Geosciences. The college library from 1900 to 1963. Exhibits open weekdays.']));
+      w.addProp({ img: G.spr.lamppost, tx: 25, ty: 19, dx: 2, solid: [25, 19, 1, 1] });
+      // the rock garden: big specimens, oldest to youngest in Eastern Pennsylvania
+      for (const [x, y, k] of [[34, 20, 'gneiss'], [35, 21, 'limestone'], [36, 20, 'conglomerate'], [37, 21, 'sandstone']]) {
+        w.addProp({ img: G.spr.boulders[k], tx: x, ty: y, dx: -2, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: () => S.rockGarden(k) });
+      }
       w.addProp({ img: G.spr.cart, tx: 22, ty: 14, h: 2, dx: -2, solid: [22, 14, 2, 2], hit: [22, 14, 2, 2], talk: S.vendor });
 
       const npc = (sprite, name, tx, ty, talk, o = {}) =>
@@ -3378,6 +3466,58 @@
           yield G.say('Nate', '...Is that Mikey? At the end of our driveway? With balloons?');
           yield G.camFocus(null, null, 30);
         }
+      })();
+    },
+  };
+
+  // Van Wickle Hall inside: a tiled main hall with oak wainscot, stained glass from
+  // the library days, mineral cases and the cross-section rock wall; the rock prep
+  // lab (jaw crusher, rock saw) up on the left, the mineralogy lab on the right.
+  G.MAPS.geology = {
+    name: 'Van Wickle Hall',
+    music: 'house',
+    tiles() {
+      const W = 22, H = 14;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 9, 2, 'N'); fill(1, 3, 9, 3, 'C');      // rock prep lab
+      fill(12, 1, 9, 2, 'V'); fill(12, 3, 9, 3, 'E');    // mineralogy lab
+      fill(1, 6, 20, 2, 'V'); fill(1, 8, 20, 5, 'E');    // the main hall
+      fill(5, 6, 1, 2, 'C'); fill(16, 6, 1, 2, 'E');     // doorways up into the labs
+      fill(10, 13, 2, 1, 'x');                           // the front doors
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      // ---- main hall
+      for (const x of [4, 9, 12]) F.hang(sp.stainedGlass, x, 7, 1, look('Stained glass from when Van Wickle was the college library, back in 1900.', 'Now it lights up rocks instead of books.'), 4);
+      F.stand(sp.mineralCases.quartz, 2, 8, 2, () => S.vwCase('quartz')());
+      F.stand(sp.mineralCases.garnet, 6, 8, 2, () => S.vwCase('garnet')());
+      F.stand(sp.rockWall, 8, 8, 6, () => S.vwRockWall());
+      F.stand(sp.mineralCases.fluor, 14, 8, 2, () => S.vwCase('fluor')());
+      F.stand(sp.mineralCases.fossil, 17, 8, 2, () => S.vwCase('fossil')());
+      F.stand(sp.mineralCases.pyrite, 19, 8, 2, () => S.vwCase('pyrite')());
+      F.stand(sp.meteorite, 3, 11, 1, look('A meteorite under a glass dome. An actual rock from outer space.', ['Nate', 'I am not allowed to touch it. I think about touching it every day.']));
+      w.add(new G.Sign(18, 11, ['GEOLOGY & ENVIRONMENTAL GEOSCIENCES', '"Every rock has a story." Exhibits open weekdays. Please do not lick the minerals.']));
+      // ---- rock prep lab
+      w.crusherProp = F.stand(sp.jawCrusher, 2, 3, 2, () => S.crusher());
+      F.stand(sp.rockSaw, 6, 3, 2, look('A diamond-blade rock saw in a tray of water. It cuts the paper-thin slices for microscope slides.', ['Nate', 'It makes a noise I find very soothing.']));
+      F.stand(sp.buckets, 8, 3, 1, look('Buckets of field samples labeled in Sharpie: GUNKS, CATSKILL, JACKSONBURG, and "DO NOT CRUSH (YET)".'));
+      // ---- mineralogy lab
+      F.hang(sp.chalkboardGeo, 13, 2, 3, look('A chalkboard covered in crystal systems: cubic, tetragonal, hexagonal... and a tiny doodle of a rock with a face.'), 4);
+      F.stand(sp.microscopeBench, 12, 4, 3, look('Petrographic microscopes. Put a thin slice of rock under polarized light and it glows like stained glass.'));
+      F.stand(sp.microscopeBench, 16, 4, 3, look('More microscopes. Somebody left a thin section of granite on the stage. It looks like a kaleidoscope.'));
+      F.stand(sp.conglomerate, 20, 3, 1, look('A plain gray rock at the back of the classroom: a conglomerate made of pieces of an even older conglomerate.', 'A rock full of other rocks\' stories. The professors call it one of the most prized things in the building.', ['Nate', 'It doesn\'t look like much. That\'s what makes it great.']));
+      // ---- out the front doors
+      w.addTrigger(10, 13, 2, 1, () => G.play.warp('campus', 27, 21, 'down'));
+    },
+    onEnter() {
+      return (function* () {
+        if (flags().vanWickle) return;
+        flags().vanWickle = true;
+        yield G.wait(20);
+        yield G.say('Nate', 'Van Wickle Hall. The geology building. My favorite place on campus.');
+        yield G.say('Nate', 'It used to be the college library. Now it\'s a library of ROCKS.');
       })();
     },
   };
