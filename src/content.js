@@ -102,10 +102,10 @@
   };
   G.CAST.priya = { skin: '#b07850', hair: '#1a1010', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 };
 
-  // Mom: long brown hair, tortoiseshell glasses, freckles, gold earrings,
+  // Mom: shoulder-length brown hair, tortoiseshell glasses, freckles, gold earrings,
   // a mauve puffer, jeans and green garden boots.
   G.CAST.michelle = {
-    skin: '#f4c8aa', hair: '#5a3624', hairStyle: 'long', glasses: '#7a5434', blush: true, smile: '#ffffff', earring: '#e8c060',
+    skin: '#f4c8aa', hair: '#5a3624', hairStyle: 'shoulder', glasses: '#7a5434', blush: true, smile: '#ffffff', earring: '#e8c060',
     coat: '#a88aa0', shirt: '#e8dce4', pants: '#4a6aa8', shoes: '#4a7a3a', boots: true, torso: 6, legs: 3,
   };
 
