@@ -1828,7 +1828,19 @@
     pizza: [['Junior', 'Honestly? I don\'t know what we\'re protesting.'], ['Junior', 'Somebody said there\'d be free pizza.'], ['Nate', 'Is there free pizza?'], ['Junior', 'There is NOT free pizza.']],
   };
   S.protester = (sign) => function* () {
+    const f = flags();
     for (const [who, line] of PROTEST[sign]) yield G.say(who, line);
+    f['protest_' + sign] = true;
+    // hear all six of them out and they chip in from the protest fund
+    if (!f.protestReward && Object.keys(PROTEST).every((k) => f['protest_' + k])) {
+      f.protestReward = true;
+      yield G.say('Protester', 'Wait. Did you just listen to ALL of us?');
+      yield G.say('Protester', 'Nobody listens to all of us. Not even us.');
+      G.play.addTeeth(20);
+      G.audio.sfx('secret');
+      yield G.say(null, 'The protesters pass a hat around. Nate gets {y}20 shark teeth{/} from the protest fund.');
+      yield G.say('Nate', 'Solidarity.');
+    }
   };
   const CHANTS = ['GIVE BACK THE QUAD!', 'SAVE THE GRASS!', 'WHO APPROVED THIS?!', 'RESPECT LITTLE PEOPLE!', 'WHERE\'S THE MONEY?!', 'PIZZA?'];
 
@@ -3279,8 +3291,9 @@
       if (flags().doronDeal) npc('pete', 'Pyro Pete', 24, 10, S.pete, { dir: 'left' });
       npc('rose', 'Grandma Rose', 27, 23, S.rose, { wander: 10 });
       npc('earl', 'Big Earl', 25, 13, S.earl);
-      // a protest by the parking lot (Lafayette's event village took the quad)
-      w.protesters = [[2, 14, 'protest1', 'people'], [6, 14, 'protest2', 'grass'], [12, 14, 'protest3', 'money'], [16, 14, 'protest4', 'quad'], [7, 11, 'protest5', 'who'], [10, 11, 'protest6', 'pizza']]
+      // a protest tucked away at the bottom of the grounds, past the stands and the
+      // tall grass (Lafayette's event village took the quad); you have to go looking
+      w.protesters = [[14, 28, 'protest1', 'people'], [18, 28, 'protest2', 'grass'], [22, 28, 'protest3', 'money'], [26, 28, 'protest4', 'quad'], [30, 28, 'protest5', 'who'], [34, 28, 'protest6', 'pizza']]
         .map(([x, y, spr, sign]) => npc(spr, 'Protester', x, y, S.protester(sign), { sign: G.spr.signs[sign] }));
 
       w.add(new G.Sign(5, 11, ['EASTON FAIRGROUNDS', 'Tonight: {y}MICRO MAYHEM WRESTLING{/}! Doors at 7.']));
