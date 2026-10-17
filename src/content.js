@@ -3346,10 +3346,6 @@
     },
     // the flock's revenge: angry hens swoop in from off-screen for a few seconds
     tick(w) {
-      const m = w.michelle;
-      if (m && m.held === G.spr.wateringCan && !G.script.busy && G.tick % 24 === 0) {
-        w.burst(m.x - 12, m.y - 10, ['#78c8ff', '#a8e0ff'], 2, { speed: 0.3, up: -0.2, g: 0.08, life: 14, size: 1 });
-      }
       if (!w.swarmT || G.script.busy) return;
       w.swarmT--;
       if (w.swarmT % 22 !== 0) return;

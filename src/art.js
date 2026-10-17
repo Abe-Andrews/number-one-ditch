@@ -3725,13 +3725,18 @@
     return finish(p);
   }
 
-  // Mom's green watering can.
+  // Mom's green watering can, tipped forward to pour (spout and rose on the left).
   function wateringCan() {
-    const p = new Pix(12, 9);
-    p.rect(3, 3, 6, 6, '#4a8a48'); p.hline(3, 8, 3, '#6aaa60');
-    p.vline(2, 4, 7, '#3a6a38'); p.set(1, 3, '#3a6a38'); p.set(0, 2, '#3a6a38');
-    for (let i = 0; i < 3; i++) p.set(9 + i, 5 - i, '#3a6a38');
-    p.hline(4, 7, 1, '#3a6a38'); p.set(4, 2, '#3a6a38'); p.set(7, 2, '#3a6a38');
+    const p = new Pix(16, 12), g = '#4a8a48', gl = '#6aaa60', gd = '#346834', brass = '#c8a040';
+    // the barrel
+    p.rect(8, 3, 6, 7, g); p.hline(8, 13, 3, gl); p.vline(8, 4, 9, gl); p.hline(8, 13, 9, gd); p.vline(13, 4, 9, gd);
+    p.hline(9, 12, 6, gd);
+    // carry handle over the top and the grip at the back
+    p.hline(9, 12, 0, gd); p.vline(9, 0, 3, gd); p.vline(12, 0, 3, gd);
+    p.vline(15, 4, 8, gd); p.set(14, 4, gd); p.set(14, 8, gd);
+    // the long spout, angled down, with a brass rose on the end
+    for (let k = 0; k < 6; k++) { p.set(7 - k, 7 + Math.floor(k / 2), g); p.set(7 - k, 8 + Math.floor(k / 2), gd); }
+    p.rect(0, 9, 2, 3, brass); p.set(0, 10, '#8a6a28');
     return finish(p);
   }
   function eggShot() {
@@ -3956,7 +3961,7 @@
     S.bookPiles = [bookPile(1, 5), bookPile(2, 4), bookPile(3, 6)]; S.furnace = furnace(); S.storageBoxes = storageBoxes();
     S.flyingBook = [flyingBook(true), flyingBook(false)];
     S.globglog = [globglog(-1), globglog(0), globglog(1)]; S.egg = eggShot();
-    S.wateringCan = wateringCan();
+    S.wateringCan = wateringCan(); S.wateringCanR = mirror(S.wateringCan);
     S.chewedPage = chewedPage(); S.pastorBook = pastorBook(); S.keyring = keyring(); S.earplugs = earplugs();
     // Dad's workshop
     S.convertible = convertible(); S.workbench = workbench(); S.bassOnBench = bassOnBench(); S.bassSwing = bassSwing(); S.bassIcon = bassIcon();

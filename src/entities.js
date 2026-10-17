@@ -391,6 +391,10 @@
     update(w) {
       if (this.flashT > 0) this.flashT--;
       if (G.script.busy) { if (!this.walking) this.moving = false; return; }
+      // Mom turns back to her flowers a moment after a chat
+      if (this.held === G.spr.wateringCan && this.dir !== this.homeDir) {
+        if ((this.backT = (this.backT || 0) + 1) > 45) { this.dir = this.homeDir; this.backT = 0; }
+      }
       if (!this.wander) return;
       if (--this.wt <= 0) {
         if (this.moving) {
@@ -430,9 +434,29 @@
         ctx.drawImage(img, Math.round(this.x - w2 / 2) - cx, Math.round(this.y + 2 - h2) - cy, w2, h2);
         return;
       }
+      const can = this.held === G.spr.wateringCan;
+      if (can && this.dir === 'up') this.drawCan(ctx, cx, cy);
       ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
-      if (this.held) ctx.drawImage(this.held, Math.round(this.x - this.held.width / 2) - cx, Math.round(this.y - S.h + 10) - cy);
+      if (can && this.dir !== 'up') this.drawCan(ctx, cx, cy);
+      else if (this.held && !can) ctx.drawImage(this.held, Math.round(this.x - this.held.width / 2) - cx, Math.round(this.y - S.h + 10) - cy);
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, Math.round(this.y - S.h - 10) - cy);
+    }
+
+    // Mom's watering can, held at her side by the grip; tipped toward whatever
+    // she's facing, with water pouring out of the rose while she's not busy.
+    drawCan(ctx, cx, cy) {
+      const d = this.dir, right = d === 'right', side = d === 'left' || right;
+      const img = right ? G.spr.wateringCanR : G.spr.wateringCan;
+      const x = Math.round(this.x + (right ? 2 : d === 'left' ? -18 : d === 'down' ? -17 : -4)) - cx;
+      const y = Math.round(this.y - 12) - cy;
+      ctx.drawImage(img, x, y);
+      if (!side || G.script.busy) return;
+      const sx = right ? x + 15 : x, sy = y + 12;
+      for (let k = 0; k < 5; k++) {
+        const ph = (G.tick * 0.6 + k * 3) % 13;
+        ctx.fillStyle = k % 2 ? '#a8e0ff' : '#78c8ff';
+        ctx.fillRect(sx + (k % 3) - 1, sy + Math.floor(ph), 1, 2);
+      }
     }
   }
   G.NPC = NPC;
