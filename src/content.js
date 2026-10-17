@@ -206,11 +206,6 @@
       kind: 'key', name: 'Mom\'s Books', icon: () => G.spr.flyingBook[1], has: () => !!st().items.books && !fl().shopOpen,
       desc: 'Gardening books, devotionals and mystery novels, rescued from the Globglogabgalab. Slightly chewed.',
     },
-    notes: {
-      kind: 'key', name: 'Nani\'s Sticky Notes', icon: () => G.spr.stickyNote, has: () => G.notesFound() > 0, count: () => G.notesFound(),
-      desc: () => 'Nani hid these all over the place. Found ' + G.sayable(G.notesFound()) + ' of ' + G.NOTES.length + '. Press Z to reread one.',
-      use: () => G.SCRIPTS.rereadNote(),
-    },
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
   G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bidet', 'bass', 'chicken', null, null, null, null, null];
@@ -221,7 +216,7 @@
   G.SIGNALS = [
     { id: 'peace', name: 'Peace Be With You', seq: ['up', 'down', 'up'], known: () => !!fl().signal_peace, effect: () => G.SCRIPTS.signalPeace() },
   ];
-  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', 'vodka', 'books', 'notes', null, null];
+  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', 'vodka', 'books', null, null, null];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -350,7 +345,6 @@
       side.push(['Doron\'s spare tickets', f.ticketsDone ? '{g}Done!' : f.dadBeaten ? 'The show\'s over' : left ? G.sayable(left) + ' left' : 'Go tell Doron!']);
     }
     if (f.booksQuest) side.push(['Mom\'s missing books', f.shopOpen ? '{g}Done!' : s.items.books ? 'Bring them to Mom' : 'Check the basement']);
-    if (G.notesFound()) side.push(['Nani\'s sticky notes', G.notesFound() >= G.NOTES.length ? '{g}All found!' : G.sayable(G.notesFound()) + '/' + G.NOTES.length]);
     // unfinished ones first
     side.sort((a, b) => (a[1].startsWith('{g}') ? 1 : 0) - (b[1].startsWith('{g}') ? 1 : 0));
     return { goal, side };
@@ -480,7 +474,6 @@
     'You are braver than you believe and smarter than you think!',
     'Today is a gift. That is why they call it the present. (Not the exploding kind, Nate.)',
     'Did you eat? Nani loves you!',
-    'I left you some little notes! Keep your eyes peeled! Love, Nani',
     'Be the light you wish to see in the world. Also wear a jacket.',
   ];
   S.naniMessage = function* () {
@@ -1715,48 +1708,6 @@
     s.items.books = true;
     yield G.itemGet(G.spr.flyingBook[1], 'You got {y}Mom\'s Books{/}! Slightly chewed. Bring them to Mom in the garden.');
     G.audio.play('house');
-  };
-
-  // ================================================================ NANI'S STICKY NOTES
-  // Secret collectibles: little notes Nani stuck in out-of-the-way spots.
-  // Find them all for an extra heart.
-  G.NOTES = [
-    { id: 'lab', map: 'lab', x: 1, y: 7, text: 'You are a shining star! Never stop shining! Love, Nani' },
-    { id: 'campus1', map: 'campus', x: 2, y: 4, text: 'Lafayette is SO lucky to have you! Love, Nani' },
-    { id: 'campus2', map: 'campus', x: 37, y: 27, pink: true, text: 'Remember to drink water! Rocks do not count as food! Love, Nani' },
-    { id: 'science', map: 'science', x: 13, y: 2, text: 'You are braver than you believe and smarter than your chemistry final! Love, Nani' },
-    { id: 'fair1', map: 'fair', x: 37, y: 10, pink: true, text: 'Wear sunscreen at the fair! And a hat. The GREEN one. Love, Nani' },
-    { id: 'fair2', map: 'fair', x: 30, y: 8, text: 'Every day is a gift. That is why they call it the present! Love, Nani' },
-    { id: 'home1', map: 'home', x: 38, y: 29, pink: true, text: 'God made the ditches AND the mountains. Both are beautiful. Love, Nani' },
-    { id: 'home2', map: 'home', x: 56, y: 4, text: 'Did you eat? There are leftovers in the fridge. Check for your sister first. Love, Nani' },
-    { id: 'homeDown', map: 'homeDown', x: 14, y: 3, pink: true, text: 'Be the light! (And call your mother. She is right outside.) Love, Nani' },
-    { id: 'homeUp', map: 'homeUp', x: 34, y: 16, text: 'I am so proud of you I could burst! Love, Nani' },
-    { id: 'garage', map: 'garage', x: 15, y: 3, pink: true, text: 'Finish that bass! I want to hear you play it! Love, Nani' },
-    { id: 'basement', map: 'basement', x: 1, y: 3, text: 'Smile! Somebody loves you. It is me. Love, Nani' },
-  ];
-  const notesHad = () => G.state.notes || (G.state.notes = {});
-  G.notesFound = () => G.NOTES.filter((n) => notesHad()[n.id]).length;
-  G.spawnNotes = (w) => {
-    for (const n of G.NOTES) if (n.map === w.id && !notesHad()[n.id]) w.add(new G.StickyNote(n));
-  };
-  S.noteFound = function* (n) {
-    const s = G.state;
-    notesHad()[n.id] = true;
-    const k = G.notesFound();
-    yield G.itemGet(n.pink ? G.spr.stickyPink : G.spr.stickyNote, 'You found one of {p}Nani\'s sticky notes{/}! (' + G.sayable(k) + '/' + G.NOTES.length + ')');
-    yield G.say('Nani', n.text);
-    if (k === 1) yield G.say('Nate', 'Nani hid sticky notes for me? ...There have to be more of these.');
-    if (k === G.NOTES.length) {
-      yield G.say('Nate', 'That\'s every single one. I\'m keeping all of them. Forever.');
-      s.maxHp += 2;
-      s.hp = s.maxHp;
-      G.audio.sfx('heart');
-      yield G.say(null, 'Nani\'s love fills Nate right up. {r}+1 heart!{/}');
-    }
-  };
-  S.rereadNote = function* () {
-    const got = G.NOTES.filter((n) => notesHad()[n.id]);
-    yield G.say('Nani', got[Math.floor(Math.random() * got.length)].text);
   };
 
   // ================================================================ THE JAM OFF (easter egg)

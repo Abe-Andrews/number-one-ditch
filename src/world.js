@@ -101,7 +101,6 @@
         }
       }
       if (def.setup) def.setup(this);
-      if (G.spawnNotes) G.spawnNotes(this);
     }
 
     // ---------------------------------------------------------- building

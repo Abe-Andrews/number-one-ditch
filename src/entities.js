@@ -1738,31 +1738,6 @@
   }
   G.BerkBoss = BerkBoss;
 
-  // ============================================================== NANI'S STICKY NOTES
-  // A secret collectible: walk over it to pick it up. Twinkles now and then.
-  class StickyNote extends Ent {
-    constructor(n) {
-      super(n.x * 16 + 8, n.y * 16 + 12);
-      this.n = n;
-      this.t = Math.floor(Math.random() * 120);
-    }
-    update(w) {
-      this.t++;
-      if (G.script.busy) return;
-      if (this.t % 120 === 0) w.burst(this.x + 3, this.y - 10, ['#ffffff', '#f8e868'], 2, { speed: 0.4, up: 0.4, life: 16, size: 1 });
-      const p = G.play.player;
-      if (p && !G.state.playAs && G.overlap([this.x - 6, this.y - 10, this.x + 6, this.y + 2], p.hurtBox())) {
-        this.dead = true;
-        G.script.run(G.SCRIPTS.noteFound(this.n));
-      }
-    }
-    draw(ctx, cx, cy) {
-      const img = this.n.pink ? G.spr.stickyPink : G.spr.stickyNote;
-      ctx.drawImage(img, Math.round(this.x - 4) - cx, Math.round(this.y - 10 + Math.sin(this.t / 16)) - cy);
-    }
-  }
-  G.StickyNote = StickyNote;
-
   // ============================================================== SIX (enemy)
   class Six extends Ent {
     constructor(x, y) {

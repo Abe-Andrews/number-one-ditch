@@ -3662,15 +3662,6 @@
     return finish(p);
   }
 
-  // One of Nani's sticky notes: a little square with a curled corner, a scribble and a heart.
-  function stickyNote(col, ink) {
-    const p = new Pix(9, 9);
-    p.rect(0, 0, 9, 9, col); p.hline(0, 8, 0, shade(col, 0.2));
-    p.set(8, 8, shade(col, -0.35)); p.set(7, 8, shade(col, -0.2)); p.set(8, 7, shade(col, -0.2));
-    p.hline(1, 5, 2, ink); p.hline(1, 6, 4, ink);
-    p.set(2, 6, '#e83848'); p.set(4, 6, '#e83848'); p.hline(2, 4, 7, '#e83848'); p.set(3, 8, '#e83848');
-    return finish(p);
-  }
   // Mom's green watering can.
   function wateringCan() {
     const p = new Pix(12, 9);
@@ -3903,7 +3894,6 @@
     S.flyingBook = [flyingBook(true), flyingBook(false)];
     S.globglog = [globglog(-1), globglog(0), globglog(1)]; S.egg = eggShot();
     S.olsen = olsen(); S.olsenL = mirror(S.olsen); S.stageKeys = stageKeys(); S.ampStack = ampStack(); S.punkNote = punkNote();
-    S.stickyNote = stickyNote('#f8e868', '#5a6ab8'); S.stickyPink = stickyNote('#f8a8c8', '#5a3a78');
     S.wateringCan = wateringCan();
     // Dad's workshop
     S.convertible = convertible(); S.workbench = workbench(); S.bassOnBench = bassOnBench(); S.bassSwing = bassSwing(); S.bassIcon = bassIcon();
