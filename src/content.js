@@ -2967,7 +2967,11 @@
       F.stand(sp.blueHutch, 43, 13, 1, look('A light blue painted hutch full of pretty plates.'));
       F.stand(sp.trainTable, 45, 14, 2, look('An old wooden train table. Somebody built a whole little town on it.'));
       // ---- critters: Nate's corn, Nate's cereal and Nate's fireworks, all very much alive
-      const at = (Kind, x, y) => w.add(new Kind(x * 16 + 8, y * 16 + 14));
+      // house critters stay gone once beaten (flag gone_<map>_<x>_<y>)
+      const at = (Kind, x, y) => {
+        const id = 'gone_' + w.id + '_' + x + '_' + y;
+        if (!flags()[id]) w.add(new Kind(x * 16 + 8, y * 16 + 14)).goneFlag = id;
+      };
       at(G.Corncob, 12, 8); at(G.Corncob, 9, 15);
       at(G.CerealBox, 41, 8); at(G.CerealBox, 47, 13);
       at(G.Firework, 18, 12);
@@ -3069,7 +3073,11 @@
       F.hang(sp.wallWindow.two, 32, 15, 2, null, 3);
       F.stand(sp.windowSeat, 32, 16, 2, look('A window seat with a view of the whole yard. The best seat in the house.'));
       // ---- critters (Nate's room is ground zero: he kept a LOT of corn in there)
-      const at = (Kind, x, y) => w.add(new Kind(x * 16 + 8, y * 16 + 14));
+      // house critters stay gone once beaten (flag gone_<map>_<x>_<y>)
+      const at = (Kind, x, y) => {
+        const id = 'gone_' + w.id + '_' + x + '_' + y;
+        if (!flags()[id]) w.add(new Kind(x * 16 + 8, y * 16 + 14)).goneFlag = id;
+      };
       at(G.Corncob, 23, 6); at(G.Corncob, 25, 5); at(G.Corncob, 8, 11);
       at(G.Firework, 22, 5);
       at(G.CerealBox, 23, 18);

@@ -1101,7 +1101,14 @@
       G.audio.sfx('hit');
       if (this.hp <= 0) this.die();
     }
+    // a beaten house critter never comes back
+    markGone() {
+      if (!this.goneFlag) return;
+      G.state.flags[this.goneFlag] = true;
+      if (this.world.ents.every((e) => e === this || e.dead || !e.goneFlag)) this.world.pop(this.x, this.y - 30, 'ALL CLEAR!', '#78e070');
+    }
     die() {
+      this.markGone();
       this.dead = true;
       G.audio.sfx('poof');
       this.world.burst(this.x, this.y - 8, this.bits || ['#ffffff', '#e8e0f0'], 12, { speed: 1.2, life: 22, size: 3 });
@@ -1225,6 +1232,7 @@
       if (--this.ft <= 0 || wall || G.overlap(this.hurtBox(), p.hurtBox())) this.explode(w, p);
     }
     explode(w, p) {
+      this.markGone();
       this.dead = true;
       G.audio.sfx('boom');
       G.play.shake(8, 2);
@@ -1234,6 +1242,7 @@
     }
     hit() {
       if (this.dead) return;
+      this.markGone();
       this.dead = true;
       G.audio.sfx('clank');
       this.world.pop(this.x, this.y - 26, this.state === 'idle' ? 'BONK!' : 'DEFUSED!', '#c8c8d0');
