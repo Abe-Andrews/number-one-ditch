@@ -87,8 +87,8 @@
   // ------------------------------------------------------------ pause menu
   // Tabbed, Minish Cap style: ITEMS / KEY ITEMS / PEOPLE / JOURNAL / SAVE.
   // Q/E switch tabs (or press up into the tab bar and use left/right).
-  const TABS = ['ITEMS', 'KEY ITEMS', 'PEOPLE', 'JOURNAL', 'SAVE'];
-  const SAVE_TAB = 4;
+  const TABS = ['ITEMS', 'KEY ITEMS', 'PEOPLE', 'ROCKS', 'JOURNAL', 'SAVE'];
+  const ROCKS_TAB = 3, SAVE_TAB = 5, RCOLS = 5;
   const COLS = 4, ROWS = 3;
   const SEL = { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' };
   const TXT = (ctx, str, x, y, col) => F().draw(ctx, str, x, y, col || '#f8f8f0', { shadow: SH });
@@ -150,6 +150,14 @@
         if (inp.hit('down') && row < ROWS - 1) this.move(COLS, COLS * ROWS);
         if (inp.hit('up')) { if (row > 0) this.move(-COLS, COLS * ROWS); else { this.onTabs = true; G.audio.sfx('menu'); } }
         if (inp.hit('a')) return this.activate();
+      } else if (this.tab === ROCKS_TAB) {
+        // the rock collection: one page per area (Z flips pages), 5 to a row
+        if (inp.hit('a')) { inp.eat('a'); this.rockArea = ((this.rockArea || 0) + 1) % G.ROCK_AREAS.length; this.sel = 0; G.audio.sfx('menu'); }
+        const n = this.areaRocks().length, col = this.sel % RCOLS, row = Math.floor(this.sel / RCOLS);
+        if (inp.hit('left') && col > 0) this.move(-1, n);
+        if (inp.hit('right') && col < RCOLS - 1) this.move(1, n);
+        if (inp.hit('down') && this.sel + RCOLS < n) this.move(RCOLS, n);
+        if (inp.hit('up')) { if (row > 0) this.move(-RCOLS, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
       } else if (this.tab === 2) {
         const list = G.people(), n = list.length;
         if (inp.hit('a')) {
@@ -219,20 +227,65 @@
       G.box(ctx, 4, 18, 232, 122);
       if (this.tab <= 1) this.drawGrid(ctx);
       else if (this.tab === 2) this.drawPeople(ctx);
+      else if (this.tab === ROCKS_TAB) this.drawRocks(ctx);
       else if (this.tab === SAVE_TAB && G.state.admin) this.drawAdmin(ctx);
       else if (this.tab === SAVE_TAB) this.drawSave(ctx);
       else this.drawJournal(ctx);
-      let help = ['Z: set to X   X: save', 'Z: use   X: save', 'Z: bring along   X: save', 'X: save', 'Z: save to this file'][this.tab];
-      if (G.state.admin) help = ['Z: set to X', 'Z: use', 'Z: bring along', '', this.admList ? 'Z: go   X: back' : 'Z: do it'][this.tab];
+      let help = ['Z: set to X   X: save', 'Z: use   X: save', 'Z: bring along   X: save', 'Z: next area   X: save', 'X: save', 'Z: save to this file'][this.tab];
+      if (G.state.admin) help = ['Z: set to X', 'Z: use', 'Z: bring along', 'Z: next area', '', this.admList ? 'Z: go   X: back' : 'Z: do it'][this.tab];
       help += '   Q/E: tabs   ENTER: close';
       if (this.confirm) help = '{r}Save over File ' + this.confirm + '?{/}  Z: yes  X: no';
       TXT(ctx, this.msgT > 0 && !this.confirm ? '{g}' + this.msg : help, 8, 146, '#9890a8');
     }
 
+    // ---- ROCKS: every specimen Nate has found, a page for each area
+    areaRocks() { const a = G.ROCK_AREAS[this.rockArea || 0]; return G.ROCKS.filter((r) => r.area === a.id); }
+    drawRocks(ctx) {
+      const s = G.state, rocks = this.areaRocks(), found = (r) => s.rocksFound && s.rocksFound[r.id];
+      const area = G.ROCK_AREAS[this.rockArea || 0], here = rocks.filter(found).length;
+      const head = '< ' + area.name + ' >';
+      TXT(ctx, head, Math.round(60 - F().width(head) / 2), 23, '#78e8e8');
+      rocks.forEach((r, i) => {
+        const x = 9 + (i % RCOLS) * 21, y = 34 + Math.floor(i / RCOLS) * 21;
+        G.box(ctx, x, y, 20, 20, i === this.sel && !this.onTabs ? SEL : undefined);
+        if (!found(r)) { TXT(ctx, '?', x + 8, y + 6, '#5a4e70'); return; }
+        ctx.drawImage(G.spr.rockIcons[r.id], x + 3, y + 4);
+        ctx.fillStyle = G.RARITY[r.r].color; ctx.fillRect(x + 2, y + 2, 2, 2);
+        const n = (s.rocks && s.rocks[r.id]) || 0;
+        if (n) TXT(ctx, G.sayable(n), x + 19 - F().width(G.sayable(n)), y + 12);
+      });
+      const ty = 34 + Math.ceil(rocks.length / RCOLS) * 21 + 4;
+      TXT(ctx, 'Here: {y}' + G.sayable(here) + '/' + rocks.length, 10, ty);
+      TXT(ctx, 'All: {y}' + G.sayable(G.rocksFound()) + '/' + G.ROCKS.length, 10, ty + 10);
+      if (ty + 22 <= 128) TXT(ctx, 'Crush them at Van', 10, ty + 22, '#9890a8');
+      if (ty + 32 <= 128) TXT(ctx, 'Wickle Hall.', 10, ty + 32, '#9890a8');
+      // details
+      const r = rocks[this.sel];
+      ctx.fillStyle = '#2a2240';
+      ctx.fillRect(117, 24, 114, 112);
+      if (!r) return;
+      const rar = G.RARITY[r.r];
+      if (!found(r)) {
+        TXT(ctx, '???', 121, 30, '#78e8e8');
+        TXT(ctx, rar.name, 121, 41, rar.color);
+        F().wrap(r.how || 'Not found yet. Keep exploring the Andover mines.', 106).slice(0, 6).forEach((l, i) => TXT(ctx, l, 121, 56 + i * 10, '#9890a8'));
+        return;
+      }
+      ctx.drawImage(G.spr.rockIcons[r.id], 121, 28, 28, 24);
+      F().wrap(r.name, 76).slice(0, 2).forEach((l, i) => TXT(ctx, l, 153, 28 + i * 10, '#78e8e8'));
+      TXT(ctx, rar.name, 153, r.name.length > 12 ? 48 : 38, rar.color);
+      TXT(ctx, 'Have: {y}' + G.sayable((s.rocks && s.rocks[r.id]) || 0) + '{/}  Found: {y}' + G.sayable(s.rocksFound[r.id]), 121, 58);
+      const g = r.crush;
+      const crush = !g ? '{r}Never. Museum piece.' : g.teeth ? '{y}+' + G.sayable(g.teeth) + ' teeth' : g.eggs ? '{y}A dozen eggs' : g.package ? '{y}2 packages' : '{r}Heart container!';
+      TXT(ctx, 'Crusher: ' + crush, 121, 68);
+      const first = r.fact.split(/(?<=\.) /)[0];
+      F().wrap(first, 106).slice(0, 6).forEach((l, i) => TXT(ctx, l, 121, 80 + i * 9, '#c8c0d8'));
+    }
+
     // ---- ADMIN (testing): replaces the SAVE tab in admin runs
     adminMain() {
       const s = G.state;
-      return ['Jump to a checkpoint...', 'Go to a place...', 'Heal fully', '+100 shark teeth', 'Give every item and song', 'Invincible: ' + (s.god ? '{g}ON' : '{r}OFF'), 'Quit to title'];
+      return ['Jump to a checkpoint...', 'Go to a place...', 'Heal fully', '+100 shark teeth', 'Give every item and song', 'One of every rock', 'Invincible: ' + (s.god ? '{g}ON' : '{r}OFF'), 'Quit to title'];
     }
     adminRows() {
       if (this.admList === 'cp') return G.ADMIN_CHECKPOINTS.map((c, i) => G.sayable(i + 1) + '. ' + c.name);
@@ -259,8 +312,9 @@
         case 2: s.hp = s.maxHp; this.flash('Hearts refilled.'); break;
         case 3: G.play.addTeeth(100); this.flash('+100 shark teeth.'); break;
         case 4: G.adminAllItems(); this.flash('Every item and song unlocked.'); break;
-        case 5: s.god = !s.god; this.flash(s.god ? 'Invincible.' : 'Mortal again.'); break;
-        case 6: G.play.menu = null; G.title.enter(); return true;
+        case 5: G.adminAllRocks(); this.flash('One of every rock added.'); break;
+        case 6: s.god = !s.god; this.flash(s.god ? 'Invincible.' : 'Mortal again.'); break;
+        case 7: G.play.menu = null; G.title.enter(); return true;
       }
       return false;
     }
@@ -287,18 +341,22 @@
     }
 
     drawTabs(ctx) {
-      const names = TABS.map((n, i) => (i === SAVE_TAB && G.state.admin ? 'ADMIN' : n));
-      const ws = names.map((t) => F().width(t) + 6);
-      let x = Math.round((G.W - ws.reduce((a, b) => a + b, 0) - (TABS.length - 1) * 2) / 2);
-      TXT(ctx, 'Q', x - 10, 6, '#9890a8');
+      // six tabs is a squeeze: "KEY ITEMS" goes by KEYS, and the Q/E hints drop if there's no room
+      const names = TABS.map((n, i) => (i === SAVE_TAB && G.state.admin ? 'ADMIN' : n === 'KEY ITEMS' ? 'KEYS' : n));
+      let pad = 6, gap = 2, ws = names.map((t) => F().width(t) + pad);
+      const total = () => ws.reduce((a, b) => a + b, 0) + (TABS.length - 1) * gap;
+      if (total() > G.W - 4) { pad = 4; gap = 1; ws = names.map((t) => F().width(t) + pad); }
+      const hints = total() + 24 <= G.W;
+      let x = Math.round((G.W - total()) / 2);
+      if (hints) TXT(ctx, 'Q', x - 10, 6, '#9890a8');
       TABS.forEach((t, i) => {
         const active = i === this.tab;
         const style = active ? (this.onTabs && (G.tick >> 4) & 1 ? { bg: '#5a4878', border: '#ffffff', inner: '#7a6a30' } : SEL) : undefined;
         G.box(ctx, x, 2, ws[i], 14, style);
-        TXT(ctx, names[i], x + 5, 5, active ? '#f8d850' : '#9890a8');
-        x += ws[i] + 2;
+        TXT(ctx, names[i], x + pad - 1, 5, active ? '#f8d850' : '#9890a8');
+        x += ws[i] + gap;
       });
-      TXT(ctx, 'E', x + 2, 6, '#9890a8');
+      if (hints) TXT(ctx, 'E', x + 2, 6, '#9890a8');
     }
 
     drawGrid(ctx) {

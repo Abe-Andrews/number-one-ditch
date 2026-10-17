@@ -1788,6 +1788,529 @@
   }
   G.IceJJ = IceJJ;
 
+
+  // ============================================================== THE ANDOVER MINES
+  // A mineral vein (or a dump pile / slag heap): three hammer hits (the bass
+  // counts double) and it breaks open, rolling a specimen from its zone.
+  class OreVein extends Ent {
+    constructor(x, y, zone) {
+      super(x, y);
+      this.solid = true;
+      this.hb = { w: 14, h: 8 };
+      this.zone = zone;
+      this.hits = 0;
+      this.shakeT = 0;
+      this.t = Math.floor(Math.random() * 90);
+    }
+    onHammer(p) {
+      if (this.dead) return;
+      this.hits += p.state === 'bass' ? 2 : 1;
+      this.shakeT = 8;
+      G.audio.sfx('clank');
+      const w = this.world;
+      w.burst(this.x, this.y - 8, ['#8a7466', '#a8583a', '#c8c8d8'], 5, { speed: 1.2, up: 0.6, g: 0.1, life: 16, size: 2 });
+      w.pop(this.x, this.y - 22, this.hits >= 3 ? 'CRACK!' : 'CLINK!', '#e0e0e8');
+      if (this.hits >= 3) {
+        this.dead = true;
+        w.burst(this.x, this.y - 6, ['#8a7466', '#6e5a4e', '#a8583a'], 12, { speed: 1.4, up: 0.8, g: 0.1, life: 24, size: 3 });
+        G.rockFind(this.zone, this.x, this.y);
+      }
+    }
+    update() { this.t++; if (this.shakeT > 0) this.shakeT--; }
+    draw(ctx, cx, cy) {
+      const jx = this.shakeT > 0 ? ((this.shakeT >> 1) & 1 ? 1 : -1) : 0;
+      if (this.zone === 'dump' || this.zone === 'slag') {
+        ctx.drawImage(this.zone === 'slag' ? G.spr.slagPile : G.spr.dumpPile, Math.round(this.x - 10 + jx) - cx, Math.round(this.y - 11) - cy);
+      } else if (G.spr.outcrops[this.zone]) {
+        // a bedrock outcrop poking out of the grass, cracking as it's hammered
+        const ox = Math.round(this.x - 10 + jx) - cx, oy = Math.round(this.y - 13) - cy;
+        ctx.drawImage(G.spr.outcrops[this.zone], ox, oy);
+        ctx.fillStyle = '#1c1612';
+        if (this.hits >= 1) { ctx.fillRect(ox + 9, oy + 4, 1, 5); ctx.fillRect(ox + 10, oy + 8, 1, 2); }
+        if (this.hits >= 2) { ctx.fillRect(ox + 5, oy + 7, 1, 4); ctx.fillRect(ox + 12, oy + 6, 3, 1); }
+      } else {
+        ctx.drawImage(G.spr.oreVein[Math.min(2, this.hits)], Math.round(this.x - 9 + jx) - cx, Math.round(this.y - 15) - cy);
+      }
+      // in the dark tunnels the veins glint through the lantern-less black
+      if (this.glowColor) this.world.glows.push({ x: Math.round(this.x + 3), y: Math.round(this.y - 10 + Math.sin(this.t / 20)), color: this.glowColor });
+      // a glint now and then
+      if ((this.t % 90) < 6) { ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(this.x + 3) - cx, Math.round(this.y - 10) - cy, 1, 1); ctx.fillRect(Math.round(this.x + 2) - cx, Math.round(this.y - 11) - cy, 3, 1); }
+    }
+  }
+  G.OreVein = OreVein;
+
+  // Old quarry rubble on the fairgrounds: green serpentine, far too solid for
+  // a hammer. A Booby-Trapped Package, though...
+  class QuarryRubble extends Ent {
+    constructor(x, y) {
+      super(x, y);
+      this.solid = true;
+      this.hb = { w: 22, h: 8 };
+      this.shakeT = 0;
+    }
+    onHammer() {
+      this.shakeT = 6;
+      G.audio.sfx('clank');
+      this.world.pop(this.x, this.y - 26, 'CLANK! Too solid.', '#e0e0e8');
+    }
+    bomb() {
+      if (this.dead) return;
+      this.dead = true;
+      this.world.burst(this.x, this.y - 8, ['#4e7a5e', '#78a888', '#2e4a3a', '#9ac8a8'], 22, { speed: 2, up: 1.2, g: 0.1, life: 36, size: 3 });
+      G.rockGain('serpentine', this.x, this.y);
+    }
+    update() { if (this.shakeT > 0) this.shakeT--; }
+    draw(ctx, cx, cy) {
+      const jx = this.shakeT > 0 ? ((this.shakeT >> 1) & 1 ? 1 : -1) : 0;
+      ctx.drawImage(G.spr.quarryRubble, Math.round(this.x - 12 + jx) - cx, Math.round(this.y - 15) - cy);
+    }
+  }
+  G.QuarryRubble = QuarryRubble;
+
+  // A rock far too heavy for Nate (the basalt boulder by Brady Brook, the
+  // dolomite ledge on campus). Doron can heave it up and crack it open.
+  class BigRock extends Ent {
+    constructor(x, y, kind, onHammer) {
+      super(x, y);
+      this.solid = true;
+      this.kind = kind;
+      this.hb = { w: 32, h: 12 };
+      this.onHammerFn = onHammer;
+      this.lift = 0;
+      this.shakeT = 0;
+    }
+    onHammer(p) {
+      if (G.script.busy) return;
+      G.audio.sfx('clank');
+      this.shakeT = 6;
+      const [dx, dy] = G.DIRS[p.dir];
+      this.world.burst(p.x + dx * 14, p.y - 8 + dy * 10, ['#ffffff', '#f8d850', '#ffb040'], 8, { speed: 1.6, life: 12 });
+      this.world.pop(p.x + dx * 12, p.y - 30, 'CLANK!', '#e0e0e8');
+      this.onHammerFn(this);
+    }
+    update() { if (this.shakeT > 0) this.shakeT--; }
+    draw(ctx, cx, cy) {
+      const img = this.kind === 'basalt' ? G.spr.bigBasalt : G.spr.bigDolomite;
+      const jx = this.shakeT > 0 ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
+      if (this.lift) ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 18) - cx, Math.round(this.y - 4) - cy, 36, 5);
+      const x0 = Math.round(this.x - 18 + jx) - cx, y0 = Math.round(this.y - 24 - this.lift) - cy;
+      ctx.drawImage(img, x0, y0);
+      // split open (until the next visit)
+      if (this.done) { ctx.fillStyle = '#0c0a0a'; for (let i = 0; i < 10; i++) ctx.fillRect(x0 + 17 + ((i >> 1) & 1), y0 + 5 + i * 2, 1, 2); }
+    }
+  }
+  G.BigRock = BigRock;
+
+  // ============================================================== FATHER CHRISTMAS (postgame boss)
+  // The original Christmas doll, out of the box after years in the basement.
+  // Spirals of glass ornaments, a sleigh dash that leaves candy canes behind,
+  // present bombs that burst into rings, a teleport-and-lunge, and (furious)
+  // HO HO HO shockwaves with one gap to slip through. Faster at each phase.
+  class FCOrnament extends Ent {
+    constructor(x, y, vx, vy, kind = 0) { super(x, y); Object.assign(this, { vx, vy, kind, life: 260 }); }
+    hurtBox() { return [this.x - 3, this.y - 12, this.x + 3, this.y - 6]; }
+    update(w) {
+      if (G.script.busy) return;
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0 || w.tileSolid(Math.floor(this.x / 16), Math.floor(this.y / 16))) { this.dead = true; return; }
+      const p = G.play.player;
+      if (G.overlap(this.hurtBox(), p.hurtBox())) { this.dead = true; p.hurt(1, this.x, this.y); }
+    }
+    draw(ctx, cx, cy) {
+      ctx.drawImage(G.spr.ornaments[this.kind], Math.round(this.x - 4) - cx, Math.round(this.y - 14) - cy);
+      // they glint in the dark of the mine
+      this.world.glows.push({ x: Math.round(this.x), y: Math.round(this.y - 9), color: ['#ff6050', '#60e070', '#f8d050'][this.kind] });
+    }
+  }
+  G.FCOrnament = FCOrnament;
+
+  // candy canes dropped by the sleigh dash: they stick around for a few seconds
+  class FCCandyCane extends Ent {
+    constructor(x, y) { super(x, y); this.life = 210; }
+    hurtBox() { return [this.x - 3, this.y - 9, this.x + 3, this.y]; }
+    update() {
+      if (G.script.busy) return;
+      if (--this.life <= 0) { this.dead = true; return; }
+      const p = G.play.player;
+      if (this.life < 180 && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
+    }
+    draw(ctx, cx, cy) {
+      if (this.life < 40 && (this.life >> 1) & 1) return;
+      ctx.drawImage(G.spr.candyCane, Math.round(this.x - 3) - cx, Math.round(this.y - 10) - cy);
+    }
+  }
+  G.FCCandyCane = FCCandyCane;
+
+  // a present lobbed at Nate: lands, fizzes, then bursts into a ring of ornaments
+  class FCGift extends Ent {
+    constructor(x, y, tx, ty, ring) { super(x, y); Object.assign(this, { sx: x, sy: y, tx, ty, ring, t: 0, air: 46, fuse: 44, z: 0 }); }
+    update(w) {
+      if (G.script.busy) return;
+      this.t++;
+      if (this.t <= this.air) {
+        const k = this.t / this.air;
+        this.x = this.sx + (this.tx - this.sx) * k; this.y = this.sy + (this.ty - this.sy) * k;
+        this.z = Math.sin(k * Math.PI) * 40;
+        if (this.t === this.air) G.audio.sfx('bump');
+        return;
+      }
+      this.z = 0;
+      if (this.t % 10 === 0) G.audio.sfx('fuse');
+      if (this.t < this.air + this.fuse) return;
+      this.dead = true;
+      G.audio.sfx('boom');
+      G.play.shake(6, 2);
+      w.fx.push({ x: this.x, y: this.y - 5, vx: 0, vy: 0, circle: true, r: 18, max: 10, life: 10, color: '#fff4c0' });
+      w.burst(this.x, this.y - 5, ['#2e7a3e', '#f8d040', '#ffffff', '#d83030'], 12, { speed: 1.8, life: 18, size: 2 });
+      const p = G.play.player;
+      if (Math.hypot(p.x - this.x, p.y - this.y) < 18) p.hurt(2, this.x, this.y);
+      const off = Math.random() * Math.PI;
+      for (let i = 0; i < this.ring; i++) {
+        const a = off + (i / this.ring) * Math.PI * 2;
+        w.add(new FCOrnament(this.x, this.y, Math.cos(a) * 1.05, Math.sin(a) * 1.05, i % 3));
+      }
+    }
+    draw(ctx, cx, cy) {
+      ctx.drawImage(G.spr.shadow, Math.round(this.x - 6) - cx, Math.round(this.y - 3) - cy);
+      let img = G.spr.giftBomb;
+      if (this.t > this.air && (this.t >> (this.t > this.air + 28 ? 1 : 2)) & 1) img = G.art.flash(img);
+      ctx.drawImage(img, Math.round(this.x - 5) - cx, Math.round(this.y - 11 - this.z) - cy);
+    }
+  }
+  G.FCGift = FCGift;
+
+  const FC_TAUNT = ['You LAUGHED at me.', 'I was FIRST.', 'An EGG. On MY mantel.', 'Years. In a BOX.', 'Ho. Ho. Ho.', 'I don\'t NEED clothes.', 'Who packed me, Nate?'];
+  const FC_OUCH = ['MY MANTEL!', 'NOT THE BEARD!', 'HO... HO...', 'I WAS FIRST!', 'AN EGG?! AN EGG!', 'NAUGHTY!'];
+  class FatherChristmas extends Ent {
+    // bounds: [x0, y0, x1, y1] in pixels, the floor he stays over
+    constructor(x, y, bounds) {
+      super(x, y);
+      this.enemy = true;
+      this.boss = true;
+      this.name = 'FATHER CHRISTMAS';
+      this.hp = this.maxHp = 40;
+      this.hb = { w: 16, h: 8 };
+      this.bounds = bounds;
+      this.t = 0;
+      this.state = 'float';
+      this.st = 80;
+      this.cycle = 0;
+      this.hurtT = 0;
+      this.kb = { x: 0, y: 0 };
+      this.alpha = 1;
+      this.phase = 1;
+      this.goal = { x, y };
+    }
+    hurtBox() { return [this.x - 10, this.y - 38, this.x + 10, this.y]; }
+    get rage() { return this.phase >= 3; }
+    clampIn(o) {
+      const b = this.bounds;
+      return { x: Math.max(b[0], Math.min(b[2], o.x)), y: Math.max(b[1], Math.min(b[3], o.y)) };
+    }
+    toFloat() { this.state = 'float'; this.st = [0, 70, 52, 38][this.phase]; this.alpha = 1; }
+    pick() {
+      const w = this.world, ph = this.phase;
+      const order = [null,
+        ['spiral', 'gifts', 'sleigh', 'spiral', 'tele'],
+        ['spiral', 'sleigh', 'gifts', 'tele', 'hohoho', 'gifts'],
+        ['hohoho', 'tele', 'sleigh', 'spiral', 'gifts', 'tele']][ph];
+      const m = order[this.cycle++ % order.length];
+      if (m === 'spiral') {
+        Object.assign(this, { state: 'spiral', st: [0, 110, 130, 150][ph], spin: (Math.random() < 0.5 ? 1 : -1) * 0.21, ang: Math.random() * 6.28 });
+        w.pop(this.x, this.y - 52, 'DECK THE HALLS.', '#f86858');
+      } else if (m === 'gifts') {
+        this.reps = [0, 3, 4, 5][ph];
+        Object.assign(this, { state: 'gifts', st: this.reps * 22 + 24 });
+        w.pop(this.x, this.y - 52, 'PRESENTS!', '#f86858');
+      } else if (m === 'sleigh') {
+        Object.assign(this, { state: 'sleighAim', st: 40, reps: ph });
+      } else if (m === 'tele') {
+        this.teleT = [0, 50, 42, 34][ph];
+        Object.assign(this, { state: 'tele', st: this.teleT, reps: ph === 1 ? 1 : 2 });
+      } else {
+        Object.assign(this, { state: 'hohoho', st: 3 * 36 + 12, reps: 3 });
+      }
+    }
+    update(w) {
+      if (G.script.busy || this.state === 'defeated') return;
+      this.t++;
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y;
+      if (this.hurtT > 0) {
+        this.hurtT--;
+        w.move(this, this.kb.x, 0); w.move(this, 0, this.kb.y);
+        this.kb.x *= 0.8; this.kb.y *= 0.8;
+      }
+      // each phase change gets a little scene
+      const ph = this.hp <= this.maxHp * 0.25 ? 3 : this.hp <= this.maxHp * 0.55 ? 2 : 1;
+      if (ph > this.phase) {
+        this.phase = ph;
+        this.toFloat();
+        Object.assign(this, this.clampIn(this));
+        G.script.run(G.SCRIPTS.fcPhase(this, ph));
+        return;
+      }
+      if (this.alpha > 0.6 && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(2, this.x, this.y);
+      const fast = [0, 1, 1.3, 1.6][this.phase], b = this.bounds;
+      switch (this.state) {
+        case 'float': {
+          // drifts around the room, keeping his distance
+          if (this.t % 50 === 0 || Math.hypot(this.goal.x - this.x, this.goal.y - this.y) < 6) {
+            const a = Math.random() * Math.PI * 2, r = 70 + Math.random() * 40;
+            this.goal = this.clampIn({ x: p.x + Math.cos(a) * r, y: p.y + Math.sin(a) * r * 0.6 });
+          }
+          w.move(this, (this.goal.x - this.x) * 0.03 * fast, 0); w.move(this, 0, (this.goal.y - this.y) * 0.03 * fast);
+          if (this.t % 110 === 0) w.pop(this.x, this.y - 52, FC_TAUNT[Math.floor(Math.random() * FC_TAUNT.length)], '#f86858');
+          if (--this.st <= 0) this.pick();
+          break;
+        }
+        case 'spiral': {
+          // arms up, glass ornaments spiral out of the beard
+          const arms = this.phase + 1, every = [0, 7, 6, 5][this.phase], v = 1.1 * Math.sqrt(fast);
+          if (this.st % every === 0) {
+            for (let i = 0; i < arms; i++) {
+              const a = this.ang + (i / arms) * Math.PI * 2;
+              w.add(new FCOrnament(this.x, this.y - 14, Math.cos(a) * v, Math.sin(a) * v, i % 3));
+            }
+            this.ang += this.spin;
+            if (this.st % (every * 3) === 0) G.audio.sfx('blip');
+          }
+          if (--this.st <= 0) this.toFloat();
+          break;
+        }
+        case 'gifts': {
+          if (this.st % 22 === 0 && this.reps > 0) {
+            this.reps--;
+            const t = this.clampIn({ x: p.x + (Math.random() * 2 - 1) * 36, y: p.y + (Math.random() * 2 - 1) * 24 });
+            w.add(new FCGift(this.x, this.y - 20, t.x, t.y, [0, 6, 8, 10][this.phase]));
+            G.audio.sfx('swing');
+          }
+          if (--this.st <= 0) this.toFloat();
+          break;
+        }
+        case 'sleighAim': {
+          // vanishes, pops up at the far side of the room on Nate's row... then charges
+          if (this.st === 40) { G.audio.sfx('poof'); w.burst(this.x, this.y - 20, ['#ece4d0', '#ffffff'], 10, { speed: 1.2, life: 20, size: 2 }); this.alpha = 0; }
+          if (this.st === 30) {
+            const fromLeft = p.x > (b[0] + b[2]) / 2;
+            this.x = fromLeft ? b[0] : b[2];
+            this.y = Math.max(b[1], Math.min(b[3], p.y));
+            this.dashDir = fromLeft ? 1 : -1;
+            this.alpha = 1;
+            w.pop(this.x, this.y - 52, 'HO HO HO!', '#f86858');
+            G.audio.sfx('yell');
+          }
+          if (--this.st <= 0) { this.state = 'sleigh'; this.lastDrop = this.x; G.audio.sfx('dash'); }
+          break;
+        }
+        case 'sleigh': {
+          this.x += this.dashDir * (3.2 + this.phase * 0.5);
+          if (Math.abs(this.x - this.lastDrop) >= 20) { this.lastDrop = this.x; w.add(new FCCandyCane(this.x, this.y + Math.round(Math.random() * 10 - 5))); }
+          if (this.t % 2 === 0) w.burst(this.x - this.dashDir * 10, this.y - 10, ['#ffffff', '#e8f4fc'], 1, { speed: 0.4, life: 16, size: 2 });
+          if ((this.dashDir > 0 && this.x >= b[2]) || (this.dashDir < 0 && this.x <= b[0])) {
+            if (--this.reps > 0) { this.state = 'sleighAim'; this.st = 40; } else this.toFloat();
+          }
+          break;
+        }
+        case 'tele': {
+          // fades out, fades back in right behind Nate, then lunges
+          const k = this.teleT - this.st;
+          if (k === 1) { G.audio.sfx('poof'); w.burst(this.x, this.y - 20, ['#ece4d0', '#ffffff'], 10, { speed: 1.2, life: 20, size: 2 }); }
+          if (k <= 10) this.alpha = 1 - k / 10;
+          else if (k === 14) {
+            const [fx, fy] = G.DIRS[p.dir];
+            Object.assign(this, this.clampIn({ x: p.x - fx * 36, y: p.y - fy * 30 + (fy ? 0 : 6) }));
+            this.alpha = 0.3;
+            G.audio.sfx('secret');
+          } else if (k > 14) this.alpha = Math.min(1, this.alpha + 0.05);
+          if (--this.st <= 0) {
+            const a = Math.atan2(dy, dx);
+            Object.assign(this, { alpha: 1, state: 'swipe', st: 16, vx: Math.cos(a) * 4, vy: Math.sin(a) * 4 });
+            w.pop(this.x, this.y - 52, 'BOO.', '#f86858');
+            G.audio.sfx('dash');
+          }
+          break;
+        }
+        case 'swipe': {
+          w.move(this, this.vx, 0); w.move(this, 0, this.vy);
+          if (--this.st <= 0) { if (--this.reps > 0) { this.state = 'tele'; this.st = this.teleT; } else this.toFloat(); }
+          break;
+        }
+        case 'hohoho': {
+          // rings of ornaments, each with one gap (roughly toward Nate) to slip through
+          if (this.st % 36 === 12 && this.reps > 0) {
+            this.reps--;
+            const n = 28, base = Math.atan2(dy, dx) + (Math.random() * 2 - 1) * 0.9;
+            const g0 = Math.round((base / (Math.PI * 2)) * n);
+            for (let i = 0; i < n; i++) {
+              let d = (((i - g0) % n) + n) % n;
+              if (d > n / 2) d -= n;
+              if (Math.abs(d) <= 2) continue;
+              const a = (i / n) * Math.PI * 2;
+              w.add(new FCOrnament(this.x, this.y - 14, Math.cos(a), Math.sin(a), i % 3));
+            }
+            w.pop(this.x, this.y - 52, 'HO!', '#f86858');
+            G.audio.sfx('yell');
+            G.play.shake(8, 2);
+          }
+          if (--this.st <= 0) this.toFloat();
+          break;
+        }
+      }
+    }
+    hit(dmg, sx, sy) {
+      if (this.state === 'defeated' || this.alpha < 0.6) return;
+      this.hp = Math.max(0, this.hp - dmg);
+      this.hurtT = 10;
+      const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
+      this.kb = { x: (dx / m) * 1.2, y: (dy / m) * 1.2 };
+      G.audio.sfx('hit');
+      this.world.burst(this.x, this.y - 24, ['#ece4d0', '#fbf7ec', '#e8b898'], 5, { speed: 1.3, up: 0.6, g: 0.06, life: 26, size: 2 });
+      if (Math.random() < 0.3) this.world.pop(this.x, this.y - 52, FC_OUCH[Math.floor(Math.random() * FC_OUCH.length)], '#f86858');
+      if (this.hp <= 0) {
+        this.state = 'defeated';
+        this.alpha = 1;
+        G.script.run(G.SCRIPTS.fcDefeated(this));
+      }
+    }
+    bomb(sx, sy) { this.hit(3, sx, sy); }
+    draw(ctx, cx, cy) {
+      if (this.hidden || this.alpha <= 0) return;
+      const up = ['spiral', 'hohoho', 'gifts', 'swipe', 'sleighAim', 'sleigh'].includes(this.state) || (this.state === 'tele' && this.st < this.teleT - 14);
+      let img = this.sweater ? G.spr.fc.sweater : G.spr.fc[(up ? 'up' : 'idle') + (this.rage && this.state !== 'defeated' ? 'Rage' : '')];
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      const bob = this.state === 'defeated' || this.still ? 0 : 3 + Math.round(Math.sin(this.t * 0.08) * 2);
+      const aiming = this.state === 'sleighAim' && this.st < 30;
+      // a red warning band across the row he's about to charge down
+      if (aiming) { ctx.fillStyle = 'rgba(255,60,60,' + (0.12 + ((this.t >> 2) & 1) * 0.1) + ')'; ctx.fillRect(0, Math.round(this.y - 30) - cy, G.W, 32); }
+      const jx = aiming ? ((this.t >> 1) & 1 ? 1 : -1) : 0;
+      ctx.globalAlpha = Math.max(0, Math.min(1, this.alpha));
+      ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 12) - cx, Math.round(this.y - 4) - cy, 24, 5);
+      ctx.drawImage(img, Math.round(this.x - 15 + jx) - cx, Math.round(this.y - 42 - bob) - cy);
+      ctx.globalAlpha = 1;
+    }
+  }
+  G.FatherChristmas = FatherChristmas;
+
+  // A brown bat: hangs still until Nate's lantern gets close, then flutters at him.
+  class Bat extends Critter {
+    constructor(x, y) {
+      super(x, y, 1);
+      this.dropChance = 0.35;
+      this.bits = ['#4a3440', '#6a4a5a'];
+      this.awake = false;
+      this.wob = Math.random() * 6;
+    }
+    hurtBox() { return [this.x - 6, this.y - 20, this.x + 6, this.y - 8]; }
+    think(w, p, dx, dy, dist) {
+      if (!this.awake) { if (dist < 72) { this.awake = true; w.pop(this.x, this.y - 26, 'SQUEAK!', '#c8a8d8'); } return; }
+      // erratic little loops toward Nate
+      this.wob += 0.2;
+      const a = Math.atan2(dy, dx) + Math.sin(this.wob) * 1.1;
+      this.x += Math.cos(a) * 1.15; this.y += Math.sin(a) * 1.15;
+    }
+    draw(ctx, cx, cy) {
+      let img = G.spr.bat[this.awake ? (this.t >> 2) & 1 : 1];
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      ctx.drawImage(img, Math.round(this.x - 7) - cx, Math.round(this.y - 18 - (this.awake ? Math.sin(this.t / 5) * 2 : 0)) - cy);
+    }
+  }
+  G.Bat = Bat;
+
+  // ============================================================== SEAGULL (the bridge-tunnel)
+  // Sits on top of a light pole, out of reach. When Nate wanders close it
+  // screeches, dives at the spot where he's standing, overshoots, and flaps
+  // back up to its light. Only hittable while it's down low.
+  class Seagull extends Critter {
+    constructor(x, y, perchZ, laughing) {
+      super(x, y, 2);
+      this.home = { x, y };
+      this.perchZ = this.z = perchZ;
+      this.laughing = laughing;
+      this.state = 'perch';
+      this.st = 30 + Math.random() * 90;
+      this.touch = false;
+      this.bits = ['#ffffff', '#c8ccd4', laughing ? '#1c1c22' : '#a8b0bc'];
+    }
+    hurtBox() { return [this.x - 7, this.y - this.z - 12, this.x + 7, this.y - this.z]; }
+    update(w) {
+      if (G.script.busy) return;
+      this.t++;
+      if (this.hurtT > 0) {
+        this.hurtT--;
+        this.x += this.kb.x; this.y += this.kb.y;
+        this.kb.x *= 0.85; this.kb.y *= 0.85;
+        if (this.hurtT === 0) this.rise();
+        return;
+      }
+      if (this.calm > 0) { this.calm--; return; }
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      if (this.state === 'perch') {
+        this.z = this.perchZ;
+        if (dist < 100 && --this.st <= 0) {
+          this.state = 'alert'; this.st = 22;
+          w.pop(this.x, this.y - this.z - 16, this.laughing ? 'HA HA HA!' : 'SKREE!', '#f8f8f0');
+          G.audio.sfx('swing');
+        }
+      } else if (this.state === 'alert') {
+        // flaps in place, then dives at where Nate is right now (and past him)
+        if (--this.st <= 0) {
+          const ux = dx / dist, uy = dy / dist, over = 44;
+          this.from = { x: this.x, y: this.y, z: this.z };
+          this.to = { x: p.x + ux * over, y: p.y + uy * over };
+          this.f = dist / (dist + over);
+          this.dur = Math.round(30 + dist * 0.25);
+          this.k = 0;
+          this.state = 'dive';
+          G.audio.sfx('dash');
+        }
+      } else if (this.state === 'dive') {
+        const k = ++this.k / this.dur, f = this.f;
+        this.x = this.from.x + (this.to.x - this.from.x) * k;
+        this.y = this.from.y + (this.to.y - this.from.y) * k;
+        this.z = k < f ? Math.max(2, this.from.z * ((f - k) / f) ** 2) : 2 + 26 * ((k - f) / (1 - f));
+        if (this.z < 10 && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
+        if (k >= 1) this.rise();
+      } else if (this.state === 'rise') {
+        // back up to its light
+        const k = ++this.k / this.dur;
+        this.x = this.from.x + (this.home.x - this.from.x) * k;
+        this.y = this.from.y + (this.home.y - this.from.y) * k;
+        this.z = this.from.z + (this.perchZ - this.from.z) * k;
+        if (k >= 1) { this.state = 'perch'; this.st = 90 + Math.random() * 90; this.x = this.home.x; this.y = this.home.y; }
+      }
+    }
+    rise() {
+      this.state = 'rise';
+      this.from = { x: this.x, y: this.y, z: this.z };
+      this.dur = 70; this.k = 0;
+    }
+    die() {
+      this.dead = true;
+      G.audio.sfx('poof');
+      const w = this.world;
+      w.burst(this.x, this.y - this.z - 6, this.bits, 14, { speed: 1.2, up: 0.6, g: 0.05, life: 30, size: 2 });
+      if (this.laughing) w.pop(this.x, this.y - this.z - 20, 'ha... ha.', '#c8c8d0');
+      // drop the loot somewhere Nate can reach it (not out over the water)
+      let x = this.x, y = this.y;
+      const p = G.play.player;
+      for (let i = 0; i < 8 && w.tileSolid(Math.floor(x / 16), Math.floor(y / 16)); i++) { x += (p.x - x) * 0.35; y += (p.y - y) * 0.35; }
+      const s = G.state, r = Math.random();
+      w.add(new G.Pickup(x, y, s.hp < s.maxHp && r < 0.25 ? 'heart' : r < 0.6 ? 'tooth5' : 'tooth'));
+    }
+    draw(ctx, cx, cy) {
+      const set = G.spr.gull[this.laughing ? 1 : 0];
+      let img = this.state === 'perch' ? set.sit : (this.t >> 2) & 1 ? set.up : set.down;
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      if (this.z < 40) { ctx.globalAlpha = 0.5; ctx.drawImage(G.spr.shadow, Math.round(this.x - 6) - cx, Math.round(this.y - 3) - cy); ctx.globalAlpha = 1; }
+      const flip = this.state !== 'perch' && (this.state === 'dive' ? this.to.x > this.from.x : this.home.x > this.x);
+      const x = Math.round(this.x - 8) - cx, y = Math.round(this.y - this.z - 12) - cy;
+      if (flip) { ctx.save(); ctx.translate(x + 16, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); ctx.restore(); }
+      else ctx.drawImage(img, x, y);
+      if (this.calm > 0) drawHalo(ctx, this.x - cx, this.y - this.z - 16 - cy);
+    }
+  }
+  G.Seagull = Seagull;
+
   // ============================================================== SIX (enemy)
   class Six extends Ent {
     constructor(x, y) {

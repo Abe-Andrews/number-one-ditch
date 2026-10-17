@@ -320,6 +320,7 @@
       }
 
       G.state.playTime = (G.state.playTime || 0) + 1;
+      if (G.tick % 30 === 0 && !G.script.busy && !this.warping && G.postgameTick) G.postgameTick();
       if (this.eggCool > 0) this.eggCool--;
       if (this.earworm > 0 && !G.script.busy) this.earworm--;
       if (this.whiteout > 0) this.whiteout -= 0.03;
@@ -503,6 +504,7 @@
       if (c.follower !== undefined) s.follower = c.follower;
       if (c.maxHp) s.maxHp = c.maxHp;
       if (c.teeth) s.teeth = c.teeth;
+      if (c.rocks) { s.rocks = s.rocks || {}; s.rocksFound = s.rocksFound || {}; for (const r of G.ROCKS) { s.rocks[r.id] = 1; s.rocksFound[r.id] = 1; } }
     }
     const c = cps[i];
     Object.assign(s, { map: c.map, x: c.at[0] * 16 + 8, y: c.at[1] * 16 + 14, dir: c.at[2] });

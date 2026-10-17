@@ -994,6 +994,62 @@
       p.rect(2, 3, 12, 12, '#5a4838'); p.rect(3, 4, 10, 10, '#7a6450');
       p.hline(5, 10, 8, '#5a4838'); p.hline(6, 9, 9, '#5a4838'); p.hline(7, 8, 10, '#5a4838');
     },
+    // ---- the Chesapeake Bay Bridge-Tunnel
+    // open bay: deeper, greener water than the brook, with whitecaps
+    bay(p, r, v, mask, frame) {
+      p.rect(0, 0, 16, 16, '#2e6a8a');
+      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+        const w = Math.sin((x + frame * 2) * 0.6 + y * 1.1) + Math.sin((y - frame) * 0.8 + x * 0.2);
+        if (w > 1.6) p.set(x, y, '#5a9ab8'); else if (w < -1.6) p.set(x, y, '#22526e');
+      }
+      if (v % 4 === 0) { const x = 3 + (v * 5) % 9, y = 3 + (v * 3) % 10; p.hline(x, x + 2, y, frame & 1 ? '#e8f4f8' : '#a8d0e0'); p.set(x + 1, y - 1, '#e8f4f8'); }
+      const edge = (cond, fn) => { if (cond) for (let i = 0; i < 16; i++) fn(i); };
+      edge(mask & 1, (i) => { p.set(i, 0, P.foam); p.set(i, 1, (i + frame) % 4 ? '#5a9ab8' : P.foam); });
+      edge(mask & 4, (i) => { p.set(i, 15, '#1c4a64'); p.set(i, 14, '#22526e'); });
+      edge(mask & 8, (i) => { p.set(0, i, P.foam); p.set(1, i, (i + frame) % 4 ? '#5a9ab8' : P.foam); });
+      edge(mask & 2, (i) => { p.set(15, i, P.foam); p.set(14, i, (i + frame) % 4 ? '#5a9ab8' : P.foam); });
+    },
+    // granite riprap armoring the man-made island
+    riprap(p, r) {
+      p.rect(0, 0, 16, 16, '#4a4a54');
+      for (let i = 0; i < 6; i++) {
+        const x = Math.floor(r() * 12), y = Math.floor(r() * 12), w = 4 + Math.floor(r() * 4), h = 3 + Math.floor(r() * 3);
+        const c = ['#8a8a94', '#9a9aa4', '#7a7a86'][Math.floor(r() * 3)];
+        p.rect(x, y, w, h, c); p.hline(x, x + w - 1, y, '#c0c0c8'); p.hline(x, x + w - 1, y + h - 1, '#5a5a64');
+      }
+      if (r() < 0.3) { p.set(5 + Math.floor(r() * 6), 6, '#f8f8f8'); }
+    },
+    // the road deck (no grass fringe), and a lane with the yellow centerline on its left edge
+    roadDeck(p, r) {
+      p.rect(0, 0, 16, 16, '#4c4c56');
+      for (let i = 0; i < 12; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#5e5e6a' : '#3e3e48');
+      if (r() < 0.15) p.set(4 + r() * 8, 4 + r() * 8, '#f8f8f8');
+    },
+    laneV(p, r, v) {
+      TILE_DRAW.roadDeck(p, r);
+      p.rect(0, 2, 1, 8, '#f0c838'); p.rect(1, 2, 1, 8, '#d8a828');
+    },
+    // the trestle's concrete parapet
+    parapet(p, r) {
+      p.rect(0, 0, 16, 16, '#8a8a94');
+      p.rect(3, 0, 10, 16, '#c4c4cc'); p.vline(3, 0, 15, '#e4e4ec'); p.vline(12, 0, 15, '#9a9aa4');
+      for (const y of [0, 8]) p.hline(3, 12, y, '#a8a8b2');
+      p.vline(0, 0, 15, '#5a5a64'); p.vline(15, 0, 15, '#5a5a64');
+    },
+    // inside the tunnel: cream ceramic tile walls with a blue band, a raised catwalk
+    tunnelWall(p, r) {
+      p.rect(0, 0, 16, 16, '#e4dfcc');
+      for (let y = 0; y < 16; y += 4) p.hline(0, 15, y, '#c4bea8');
+      for (let x = 0; x < 16; x += 4) p.vline(x, 0, 15, '#cfc9b4');
+      p.rect(6, 0, 4, 16, '#3a6ab0'); p.vline(6, 0, 15, '#5a8ad0');
+      if (r() < 0.4) p.rect(Math.floor(r() * 12), Math.floor(r() * 12), 3, 2, '#bab29a');
+    },
+    catwalk(p, r) {
+      p.rect(0, 0, 16, 16, '#9a9aa2');
+      for (let i = 0; i < 6; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#aaaab2' : '#8a8a92');
+      p.vline(0, 0, 15, '#d8d8e0'); p.vline(1, 0, 15, '#b8b8c0'); p.vline(15, 0, 15, '#d8d8e0'); p.vline(14, 0, 15, '#6a6a74');
+      p.hline(0, 15, 15, '#8a8a92');
+    },
     void(p) { p.rect(0, 0, 16, 16, '#000000'); },
     asphalt(p, r, v, mask) {
       p.rect(0, 0, 16, 16, '#4c4c56');
@@ -1195,6 +1251,35 @@
       for (let y = 0; y < 16; y += 5) { p.hline(0, 15, y, '#4a4a52'); for (let x = (y % 10 ? 3 : 8); x < 16; x += 9) p.vline(x, y, y + 4, '#4a4a52'); }
       for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#8a8a92');
       if (mask & 4) { p.rect(0, 14, 16, 2, '#3a3a42'); }
+    },
+    // ---- the Andover mines
+    cutFloor(p, r) {
+      p.rect(0, 0, 16, 16, '#866654');
+      for (let i = 0; i < 9; i++) p.set(r() * 16, r() * 16, ['#a8583a', '#6e5244', '#9a8478', '#7a7270'][Math.floor(r() * 4)]);
+      if (r() < 0.4) p.rect(r() * 12, r() * 12, 3, 2, '#6a5246');
+    },
+    cutWall(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#7a5a4a');
+      for (let y = 3; y < 16; y += 4) p.hline(0, 15, y + Math.floor(r() * 2), '#5e4438');
+      for (let i = 0; i < 4; i++) { const x = Math.floor(r() * 14), y = Math.floor(r() * 12); p.rect(x, y, 2, 3, '#a84a2a'); }
+      if (mask & 1) { p.rect(0, 0, 16, 3, '#4a7a34'); p.hline(0, 15, 3, '#2e4a22'); for (let x = 0; x < 16; x += 3) p.set(x, 3 + (x % 2), '#4a7a34'); }
+      if (mask & 4) p.hline(0, 15, 15, '#4a3428');
+    },
+    tunnelFace(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#4a3a34');
+      for (let y = 2; y < 16; y += 4) p.hline(0, 15, y + Math.floor(r() * 2), '#3a2c28');
+      for (let i = 0; i < 3; i++) p.set(r() * 16, r() * 14, '#8a4a30');
+      if (v % 5 === 0) { p.rect(6, 0, 4, 16, '#7a5a34'); p.vline(6, 0, 15, '#9a7444'); p.vline(9, 0, 15, '#5a4024'); }
+      if (mask & 4) p.hline(0, 15, 15, '#241c18');
+    },
+    mineFloor(p, r) {
+      p.rect(0, 0, 16, 16, '#4e423c');
+      for (let i = 0; i < 7; i++) p.set(r() * 16, r() * 16, ['#5e504a', '#3e3430', '#7a4a34'][Math.floor(r() * 3)]);
+    },
+    mineRail(p, r) {
+      p.rect(0, 0, 16, 16, '#4e423c');
+      for (let y = 1; y < 16; y += 5) p.hline(1, 14, y, '#6a4a2a');
+      p.vline(4, 0, 15, '#9a9aa4'); p.vline(11, 0, 15, '#9a9aa4');
     },
     hallTile(p, r) {
       p.rect(0, 0, 16, 16, '#e4dac4');
@@ -3862,6 +3947,311 @@
     return finish(p);
   }
 
+  // ================================================================ THE ANDOVER MINES
+  // Specimen icons (14x12), one look per rock.
+  function rockIcon(id) {
+    const p = new Pix(14, 12);
+    const blob = (c, cl) => { for (let y = 1; y < 12; y++) for (let x = 0; x < 14; x++) if ((x - 6.5) ** 2 / 44 + (y - 6.5) ** 2 / 28 <= 1) p.set(x, y, y < 4 ? cl : c); };
+    switch (id) {
+      case 'hematite': blob('#5a3a36', '#8a5a54'); for (const [x, y] of [[4, 6], [8, 5], [6, 8], [10, 8]]) p.set(x, y, '#a8302a'); p.hline(3, 9, 9, '#7a2a24'); break;
+      case 'magnetite': blob('#2a2a30', '#4a4a54'); for (const [x, y] of [[5, 4], [8, 6], [4, 8], [10, 7]]) { p.set(x, y, '#9a9aa8'); p.set(x + 1, y + 1, '#6a6a74'); } break;
+      case 'calcite': blob('#e8e4d8', '#ffffff'); p.hline(3, 10, 5, '#c8c0b0'); p.vline(7, 3, 10, '#c8c0b0'); p.set(5, 7, '#f8f0c8'); break;
+      case 'marble': blob('#ecebe6', '#ffffff'); for (let x = 2; x < 12; x++) p.set(x, 5 + Math.round(Math.sin(x) * 1.5), '#a8a8b0'); p.set(9, 9, '#c8c8d0'); break;
+      case 'quartz': p.rect(2, 9, 10, 3, '#8a8a90'); for (const [x, h] of [[3, 7], [6, 9], [9, 6]]) { p.rect(x, 9 - h, 2, h, '#e8f4fc'); p.set(x, 9 - h - 1, '#ffffff'); p.vline(x + 1, 9 - h, 8, '#b8d0e0'); } break;
+      case 'jasper': blob('#a83a2a', '#c85a44'); p.hline(3, 9, 7, '#8a2a20'); p.set(5, 4, '#e88070'); break;
+      case 'garnet': blob('#7a7a80', '#9a9aa0'); for (const [x, y] of [[3, 5], [7, 4], [9, 7], [5, 8]]) { p.rect(x, y, 2, 2, '#8a1828'); p.set(x, y, '#d84858'); } break;
+      case 'pyrite': p.rect(1, 5, 6, 6, '#c8a838'); p.rect(6, 3, 6, 6, '#d8b848'); p.hline(6, 11, 3, '#f8e898'); p.hline(1, 6, 5, '#f0d870'); p.vline(11, 3, 8, '#a88a28'); break;
+      case 'slag': blob('#3a8a8a', '#68c8c0'); for (const [x, y] of [[4, 6], [8, 8], [9, 4]]) p.set(x, y, '#1c4a4a'); p.set(5, 3, '#c8f8f0'); break;
+      case 'sphalerite': blob('#4a2a14', '#7a4a24'); p.set(5, 4, '#c88a40'); p.set(8, 7, '#a86a30'); p.hline(4, 7, 9, '#2a180a'); break;
+      case 'galena': p.rect(2, 4, 6, 6, '#8a8a98'); p.rect(6, 2, 6, 6, '#a8a8b8'); p.hline(6, 11, 2, '#e0e0ec'); p.hline(2, 7, 4, '#c8c8d8'); p.vline(11, 2, 7, '#6a6a78'); p.rect(3, 9, 4, 1, '#6a6a78'); break;
+      case 'chalcopyrite': blob('#b89838', '#d8b848'); for (const [x, y, c] of [[3, 7, '#5a6ad8'], [6, 8, '#a858c8'], [9, 6, '#58b8c8'], [7, 5, '#c858a8']]) { p.set(x, y, c); p.set(x + 1, y, c); } break;
+      case 'specular': blob('#5a5a64', '#7a7a84'); for (const [x, y] of [[3, 5], [6, 3], [9, 6], [5, 8], [10, 9]]) { p.set(x, y, '#ffffff'); p.set(x + 1, y, '#c8c8d8'); } break;
+      case 'lodestone': blob('#2a2a30', '#44444c'); for (let x = 1; x < 13; x += 2) { p.set(x, 1, '#8a8a94'); p.set(x + 1, 0, '#8a8a94'); } p.rect(10, 7, 3, 1, '#c8c8d0'); p.set(12, 6, '#c8c8d0'); break;
+      case 'dolomite': blob('#a8a49a', '#c8c4b8'); for (const [x, y] of [[3, 6], [7, 5], [10, 8], [5, 9]]) p.set(x, y, '#e8e4d8'); p.hline(2, 11, 7, '#8a8678'); break;
+      case 'gneiss': blob('#e0d8c8', '#f0ece0'); for (const y of [5, 8, 10]) for (let x = 1; x < 13; x++) p.set(x, y + Math.round(Math.sin(x * 0.7 + y) * 0.8), '#3a3a40'); p.set(6, 4, '#d89a8a'); break;
+      case 'stromatolite': blob('#9a8a70', '#b8a88a'); for (const r of [2, 4, 6]) for (let x = 0; x < 14; x++) { const y = 11 - Math.round(Math.sqrt(Math.max(0, r * r - (x - 6.5) ** 2)) * 1.1); if (y > 1 && y < 11) p.set(x, y, '#6a5a44'); } break;
+      case 'cementrock': blob('#4e5058', '#6a6c74'); p.hline(2, 11, 6, '#3a3c44'); p.hline(3, 10, 9, '#3a3c44'); p.set(8, 4, '#8a8c94'); break;
+      case 'serpentine': blob('#4e8a5e', '#78b888'); for (const [x, y] of [[3, 7], [4, 8], [5, 8], [8, 5], [9, 6], [10, 9]]) p.set(x, y, '#2e5a3e'); p.set(5, 4, '#c8f0d0'); p.set(9, 8, '#a8d8b0'); break;
+      case 'eastonite': for (let i = 0; i < 4; i++) { p.rect(2 + i, 8 - i * 2, 9, 3, i % 2 ? '#a87a3a' : '#c8984a'); p.hline(2 + i, 10 + i, 8 - i * 2, '#f0d088'); } p.set(6, 3, '#ffffff'); break;
+      case 'shale': for (let i = 0; i < 3; i++) { p.rect(1 + i, 9 - i * 3, 12 - i * 2, 3, i % 2 ? '#a85040' : '#9a4a3a'); p.hline(1 + i, 12 - i, 9 - i * 3, '#c8705a'); } p.set(6, 7, '#5a2a20'); p.set(7, 7, '#5a2a20'); break;
+      case 'basalt': blob('#2e2e34', '#46464e'); for (const [x, y] of [[4, 6], [8, 5], [6, 9], [10, 8]]) { p.set(x, y, '#1a1a20'); p.set(x + 1, y, '#5a5a64'); } break;
+      case 'prehnite': blob('#2e2e34', '#46464e'); for (const [x, y] of [[4, 5], [5, 5], [6, 4], [5, 6], [8, 6], [9, 7], [8, 7]]) p.set(x, y, '#b8e898'); p.set(5, 4, '#e8fcd8'); p.set(9, 6, '#e8fcd8'); break;
+      case 'cannonball': for (let y = 1; y < 12; y++) for (let x = 1; x < 13; x++) if ((x - 6.5) ** 2 + (y - 6.5) ** 2 <= 27) p.set(x, y, '#2a2a2e'); p.set(4, 4, '#8a8a94'); p.set(5, 3, '#6a6a74'); p.set(8, 9, '#4a3a2a'); break;
+    }
+    return finish(p);
+  }
+  // A mineral vein in the rock: glints in the lantern light; cracks when hit.
+  function oreVein(stage) {
+    const p = new Pix(18, 16);
+    for (let y = 2; y < 16; y++) for (let x = 0; x < 18; x++) if ((x - 8.5) ** 2 / 72 + (y - 9) ** 2 / 44 <= 1) p.set(x, y, y < 6 ? '#8a7466' : '#6e5a4e');
+    for (const [x, y, c] of [[4, 8, '#a8302a'], [8, 6, '#c8c8d8'], [12, 9, '#d8b848'], [7, 11, '#5a5a64'], [10, 12, '#a8302a']]) { p.set(x, y, c); p.set(x + 1, y, c); }
+    if (stage >= 1) { p.vline(9, 4, 9, '#2a1c18'); p.set(10, 10, '#2a1c18'); p.set(8, 11, '#2a1c18'); }
+    if (stage >= 2) { p.vline(5, 7, 13, '#2a1c18'); p.hline(10, 14, 7, '#2a1c18'); p.set(12, 12, '#2a1c18'); }
+    return finish(p);
+  }
+  // A heap of mine waste on the dump (and a glassy slag heap by the old furnace).
+  function dumpPile(slag) {
+    const p = new Pix(20, 12), c = slag ? ['#3a8a8a', '#2a6a6a', '#68c8c0', '#5a5a5a'] : ['#7a5a4a', '#5e4438', '#a8583a', '#8a8a90'];
+    for (let y = 2; y < 12; y++) for (let x = 0; x < 20; x++) if ((x - 9.5) ** 2 / 100 + (y - 11) ** 2 / 81 <= 1) p.set(x, y, c[Math.floor(G.hash(x, y, slag ? 31 : 32) * 4)]);
+    return finish(p);
+  }
+  // The ruins of the old Andover iron furnace: a stone stack, crumbling.
+  function furnaceRuin() {
+    const p = new Pix(36, 44);
+    for (let y = 6; y < 44; y++) { const half = 10 + Math.floor((y - 6) / 6); for (let x = 18 - half; x <= 17 + half; x++) p.set(x, y, ((x + (y >> 2)) % 5 === 0 || y % 4 === 0) ? '#6a6460' : (G.hash(x, y, 9) < 0.15 ? '#9a928a' : '#84807a')); }
+    for (let y = 0; y < 8; y++) for (let x = 9 + y; x < 27 - (y >> 1); x++) if (G.hash(x, y, 11) < 0.7) p.set(x, y + 4, '#84807a');
+    for (let y = 28; y < 44; y++) for (let x = 13; x < 23; x++) if ((x - 18) ** 2 / 25 + (y - 36) ** 2 / 64 <= 1 || y > 36) p.set(x, y, '#2a2420');
+    for (const [x, y] of [[6, 20], [28, 26], [10, 34], [25, 14]]) p.rect(x, y, 3, 2, '#4a7a34');
+    return finish(p);
+  }
+  // A timbered tunnel mouth (the adit) at the north end of the cut.
+  function adit() {
+    const p = new Pix(28, 26);
+    p.rect(4, 6, 20, 20, '#120c0a'); for (let y = 6; y < 26; y++) p.set(4 + (y % 3 === 0 ? 1 : 0), y, '#1c1410');
+    p.rect(1, 4, 4, 22, '#7a5a34'); p.rect(23, 4, 4, 22, '#7a5a34'); p.vline(1, 4, 25, '#9a7444'); p.vline(23, 4, 25, '#9a7444');
+    p.rect(0, 2, 28, 5, '#6a4a2a'); p.hline(0, 27, 2, '#9a7444');
+    p.rect(9, 9, 10, 4, '#e8d8b0'); p.hline(10, 17, 10, '#8a2a20'); p.hline(10, 16, 11, '#8a2a20');
+    return finish(p);
+  }
+  // A little brown bat (two frames).
+  function batFrame(up) {
+    const p = new Pix(14, 8), c = '#4a3440', cl = '#6a4a5a';
+    p.rect(5, 2, 4, 4, c); p.set(6, 3, '#f8d850'); p.set(8, 3, '#f8d850'); p.set(5, 1, c); p.set(8, 1, c);
+    if (up) { p.hline(0, 4, 1, cl); p.hline(9, 13, 1, cl); p.set(1, 2, c); p.set(12, 2, c); }
+    else { p.hline(0, 4, 4, cl); p.hline(9, 13, 4, cl); p.set(0, 5, c); p.set(13, 5, c); }
+    return finish(p);
+  }
+
+  // ---- area rocks: outcrops, quarry rubble, the big rocks only Doron can move, a gravel bar
+  function outcrop(kind) {
+    const p = new Pix(20, 14);
+    const c = { laf: ['#8a8c90', '#a8aaae', '#6e7074'], eas: ['#4e5058', '#6a6c74', '#3a3c44'], bed: ['#9a4a3a', '#b8624e', '#7a3a2c'] }[kind];
+    for (let y = 2; y < 14; y++) for (let x = 0; x < 20; x++) if ((x - 9.5) ** 2 / 100 + (y - 10) ** 2 / 64 <= 1) p.set(x, y, y % 3 === 0 ? c[2] : y < 6 ? c[1] : c[0]);
+    p.set(5, 7, '#4a7a34'); p.set(6, 7, '#5a9a40'); p.set(14, 5, '#4a7a34');
+    return finish(p);
+  }
+  function quarryRubble() {
+    const p = new Pix(24, 16);
+    for (const [x, y, w, h] of [[0, 8, 9, 8], [7, 5, 10, 11], [15, 7, 9, 9], [4, 2, 8, 7], [12, 1, 7, 6]]) {
+      p.rect(x, y, w, h, '#4e7a5e'); p.hline(x, x + w - 1, y, '#78a888'); p.vline(x + w - 1, y, y + h - 1, '#3a5a46');
+      p.set(x + 2, y + 3, '#2e4a3a'); p.set(x + 4, y + 5, '#9ac8a8');
+    }
+    return finish(p);
+  }
+  function bigRock(kind) {
+    const p = new Pix(36, 26);
+    const c = kind === 'basalt' ? ['#2e2e34', '#46464e', '#1e1e24', '#5a5a64'] : ['#8a8c90', '#a8aaae', '#6e7074', '#c0c2c6'];
+    for (let y = 2; y < 26; y++) for (let x = 0; x < 36; x++) if ((x - 17.5) ** 2 / 300 + (y - 15) ** 2 / 150 <= 1) p.set(x, y, y < 9 ? c[1] : (x + y * 3) % 7 === 0 ? c[2] : c[0]);
+    if (kind === 'basalt') for (const [x, y] of [[9, 12], [16, 9], [24, 14], [12, 18], [21, 20]]) { p.set(x, y, c[2]); p.set(x + 1, y, c[3]); }
+    else for (let y = 10; y < 24; y += 3) for (let x = 4; x < 32; x++) if ((x - 17.5) ** 2 / 300 + (y - 15) ** 2 / 150 <= 1 && (x + y) % 4 < 2) p.set(x, y, c[3]);
+    p.rect(6, 22, 6, 3, '#4a7a34'); p.rect(26, 21, 5, 3, '#4a7a34');
+    return finish(p);
+  }
+  // a sandy gravel bar in the brook, pebbles of every color washed down from upstream
+  function gravelBar() {
+    const p = new Pix(28, 12);
+    for (let y = 0; y < 12; y++) for (let x = 0; x < 28; x++) {
+      const d = (x - 13.5) ** 2 / 182 + (y - 6) ** 2 / 30;
+      if (d <= 1) p.set(x, y, d > 0.75 ? '#a89a78' : G.hash(x, y, 62) < 0.25 ? '#a89878' : '#c8b890');
+    }
+    for (let i = 0; i < 22; i++) {
+      const x = 3 + Math.floor(G.hash(i, 3, 61) * 22), y = 3 + Math.floor(G.hash(i, 4, 61) * 6);
+      const c = ['#b8624e', '#6e7074', '#e8e0d0', '#2e2e34', '#8ac888'][i % 5];
+      p.set(x, y, c); if (i % 3 === 0) p.set(x + 1, y, c);
+    }
+    return finish(p);
+  }
+
+  // ================================================================ THE CHESAPEAKE BAY BRIDGE-TUNNEL
+  // A highway light, its arm reaching out over the road (gulls sit on these).
+  // Drawn with the arm pointing right; the left-pointing one is the mirror.
+  function lampPost() {
+    const p = new Pix(30, 60), g = '#9aa0a8', gD = '#6a7078', gL = '#c8ccd2';
+    p.rect(2, 8, 3, 50, g); p.vline(2, 8, 57, gL); p.vline(4, 8, 57, gD);
+    p.rect(1, 56, 5, 4, gD); p.hline(1, 5, 56, g);
+    for (let i = 0; i <= 18; i++) { const x = 3 + i, y = i < 5 ? 8 - i : 3; p.set(x, y, g); p.set(x, y + 1, gD); }
+    p.rect(18, 1, 10, 4, '#7a8088'); p.hline(18, 27, 1, '#9aa0a8'); p.hline(19, 26, 5, '#fff4c8'); p.hline(20, 25, 6, '#f8e098');
+    return finish(p);
+  }
+  // Seagulls: a herring gull (white head, yellow bill) and a laughing gull
+  // (black head, red bill). Poses: sitting, wings up, wings down.
+  function gullFrame(laughing, pose) {
+    const p = new Pix(16, 12);
+    const wing = laughing ? '#5a6270' : '#a8b0bc', head = laughing ? '#1c1c22' : '#f8f8f8', beak = laughing ? '#a02828' : '#f0c838', legs = laughing ? '#802020' : '#e8a090';
+    if (pose === 'sit') {
+      p.rect(4, 5, 8, 5, '#f8f8f8'); p.rect(5, 4, 7, 3, wing); p.rect(11, 5, 3, 2, '#202024');
+      p.rect(2, 2, 4, 4, head); p.set(3, 3, laughing ? '#f8f8f8' : '#101010');
+      p.set(1, 4, beak); p.set(0, 4, beak); if (!laughing) p.set(1, 5, '#d03030');
+      p.set(6, 10, legs); p.set(9, 10, legs); p.set(6, 11, legs); p.set(9, 11, legs);
+    } else {
+      const up = pose === 'up';
+      p.rect(5, 6, 6, 3, '#f8f8f8'); p.rect(3, 5, 3, 3, head); p.set(2, 6, beak); p.set(1, 6, beak);
+      for (let i = 0; i < 6; i++) {
+        const y = up ? 6 - i : 6 + Math.floor(i / 2);
+        p.set(6 - i, y, i > 3 ? '#202024' : wing); p.set(9 + i, y, i > 3 ? '#202024' : wing);
+        p.set(7 - i, y, wing); p.set(8 + i, y, wing);
+      }
+      p.set(11, 7, '#d8d8e0'); p.set(12, 7, '#202024');
+    }
+    return finish(p);
+  }
+  // The ventilation building over the tunnel portal: louvered concrete with
+  // the road diving into the dark under a green sign.
+  function tunnelPortal() {
+    const W = 192, H = 100, p = new Pix(W, H);
+    p.rect(0, 0, W, 22, '#9aa0a8'); p.hline(0, W - 1, 0, '#c0c4ca'); p.hline(0, W - 1, 21, '#7a8088');
+    for (const cx of [36, 156]) for (let y = 4; y < 18; y++) for (let x = cx - 8; x <= cx + 8; x++) if ((x - cx) ** 2 + (y - 11) ** 2 <= 49) p.set(x, y, (x + y) % 3 ? '#5a6068' : '#3a4048');
+    p.rect(0, 22, W, H - 22, '#cfcabe');
+    for (let y = 28; y < 92; y += 4) { p.hline(8, 54, y, '#8a8a90'); p.hline(8, 54, y + 1, '#a8a8ae'); p.hline(137, 183, y, '#8a8a90'); p.hline(137, 183, y + 1, '#a8a8ae'); }
+    for (const x of [6, 56, 135, 185]) p.rect(x, 22, 2, H - 22, '#b0aca0');
+    // the tunnel mouth
+    p.rect(60, 52, 72, H - 52, '#a8a49a'); p.hline(60, 131, 52, '#e0dcd0');
+    for (let y = 56; y < H; y++) { const k = Math.min(1, (y - 56) / 20); for (let x = 64; x < 128; x++) p.set(x, y, k < 0.5 ? '#2a2630' : '#14121a'); }
+    for (const [x, y] of [[80, 66], [111, 66], [86, 74], [105, 74], [92, 80], [99, 80]]) { p.set(x, y, '#f8a040'); p.set(x + 1, y, '#c87828'); }
+    p.vline(96, 86, 99, '#c8a030');
+    p.outline();
+    const c = p.canvas(), x = c.getContext('2d');
+    const text = 'CHESAPEAKE CHANNEL TUNNEL', tw = G.font.width(text), sw = tw + 10, sx = Math.round((W - sw) / 2);
+    x.fillStyle = OUT; x.fillRect(sx - 1, 33, sw + 2, 15);
+    x.fillStyle = '#ffffff'; x.fillRect(sx, 34, sw, 13);
+    x.fillStyle = '#1e6a3a'; x.fillRect(sx + 1, 35, sw - 2, 11);
+    G.font.draw(x, text, sx + 5, 37, '#ffffff');
+    return c;
+  }
+  // a container ship headed for the channel
+  function containerShip() {
+    const p = new Pix(170, 40);
+    for (let x = 0; x < 170; x++) { const top = x < 14 ? 22 + Math.round((14 - x) * 0.4) : 22; p.vline(x, top, 36, x < 10 ? '#7a1c1c' : '#8a2424'); p.set(x, 36, '#3a0c0c'); }
+    p.hline(6, 169, 22, '#c8c8d0');
+    const cols = ['#d84838', '#3a78c8', '#e8a830', '#3a9a5a', '#8a5ab8', '#d8d8d8'];
+    for (let b = 0; b < 9; b++) for (let k = 0; k < 2 + (b % 3 === 1 ? 1 : 0); k++) { const x = 20 + b * 14, y = 16 - k * 6; p.rect(x, y, 13, 6, cols[(b * 3 + k) % cols.length]); p.hline(x, x + 12, y, '#f8f8f8'); }
+    p.rect(150, 4, 14, 18, '#f0f0f0'); p.hline(150, 163, 7, '#3a4a5a'); p.hline(150, 163, 11, '#3a4a5a'); p.rect(156, 0, 3, 4, '#3a3a40');
+    return finish(p);
+  }
+  // a brown pelican on the rocks
+  function pelican() {
+    const p = new Pix(16, 16);
+    p.rect(4, 7, 9, 6, '#7a6a5a'); p.rect(5, 8, 7, 3, '#9a8a78'); p.rect(11, 9, 3, 3, '#5a4a3e');
+    p.rect(3, 2, 3, 6, '#f0e8d0'); p.rect(3, 1, 3, 3, '#f8e8a0');
+    p.hline(0, 3, 3, '#c8a868'); p.hline(0, 3, 4, '#a88848'); p.rect(0, 5, 3, 2, '#8a7058');
+    p.set(4, 2, '#101010'); p.set(6, 13, '#3a3a40'); p.set(9, 13, '#3a3a40');
+    return finish(p);
+  }
+  // a coin-op viewer for looking out over the bay
+  function bayViewer() {
+    const p = new Pix(14, 26);
+    p.rect(6, 10, 2, 14, '#3a6a4a'); p.rect(3, 23, 8, 3, '#2a4a36');
+    p.rect(1, 2, 12, 9, '#4a8a5a'); p.hline(1, 12, 2, '#6aaa7a'); p.rect(2, 4, 3, 3, '#1c1c24'); p.rect(9, 4, 3, 3, '#1c1c24');
+    p.set(3, 5, '#88c8e8'); p.set(10, 5, '#88c8e8'); p.rect(5, 8, 4, 2, '#d8b040');
+    return finish(p);
+  }
+  // an amber light fixture on the tunnel wall, and a green tunnel sign
+  function tunnelLight() {
+    const p = new Pix(8, 6);
+    p.rect(0, 0, 8, 6, '#4a4a54'); p.rect(1, 1, 6, 4, '#f8b040'); p.hline(1, 6, 1, '#fff0c0');
+    return finish(p);
+  }
+  function tunnelSign() {
+    const p = new Pix(24, 12);
+    p.rect(0, 0, 24, 12, '#ffffff'); p.rect(1, 1, 22, 10, '#1e6a3a');
+    for (const [x, y, w] of [[3, 3, 12], [3, 6, 18], [17, 3, 4]]) p.hline(x, x + w - 1, y, '#e8f0e8');
+    p.outline();
+    return p.canvas();
+  }
+
+  // ---- the deep stope: the DO NOT OPEN (LILY) box, an ore cart, timbers, lanterns
+  function fcCrate(open) {
+    const p = new Pix(20, 17);
+    p.rect(1, 4, 18, 13, '#c8a070'); p.vline(18, 4, 16, '#a07a48'); p.hline(1, 18, 16, '#a07a48');
+    if (open) {
+      p.rect(2, 4, 16, 3, '#2a1c14');
+      p.rect(0, 1, 4, 4, '#e0c090'); p.rect(16, 1, 4, 4, '#e0c090'); p.hline(5, 14, 3, '#d8b480');
+    } else {
+      p.rect(1, 2, 18, 3, '#e0c090'); p.vline(10, 2, 8, '#b8b0a0'); p.hline(1, 18, 2, '#f0d8a8');
+    }
+    // marker scrawl on the side: CHRISTMAS / DO NOT OPEN (LILY)
+    for (const [x, w] of [[3, 6], [10, 5]]) p.hline(x, x + w - 1, 9, '#c83030');
+    for (const [x, w] of [[3, 3], [7, 4], [12, 5]]) p.hline(x, x + w - 1, 12, '#c83030');
+    p.set(3, 13, '#c83030'); p.set(16, 13, '#c83030');
+    return finish(p);
+  }
+  function mineCart() {
+    const p = new Pix(24, 16);
+    p.rect(2, 3, 20, 9, '#6a4a3a'); p.hline(1, 22, 2, '#8a6a52'); p.hline(1, 22, 3, '#4a3428'); p.hline(2, 21, 11, '#3e2a20');
+    for (const x of [4, 9, 14, 19]) { p.set(x, 5, '#a8886a'); p.set(x, 9, '#a8886a'); }
+    for (const [x, y, c] of [[5, 1, '#8a8c90'], [8, 0, '#a8302a'], [12, 1, '#6e7074'], [16, 0, '#8a5a54'], [19, 1, '#8a8c90']]) { p.rect(x, y, 3, 2, c); }
+    for (const x of [5, 16]) { p.rect(x, 11, 4, 4, '#1c1614'); p.set(x + 1, 12, '#5a5a62'); }
+    return finish(p);
+  }
+  function timberSet() {
+    const p = new Pix(34, 30), wd = '#7a5a34', wl = '#9a7444', wk = '#5a3e22';
+    for (const x of [1, 29]) { p.rect(x, 3, 4, 27, wd); p.vline(x, 3, 29, wl); p.vline(x + 3, 3, 29, wk); for (let y = 7; y < 29; y += 6) p.set(x + 1, y, wk); }
+    p.rect(0, 0, 34, 4, wd); p.hline(0, 33, 0, wl); p.hline(0, 33, 3, wk);
+    p.set(8, 1, wk); p.set(20, 2, wk);
+    return finish(p);
+  }
+  function mineLantern() {
+    const p = new Pix(7, 11);
+    p.hline(2, 4, 0, '#3a3a40'); p.set(1, 1, '#3a3a40'); p.set(5, 1, '#3a3a40');
+    p.rect(1, 2, 5, 2, '#2a2a30'); p.rect(1, 4, 5, 5, '#f8d878'); p.vline(1, 4, 8, '#3a3a40'); p.vline(5, 4, 8, '#3a3a40'); p.set(3, 5, '#ffffff');
+    p.rect(1, 9, 5, 2, '#2a2a30');
+    return p.canvas();
+  }
+
+  // ================================================================ FATHER CHRISTMAS (postgame)
+  // The original Christmas doll: a tall peach cloth body (he came from the thrift
+  // store with no clothes), long floppy arms, a wild cream wool hood and beard
+  // around a tiny face with black bead eyes. Frames: arms down / arms up; rage
+  // eyes; and (after) Michelle's red sweater.
+  function fatherChristmas(armsUp, rage, sweater) {
+    const W = 30, H = 42, p = new Pix(W, H);
+    const wool = '#ece4d0', woolD = '#cfc3a6', woolL = '#fbf7ec', skin = '#e8b898', skinD = '#c89878';
+    // the cloth body and stubby legs
+    p.rect(9, 22, 12, 13, skin); p.vline(20, 22, 34, skinD); p.vline(15, 26, 33, skinD);
+    p.rect(10, 35, 4, 6, skin); p.rect(16, 35, 4, 6, skin); p.vline(13, 35, 40, skinD); p.vline(19, 35, 40, skinD);
+    if (sweater) {
+      p.rect(8, 22, 14, 13, '#c83030'); p.hline(8, 21, 34, '#a02020'); p.hline(8, 21, 23, '#e85050');
+      for (const [x, y] of [[11, 27], [15, 29], [19, 27], [13, 31], [17, 32]]) { p.set(x, y, '#f8f8f0'); p.set(x - 1, y, '#f8d8d8'); p.set(x + 1, y, '#f8d8d8'); }
+    }
+    // long floppy arms
+    const arm = sweater ? '#c83030' : skin;
+    if (armsUp) { p.rect(3, 8, 4, 16, arm); p.rect(23, 8, 4, 16, arm); p.rect(3, 6, 4, 3, skin); p.rect(23, 6, 4, 3, skin); }
+    else { p.rect(4, 22, 4, 12, arm); p.rect(22, 22, 4, 12, arm); p.rect(4, 33, 4, 3, skin); p.rect(22, 33, 4, 3, skin); p.vline(7, 22, 35, skinD); p.vline(25, 22, 35, skinD); }
+    // the wool hood and beard: a big shaggy mane down to the chest
+    for (let y = 0; y < 30; y++) for (let x = 0; x < W; x++) {
+      const top = (x - 14.5) ** 2 / 100 + (y - 11) ** 2 / 121 <= 1;
+      const beard = y >= 12 && Math.abs(x - 14.5) <= 9 - (y - 12) * 0.35;
+      if (top || beard) p.set(x, y, G.hash(x, y, 71) < 0.18 ? woolL : (x + y) % 5 === 0 ? woolD : wool);
+    }
+    // the little face peeking out of the wool: black bead eyes, a pointy nose
+    for (let y = 5; y < 13; y++) for (let x = 9; x < 21; x++) if ((x - 14.5) ** 2 / 26 + (y - 8.5) ** 2 / 13 <= 1) p.set(x, y, '#ecb894');
+    p.hline(11, 18, 5, '#d8a080');
+    const eye = rage ? '#ff2020' : '#100c0c';
+    for (const ex of [12, 17]) { p.set(ex, 8, eye); p.set(ex, 9, eye); p.set(ex - (ex < 14 ? 0 : 0), 7, rage ? '#ff9090' : '#ecb894'); }
+    if (!rage) { p.set(12, 8, '#f8f8f8'); p.set(17, 8, '#f8f8f8'); p.set(12, 9, eye); p.set(17, 9, eye); p.set(13, 9, eye); p.set(16, 9, eye); }
+    p.set(14, 9, '#d08868'); p.set(15, 9, '#d08868'); p.set(14, 10, '#c07858'); p.set(15, 10, '#e0a080');
+    // the wool mustache sweeping out over the beard
+    p.hline(11, 18, 11, woolL); p.hline(9, 20, 12, wool); p.set(10, 11, wool); p.set(19, 11, wool);
+    return finish(p);
+  }
+  function ornament(col) {
+    const p = new Pix(8, 9);
+    for (let y = 2; y < 9; y++) for (let x = 0; x < 8; x++) if ((x - 3.5) ** 2 + (y - 5.5) ** 2 <= 11) p.set(x, y, col);
+    p.rect(3, 0, 2, 2, '#d8b050'); p.set(2, 4, '#ffffff');
+    return finish(p);
+  }
+  function candyCane() {
+    const p = new Pix(7, 10);
+    for (let y = 3; y < 10; y++) p.set(5, y, y % 2 ? '#e83030' : '#ffffff');
+    p.set(4, 2, '#ffffff'); p.set(3, 1, '#e83030'); p.set(2, 1, '#ffffff'); p.set(1, 2, '#e83030'); p.set(1, 3, '#ffffff');
+    return finish(p);
+  }
+  function giftBomb() {
+    const p = new Pix(10, 10);
+    p.rect(1, 2, 8, 8, '#2e7a3e'); p.vline(5, 2, 9, '#f8d040'); p.hline(1, 8, 5, '#f8d040'); p.set(4, 1, '#f8d040'); p.set(6, 1, '#f8d040'); p.set(3, 0, '#f8d040'); p.set(7, 0, '#f8d040');
+    return finish(p);
+  }
+
   // ================================================================ THE FROZEN POND (Ice JJ Fish)
   // Snow piled on every branch of a pine (white on each top edge).
   function snowCap(src) {
@@ -4205,6 +4595,18 @@
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
     S.vanWickle = vanWickle();
+    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite']) S.rockIcons[k] = rockIcon(k);
+    S.oreVein = [oreVein(0), oreVein(1), oreVein(2)]; S.dumpPile = dumpPile(false); S.slagPile = dumpPile(true);
+    S.furnaceRuin = furnaceRuin(); S.adit = adit(); S.bat = [batFrame(true), batFrame(false)];
+    S.outcrops = { laf: outcrop('laf'), eas: outcrop('eas'), bed: outcrop('bed') };
+    S.quarryRubble = quarryRubble(); S.bigBasalt = bigRock('basalt'); S.bigDolomite = bigRock('dolomite'); S.gravelBar = gravelBar();
+    S.fc = { idle: fatherChristmas(false, false), up: fatherChristmas(true, false), idleRage: fatherChristmas(false, true), upRage: fatherChristmas(true, true), sweater: fatherChristmas(false, false, true) };
+    S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);
+    S.gull = [false, true].map((l) => ({ sit: gullFrame(l, 'sit'), up: gullFrame(l, 'up'), down: gullFrame(l, 'down') }));
+    S.tunnelPortal = tunnelPortal(); S.containerShip = containerShip(); S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
+    S.bayViewer = bayViewer(); S.tunnelLight = tunnelLight(); S.tunnelSign = tunnelSign();
+    S.fcCrate = fcCrate(false); S.fcCrateOpen = fcCrate(true); S.mineCart = mineCart(); S.timberSet = timberSet(); S.mineLantern = mineLantern();
+    S.ornaments = [ornament('#d83030'), ornament('#2e9a4a'), ornament('#d8b040')]; S.candyCane = candyCane(); S.giftBomb = giftBomb();
     S.mineralCases = {}; for (const k of ['quartz', 'garnet', 'fluor', 'fossil', 'pyrite']) S.mineralCases[k] = mineralCase(k);
     S.rockWall = rockWallSection(); S.stainedGlass = stainedGlass(); S.jawCrusher = jawCrusher(); S.rockSaw = rockSaw();
     S.microscopeBench = microscopeBench(); S.conglomerate = conglomerate(); S.meteorite = meteoritePedestal(); S.lamppost = lamppost();

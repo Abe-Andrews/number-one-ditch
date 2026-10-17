@@ -54,6 +54,11 @@
       skin: '#f4cdb0', hair: '#7a4a28', hairStyle: 'short', glasses: '#2a2e48', smile: '#f0e0d8',
       shirt: '#1c1c24', collar: '#34343e', logo: '#d03038', pants: '#5a6478', shoes: '#2a2a30', torso: 5, legs: 3,
     },
+    // The toll-taker in the Chesapeake Channel Tunnel: a deep hood, no face, two glowing eyes.
+    hooded: {
+      skin: '#141018', hair: '#2a2438', hairStyle: 'short', eyes: '#f8e070',
+      shirt: '#2a2438', pants: '#1e1a28', shoes: '#16121c', cloak: '#2e2840', hood: '#2e2840', torso: 8, legs: 5,
+    },
     // Campus NPCs
     devin: { skin: '#b07850', hair: '#1c1418', hairStyle: 'short', shirt: '#8a2034', pants: '#3a4258', shoes: '#e8e8e8', torso: 6, legs: 3 },
     prof: {
@@ -304,6 +309,20 @@
         : 'Something pink in the basement, eating Mom\'s books and singing a song she can\'t stand. Never stops dancing.'),
     },
     {
+      id: 'hooded', name: '???', met: () => fl().hoodedMet,
+      tag: () => (fl().tollPaid ? '{o}Toll paid' : '{r}Toll: 500 teeth'),
+      bio: () => (fl().tollPaid
+        ? 'Took 500 teeth in a bag far too small to hold them, then vanished into fog. He knew Nate\'s name.'
+        : 'Hooded. No face, just glowing eyes. Blocks the Chesapeake Channel Tunnel. Toll: 500 shark teeth.'),
+    },
+    {
+      id: 'fc', name: 'Father Christmas', met: () => fl().fcMet, img: () => (fl().fcBeaten ? G.spr.fc.sweater : G.spr.fc.idle),
+      tag: () => (fl().fcBeaten ? '{o}Postgame boss: knitted' : '{r}Postgame boss'),
+      bio: () => (fl().fcBeaten
+        ? 'The original Christmas doll. Michelle drove him to the Andover mines in a box. Now: half the mantel, one red sweater.'
+        : 'The original Christmas doll, thrift-store naked. Vanished in the move. Furious that Eggmas took his mantel.'),
+    },
+    {
       id: 'icejj', name: 'Ice JJ Fish', met: () => fl().jjMet,
       tag: () => (fl().jjBeaten ? '{o}Boss: beaten' : '{r}Boss'),
       bio: () => (fl().jjBeaten
@@ -356,14 +375,19 @@
     else if (!f.badlandsBeaten && G.ingredientCount() < 4) goal = 'Find milk, blue food coloring, liquid smoke and vodka shooters (ask Mom?) for the refrigerator game. (' + G.sayable(G.ingredientCount()) + '/4)';
     else if (!f.badlandsBeaten) goal = 'Bring the ingredients to Badlands Chugs in the kitchen. Time for the refrigerator game.';
     else if (!f.mikeyBeaten) goal = 'Mikey is waiting at the end of the driveway. Lily has something to tell him.';
-    else goal = 'The road to Chesapeake is open! Leave from either end of Rattlesnake Bridge Rd. (More story soon!)';
+    else if (!f.cbbtArrived) goal = 'The road to Chesapeake is open! Leave from either end of Rattlesnake Bridge Rd.';
+    else if (!f.tollPaid) goal = f.hoodedMet ? 'A hooded figure in the tunnel wants 500 shark teeth to let you through. (' + G.sayable(s.teeth) + '/500)' : 'Cross the Chesapeake Bay Bridge-Tunnel. Chesapeake is on the other side of the tunnel.';
+    else goal = 'The toll is paid. Chesapeake is through the tunnel! (More story soon!)';
     const side = [];
     if (f.capQuest || s.items.cap) side.push(['Gus\'s lawn job', s.items.cap ? '{g}Done!' : G.sayable(G.capProgress()) + '/10 sacred numbers']);
     if (f.chemMet) side.push(['The Chem Final', f.chemPerfect ? '{g}Perfect!' : f.chemPassed ? 'Passed! Retake for a heart' : 'Not passed yet']);
     if (f.ticketQuest) {
       const left = s.items.tickets || 0;
-      side.push(['Doron\'s spare tickets', f.ticketsDone ? '{g}Done!' : f.dadBeaten ? 'The show\'s over' : left ? G.sayable(left) + ' left' : 'Go tell Doron!']);
+      side.push(['Doron\'s spare tickets', f.ticketsDone ? '{g}Done!' : left ? G.sayable(left) + ' left' + (f.dadBeaten ? ' (next show)' : '') : 'Go tell Doron!']);
     }
+    if (G.rocksFound()) side.push(['Nate\'s rocks', G.rocksFound() >= G.ROCKS.length ? '{g}All found!' : G.sayable(G.rocksFound()) + '/' + G.ROCKS.length]);
+    if (f.fcAwake) side.push(['Father Christmas', f.fcBeaten ? '{g}Done!' : 'Deep in the Andover mines']);
+    else if (f.homeArrived) { const c = G.completion(); side.push(['100%', G.sayable(c.filter((x) => x[1]).length) + '/' + c.length + ' done']); }
     if (f.jjMet) side.push(['Ice JJ Fish', f.jjBeaten ? '{g}Done!' : 'North of the bridge']);
     if (f.booksQuest) {
       side.push(['Mom\'s missing books', f.shopOpen ? '{g}Done!' : s.items.books ? 'Bring them to Mom'
@@ -376,6 +400,7 @@
   };
 
   // ================================================================ MUSIC (original tunes)
+  // (Father Christmas's theme speeds up as he gets angrier: fc2, fc3 are set below)
   G.SONGS = {
     title: {
       bpm: 92,
@@ -438,6 +463,43 @@
         { wave: 'square', vol: 0.05, notes: 'D4:3 F4:1 A4:4 G#4:2 A4:2 R:4 | C5:3 A4:1 F4:4 E4:4 R:4 | D4:3 F4:1 A4:4 A#4:2 A4:2 G4:4 | F4:2 E4:2 D4:8 R:4 | A#4:3 A4:1 G4:4 F4:2 G4:2 A4:4 | C5:2 A#4:2 A4:4 G4:8 | F4:2 G4:2 A4:2 F4:2 E4:2 C#4:2 E4:4 | D4:12 R:4' },
         { wave: 'triangle', vol: 0.15, notes: 'D3:4 A2:4 D3:4 A2:4 | F2:4 C3:4 F2:4 C3:4 | D3:4 A2:4 G2:4 A2:4 | D3:4 A2:4 D3:8 | A#2:4 F3:4 A#2:4 F3:4 | C3:4 G3:4 C3:4 E3:4 | A2:4 E3:4 A2:4 C#3:4 | D3:8 A2:8' },
         { wave: 'noise', vol: 0.04, notes: 'k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:2 s:2 s:4' },
+      ],
+    },
+    // the Andover tunnels: slow minor arpeggios and water drips (original)
+    mine: {
+      bpm: 80,
+      tracks: [
+        { wave: 'square', vol: 0.025, notes: 'A3:2 C4:2 E4:2 C4:2 A3:2 C4:2 E4:2 C4:2 | F3:2 A3:2 C4:2 A3:2 F3:2 A3:2 C4:2 A3:2 | D3:2 F3:2 A3:2 F3:2 D3:2 F3:2 A3:2 F3:2 | E3:2 G#3:2 B3:2 G#3:2 E3:2 G#3:2 B3:2 R:2' },
+        { wave: 'triangle', vol: 0.13, notes: 'A2:8 E3:8 | F2:8 C3:8 | D2:8 A2:8 | E2:8 E2:8' },
+        { wave: 'noise', vol: 0.02, notes: 'h:2 R:14 | R:6 h:2 R:8 | R:16 | R:10 h:2 R:4' },
+      ],
+    },
+    // the bridge-tunnel: a breezy tune in G, salt air and gulls (original)
+    bay: {
+      bpm: 104,
+      tracks: [
+        { wave: 'square', vol: 0.04, notes: 'G4:2 B4:2 D5:4 B4:2 D5:2 E5:4 | D5:4 B4:2 G4:2 A4:8 | A4:2 C5:2 E5:4 D5:2 C5:2 B4:4 | G4:4 A4:2 B4:2 G4:8' },
+        { wave: 'triangle', vol: 0.14, notes: 'G2:4 D3:4 G2:4 D3:4 | D2:4 A2:4 D2:4 A2:4 | C3:4 G2:4 C3:4 G2:4 | G2:4 D3:4 G2:8' },
+        { wave: 'noise', vol: 0.03, notes: 'k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:2 s:2 h:4' },
+      ],
+    },
+    // under the shipping channel: a low hum and a slow, uneasy chime (original)
+    tunnel: {
+      bpm: 70,
+      tracks: [
+        { wave: 'triangle', vol: 0.14, notes: 'E2:16 | F2:16 | E2:16 | D#2:16' },
+        { wave: 'sine', vol: 0.05, notes: 'R:8 B4:8 | R:8 C5:8 | R:8 B4:8 | R:8 A#4:8' },
+        { wave: 'noise', vol: 0.012, notes: 'h:8 R:8 | h:8 R:8 | h:8 R:8 | h:8 h:4 R:4' },
+      ],
+    },
+    // Father Christmas: a music box gone wrong, in D minor, with sleigh bells (original)
+    fc: {
+      bpm: 132,
+      tracks: [
+        { wave: 'sine', vol: 0.1, notes: 'D5:4 F5:2 E5:2 D5:4 | A4:4 A#4:4 A4:4 | G4:4 A#4:2 A4:2 G4:4 | F4:4 E4:4 C#5:4 | D5:4 F5:2 G5:2 A5:4 | A#5:4 A5:4 G5:4 | F5:2 E5:2 D5:2 C#5:2 E5:4 | D5:8 R:4' },
+        { wave: 'triangle', vol: 0.15, notes: 'D3:4 A3:4 A3:4 | D3:4 A3:4 A3:4 | G2:4 D3:4 D3:4 | A2:4 E3:4 E3:4 | D3:4 A3:4 A3:4 | G2:4 D3:4 D3:4 | A2:4 E3:4 E3:4 | D3:4 A2:4 D2:4' },
+        { wave: 'square', vol: 0.018, notes: 'R:4 F4:4 F4:4 | R:4 F4:4 F4:4 | R:4 A#3:4 A#3:4 | R:4 G4:4 G4:4 | R:4 F4:4 F4:4 | R:4 A#3:4 A#3:4 | R:4 G4:4 G4:4 | R:4 F4:4 R:4' },
+        { wave: 'noise', vol: 0.025, notes: 'k:2 h:2 h:2 h:2 h:2 h:2 | k:2 h:2 h:2 h:2 h:2 h:2 | k:2 h:2 h:2 h:2 h:2 h:2 | k:2 h:2 h:2 h:2 s:2 h:2 | k:2 h:2 h:2 h:2 h:2 h:2 | k:2 h:2 h:2 h:2 h:2 h:2 | k:2 h:2 h:2 h:2 h:2 h:2 | k:2 h:2 s:2 h:2 s:2 s:2' },
       ],
     },
     // the frozen pond: a slow, soulful ballad in A minor (original)
@@ -613,10 +675,7 @@
 
   S.prof = function* () {
     const f = flags();
-    if (f.profTalk) {
-      yield G.say('Prof. Schist', 'Remember: every rock tells a story. Most of them are about pressure.');
-      return;
-    }
+    if (f.profTalk) { yield* S.profQuiz(); return; }
     yield G.say('Prof. Schist', 'Nate! I hear a plush egg is after the Number One Ditch.');
     yield G.say('Prof. Schist', 'Tragic. Coastal plain ditches are fascinating. Flat. Wet. Extremely ditchy.');
     yield G.say('Prof. Schist', 'My advice: when in doubt, hit it with your rock hammer.');
@@ -950,13 +1009,13 @@
 
   S.ticketReaction = function (npc) {
     const f = flags(), s = G.state;
-    if (!f.ticketQuest || f.ticketsGiven || f.dadBeaten || !(s.items.tickets > 0)) return null;
+    if (!f.ticketQuest || f.ticketsGiven || !(s.items.tickets > 0)) return null;
     const r = TICKET_REACTIONS[npc.name];
     const key = 'ticket_' + npc.name;
     if (!r || f[key]) return null;
     return (function* () {
       f[key] = r.accept ? 'yes' : 'no';
-      yield G.say('Nate', 'Hey! Want a free ticket to {y}Micro Mayhem Wrestling{/}?');
+      yield G.say('Nate', f.dadBeaten ? 'Hey! Want a free ticket to {y}Micro Mayhem Wrestling{/}? Next week\'s show.' : 'Hey! Want a free ticket to {y}Micro Mayhem Wrestling{/}?');
       for (const [who, line] of r.lines) yield G.say(who === 'n' ? 'Nate' : npc.name, line);
       if (!r.accept) return;
       s.items.tickets--;
@@ -965,9 +1024,23 @@
         yield G.say(null, 'Ticket given! {y}' + G.sayable(s.items.tickets) + '{/} left.');
       } else {
         f.ticketsGiven = true;
-        yield G.say(null, 'That was the last ticket! Go tell {y}Doron{/}.');
+        yield G.say(null, f.dadBeaten ? 'That was the last ticket! Doron is going to lose his mind.' : 'That was the last ticket! Go tell {y}Doron{/}.');
       }
     })();
+  };
+
+  // all four given away after the show (Doron's not at the fair anymore): he hears about it
+  S.ticketsText = function* () {
+    const f = flags(), say = G.with('doron') ? G.say : G.text;
+    if (f.ticketsDone) return;
+    yield G.wait(20);
+    if (!G.with('doron')) G.audio.sfx('buzz');
+    yield say('Doron', G.with('doron') ? 'Wait. You gave away ALL my tickets? People are actually COMING?!' : 'wait. you gave away ALL my tickets?? people are COMING?');
+    yield say('Doron', G.with('doron') ? 'Best day of my life. I\'m not crying. It\'s the pyro smoke.' : 'best day of my life. not crying. its the pyro smoke');
+    f.ticketsDone = true;
+    G.play.addTeeth(30);
+    G.audio.sfx('tooth');
+    yield G.say(null, 'Doron sends {y}30 shark teeth{/}. "For your trouble. And for being my brother."');
   };
 
   S.ticketsReward = function* () {
@@ -987,11 +1060,10 @@
   };
 
   S.rose = function* () {
-    if (flags()['ticket_Grandma Rose'] === 'yes') {
-      yield G.say('Grandma Rose', 'Thank you for the ticket, dear. I\'ll be ringside!');
-      return;
-    }
-    yield G.say('Grandma Rose', 'I come to the fair every year for the funnel cake. Six teeth! Can you believe it?');
+    if (G.state.items.hammer && (!flags().roseRocks || G.rocksHave('cementrock') >= 3)) { yield* S.roseTrade(); return; }
+    if (flags()['ticket_Grandma Rose'] === 'yes') yield G.say('Grandma Rose', 'Thank you for the ticket, dear. I\'ll be ringside!');
+    else yield G.say('Grandma Rose', 'I come to the fair every year for the funnel cake. Six teeth! Can you believe it?');
+    if (flags().roseRocks) yield* S.roseTrade();
   };
 
   S.earl = function* () {
@@ -1379,8 +1451,9 @@
   // drive to Chesapeake (which Mikey blocks until Lily is saved).
   S.homeLeave = function* (side) {
     const p = P(), back = side === 'west' ? 1 : -1;
-    const c = yield G.ask('Nate', 'Where to?', ['Back to Lafayette', 'Drive to Chesapeake', 'Stay home']);
+    const c = yield G.ask('Nate', 'Where to?', ['Back to Lafayette', 'Drive to Chesapeake', 'The Andover mines', 'Stay home']);
     if (c === 0) { G.play.warp('campus', 19, 27, 'up'); return; }
+    if (c === 2) { yield* S.driveAndover(); return; }
     if (c === 1) {
       if (!flags().lilySaved) { yield* S.mikeyBlock(side); return; }
       if (!flags().mikeyBeaten) { yield* S.mikeyGoldenHour(); return; }
@@ -1390,11 +1463,9 @@
     yield G.walkTo(p, p.x + back * 24, p.y, 1.2);
   };
 
-  S.homeEast = function* (side) {
-    const p = P(), back = side === 'west' ? 1 : -1;
-    yield G.say('Nate', 'Chesapeake is still a long way down this road.');
-    yield G.banner('TO BE CONTINUED...', 'The road to Chesapeake opens in a future update!', 240);
-    yield G.walkTo(p, p.x + back * 24, p.y, 1);
+  S.homeEast = function* () {
+    yield G.say('Nate', 'Chesapeake. Down the Eastern Shore, then straight across the bay. Hang on, Number One Ditch.');
+    G.play.warp('cbbt', 21, 20, 'left');
   };
   // ---------------------------------------------------------------- Badlands Chugs and the refrigerator game
   // Lily is locked in the kitchen fridge. The only way to get her out: beat
@@ -1927,6 +1998,232 @@
     G.audio.play('house');
   };
 
+
+  // ================================================================ FATHER CHRISTMAS (postgame)
+  // The original Christmas doll: bought at a thrift store with no clothes, the
+  // kids thought he was hilarious, and he vanished in the move. Abe and Nate
+  // always suspected Michelle. Reaching 100% (every quest, every rock) wakes him
+  // up, deep in the Andover mines, in a box labeled DO NOT OPEN (LILY). Lily is
+  // terrified of him.
+  G.SONGS.fc2 = Object.assign({}, G.SONGS.fc, { bpm: 160 });
+  G.SONGS.fc3 = Object.assign({}, G.SONGS.fc, { bpm: 184 });
+  const FC_BOUNDS = [2 * 16 + 8, 5 * 16, 22 * 16 - 8, 13 * 16 + 8];
+  const fcJunk = (e) => e instanceof G.FCOrnament || e instanceof G.FCGift || e instanceof G.FCCandyCane;
+
+  // 100%: the whole story, every sidequest, and every rock. That's what wakes him.
+  G.completion = () => {
+    const f = flags(), s = G.state;
+    return [
+      ['Gus\'s lawn job', !!s.items.cap],
+      ['Devin\'s chem question', !!f.phDone],
+      ['The Chem Final (perfect)', !!f.chemPerfect],
+      ['Doron\'s spare tickets', !!f.ticketsDone],
+      ['The main event', !!f.dadBeaten],
+      ['The boulder', !!f.boulderGone],
+      ['Badlands Chugs', !!f.badlandsBeaten],
+      ['Mikey', !!f.mikeyBeaten],
+      ['Mom\'s missing books', !!f.shopOpen],
+      ['The protesters', !!f.protestReward],
+      ['Ice JJ Fish', !!f.jjBeaten],
+      ['The bridge-tunnel toll', !!f.tollPaid],
+      ['Every rock', G.rocksFound() >= G.ROCKS.length],
+    ];
+  };
+  G.allDone = () => G.completion().every((c) => c[1]);
+  // checked every half second or so from the play loop
+  G.postgameTick = () => {
+    const f = flags();
+    if (G.state.playAs || G.play.dying) return;
+    if (f.ticketsGiven && !f.ticketsDone && f.dadBeaten) { G.script.run(S.ticketsText()); return; }
+    if (!f.fcAwake && G.allDone()) G.script.run(S.fcWakes());
+  };
+
+  S.fcWakes = function* () {
+    const f = flags();
+    if (f.fcAwake) return;
+    yield G.wait(30);
+    G.audio.sfx('fanfare');
+    yield G.banner('100%!', 'every quest, every rock', 170);
+    G.audio.sfx('buzz');
+    yield G.say(null, 'Nate\'s phone buzzes. And buzzes. And buzzes.');
+    yield G.say(null, '{c}~ FAMILY GROUP CHAT ~{/}');
+    yield G.text('Lily', 'nate');
+    yield G.text('Lily', 'the news says people are hearing HO HO HO coming out of the old andover mines');
+    yield G.text('Lily', 'slowly. they said it was SLOW');
+    yield G.text('Abe', 'wait. andover. didnt mom go "antiquing" up there the week of the move');
+    yield G.text('Abe', 'nate. NATE. you know what this means');
+    yield G.say('Nate', '...Father Christmas.');
+    yield G.text('Lily', 'i am never going to andover. ever');
+    f.fcAwake = true;
+    G.audio.sfx('secret');
+    yield G.banner('POSTGAME', 'something stirs in the Andover mines', 170);
+  };
+
+  // the box at the back of the deep stope, shaking
+  S.fcBox = function* () {
+    const f = flags(), w = G.play.world, p = P();
+    const lily = w.ents.find((e) => e instanceof G.Follower && e.id === 'lily' && !e.dead);
+    const doron = w.ents.find((e) => e instanceof G.Follower && e.id === 'doron' && !e.dead);
+    yield G.say(null, 'A cardboard box, way down here. In marker: {r}CHRISTMAS. DO NOT OPEN (LILY).{/} It\'s shaking. Something inside is humming. Slowly.');
+    if (lily) yield G.say('Lily', 'nate. NATE. it says do not open. it says LILY. that is ME.');
+    const c = yield G.ask('Nate', f.fcMet ? 'Open it again?' : 'Open the box?', ['Open it', 'Absolutely not']);
+    if (c) { if (lily) yield G.say('Lily', 'thank you. thank you so much'); return; }
+    const bx = w.fcBox.x + 9;
+    yield G.walkTo(p, bx, 9 * 16 + 14, 1);
+    p.dir = 'up';
+    yield G.say(null, 'Nate lifts the lid...');
+    // he unfolds out of the box
+    G.audio.sfx('yell');
+    G.play.shake(20, 3);
+    w.fcBox.still = true;
+    const b = w.fc = w.add(new G.FatherChristmas(bx, 4 * 16 + 14, FC_BOUNDS));
+    b.alpha = 0;
+    w.burst(bx, 4 * 16 + 4, ['#d83030', '#2e9a4a', '#d8b040', '#ece4d0', '#ffffff'], 24, { speed: 1.8, up: 1.2, g: 0.08, life: 40, size: 2 });
+    yield { update() { b.alpha = Math.min(1, b.alpha + 0.03); return b.alpha >= 1; } };
+    yield G.walkTo(b, bx, 6 * 16 + 4, 0.4);
+    yield G.camFocus(b.x, b.y - 20, 30);
+    if (!f.fcMet) {
+      yield G.say('Father Christmas', 'Ho.');
+      yield G.say('Father Christmas', 'Ho.');
+      yield G.say('Father Christmas', '...Ho.');
+      yield G.say('Nate', 'FATHER CHRISTMAS?!');
+      if (doron) {
+        yield G.say('Doron', 'Is he... naked?');
+        yield G.say('Nate', 'He came that way. From the thrift store.');
+        yield G.say('Doron', 'Oh, I remember. We thought it was hilarious.');
+      }
+      yield G.say('Father Christmas', 'Oh, you remember me. How NICE.');
+      yield G.say('Father Christmas', 'I was the FIRST, Nate. The original. Front and center on the mantel every December.');
+      yield G.say('Father Christmas', 'Abe, Doron, Nate and Lily. You all laughed. I thought you were laughing WITH me.');
+      yield G.say('Father Christmas', 'Then came the move. Then came the box. Then came a long, dark drive. Then came THE MINE.');
+      yield G.say('Father Christmas', 'And who sits on MY mantel now?');
+      yield G.say('Nate', '...Father Eggmas.');
+      yield G.say('Father Christmas', 'AN EGG. A plush EGG in a Santa hat. My REPLACEMENT. He even took HALF MY NAME!');
+      yield G.say('Father Christmas', 'You did EVERYTHING, Nate. Every quest. Every rock in three counties. All that hammering woke me up.');
+      yield G.say('Father Christmas', 'Now I\'m taking back my mantel. And then I\'m taking back CHRISTMAS.');
+    } else {
+      yield G.say('Father Christmas', 'Back for more? Ho. Ho. HO.');
+    }
+    if (lily) {
+      yield G.say('Lily', 'NOPE.');
+      lily.hold = true;
+      yield G.walkTo(lily, 0, 8 * 16 + 14, 3.4);
+      lily.dead = true;
+      w.lilyFled = true;
+      yield G.say('Nate', 'LILY!');
+      if (!f.fcMet) yield G.text('Lily', 'i am in the car. i locked the doors. good luck');
+    }
+    if (doron) {
+      yield G.say('Doron', 'I\'m not scared of a doll.');
+      doron.hold = true;
+      yield G.walkTo(doron, 3 * 16 + 18, 12 * 16 + 2, 3);
+      doron.dir = 'down';
+      w.pop(doron.x, doron.y - 30, '*guards the mine cart*', '#68c8ff');
+    }
+    yield G.camFocus(null, null, 30);
+    if (!f.fcMet) {
+      f.fcMet = true;
+      yield G.say(null, 'He\'s {r}tough{/}: he hits for a whole heart and gets faster the angrier he gets. Watch for the {r}red band{/} before his sleigh dash, and slip through the {y}gap{/} in his HO HO HO rings.');
+      G.play.autosave();
+    }
+    w.fcFight = true;
+    yield G.banner('FATHER CHRISTMAS', 'the original', 150);
+    G.audio.play('fc');
+  };
+
+  S.fcPhase = function* (boss, ph) {
+    const w = G.play.world;
+    for (const e of w.ents) if (fcJunk(e)) e.dead = true;
+    G.audio.stop();
+    yield G.shakeCmd(20, 3);
+    if (ph === 2) {
+      yield G.say('Father Christmas', 'Do you know what it\'s like? Staring at the inside of a box lid in the dark for YEARS?');
+      yield G.say('Father Christmas', 'Every December I pictured you all at home. Hanging up the EGG.');
+    } else {
+      G.audio.sfx('boom');
+      yield G.bigText('NAUGHTY LIST', 70, '#f86858');
+      yield G.say('Father Christmas', 'HO. HO. HO. You are ALL on the naughty list.');
+    }
+    // the box coughs up a couple of hearts
+    const bx = w.fcBox.bx + 9;
+    for (const dx of [-12, 12]) w.add(new G.Pickup(bx + dx, 5 * 16 + 14, 'heart'));
+    G.audio.play(ph === 2 ? 'fc2' : 'fc3');
+  };
+
+  S.fcDefeated = function* (boss) {
+    const f = flags(), w = G.play.world, p = P();
+    G.audio.stop();
+    for (const e of w.ents) if (fcJunk(e)) { e.dead = true; w.burst(e.x, e.y - 8, ['#ffffff', '#d83030'], 3); }
+    G.audio.sfx('bell');
+    yield G.shakeCmd(30, 3);
+    yield G.wait(40);
+    w.fcFight = false;
+    yield G.banner('YOU WIN!', 'the original, defeated', 150);
+    boss.still = true;
+    p.dir = G.dirToward(boss.x - p.x, boss.y - p.y);
+    yield G.say('Father Christmas', '...Fine. FINE. Leave me down here. That\'s what you people do.');
+    yield G.say('Nate', 'I didn\'t leave you anywhere! We thought you got lost in the move.');
+    yield G.say('Father Christmas', 'LOST? I didn\'t get LOST, Nate. Somebody PACKED me. Somebody DROVE me out here.');
+    yield G.say('Father Christmas', 'She said "this is for the best." Then she said "Nate will never look past the rocks."');
+    yield G.say('Nate', '...She?');
+    const doron = w.ents.find((e) => e instanceof G.Follower && e.id === 'doron' && e.hold);
+    if (doron) {
+      yield G.walkTo(doron, doron.x + 18, doron.y + 14, 1);
+      yield G.say('Doron', 'I was guarding the mine cart.');
+      yield G.say('Nate', 'Sure you were.');
+      doron.hold = false;
+    }
+    G.audio.sfx('buzz');
+    yield G.say(null, 'Nate texts Mom.');
+    yield G.text('Nate', 'mom. did you throw father christmas away in the move');
+    yield G.text('Michelle', 'I did NOT throw him away.');
+    yield G.text('Michelle', 'I put him in a box, labeled it DO NOT OPEN (LILY), and drove him to the Andover mines.');
+    yield G.text('Nate', 'WHY');
+    yield G.text('Michelle', 'He was NAKED, Nate. On the MANTEL. The church ladies came over for Advent.');
+    yield G.text('Michelle', 'And I knew you\'d never look at anything down there but the rocks.');
+    yield G.say('Nate', 'Abe and I KNEW it.');
+    yield G.text('Abe', 'I KNEW IT. she told us he got LOST');
+    yield G.say('Father Christmas', '...Can I come home?');
+    yield G.text('Michelle', '...Fine. Bring him home. He can have half the mantel. Eggmas can scoot over.');
+    yield G.text('Michelle', 'But he is wearing CLOTHES.');
+    f.fcBeaten = true;
+    // home: Michelle with her knitting needles
+    yield G.fadeOut(30);
+    G.play.loadMap('homeDown', 9 * 16 + 8, 6 * 16 + 14, 'left', true);
+    const hw = G.play.world;
+    const m = hw.add(new G.NPC({ sprite: 'michelle', name: 'Michelle', x: 8 * 16 + 8, y: 4 * 16 + 14, dir: 'left' }));
+    yield G.say(null, 'Back home. Three hours and one ball of red yarn later...');
+    yield G.fadeIn(30);
+    yield G.say('Father Christmas', '...It itches.');
+    yield G.say('Michelle', 'It\'s wool. You\'re wool. You match.');
+    yield G.say('Father Christmas', '...Ho. Ho. Ho.');
+    hw.pop(7 * 16 + 8, 3 * 16 - 30, '*content*', '#f8d850');
+    yield G.text('Lily', 'is he gone');
+    yield G.text('Nate', 'he\'s wearing a sweater now');
+    yield G.text('Lily', 'still no');
+    G.play.addTeeth(100);
+    G.audio.sfx('tooth');
+    yield G.itemGet(G.spr.toothGold, 'Father Christmas hands over {y}100 shark teeth{/} he found in the mine. Nobody asks how.');
+    G.audio.sfx('fanfare');
+    yield G.banner('POSTGAME CLEAR!', 'thank you for playing', 220);
+    yield G.walkTo(m, 20 * 16 + 8, 5 * 16 + 14, 1);
+    m.dead = true;
+    G.play.autosave();
+  };
+
+  // afterward he stands by the brick fireplace in his sweater
+  S.fcHome = function* () {
+    const f = flags();
+    f.fcLine = ((f.fcLine || 0) + 1) % 4;
+    if (G.with('lily')) { yield G.say('Lily', 'dont look at him. dont make eye contact.'); return; }
+    yield G.say('Father Christmas', [
+      'Half a mantel. HALF. ...It\'s a start.',
+      'The sweater itches. Don\'t tell Michelle.',
+      'When the egg comes back, he gets the LEFT side. The drafty side.',
+      'Ho. Ho. Ho. (He seems happy. It\'s hard to tell.)',
+    ][f.fcLine]);
+  };
+
   // ================================================================ VAN WICKLE HALL (geology)
   // Nate's favorite building on campus: rocks, minerals, and a rock crusher he
   // has written permission to use.
@@ -1965,23 +2262,18 @@
       yield G.say('Nate', 'I have a permission slip. For the rock crusher. This is the best day of my life.');
       if (G.with('doron')) { yield G.say('Doron', 'Can I put something in it?'); yield G.say('Nate', 'No.'); }
     }
-    if (w.crushed) { yield G.say('Nate', 'It needs to cool down. One rock per visit. Safety first.'); return; }
-    const c = yield G.ask('Nate', 'Feed it a rock?', ['Crush a rock', 'Not right now']);
-    if (c !== 0) return;
+    const hasRocks = G.ROCKS.some((r) => G.rocksHave(r.id) > 0);
+    const opts = [], acts = [];
+    if (!w.crushed) { opts.push('A field sample'); acts.push('sample'); }
+    if (hasRocks) { opts.push('A rock from my collection'); acts.push('mine'); }
+    opts.push('Not right now'); acts.push(null);
+    if (opts.length === 1) { yield G.say('Nate', 'The field samples are done for today. Next time, bring rocks from Andover.'); return; }
+    const c = yield G.ask('Nate', 'What goes in the crusher?', opts);
+    if (acts[c] === 'mine') { yield* S.crushCollection(); return; }
+    if (acts[c] !== 'sample') return;
     w.crushed = true;
-    const cx = 2 * 16 + 16, cy = 3 * 16 + 8;
     yield G.say(null, 'Nate grabs a field sample from the bucket, puts on his safety glasses, and drops it in the hopper.');
-    yield {
-      start() { this.t = 0; },
-      update() {
-        this.t++;
-        if (this.t % 7 === 0) { G.audio.sfx('clank'); w.burst(cx, cy, ['#8a8a90', '#c8c0b0', '#5a5a62', '#a85a48'], 4, { speed: 1.1, up: 0.8, g: 0.1, life: 22, size: 2 }); }
-        G.play.shake(2, 1);
-        if (this.t === 21) w.pop(cx, cy - 24, 'CRUNCH!', '#ffffff');
-        if (this.t === 42) w.pop(cx, cy - 24, 'GRIND!', '#ffffff');
-        return this.t >= 60;
-      },
-    };
+    yield* G.crushAnim(w);
     const FINDS = [
       [4, 'Just gravel. Very fine, very gray gravel.', 0],
       [3, 'Hidden inside: a pocket of clear quartz crystals!', 5],
@@ -2003,6 +2295,291 @@
     }
   };
 
+  // ================================================================ THE ANDOVER MINES (rock collecting)
+  // Nate's favorite place to explore: the old iron mines of Andover, Sussex
+  // County, NJ (worked before the Revolution; the Continental Congress ran them
+  // for cannonballs and steel). Smash dump piles and mineral veins to collect
+  // real specimens; crush them at Van Wickle's jaw crusher for rewards.
+  const RARITY = [
+    { name: 'Common', color: '#f8f8f0' },
+    { name: 'Uncommon', color: '#78e070' },
+    { name: 'Rare', color: '#68c8ff' },
+    { name: 'Very rare', color: '#c898ff' },
+    { name: 'Legendary', color: '#f8d850' },
+  ];
+  G.RARITY = RARITY;
+  // crush: what the jaw crusher turns it into (teeth / eggs / packages / heart / none)
+  G.ROCKS = [
+    // the Andover mines
+    { id: 'hematite', name: 'Hematite', area: 'andover', r: 0, crush: { teeth: 5 }, fact: 'Andover\'s red iron ore: the biggest hematite deposit in New Jersey. Scratch it on tile and the streak is reddish brown.' },
+    { id: 'magnetite', name: 'Magnetite', area: 'andover', r: 0, crush: { teeth: 5 }, fact: 'Black iron ore that sticks to a magnet. Andover and Sulphur Hill shipped as much as 400,000 tons of iron ore.' },
+    { id: 'calcite', name: 'Calcite', area: 'andover', r: 0, crush: { eggs: 12 }, fact: 'Soft and milky white, and it fizzes in acid. It came up with the ore. Crushed, it\'s calcium grit for laying hens.' },
+    { id: 'marble', name: 'Franklin Marble', area: 'andover', r: 0, crush: { teeth: 5 }, fact: 'The white, sugary marble of the New Jersey Highlands, over a billion years old. The iron ore formed in rock like this.' },
+    { id: 'quartz', name: 'Quartz', area: 'andover', r: 0, crush: { teeth: 5 }, fact: 'Clear six-sided crystals. Hardness 7: it scratches glass. Found almost everywhere, loved anyway.' },
+    { id: 'jasper', name: 'Jasper', area: 'andover', r: 1, crush: { teeth: 10 }, fact: 'Opaque red quartz, colored by iron. Old reports list jasper right alongside Andover\'s ore.' },
+    { id: 'garnet', name: 'Garnet', area: 'andover', r: 1, crush: { teeth: 15 }, fact: 'Little red-brown twelve-sided crystals. Garnet has been recorded at the Andover Iron Mine.' },
+    { id: 'pyrite', name: 'Pyrite', area: 'andover', r: 1, crush: { package: 2 }, fact: 'Fool\'s gold. Strike it with steel and it sparks. Sulphur Hill next door was named for its sulfur-rich ore.' },
+    { id: 'slag', name: 'Furnace Slag', area: 'andover', r: 1, crush: { teeth: 10 }, fact: 'Glassy blue-green waste from the old Andover iron furnace, first fired in the 1760s. Not a mineral, but a piece of history.' },
+    { id: 'sphalerite', name: 'Sphalerite', area: 'andover', r: 2, crush: { teeth: 20 }, fact: 'Dark, resinous zinc ore. Zinc sulfides turn up mixed with the iron in Andover\'s lower workings, including a vein with copper inclusions.' },
+    { id: 'galena', name: 'Galena', area: 'andover', r: 2, crush: { teeth: 20 }, fact: 'Silvery lead ore that breaks into perfect cubes, and it\'s HEAVY. Lead sulfides show up in the lower workings too.' },
+    { id: 'chalcopyrite', name: 'Chalcopyrite', area: 'andover', r: 2, crush: { teeth: 25 }, fact: 'Brassy copper ore that tarnishes peacock blue and purple. Early-1940s prospectors came to Andover looking for copper.' },
+    { id: 'specular', name: 'Specular Hematite', area: 'andover', r: 3, crush: { teeth: 40 }, fact: 'Hematite in glittering mirror-bright plates. In the lantern light it sparkles like a night sky.' },
+    { id: 'lodestone', name: 'Lodestone', area: 'andover', r: 3, crush: { heart: 1 }, fact: 'Magnetite that\'s a natural magnet. Iron filings bristle off it. People used lodestones as the first compasses.' },
+    { id: 'cannonball', name: 'Continental Cannonball', area: 'andover', r: 4, crush: null, fact: 'An iron cannonball, maybe cast from Andover ore when the Continental Congress ran the mine for the American army. It belongs in a museum. Nate is the museum.' },
+    // Lafayette (College Hill, Easton PA)
+    { id: 'dolomite', area: 'lafayette', name: 'Allentown Dolomite', r: 0, crush: { teeth: 5 }, how: 'Hammer the gray rock outcrops around campus.', fact: 'The most common bedrock in the Lehigh Valley: dolostone from a warm, shallow sea about 500 million years ago.' },
+    { id: 'gneiss', area: 'lafayette', name: 'The Nicest Gneiss', r: 1, crush: { teeth: 15 }, how: 'Prof. Schist gives one out for a right answer.', fact: 'Banded Precambrian gneiss of the Reading Prong, over a billion years old. Easton\'s arts trail has a sign about it called "The Nicest Gneiss."' },
+    { id: 'stromatolite', area: 'lafayette', name: 'Stromatolite', r: 2, crush: { teeth: 30 }, how: 'Something big and strong could crack the dolomite ledge.', fact: 'Fossil mats of ancient microbes, layered like a cabbage, from the Allentown Formation. Some of the oldest life you can hold.' },
+    // Easton (the fairgrounds)
+    { id: 'cementrock', area: 'easton', name: 'Cement Rock', r: 0, crush: { teeth: 5 }, how: 'Hammer the dark outcrops around the fairgrounds.', fact: 'Shaly limestone from the Jacksonburg Formation. The Lehigh Valley ground it into Portland cement and was once the cement capital of America.' },
+    { id: 'serpentine', area: 'easton', name: 'Serpentine', r: 1, crush: { package: 2 }, how: 'That pile of old quarry rubble is too solid to hammer. Maybe something explosive?', fact: 'Green "verdolite" from the Chestnut Hill quarries in Easton, cut for ornamental stone. Smooth, waxy and mottled like a snake.' },
+    { id: 'eastonite', area: 'easton', name: 'Eastonite', r: 2, crush: { teeth: 30 }, how: 'Grandma Rose collects rocks. Maybe she\'d trade?', fact: 'A mica named after Easton itself, found in the Chestnut Hill quarry. Collectors still find it there.' },
+    // Bedminster (home)
+    { id: 'shale', area: 'bedminster', name: 'Passaic Red Shale', r: 0, crush: { teeth: 5 }, how: 'Hammer the red rock ledges around the yard.', fact: 'Red mud from the Newark Basin, Triassic and Jurassic. Dinosaurs left footprints in mud like this all over New Jersey.' },
+    { id: 'basalt', area: 'bedminster', name: 'Watchung Basalt', r: 1, crush: { teeth: 15 }, how: 'The big black boulder by Brady Brook is way too heavy for Nate. Doron, though...', fact: 'Jurassic lava flows that built the Watchung Mountains just east of Bedminster.' },
+    { id: 'prehnite', area: 'bedminster', name: 'Prehnite', r: 2, crush: { heart: 1 }, how: 'Try sifting the gravel in Brady Brook.', fact: 'Pale green crystals that grow in the gas bubbles of New Jersey basalt. Mindat lists prehnite in Bedminster Township.' },
+  ];
+  G.rockById = (id) => G.ROCKS.find((r) => r.id === id);
+  G.ROCK_AREAS = [
+    { id: 'andover', name: 'ANDOVER MINES' },
+    { id: 'lafayette', name: 'LAFAYETTE' },
+    { id: 'easton', name: 'EASTON FAIR' },
+    { id: 'bedminster', name: 'BEDMINSTER' },
+  ];
+  const rockState = () => { const s = G.state; s.rocks = s.rocks || {}; s.rocksFound = s.rocksFound || {}; return s; };
+  G.rocksFound = () => G.ROCKS.filter((r) => rockState().rocksFound[r.id]).length;
+  G.rocksHave = (id) => rockState().rocks[id] || 0;
+
+  // what each spot can hold (weights): dump piles and the slag heap outside,
+  // the tunnels, and the lower workings (where the sulfides are)
+  const ROCK_ZONES = {
+    dump: [['hematite', 30], ['magnetite', 24], ['calcite', 16], ['marble', 14], ['quartz', 12], ['jasper', 7], ['garnet', 3]],
+    slag: [['slag', 60], ['hematite', 15], ['quartz', 10], ['jasper', 8], ['magnetite', 7]],
+    tunnel: [['hematite', 20], ['magnetite', 20], ['quartz', 10], ['calcite', 8], ['jasper', 11], ['garnet', 12], ['pyrite', 11], ['specular', 4], ['lodestone', 1]],
+    deep: [['pyrite', 12], ['sphalerite', 15], ['galena', 12], ['chalcopyrite', 10], ['garnet', 9], ['specular', 7], ['lodestone', 3], ['magnetite', 8], ['hematite', 8]],
+    cannon: [['cannonball', 1]],
+    laf: [['dolomite', 40], ['stromatolite', 1]],
+    eas: [['cementrock', 1]],
+    bed: [['shale', 1]],
+  };
+  // Break a vein: roll a specimen, add it, and announce it.
+  G.rockFind = (zone, x, y) => {
+    const table = ROCK_ZONES[zone] || ROCK_ZONES.dump;
+    let roll = Math.random() * table.reduce((n, e) => n + e[1], 0), id = table[0][0];
+    for (const [k, wgt] of table) { roll -= wgt; if (roll < 0) { id = k; break; } }
+    if (zone === 'cannon') flags().cannonball = true;
+    G.rockGain(id, x, y);
+  };
+  // Add one specimen: new or rare finds get the fanfare, the rest just a pop.
+  G.rockGain = (id, x, y) => {
+    const s = rockState(), rock = G.rockById(id), isNew = !s.rocksFound[id];
+    s.rocks[id] = (s.rocks[id] || 0) + 1;
+    s.rocksFound[id] = (s.rocksFound[id] || 0) + 1;
+    const w = G.play.world;
+    if (isNew || rock.r >= 2) G.script.run(S.rockNew(id, isNew));
+    else { G.audio.sfx('tooth'); w.pop(x, y - 30, '+1 ' + rock.name, RARITY[rock.r].color); }
+    return isNew;
+  };
+  // Inside a script: add one and announce it right there.
+  S.rockGive = function* (id) {
+    const s = rockState(), isNew = !s.rocksFound[id];
+    s.rocks[id] = (s.rocks[id] || 0) + 1;
+    s.rocksFound[id] = (s.rocksFound[id] || 0) + 1;
+    yield* S.rockNew(id, isNew);
+  };
+  S.rockNew = function* (id, isNew) {
+    const rock = G.rockById(id), rar = RARITY[rock.r];
+    yield G.itemGet(G.spr.rockIcons[id], (isNew ? 'NEW! ' : '') + 'You found {y}' + rock.name + '{/}! (' + rar.name + ')');
+    if (isNew) yield G.say(null, rock.fact);
+    if (isNew && rock.r >= 3) yield G.say('Nate', rock.r === 4 ? 'This is the greatest moment of my life. Again.' : 'I have READ about these. In MULTIPLE books.');
+    if (isNew && G.rocksFound() === G.ROCKS.length && !flags().rockHound) {
+      flags().rockHound = true;
+      G.audio.sfx('fanfare');
+      yield G.banner('ROCK HOUND!', 'every rock, every area', 170);
+      G.play.addTeeth(50);
+      yield G.say('Nate', 'Every single rock. I need a bigger shelf.');
+      yield G.say(null, 'Nate gets {y}50 shark teeth{/} for completing the collection.');
+    }
+  };
+
+  // A choice from a long list, seven at a time. Returns the index, or -1.
+  function* pickFrom(name, text, labels) {
+    for (let start = 0; ;) {
+      const page = labels.slice(start, start + 7), more = start + 7 < labels.length;
+      const c = yield G.ask(name, text, page.concat(more ? ['More...', 'Never mind'] : ['Never mind']));
+      if (c < page.length) return start + c;
+      if (more && c === page.length) { start += 7; continue; }
+      return -1;
+    }
+  }
+
+  // ---- rocks around Lafayette, the fairgrounds and home: some take more than a hammer
+  // A rock too heavy for Nate. With Doron along, he heaves it up and slams it open.
+  S.bigRockLift = function* (rock) {
+    const w = G.play.world, p = P(), basalt = rock.kind === 'basalt';
+    const d = w.ents.find((e) => e instanceof G.Follower && e.id === 'doron' && !e.dead);
+    if (rock.done) { yield G.say('Nate', 'Split clean open. Doron says he\'ll do another one next time we\'re here.'); return; }
+    if (!d) {
+      yield G.say('Nate', basalt ? 'A huge black basalt boulder, washed down Brady Brook. It weighs about a ton.' : 'A thick dolomite ledge with wavy layers all through it. Fossils, maybe. Way too thick to hammer.');
+      yield G.say('Nate', 'I need somebody really strong. Somebody who suplexes rocks for breakfast.');
+      return;
+    }
+    yield G.say('Nate', basalt ? 'Doron. Can you lift that?' : 'Doron. See those wavy layers? I need to get inside that ledge.');
+    yield G.say('Doron', basalt ? 'Can I lift it. CAN I LIFT IT.' : 'Say no more.');
+    d.hold = true;
+    yield G.walkTo(p, rock.x - 40, rock.y + 16, 1.2);
+    p.dir = 'right';
+    yield G.walkTo(d, rock.x, rock.y + 16, 1.2);
+    d.dir = 'up';
+    yield { start() { G.audio.sfx('dash'); }, update() { rock.lift += 1; G.play.shake(2, 1); return rock.lift >= 30; } };
+    yield G.say('Doron', basalt ? 'HUP!' : 'ARMY...');
+    yield { update() { rock.lift = Math.max(0, rock.lift - 6); return rock.lift <= 0; } };
+    rock.done = true;
+    G.audio.sfx('boom');
+    G.play.shake(24, 4);
+    w.burst(rock.x, rock.y - 10, basalt ? ['#2e2e34', '#46464e', '#5a5a64'] : ['#8a8c90', '#a8aaae', '#c0c2c6'], 20, { speed: 2, up: 1.2, g: 0.1, life: 36, size: 3 });
+    yield G.wait(30);
+    yield G.say('Doron', basalt ? 'Rock. Meet ground.' : '...SPLIT!');
+    d.hold = false;
+    yield* S.rockGive(basalt ? 'basalt' : 'stromatolite');
+    if (!basalt && G.rocksHave('stromatolite') === 1) yield G.say('Nate', 'Doron. You just cracked open half a billion years.');
+    if (!basalt && G.rocksHave('stromatolite') === 1) yield G.say('Doron', 'It had it coming.');
+  };
+
+  // Sifting the gravel bar in Brady Brook (once a visit). Prehnite washes out of
+  // the basalt upstream; it turns up for sure by the third try.
+  S.brookSift = function* () {
+    const w = G.play.world, f = flags();
+    if (w.sifted) { yield G.say('Nate', 'I\'ve sifted this gravel bar down to sand. The brook will bring more.'); return; }
+    const c = yield G.ask(null, 'A gravel bar in Brady Brook: red shale, black basalt, a little quartz.', ['Sift through it', 'Leave it']);
+    if (c) return;
+    w.sifted = true;
+    yield G.say(null, 'Nate kneels at the edge of the brook and sifts through handfuls of cold, wet gravel...');
+    G.audio.sfx('slip');
+    yield G.wait(30);
+    f.siftTries = (f.siftTries || 0) + 1;
+    const roll = Math.random();
+    if (roll < 0.3 || (f.siftTries >= 3 && !G.rocksHave('prehnite') && !(G.state.rocksFound || {}).prehnite)) {
+      yield* S.rockGive('prehnite');
+      if (G.rocksHave('prehnite') === 1) yield G.say('Nate', 'Prehnite! It grows in the gas bubbles inside basalt. This came all the way down the brook.');
+    } else if (roll < 0.75) {
+      yield* S.rockGive('shale');
+    } else {
+      yield G.say(null, 'Just pebbles. And a crawfish. He seems upset about it.');
+    }
+  };
+
+  // Prof. Schist's pop quiz (once a visit): a right answer earns a piece of gneiss.
+  const PROF_QUIZ = [
+    { q: 'Which mineral is harder?', opts: ['Calcite', 'Quartz'], right: 1, why: 'Quartz is a 7 on the Mohs scale. Calcite is a 3. Quartz scratches glass.' },
+    { q: 'Gneiss forms from...', opts: ['Cooling lava', 'Heat and pressure', 'River sand'], right: 1, why: 'Gneiss is metamorphic: cooked and squeezed deep underground.' },
+    { q: 'Which mineral fizzes in acid?', opts: ['Galena', 'Quartz', 'Calcite'], right: 2, why: 'Calcite is calcium carbonate. Acid makes it bubble.' },
+    { q: 'Basalt is what kind of rock?', opts: ['Igneous', 'Sedimentary', 'Metamorphic'], right: 0, why: 'Igneous: it cooled from lava.' },
+    { q: 'What is fool\'s gold?', opts: ['Mica', 'Pyrite', 'Galena'], right: 1, why: 'Pyrite. Brassy, cubic, and it sparks.' },
+    { q: 'Scratch hematite on tile. The streak is...', opts: ['Reddish brown', 'Black', 'White'], right: 0, why: 'Reddish brown, like rust. Magnetite is the one with the black streak.' },
+  ];
+  S.profQuiz = function* () {
+    const w = G.play.world;
+    if (w.profQuizzed) { yield G.say('Prof. Schist', 'Remember: every rock tells a story. Most of them are about pressure.'); return; }
+    const c = yield G.ask('Prof. Schist', 'Pop quiz, Nate! Get it right and you get a rock from my office.', ['Bring it on', 'Not now']);
+    if (c) return;
+    w.profQuizzed = true;
+    const q = PROF_QUIZ[Math.floor(Math.random() * PROF_QUIZ.length)];
+    const a = yield G.ask('Prof. Schist', q.q, q.opts);
+    if (a !== q.right) {
+      yield G.say('Prof. Schist', 'Ooh. No. ' + q.why);
+      yield G.say('Prof. Schist', 'Come back later and I\'ll give you another one.');
+      return;
+    }
+    yield G.say('Prof. Schist', 'Correct! ' + q.why);
+    yield G.say('Prof. Schist', 'Here: the nicest gneiss in my collection. Get it? NICE. GNEISS.');
+    yield* S.rockGive('gneiss');
+  };
+
+  // Grandma Rose trades her eastonite for three pieces of cement rock.
+  S.roseTrade = function* () {
+    const f = flags();
+    if (!f.roseRocks) {
+      f.roseRocks = true;
+      yield G.say('Grandma Rose', 'Is that a rock hammer, dear? I collect rocks too. Have since I was a girl.');
+      yield G.say('Grandma Rose', 'Bring me three pieces of cement rock, and I\'ll trade you something special. Something named after this very town.');
+      if (G.rocksHave('cementrock') < 3) return;
+    }
+    if (G.rocksHave('cementrock') < 3) {
+      yield G.say('Grandma Rose', 'Three pieces of cement rock, dear. Those dark outcrops around the fairgrounds are full of it.');
+      return;
+    }
+    const c = yield G.ask('Grandma Rose', 'Ooh, cement rock! Three of those for my eastonite?', ['Trade', 'Not yet']);
+    if (c) return;
+    G.state.rocks.cementrock -= 3;
+    yield G.say('Grandma Rose', 'I found it in the old quarry up on Chestnut Hill when I was your age. Take good care of it.');
+    yield* S.rockGive('eastonite');
+  };
+
+  // ---- the jaw crusher takes specimens from the collection too
+  function* crushAnim(w) {
+    const cx = 2 * 16 + 16, cy = 3 * 16 + 8;
+    yield {
+      start() { this.t = 0; },
+      update() {
+        this.t++;
+        if (this.t % 7 === 0) { G.audio.sfx('clank'); w.burst(cx, cy, ['#8a8a90', '#c8c0b0', '#5a5a62', '#a85a48'], 4, { speed: 1.1, up: 0.8, g: 0.1, life: 22, size: 2 }); }
+        G.play.shake(2, 1);
+        if (this.t === 21) w.pop(cx, cy - 24, 'CRUNCH!', '#ffffff');
+        if (this.t === 42) w.pop(cx, cy - 24, 'GRIND!', '#ffffff');
+        return this.t >= 60;
+      },
+    };
+  }
+  G.crushAnim = crushAnim;
+  S.crushCollection = function* () {
+    const s = rockState(), w = G.play.world;
+    const owned = G.ROCKS.filter((r) => s.rocks[r.id] > 0);
+    if (!owned.length) { yield G.say('Nate', 'I don\'t have any rocks on me. Time for a trip to Andover.'); return; }
+    const tiers = [...new Set(owned.map((r) => r.r))].sort();
+    let pick;
+    if (owned.length <= 6) pick = owned;
+    else {
+      const t = yield G.ask('Nate', 'Which rocks?', tiers.map((r) => RARITY[r].name).concat('Never mind'));
+      if (t >= tiers.length) return;
+      pick = owned.filter((r) => r.r === tiers[t]);
+    }
+    const c = yield* pickFrom('Nate', 'Crush which one?', pick.map((r) => r.name + ' x' + G.sayable(s.rocks[r.id])));
+    if (c < 0) return;
+    const rock = pick[c];
+    if (!rock.crush) {
+      yield G.say('Nate', 'Crush a Continental Army cannonball?! Absolutely not. This goes on my shelf.');
+      return;
+    }
+    s.rocks[rock.id]--;
+    yield G.say(null, 'Nate drops the ' + rock.name.toLowerCase() + ' in the hopper.');
+    yield* crushAnim(w);
+    const g = rock.crush;
+    if (g.teeth) { G.play.addTeeth(g.teeth); G.audio.sfx('tooth'); yield G.say(null, 'Crushed ' + rock.name.toLowerCase() + ' sells to the rock shop: {y}+' + G.sayable(g.teeth) + ' shark teeth{/}.'); }
+    if (g.eggs) {
+      if (s.items.chicken) { s.items.eggs = Math.min(40, (s.items.eggs || 0) + g.eggs); yield G.itemGet(G.spr.egg, 'Calcium grit for Henrietta! She lays {y}a dozen eggs{/} on the spot.'); }
+      else { G.play.addTeeth(5); yield G.say(null, 'Calcite grit. Nobody needs it yet, so Nate sells it: {y}+5 shark teeth{/}.'); }
+    }
+    if (g.package) {
+      s.items.package = Math.min(10, (s.items.package || 0) + g.package);
+      yield G.itemGet(G.spr.gift, rock.id === 'pyrite' ? 'Pyrite sparks! Nate rigs {y}2 Booby-Trapped Packages{/}.' : 'Nate packs the ' + rock.name.toLowerCase() + ' grit into boxes with fuses: {y}2 Booby-Trapped Packages{/}.');
+    }
+    if (g.heart) {
+      s.maxHp += 2; s.hp = s.maxHp;
+      yield G.itemGet(G.spr.heartBig, rock.id === 'lodestone' ? 'The lodestone crumbles into magnetic filings. Nate feels... drawn to adventure. {r}Heart Container!{/}' : 'The ' + rock.name.toLowerCase() + ' crumbles into glittering green sand. Nate feels brand new. {r}Heart Container!{/}');
+    }
+  };
+
+  // ---- getting there: the "Where to?" menu at either end of the road
+  S.driveAndover = function* () {
+    yield G.say('Nate', 'Andover. The old iron mines. I\'ve read every book about them. Twice.');
+    G.play.warp('andover', 27, 15, 'left');
+  };
+  S.andoverCar = function* () {
+    const c = yield G.ask('Nate', 'Head home?', ['Head home', 'Keep exploring']);
+    if (c === 0) G.play.warp('home', 1, 53, 'right');
+  };
+
   // ================================================================ ADMIN MODE (testing)
   // Story checkpoints in play order. Starting one applies every checkpoint up to
   // it (flags, items, party), then drops Nate at its spot. Admin runs never save.
@@ -2022,7 +2599,9 @@
     { name: 'Basement: Globglogabgalab', map: 'homeDown', at: [22, 8, 'up'], flags: { clue_den: true, clue_nightstand: true, clue_mudroom: true, cluesDone: true, momReport: true }, items: { basementKey: true, earplugs: true, bait: true } },
     { name: 'Return Mom\'s books (shop)', map: 'home', at: [34, 20, 'left'], flags: { globMet: true, globBeaten: true, baitPlaced: true, basementOpened: true }, items: { books: true, bait: false } },
     { name: 'Ice JJ Fish (north)', map: 'north', at: [10, 13, 'up'], flags: { shopOpen: true }, items: { books: false }, teeth: 120 },
-    { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, momHeart: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10 }, maxHp: 10, teeth: 300 },
+    { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, momHeart: true, phDone: true, chemMet: true, chemPassed: true, chemPerfect: true, ticketQuest: true, ticketsGiven: true, ticketsDone: true, protestReward: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10, tickets: 0 }, maxHp: 10, teeth: 300 },
+    { name: 'Bay Bridge-Tunnel (the toll)', map: 'cbbt', at: [21, 20, 'left'], teeth: 520 },
+    { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, rockHound: true, fcAwake: true }, rocks: true },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
   G.ADMIN_PLACES = [
@@ -2038,7 +2617,17 @@
     { name: 'Dad\'s workshop', map: 'garage', at: [10, 10, 'up'] },
     { name: 'The basement', map: 'basement', at: [18, 6, 'down'] },
     { name: 'The frozen pond', map: 'north', at: [10, 13, 'up'] },
+    { name: 'Andover mines (outside)', map: 'andover', at: [27, 15, 'left'] },
+    { name: 'Andover mines (tunnels)', map: 'andoverMine', at: [13, 20, 'up'] },
+    { name: 'Andover: the deep stope', map: 'andoverDeep', at: [2, 8, 'right'] },
+    { name: 'Bay Bridge-Tunnel: the island', map: 'cbbt', at: [14, 20, 'up'] },
+    { name: 'Chesapeake Channel Tunnel', map: 'cbbtTunnel', at: [7, 60, 'up'] },
   ];
+  // Admin: one of every rock.
+  G.adminAllRocks = () => {
+    const s = G.state; s.rocks = s.rocks || {}; s.rocksFound = s.rocksFound || {};
+    for (const r of G.ROCKS) { s.rocks[r.id] = (s.rocks[r.id] || 0) + 1; s.rocksFound[r.id] = (s.rocksFound[r.id] || 0) + 1; }
+  };
   // Admin: hand over every item and song.
   G.adminAllItems = () => {
     const s = G.state, f = s.flags;
@@ -2760,6 +3349,7 @@
     },
   };
 
+  const LAF_OUTCROPS = [[2, 9], [8, 26], [10, 14], [13, 10]];
   G.MAPS.campus = {
     name: 'Lafayette College',
     music: 'field',
@@ -2813,6 +3403,11 @@
         w.addProp({ img: G.spr.boulders[k], tx: x, ty: y, dx: -2, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: () => S.rockGarden(k)() });
       }
       w.addProp({ img: G.spr.cart, tx: 22, ty: 14, h: 2, dx: -2, solid: [22, 14, 2, 2], hit: [22, 14, 2, 2], talk: S.vendor });
+      // bedrock poking up through the lawns: Allentown dolomite (and a big ledge only Doron can crack)
+      if (G.state.items.hammer) {
+        for (const [x, y] of LAF_OUTCROPS) w.add(new G.OreVein(x * 16 + 8, y * 16 + 14, 'laf'));
+        w.add(new G.BigRock(28 * 16, 22 * 16 + 12, 'dolomite', (r) => G.script.run(S.bigRockLift(r))));
+      }
 
       const npc = (sprite, name, tx, ty, talk, o = {}) =>
         w.add(new G.NPC(Object.assign({ sprite, name, x: tx * 16 + 8, y: ty * 16 + 14, talk }, o)));
@@ -2977,6 +3572,7 @@
       F.hang(sp.frenchDoor, 3, 2, 1, look('French doors out to the side steps by the chimney.'), 1);
       w.addProp({ img: sp.brickFireplace, tx: 5, ty: 1, h: 3, flat: true, solid: [5, 3, 2, 1], hit: [5, 3, 2, 1], talk: look('The brick fireplace, with a landscape hung over the mantel.', 'The chimney outside is older than everybody in the family put together.') });
       F.hang(sp.frenchDoor, 8, 2, 1, look('More French doors. This house loves a French door.'), 1);
+      if (f.fcBeaten) w.addProp({ img: sp.fc.sweater, tx: 7, ty: 3, dx: -7, solid: [7, 3, 1, 1], hit: [7, 3, 1, 1], talk: S.fcHome });
       F.hang(sp.bayWindow, 10, 2, 4, null, 1);
       F.stand(sp.tuftedSofa, 10, 3, 3, look('The tufted sofa under the big window. Prime napping real estate.'));
       F.stand(sp.gingerLamp, 9, 3, 1, look('A blue-and-white ginger jar lamp. Very fancy. Do not throw a ball near it.'));
@@ -3403,6 +3999,10 @@
       w.addTree(16, 19, 'pine');
       w.addTree(46, 23, 'pine');
       w.add(new G.Sign(53, 12, 'BRADY BROOK.'));
+      // red Passaic shale ledges, a basalt boulder by the brook, and a gravel bar to sift
+      for (const [x, y] of [[6, 7], [20, 9], [3, 36], [54, 47]]) w.add(new G.OreVein(x * 16 + 8, y * 16 + 14, 'bed'));
+      w.add(new G.BigRock(45 * 16, 11 * 16 + 12, 'basalt', (r) => G.script.run(S.bigRockLift(r))));
+      w.addProp({ img: G.spr.gravelBar, tx: 47, ty: 9, dx: 2, dy: -1, flat: true, hit: [47, 9, 2, 1], talk: S.brookSift });
 
       // critters around the property: snapdragons, birdhouse gourds, and the bear by the brook
       const at = (Kind, x, y) => w.add(new Kind(x * 16 + 8, y * 16 + 14));
@@ -3518,6 +4118,445 @@
         yield G.wait(20);
         yield G.say('Nate', 'Van Wickle Hall. The geology building. My favorite place on campus.');
         yield G.say('Nate', 'It used to be the college library. Now it\'s a library of ROCKS.');
+      })();
+    },
+  };
+
+  // The Andover iron mines, outside: the long open cut (about 300 yards long in
+  // real life), mine dumps, the ruins of the old furnace and its slag, and the
+  // tunnel mouth at the north end of the cut.
+  G.MAPS.andover = {
+    name: 'Andover Mines',
+    music: 'field',
+    tiles() {
+      const W = 30, H = 20;
+      const g = Array.from({ length: H }, () => Array(W).fill('.'));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
+      for (let i = 0; i < 40; i++) set(Math.floor(G.hash(i, 51) * W), Math.floor(G.hash(i, 52) * H), ',');
+      // the open cut: rock walls along the north side, rubble floor
+      fill(3, 3, 22, 2, '%'); fill(3, 5, 22, 5, 'Z');
+      set(6, 4, '@');                               // the tunnel mouth
+      // the dumps below the cut
+      fill(5, 10, 12, 3, 'Z');
+      // a dirt track from the parking spot up to the cut
+      fill(17, 10, 2, 4, '='); fill(17, 14, 11, 2, '=');
+      fill(24, 12, 4, 2, 'g');                      // pull-off by the road
+      // woods all around (a gap on the east for the road out)
+      for (let x = 0; x < W; x += 2) { set(x, 0, 'T'); set(x, 18, 'T'); }
+      for (let y = 2; y < 18; y += 2) { set(0, y, 'T'); if (y !== 14) set(28, y, 'T'); }
+      [[2, 12], [26, 4], [22, 16], [12, 16]].forEach(([x, y]) => set(x, y, 'T'));
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      w.addProp({ img: G.spr.adit, tx: 5, ty: 4, dx: 2, base: 4 * 16, flat: true });
+      w.addTrigger(6, 4, 1, 1, () => G.play.warp('andoverMine', 13, 20, 'up'));
+      w.addProp({ img: G.spr.furnaceRuin, tx: 19, ty: 16, dx: -2, solid: [19, 16, 2, 1], hit: [19, 16, 2, 1], talk: look('The ruins of the old Andover iron furnace, first fired in the 1760s.', 'During the Revolution, the Continental Congress took it over and made cannonballs and steel for the army here.') });
+      w.addProp({ img: G.spr.suv, tx: 24, ty: 11, h: 3, dx: 3, solid: [24, 12, 2, 2], hit: [24, 12, 2, 2], talk: S.andoverCar });
+      w.add(new G.Sign(21, 12, ['ANDOVER IRON MINE', 'The biggest hematite deposit in New Jersey. Worked before the Revolution, seized by the Continental Congress, reopened 1848, closed 1880.']));
+      w.add(new G.Sign(26, 15, ['PRIVATE PROPERTY', '(Nate called the owner ahead of time. He always calls ahead.)']));
+      const at = (x, y, zone) => { const v = w.add(new G.OreVein(x * 16 + 8, y * 16 + 14, zone)); return v; };
+      for (const [x, y] of [[9, 6], [13, 7], [16, 6], [20, 8], [22, 6], [6, 11], [10, 12], [14, 11]]) at(x, y, 'dump');
+      for (const [x, y] of [[17, 17], [21, 17], [16, 16]]) at(x, y, 'slag');
+    },
+    onEnter() {
+      return (function* () {
+        if (flags().andover) return;
+        flags().andover = true;
+        yield G.wait(20);
+        yield G.say('Nate', 'The Andover mines. Iron ore from before the Revolution. I have SO many books about this place.');
+        if (G.with('doron')) yield G.say('Doron', 'You dragged me to a hole in the ground.');
+        else if (G.with('lily')) yield G.say('Lily', 'If there are bats, I\'m going back to the car.');
+        yield G.say(null, 'Smash the {y}dump piles{/} and {y}mineral veins{/} with your hammer to collect rocks. The good stuff is deep in the tunnels.');
+        yield G.say(null, 'Crush them at the {y}rock crusher{/} in Van Wickle Hall, and see your collection in the {y}ROCKS{/} menu.');
+      })();
+    },
+  };
+
+  // Inside the Andover workings: dark drifts lit only by Nate's lantern, glinting
+  // veins, bats, and the lower workings where the zinc, lead and copper sulfides are.
+  G.MAPS.andoverMine = {
+    name: 'Andover Mines: the Tunnels',
+    music: 'mine',
+    tiles() {
+      const W = 28, H = 22;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(13, 3, 2, 19, '@'); fill(13, 3, 1, 19, '|');   // the main drift, with rails
+      fill(3, 16, 10, 2, '@'); fill(2, 12, 6, 6, '@');      // west drift and stope
+      fill(15, 11, 11, 2, '@'); fill(20, 13, 7, 6, '@');    // east drift and stope
+      fill(4, 3, 9, 2, '@'); fill(15, 3, 12, 2, '@');       // the north crosscut
+      fill(26, 5, 1, 4, '@');                               // a narrow dead end
+      fill(4, 5, 2, 1, '@'); fill(3, 6, 7, 5, '@');         // the lower workings
+      if (flags().fcAwake) fill(27, 15, 1, 2, '@');         // (100%) the way to the deep stope
+      // rock faces wherever a passage runs below solid rock
+      for (let y = 0; y < H - 1; y++) for (let x = 0; x < W; x++) if (g[y][x] === 'w' && g[y + 1][x] !== 'w' && g[y + 1][x] !== '&') g[y][x] = '&';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const at = (x, y, zone) => {
+        const v = w.add(new G.OreVein(x * 16 + 8, y * 16 + 14, zone));
+        v.glowColor = zone === 'deep' ? '#a8c8ff' : zone === 'cannon' ? '#f8d850' : '#f8e8a0';
+      };
+      for (const [x, y] of [[2, 12], [6, 13], [3, 15], [21, 13], [25, 14], [23, 17], [20, 18], [24, 11], [9, 3], [18, 3], [22, 4]]) at(x, y, 'tunnel');
+      for (const [x, y] of [[3, 6], [8, 6], [4, 9], [9, 9], [6, 8]]) at(x, y, 'deep');
+      if (!flags().cannonball) {
+        at(26, 8, 'cannon');
+      }
+      w.add(new G.Sign(6, 5, ['THE LOWER WORKINGS', '"Zinc and lead sulfides occur mixed with iron ores in the lower workings." - U.S. Bureau of Mines, 1947']));
+      for (const [x, y] of [[8, 16], [22, 15], [5, 7], [19, 3]]) w.add(new G.Bat(x * 16 + 8, y * 16 + 14));
+      if (flags().fcAwake) w.addTrigger(27, 15, 1, 2, () => G.play.warp('andoverDeep', 1, 8, 'right'));
+      w.addTrigger(13, 21, 2, 1, () => G.play.warp('andover', 6, 5, 'down'));
+    },
+    // Nate's lantern: everything past its glow is pitch black
+    tint(ctx) {
+      const p = G.play.player, cam = G.play.cam;
+      if (!p) return;
+      const x = Math.round(p.x - cam.x), y = Math.round(p.y - 10 - cam.y), r = 64 + Math.sin(G.tick * 0.13) * 2;
+      const grad = ctx.createRadialGradient(x, y, r * 0.3, x, y, r);
+      grad.addColorStop(0, 'rgba(10,6,4,0)');
+      grad.addColorStop(1, 'rgba(10,6,4,0.95)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, G.W, G.H);
+      ctx.fillStyle = 'rgba(255,160,60,0.05)';
+      ctx.fillRect(0, 0, G.W, G.H);
+    },
+    onEnter() {
+      return (function* () {
+        const f = flags();
+        if (f.fcAwake && !f.fcBeaten && !f.fcPassage) {
+          f.fcPassage = true;
+          yield G.wait(20);
+          yield G.say(null, 'The tunnels are humming. Way off to the {r}east{/}, past the east stope, a cave-in has shaken loose. Cold air is blowing out of a new passage.');
+          if (G.with('lily')) yield G.say('Lily', 'i said i was never coming to andover. why am i in andover');
+        }
+        if (f.andoverMine) return;
+        f.andoverMine = true;
+        yield G.wait(20);
+        yield G.say('Nate', 'Lantern on. The old workings run a couple hundred feet into the hill.');
+        yield G.say(null, 'Watch for {y}glints{/} in the dark: those are mineral veins. The {c}lower workings{/} up north are where the rare stuff is.');
+      })();
+    },
+  };
+
+  // The deep stope: a big, timbered chamber at the very bottom of the old
+  // workings, sealed by a cave-in until the 100% rumbling shook it loose.
+  // Lanterns on the timbers, a mine cart on a spur, and one cardboard box.
+  const STOPE_LANTERNS = [[5 * 16, 3 * 16 + 2], [11 * 16 + 8, 3 * 16 + 2], [18 * 16, 3 * 16 + 2], [5 * 16, 13 * 16 + 6], [18 * 16, 13 * 16 + 6]];
+  let stopeDark = null;
+  G.MAPS.andoverDeep = {
+    name: 'Andover Mines: the Deep Stope',
+    get music() { const f = flags(); return f.fcAwake && !f.fcBeaten ? null : 'mine'; },
+    tiles() {
+      const W = 24, H = 16;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(2, 3, 20, 11, '@');                 // the stope
+      fill(0, 8, 2, 2, '@');                   // the passage back up
+      fill(2, 12, 6, 1, '|');                  // a rail spur
+      for (let y = 0; y < H - 1; y++) for (let x = 0; x < W; x++) if (g[y][x] === 'w' && g[y + 1][x] !== 'w' && g[y + 1][x] !== '&') g[y][x] = '&';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const f = flags();
+      // timber sets along the walls, each with a lantern
+      for (const [lx, ly] of STOPE_LANTERNS) {
+        const top = ly < 8 * 16;
+        w.props.push({
+          base: top ? 2 * 16 : 14 * 16 + 10,
+          draw(ctx, cx, cy) {
+            ctx.drawImage(G.spr.timberSet, Math.round(lx - 17) - cx, Math.round(ly - (top ? 26 : 30)) - cy);
+            const fl = (G.tick >> 3) % 5 === 0 ? 1 : 0;
+            ctx.drawImage(G.spr.mineLantern, Math.round(lx - 3) - cx, Math.round(ly - (top ? 10 : 14) + fl) - cy);
+            w.glows.push({ x: Math.round(lx), y: Math.round(ly - (top ? 5 : 9)), color: '#f8c060' });
+          },
+        });
+      }
+      w.addProp({ img: G.spr.mineCart, tx: 3, ty: 12, dx: 6, dy: 2, solid: [3, 12, 2, 1], hit: [3, 12, 2, 1], talk: look('An old ore cart, rusted to the rails. Doron says it\'s a "tactical position."') });
+      for (const [x, y, slag] of [[20, 4, false], [2, 4, true], [21, 12, false]]) w.addProp({ img: slag ? G.spr.slagPile : G.spr.dumpPile, tx: x, ty: y, dx: -2, solid: [x, y, 1, 1] });
+      // the box (while he's awake), or what's left of it
+      if (f.fcAwake && !f.fcBeaten) {
+        const box = w.addProp({ img: G.spr.fcCrate, tx: 11, ty: 4, dx: -1, solid: [11, 4, 2, 1], hit: [11, 4, 2, 1], talk: S.fcBox });
+        w.fcBox = box; box.bx = box.x;
+      } else if (f.fcBeaten) {
+        w.addProp({ img: G.spr.fcCrateOpen, tx: 11, ty: 4, dx: -1, solid: [11, 4, 2, 1], hit: [11, 4, 2, 1], talk: look('The DO NOT OPEN (LILY) box, empty. Somebody opened it. It was Nate.') });
+      }
+      w.add(new G.Sign(2, 7, ['THE DEEP STOPE', 'Worked out before the Revolution. Then sealed. Then, apparently, used for storage.']));
+      w.addTrigger(0, 8, 1, 2, () => { if (!w.fcFight) G.play.warp('andoverMine', 26, 15, 'left'); });
+    },
+    // the box rattles and hums now and then
+    tick(w) {
+      const b = w.fcBox;
+      if (!b) return;
+      b.x = b.bx + (b.still || G.script.busy ? 0 : [0, 1, 0, -1][(G.tick >> 2) & 3] * ((G.tick % 150) < 50 ? 1 : 0));
+      if (!b.still && !G.script.busy && G.tick % 220 === 0) w.pop(b.bx + 9, 4 * 16 - 8, ['ho...', 'ho... ho...', '*thump*', 'hmm hmm hmm...'][Math.floor(Math.random() * 4)], '#f86858');
+    },
+    // lantern light: dark everywhere except around the lanterns, Nate and him
+    tint(ctx) {
+      const w = G.play.world, p = G.play.player, cam = G.play.cam;
+      if (!stopeDark) { stopeDark = document.createElement('canvas'); stopeDark.width = G.W; stopeDark.height = G.H; }
+      const d = stopeDark.getContext('2d');
+      d.globalCompositeOperation = 'source-over';
+      d.clearRect(0, 0, G.W, G.H);
+      d.fillStyle = 'rgba(10,6,8,0.86)';
+      d.fillRect(0, 0, G.W, G.H);
+      d.globalCompositeOperation = 'destination-out';
+      const hole = (x, y, r) => {
+        const g = d.createRadialGradient(x, y, r * 0.25, x, y, r);
+        g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+        d.fillStyle = g; d.fillRect(x - r, y - r, r * 2, r * 2);
+      };
+      const fl = Math.sin(G.tick * 0.13) * 2;
+      for (const [lx, ly] of STOPE_LANTERNS) hole(lx - cam.x, ly - cam.y + 10, 84 + fl);
+      if (p) hole(p.x - cam.x, p.y - 10 - cam.y, 60 + fl);
+      if (w.fc && !w.fc.dead) hole(w.fc.x - cam.x, w.fc.y - 20 - cam.y, 44);
+      ctx.drawImage(stopeDark, 0, 0);
+      ctx.fillStyle = 'rgba(255,160,60,0.05)';
+      ctx.fillRect(0, 0, G.W, G.H);
+      if (w.fcFight) {
+        const rage = w.fc && w.fc.rage;
+        ctx.fillStyle = rage ? 'rgba(90,0,14,' + (0.22 + Math.sin(G.tick * 0.2) * 0.06) + ')' : 'rgba(30,10,40,0.18)';
+        ctx.fillRect(0, 0, G.W, G.H);
+      }
+    },
+    onEnter() {
+      return (function* () {
+        const f = flags();
+        if (!f.fcAwake || f.fcBeaten || f.fcMet) return;
+        yield G.wait(30);
+        yield G.say('Nate', 'The deep stope. The books say this part was sealed off before the Revolution.');
+        yield G.say(null, 'At the back of the chamber, something goes {r}thump{/}.');
+        if (G.with('lily')) yield G.say('Lily', 'nope. no. i am going to stand right here by the tunnel.');
+      })();
+    },
+  };
+
+  // ================================================================ THE CHESAPEAKE BAY BRIDGE-TUNNEL
+  // 17.6 miles shore to shore across the mouth of the bay: low trestles, two
+  // mile-long tunnels under the shipping channels, and four man-made islands
+  // (about five acres each) where the road dives underground. Gulls sit on
+  // every light pole. A hooded figure waits at the far end of the tunnel.
+  const TOLL = 500;
+  S.cbbtArrive = function* () {
+    const f = flags(), w = G.play.world;
+    if (f.cbbtArrived) return;
+    f.cbbtArrived = true;
+    yield G.wait(30);
+    yield G.say('Nate', 'The Chesapeake Bay Bridge-Tunnel. Seventeen-point-six miles across the mouth of the bay, shore to shore.');
+    if (G.with('doron')) {
+      yield G.say('Doron', 'Why does a bridge turn into a tunnel?');
+      yield G.say('Nate', 'Ships. Huge ones, headed into the bay. A bridge would be in their way, so the road dives under the channels. Twice.');
+    } else if (G.with('lily')) {
+      yield G.say('Lily', 'why does the bridge turn into a tunnel');
+      yield G.say('Nate', 'So the ships can get by. The road dives under the shipping channels. Twice.');
+      yield G.say('Lily', 'i do not like that');
+    } else {
+      yield G.say('Nate', 'Two tunnels under the shipping channels, so the ships can get by. Four man-made islands. This is one of them.');
+    }
+    const g = w.ents.find((e) => e instanceof G.Seagull);
+    if (g) {
+      yield G.camFocus(g.x, g.y - g.z, 40);
+      yield G.say(null, 'There is a seagull on every light. Every single one of them is looking at Nate.');
+      yield G.camFocus(null, null, 30);
+    }
+    yield G.say('Nate', 'Chesapeake is on the other side of that tunnel. Let\'s go.');
+  };
+  S.cbbtCar = function* () {
+    const c = yield G.ask('Nate', 'Head home?', ['Head home', 'Keep going']);
+    if (c === 0) G.play.warp('home', 1, 53, 'right');
+  };
+  S.cbbtTrestleEnd = function* () {
+    const p = P();
+    yield G.say('Nate', 'That\'s miles of trestle back to the Eastern Shore. If I\'m going home, I\'m taking the car.');
+    yield G.walkTo(p, p.x, p.y - 24, 1);
+  };
+  S.bayViewer = function* () {
+    yield G.say(null, 'A coin-op viewer. Nate puts in a quarter.');
+    yield G.say(null, 'East: the open Atlantic. West: the bay, all the way to the horizon. A cargo ship lining up for the channel.');
+    yield G.say(null, 'And seagulls. So, so many seagulls.');
+  };
+
+  // the far end of the tunnel: a hooded figure, and his toll
+  S.hooded = function* () {
+    const f = flags(), w = G.play.world, p = P(), h = w.hooded, s = G.state;
+    if (!h || h.dead || f.tollPaid) return;
+    p.dir = 'up';
+    if (!f.hoodedMet) {
+      f.hoodedMet = true;
+      G.audio.stop();
+      yield G.camFocus(h.x, h.y - 12, 40);
+      w.burst(h.x, h.y - 6, ['#c8c4d8', '#8a849c'], 10, { speed: 0.5, up: 0.2, life: 50, size: 4 });
+      yield G.say('Hooded Figure', '...');
+      yield G.say('Hooded Figure', 'None pass to Chesapeake without paying the toll.');
+      yield G.say('Nate', 'I already paid the toll. At the toll plaza. With money.');
+      yield G.say('Hooded Figure', 'That was THEIR toll. This is MY toll.');
+      yield G.say('Hooded Figure', 'Five hundred shark teeth.');
+      yield G.say('Nate', 'FIVE HUNDRED?!');
+      yield G.say('Hooded Figure', 'The ditch is worth it, Nate. You know this.');
+      yield G.say('Nate', '...How do you know my name?');
+      yield G.say('Hooded Figure', '...');
+      if (G.with('doron')) {
+        yield G.say('Doron', 'I could take him.');
+        yield G.say('Hooded Figure', 'You could not.');
+        yield G.say('Doron', '...I could not.');
+      } else if (G.with('lily')) {
+        yield G.say('Lily', 'nate. he doesnt have a face. why doesnt he have a face');
+      }
+      yield G.camFocus(null, null, 30);
+      G.audio.play('tunnel');
+    }
+    if (s.teeth < TOLL) {
+      yield G.say('Hooded Figure', 'You have ' + G.sayable(s.teeth) + '. The toll is five hundred. The bay is patient. So am I.');
+      yield G.walkTo(p, p.x, p.y + 20, 1.2);
+      return;
+    }
+    const c = yield G.ask('Hooded Figure', 'Five hundred shark teeth. Pay the toll?', ['Pay 500 teeth', 'Not yet']);
+    if (c) { yield G.walkTo(p, p.x, p.y + 20, 1.2); return; }
+    s.teeth -= TOLL;
+    G.audio.sfx('tooth');
+    yield G.say(null, 'Nate pours five hundred shark teeth into a little velvet bag. The bag is much smaller than five hundred shark teeth. They all fit.');
+    yield G.say('Hooded Figure', 'The toll is paid.');
+    yield G.say('Hooded Figure', 'The Number One Ditch is waiting for you, Nate. It always has been.');
+    G.audio.sfx('poof');
+    w.burst(h.x, h.y - 14, ['#c8c4d8', '#8a849c', '#ffffff'], 26, { speed: 0.9, up: 0.6, life: 50, size: 4 });
+    h.dead = true;
+    for (let x = 5; x <= 10; x++) w.block[4 * w.w + x] = 0;
+    f.tollPaid = true;
+    yield G.wait(50);
+    yield G.say('Nate', '...Did anyone else see that?');
+    if (G.with('doron')) yield G.say('Doron', 'See what?');
+    else if (G.with('lily')) yield G.say('Lily', 'i saw it. i will be seeing it forever');
+  };
+  S.tunnelEnd = function* () {
+    const p = P();
+    if (!flags().tollPaid) { yield* S.hooded(); return; }
+    yield G.say('Nate', 'Daylight! Chesapeake is right on the other side.');
+    yield G.banner('TO BE CONTINUED...', 'Chesapeake and the Number One Ditch: next update!', 240);
+    yield G.walkTo(p, p.x, p.y + 24, 1);
+  };
+
+  G.MAPS.cbbt = {
+    name: 'Chesapeake Bay Bridge-Tunnel',
+    music: 'bay',
+    tiles() {
+      const W = 30, H = 44;
+      const g = Array.from({ length: H }, () => Array(W).fill('y'));
+      // the island: rounded, armored all the way around with riprap
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const d = Math.abs((x - 14.5) / 11.5) ** 4 + Math.abs((y - 16.5) / 12) ** 4;
+        if (d <= 1) g[y][x] = d > 0.5 ? '^' : '.';
+      }
+      // concrete along the road and around the lookout; a little parking lot
+      for (let y = 9; y < 28; y++) for (let x = 11; x <= 18; x++) if (g[y][x] === '.') g[y][x] = 'C';
+      for (let y = 12; y < 17; y++) for (let x = 5; x <= 10; x++) if (g[y][x] === '.') g[y][x] = 'C';
+      for (let y = 17; y < 22; y++) for (let x = 19; x <= 23; x++) g[y][x] = 'a';
+      // the road: out of the tunnel portal, down the island and off along the trestle
+      for (let y = 9; y < H; y++) {
+        for (let x = 13; x <= 16; x++) g[y][x] = x === 15 ? 't' : '+';
+        if (y >= 29) { g[y][12] = '!'; g[y][17] = '!'; }
+      }
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      // a container ship sliding past out in the channel
+      w.props.push({ base: -1000, draw(ctx, cx, cy) { ctx.drawImage(G.spr.containerShip, Math.round((G.tick * 0.3) % 760 - 190) - cx, 6 - cy); } });
+      // the ventilation building over the tunnel portal; walk into the mouth to go under
+      w.addProp({ img: G.spr.tunnelPortal, tx: 9, ty: 4, h: 6 });
+      w.blockTiles(9, 4, 12, 6);
+      for (let y = 8; y <= 9; y++) for (let x = 13; x <= 16; x++) w.block[y * w.w + x] = 0;
+      w.addTrigger(13, 8, 4, 1, () => G.play.warp('cbbtTunnel', 7, 61, 'up'));
+      // light poles on the island and along the trestle, most of them with a gull on top
+      const lamp = (tx, ty, armRight, gull) => {
+        const bx = tx * 16 + 8, by = ty * 16 + 15;
+        w.props.push({ img: armRight ? G.spr.lampPost : G.spr.lampPostL, x: armRight ? bx - 3 : bx - 26, y: by - 59, base: by });
+        w.blockTiles(tx, ty, 1, 1);
+        if (gull !== undefined) w.add(new G.Seagull(bx + (armRight ? 19 : -19), by + 1, 59, gull));
+      };
+      lamp(12, 13, true, false); lamp(17, 17, false, true); lamp(12, 21, true); lamp(17, 25, false, false);
+      lamp(12, 31, true, false); lamp(17, 35, false, true); lamp(12, 39, true, true); lamp(17, 42, false, false);
+      // the lookout: a viewer, a bench, a trash can the gulls have been working on
+      w.addProp({ img: G.spr.bayViewer, tx: 7, ty: 13, dx: 1, solid: [7, 13, 1, 1], hit: [7, 13, 1, 1], talk: S.bayViewer });
+      w.addProp({ img: G.spr.teakBench, tx: 5, ty: 15, solid: [5, 15, 2, 1], hit: [5, 15, 2, 1], talk: look('A bench facing the bay. The gulls have claimed it. Nate respects that.') });
+      w.addProp({ img: G.spr.trash, tx: 9, ty: 16, dx: 2, solid: [9, 16, 1, 1], hit: [9, 16, 1, 1], talk: look('A trash can with a heavy lid. Something has been pecking at it. A lot.') });
+      w.add(new G.Sign(11, 10, ['CHESAPEAKE BAY BRIDGE-TUNNEL', 'One of four man-made islands, about five acres each. Ahead: the Chesapeake Channel Tunnel, under the shipping channel.']));
+      w.add(new G.Sign(6, 12, ['BIRD NOTE', 'The rocks around these islands are a hangout for gulls, brown pelicans and purple sandpipers.', 'Please do not feed the gulls. They do not need the encouragement.']));
+      // brown pelicans on the riprap
+      for (const [x, y, flip, line] of [[3, 17, false, 'A brown pelican. It stares at Nate like he owes it money.'], [26, 13, true, 'A brown pelican, eyes closed, napping on the rocks. Living the dream.'], [8, 27, false, 'A brown pelican. It opens its pouch, considers Nate, and closes it again.']]) {
+        w.addProp({ img: flip ? G.spr.pelicanL : G.spr.pelican, tx: x, ty: y, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: look(line) });
+      }
+      // Nate's car in the lot
+      w.addProp({ img: G.spr.suv, tx: 20, ty: 17, h: 3, dx: 3, solid: [20, 18, 2, 2], hit: [20, 18, 2, 2], talk: S.cbbtCar });
+      w.add(new G.Chest(23, 12, 'cbbt_teeth', function* () {
+        yield G.itemGet(G.spr.toothGold, 'Tucked behind the rocks: {y}30 shark teeth{/}! Probably a gull\'s stash.');
+        G.play.addTeeth(30);
+      }));
+      w.addTrigger(13, 43, 4, 1, () => G.script.run(S.cbbtTrestleEnd()));
+    },
+    onEnter() { return S.cbbtArrive(); },
+  };
+
+  // The Chesapeake Channel Tunnel: about a mile of tiled tube under the bay,
+  // sodium lights, a catwalk on each side, and (at the far end) the toll.
+  G.MAPS.cbbtTunnel = {
+    name: 'Chesapeake Channel Tunnel',
+    music: 'tunnel',
+    tiles() {
+      return Array.from({ length: 64 }, () => '    :-++t+-:    ');
+    },
+    setup(w) {
+      for (let ty = 2; ty < 64; ty += 4) {
+        for (const [x, side] of [[5 * 16 - 9, 0], [11 * 16 + 1, 1]]) {
+          w.props.push({ base: ty * 16, draw(ctx, cx, cy) { ctx.drawImage(G.spr.tunnelLight, x - cx, ty * 16 + 4 - cy); w.glows.push({ x: x + 4, y: ty * 16 + 7, color: '#f8a040' }); } });
+        }
+      }
+      // gulls. In the tunnel. How did they even get in here
+      for (const [ty, side, laughing] of [[50, 0, true], [34, 1, false], [18, 0, false]]) {
+        w.add(new G.Seagull(side ? 11 * 16 - 4 : 5 * 16 + 4, ty * 16 + 26, 22, laughing));
+      }
+      for (const [ty, side, text] of [
+        [58, 0, ['CHESAPEAKE CHANNEL TUNNEL', 'About a mile long: 5,237 feet, under the main shipping channel into the bay.']],
+        [32, 1, ['YOU ARE NOW UNDER THE SHIPPING CHANNEL', 'Container ships are passing right over your head. Try not to think about it.']],
+        [12, 0, ['NO STOPPING IN TUNNEL', 'Somebody has scratched underneath: "except for the toll."']],
+      ]) {
+        const tx = side ? 11 : 4;
+        w.addProp({ img: G.spr.tunnelSign, tx, ty, dx: side ? -4 : -4, flat: true, hit: [tx, ty, 1, 1], talk: look(...text) });
+      }
+      // the toll-taker
+      if (!flags().tollPaid) {
+        w.hooded = w.add(new G.NPC({ sprite: 'hooded', name: 'Hooded Figure', x: 8 * 16, y: 4 * 16 + 14, dir: 'down', talk: S.hooded }));
+        w.blockTiles(5, 4, 6, 1);
+        w.addTrigger(5, 6, 6, 2, () => { if (!flags().tollPaid) G.script.run(S.hooded()); });
+      }
+      w.addTrigger(5, 0, 6, 1, () => G.script.run(S.tunnelEnd()));
+      w.addTrigger(5, 63, 6, 1, () => G.play.warp('cbbt', 14, 10, 'down'));
+    },
+    // ships rumble by overhead now and then
+    tick(w) {
+      if (G.script.busy) return;
+      w.rumbleT = (w.rumbleT || 0) + 1;
+      if (w.rumbleT < 900) return;
+      w.rumbleT = 0;
+      G.audio.sfx('bump');
+      G.play.shake(50, 1);
+      const p = G.play.player;
+      w.pop(p.x, p.y - 34, '*a cargo ship rumbles by overhead*', '#c8c0b0');
+    },
+    tint(ctx) {
+      ctx.fillStyle = 'rgba(24,10,0,0.22)';
+      ctx.fillRect(0, 0, G.W, G.H);
+      ctx.fillStyle = 'rgba(255,150,50,0.09)';
+      ctx.fillRect(0, 0, G.W, G.H);
+    },
+    onEnter() {
+      return (function* () {
+        const f = flags();
+        if (f.tunnelSeen) return;
+        f.tunnelSeen = true;
+        yield G.wait(20);
+        yield G.say('Nate', 'The Chesapeake Channel Tunnel. About a mile long, right under the shipping channel.');
+        if (G.with('lily')) yield G.say('Lily', 'there is a whole ocean on top of us right now');
+        else if (G.with('doron')) yield G.say('Doron', 'There are gulls in here. How are there gulls in here?');
+        else yield G.say('Nate', '...Are those seagulls? In the TUNNEL?');
       })();
     },
   };
@@ -3676,6 +4715,11 @@
         w.add(new G.Wrestler(x * 16 + 8, y * 16 + 14, styles[i % styles.length])));
 
       w.addWarp(0, 12, 1, 2, 'campus', 38, 12, 'left');
+      // Jacksonburg cement rock in the grass, and a pile of old quarry rubble (serpentine)
+      if (G.state.items.hammer) {
+        for (const [x, y] of [[2, 8], [37, 15], [10, 29], [26, 15]]) w.add(new G.OreVein(x * 16 + 8, y * 16 + 14, 'eas'));
+        w.add(new G.QuarryRubble(3 * 16, 28 * 16 + 12));
+      }
     },
     // the protesters chant every so often
     tick(w) {

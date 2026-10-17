@@ -70,10 +70,23 @@
     'd': { k: 'basementFloor' },
     'J': { k: 'snow' },
     'E': { k: 'hallTile' },
+    'Z': { k: 'cutFloor' },
+    '%': { k: 'cutWall', solid: true, edge: true },
+    '&': { k: 'tunnelFace', solid: true, edge: true },
+    '@': { k: 'mineFloor' },
+    '|': { k: 'mineRail' },
     'V': { k: 'faceOak', solid: true, edge: true },
     'A': { k: 'snowPath' },
     'I': { k: 'ice', edge: true, ice: true },
     'U': { k: 'iceHole', edge: true, hazard: true },
+    // the Chesapeake Bay Bridge-Tunnel
+    'y': { k: 'bay', solid: true, edge: true, anim: true },
+    '^': { k: 'riprap', solid: true },
+    '+': { k: 'roadDeck' },
+    't': { k: 'laneV' },
+    '!': { k: 'parapet', solid: true },
+    ':': { k: 'tunnelWall', solid: true },
+    '-': { k: 'catwalk' },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 
