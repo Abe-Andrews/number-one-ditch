@@ -133,7 +133,7 @@
       // o: { img, tx, ty, solid: [x,y,w,h] tiles, talk, hit: [x,y,w,h] tiles, dy }
       const img = o.img;
       const px = o.tx * 16 + (o.dx || 0);
-      const py = o.ty * 16 + (o.h || 1) * 16 - img.height + (o.dy || 0);
+      const py = o.ty * 16 + (o.h || 1) * 16 - (img ? img.height : 0) + (o.dy || 0); // (no image = just a talk spot)
       const prop = { img, x: px, y: py, base: o.base != null ? o.base : o.ty * 16 + (o.h || 1) * 16 - 1, talk: o.talk, flat: o.flat };
       if (o.solid) this.blockTiles(...o.solid);
       if (o.hit) prop.hit = [o.hit[0] * 16, o.hit[1] * 16, (o.hit[0] + o.hit[2]) * 16, (o.hit[1] + o.hit[3]) * 16];

@@ -2810,7 +2810,7 @@
       w.addProp({ img: G.spr.lamppost, tx: 25, ty: 19, dx: 2, solid: [25, 19, 1, 1] });
       // the rock garden: big specimens, oldest to youngest in Eastern Pennsylvania
       for (const [x, y, k] of [[34, 20, 'gneiss'], [35, 21, 'limestone'], [36, 20, 'conglomerate'], [37, 21, 'sandstone']]) {
-        w.addProp({ img: G.spr.boulders[k], tx: x, ty: y, dx: -2, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: () => S.rockGarden(k) });
+        w.addProp({ img: G.spr.boulders[k], tx: x, ty: y, dx: -2, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: () => S.rockGarden(k)() });
       }
       w.addProp({ img: G.spr.cart, tx: 22, ty: 14, h: 2, dx: -2, solid: [22, 14, 2, 2], hit: [22, 14, 2, 2], talk: S.vendor });
 
