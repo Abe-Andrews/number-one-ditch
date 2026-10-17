@@ -102,7 +102,7 @@
       for (let i = 0; i < 90; i++) this.trail.push({ x: x - ddx * i * 0.6, y: y - ddy * i * 0.6, dir });
       // one party member at a time trails behind Nate (picked in the PEOPLE menu)
       const fid = G.activeFollower();
-      if (fid && !G.state.playAs) {
+      if (fid && !G.state.playAs && !G.state.jam) {
         const t = this.trail[14];
         this.world.add(new G.Follower(fid, 0, t.x, t.y, dir));
       }

@@ -187,6 +187,14 @@ G.audio = (function () {
     bass: (t) => { tone(110, t + 0.05, 0.3, 'sawtooth', 0.16, sfxBus, 55); tone(220, t + 0.05, 0.08, 'square', 0.06); noise(t, 0.18, 0.22, sfxBus, 700); },
     no: (t) => { tone(659, t, 0.06, 'square', 0.08, sfxBus, 523); tone(440, t + 0.07, 0.12, 'square', 0.08, sfxBus, 330); },
     bell: (t) => { [0, 0.18, 0.36].forEach((d) => { tone(1568, t + d, 0.3, 'triangle', 0.14); tone(2349, t + d, 0.2, 'sine', 0.06); }); },
+    // the Olsen: a strummed open E chord, and a big on-the-beat power chord
+    strum: (t) => { [165, 208, 247, 330].forEach((f, i) => tone(f, t + i * 0.014, 0.4, 'triangle', 0.08)); noise(t, 0.04, 0.05, sfxBus, 4500); },
+    power: (t) => {
+      [82, 123, 165].forEach((f) => tone(f, t, 0.45, 'sawtooth', 0.05));
+      [330, 415, 494, 659].forEach((f, i) => tone(f, t + i * 0.01, 0.35, 'triangle', 0.07));
+      noise(t, 0.1, 0.08, sfxBus, 2500);
+    },
+    crowd: (t) => { noise(t, 0.9, 0.14, sfxBus, 1100); noise(t + 0.1, 0.7, 0.08, sfxBus, 2400); },
   };
 
   function sfx(name) {
@@ -215,6 +223,7 @@ G.audio = (function () {
     const now = ctx.currentTime + 0.08;
     song = {
       name,
+      start: now,
       step: 60 / def.bpm / 4,
       tracks: def.tracks.map((tr) => ({ ...tr, notes: parse(tr.notes), i: 0, t: now })),
     };
@@ -254,6 +263,13 @@ G.audio = (function () {
       if (ctx) startSong(name);
     },
     stop() { want = null; stopSong(); },
+    // Where the current song is in its beat: n = beat count, phase 0..1 (0 = on the beat).
+    // Null when nothing is playing or the audio clock isn't running.
+    beat() {
+      if (!song || !ctx || ctx.state !== 'running') return null;
+      const t = (ctx.currentTime - song.start) / (song.step * 4);
+      return { n: Math.floor(t), phase: t - Math.floor(t), song: song.name };
+    },
     // Dad's pipe: each direction is a breathy note.
     puff(dir) {
       if (!ctx || muted) return;

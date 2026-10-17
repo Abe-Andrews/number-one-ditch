@@ -253,6 +253,18 @@
     }
     if (c.earring) p.set(13, y0 + 7, c.earring);
     hatFront(p, c, y0, ty);
+    headphones(p, c, y0, 'front');
+  }
+
+  // Over-ear headphones: cups on both sides, band up over the head.
+  function headphones(p, c, y0, view) {
+    const h = c.headphones;
+    if (!h) return;
+    const hl = shade(h, 0.35);
+    if (view === 'side') { p.vline(6, y0, y0 + 3, h); p.rect(5, y0 + 4, 3, 4, h); p.set(6, y0 + 5, hl); return; }
+    p.vline(2, y0 + 1, y0 + 4, h); p.vline(13, y0 + 1, y0 + 4, h);
+    p.rect(1, y0 + 4, 2, 4, h); p.rect(13, y0 + 4, 2, 4, h);
+    p.set(1, y0 + 5, hl); p.set(14, y0 + 5, hl);
   }
 
   // Luchador mask with contrasting trim around the eyes and mouth.
@@ -467,6 +479,7 @@
     if (!c.hat) return;
     for (let i = 0; i < 4; i++) p.hline(HEAD[i][0], HEAD[i][1], y0 + i, i === 3 ? c.hatD : c.hat);
     if (c.hatStyle !== 'flat') { p.set(7, y0 + 3, c.hair); p.set(8, y0 + 3, c.hair); }
+    headphones(p, c, y0, 'back');
   }
 
   function drawSide(p, c, step, y0, ty, ly, sy) {
@@ -623,6 +636,7 @@
       if (c.hatStyle === 'flat') p.hline(8, 13, y0 + 3, c.hatD);
       else { p.hline(10, 14, y0 + 3, c.hatD); p.set(3, y0 + 3, c.hatD); }
     }
+    headphones(p, c, y0, 'side');
   }
 
   // ================================================================ ICONS & SMALL SPRITES
@@ -1193,6 +1207,12 @@
       for (let y = 0; y < 16; y += 5) { p.hline(0, 15, y, '#4a4a52'); for (let x = (y % 10 ? 3 : 8); x < 16; x += 9) p.vline(x, y, y + 4, '#4a4a52'); }
       for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#8a8a92');
       if (mask & 4) { p.rect(0, 14, 16, 2, '#3a3a42'); }
+    },
+    stageFloor(p, r) {
+      p.rect(0, 0, 16, 16, '#2c2c38');
+      p.hline(0, 15, 7, '#24242e'); p.hline(0, 15, 15, '#24242e');
+      for (let i = 0; i < 3; i++) p.set(r() * 16, r() * 16, '#3a3a4a');
+      if (r() < 0.12) p.hline(2 + Math.floor(r() * 6), 8 + Math.floor(r() * 6), 2 + Math.floor(r() * 10), '#c8b840');
     },
     basementFloor(p, r) {
       p.rect(0, 0, 16, 16, '#7a7670');
@@ -3589,6 +3609,59 @@
     p.vline(hx + 8 - off, 20, 30, skin); p.set(hx + 9 - off, 30, skin);
     return finish(p);
   }
+  // ================================================================ THE JAM OFF (Berk)
+  // Nate's Olsen acoustic: spruce top, soundhole and rosette, mahogany neck.
+  function olsen() {
+    const p = new Pix(22, 10), top = '#ecc88a', topD = '#c89a58';
+    for (let y = 0; y < 10; y++) for (let x = 0; x < 13; x++) {
+      const lo = ((x - 4.5) ** 2) / 21 + ((y - 4.5) ** 2) / 21 <= 1;
+      const up = ((x - 10) ** 2) / 7 + ((y - 4.5) ** 2) / 11 <= 1;
+      if (lo || up) p.set(x, y, y >= 8 ? topD : top);
+    }
+    p.rect(9, 3, 3, 3, '#8a6a40'); p.rect(10, 4, 1, 1, '#2a1a10'); p.set(9, 4, '#2a1a10'); p.set(10, 3, '#2a1a10'); p.set(10, 5, '#2a1a10'); p.set(11, 4, '#2a1a10');
+    p.vline(3, 3, 6, '#4a2414');
+    p.rect(13, 4, 6, 2, '#8a4a24'); for (const x of [14, 16, 18]) p.vline(x, 4, 5, '#d8d0b8');
+    p.rect(19, 3, 3, 4, '#3a2014'); p.set(19, 2, '#c8c8d0'); p.set(21, 2, '#c8c8d0'); p.set(19, 7, '#c8c8d0'); p.set(21, 7, '#c8c8d0');
+    p.hline(4, 18, 4, '#f4f0e0');
+    return finish(p);
+  }
+  // Berk's red stage keyboard on an X stand.
+  function stageKeys() {
+    const p = new Pix(40, 22), red = '#d83038', redD = '#a02028';
+    for (const x0 of [4, 29]) for (let i = 0; i < 10; i++) {
+      p.set(x0 + (i >> 1), 12 + i, '#4a4a54'); p.set(x0 + 5 - (i >> 1), 12 + i, '#4a4a54');
+    }
+    p.rect(0, 0, 40, 12, red); p.hline(0, 39, 0, '#f05058');
+    p.rect(2, 1, 36, 3, '#2a2a30');
+    for (let x = 3; x < 26; x += 3) p.set(x, 2, '#d8d8d8');
+    p.rect(29, 2, 7, 1, '#58c0f0');
+    p.rect(2, 5, 36, 5, '#f4f4f0');
+    for (let x = 4; x < 38; x += 2) p.vline(x, 5, 9, '#c8c8d0');
+    const pat = [1, 1, 0, 1, 1, 1, 0];
+    for (let i = 0, x = 3; x < 37; i++, x += 2) if (pat[i % 7]) p.vline(x, 5, 7, '#1c1c22');
+    p.rect(0, 10, 40, 2, redD);
+    p.hline(3, 7, 11, '#f4f4f0');
+    return finish(p);
+  }
+  // A stack of two speaker cabinets.
+  function ampStack() {
+    const p = new Pix(16, 40);
+    for (const y0 of [0, 20]) {
+      p.rect(0, y0, 16, 19, '#1c1c22'); p.hline(0, 15, y0, '#3a3a44');
+      p.rect(2, y0 + 3, 12, 14, '#2a2a32');
+      for (let y = y0 + 4; y < y0 + 17; y += 2) for (let x = 3 + (y % 4 ? 1 : 0); x < 14; x += 2) p.set(x, y, '#3a3a46');
+      p.hline(6, 9, y0 + 1, '#c8c8d0');
+    }
+    return finish(p);
+  }
+  // A red punk-rock eighth note (Berk's ammo).
+  function punkNote() {
+    const p = new Pix(8, 10), r = '#e83848';
+    p.rect(0, 7, 4, 3, r); p.set(1, 7, '#ff98a0');
+    p.vline(3, 0, 8, r); p.vline(4, 0, 1, r); p.set(5, 1, r); p.set(5, 2, r); p.set(6, 3, r); p.set(6, 4, r);
+    return finish(p);
+  }
+
   // One of Nani's sticky notes: a little square with a curled corner, a scribble and a heart.
   function stickyNote(col, ink) {
     const p = new Pix(9, 9);
@@ -3829,6 +3902,7 @@
     S.bookPiles = [bookPile(1, 5), bookPile(2, 4), bookPile(3, 6)]; S.furnace = furnace(); S.storageBoxes = storageBoxes();
     S.flyingBook = [flyingBook(true), flyingBook(false)];
     S.globglog = [globglog(-1), globglog(0), globglog(1)]; S.egg = eggShot();
+    S.olsen = olsen(); S.olsenL = mirror(S.olsen); S.stageKeys = stageKeys(); S.ampStack = ampStack(); S.punkNote = punkNote();
     S.stickyNote = stickyNote('#f8e868', '#5a6ab8'); S.stickyPink = stickyNote('#f8a8c8', '#5a3a78');
     S.wateringCan = wateringCan();
     // Dad's workshop
