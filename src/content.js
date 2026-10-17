@@ -3267,7 +3267,7 @@
 
       // critters around the property: snapdragons, birdhouse gourds, and the bear by the brook
       const at = (Kind, x, y) => w.add(new Kind(x * 16 + 8, y * 16 + 14));
-      for (const [x, y] of [[30, 22], [38, 22], [20, 41], [33, 45], [10, 45]]) at(G.Snapdragon, x, y);
+      for (const [x, y] of [[47, 44], [22, 47], [20, 41], [33, 45], [10, 45]]) at(G.Snapdragon, x, y); // (none in Mom's garden)
       for (const [x, y] of [[6, 33], [27, 42], [51, 38], [50, 46]]) at(G.Gourd, x, y);
       at(G.Bear, 12, 14);
 
