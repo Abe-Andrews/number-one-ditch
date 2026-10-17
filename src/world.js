@@ -68,6 +68,9 @@
     // the basement
     'N': { k: 'faceStone', solid: true, edge: true },
     'd': { k: 'basementFloor' },
+    'J': { k: 'snow' },
+    'A': { k: 'snowPath' },
+    'I': { k: 'ice', edge: true, ice: true },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 
@@ -113,8 +116,8 @@
     addTree(x, y, kind) {
       if (kind === 'pink' || kind === 'purple') {
         this.props.push({ img: kind === 'pink' ? G.spr.pinkTree : G.spr.purpleTree, x: x * 16, y: y * 16 - 2, base: y * 16 + 31 });
-      } else if (kind === 'pine') {
-        const img = G.spr.pines[(x + y) % G.spr.pines.length];
+      } else if (kind === 'pine' || kind === 'snowpine') {
+        const set = kind === 'snowpine' ? G.spr.snowPines : G.spr.pines, img = set[(x + y) % set.length];
         this.props.push({ img, x: x * 16, y: y * 16 - 10, base: y * 16 + 31 });
       } else {
         const img = G.spr.trees[(x * 7 + y * 3) % G.spr.trees.length];

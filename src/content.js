@@ -109,6 +109,13 @@
     coat: '#a88aa0', shirt: '#e8dce4', pants: '#4a6aa8', shoes: '#4a7a3a', boots: true, torso: 6, legs: 3,
   };
 
+  // Ice JJ Fish: short dark hair, thin silver glasses, a big gap-toothed grin,
+  // white tee with navy stars, a chain, a mic.
+  G.CAST.icejj = {
+    skin: '#b07a58', eyes: '#2a1a10', hair: '#1c1410', hairStyle: 'buzz', glasses: '#8a8a96', smile: '#ffffff', grin: true,
+    shirt: '#f4f4f0', pattern: 'stars', necklace: '#c8c8d0', pants: '#2a3a5a', shoes: '#f0f0f0', torso: 7, legs: 4,
+  };
+
   // Lafayette students, protesting the event village on the quad.
   Object.assign(G.CAST, {
     protest1: { skin: '#e8b890', hair: '#c86a30', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 },
@@ -283,6 +290,13 @@
         ? 'A bookworm who lived in the basement and ate Mom\'s books. Lost a dance battle to Nate. Now sings quietly.'
         : 'Something pink in the basement, eating Mom\'s books and singing a song she can\'t stand. Never stops dancing.'),
     },
+    {
+      id: 'icejj', name: 'Ice JJ Fish', met: () => fl().jjMet,
+      tag: () => (fl().jjBeaten ? '{o}Boss: beaten' : '{r}Boss'),
+      bio: () => (fl().jjBeaten
+        ? 'Sang "I Pray to Jesus" on the frozen pond north of the bridge until Nate knocked the mic out of his hands. Stays icy.'
+        : 'Singing "I Pray to Jesus" on a frozen pond north of the bridge. It snows there and nowhere else.'),
+    },
     { id: 'gus', name: 'Gus', tag: '{y}Friend', met: () => fl().capQuest, bio: 'Lafayette\'s groundskeeper. Protector of petunias. Found Nate\'s hat.' },
     { id: 'moles', name: 'Dr. Moles', tag: '{y}Friend', met: () => fl().chemMet, bio: 'Chemistry professor. Nobody has ever gotten the last question on his final right.' },
     { id: 'pete', name: 'Pyro Pete', tag: '{y}Friend', met: () => fl().doronDeal, bio: 'Runs the pyro for Micro Mayhem. Thinks Nate\'s exploding present was beautiful.' },
@@ -337,6 +351,7 @@
       const left = s.items.tickets || 0;
       side.push(['Doron\'s spare tickets', f.ticketsDone ? '{g}Done!' : f.dadBeaten ? 'The show\'s over' : left ? G.sayable(left) + ' left' : 'Go tell Doron!']);
     }
+    if (f.jjMet) side.push(['Ice JJ Fish', f.jjBeaten ? '{g}Done!' : 'North of the bridge']);
     if (f.booksQuest) side.push(['Mom\'s missing books', f.shopOpen ? '{g}Done!' : s.items.books ? 'Bring them to Mom' : 'Check the basement']);
     // unfinished ones first
     side.sort((a, b) => (a[1].startsWith('{g}') ? 1 : 0) - (b[1].startsWith('{g}') ? 1 : 0));
@@ -406,6 +421,16 @@
         { wave: 'square', vol: 0.05, notes: 'D4:3 F4:1 A4:4 G#4:2 A4:2 R:4 | C5:3 A4:1 F4:4 E4:4 R:4 | D4:3 F4:1 A4:4 A#4:2 A4:2 G4:4 | F4:2 E4:2 D4:8 R:4 | A#4:3 A4:1 G4:4 F4:2 G4:2 A4:4 | C5:2 A#4:2 A4:4 G4:8 | F4:2 G4:2 A4:2 F4:2 E4:2 C#4:2 E4:4 | D4:12 R:4' },
         { wave: 'triangle', vol: 0.15, notes: 'D3:4 A2:4 D3:4 A2:4 | F2:4 C3:4 F2:4 C3:4 | D3:4 A2:4 G2:4 A2:4 | D3:4 A2:4 D3:8 | A#2:4 F3:4 A#2:4 F3:4 | C3:4 G3:4 C3:4 E3:4 | A2:4 E3:4 A2:4 C#3:4 | D3:8 A2:8' },
         { wave: 'noise', vol: 0.04, notes: 'k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:2 s:2 s:4' },
+      ],
+    },
+    // the frozen pond: a slow, soulful ballad in A minor (original)
+    icejj: {
+      bpm: 72,
+      tracks: [
+        { wave: 'sine', vol: 0.11, notes: 'E5:4 D5:2 C5:2 A4:8 | C5:4 D5:2 E5:2 G5:6 E5:2 | D5:4 C5:2 A4:2 G4:8 | A4:4 C5:4 D5:8 | E5:4 G5:2 A5:2 G5:6 E5:2 | D5:4 E5:2 D5:2 C5:8 | A4:4 C5:2 D5:2 E5:4 D5:2 C5:2 | A4:12 R:4' },
+        { wave: 'square', vol: 0.022, notes: 'A3:4 C4:4 E4:4 C4:4 | F3:4 A3:4 C4:4 A3:4 | C4:4 E4:4 G4:4 E4:4 | G3:4 B3:4 D4:4 B3:4 | A3:4 C4:4 E4:4 C4:4 | F3:4 A3:4 C4:4 A3:4 | D3:4 F3:4 A3:4 F3:4 | E3:4 G#3:4 B3:4 G#3:4' },
+        { wave: 'triangle', vol: 0.15, notes: 'A2:8 E3:8 | F2:8 C3:8 | C3:8 G2:8 | G2:8 D3:8 | A2:8 E3:8 | F2:8 C3:8 | D3:8 A2:8 | E2:8 E3:8' },
+        { wave: 'noise', vol: 0.03, notes: 'k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:4 h:4 | k:4 h:4 s:4 s:4' },
       ],
     },
     // Badlands' groove for the refrigerator game
@@ -1336,12 +1361,6 @@
     yield G.banner('TO BE CONTINUED...', 'The road to Chesapeake opens in a future update!', 240);
     yield G.walkTo(p, p.x + back * 24, p.y, 1);
   };
-  S.homeNorth = function* () {
-    const p = P();
-    yield G.say('Nate', 'Past the bridge it\'s just woods, deer and ticks. Nothing out there... yet.');
-    yield G.walkTo(p, p.x, p.y + 20, 1);
-  };
-
   // ---------------------------------------------------------------- Badlands Chugs and the refrigerator game
   // Lily is locked in the kitchen fridge. The only way to get her out: beat
   // Badlands at the refrigerator game with the nastiest drink Nate can make.
@@ -1707,6 +1726,54 @@
     s.items.books = true;
     yield G.itemGet(G.spr.flyingBook[1], 'You got {y}Mom\'s Books{/}! Slightly chewed. Bring them to Mom in the garden.');
     G.audio.play('house');
+  };
+
+  // ================================================================ ICE JJ FISH (north of the bridge)
+  S.jjIntro = function* () {
+    const f = flags(), w = G.play.world, g = w.jj;
+    yield G.wait(20);
+    if (!f.jjMet) {
+      f.jjMet = true;
+      yield G.say(null, 'Past the bridge, the woods open up onto a frozen pond. It\'s snowing. Only here.');
+      yield G.camFocus(g.x, g.y - 16, 50);
+      w.pop(g.x, g.y - 36, '~ ooooOOOOH ~', '#a8e0ff');
+      yield G.wait(40);
+      yield G.say('Ice JJ Fish', 'Ayy! An audience!');
+      yield G.say('Nate', '...Is that Ice JJ Fish? On our pond?');
+      if (G.with('doron')) yield G.say('Doron', 'We have a pond?');
+      else if (G.with('lily')) yield G.say('Lily', 'Oh no. He\'s going to sing.');
+      yield G.say('Ice JJ Fish', 'This one\'s called "I Pray to Jesus." It goes out to everybody on Rattlesnake Bridge Road.');
+      yield G.say('Nate', 'There are like four of us.');
+      yield G.say('Ice JJ Fish', 'Then it goes out to all four of y\'all. HIT IT!');
+      yield G.camFocus(null, null, 30);
+      yield G.say(null, 'Careful: the pond is {c}slippery{/}. Nate slides around on the ice.');
+    } else {
+      yield G.say('Ice JJ Fish', 'Back for the encore? Say less.');
+    }
+    yield G.banner('ICE JJ FISH', 'live from the frozen pond', 150);
+  };
+
+  S.jjDefeated = function* (boss) {
+    const f = flags(), w = G.play.world, s = G.state;
+    G.audio.stop();
+    for (const e of w.ents) if (e instanceof G.Shot || e instanceof G.Icicle) { e.dead = true; w.burst(e.x, e.y - 6, ['#d8f4ff', '#ffffff'], 4); }
+    G.audio.sfx('bell');
+    yield G.shakeCmd(30, 3);
+    yield G.wait(30);
+    yield G.banner('YOU WIN!', 'the snow stops', 150);
+    yield G.say('Ice JJ Fish', 'Okay, okay. You got me.');
+    yield G.say('Ice JJ Fish', 'That was a vibe though. You felt it, right?');
+    yield G.say('Nate', '...I did feel something.');
+    yield G.say('Ice JJ Fish', 'That\'s the song, bro. Stay icy.');
+    s.maxHp += 2;
+    s.hp = s.maxHp;
+    yield G.itemGet(G.spr.heartBig, 'Ice JJ Fish gives Nate a frosty fist bump. You got a {r}Heart Container{/}!');
+    w.pop(boss.x, boss.y - 36, '~ I PRAY TO JESUUUS ~', '#a8e0ff');
+    yield G.walkTo(boss, boss.x + 200, boss.y - 10, 1.6);
+    boss.dead = true;
+    f.jjBeaten = true;
+    G.audio.play('home');
+    yield G.say('Nate', '...He slid off across the ice. Still singing.');
   };
 
   // The WiFi router on the den desk.
@@ -3006,7 +3073,7 @@
       // leaving: either end of the road asks where to; north past the bridge is a dead end for now
       w.addTrigger(0, 53, 1, 2, () => G.script.run(S.homeLeave('west')));
       w.addTrigger(59, 53, 1, 2, () => G.script.run(S.homeLeave('east')));
-      w.addTrigger(51, 0, 2, 1, () => G.script.run(S.homeNorth()));
+      w.addTrigger(51, 0, 2, 1, () => G.play.warp('north', 10, 13, 'up'));
 
       // Mikey, waiting at the start of the driveway with flowers and heart balloons.
       // Once Lily is out of the fridge, walking by him starts his serenade.
@@ -3050,6 +3117,42 @@
         }
       })();
     },
+  };
+
+  // North of the bridge: snowy woods around a frozen pond, where Ice JJ Fish sings.
+  G.MAPS.north = {
+    name: 'The Frozen Pond',
+    get music() { return flags().jjBeaten ? 'home' : 'icejj'; },
+    tiles() {
+      const W = 22, H = 16;
+      const g = Array.from({ length: H }, (_, y) => Array.from({ length: W }, (_, x) => {
+        if ((x - 11) ** 2 / 64 + (y - 7) ** 2 / 20 <= 1) return 'I';
+        return 'J';
+      }));
+      for (let y = 11; y < H; y++) { g[y][10] = 'A'; g[y][11] = 'A'; }
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      // snowy pines all the way around (gap at the bottom for the road home)
+      for (let x = 0; x < 22; x += 2) w.addTree(x, 0, 'snowpine');
+      for (let y = 2; y < 14; y += 2) { w.addTree(0, y, 'snowpine'); w.addTree(20, y, 'snowpine'); }
+      for (const x of [2, 4, 6, 14, 16, 18]) w.addTree(x, 14, 'snowpine');
+      w.addProp({ img: G.spr.snowman, tx: 3, ty: 11, dx: -1, solid: [3, 11, 1, 1], hit: [3, 11, 1, 1], talk: look('A snowman in a top hat and a red scarf. It\'s been listening to the singing for a long time. It looks tired.') });
+      w.add(new G.Sign(14, 12, ['THE FROZEN POND', 'It snows here year-round. Nobody knows why.']));
+      w.addTrigger(10, 15, 2, 1, () => G.play.warp('home', 51, 2, 'down'));
+      if (!flags().jjBeaten) w.jj = w.add(new G.IceJJ(11 * 16 + 8, 6 * 16 + 14));
+    },
+    // it's always snowing here
+    tint(ctx) {
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      for (let i = 0; i < 46; i++) {
+        const sp = 0.3 + (i % 4) * 0.12;
+        const y = (i * 37 + G.tick * sp) % (G.H + 8) - 4;
+        const x = (i * 53 + Math.sin((G.tick + i * 20) * 0.02) * 8 + 240) % G.W;
+        ctx.fillRect(Math.round(x), Math.round(y), i % 3 ? 1 : 2, i % 3 ? 1 : 2);
+      }
+    },
+    onEnter() { return (function* () { if (!flags().jjBeaten) yield* S.jjIntro(); })(); },
   };
 
   // Under the house: stone walls, a furnace, storage boxes, and the

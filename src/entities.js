@@ -125,9 +125,11 @@
         return;
       }
 
-      // walking
+      // walking (on ice, Nate slides: he speeds up and slows down gradually)
       const d = inp.dir();
       this.moving = !!(d.x || d.y);
+      const under = G.TILE_DEFS[w.tileAt(Math.floor(this.x / 16), Math.floor((this.y - 3) / 16))];
+      const sp = d.x && d.y ? 1.0 : 1.35;
       if (this.moving) {
         if (d.x && d.y) {
           const okH = (d.x < 0 && this.dir === 'left') || (d.x > 0 && this.dir === 'right');
@@ -136,12 +138,18 @@
         } else {
           this.dir = d.x < 0 ? 'left' : d.x > 0 ? 'right' : d.y < 0 ? 'up' : 'down';
         }
-        const sp = d.x && d.y ? 1.0 : 1.35;
-        w.move(this, d.x * sp, 0, true);
-        w.move(this, 0, d.y * sp, true);
         this.anim++;
       } else {
         this.anim = 0;
+      }
+      if (under && under.ice) {
+        this.ivx = (this.ivx || 0) + (d.x * sp - (this.ivx || 0)) * 0.05;
+        this.ivy = (this.ivy || 0) + (d.y * sp - (this.ivy || 0)) * 0.05;
+        if (w.move(this, this.ivx, 0, true).hitX) this.ivx = 0;
+        if (w.move(this, 0, this.ivy, true).hitY) this.ivy = 0;
+      } else {
+        this.ivx = d.x * sp; this.ivy = d.y * sp;
+        if (this.moving) { w.move(this, d.x * sp, 0, true); w.move(this, 0, d.y * sp, true); }
       }
 
       if (inp.hit('a')) {
@@ -1497,6 +1505,156 @@
     }
   }
   G.Globglog = Globglog;
+
+
+  // ============================================================== ICE JJ FISH (boss)
+  // Sings on the frozen pond north of the bridge: snowflake notes, a huge held
+  // high note, a slide across the ice (then he's dizzy), and later, icicles.
+  const JJ_SONG = ['~ I PRAY TO JESUS ~', '~ ooooOOOOH ~', '~ yeahhh ~', '~ (a very high note) ~', '~ I PRAY TO JESUUUS ~', '~ mmmm ~', '~ OHHHHH ~', '~ hallelujah ~'];
+  const JJ_OUCH = ['OUCH, BRO!', 'NOT THE MIC!', 'STILL ON KEY!', 'AYO?!', 'I\'M ICY!', 'THAT WAS FLAT!'];
+  class Icicle extends Ent {
+    constructor(x, y) { super(x, y); this.t = 50; this.land = 0; }
+    update(w) {
+      if (G.script.busy) return;
+      if (this.land) { if (--this.land <= 0) this.dead = true; return; }
+      if (--this.t > 0) return;
+      this.land = 12;
+      G.audio.sfx('clank');
+      w.burst(this.x, this.y - 4, ['#e8f8ff', '#bce8fc', '#ffffff'], 10, { speed: 1.4, up: 0.8, g: 0.1, life: 22, size: 2 });
+      const p = G.play.player;
+      if (G.overlap([this.x - 9, this.y - 8, this.x + 9, this.y + 3], p.hurtBox())) p.hurt(1, this.x, this.y);
+    }
+    draw(ctx, cx, cy) {
+      if (this.land) return;
+      const k = 1 - this.t / 50;
+      ctx.fillStyle = `rgba(30,60,110,${0.2 + k * 0.35})`;
+      ctx.beginPath(); ctx.ellipse(Math.round(this.x) - cx, Math.round(this.y) - cy, 4 + k * 5, 2 + k * 2, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.drawImage(G.spr.icicle, Math.round(this.x - 3) - cx, Math.round(this.y - 14 - this.t * 3) - cy);
+    }
+  }
+  G.Icicle = Icicle;
+
+  class IceJJ extends Ent {
+    constructor(x, y) {
+      super(x, y);
+      this.enemy = true;
+      this.boss = true;
+      this.name = 'ICE JJ FISH';
+      this.hp = this.maxHp = 22;
+      this.hb = { w: 12, h: 8 };
+      this.home = { x, y };
+      this.state = 'glide';
+      this.t = 90;
+      this.dir = 'down';
+      this.anim = 0;
+      this.hurtT = 0;
+      this.kb = { x: 0, y: 0 };
+      this.cycle = 0;
+      this.songT = 0;
+      this.verse = -1;
+      this.vx = 0; this.vy = 0;
+    }
+    get S() { return G.sprites.icejj; }
+    get hyped() { return this.hp <= this.maxHp / 2; }
+    hurtBox() { return [this.x - 7, this.y - 22, this.x + 7, this.y]; }
+    snow(w, a, sp) { w.add(new Shot(this.x, this.y - 2, Math.cos(a) * sp, Math.sin(a) * sp, G.spr.snowflake, { life: 220, z: 9 })); }
+    update(w) {
+      if (G.script.busy || this.state === 'defeated') return;
+      // he never stops singing
+      if (++this.songT % 70 === 1) { this.verse = (this.verse + 1) % JJ_SONG.length; w.pop(this.x, this.y - 36, JJ_SONG[this.verse], '#a8e0ff'); }
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      if (this.hurtT > 0) {
+        // knocked back across the ice
+        this.hurtT--;
+        if (w.move(this, this.kb.x, 0).hitX) this.kb.x = -this.kb.x;
+        if (w.move(this, 0, this.kb.y).hitY) this.kb.y = -this.kb.y;
+        this.kb.x *= 0.93; this.kb.y *= 0.93;
+        return;
+      }
+      if (this.state !== 'dizzy' && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
+      if (this.state === 'glide') {
+        // a lazy figure skate around the pond
+        this.t--;
+        const tx = this.home.x + Math.cos(this.songT * 0.02) * 64, ty = this.home.y + Math.sin(this.songT * 0.02) * 22;
+        w.move(this, (tx - this.x) * 0.04, 0); w.move(this, 0, (ty - this.y) * 0.04);
+        this.dir = G.dirToward(dx, dy);
+        this.anim++;
+        if (this.t <= 0) {
+          const moves = this.hyped ? ['sing', 'high', 'slide', 'icicles'] : ['sing', 'high', 'sing', 'slide'];
+          this.state = moves[this.cycle++ % moves.length];
+          this.t = { sing: 80, high: 70, slide: 60, icicles: 100 }[this.state];
+        }
+      } else if (this.state === 'sing') {
+        this.dir = G.dirToward(dx, dy);
+        if (this.t % 20 === 0) {
+          const n = this.hyped ? 5 : 3, a = Math.atan2(dy, dx);
+          for (let i = 0; i < n; i++) this.snow(w, a + (i - (n - 1) / 2) * 0.3, this.hyped ? 1.6 : 1.3);
+          G.audio.sfx('blip');
+        }
+        if (--this.t <= 0) { this.state = 'glide'; this.t = 80; }
+      } else if (this.state === 'high') {
+        // holds a high note so long the air freezes
+        this.dir = 'down';
+        if (this.t === 66) { w.pop(this.x, this.y - 48, '~ OOOOOOOOOOOH ~', '#ffffff'); G.audio.sfx('bell'); }
+        G.play.shake(2, 1);
+        if (this.t === 50 || this.t === 22) {
+          const n = 14, gap = Math.floor(Math.random() * n);
+          for (let i = 0; i < n; i++) if (i !== gap && i !== (gap + 1) % n) this.snow(w, (i / n) * Math.PI * 2 + this.t * 0.02, 1.1);
+          w.fx.push({ x: this.x, y: this.y - 10, vx: 0, vy: 0, shock: true, r: 50, max: 22, life: 22, color: '#d8f4ff' });
+        }
+        if (--this.t <= 0) { this.state = 'glide'; this.t = 90; }
+      } else if (this.state === 'slide') {
+        // a knee slide right across the ice
+        if (this.t === 60) { this.vx = (dx / dist) * 3.2; this.vy = (dy / dist) * 3.2; w.pop(this.x, this.y - 36, 'WHOOOO!', '#ffffff'); G.audio.sfx('dash'); this.dir = G.dirToward(dx, dy); }
+        if (w.move(this, this.vx, 0).hitX) { this.vx = -this.vx; G.audio.sfx('bump'); }
+        if (w.move(this, 0, this.vy).hitY) { this.vy = -this.vy; G.audio.sfx('bump'); }
+        this.vx *= 0.985; this.vy *= 0.985;
+        if (--this.t <= 0) { this.state = 'dizzy'; this.t = this.hyped ? 50 : 70; w.pop(this.x, this.y - 36, '...whoa.', '#ffffff'); }
+      } else if (this.state === 'dizzy') {
+        this.dir = ['down', 'left', 'up', 'right'][(this.t >> 3) % 4];
+        if (--this.t <= 0) { this.state = 'glide'; this.t = 70; }
+      } else if (this.state === 'icicles') {
+        if (this.t % 20 === 0 && this.t > 10) {
+          w.add(new Icicle(p.x + (Math.random() * 20 - 10), p.y + (Math.random() * 10 - 5)));
+          if (this.t === 100) w.pop(this.x, this.y - 36, 'IT\'S GETTING COLD IN HERE!', '#a8e0ff');
+        }
+        if (--this.t <= 0) { this.state = 'glide'; this.t = 70; }
+      }
+    }
+    hit(dmg, sx, sy) {
+      if (this.state === 'defeated') return;
+      this.hp = Math.max(0, this.hp - dmg);
+      this.hurtT = 16;
+      const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
+      this.kb = { x: (dx / m) * 3, y: (dy / m) * 3 };
+      G.audio.sfx('hit');
+      this.world.pop(this.x, this.y - 30, JJ_OUCH[Math.floor(Math.random() * JJ_OUCH.length)], '#f8f8f0');
+      if (this.hp <= 0) {
+        this.state = 'defeated';
+        G.script.run(G.SCRIPTS.jjDefeated(this));
+      }
+    }
+    bomb(sx, sy) { this.hit(3, sx, sy); }
+    draw(ctx, cx, cy) {
+      const S = this.S;
+      drawShadow(ctx, this.x, this.y, cx, cy);
+      const moving = this.state === 'glide' || this.state === 'slide';
+      let img = S[this.dir][walkFrame(this.anim, moving)];
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2) - cy;
+      ctx.drawImage(img, sx, sy);
+      // the mic
+      if (this.dir !== 'up') ctx.drawImage(G.spr.mic, sx + (this.dir === 'left' ? 2 : this.dir === 'right' ? 10 : 9), sy + 9);
+      if (this.state === 'dizzy') {
+        ctx.fillStyle = '#d8f4ff';
+        for (let i = 0; i < 3; i++) {
+          const a = this.t * 0.15 + (i * Math.PI * 2) / 3;
+          ctx.fillRect(Math.round(this.x + Math.cos(a) * 9) - cx, Math.round(this.y - S.h - 2 + Math.sin(a) * 3) - cy, 2, 2);
+        }
+      }
+    }
+  }
+  G.IceJJ = IceJJ;
 
   // ============================================================== SIX (enemy)
   class Six extends Ent {

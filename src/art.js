@@ -231,7 +231,8 @@
     }
     p.set(5, y0 + 5, c.eyes); p.set(5, y0 + 6, c.eyes);
     p.set(10, y0 + 5, c.eyes); p.set(10, y0 + 6, c.eyes);
-    if (c.smile) { p.set(6, y0 + 8, c.skinD); p.hline(7, 8, y0 + 8, c.smile); p.set(9, y0 + 8, c.skinD); }
+    if (c.smile && c.grin) { p.hline(5, 10, y0 + 8, c.smile); p.set(8, y0 + 8, '#5a2a24'); p.set(5, y0 + 8, c.skinD); p.set(10, y0 + 8, c.skinD); }
+    else if (c.smile) { p.set(6, y0 + 8, c.skinD); p.hline(7, 8, y0 + 8, c.smile); p.set(9, y0 + 8, c.skinD); }
     else p.hline(7, 8, y0 + 8, c.skinD);
     if (c.blush) { p.set(4, y0 + 7, BLUSH); p.set(11, y0 + 7, BLUSH); }
     hairFront(p, c, y0, ty);
@@ -304,6 +305,7 @@
       return edge ? c.shirtD : c.shirt;
     }
     if (c.pattern === 'stripes') return x % 2 ? '#1c1c24' : c.shirt;
+    if (c.pattern === 'stars') return G.hash(x, y, 9) < 0.17 ? '#24305a' : edge ? c.shirtD : c.shirt;
     if (c.pattern === 'floral') {
       const h = G.hash(x, y, 7);
       if (h < 0.18) return '#e27890';
@@ -1193,6 +1195,22 @@
       for (let y = 0; y < 16; y += 5) { p.hline(0, 15, y, '#4a4a52'); for (let x = (y % 10 ? 3 : 8); x < 16; x += 9) p.vline(x, y, y + 4, '#4a4a52'); }
       for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#8a8a92');
       if (mask & 4) { p.rect(0, 14, 16, 2, '#3a3a42'); }
+    },
+    snow(p, r) {
+      p.rect(0, 0, 16, 16, '#eef2f8');
+      for (let i = 0; i < 7; i++) p.set(r() * 16, r() * 16, r() < 0.6 ? '#d4deec' : '#ffffff');
+      if (r() < 0.3) p.hline(Math.floor(r() * 10), Math.floor(r() * 10) + 4, Math.floor(r() * 14) + 1, '#dce4f0');
+    },
+    snowPath(p, r) {
+      p.rect(0, 0, 16, 16, '#dde4ee');
+      for (let i = 0; i < 6; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#c8d2e0' : '#eef2f8');
+      if (r() < 0.6) { const x = 3 + Math.floor(r() * 8), y = 2 + Math.floor(r() * 9); p.rect(x, y, 2, 3, '#c4cedc'); p.rect(x + 3, y + 3, 2, 3, '#c4cedc'); }
+    },
+    ice(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#a8d8f0');
+      for (let i = 0; i < 3; i++) { const x = Math.floor(r() * 14), y = Math.floor(r() * 14); for (let k = 0; k < 4; k++) p.set(x + k, y + (k >> 1), '#d8f0fc'); }
+      if (r() < 0.4) { const x = Math.floor(r() * 12), y = Math.floor(r() * 12); p.set(x, y, '#80b4d4'); p.set(x + 1, y + 1, '#80b4d4'); p.set(x + 2, y + 1, '#80b4d4'); p.set(x + 3, y + 2, '#80b4d4'); }
+      edgeFringe(p, mask, v, '#eef2f8', '#c8dcea');
     },
     basementFloor(p, r) {
       p.rect(0, 0, 16, 16, '#7a7670');
@@ -3609,6 +3627,52 @@
     p.vline(hx + 8 - off, 20, 30, skin); p.set(hx + 9 - off, 30, skin);
     return finish(p);
   }
+  // ================================================================ THE FROZEN POND (Ice JJ Fish)
+  // Snow piled on every branch of a pine (white on each top edge).
+  function snowCap(src) {
+    const c = G.canvas(src.width, src.height), x = c.getContext('2d');
+    x.drawImage(src, 0, 0);
+    const d = x.getImageData(0, 0, c.width, c.height), px = d.data, W = c.width;
+    const solid = (i, j) => j >= 0 && px[(j * W + i) * 4 + 3] > 0;
+    for (let j = c.height - 1; j >= 0; j--) for (let i = 0; i < W; i++) {
+      if (!solid(i, j) || solid(i, j - 1) || G.hash(i, j, 41) < 0.15) continue;
+      for (let k = 0; k < 2; k++) {
+        if (!solid(i, j + k)) break;
+        const o = ((j + k) * W + i) * 4;
+        px[o] = k ? 214 : 244; px[o + 1] = k ? 226 : 248; px[o + 2] = k ? 240 : 252;
+      }
+    }
+    x.putImageData(d, 0, 0);
+    return c;
+  }
+  function micSprite() {
+    const p = new Pix(5, 8);
+    p.rect(1, 0, 3, 3, '#c8c8d0'); p.set(2, 1, '#8a8a94'); p.set(1, 0, '#f0f0f4');
+    p.rect(2, 3, 1, 5, '#1c1c22');
+    return finish(p);
+  }
+  function snowflake() {
+    const p = new Pix(7, 7), c = '#d8f4ff';
+    p.vline(3, 0, 6, c); p.hline(0, 6, 3, c); p.set(1, 1, c); p.set(5, 1, c); p.set(1, 5, c); p.set(5, 5, c); p.set(3, 3, '#ffffff');
+    return finish(p);
+  }
+  function icicle() {
+    const p = new Pix(6, 14);
+    for (let y = 0; y < 14; y++) { const w = Math.max(1, 3 - Math.floor(y / 5)); p.hline(3 - w, 2 + w, y, y % 4 ? '#bce8fc' : '#e8f8ff'); }
+    p.vline(2, 0, 9, '#ffffff');
+    return finish(p);
+  }
+  function snowman() {
+    const p = new Pix(18, 26);
+    for (const [cx, cy, r] of [[9, 19, 6.5], [9, 9, 4.5]]) for (let y = 0; y < 26; y++) for (let x = 0; x < 18; x++) if ((x - cx) ** 2 + (y - cy) ** 2 <= r * r) p.set(x, y, x > cx + 2 ? '#d4deec' : '#f4f8fc');
+    p.rect(5, 1, 8, 4, '#1c1c22'); p.hline(3, 14, 5, '#1c1c22');
+    p.hline(5, 12, 8, '#1c1c22'); p.set(7, 9, '#1c1c22'); p.set(11, 9, '#1c1c22'); p.hline(8, 10, 9, '#1c1c22');
+    p.set(9, 11, '#f08030'); p.set(10, 11, '#f08030');
+    p.hline(5, 13, 14, '#c83030'); p.set(12, 15, '#c83030'); p.set(12, 16, '#c83030');
+    p.set(9, 18, '#1c1c22'); p.set(9, 21, '#1c1c22');
+    return finish(p);
+  }
+
   // Mom's green watering can.
   function wateringCan() {
     const p = new Pix(12, 9);
@@ -3862,6 +3926,8 @@
     S.mailbox = mailbox();
     S.streetSign = streetSign();
     S.pines = [pineTree(4), pineTree(5)];
+    S.snowPines = S.pines.map(snowCap);
+    S.mic = micSprite(); S.snowflake = snowflake(); S.icicle = icicle(); S.snowman = snowman();
     S.chickens = {};
     for (const [k, col] of [['white', '#f4f2ec'], ['brown', '#b8683a']]) {
       const a = chicken(col, false), b = chicken(col, true);
