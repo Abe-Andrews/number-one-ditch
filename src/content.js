@@ -1883,23 +1883,39 @@
     yield G.say('Michelle', 'I WORK there, Nate. I have a job. I have a flower farm. I have a NAME.');
     yield G.say('Nate', 'Michelle.');
     yield G.say('Michelle', 'THANK you.');
-    yield G.say('Michelle', 'Also, something strange is going on. My books keep disappearing.');
+    if (f.fridgeGame && !G.state.items.vodka && !f.badlandsBeaten) yield* askMomForVodka();
+    // (her missing books wait until things at home calm down, after Golden Hour)
+    if (f.mikeyBeaten) yield* momBooksStart(false);
+    if (fol) fol.hold = false;
+  };
+
+  // The missing books: Mom asks Nate to look into it.
+  function* momBooksStart(later) {
+    yield G.say('Michelle', later ? 'Nate! Now that things have calmed down around here. Something strange is going on. My books keep disappearing.' : 'Also, something strange is going on. My books keep disappearing.');
     yield G.say('Michelle', 'First my gardening books. Then my devotionals. Then a whole stack of mystery novels. Gone!');
     yield G.say('Michelle', 'And at night I hear... singing. Coming up through the floor vents. From the BASEMENT.');
     yield G.say('Nate', 'Singing?');
     yield G.say('Michelle', 'A slithery, horrible little song. It gets stuck in my head for DAYS. I cannot STAND it.');
     yield G.say('Michelle', 'Be a dear and look around the house? Whatever is taking them can\'t be tidy about it. Find me some clues, and I\'ll make it worth your while.');
-    f.booksQuest = true;
-    if (f.fridgeGame && !G.state.items.vodka && !f.badlandsBeaten) yield* askMomForVodka();
-    if (fol) fol.hold = false;
-  };
+    flags().booksQuest = true;
+  }
 
+  // The refrigerator game needs vodka shooters, and Mom has the only ones.
   function* askMomForVodka() {
     flags().vodkaAsked = true;
     yield G.say('Nate', 'Also... hypothetically... do you still have any vodka shooters?');
-    yield G.say('Michelle', 'The ones I found in a hollowed-out "War and Peace"? Maybe I do. Maybe I don\'t.');
-    yield G.say('Michelle', 'Find my books first. Then we\'ll talk.');
+    yield G.say('Michelle', 'The ones I found in a hollowed-out "War and Peace"? Who exactly are these for?');
+    yield G.say('Nate', 'Badlands Chugs. He locked Lily in the fridge. It\'s for the refrigerator game.');
+    yield G.say('Michelle', '...I\'m not even going to ask.');
+    yield G.say('Michelle', 'I\'ve been saving these for a special occasion. This is a special occasion.');
+    yield* getIngredient('vodka');
   }
+  // what Mom talks about before the books go missing (before Golden Hour)
+  const MOM_EARLY = [
+    'If one more person calls me "the pastor\'s wife" I\'m going to plant them in a raised bed.',
+    'Watch out for the snapdragons. These ones bite. I don\'t know where they came from.',
+    'Three weddings this month. Do you know how many dahlias that is? I do. I counted.',
+  ];
 
   const MOM_LINES = [
     'Any luck with my books? The basement door is in the front hall.',
@@ -1913,7 +1929,14 @@
     if (f.snackQuest && !s.items.candyCorn && !f.snacksDone && !f.momDenied) { yield* S.momCandy(); return; }
     if (s.items.books && !f.shopOpen) { yield* returnBooks(); return; }
     if (f.cluesDone && !f.momReport) { yield* momReport(); return; }
-    if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten && !f.vodkaAsked) { yield* askMomForVodka(); return; }
+    if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten) { yield* askMomForVodka(); return; }
+    if (!f.booksQuest) {
+      if (f.mikeyBeaten) { yield* momBooksStart(true); return; }
+      if (f.lilySaved) { yield G.say('Michelle', 'There\'s a boy at the end of the driveway with heart balloons. Lily has that look on her face.'); return; }
+      f.momLine = ((f.momLine || 0) + 1) % MOM_EARLY.length;
+      yield G.say('Michelle', MOM_EARLY[f.momLine]);
+      return;
+    }
     if (!f.cluesDone) { yield G.say('Michelle', 'Find anything? Look around the house. Whatever it is, it leaves a mess.'); return; }
     if (!s.items.basementKey && !f.globBeaten) { yield G.say('Michelle', 'Any luck with your father\'s keys? Garage, truck, grill. Anywhere he\'s ever held a sandwich.'); return; }
     if (!s.items.earplugs && !f.globBeaten) { yield G.say('Michelle', 'Earplugs, Nate. Cotton balls in the upstairs bathroom, wax from Lily\'s candle. Trust me.'); return; }
@@ -2972,14 +2995,19 @@
       yield G.say('Dad', 'Check the truck. I eat lunch in the truck.');
       if (f.snackQuest) return;
     }
+    // (one thing at a time at home: his snack run waits until Lily and Mikey are sorted out)
+    if (!f.snackQuest && !f.mikeyBeaten) {
+      if (!f.badlandsMet) yield G.say('Dad', 'Nate! You made it home. Go on in and say hi to everybody. I\'m in the middle of a pipe.');
+      else if (!f.lilySaved) {
+        yield G.say('Nate', 'Dad, Lily is locked in the kitchen fridge.');
+        yield G.say('Dad', 'Then go get your sister out of the fridge. I\'ll survive on sawdust.');
+        if (f.fridgeGame && !s.items.milk) yield G.say('Dad', 'If you need milk, there\'s some in the old fridge out here. I wouldn\'t drink it.');
+      } else yield G.say('Dad', 'There\'s a boy at the end of our driveway with heart balloons. Lily says she\'ll handle it. I am staying out of it.');
+      return;
+    }
     if (!f.snackQuest) {
       f.snackQuest = true;
       yield G.say('Dad', 'Nate! Just the man I wanted to see.');
-      // (only once Nate's found her in there: Badlands Chugs in the kitchen)
-      if (f.badlandsMet && !f.lilySaved) {
-        yield G.say('Nate', 'Dad, Lily is locked in the kitchen fridge.');
-        yield G.say('Dad', 'Then she\'s the only one in this family with access to snacks. Speaking of which.');
-      }
       yield G.say('Dad', 'I have been out here since lunch. I am running on fumes. And sawdust.');
       yield G.say('Dad', 'I need my snacks. Candy corn. And the blue Doritos.');
       yield G.say('Nate', 'Together?');
@@ -4644,7 +4672,8 @@
       w.add(new G.Sign(53, 12, 'BRADY BROOK.'));
       // a red shale ledge out on the island in the brook pool, a basalt boulder by the brook, a gravel bar to sift
       w.add(new G.OreVein(8 * 16, 2 * 16 + 14, 'bed'));
-      w.addTrigger(4, 6, 8, 1, () => { if (!flags().poolHint) G.script.run(S.poolHint()); });
+      // (Nate only remarks on it once the main story at home is done; it's there for explorers before that)
+      w.addTrigger(4, 6, 8, 1, () => { if (!flags().poolHint && flags().mikeyBeaten) G.script.run(S.poolHint()); });
       w.add(new G.BigRock(45 * 16, 11 * 16 + 12, 'basalt', (r) => G.script.run(S.bigRockLift(r))));
       w.addProp({ img: G.spr.gravelBar, tx: 47, ty: 9, dx: 2, dy: -1, flat: true, hit: [47, 9, 2, 1], talk: S.brookSift });
 
@@ -4673,7 +4702,11 @@
       // leaving: either end of the road asks where to; north past the bridge is a dead end for now
       w.addTrigger(0, 53, 1, 2, () => G.script.run(S.homeLeave('west')));
       w.addTrigger(59, 53, 1, 2, () => G.script.run(S.homeLeave('east')));
-      w.addTrigger(51, 0, 2, 1, () => G.play.warp('north', 10, 13, 'up'));
+      // north past the bridge (Ice JJ's pond) opens once Lily and Mikey are sorted out
+      w.addTrigger(51, 0, 2, 1, () => {
+        if (flags().mikeyBeaten || flags().jjSeen) G.play.warp('north', 10, 13, 'up');
+        else G.script.run(S.northNotYet());
+      });
 
       // Mikey, waiting at the start of the driveway with flowers and heart balloons.
       // Once Lily is out of the fridge, walking by him starts his serenade.
@@ -5028,6 +5061,15 @@
     yield G.say(null, 'A coin-op viewer. Nate puts in a quarter.');
     yield G.say(null, 'East: the open Atlantic. West: the bay, all the way to the horizon. A cargo ship lining up for the channel.');
     yield G.say(null, 'And seagulls. So, so many seagulls.');
+  };
+
+  // Before Golden Hour the path north waits: one thing at a time at home.
+  S.northNotYet = function* () {
+    const f = flags(), p = P();
+    if (!f.badlandsMet) yield G.say('Nate', 'Is that... snow? Past the bridge? In July? ...Weird. I should check in at the house first.');
+    else if (!f.lilySaved) yield G.say('Nate', 'Snow past the bridge? Not now. Lily is in a FRIDGE.');
+    else yield G.say('Nate', 'Whatever\'s going on up there can wait. Mikey is still at the end of our driveway.');
+    yield G.walkTo(p, p.x, p.y + 18, 1);
   };
 
   // walking up to the brook pool at home
