@@ -3080,10 +3080,8 @@
     yield G.camFocus(null, null, 30);
   };
   S.jjBusy = function* () {
-    const f = flags();
     yield G.say('Ice JJ Fish', 'Ayy, I\'m in the middle of a set. You want a real show? Get me a BOOKING.');
     yield G.say('Nate', '...Who even books Ice JJ Fish?');
-    if (!f.snacksDone) yield G.say('Nate', 'Dad might. Dad books everybody. Dad\'s in his workshop.');
   };
 
   // with Dad's booking: survive the whole set and he'll play Sunday service
