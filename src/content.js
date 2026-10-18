@@ -420,32 +420,47 @@
     else if (!f.tollPaid) goal = f.hoodedMet ? 'A hooded figure in the tunnel wants 500 shark teeth to let you through. (' + G.sayable(s.teeth) + '/500)' : 'Cross the Chesapeake Bay Bridge-Tunnel. Chesapeake is on the other side of the tunnel.';
     else if (!f.tylerBeaten) goal = 'The hooded figure is Tyler, hypnotized by Father Eggmas! Snap him out of it.';
     else goal = 'Tyler says Father Eggmas is at the Number One Ditch. Chesapeake is through the tunnel! (More story soon!)';
+    // which chapter of the road trip Nate is on
+    const chapter = !f.doronDeal ? 'CH. 1 - LAFAYETTE' : !f.boulderGone ? 'CH. 2 - EASTON FAIR' : !f.mikeyBeaten ? 'CH. 3 - HOME' : 'CH. 4 - THE BAY';
+    // side quests: { name, status, kind (active / rumor / done), prog [n, of], where, hint }
     const side = [];
-    if (f.capQuest || s.items.cap) side.push(['Gus\'s lawn job', s.items.cap ? '{g}Done!' : G.sayable(G.capProgress()) + '/10 sacred numbers']);
-    if (f.chemMet) side.push(['The Chem Final', f.chemPerfect ? '{g}Perfect!' : f.chemPassed ? 'Passed! Retake for a heart' : 'Not passed yet']);
+    const add = (name, done, status, where, hint, prog) => side.push({ name, status: done ? (typeof done === 'string' ? done : 'Done!') : status, kind: done ? 'done' : 'active', where, hint, prog });
+    if (f.capQuest || s.items.cap) add('Gus\'s lawn job', s.items.cap, G.sayable(G.capProgress()) + '/10 bonked', 'Lafayette', 'Bonk ten sacred numbers on the quad and Gus gives your hat back.', [G.capProgress(), 10]);
+    if (f.chemMet) add('The Chem Final', f.chemPerfect && 'Perfect!', f.chemPassed ? 'Retake for a heart' : 'Not passed yet', 'Lafayette - Science Center', f.chemPassed ? 'Ace it without saying the sacred number for a heart container.' : 'Dr. Moles is giving the final in the Science Center.');
     if (f.ticketQuest) {
       const left = s.items.tickets || 0;
-      side.push(['Doron\'s spare tickets', f.ticketsDone ? '{g}Done!' : left ? G.sayable(left) + ' left' + (f.dadBeaten ? ' (next show)' : '') : 'Go tell Doron!']);
+      add('Doron\'s spare tickets', f.ticketsDone, left ? G.sayable(left) + ' left' : 'Tell Doron', 'Lafayette + Easton Fair', left ? 'Offer the tickets to people around campus and the fair. Most say no.' + (f.dadBeaten ? ' (They\'re for next week\'s show now.)' : '') : 'All given away! Go tell Doron.', [4 - left, 4]);
     }
-    if (G.rocksFound()) side.push(['Nate\'s rocks', G.rocksFound() >= G.ROCKS.length ? '{g}All found!' : G.sayable(G.rocksFound()) + '/' + G.ROCKS.length]);
+    if (G.rocksFound()) add('Nate\'s rocks', G.rocksFound() >= G.ROCKS.length && 'All found!', G.sayable(G.rocksFound()) + '/' + G.ROCKS.length, 'Everywhere', 'Mine the Andover mines. Every other rock is a hidden secret. See the ROCKS page.', [G.rocksFound(), G.ROCKS.length]);
     // rumors: things going on around home that Nate hasn't looked into yet
-    if (f.mikeyBeaten) for (const [, , where, hint] of homeLeads()) side.push([where, '{c}' + hint]);
-    if (f.andoverLocked) side.push(['The Andover mines', s.items.andoverKey ? '{g}Key in hand!' : f.shopOpen ? 'Mom\'s stand sells a key' : 'Need a key to the gate']);
-    if (f.roseRocks) side.push(['Grandma Rose\'s funnel cake', f.roseTraded ? '{g}Done!' : s.items.funnelCake ? 'Bring it to her' : 'Someone has to order it']);
-    if (f.rodQuest || s.items.rod) side.push(['The old fisherman', s.items.rod ? '{g}Done!' : 'Gulls: ' + G.sayable(f.gullBonks || 0) + '/5']);
-    if (f.fcAwake) side.push(['Father Christmas', f.fcBeaten ? '{g}Done!' : 'Deep in the Andover mines']);
-    else if (f.homeArrived) { const c = G.completion(); side.push(['100%', G.sayable(c.filter((x) => x[1]).length) + '/' + c.length + ' done']); }
-    if (f.snackQuest) side.push(['Dad\'s snacks', f.snacksDone ? '{g}Done!' : s.items.candyCorn && s.items.doritos ? 'Bring them to Dad' : 'Need: ' + [!s.items.candyCorn && 'candy corn', !s.items.doritos && 'blue Doritos'].filter(Boolean).join(' + ')]);
-    if (f.jjMet || f.jjGig) side.push(['Ice JJ Fish', f.jjBeaten ? '{g}Booked!' : f.jjGig ? 'Book him for Dad\'s church' : 'Wants a booking']);
-    if (f.booksQuest) {
-      side.push(['Mom\'s missing books', f.shopOpen ? '{g}Done!' : s.items.books ? 'Bring them to Mom'
-        : !f.cluesDone ? 'Clues: ' + G.sayable(G.clueCount()) + '/' + CLUES_NEEDED
-        : !f.momReport ? 'Tell Mom' : !s.items.basementKey && !f.globBeaten ? 'Find Dad\'s keys' : 'The basement']);
+    const leadHint = { Michelle: 'Mom is out in the garden. Something is going on with her books.', Dad: 'Dad is in his workshop (the garage). He needs something.', Lily: 'Take the trail north, past the bridge over Brady Brook.', Doron: 'Pick "The Andover mines" when you leave home.' };
+    if (f.mikeyBeaten) for (const [who, , where, hint] of homeLeads()) side.push({ name: where, status: hint, kind: 'rumor', where: 'Home', hint: leadHint[who] });
+    if (f.andoverLocked) add('The Andover mines', s.items.andoverKey && 'Key in hand!', f.shopOpen ? 'Mom sells a key' : 'Need a key', 'Home - Andover', s.items.andoverKey ? 'Pick "The Andover mines" when you leave home.' : f.shopOpen ? 'Mom\'s flower stand sells the gate key. It isn\'t cheap.' : 'The mines are on private land. Mom knows everybody at church.');
+    if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number. Somebody has to say it out loud.');
+    if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
+    if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
+    if (f.snackQuest) {
+      const n = (s.items.candyCorn ? 1 : 0) + (s.items.doritos ? 1 : 0);
+      add('Dad\'s snacks', f.snacksDone, n === 2 ? 'Bring them to Dad' : G.sayable(n) + '/2 snacks', 'Home', n === 2 ? 'Dad is in his workshop.' : 'Candy corn: Mom hides it somewhere. Doritos: follow the muddy tracks.', [n, 2]);
     }
-    // unfinished ones first, then rumors, then the done ones
-    const rank = (e) => (e[1].startsWith('{g}') ? 2 : e[1].startsWith('{c}') ? 1 : 0);
-    side.sort((a, b) => rank(a) - rank(b));
-    return { goal, side };
+    if (f.jjMet || f.jjGig) add('Ice JJ Fish', f.jjBeaten && 'Booked!', f.jjGig ? 'Book him' : 'Wants a booking', 'Home - past the bridge', f.jjGig ? 'Survive his whole set and he\'ll play Dad\'s church.' : 'He won\'t stop singing until somebody books him. Who books singers?');
+    if (f.booksQuest) {
+      const clues = G.clueCount();
+      add('Mom\'s missing books', f.shopOpen, s.items.books ? 'Bring them to Mom' : !f.cluesDone ? G.sayable(clues) + '/' + CLUES_NEEDED + ' clues' : !f.momReport ? 'Tell Mom' : !s.items.basementKey && !f.globBeaten ? 'Find Dad\'s keys' : 'The basement',
+        'Home', s.items.books ? 'Mom is in the garden.' : !f.cluesDone ? 'Search the house for chewed pages and bite marks.' : !f.momReport ? 'Tell Mom what you found.' : !s.items.basementKey && !f.globBeaten ? 'Dad\'s keys are somewhere he eats lunch.' : 'Earplugs, the bait book, then the basement.', !f.cluesDone ? [clues, CLUES_NEEDED] : null);
+    }
+    // active first, then rumors, then the done ones
+    const rank = { active: 0, rumor: 1, done: 2 };
+    side.sort((a, b) => rank[a.kind] - rank[b.kind]);
+    return { goal, chapter, side };
+  };
+
+  // How close to 100%: every item on the list, with rocks counted one by one.
+  G.completionPct = () => {
+    const c = G.completion(), n = c.length;
+    let done = 0;
+    for (const [name, ok] of c) done += name === 'Every rock' ? G.rocksFound() / G.ROCKS.length : ok ? 1 : 0;
+    return Math.floor((done / n) * 100);
   };
 
   // ================================================================ MUSIC (original tunes)
