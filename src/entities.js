@@ -2296,11 +2296,12 @@
     }
     hook(w, e) {
       this.state = 'back';
+      const p = this.owner;
+      // (onHook returning false means the hook slid right off)
+      if (e.onHook && e.onHook(p) === false) { G.audio.sfx('clank'); return; }
       G.audio.sfx('select');
       w.pop(this.x, this.y - 22, 'HOOKED!', '#f8f8f0');
-      const p = this.owner;
-      if (e.onHook) e.onHook(p);
-      else e.hit(1, e.x * 2 - p.x, e.y * 2 - p.y); // (knocked back TOWARD Nate)
+      if (!e.onHook) e.hit(1, e.x * 2 - p.x, e.y * 2 - p.y); // (knocked back TOWARD Nate)
     }
     draw(ctx, cx, cy) {
       const p = this.owner, [dx, dy] = DIRS[p.dir];
@@ -2512,9 +2513,14 @@
     hurtBox() { return [this.x - 7, this.y - 24, this.x + 7, this.y]; }
     toPace() { this.state = 'pace'; this.st = this.phase === 2 ? 50 : 75; this.shadesDown = false; }
     get open() { return this.state === 'reeled'; }
-    // hooked with the surf rod: yanked down the tunnel to Nate, screen dropped
+    // hooked with the surf rod: yanked down the tunnel to Nate, screen dropped.
+    // Right after he gets back up he's watching for the hook, so it slides off.
     onHook(p) {
-      if (this.state === 'defeated' || this.state === 'yank' || this.state === 'reeled') return;
+      if (this.state === 'defeated' || this.state === 'yank' || this.state === 'reeled') return false;
+      if (this.hookCool > 0) {
+        if (G.tick - (this.dodgeT || -99) > 30) { this.dodgeT = G.tick; this.world.pop(this.x, this.y - 34, 'NOT AGAIN!', '#78e8e8'); }
+        return false;
+      }
       const ty = Math.max(3 * 16, Math.min(21 * 16, p.y - 22));
       Object.assign(this, { state: 'yank', k: 0, from: { x: this.x, y: this.y }, to: { x: Math.max(5 * 16 + 8, Math.min(11 * 16 - 8, p.x)), y: ty }, shadesDown: false });
       this.world.pop(this.x, this.y - 34, 'WHOA-OA-OA!', '#78e8e8');
@@ -2530,6 +2536,7 @@
     update(w) {
       if (G.script.busy || this.state === 'defeated') return;
       this.t++;
+      if (this.hookCool > 0) this.hookCool--;
       const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1, hot = this.phase === 2;
       if (this.hurtT > 0) {
         this.hurtT--;
@@ -2558,7 +2565,7 @@
         }
         case 'reeled':
           // flat on his face, screen dropped: now's the time
-          if (--this.st <= 0) { this.toPace(); w.pop(this.x, this.y - 34, 'SCREEN UP!', '#78e8e8'); }
+          if (--this.st <= 0) { this.toPace(); this.hookCool = hot ? 120 : 90; w.pop(this.x, this.y - 34, 'SCREEN UP!', '#78e8e8'); }
           break;
         case 'pace': {
           // stays up the tunnel from Nate, sidestepping across the lanes

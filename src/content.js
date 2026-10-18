@@ -5109,13 +5109,16 @@
     yield G.say('Nate', 'Father Eggmas is AT the Number One Ditch.');
     if (G.with('doron')) yield G.say('Doron', 'Then that\'s where we\'re going.');
     else if (G.with('lily')) yield G.say('Lily', 'Nate, I want to go home.');
-    yield G.say('Tyler', 'Go. I\'m right behind you.');
+    yield G.say('Tyler', 'Go get him. I\'m heading back to New Jersey before anything else hypnotizes me.');
     yield G.say('Tyler', 'And Nate? If you see my mosasaur tooth...');
     yield G.say('Nate', 'I KNOW, Tyler.');
-    // off he runs toward daylight, still yelling about it
+    // off he runs back down the tunnel toward the bridge and home, still yelling
+    // about it (in the lane away from Nate, and off the bottom of the screen)
     for (let x = 5; x <= 10; x++) { w.block[1 * w.w + x] = 0; w.block[22 * w.w + x] = 0; }
     w.pop(t.x, t.y - 34, 'THE MOSASAUR TOOTH!', '#78e8e8');
-    yield G.walkTo(t, 8 * 16, 0, 2.2);
+    const lane = p.x < 8 * 16 ? 10 * 16 + 8 : 5 * 16 + 8;
+    yield G.walkTo(t, lane, t.y, 2.2);
+    yield G.walkTo(t, lane, G.play.cam.y + G.H + 40, 2.2);
     t.dead = true;
     f.tylerBeaten = true;
     G.audio.play('tunnel');
