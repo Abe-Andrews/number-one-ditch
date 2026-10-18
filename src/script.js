@@ -33,6 +33,8 @@
         s.val = undefined;
         if (r.done) {
           this.cur = null;
+          // a cutscene walk can leave Nate standing inside something solid: step him out
+          if (!this.queue.length && G.play && G.play.player && G.scene === G.play) G.unstick(G.play.player);
           if (this.queue.length) this.run(this.queue.shift());
           return;
         }
@@ -180,6 +182,20 @@
       },
     };
   }
+
+  // If an entity is standing inside a wall, tree or bush, move it to the
+  // nearest open spot (searching outward a few pixels at a time).
+  G.unstick = (e) => {
+    const w = G.play && G.play.world;
+    if (!w || !e || !w.blocked(e.box(), e)) return false;
+    for (let r = 4; r <= 64; r += 4) {
+      for (let a = 0; a < 16; a++) {
+        const x = Math.round(e.x + Math.cos((a * Math.PI) / 8) * r), y = Math.round(e.y + Math.sin((a * Math.PI) / 8) * r);
+        if (!w.blocked(e.boxAt(x, y), e)) { e.x = x; e.y = y; return true; }
+      }
+    }
+    return false;
+  };
 
   G.say = (name, text, opts) => dialog(name, text, opts);
   G.ask = (name, text, options, opts = {}) => dialog(name, text, Object.assign({}, opts, { options }));

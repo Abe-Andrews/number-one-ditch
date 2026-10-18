@@ -2710,6 +2710,12 @@
 
   // ---- rocks around Lafayette, the fairgrounds and home: some take more than a hammer
   // A rock too heavy for Nate. With Doron along, he heaves it up and slams it open.
+  // Cutscene walks go straight through walls, so pick a standing spot that's
+  // actually open (the first of these that fits), or Nate can end up in a tree.
+  function openSpot(w, ent, spots) {
+    for (const [x, y] of spots) if (!w.blocked(ent.boxAt(x, y), ent)) return [x, y];
+    return spots[0];
+  }
   S.bigRockLift = function* (rock) {
     const w = G.play.world, p = P(), basalt = rock.kind === 'basalt';
     const d = w.ents.find((e) => e instanceof G.Follower && e.id === 'doron' && !e.dead);
@@ -2722,9 +2728,12 @@
     yield G.say('Nate', basalt ? 'Doron. Can you lift that?' : 'Doron. See those wavy layers? I need to get inside that ledge.');
     yield G.say('Doron', basalt ? 'Can I lift it. CAN I LIFT IT.' : 'Say no more.');
     d.hold = true;
-    yield G.walkTo(p, rock.x - 40, rock.y + 16, 1.2);
-    p.dir = 'right';
-    yield G.walkTo(d, rock.x, rock.y + 16, 1.2);
+    // Nate steps off to the side (whichever side is clear), Doron squares up in front
+    const [nx, ny] = openSpot(w, p, [[rock.x - 40, rock.y + 16], [rock.x + 40, rock.y + 16], [rock.x - 32, rock.y + 2], [rock.x + 32, rock.y + 2], [rock.x - 24, rock.y + 30], [rock.x + 24, rock.y + 30]]);
+    yield G.walkTo(p, nx, ny, 1.2);
+    p.dir = nx < rock.x ? 'right' : 'left';
+    const [dx, dy] = openSpot(w, d, [[rock.x, rock.y + 16], [rock.x - 10, rock.y + 16], [rock.x + 10, rock.y + 16], [rock.x, rock.y + 24]]);
+    yield G.walkTo(d, dx, dy, 1.2);
     d.dir = 'up';
     yield { start() { G.audio.sfx('dash'); }, update() { rock.lift += 1; G.play.shake(2, 1); return rock.lift >= 30; } };
     yield G.say('Doron', basalt ? 'HUP!' : 'ARMY...');
@@ -4703,7 +4712,7 @@
         flags().homeArrived = true;
         yield G.wait(30);
         yield G.say('Nate', 'Rattlesnake Bridge Road. Home sweet home.');
-        if (G.with('doron')) yield G.say('Doron', 'Smells like woodsmoke and chickens. Feels like home.');
+        yield G.say('Nate', 'Smells like woodsmoke and chickens. Feels like home.');
         const m = G.play.world.mikey;
         if (m && !flags().mikeyMet) {
           yield G.camFocus(m.x, m.y - 10, 60);
