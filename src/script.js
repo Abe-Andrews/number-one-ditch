@@ -72,6 +72,24 @@
 
   const BOX = { x: 6, w: 228, h: 44, lineH: 11, lines: 3 };
 
+  // who gets a little face on their name plate (their sprite's head)
+  const FACES = {
+    Lily: 'lily', Abe: 'abe', Hannah: 'hannah', Doron: 'doron', Dad: 'dad', Mikey: 'mikey', Michelle: 'michelle',
+    'Old Fisherman': 'fisherman', 'Hooded Figure': 'hooded', 'Professor Pembrook': 'pembrook', Devin: 'devin',
+    'Prof. Schist': 'prof', Vendor: 'vendor', Maya: 'maya', Jordan: 'jordan', Superfan: 'superfan', Attendant: 'attendant',
+    Lemonade: 'lemonade', Referee: 'ref', 'Pyro Pete': 'pete', Gus: 'gus', 'Dr. Moles': 'moles', 'Grandma Rose': 'rose',
+    'Big Earl': 'earl', Priya: 'priya', 'Ice JJ Fish': 'icejj', 'Badlands Chugs': 'badlands', 'Little Nate': 'nate_toddler',
+    'El EEENGLISH': 'elenglish',
+  };
+  function faceOf(name) {
+    const s = G.state;
+    const id = name === 'Nate' ? (s && s.items.cap ? 'nate' : 'nate_nocap')
+      : name === 'Tyler' ? (s && s.flags.tylerBeaten ? 'tyler' : 'tylerHypno') : FACES[name];
+    return id && G.sprites && G.sprites[id] ? G.sprites[id].down[0] : null;
+  }
+  let lastDialogEnd = -99;
+  const OPEN_T = 5;
+
   // ------------------------------------------------------------ say / ask
   function dialog(name, text, opts = {}) {
     const style = STYLES[opts.style || 'normal'];
@@ -83,10 +101,13 @@
       start() {
         const pl = G.play && G.play.player;
         this.top = opts.top != null ? opts.top : (!G.play.camFocus && pl && pl.y - G.play.cam.y > 96);
+        // the box pops open at the start of a conversation (not between lines of one)
+        this.openT = G.tick - lastDialogEnd <= 3 ? OPEN_T : 0;
       },
       pageLen() { return this.pages[this.page].reduce((n, l) => n + F().visibleLength(l), 0); },
       update() {
         const inp = G.input;
+        if (this.openT < OPEN_T) { this.openT++; return false; }
         const len = this.pageLen();
         if (this.chars < len) {
           this.chars += inp.down('a') || inp.down('b') ? 2.5 : 0.75;
@@ -100,12 +121,12 @@
         if (last && opts.options) {
           if (inp.hit('up')) { this.choice = (this.choice + opts.options.length - 1) % opts.options.length; G.audio.sfx('menu'); }
           if (inp.hit('down')) { this.choice = (this.choice + 1) % opts.options.length; G.audio.sfx('menu'); }
-          if (inp.hit('a')) { inp.eat('a'); G.audio.sfx('select'); this.result = this.choice; return true; }
+          if (inp.hit('a')) { inp.eat('a'); G.audio.sfx('select'); this.result = this.choice; lastDialogEnd = G.tick; return true; }
           return false;
         }
         if (inp.hit('a') || inp.hit('b')) {
           inp.eat('a'); inp.eat('b');
-          if (last) return true;
+          if (last) { lastDialogEnd = G.tick; return true; }
           this.page++;
           this.chars = 0;
         }
@@ -113,13 +134,22 @@
       },
       draw(ctx) {
         const y = this.top ? 4 : G.H - BOX.h - 4;
+        if (this.openT < OPEN_T) {
+          // opening: the box grows out from its middle
+          const k = (this.openT + 1) / (OPEN_T + 1), h = Math.max(4, Math.round(BOX.h * k)), w = Math.round(BOX.w * (0.6 + 0.4 * k));
+          box(ctx, Math.round((G.W - w) / 2), y + Math.round((BOX.h - h) / 2), w, h, style);
+          return;
+        }
         box(ctx, BOX.x, y, BOX.w, BOX.h, style);
         if (name) {
-          const nw = F().width(name) + 10;
-          box(ctx, BOX.x + 6, y - 9, nw, 13, style);
+          // the name plate (with the speaker's face), hanging off the bottom when the box is at the top
+          const face = faceOf(name), fw = face ? 14 : 0, ph = face ? 15 : 13;
+          const nw = F().width(name) + 10 + fw, py = this.top ? y + BOX.h - 4 : y - ph + 4;
+          box(ctx, BOX.x + 6, py, nw, ph, style);
+          if (face) ctx.drawImage(face, 2, 1, 12, 11, BOX.x + 9, py + 2, 12, 11);
           let nc = opts.nameColor || G.NAME_COLORS[name] || '#f8d850';
           if (opts.style === 'phone') nc = G.art.shade(nc, -0.45);
-          F().draw(ctx, name, BOX.x + 11, y - 6, nc, { shadow: style.shadow });
+          F().draw(ctx, name, BOX.x + 11 + fw, py + Math.floor((ph - 7) / 2), nc, { shadow: style.shadow });
         }
         let left = Math.floor(this.chars);
         this.pages[this.page].forEach((line, i) => {
@@ -129,9 +159,9 @@
           left -= n;
         });
         const done = this.chars >= this.pageLen() && this.wait <= 0;
-        if (done && !(opts.options && this.page === this.pages.length - 1) && (G.tick >> 4) & 1) {
+        if (done && !(opts.options && this.page === this.pages.length - 1)) {
           ctx.fillStyle = opts.style === 'phone' ? '#2a2238' : '#f8d850';
-          const ax = BOX.x + BOX.w - 12, ay = y + BOX.h - 9;
+          const ax = BOX.x + BOX.w - 12, ay = y + BOX.h - 10 + ((G.tick >> 3) & 1);
           ctx.fillRect(ax, ay, 5, 1); ctx.fillRect(ax + 1, ay + 1, 3, 1); ctx.fillRect(ax + 2, ay + 2, 1, 1);
         }
         if (done && opts.options && this.page === this.pages.length - 1) {
@@ -355,23 +385,53 @@
   };
 
   // Big centered banner (chapter titles, achievements).
+  // Big moments: a dark band opens across the middle, the title drops in in
+  // big gold letters (on two lines if it needs them) and the subtitle fades in
+  // under it, wrapped so nothing runs off the screen.
+  function wrapBig(text, scale, maxW) {
+    const lines = [];
+    let cur = '';
+    for (const w of text.split(' ')) {
+      const t = cur ? cur + ' ' + w : w;
+      if (cur && F().bigWidth(t, scale) > maxW) { lines.push(cur); cur = w; } else cur = t;
+    }
+    if (cur) lines.push(cur);
+    return lines;
+  }
+  const BANNER_GOLD = (r) => (r < 2 ? '#fff4c0' : r < 4 ? '#f8d850' : '#e0a030');
   G.banner = (title, sub, n = 150) => ({
-    start() { this.t = 0; },
+    start() {
+      this.t = 0;
+      this.scale = 2;
+      this.lines = wrapBig(title, 2, 224);
+      if (this.lines.length > 2 || this.lines.some((l) => F().bigWidth(l, 2) > 232)) { this.scale = 1; this.lines = [title]; }
+      this.subs = sub ? F().wrap(sub, 224).slice(0, 2) : [];
+      // two lines of subtitle? even them out
+      if (this.subs.length === 2) for (let w = Math.ceil(F().width(sub) / 2); w < 224; w += 4) { const l = F().wrap(sub, w); if (l.length === 2) { this.subs = l; break; } }
+      this.lh = this.scale * 7 + 4;
+      this.h = 12 + this.lines.length * this.lh + (this.subs.length ? 2 + this.subs.length * 9 : 0);
+    },
     update() {
       this.t++;
       if (this.t > 30 && G.input.hit('a')) { G.input.eat('a'); return true; }
       return this.t >= n;
     },
     draw(ctx) {
-      const a = Math.min(1, this.t / 15);
-      ctx.fillStyle = `rgba(12,8,20,${0.75 * a})`;
-      ctx.fillRect(0, 52, G.W, 52);
-      const tw = F().width(title);
-      F().draw(ctx, title, Math.round((G.W - tw) / 2), 64, '#f8d850', { shadow: '#0c0814' });
-      if (sub) {
-        const sw = F().width(sub);
-        F().draw(ctx, sub, Math.round((G.W - sw) / 2), 82, '#f8f8f0', { shadow: '#0c0814' });
+      const t = this.t, open = Math.min(1, t / 10), e = 1 - (1 - open) * (1 - open), out = Math.max(0, Math.min(1, (n - t) / 12));
+      const cy = 78, bh = Math.max(2, Math.round(this.h * e)), y = Math.round(cy - bh / 2);
+      ctx.globalAlpha = out;
+      ctx.fillStyle = 'rgba(12,8,20,0.8)'; ctx.fillRect(0, y, G.W, bh);
+      ctx.fillStyle = '#c8a040'; ctx.fillRect(0, y, G.W, 1); ctx.fillRect(0, y + bh - 1, G.W, 1);
+      if (open >= 1) {
+        const top = Math.round(cy - this.h / 2) + 6, k = Math.min(1, (t - 10) / 8);
+        ctx.globalAlpha = out * k;
+        this.lines.forEach((l, i) => {
+          F().drawBig(ctx, l, Math.round((G.W - F().bigWidth(l, this.scale)) / 2), top + i * this.lh - Math.round((1 - k) * 6), this.scale, BANNER_GOLD, '#1c1424');
+        });
+        ctx.globalAlpha = out * Math.min(1, Math.max(0, (t - 18) / 10));
+        this.subs.forEach((l, i) => F().draw(ctx, l, Math.round((G.W - F().width(l)) / 2), top + this.lines.length * this.lh + 1 + i * 9, '#f8f8f0', { shadow: '#0c0814' }));
       }
+      ctx.globalAlpha = 1;
     },
   });
 })();

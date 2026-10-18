@@ -84,6 +84,7 @@
       G.script.reset();
       G.fade = 1;
       this.menu = null;
+      G.toasts.clear();
       this.dying = 0;
       this.healQ = 0;
       const s = G.state;
@@ -117,6 +118,7 @@
       for (const t of this.world.triggers) t.inside = G.overlap(t.rect, this.feet());
       const s = G.state;
       s.map = id; s.x = x; s.y = y; s.dir = dir;
+      (s.visited = s.visited || {})[id] = 1;
       G.audio.play(this.world.def.music);
       G.areaBanner.show(this.world.def.name);
       this.snapCam();
@@ -332,6 +334,7 @@
 
       G.state.playTime = (G.state.playTime || 0) + 1;
       if (G.tick % 30 === 0 && !G.script.busy && !this.warping && G.postgameTick) G.postgameTick();
+      if (G.tick % 30 === 15 && !G.script.busy && !this.warping && !this.menu) G.questWatch();
       if (this.eggCool > 0) this.eggCool--;
       if (this.earworm > 0 && !G.script.busy) this.earworm--;
       if (this.whiteout > 0) this.whiteout -= 0.03;
@@ -340,6 +343,7 @@
         if (this.menu.update()) this.menu = null;
         return;
       }
+      G.toasts.update();
 
       if (!G.script.busy && G.input.hit('start')) {
         G.input.eat('start');
@@ -433,6 +437,7 @@
       G.pipe.draw(ctx);
       const boss = this.world.ents.find((e) => e.boss && e.state !== 'defeated');
       if (boss) G.hud.bossBar(ctx, boss);
+      if (!this.menu) G.toasts.draw(ctx, !!boss);
       G.areaBanner.draw(ctx);
       G.script.draw(ctx);
       if (this.menu) this.menu.draw(ctx);
@@ -447,6 +452,9 @@
       this.t = 0;
       this.sel = 0;
       this.opts = (G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game']).concat('Admin');
+      // which file Continue picks up (shown along the bottom)
+      const n = G.hasSave() && G.latestSave(), sv = n && G.readSave(n);
+      this.cont = sv ? ['File ' + n + ' - ' + ((G.MAPS[sv.map] || {}).name || '???') + ' - ' + G.playTimeText(sv.playTime), 'File ' + n + ' - ' + G.playTimeText(sv.playTime)] : null;
       G.audio.play('title');
     },
     update() {
@@ -496,7 +504,13 @@
       const cy = y + 6 + this.sel * 12, b = (this.t >> 3) & 1;
       ctx.fillStyle = '#f8d850';
       ctx.fillRect(x + 8 + b, cy, 1, 5); ctx.fillRect(x + 9 + b, cy + 1, 1, 3); ctx.fillRect(x + 10 + b, cy + 2, 1, 1);
-      F().draw(ctx, 'Z: select', 4, G.H - 10, '#ffffff', { shadow: '#1c1424' });
+      ctx.fillStyle = 'rgba(12,8,20,0.55)'; ctx.fillRect(0, G.H - 15, G.W, 15);
+      const kw = G.keycap(ctx, 4, G.H - 13, 'Z');
+      F().draw(ctx, 'select', 7 + kw, G.H - 11, '#ffffff', { shadow: '#1c1424' });
+      if (this.cont && this.opts[this.sel] === 'Continue') {
+        const info = F().width(this.cont[0]) <= G.W - 50 - kw ? this.cont[0] : this.cont[1];
+        F().draw(ctx, info, G.W - 5 - F().width(info), G.H - 11, '#f8d850', { shadow: '#1c1424' });
+      }
     },
   };
 
@@ -706,21 +720,48 @@
     draw(ctx) {
       ctx.fillStyle = '#0c0814';
       ctx.fillRect(0, 0, G.W, G.H);
+      // a dim red glow behind whoever fainted
+      const glow = ctx.createRadialGradient(120, 58, 4, 120, 58, 90);
+      glow.addColorStop(0, 'rgba(120,30,50,0.45)'); glow.addColorStop(1, 'rgba(12,8,20,0)');
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, G.W, G.H);
       const S = G.nateSprites();
       ctx.save();
       ctx.translate(120, 60);
       ctx.rotate(Math.PI / 2);
       ctx.drawImage(S.down[0], -S.h / 2, -8);
       ctx.restore();
+      // seeing stars
+      for (let i = 0; i < 3; i++) {
+        const a = this.t / 14 + (i * Math.PI * 2) / 3, sx = Math.round(126 + Math.cos(a) * 8), sy = Math.round(45 + Math.sin(a) * 2.5);
+        ctx.fillStyle = '#1c1424'; ctx.fillRect(sx - 2, sy - 1, 5, 3); ctx.fillRect(sx - 1, sy - 2, 3, 5);
+        ctx.fillStyle = Math.sin(a) > 0 ? '#f8d850' : '#c89838'; ctx.fillRect(sx - 1, sy, 3, 1); ctx.fillRect(sx, sy - 1, 1, 3);
+      }
       const lily = G.state.playAs === 'lily';
       const t1 = (lily ? 'Lily' : 'Nate') + ' fainted...';
-      F().draw(ctx, t1, Math.round((G.W - F().width(t1)) / 2), 84, '#f86858', { shadow: '#000' });
+      F().drawBig(ctx, t1, Math.round((G.W - F().bigWidth(t1, 2)) / 2), 72, 2, (r) => (r < 2 ? '#ffb0a8' : r < 4 ? '#f86858' : '#c83848'), '#1c1424');
       if (this.t < 60) return;
-      const t2 = lily ? 'Nate: get up lily. mikey is still singing' : 'Lily: get up nate. the ditch needs you';
-      F().draw(ctx, t2, Math.round((G.W - F().width(t2)) / 2), 98, '#ff98d0', { shadow: '#000' });
+      // whoever gets them back up says so, with their face in a little frame
+      const k = Math.min(1, (this.t - 60) / 10), who = lily ? 'Nate' : 'Lily';
+      const msg = lily ? 'Get up, Lily. Mikey is still singing.' : 'Get up, Nate. The ditch needs you.';
+      const face = G.sprites[lily ? (G.state.items.cap ? 'nate' : 'nate_nocap') : 'lily'].down[0];
+      const bw = 38 + Math.max(F().width(msg), F().width(who)) + 9, bx = Math.round((G.W - bw) / 2), by = 90 + Math.round((1 - k) * 6);
+      ctx.globalAlpha = k;
+      G.box(ctx, bx, by, bw, 30);
+      ctx.fillStyle = '#0c0814'; ctx.fillRect(bx + 5, by + 3, 28, 24);
+      ctx.fillStyle = '#2a2240'; ctx.fillRect(bx + 6, by + 4, 26, 22);
+      ctx.drawImage(face, 2, 1, 12, 11, bx + 7, by + 4, 24, 22);
+      F().draw(ctx, who, bx + 38, by + 5, G.NAME_COLORS[who] || '#ff98d0', { shadow: '#0c0814' });
+      F().draw(ctx, msg, bx + 38, by + 16, '#f8f8f0', { shadow: '#0c0814', max: Math.max(0, Math.floor((this.t - 66) * 0.9)) });
+      ctx.globalAlpha = 1;
+      // continue / title, in a box like the title screen's
+      const w = 84, x = Math.round((G.W - w) / 2), y = 125;
+      G.box(ctx, x, y, w, 32);
       ['Continue', 'Back to Title'].forEach((o, i) => {
-        F().draw(ctx, (i === this.sel ? '> ' : '  ') + o, 84, 118 + i * 12, i === this.sel ? '#f8d850' : '#f8f8f0', { shadow: '#000' });
+        F().draw(ctx, o, x + 18, y + 5 + i * 12, i === this.sel ? '#f8d850' : '#f8f8f0', { shadow: '#0c0814' });
       });
+      const cy = y + 6 + this.sel * 12, b = (this.t >> 3) & 1;
+      ctx.fillStyle = '#f8d850';
+      ctx.fillRect(x + 8 + b, cy, 1, 5); ctx.fillRect(x + 9 + b, cy + 1, 1, 3); ctx.fillRect(x + 10 + b, cy + 2, 1, 1);
     },
   };
 

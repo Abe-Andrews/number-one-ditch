@@ -626,7 +626,7 @@
     yield G.shakeCmd(30, 3);
     G.state.stats.slips++;
     G.state.hp = Math.max(1, G.state.hp - 1);
-    yield G.banner('THE SACRED NUMBER WAS SPOKEN', 'Slips so far: ' + G.state.stats.slips, 150);
+    yield G.banner('THE SACRED NUMBER WAS SPOKEN', 'Slips so far: ' + G.sayable(G.state.stats.slips), 150);
   }
   S.slip = slip;
 

@@ -311,8 +311,31 @@
       if (swinging && this.dir !== 'up') this.drawHammer(ctx, cx, cy);
       if (bassing && this.dir !== 'up') this.drawBass(ctx, cx, cy);
       if (this.pose === 'hold' && this.holdIcon) {
-        const ic = this.holdIcon;
-        ctx.drawImage(ic, Math.round(this.x - ic.width / 2) - cx, sy - ic.height - 1);
+        const ic = this.holdIcon, ix = Math.round(this.x - ic.width / 2) - cx, iy = sy - ic.height - 1;
+        // a slow burst of light behind whatever Nate just found
+        const gx = ix + ic.width / 2, gy = iy + ic.height / 2, t = G.tick * 0.03;
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = 'rgba(255,236,160,0.2)';
+        for (let i = 0; i < 8; i++) {
+          const a = t + (i * Math.PI) / 4, R = i % 2 ? 15 : 20;
+          ctx.beginPath(); ctx.moveTo(gx, gy);
+          ctx.lineTo(gx + Math.cos(a - 0.14) * R, gy + Math.sin(a - 0.14) * R);
+          ctx.lineTo(gx + Math.cos(a + 0.14) * R, gy + Math.sin(a + 0.14) * R);
+          ctx.fill();
+        }
+        ctx.fillStyle = 'rgba(255,248,210,0.22)';
+        ctx.beginPath(); ctx.arc(gx, gy, 8, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        ctx.drawImage(ic, ix, iy);
+        // and a few twinkles around it
+        for (let i = 0; i < 3; i++) {
+          const ph = (G.tick + i * 13) % 40;
+          if (ph > 14) continue;
+          const a = -t * 1.7 + (i * 2 * Math.PI) / 3, R = 12 + (i % 2) * 3, px = Math.round(gx + Math.cos(a) * R), py = Math.round(gy + Math.sin(a) * R);
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(px, py, 1, 1);
+          if (ph > 3 && ph < 11) { ctx.fillStyle = '#fff4c0'; ctx.fillRect(px - 1, py, 3, 1); ctx.fillRect(px, py - 1, 1, 3); }
+        }
       }
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, sy - 12);
       if (G.play.earworm > 0) {

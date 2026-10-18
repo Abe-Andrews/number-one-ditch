@@ -29,12 +29,22 @@
   G.hud = {
     draw(ctx) {
       const s = G.state;
-      // hearts
-      const n = s.maxHp / 2;
+      // (a new save or a new game: no rolling or shaking from the old numbers)
+      if (this.seen !== s) { this.seen = s; this.lastHp = s.hp; this.hurtT = 0; this.healT = 0; this.tShown = s.teeth; this.tSeen = s.teeth; this.gain = 0; this.gainT = 0; }
+      // hearts: they shake when Nate gets hurt, flash when he heals,
+      // and the last one beats when he's down to one heart
+      if (s.hp < this.lastHp) this.hurtT = 14;
+      else if (s.hp > this.lastHp) this.healT = 16;
+      this.lastHp = s.hp;
+      if (this.hurtT > 0) this.hurtT--;
+      if (this.healT > 0) this.healT--;
+      const n = s.maxHp / 2, last = Math.ceil(s.hp / 2) - 1, low = s.hp <= 2 && s.maxHp > 2 && s.hp > 0;
+      const shake = this.hurtT > 0 ? ((this.hurtT >> 1) & 1 ? 1 : -1) : 0, beat = low && G.tick % 48 < 6;
       for (let i = 0; i < n; i++) {
         const v = s.hp - i * 2;
-        const img = v >= 2 ? G.spr.heart.full : v === 1 ? G.spr.heart.half : G.spr.heart.empty;
-        ctx.drawImage(img, 5 + (i % 10) * 8, 5 + Math.floor(i / 10) * 8);
+        let img = v >= 2 ? G.spr.heart.full : v === 1 ? G.spr.heart.half : G.spr.heart.empty;
+        if ((beat && i === last) || (this.healT > 0 && i === last && (this.healT >> 2) & 1)) img = G.art.flash(img);
+        ctx.drawImage(img, 5 + (i % 10) * 8 + shake, 5 + Math.floor(i / 10) * 8 - (beat && i === last ? 1 : 0));
       }
       // item buttons
       const xi = s.xItem && G.ITEMS[s.xItem];
@@ -52,18 +62,74 @@
         itemBox(ctx, G.W - 27, 5, 'Z', s.items.hammer ? G.ITEMS.hammer.icon() : null);
       }
       if (s.admin) F().draw(ctx, s.god ? 'ADMIN (INVINCIBLE)' : 'ADMIN', 5, 15 + Math.floor((s.maxHp / 2 - 1) / 10) * 8, '#ff98d0', { shadow: SH });
-      // shark teeth
-      ctx.drawImage(G.spr.tooth, 5, G.H - 14);
-      F().draw(ctx, String(s.teeth).padStart(3, '0'), 15, G.H - 13, '#f8f8f0', { shadow: SH });
+      // shark teeth: the counter rolls to the new number (skipping the sacred
+      // number, like the teeth do) and a little +n floats up beside it
+      if (s.teeth !== this.tSeen) {
+        const d = s.teeth - this.tSeen;
+        this.gain = (this.gainT > 0 && Math.sign(this.gain) === Math.sign(d) ? this.gain : 0) + d;
+        this.gainT = 70;
+        this.tSeen = s.teeth;
+      }
+      const rolling = this.tShown !== s.teeth;
+      if (rolling) {
+        const d = s.teeth - this.tShown, dir = Math.sign(d);
+        let v = this.tShown + dir * Math.min(Math.abs(d), Math.max(1, Math.ceil(Math.abs(d) / 24)));
+        while (/6/.test(String(v)) && v !== s.teeth) v += dir;
+        this.tShown = v;
+      }
+      ctx.drawImage(G.spr.tooth, 5, G.H - 14 - (rolling && (G.tick >> 2) & 1 ? 1 : 0));
+      const shown = String(this.tShown).padStart(3, '0');
+      F().draw(ctx, shown, 15, G.H - 13, rolling ? (this.gain < 0 ? '#f86858' : '#f8d850') : '#f8f8f0', { shadow: SH });
+      if (this.gainT > 0) {
+        this.gainT--;
+        const txt = (this.gain > 0 ? '+' : '-') + G.sayable(Math.abs(this.gain));
+        ctx.globalAlpha = Math.min(1, this.gainT / 20);
+        F().draw(ctx, txt, 18 + F().width(shown), G.H - 13 - Math.min(4, Math.floor((70 - this.gainT) / 6)), this.gain > 0 ? '#f8d850' : '#f86858', { shadow: SH });
+        ctx.globalAlpha = 1;
+      }
     },
 
+    // The boss's health: fills up when the fight starts, flashes on a hit,
+    // and leaves a pale trail that drains away a moment later.
     bossBar(ctx, b) {
-      const w = 120, x = Math.round((G.W - w) / 2), y = G.H - 14;
-      F().draw(ctx, b.name, Math.round((G.W - F().width(b.name)) / 2), y - 10, '#f8d850', { shadow: SH });
-      ctx.fillStyle = SH; ctx.fillRect(x - 1, y - 1, w + 2, 7);
-      ctx.fillStyle = '#4a2030'; ctx.fillRect(x, y, w, 5);
-      ctx.fillStyle = '#e83848'; ctx.fillRect(x, y, Math.round((w * b.hp) / b.maxHp), 5);
-      ctx.fillStyle = '#ff8890'; ctx.fillRect(x, y, Math.round((w * b.hp) / b.maxHp), 1);
+      const w = 140, x = Math.round((G.W - w) / 2), y = G.H - 13;
+      let bt = this.bt;
+      if (!bt || bt.b !== b) bt = this.bt = { b, show: 0, trail: b.hp, last: b.hp, hold: 0, flash: 0 };
+      if (bt.show < 1) bt.show = Math.min(1, bt.show + 1 / 40);
+      if (b.hp < bt.last) { bt.hold = 24; bt.flash = 6; }
+      if (b.hp > bt.last) bt.trail = b.hp; // (healed: Berk's crowd)
+      bt.last = b.hp;
+      if (bt.hold > 0) bt.hold--;
+      else if (bt.trail > b.hp) bt.trail = Math.max(b.hp, bt.trail - b.maxHp / 80);
+      if (bt.flash > 0) bt.flash--;
+      const ease = 1 - (1 - bt.show) * (1 - bt.show);
+      const frac = (v) => Math.max(0, Math.min(1, v / b.maxHp)) * ease, iw = w - 2;
+      // the name on a little plate
+      const nw = F().width(b.name) + 12, nx = Math.round((G.W - nw) / 2), ny = y - 13;
+      ctx.fillStyle = SH; ctx.fillRect(nx - 1, ny - 1, nw + 2, 13);
+      ctx.fillStyle = '#5a5078'; ctx.fillRect(nx, ny, nw, 11);
+      ctx.fillStyle = '#1e1830'; ctx.fillRect(nx + 1, ny + 1, nw - 2, 10);
+      F().draw(ctx, b.name, nx + 6, ny + 2, '#f8d850', { shadow: SH });
+      // the frame, with little gold studs on the ends
+      ctx.fillStyle = SH; ctx.fillRect(x - 2, y - 2, w + 4, 10);
+      ctx.fillStyle = '#5a5078'; ctx.fillRect(x - 1, y - 1, w + 2, 8);
+      ctx.fillStyle = '#2a1020'; ctx.fillRect(x, y, w, 6);
+      for (const sx of [x - 5, x + w + 2]) {
+        ctx.fillStyle = SH; ctx.fillRect(sx, y, 3, 6); ctx.fillRect(sx - 1, y + 1, 5, 4);
+        ctx.fillStyle = '#f8d850'; ctx.fillRect(sx, y + 2, 3, 2); ctx.fillRect(sx + 1, y + 1, 1, 4);
+      }
+      // the pale trail, then the health itself
+      const hw = Math.round(iw * frac(b.hp)), tw = Math.round(iw * frac(bt.trail));
+      if (tw > hw) { ctx.fillStyle = '#f8e0a0'; ctx.fillRect(x + 1 + hw, y + 1, tw - hw, 4); }
+      if (hw > 0) {
+        const low = b.hp <= b.maxHp / 4 && (G.tick >> 3) & 1;
+        ctx.fillStyle = bt.flash ? '#ffffff' : low ? '#ff6868' : '#e83848'; ctx.fillRect(x + 1, y + 1, hw, 4);
+        ctx.fillStyle = bt.flash ? '#ffffff' : '#ff98a0'; ctx.fillRect(x + 1, y + 1, hw, 1);
+        ctx.fillStyle = bt.flash ? '#e8e8f0' : '#a82838'; ctx.fillRect(x + 1, y + 4, hw, 1);
+      }
+      // quarter marks
+      ctx.fillStyle = 'rgba(12,8,20,0.55)';
+      for (let q = 1; q < 4; q++) ctx.fillRect(x + 1 + Math.round((iw * q) / 4), y + 1, 1, 4);
     },
   };
 
@@ -84,12 +150,76 @@
     },
   };
 
+  // ------------------------------------------------------------ quest toasts
+  // Twice a second (outside cutscenes) the side quests get compared with the
+  // last look. A new quest, a new rumor or a finished one pops a little card up
+  // from the bottom of the screen, and new ones say NEW on the QUESTS page
+  // until Nate looks at it.
+  const TOAST = { active: ['NEW QUEST', '#f8d850'], rumor: ['NEW RUMOR', '#78e8e8'], done: ['QUEST COMPLETE', '#78e070'] };
+  const TOAST_T = 170;
+  G.toasts = {
+    list: [], t: 0, dur: TOAST_T,
+    update() {
+      if (!this.list.length || G.script.busy) return;
+      // (quicker when there's a line of them)
+      if (this.t === 0) { this.dur = this.list.length > 1 ? 120 : TOAST_T; G.audio.sfx(this.list[0].kind === 'done' ? 'secret' : 'select'); }
+      if (++this.t >= this.dur) { this.list.shift(); this.t = 0; }
+    },
+    clear() { this.list = []; this.t = 0; },
+    draw(ctx, raised) {
+      const q = this.list[0];
+      if (!q || !this.t || G.script.busy) return;
+      const [label, col] = TOAST[q.kind], t = this.t;
+      const k = Math.min(1, t / 10, (this.dur - t) / 12), e = 1 - (1 - k) * (1 - k);
+      const name = fit(q.name, 180), w = Math.max(F().width(label), F().width(name)) + 30, h = 22;
+      const x = Math.round((G.W - w) / 2), y = G.H - (raised ? 56 : 32) + Math.round((1 - e) * 10);
+      ctx.globalAlpha = e;
+      ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(x + 2, y + 2, w, h);
+      ctx.fillStyle = col; ctx.fillRect(x + 1, y, w - 2, h); ctx.fillRect(x, y + 1, w, h - 2);
+      ctx.fillStyle = '#1e1830'; ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+      ctx.fillStyle = '#2a2240'; ctx.fillRect(x + 1, y + 1, w - 2, 1);
+      // the badge: ! for a quest, ? for a rumor, a check when it's done
+      const bx = x + 4, by = y + 4;
+      ctx.fillStyle = '#0c0814'; ctx.fillRect(bx + 1, by, 12, 14); ctx.fillRect(bx, by + 1, 14, 12);
+      ctx.fillStyle = col; ctx.fillRect(bx + 1, by + 1, 12, 12);
+      ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillRect(bx + 1, by + 1, 12, 2);
+      ctx.fillStyle = '#1c1424';
+      if (q.kind === 'done') [[3, 7], [4, 8], [5, 9], [6, 8], [7, 7], [8, 6], [9, 5], [10, 4]].forEach(([dx, dy]) => ctx.fillRect(bx + dx, by + dy, 1, 2));
+      else F().draw(ctx, q.kind === 'active' ? '!' : '?', bx + 7 - Math.floor(F().width(q.kind === 'active' ? '!' : '?') / 2), by + 4, '#1c1424');
+      F().draw(ctx, label, x + 22, y + 3, col, { shadow: SH });
+      F().draw(ctx, name, x + 22, y + 12, '#f8f8f0', { shadow: SH });
+      // a glint across the card as it lands
+      if (t > 6 && t < 26) {
+        const gx = x + Math.round(((t - 6) / 20) * (w + 16)) - 8;
+        ctx.save(); ctx.beginPath(); ctx.rect(x + 1, y + 1, w - 2, h - 2); ctx.clip();
+        ctx.fillStyle = 'rgba(255,255,255,0.18)';
+        for (let i = 0; i < h; i++) ctx.fillRect(gx - Math.floor(i / 2), y + i, 4, 1);
+        ctx.restore();
+      }
+      ctx.globalAlpha = 1;
+    },
+  };
+  G.questWatch = () => {
+    const s = G.state, side = G.journal().side;
+    // the first look (old saves, new games, admin runs) just takes notes
+    if (!s.questLog) { s.questLog = {}; for (const q of side) s.questLog[q.name] = q.kind; return; }
+    s.questNew = s.questNew || {};
+    for (const q of side) {
+      const was = s.questLog[q.name];
+      if (was === q.kind || was === 'done' || (was && q.kind === 'rumor')) continue;
+      s.questLog[q.name] = q.kind;
+      G.toasts.list.push({ kind: q.kind, name: q.name });
+      if (q.kind === 'done') delete s.questNew[q.name];
+      else s.questNew[q.name] = 1;
+    }
+  };
+
   // ------------------------------------------------------------ pause menu
-  // GBA-style pages: QUESTS / ITEMS / KEYS / PEOPLE / ROCKS / SAVE (ADMIN in
+  // GBA-style pages: QUESTS / MAP / ITEMS / KEYS / PEOPLE / ROCKS / SAVE (ADMIN in
   // admin runs). Q/E flip pages (or press up into the tab bar, then left/right).
   // The menu opens on whichever page you had open last (QUESTS the first time).
-  const TABS = ['QUESTS', 'ITEMS', 'KEYS', 'PEOPLE', 'ROCKS', 'SAVE'];
-  const QUEST_TAB = 0, ITEM_TAB = 1, KEY_TAB = 2, PEOPLE_TAB = 3, ROCKS_TAB = 4, SAVE_TAB = 5;
+  const TABS = ['QUESTS', 'MAP', 'ITEMS', 'KEYS', 'PEOPLE', 'ROCKS', 'SAVE'];
+  const QUEST_TAB = 0, MAP_TAB = 1, ITEM_TAB = 2, KEY_TAB = 3, PEOPLE_TAB = 4, ROCKS_TAB = 5, SAVE_TAB = 6;
   const COLS = 4, ROWS = 3, RCOLS = 5;
   const SEL = { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' };
   const TXT = (ctx, str, x, y, col) => F().draw(ctx, str, x, y, col || '#f8f8f0', { shadow: SH });
@@ -111,6 +241,13 @@
     save: ['kkkkkkkkk', 'kuwwwwwuk', 'kuwwwwwuk', 'kuuuuuuuk', 'kuugggguk', 'kuugkgguk', 'kuugggguk', 'kuuuuuuuk', 'kkkkkkkkk'],
     admin: ['.kk...kk.', 'kggk.kggk', 'kggkkkggk', '.kgggggk.', '..kgggk..', '...kgk...', '...kgk...', '...kgk...', '...kkk...'],
     clock: ['..kkkkk..', '.kwwkwwk.', 'kwwwkwwwk', 'kwwwkwwwk', 'kwwwkkkwk', 'kwwwwwwwk', 'kwwwwwwwk', '.kwwwwwk.', '..kkkkk..'],
+    map: ['.kkkkkkk.', 'kwwnkwwwk', 'kwnnkwrwk', 'kwwwkrwrk', 'kwyykwrwk', 'kwyykwwwk', 'kwwwkwwnk', '.kkkkkkk.', '.........'],
+    college: ['....k....', '..kkrkk..', '.krrrrrk.', 'kkkkkkkkk', '.kwkwkwk.', '.kwkwkwk.', '.kwkwkwk.', 'kkkkkkkkk', 'kgggggggk'],
+    fair: ['..kkkkk..', '.ky.k.yk.', 'ky.kkk.yk', 'k.kkykk.k', 'kkkyyykkk', 'k.kkykk.k', 'ky.kkk.yk', '.kykkkyk.', '.kk...kk.'],
+    house: ['....k....', '...krk...', '..krrrk..', '.krrrrrk.', 'kkkkkkkkk', '.kwwwwwk.', '.kukbkuk.', '.kwkbkwk.', '.kkkkkkk.'],
+    mine: ['..kkkkk..', '.kbbbbbk.', 'kbkkkkkbk', 'kbk...kbk', 'kbk...kbk', 'kbk...kbk', 'kbk.y.kbk', 'kbk...kbk', 'kkkkkkkkk'],
+    bridge: ['..k...k..', '.kgk.kgk.', 'kkgkkkgkk', 'ggggggggg', 'kkkkkkkkk', '.k.k.k.k.', 'ulululull', 'uuuuuuuuu', '.........'],
+    trophy: ['kkkkkkkkk', 'kyyyyyyyk', 'kkyyyyykk', '.kyywyyk.', '..kyyyk..', '...kyk...', '...kyk...', '..kkkkk..', '..koook..'],
     party: ['.kk...kk.', 'khhk.kssk', 'kssk.kssk', '.kk...kk.', 'knnk.kuuk', 'nnnnkuuuu', 'nnnnkuuuu', 'nnnnkuuuu', '.........'],
   };
   const iconCache = {};
@@ -152,6 +289,12 @@
     ctx.fillStyle = '#8a809c'; ctx.fillRect(x + 1, y + 9, w - 2, 1);
     F().draw(ctx, label, x + 3, y + 2, '#282030');
     return w;
+  }
+  // a little pink twinkle for things that are new
+  function sparkle(ctx, x, y) {
+    ctx.fillStyle = SH; ctx.fillRect(x + 1, y + 2, 5, 3); ctx.fillRect(x + 2, y + 1, 3, 5); ctx.fillRect(x + 3, y, 1, 7);
+    ctx.fillStyle = C.pink; ctx.fillRect(x + 3, y + 1, 1, 5); ctx.fillRect(x + 1, y + 3, 5, 1); ctx.fillRect(x + 2, y + 2, 3, 3);
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 3, y + 3, 1, 1);
   }
   // a little pointing arrow that bobs next to whatever is selected
   function cursor(ctx, x, y) {
@@ -207,6 +350,60 @@
     return c;
   }
 
+  // ---- the MAP page: where Nate has been, where he is, and where the quests are
+  const PLACES = [
+    { id: 'laf', name: 'LAFAYETTE', x: 30, y: 36, icon: 'college', key: 'Lafayette',
+      maps: [['lab', 'Nate\'s Lab'], ['campus', 'The Quad'], ['science', 'Science Center'], ['geology', 'Van Wickle Hall'], ['pardee', 'Pardee Hall']] },
+    { id: 'fair', name: 'EASTON FAIR', x: 98, y: 32, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall']] },
+    { id: 'home', name: 'HOME', x: 44, y: 72, icon: 'house', key: 'Home',
+      maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['north', 'The Frozen Pond']] },
+    { id: 'andover', name: 'ANDOVER', x: 112, y: 64, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverDeep', 'The Deep Stope']] },
+    { id: 'bay', name: 'THE BAY', x: 74, y: 98, icon: 'bridge', key: 'Bay', maps: [['cbbt', 'The Bridge'], ['cbbtTunnel', 'Channel Tunnel']] },
+    { id: 'ditch', name: 'THE DITCH', x: 118, y: 94, icon: 'trophy', key: '-', maps: [] },
+  ];
+  const ROADS = [['laf', 'fair'], ['laf', 'home'], ['home', 'andover'], ['home', 'bay'], ['bay', 'ditch']];
+  const placeById = (id) => PLACES.find((p) => p.id === id);
+  // somewhere Nate has been (older saves didn't keep track, so the story fills in)
+  const SEEN_IF = {
+    lab: () => true, campus: () => true, science: (f) => f.chemMet, pardee: (f) => f.engMet, geology: (f) => f.profTalk,
+    fair: (f) => f.doronChat || f.doronDeal, arena: (f) => f.dadBeaten, home: (f) => f.homeArrived, homeDown: (f) => f.badlandsMet,
+    garage: (f) => f.snackQuest, basement: (f) => f.globMet, north: (f) => f.jjSeen, andover: (f) => f.andover || f.andoverMine,
+    andoverMine: (f) => f.andoverMine, andoverDeep: (f) => f.fcAwake, cbbt: (f) => f.cbbtArrived, cbbtTunnel: (f) => f.tunnelSeen,
+  };
+  const beenTo = (id) => !!((G.state.visited && G.state.visited[id]) || (SEEN_IF[id] && SEEN_IF[id](G.state.flags)));
+  const placeVisited = (pl) => pl.maps.some(([id]) => beenTo(id));
+  // can Nate get there yet?
+  const placeOpen = (pl) => {
+    const f = G.state.flags, s = G.state;
+    return { laf: true, fair: s.items.cap || f.doronChat, home: f.boulderGone, andover: s.items.andoverKey || f.andoverLocked, bay: f.mikeyBeaten, ditch: f.tylerBeaten }[pl.id] || placeVisited(pl);
+  };
+  // which place Nate is standing in
+  const placeOf = (mapId) => {
+    if (mapId === 'ring') mapId = 'arena';
+    if (mapId === 'goldenHour') mapId = 'home';
+    if (mapId === 'jamStage') mapId = (G.state.jamFrom && G.state.jamFrom.map) || 'campus';
+    return PLACES.find((pl) => pl.maps.some(([id]) => id === mapId));
+  };
+  // where the main quest is headed
+  const mainPlace = () => {
+    const f = G.state.flags, s = G.state;
+    if (!s.items.cap) return 'laf';
+    if (!f.dadBeaten) return 'fair';
+    if (!f.boulderGone) return 'laf';
+    if (!f.mikeyBeaten) return 'home';
+    if (!f.tylerBeaten) return 'bay';
+    return 'ditch';
+  };
+  // a round badge for a place on the map
+  function badge(ctx, x, y, rim, fill) {
+    for (let dy = -8; dy <= 8; dy++) {
+      const hw = Math.floor(Math.sqrt(72.5 - dy * dy));
+      ctx.fillStyle = SH; ctx.fillRect(x - hw, y + dy, hw * 2 + 1, 1);
+      if (Math.abs(dy) <= 7) { const w2 = Math.floor(Math.sqrt(56.5 - dy * dy)); ctx.fillStyle = rim; ctx.fillRect(x - w2, y + dy, w2 * 2 + 1, 1); }
+      if (Math.abs(dy) <= 6) { const w3 = Math.floor(Math.sqrt(42.5 - dy * dy)); ctx.fillStyle = fill; ctx.fillRect(x - w3, y + dy, w3 * 2 + 1, 1); }
+    }
+  }
+
   class PauseMenu {
     constructor() {
       this.tab = lastTab;
@@ -214,10 +411,12 @@
       this.qsel = 0;
       this.qscroll = 0;
       this.qmode = 0;
+      this.msel = Math.max(0, PLACES.indexOf(G.play.world && placeOf(G.play.world.id)));
       this.onTabs = false;
       this.msg = '';
       this.msgT = 0;
       this.openT = 0;
+      this.fresh = Object.assign({}, G.state.questNew);
       G.audio.sfx('select');
     }
 
@@ -281,6 +480,21 @@
         const n = this.questRows().length;
         if (inp.hit('down') && this.qsel < n - 1) { this.qsel++; G.audio.sfx('menu'); }
         if (inp.hit('up')) { if (this.qsel > 0) { this.qsel--; G.audio.sfx('menu'); } else { this.onTabs = true; G.audio.sfx('menu'); } }
+      } else if (this.tab === MAP_TAB) {
+        // arrows hop to the nearest place that way; up off the top goes to the tabs
+        for (const [d, vx, vy] of [['left', -1, 0], ['right', 1, 0], ['up', 0, -1], ['down', 0, 1]]) {
+          if (!inp.hit(d)) continue;
+          const a = PLACES[this.msel];
+          let best = -1, bs = 1e9;
+          PLACES.forEach((b, j) => {
+            const dx = b.x - a.x, dy = b.y - a.y, along = dx * vx + dy * vy;
+            if (j === this.msel || along <= 0) return;
+            const score = along + Math.abs(dx * vy - dy * vx) * 2;
+            if (score < bs) { bs = score; best = j; }
+          });
+          if (best >= 0) { this.msel = best; G.audio.sfx('menu'); }
+          else if (d === 'up') { this.onTabs = true; G.audio.sfx('menu'); }
+        }
       } else if (this.tab === ITEM_TAB || this.tab === KEY_TAB) {
         const col = this.sel % COLS, row = Math.floor(this.sel / COLS);
         if (inp.hit('left') && col > 0) this.move(-1, COLS * ROWS);
@@ -368,6 +582,7 @@
       ctx.globalAlpha = ease;
       this.drawTabs(ctx);
       if (this.tab === QUEST_TAB) this.drawQuests(ctx);
+      else if (this.tab === MAP_TAB) this.drawMap(ctx);
       else if (this.tab === ITEM_TAB || this.tab === KEY_TAB) this.drawGrid(ctx);
       else if (this.tab === PEOPLE_TAB) this.drawPeople(ctx);
       else if (this.tab === ROCKS_TAB) this.drawRocks(ctx);
@@ -384,10 +599,10 @@
       if (this.msgT > 0) { TXT(ctx, '{g}' + this.msg, 6, y + 2); return; }
       const admin = G.state.admin, act = {
         [QUEST_TAB]: QMODES[(this.qmode + 1) % QMODES.length] === 'ACTIVE' ? 'quests' : QMODES[(this.qmode + 1) % QMODES.length] === '100%' ? '100% list' : 'rules',
-        [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along', [ROCKS_TAB]: 'next area',
+        [MAP_TAB]: null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along', [ROCKS_TAB]: 'next area',
         [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here',
       }[this.tab];
-      const pairs = [['Z', act]];
+      const pairs = act ? [['Z', act]] : [['↑↓←→', 'look around']];
       if (!admin) pairs.push(['X', 'quick save']);
       else if (this.tab === SAVE_TAB && this.admList) pairs.push(['X', 'back']);
       pairs.push(['Q/E', 'pages'], ['ENTER', 'close']);
@@ -403,7 +618,7 @@
 
     drawTabs(ctx) {
       const names = TABS.map((n, i) => (i === SAVE_TAB && G.state.admin ? 'ADMIN' : n));
-      const icons = ['quests', 'items', 'keys', 'people', 'rocks', G.state.admin ? 'admin' : 'save'];
+      const icons = ['quests', 'map', 'items', 'keys', 'people', 'rocks', G.state.admin ? 'admin' : 'save'];
       const wOf = (i) => (i === this.tab ? 9 + 5 + F().width(names[i]) + 8 : 17);
       const gap = 2, total = names.reduce((a, _, i) => a + wOf(i), 0) + gap * (names.length - 1);
       let x = Math.round((G.W - total) / 2);
@@ -417,6 +632,11 @@
         ctx.drawImage(icon(icons[i]), x + 4, on ? 5 : 6);
         if (!on) ctx.globalAlpha /= 0.55;
         if (on) TXT(ctx, n, x + 16, 6, C.gold);
+        // a gold dot on QUESTS while there's something new on it
+        if (i === QUEST_TAB && !on && G.state.questNew && Object.keys(G.state.questNew).length) {
+          ctx.fillStyle = SH; ctx.fillRect(x + w - 5, 2, 5, 5);
+          ctx.fillStyle = C.gold; ctx.fillRect(x + w - 4, 3, 3, 3);
+        }
         x += w + gap;
       });
       keycap(ctx, x + 2, 5, 'E');
@@ -425,6 +645,7 @@
     // ---- QUESTS: how far along, the main quest, and everything on the go
     drawQuests(ctx) {
       const s = G.state, f = s.flags, j = G.journal();
+      if (s.questNew && Object.keys(s.questNew).length) s.questNew = {};
       // across the top: the main quest
       const goal = F().wrap(j.goal, 220).slice(0, 3), mh = 13 + goal.length * 9 + 2;
       card(ctx, 5, 21, 230, mh);
@@ -497,7 +718,9 @@
         }
         // a side quest: ! active, ? rumor, a check when it's done
         const col = q.kind === 'active' ? C.gold : q.kind === 'rumor' ? C.cyan : C.green;
-        if (q.kind === 'done') check(RX + 11, y - 1, col);
+        // new since the last look: the bullet twinkles pink now and then
+        if (this.fresh[q.name] && q.kind !== 'done' && (G.tick >> 4) % 3 === 2) sparkle(ctx, RX + 11, y - 1);
+        else if (q.kind === 'done') check(RX + 11, y - 1, col);
         else TXT(ctx, q.kind === 'active' ? '!' : '?', RX + 12, y - 1, col);
         const sw = F().width(q.status), room = RW - 26 - sw;
         // a little progress bar if there's room for it next to the name
@@ -517,6 +740,14 @@
         ctx.fillStyle = '#181228'; ctx.fillRect(RX + 1, dy + 1, RW - 2, detail - 2);
         const hint = F().wrap((q.where ? '{c}' + q.where + ':{/} ' : '') + (q.hint || ''), RW - 10).slice(0, 2);
         hint.forEach((l, i) => TXT(ctx, l, RX + 5, dy + 3 + i * 8, C.soft));
+        // and a NEW badge sitting on the box's top edge
+        if (this.fresh[q.name] && q.kind !== 'done') {
+          const bw = F().width('NEW') + 6, bx = RX + RW - bw - 14;
+          ctx.fillStyle = SH; ctx.fillRect(bx - 1, dy - 5, bw + 2, 11);
+          ctx.fillStyle = '#c83878'; ctx.fillRect(bx, dy - 4, bw, 9);
+          ctx.fillStyle = C.pink; ctx.fillRect(bx, dy - 4, bw, 1);
+          F().draw(ctx, 'NEW', bx + 3, dy - 3, '#ffffff');
+        }
       }
     }
 
@@ -535,6 +766,89 @@
         TXT(ctx, v, x + w - 8 - F().width(v), ry, col);
         ry += 9;
       }
+    }
+
+    // ---- MAP: the road trip so far
+    drawMap(ctx) {
+      const s = G.state, j = G.journal(), here = G.play.world && placeOf(G.play.world.id), main = mainPlace();
+      const MX = 5, MY = 21, MW = 140, MH = 121;
+      const total = PLACES.reduce((n, pl) => n + pl.maps.length, 0), been = PLACES.reduce((n, pl) => n + pl.maps.filter(([id]) => beenTo(id)).length, 0);
+      card(ctx, MX, MY, MW, MH, 'MAP', C.gold, G.sayable(been) + '/' + G.sayable(total) + ' places', C.dim);
+      // the land, with a speckle, and the bay down at the bottom
+      ctx.save(); ctx.beginPath(); ctx.rect(MX + 1, MY + 14, MW - 2, MH - 15); ctx.clip();
+      ctx.fillStyle = '#1a2a22'; ctx.fillRect(MX + 1, MY + 14, MW - 2, MH - 15);
+      ctx.fillStyle = '#22362a';
+      for (let yy = MY + 16; yy < MY + MH; yy += 6) for (let xx = MX + 3 + (yy % 12 ? 3 : 0); xx < MX + MW; xx += 6) ctx.fillRect(xx, yy, 1, 1);
+      ctx.fillStyle = '#152040';
+      ctx.fillRect(MX + 50, MY + 86, 50, 36); ctx.fillRect(MX + 58, MY + 80, 34, 6); ctx.fillRect(MX + 42, MY + 96, 8, 26); ctx.fillRect(MX + 100, MY + 104, 8, 18);
+      ctx.fillStyle = '#28407a';
+      for (let k = 0; k < 9; k++) { const wx = MX + 52 + ((k * 23 + (G.tick >> 3)) % 46), wy = MY + 88 + ((k * 7) % 30); ctx.fillRect(wx, wy, 3, 1); }
+      ctx.restore();
+      // roads (dim when they lead somewhere Nate can't go yet)
+      for (const [a, b] of ROADS) {
+        const A = placeById(a), B = placeById(b), open = placeOpen(A) && placeOpen(B);
+        const n = Math.ceil(Math.hypot(B.x - A.x, B.y - A.y) / 3);
+        ctx.fillStyle = open ? '#b89868' : '#3e3a50';
+        for (let i = 3; i < n - 2; i++) ctx.fillRect(MX + Math.round(A.x + ((B.x - A.x) * i) / n), MY + Math.round(A.y + ((B.y - A.y) * i) / n), 1, 1);
+      }
+      // the places
+      const quests = (pl) => j.side.filter((q) => q.kind !== 'done' && q.where && q.where.includes(pl.key));
+      PLACES.forEach((pl, i) => {
+        const x = MX + pl.x, y = MY + pl.y, open = placeOpen(pl), seen = placeVisited(pl), sel = i === this.msel && !this.onTabs;
+        const rim = sel ? ((G.tick >> 3) & 1 ? '#ffffff' : C.gold) : pl === here ? C.green : open ? '#8a80a8' : '#3e3a50';
+        badge(ctx, x, y, rim, open ? '#2a2240' : '#1a1428');
+        if (open) { if (!seen) ctx.globalAlpha *= 0.5; ctx.drawImage(icon(pl.icon), x - 4, y - 4); if (!seen) ctx.globalAlpha /= 0.5; }
+        else TXT(ctx, '?', x - 1, y - 3, '#5a5078');
+        const label = open ? pl.name : '???';
+        TXT(ctx, label, x - Math.floor(F().width(label) / 2), y + 10, sel ? C.gold : seen ? '#f8f8f0' : C.dim);
+        // quest markers: ! for quests, ? for rumors; a star where the main quest is headed
+        const qs = quests(pl);
+        if (qs.length) {
+          const act = qs.some((q) => q.kind === 'active'), mx = x + 5, my = y - 9;
+          ctx.fillStyle = SH; ctx.fillRect(mx - 1, my - 1, 7, 9);
+          ctx.fillStyle = act ? C.gold : C.cyan; ctx.fillRect(mx, my, 5, 7);
+          F().draw(ctx, act ? '!' : '?', mx + 3 - Math.ceil(F().width(act ? '!' : '?') / 2), my, '#1c1424');
+        }
+        if (pl.id === main && open) {
+          const sx = x - 11, sy = y - 10, tw = (G.tick >> 4) & 1;
+          ctx.fillStyle = SH; ctx.fillRect(sx + 1, sy - 1, 3, 7); ctx.fillRect(sx - 1, sy + 1, 7, 3);
+          ctx.fillStyle = tw ? '#fff4c0' : C.gold; ctx.fillRect(sx + 2, sy, 1, 5); ctx.fillRect(sx, sy + 2, 5, 1); ctx.fillRect(sx + 1, sy + 1, 3, 3);
+        }
+      });
+      // Nate's head bobbing over wherever he is
+      if (here) {
+        const img = G.nateSprites().down[0], bob = Math.round(Math.sin(G.tick / 9) * 1.5);
+        ctx.drawImage(img, 0, 0, 16, 11, MX + here.x - 8, MY + here.y - 21 + bob, 16, 11);
+      }
+
+      // right: about the place under the cursor
+      const pl = PLACES[this.msel], open = placeOpen(pl), RX = 148, RW = 87;
+      card(ctx, RX, MY, RW, MH, open ? pl.name : '???', C.gold);
+      let y = MY + 17;
+      if (pl === here) { TXT(ctx, 'YOU ARE HERE', RX + 6, y, C.green); y += 10; }
+      if (pl.id === 'ditch') {
+        const msg = open ? 'The Number One Ditch, in Chesapeake. Father Eggmas is waiting. (More story soon!)' : 'Somewhere far to the south...';
+        F().wrap(msg, RW - 12).forEach((l) => { TXT(ctx, l, RX + 6, y, C.soft); y += 9; });
+      } else if (!open) {
+        F().wrap('Nate can\'t get here yet.', RW - 12).forEach((l) => { TXT(ctx, l, RX + 6, y, C.dim); y += 9; });
+      } else {
+        for (const [id, name] of pl.maps) {
+          const wid = G.play.world && G.play.world.id, b = beenTo(id);
+          const cur = wid === id || (id === 'arena' && wid === 'ring') || (id === 'home' && wid === 'goldenHour');
+          if (b) { ctx.fillStyle = cur ? C.green : '#5a5078'; ctx.fillRect(RX + 7, y + 2, 3, 3); }
+          else { ctx.fillStyle = '#3e3a50'; ctx.fillRect(RX + 8, y + 3, 1, 1); }
+          TXT(ctx, b ? fit(name, RW - 18) : '???', RX + 13, y, b ? (cur ? C.green : '#f8f8f0') : C.faint);
+          y += 9;
+        }
+      }
+      // what's going on there
+      const qs = open ? quests(pl) : [], act = qs.filter((q) => q.kind === 'active').length, rum = qs.length - act;
+      let by = MY + MH - 6 - 9 * ((act ? 1 : 0) + (rum ? 1 : 0) + (pl.id === main && open ? 1 : 0));
+      if (by < y + 2) by = y + 2;
+      if (by < MY + MH - 6) { ctx.fillStyle = '#3e3460'; ctx.fillRect(RX + 4, by - 3, RW - 8, 1); }
+      if (pl.id === main && open) { TXT(ctx, 'Main quest', RX + 6, by, C.gold); by += 9; }
+      if (act) { TXT(ctx, '! ' + G.sayable(act) + (act === 1 ? ' quest' : ' quests'), RX + 6, by, C.gold); by += 9; }
+      if (rum) { TXT(ctx, '? ' + G.sayable(rum) + (rum === 1 ? ' rumor' : ' rumors'), RX + 6, by, C.cyan); }
     }
 
     // ---- ITEMS and KEYS: a grid of slots and the details of the one selected
@@ -737,6 +1051,7 @@
     }
   }
   G.PauseMenu = PauseMenu;
+  G.keycap = keycap;
 
   // Play time, keeping clear of the sacred number like everything else.
   G.playTimeText = (frames) => {
