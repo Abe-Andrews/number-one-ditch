@@ -4899,7 +4899,7 @@
     S.signs = {
       people: protestSign('RESPECT|LITTLE|PEOPLE', '#f8e8a0'), grass: protestSign('SAVE THE|GRASS', '#c8e8b0'),
       money: protestSign('WASTE OF|MONEY', '#f0d0c0'), quad: protestSign('GIVE BACK|THE QUAD', '#d0e0f0'),
-      who: protestSign('WHO|APPROVED|THIS?', '#f4f0e0'), pizza: protestSign('FREE|PIZZA?', '#f8d8e8'),
+      who: protestSign('WHO|APPROVED|THIS?', '#f4f0e0'),
       cave: protestSign('CAVE|CLOSED', '#f8d0c0'),
     };
     S.bookPiles = [bookPile(1, 5), bookPile(2, 4), bookPile(3, 6)]; S.furnace = furnace(); S.storageBoxes = storageBoxes();

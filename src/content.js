@@ -153,7 +153,6 @@
     protest3: { skin: '#f0c8a8', hair: '#e0c070', hairStyle: 'shoulder', shirt: '#f0f0f0', pants: '#5878b8', shoes: '#a03030', torso: 5, legs: 3, blush: true },
     protest4: { skin: '#c88a60', hair: '#2a1a14', hairStyle: 'cap', hat: '#8a2034', hatStyle: 'ball', shirt: '#8a2034', pants: '#4a4038', shoes: '#f0f0f0', torso: 6, legs: 3 },
     protest5: { skin: '#f2c8a0', hair: '#5a3a20', hairStyle: 'buzz', beard: '#5a3a20', shirt: '#4a5a8a', sleeves: 'long', pants: '#3a3a44', shoes: '#3a2818', torso: 7, legs: 3 },
-    protest6: { skin: '#b07850', hair: '#3a2418', hairStyle: 'long', shirt: '#e8a030', pants: '#2a2a30', shoes: '#f0f0f0', torso: 5, legs: 3, smile: '#ffffff' },
     organizer: { skin: '#e0b088', hair: '#2a1a14', hairStyle: 'shoulder', glasses: '#202020', shirt: '#6a3a8a', pants: '#2a2a30', shoes: '#c8c8c8', torso: 6, legs: 3 },
   });
 
@@ -3167,13 +3166,12 @@
     money: [['Senior', 'Do you know how much they spent on a TEMPORARY event village?'], ['Senior', 'Me neither. Nobody will tell us. That\'s how you know it\'s a lot.']],
     quad: [['Freshman', 'The event village blocks the ENTIRE quad.'], ['Freshman', 'I have to walk all the way around it to get to class. It adds four minutes. FOUR.'], ['Nate', 'That\'s eight minutes round trip.'], ['Freshman', 'THANK you.']],
     who: [['Grad Student', 'We have some questions for the president of Lafayette.'], ['Grad Student', 'Mostly "why." Also "why the quad." Also... "why."']],
-    pizza: [['Junior', 'Honestly? I don\'t know what we\'re protesting.'], ['Junior', 'Somebody said there\'d be free pizza.'], ['Nate', 'Is there free pizza?'], ['Junior', 'There is NOT free pizza.']],
   };
   S.protester = (sign) => function* () {
     const f = flags();
     for (const [who, line] of PROTEST[sign]) yield G.say(who, line);
     f['protest_' + sign] = true;
-    // hear all six of them out and they chip in from the protest fund
+    // hear all of them out and they chip in from the protest fund
     if (!f.protestReward && Object.keys(PROTEST).every((k) => f['protest_' + k])) {
       f.protestReward = true;
       yield G.say('Protester', 'Wait. Did you just listen to ALL of us?');
@@ -3224,7 +3222,7 @@
     yield G.say('Nate', '...Sorry! Sorry. You can come back. It\'s a free country.');
     yield G.say('Nate', 'And the trail to the cave is wide open.');
   };
-  const CHANTS = ['GIVE BACK THE QUAD!', 'SAVE THE GRASS!', 'WHO APPROVED THIS?!', 'RESPECT LITTLE PEOPLE!', 'WHERE\'S THE MONEY?!', 'PIZZA?'];
+  const CHANTS = ['GIVE BACK THE QUAD!', 'SAVE THE GRASS!', 'WHO APPROVED THIS?!', 'RESPECT LITTLE PEOPLE!', 'WHERE\'S THE MONEY?!'];
 
   S.denShelf = function* () {
     const f = flags(), s = G.state;
@@ -5547,7 +5545,7 @@
       npc('earl', 'Big Earl', 25, 13, S.earl);
       // a protest tucked away at the bottom of the grounds, past the stands and the
       // tall grass (Lafayette's event village took the quad); you have to go looking
-      w.protesters = [[14, 28, 'protest1', 'people'], [18, 28, 'protest2', 'grass'], [22, 28, 'protest3', 'money'], [26, 28, 'protest4', 'quad'], [30, 28, 'protest5', 'who'], [34, 28, 'protest6', 'pizza']]
+      w.protesters = [[14, 28, 'protest1', 'people'], [18, 28, 'protest2', 'grass'], [22, 28, 'protest3', 'money'], [26, 28, 'protest4', 'quad'], [30, 28, 'protest5', 'who']]
         .map(([x, y, spr, sign]) => npc(spr, 'Protester', x, y, S.protester(sign), { sign: G.spr.signs[sign] }));
       // the trail down to the little cave, with the protest dug in across it
       // (Jamie Lee Curtis on the pipe scatters them: S.protestScatter)
