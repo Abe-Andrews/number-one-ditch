@@ -1029,10 +1029,8 @@
     }
     if (score === ENG_EXAM.length && slips === 0) {
       f.engPerfect = true;
-      s.maxHp += 2;
-      s.hp = s.maxHp;
       yield G.say('Professor Pembrook', 'A PERFECT score. You truly speak EEENGLISH.');
-      yield G.itemGet(G.spr.diploma, 'You got a {y}Diploma in EEENGLISH{/}! And a {r}Heart Container{/}! Max hearts +1.');
+      yield G.itemGet(G.spr.diploma, 'You got a {y}Diploma in EEENGLISH{/}!');
       yield G.say('Professor Pembrook', 'Tell your father. Tell EVERYONE.');
     } else if (score === ENG_EXAM.length) {
       yield G.say('Professor Pembrook', 'Seven out of seven! ...But you said a certain number, didn\'t you. I heard it. Everyone heard it.');
