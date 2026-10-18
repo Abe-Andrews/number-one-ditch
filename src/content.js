@@ -192,6 +192,14 @@
       kind: 'gear', equip: true, name: 'Surf Rod', short: 'Surf Rod', icon: () => G.spr.rodIcon, has: () => !!st().items.rod,
       desc: 'The old fisherman\'s spare, from the bridge-tunnel island. Press X to cast. Whatever you hook gets reeled in: fish, gulls, teeth... people.',
     },
+    candyCorn: {
+      kind: 'key', name: 'Mom\'s Candy Corn', icon: () => G.spr.candyCorn, has: () => !!st().items.candyCorn && !fl().snacksDone,
+      desc: 'A family-size bag, from behind the gravy boat in the good china. Mom does not know you have it. (She knows.)',
+    },
+    doritos: {
+      kind: 'key', name: 'Blue Doritos', icon: () => G.spr.doritos, has: () => !!st().items.doritos && !fl().snacksDone,
+      desc: 'Rescued from a bear. Slightly chewed. Dad will not mind. Dad will not notice.',
+    },
     mikeyNote: {
       kind: 'key', name: 'Mikey\'s Note', icon: () => G.spr.noteIcon, has: () => !!st().items.mikeyNote,
       desc: 'Folded into a very small square. Mikey gave it to Lily on his way out. Lily can\'t look at it. Press Z to read it.',
@@ -260,7 +268,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs'];
+  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -424,7 +432,8 @@
     if (f.rodQuest || s.items.rod) side.push(['The old fisherman', s.items.rod ? '{g}Done!' : 'Gulls: ' + G.sayable(f.gullBonks || 0) + '/5']);
     if (f.fcAwake) side.push(['Father Christmas', f.fcBeaten ? '{g}Done!' : 'Deep in the Andover mines']);
     else if (f.homeArrived) { const c = G.completion(); side.push(['100%', G.sayable(c.filter((x) => x[1]).length) + '/' + c.length + ' done']); }
-    if (f.jjMet) side.push(['Ice JJ Fish', f.jjBeaten ? '{g}Done!' : 'North of the bridge']);
+    if (f.snackQuest) side.push(['Dad\'s snacks', f.snacksDone ? '{g}Done!' : s.items.candyCorn && s.items.doritos ? 'Bring them to Dad' : 'Need: ' + [!s.items.candyCorn && 'candy corn', !s.items.doritos && 'blue Doritos'].filter(Boolean).join(' + ')]);
+    if (f.jjMet || f.jjGig) side.push(['Ice JJ Fish', f.jjBeaten ? '{g}Booked!' : f.jjGig ? 'Book him for Dad\'s church' : 'Wants a booking']);
     if (f.booksQuest) {
       side.push(['Mom\'s missing books', f.shopOpen ? '{g}Done!' : s.items.books ? 'Bring them to Mom'
         : !f.cluesDone ? 'Clues: ' + G.sayable(G.clueCount()) + '/' + CLUES_NEEDED
@@ -1708,6 +1717,7 @@
   S.michelle = function* () {
     const f = flags(), s = G.state;
     if (!f.michelleMet) { yield* S.michelleStartle(); return; }
+    if (f.snackQuest && !s.items.candyCorn && !f.snacksDone && !f.momDenied) { yield* S.momCandy(); return; }
     if (s.items.books && !f.shopOpen) { yield* returnBooks(); return; }
     if (f.cluesDone && !f.momReport) { yield* momReport(); return; }
     if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten && !f.vodkaAsked) { yield* askMomForVodka(); return; }
@@ -1864,6 +1874,7 @@
   ];
   S.michelleShop = function* () {
     const f = flags(), s = G.state;
+    if (f.snackQuest && !s.items.candyCorn && !f.snacksDone && !f.momDenied) { yield* S.momCandy(); return; }
     const menu = [];
     if (!s.items.chicken) menu.push(['The Chicken: 30', function* () {
       if (!(yield* momPay(30))) return;
@@ -2661,7 +2672,8 @@
     { name: 'Mom\'s books: clue hunt', map: 'homeDown', at: [38, 4, 'up'], flags: { michelleMet: true, booksQuest: true } },
     { name: 'Basement: Globglogabgalab', map: 'homeDown', at: [22, 8, 'up'], flags: { clue_den: true, clue_nightstand: true, clue_mudroom: true, cluesDone: true, momReport: true }, items: { basementKey: true, earplugs: true, bait: true } },
     { name: 'Return Mom\'s books (shop)', map: 'home', at: [34, 20, 'left'], flags: { globMet: true, globBeaten: true, baitPlaced: true, basementOpened: true }, items: { books: true, bait: false } },
-    { name: 'Ice JJ Fish (north)', map: 'north', at: [10, 13, 'up'], flags: { shopOpen: true }, items: { books: false }, teeth: 120 },
+    { name: 'Dad\'s snacks (workshop)', map: 'garage', at: [10, 10, 'up'], flags: { shopOpen: true }, items: { books: false }, teeth: 120 },
+    { name: 'Ice JJ Fish (north)', map: 'north', at: [10, 13, 'up'], flags: { snackQuest: true, snacksDone: true, momDenied: true, jjGig: true } },
     { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, momHeart: true, phDone: true, chemMet: true, chemPassed: true, chemPerfect: true, ticketQuest: true, ticketsGiven: true, ticketsDone: true, protestReward: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10, tickets: 0, andoverKey: true }, maxHp: 10, teeth: 300 },
     { name: 'Bay Bridge-Tunnel (the toll)', map: 'cbbt', at: [21, 20, 'left'], teeth: 520 },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
@@ -2700,23 +2712,154 @@
     f.signal_peace = true; f.signal_icy = true; f.doronDeal = true; f.hadDoosh = true; f.capHeart = true;
   };
 
+  // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)
+  // Dad hangs out in his workshop and needs his snacks: candy corn and blue
+  // Doritos, together. Mom hides the candy corn in the good china; a bear
+  // walked off with the Doritos. Bring him both and he sends Nate to book the
+  // man singing a hymn on the pond for Sunday service.
+  S.dadWorkshop = function* () {
+    const f = flags(), s = G.state;
+    if (f.jjBeaten) {
+      f.dadLine = ((f.dadLine || 0) + 1) % 3;
+      yield G.say('Dad', [
+        'He\'s playing the nine o\'clock! The church ladies are going to faint.',
+        'Candy corn and blue Doritos. Don\'t tell your mother. She knows.',
+        'Do you speak EEENGLISH? ...Just checking.',
+      ][f.dadLine]);
+      return;
+    }
+    if (f.jjGig) { yield G.say('Dad', 'Did you book him yet? Tell him we have a fog machine. We don\'t. But we could.'); return; }
+    if (!f.snackQuest) {
+      f.snackQuest = true;
+      yield G.say('Dad', 'Nate! Just the man I wanted to see.');
+      yield G.say('Dad', 'I have been out here since lunch. I am running on fumes. And sawdust.');
+      yield G.say('Dad', 'I need my snacks. Candy corn. And the blue Doritos.');
+      yield G.say('Nate', 'Together?');
+      yield G.say('Dad', 'Together. Salty and sweet. It is the perfect meal.');
+      yield G.say('Dad', 'There was a bag of blue Doritos right here on the bench. Somebody took it.');
+      yield G.say('Dad', 'And your mother hides the candy corn. She thinks I don\'t know where. I DON\'T know where. That\'s the problem.');
+      return;
+    }
+    if (!(s.items.candyCorn && s.items.doritos)) {
+      const need = [!s.items.candyCorn && 'the candy corn', !s.items.doritos && 'the blue Doritos'].filter(Boolean).join(' and ');
+      yield G.say('Dad', 'Still waiting on ' + need + ', Nate. I am wasting away out here.');
+      if (!s.items.doritos) yield G.say('Dad', 'Whoever took the Doritos tracked mud all over my floor.');
+      return;
+    }
+    // the delivery
+    yield G.say('Nate', 'One bag of candy corn. One bag of blue Doritos. Slightly chewed.');
+    yield G.say('Dad', 'Chewed?');
+    yield G.say('Nate', 'There was a bear.');
+    yield G.say('Dad', '...Very EEENGLISH.');
+    s.items.candyCorn = false; s.items.doritos = false;
+    f.snacksDone = true;
+    yield G.say(null, 'Dad pours the candy corn into the Doritos bag, folds the top over, and shakes it.');
+    yield G.say('Dad', 'Ahh. NOW we\'re talking.');
+    // ...and the real reason he's been out here all day
+    yield G.wait(30);
+    const shop = G.play.world;
+    if (shop.dad) shop.pop(shop.dad.x + 30, shop.dad.y - 40, '~ I pray to Jesus ~', '#a8e0ff');
+    yield G.wait(40);
+    yield G.say('Dad', 'Do you hear that? Somebody has been singing out past the bridge all week.');
+    yield G.say('Dad', 'A HYMN, Nate. In a snowstorm. In July.');
+    if (f.jjSeen) yield G.say('Nate', 'That\'s Ice JJ Fish. He\'s on our pond. He won\'t stop singing.');
+    else yield G.say('Nate', '...Is it snowing past the bridge?');
+    yield G.say('Dad', 'Whoever he is, I need him for Sunday service. The nine o\'clock could use some energy.');
+    yield G.say('Dad', 'Go out there and book him for me. Tell him the pastor is VERY interested.');
+    f.jjGig = true;
+    G.audio.sfx('secret');
+    yield G.say(null, 'New quest: {y}book the singer on the frozen pond{/} for Dad\'s church. He\'s past the bridge, north of the yard.');
+  };
+
+  // the good china: where Mom hides the candy corn
+  S.goodChina = function* () {
+    const f = flags(), s = G.state;
+    yield G.say(null, 'A glass cabinet full of the good china. Nobody is allowed to use the good china.');
+    if (f.snacksDone) { yield G.say(null, 'Behind the gravy boat: a candy-corn-shaped empty spot.'); return; }
+    if (!f.snackQuest || s.items.candyCorn) return;
+    yield G.say(null, 'Nate very, very carefully moves the gravy boat...');
+    yield G.say(null, 'Behind it: a family-size bag of candy corn. And two more behind that.');
+    s.items.candyCorn = true;
+    yield G.itemGet(G.spr.candyCorn, 'You found {y}Mom\'s secret candy corn{/}!');
+    G.audio.sfx('yell');
+    yield G.say(null, 'From somewhere outside, faintly: "JAMIE LEE CURTIS!"');
+    yield G.say('Nate', '...She knows.');
+  };
+
+  // asking Mom about candy corn
+  S.momCandy = function* () {
+    const f = flags();
+    f.momDenied = true;
+    yield G.say('Nate', 'Mom, do we have any candy corn?');
+    yield G.say('Michelle', 'Candy corn? In THIS house? I have no idea what you\'re talking about.');
+    yield G.say('Michelle', 'Is this for your father? Your father is not allowed candy corn. Your father knows why.');
+    yield G.say('Nate', '...She\'s definitely hiding it.');
+    if (G.with('lily')) {
+      yield G.say('Lily', 'She hides the good candy in the good china. Living room.');
+      yield G.say('Lily', 'Nobody is allowed to touch the good china, so nobody ever looks there.');
+      return;
+    }
+    G.audio.sfx('buzz');
+    yield G.text('Lily', 'mom hides the good candy in the good china. living room');
+    yield G.text('Lily', 'nobody is allowed to touch the good china so nobody ever looks');
+    yield G.text('Lily', f.lilySaved ? 'you didnt hear it from me' : 'also im still in a fridge. ok bye');
+  };
+
+  // the bear drops the bag
+  S.doritosBack = function* () {
+    yield G.wait(20);
+    yield G.say(null, 'The bear drops the bag and lumbers off toward the brook.');
+    G.state.items.doritos = true;
+    yield G.itemGet(G.spr.doritos, 'You got the {y}blue Doritos{/}! They\'re... mostly still in the bag.');
+  };
+
   // ================================================================ ICE JJ FISH (north of the bridge)
+  // before Dad's booking: he's mid-set, and he won't stop for anybody
+  S.jjBusyIntro = function* () {
+    const f = flags(), w = G.play.world, g = w.jjNpc;
+    if (f.jjSeen) return;
+    f.jjSeen = true;
+    f.jjMet = true;
+    yield G.wait(20);
+    yield G.say(null, 'Past the bridge, the woods open up onto a frozen pond. It\'s snowing. Only here.');
+    yield G.camFocus(g.x, g.y - 16, 50);
+    w.pop(g.x, g.y - 36, '~ ooooOOOOH ~', '#a8e0ff');
+    yield G.wait(40);
+    yield G.say('Nate', '...Is that Ice JJ Fish? On our pond?');
+    if (G.with('doron')) yield G.say('Doron', 'We have a pond?');
+    else if (G.with('lily')) yield G.say('Lily', 'Oh no. He\'s singing.');
+    yield G.say('Ice JJ Fish', 'Shh. Little man. I\'m in the middle of a SET.');
+    yield G.camFocus(null, null, 30);
+  };
+  S.jjBusy = function* () {
+    const f = flags();
+    yield G.say('Ice JJ Fish', 'Ayy, I\'m in the middle of a set. You want a real show? Get me a BOOKING.');
+    yield G.say('Nate', '...Who even books Ice JJ Fish?');
+    if (f.globBeaten && !f.snacksDone) yield G.say('Nate', 'Dad might. Dad books everybody. Dad\'s in his workshop.');
+  };
+
+  // with Dad's booking: survive the whole set and he'll play Sunday service
   S.jjIntro = function* () {
     const f = flags(), w = G.play.world, g = w.jj;
     yield G.wait(20);
-    if (!f.jjMet) {
+    if (!f.jjBooked) {
+      f.jjBooked = true;
       f.jjMet = true;
-      yield G.say(null, 'Past the bridge, the woods open up onto a frozen pond. It\'s snowing. Only here.');
+      if (!f.jjSeen) {
+        f.jjSeen = true;
+        yield G.say(null, 'Past the bridge, the woods open up onto a frozen pond. It\'s snowing. Only here.');
+      }
       yield G.camFocus(g.x, g.y - 16, 50);
       w.pop(g.x, g.y - 36, '~ ooooOOOOH ~', '#a8e0ff');
       yield G.wait(40);
-      yield G.say('Ice JJ Fish', 'Ayy! An audience!');
-      yield G.say('Nate', '...Is that Ice JJ Fish? On our pond?');
-      if (G.with('doron')) yield G.say('Doron', 'We have a pond?');
+      yield G.say('Nate', 'Ice JJ Fish! My dad\'s a pastor. He heard you all the way from his workshop.');
+      yield G.say('Nate', 'He wants to book you. For Sunday service.');
+      yield G.say('Ice JJ Fish', 'A CHURCH gig?');
+      yield G.say('Ice JJ Fish', '...Ice JJ Fish doesn\'t sign with just anybody, little man.');
+      yield G.say('Ice JJ Fish', 'You want me at your dad\'s church? Survive my WHOLE set.');
+      if (G.with('doron')) yield G.say('Doron', 'How long is the set?');
       else if (G.with('lily')) yield G.say('Lily', 'Oh no. He\'s going to sing.');
-      yield G.say('Ice JJ Fish', 'This one\'s called "I Pray to Jesus." It goes out to everybody on Rattlesnake Bridge Road.');
-      yield G.say('Nate', 'There are like four of us.');
-      yield G.say('Ice JJ Fish', 'Then it goes out to all four of y\'all. HIT IT!');
+      yield G.say('Ice JJ Fish', 'This one\'s called "I Pray to Jesus." It goes out to the pastor. HIT IT!');
       yield G.camFocus(null, null, 30);
       yield G.say(null, 'Careful: the pond is {c}slippery{/}. Nate slides around on the ice.');
     } else {
@@ -2737,6 +2880,8 @@
     yield G.say('Ice JJ Fish', 'That was a vibe though. You felt it, right?');
     yield G.say('Nate', '...I did feel something.');
     yield G.say('Ice JJ Fish', 'That\'s the song, bro. Stay icy.');
+    yield G.say('Ice JJ Fish', 'Aight. You survived the whole set. Tell your pops I\'m in. Sunday. Nine a.m.');
+    yield G.say('Ice JJ Fish', 'I\'ll bring the snow.');
     yield G.say('Ice JJ Fish', 'Hold up. Is that a pipe? Lemme teach you a little something. Three notes. Real smooth.');
     f.signal_icy = true;
     yield G.itemGet(G.spr.pipe, 'You learned a new pipe song: {c}Stay Icy{/}  ' + G.arrows(['left', 'right', 'up']));
@@ -2746,7 +2891,7 @@
     boss.dead = true;
     f.jjBeaten = true;
     G.audio.play('home');
-    yield G.say('Nate', '...He slid off across the ice. Still singing.');
+    yield G.say('Nate', '...He slid off across the ice. Still singing. I think that means he\'s booked.');
   };
 
   // The WiFi router on the den desk.
@@ -3724,7 +3869,7 @@
     setup(w) {
       const F = furnish(w), sp = G.spr, f = flags();
       // ---- living room
-      F.stand(sp.curio, 1, 3, 1, look('A glass cabinet full of the good china. Nobody is allowed to use the good china.'));
+      F.stand(sp.curio, 1, 3, 1, S.goodChina);
       F.hang(sp.frenchDoor, 3, 2, 1, look('French doors out to the side steps by the chimney.'), 1);
       w.addProp({ img: sp.brickFireplace, tx: 5, ty: 1, h: 3, flat: true, solid: [5, 3, 2, 1], hit: [5, 3, 2, 1], talk: look('The brick fireplace, with a landscape hung over the mantel.', 'The chimney outside is older than everybody in the family put together.') });
       F.hang(sp.frenchDoor, 8, 2, 1, look('More French doors. This house loves a French door.'), 1);
@@ -3967,6 +4112,11 @@
       F.stand(sp.dustCollector, 13, 10, 2, look('The dust collector. It is losing the war.'));
       F.stand(sp.shopVac, 7, 10, 1, look('An orange shop vac, also losing the war.'));
       F.stand(sp.buckets, 20, 11, 1, look('Five-gallon buckets. Every garage has somewhere between four and four hundred.'));
+      // Dad, hanging out at his workbench (once Mom's books are back and things calm down)
+      const f = flags();
+      if (f.globBeaten) w.dad = w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'left', talk: S.dadWorkshop }));
+      // muddy paw prints leading out the open bay (whoever took the Doritos)
+      if (f.snackQuest && !s.items.doritos && !f.snacksDone) w.addProp({ img: sp.pawPrints, tx: 9, ty: 10, dy: 2, flat: true, hit: [9, 10, 3, 1], talk: look('Muddy paw prints in the sawdust. BIG ones. A torn corner of a blue chip bag.', 'They lead out the open bay, toward the brook.') });
       // out through the open middle bay
       w.addWarp(8, 12, 6, 1, 'home', 38, 34, 'down');
     },
@@ -4167,7 +4317,8 @@
       const at = (Kind, x, y) => w.add(new Kind(x * 16 + 8, y * 16 + 14));
       for (const [x, y] of [[47, 44], [22, 47], [20, 41], [33, 45], [10, 45]]) at(G.Snapdragon, x, y); // (none in Mom's garden)
       for (const [x, y] of [[6, 33], [27, 42], [51, 38], [50, 46]]) at(G.Gourd, x, y);
-      at(G.Bear, 12, 14);
+      const bear = at(G.Bear, 12, 14);
+      if (flags().snackQuest && !G.state.items.doritos && !flags().snacksDone) bear.bag = true;
 
       // the hens, free-ranging inside the garden fence
       const pen = [27 * 16 + 6, 19 * 16 + 4, 40 * 16 - 6, 23 * 16 - 2];
@@ -4924,7 +5075,10 @@
       w.addProp({ img: G.spr.snowman, tx: 3, ty: 11, dx: -1, solid: [3, 11, 1, 1], hit: [3, 11, 1, 1], talk: look('A snowman in a top hat and a red scarf. It\'s been listening to the singing for a long time. It looks tired.') });
       w.add(new G.Sign(14, 12, ['THE FROZEN POND', 'It snows here year-round. Nobody knows why.']));
       w.addTrigger(10, 15, 2, 1, () => G.play.warp('home', 51, 2, 'down'));
-      if (!flags().jjBeaten) w.jj = w.add(new G.IceJJ(11 * 16 + 8, 6 * 16 + 14));
+      if (!flags().jjBeaten) {
+        if (flags().jjGig) w.jj = w.add(new G.IceJJ(11 * 16 + 8, 6 * 16 + 14));
+        else w.jjNpc = w.add(new G.NPC({ sprite: 'icejj', name: 'Ice JJ Fish', x: 11 * 16 + 8, y: 6 * 16 + 14, dir: 'down', talk: S.jjBusy }));
+      }
     },
     // it's always snowing here
     tint(ctx) {
@@ -4936,7 +5090,14 @@
         ctx.fillRect(Math.round(x), Math.round(y), i % 3 ? 1 : 2, i % 3 ? 1 : 2);
       }
     },
-    onEnter() { return (function* () { if (!flags().jjBeaten) yield* S.jjIntro(); })(); },
+    // mid-set, he never stops singing
+    tick(w) {
+      const g = w.jjNpc;
+      if (!g || G.script.busy || G.tick % 70) return;
+      w.jjVerse = ((w.jjVerse == null ? -1 : w.jjVerse) + 1) % G.JJ_SONG.length;
+      w.pop(g.x, g.y - 36, G.JJ_SONG[w.jjVerse], '#a8e0ff');
+    },
+    onEnter() { return (function* () { const f = flags(); if (!f.jjBeaten) yield* (f.jjGig ? S.jjIntro() : S.jjBusyIntro()); })(); },
   };
 
   // Under the house: stone walls, a furnace, storage boxes, and the
@@ -5092,7 +5253,7 @@
       w.addProp({ img: G.spr.concession, tx: 2, ty: 15, h: 2, solid: [2, 15, 4, 2], hit: [2, 15, 4, 2], talk: S.nachos });
 
       w.add(new G.NPC({ sprite: 'ref', name: 'Referee', x: 18 * 16 + 8, y: 15 * 16 + 14, talk: S.ref, wander: 20 }));
-      if (flags().dadBeaten) w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 7 * 16 + 8, y: 15 * 16 + 14, dir: 'left', talk: S.dadArena }));
+      if (flags().dadBeaten && !flags().homeArrived) w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 7 * 16 + 8, y: 15 * 16 + 14, dir: 'left', talk: S.dadArena }));
       // everyone Nate gave one of Doron's tickets to shows up ringside
       [['superfan', 'Superfan', 5, 8, 'right'], ['rose', 'Grandma Rose', 18, 8, 'left'], ['gus', 'Gus', 5, 10, 'right'], ['devin', 'Devin', 18, 10, 'left']]
         .forEach(([sprite, name, x, y, dir]) => {

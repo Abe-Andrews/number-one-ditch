@@ -4086,6 +4086,32 @@
     return finish(p);
   }
 
+  // ---- Dad's snacks: a bag of candy corn, a bag of blue Doritos, and the
+  // muddy bear tracks across the workshop floor
+  function candyCorn() {
+    const p = new Pix(14, 16);
+    p.rect(2, 2, 10, 13, '#e8f0f4'); p.hline(2, 11, 2, '#c8d4dc'); p.rect(2, 0, 10, 2, '#e85a20'); p.hline(3, 10, 1, '#f8a040');
+    for (const [x, y] of [[4, 5], [8, 6], [5, 9], [9, 10], [4, 12], [8, 13], [6, 7]]) { p.set(x, y, '#f8f8f0'); p.set(x, y + 1, '#f8a020'); p.set(x + 1, y + 1, '#f8a020'); p.set(x, y + 2, '#f8d040'); p.set(x + 1, y + 2, '#f8d040'); }
+    p.rect(3, 3, 8, 2, '#e85a20'); p.set(5, 3, '#f8f8f0'); p.set(8, 3, '#f8f8f0');
+    return finish(p);
+  }
+  function doritos() {
+    const p = new Pix(14, 16);
+    p.rect(1, 1, 12, 14, '#2a5ad0'); p.hline(1, 12, 1, '#5a8af0'); p.vline(12, 1, 14, '#1a3aa0'); p.hline(1, 12, 0, '#c8c8d0'); p.hline(1, 12, 15, '#c8c8d0');
+    for (let y = 0; y < 5; y++) p.hline(5 - y, 7 + y, 6 + y, y === 0 ? '#f8d040' : '#e88a30');
+    p.set(5, 8, '#78c048'); p.set(8, 9, '#78c048'); p.set(6, 10, '#78c048');
+    p.hline(3, 10, 3, '#e83030'); p.hline(4, 9, 4, '#f8f8f0');
+    return finish(p);
+  }
+  function pawPrints() {
+    const p = new Pix(46, 14), mud = '#6a5038', mudD = '#4a3828';
+    for (const [x, y] of [[2, 8], [14, 3], [26, 8], [38, 3]]) {
+      p.rect(x, y + 2, 4, 3, mud); p.hline(x + 1, x + 2, y + 5, mudD);
+      for (const t of [0, 2, 4]) p.set(x + t - 1 + (t >> 1), y, mudD);
+    }
+    return p.canvas();
+  }
+
   // ---- secret rocks: the carnival balloon booth (full, and after Lily), a
   // funnel cake, and Dr. Moles' tray of three gray rocks with a dropper bottle
   function balloonBooth(popped) {
@@ -4864,6 +4890,7 @@
     S.outcrops = { laf: outcrop('laf'), eas: outcrop('eas'), bed: outcrop('bed') };
     S.quarryRubble = quarryRubble(); S.bigBasalt = bigRock('basalt'); S.bigDolomite = bigRock('dolomite'); S.gravelBar = gravelBar();
     S.fc = { idle: fatherChristmas(false, false), up: fatherChristmas(true, false), idleRage: fatherChristmas(false, true), upRage: fatherChristmas(true, true), sweater: fatherChristmas(false, false, true) };
+    S.candyCorn = candyCorn(); S.doritos = doritos(); S.pawPrints = pawPrints();
     S.balloonBooth = balloonBooth(false); S.balloonBoothEmpty = balloonBooth(true); S.funnelCake = funnelCake(); S.rockTray = rockTray();
     S.mikeyNote = mikeyNotePages(); S.noteIcon = noteIcon();
     S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);

@@ -1315,6 +1315,7 @@
       super.update(w);
     }
     think(w, p, dx, dy, dist) {
+      if (this.bag && this.t % 130 === 0) w.pop(this.x, this.y - 32, '*crunch crunch*', '#c8a080');
       if (this.state === 'roam') {
         const hx = this.x - this.home.x, hy = this.y - this.home.y, hd = Math.hypot(hx, hy) || 1;
         if (hd > 72) { this.vx = (-hx / hd) * 0.4; this.vy = (-hy / hd) * 0.4; this.step(w); } else this.wander(w, 0.35);
@@ -1343,6 +1344,7 @@
       this.face = this.vx < 0 ? 'left' : 'right';
       this.world.pop(this.x, this.y - 34, 'HMPH.', '#c8a080');
       G.audio.sfx('poof');
+      if (this.bag) { this.bag = false; G.script.run(G.SCRIPTS.doritosBack()); }
       for (let i = 0; i < 3; i++) this.world.add(new Pickup(this.x + (i - 1) * 10, this.y + 4, 'tooth5'));
     }
     draw(ctx, cx, cy) {
@@ -1351,6 +1353,13 @@
       const frame = moving ? Math.floor(this.t / (this.state === 'charge' || this.fled ? 5 : 10)) % 2 : 0;
       if (this.fled) ctx.globalAlpha = Math.min(1, this.st / 40);
       this.drawSprite(ctx, cx, cy, set[frame]);
+      // Dad's blue Doritos, clamped in its jaws
+      if (this.bag) {
+        const bx = Math.round(this.x + (this.face === 'left' ? -17 : 11)) - cx, by = Math.round(this.y - 15) - cy;
+        ctx.fillStyle = '#2a5ad0'; ctx.fillRect(bx, by, 6, 8);
+        ctx.fillStyle = '#c8c8d0'; ctx.fillRect(bx, by, 6, 1);
+        ctx.fillStyle = '#e88a30'; ctx.fillRect(bx + 2, by + 3, 2, 2);
+      }
       ctx.globalAlpha = 1;
       if (this.state === 'dazed') {
         for (let i = 0; i < 3; i++) {
@@ -1601,7 +1610,9 @@
       '~ I pray to Jesus Christ ~', '~ (Jesus) ~',
       '~ I pray to Jesus Christ ~', '~ (Jesus) ~',
       '~ I pray to Jesus Christ ~', '~ (Jesus) ~',
-  ];  const JJ_OUCH = ['OUCH, BRO!', 'NOT THE MIC!', 'STILL ON KEY!', 'AYO?!', 'I\'M ICY!', 'THAT WAS FLAT!'];
+  ];
+  G.JJ_SONG = JJ_SONG;
+  const JJ_OUCH = ['OUCH, BRO!', 'NOT THE MIC!', 'STILL ON KEY!', 'AYO?!', 'I\'M ICY!', 'THAT WAS FLAT!'];
   class Icicle extends Ent {
     constructor(x, y) { super(x, y); this.t = 50; this.land = 0; }
     update(w) {

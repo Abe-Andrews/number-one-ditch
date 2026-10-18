@@ -104,7 +104,12 @@
     }
 
     // shared slots ([a, b]) show whichever item Nate has (or the last one, still unfound)
-    slots() { return (this.tab === 0 ? G.GEAR_SLOTS : G.KEY_SLOTS).map((e) => (Array.isArray(e) ? e.find((id) => G.itemHas(id)) || e[e.length - 1] : e)); }
+    // (KEY ITEMS just lists what Nate is carrying, in order; the grid only holds twelve)
+    slots() {
+      if (this.tab === 0) return G.GEAR_SLOTS.map((e) => (Array.isArray(e) ? e.find((id) => G.itemHas(id)) || e[e.length - 1] : e));
+      const held = G.KEY_SLOTS.flat().filter((id) => G.itemHas(id)).slice(0, COLS * ROWS);
+      return held.concat(Array(COLS * ROWS - held.length).fill(null));
+    }
 
     switchTab(d) {
       this.tab = (this.tab + d + TABS.length) % TABS.length;
