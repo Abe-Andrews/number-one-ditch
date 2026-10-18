@@ -146,6 +146,7 @@
     protest4: { skin: '#c88a60', hair: '#2a1a14', hairStyle: 'cap', hat: '#8a2034', hatStyle: 'ball', shirt: '#8a2034', pants: '#4a4038', shoes: '#f0f0f0', torso: 6, legs: 3 },
     protest5: { skin: '#f2c8a0', hair: '#5a3a20', hairStyle: 'buzz', beard: '#5a3a20', shirt: '#4a5a8a', sleeves: 'long', pants: '#3a3a44', shoes: '#3a2818', torso: 7, legs: 3 },
     protest6: { skin: '#b07850', hair: '#3a2418', hairStyle: 'long', shirt: '#e8a030', pants: '#2a2a30', shoes: '#f0f0f0', torso: 5, legs: 3, smile: '#ffffff' },
+    organizer: { skin: '#e0b088', hair: '#2a1a14', hairStyle: 'shoulder', glasses: '#202020', shirt: '#6a3a8a', pants: '#2a2a30', shoes: '#c8c8c8', torso: 6, legs: 3 },
   });
 
   // Badlands Chugs: bald, full beard, black "Don't Touch Dat" tee, white sneakers.
@@ -185,8 +186,7 @@
       kind: 'gear', equip: true, name: 'Dad\'s Pipe', short: 'Dad\'s Pipe', icon: () => G.spr.pipe, has: () => !!st().items.pipe,
       desc: () => {
         const known = G.SIGNALS.filter((sg) => sg.known());
-        return 'Hand-carved by Dad. Press X, then puff arrows. ' +
-          (known.length ? 'Signals: ' + known.map((sg) => '{c}' + sg.name + '{/} ' + G.arrows(sg.seq)).join(', ') : '');
+        return 'Hand-carved by Dad. Press X and puff a song.';
       },
     },
     bidet: { kind: 'gear', name: 'Portable Bidet', icon: () => null, desc: '', has: () => !!st().items.bidet },
@@ -275,7 +275,12 @@
   // happens. Add new ones here as the story teaches them.
   G.SIGNALS = [
     { id: 'peace', name: 'Peace Be With You', seq: ['up', 'down', 'up'], known: () => !!fl().signal_peace, effect: () => G.SCRIPTS.signalPeace() },
-    { id: 'icy', name: 'Stay Icy', seq: ['left', 'right', 'up'], known: () => !!fl().signal_icy, effect: () => G.SCRIPTS.signalIcy() },
+    { id: 'icy', name: 'I Pray to Jesus', seq: ['left', 'right', 'up'], known: () => !!fl().signal_icy, effect: () => G.SCRIPTS.signalIcy() },
+    { id: 'jlc', name: 'Jamie Lee Curtis', seq: ['right', 'left', 'right'], known: () => !!fl().signal_jlc, effect: () => G.SCRIPTS.signalJlc() },
+    // TODO (with the Abe chapter / Father Eggmas boss fight): "Nice Crack" (down, down, left),
+    // taught by Abe when he joins ("Nice crack, Abe!"). Cracks marked walls and boulders to
+    // open secret spots, and cracks Father Eggmas's shell in the finale. Keep any new song's
+    // arrows from containing another song's arrows, or one will fire while puffing the other.
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
@@ -376,7 +381,7 @@
       id: 'icejj', name: 'Ice JJ Fish', met: () => fl().jjMet,
       tag: () => (fl().jjBeaten ? '{o}Boss: beaten' : '{r}Boss'),
       bio: () => (fl().jjBeaten
-        ? 'Sang "I Pray to Jesus" on the frozen pond north of the bridge until Nate knocked the mic out of his hands. Taught Nate "Stay Icy" on the pipe.'
+        ? 'Sang "I Pray to Jesus" on the frozen pond north of the bridge until Nate knocked the mic out of his hands. Taught Nate how to play it on the pipe.'
         : 'Singing "I Pray to Jesus" on a frozen pond north of the bridge. It snows there and nowhere else.'),
     },
     { id: 'gus', name: 'Gus', tag: '{y}Friend', met: () => fl().capQuest, bio: 'Lafayette\'s groundskeeper. Protector of petunias. Found Nate\'s hat.' },
@@ -1401,24 +1406,64 @@
     if (!n) w.pop(p.x, p.y - 24, '(nobody to calm down)', '#c8c8d0');
   };
 
-  // Stay Icy (taught by Ice JJ Fish): nearby enemies freeze solid for 5 seconds.
-  // Frozen enemies can't move or hurt anyone, but they can still be hit.
-  const ICY_RADIUS = 72;
+  // I Pray to Jesus (Ice JJ Fish's song, taught by him): an ice beam straight out
+  // the way Nate is facing. It stops at walls but carries over water. Anything it
+  // touches freezes solid for 5 seconds (and can still be bonked); aimed at the
+  // brook pool at home, the water freezes over.
+  const BEAM_LEN = 128, BEAM_W = 12;
   S.signalIcy = function () {
-    const p = P(), w = G.play.world;
-    w.fx.push({ x: p.x, y: p.y - 6, vx: 0, vy: 0, circle: true, r: ICY_RADIUS - 6, max: 24, life: 24, color: '#c8ecff' });
-    w.burst(p.x, p.y - 10, ['#ffffff', '#d8f4ff', '#a8e0ff'], 16, { speed: 1.6, life: 30, size: 2 });
-    w.pop(p.x, p.y - 34, 'STAY ICY', '#a8e0ff');
-    let n = 0;
+    const p = P(), w = G.play.world, [dx, dy] = G.DIRS[p.dir];
+    const x0 = p.x + dx * 8, y0 = p.y - 8 + dy * 2;
+    let len = 0;
+    while (len < BEAM_LEN) {
+      const tx = Math.floor((x0 + dx * (len + 4)) / 16), ty = Math.floor((p.y - 4 + dy * (len + 4)) / 16);
+      const d = G.TILE_DEFS[w.tileAt(tx, ty)];
+      if (w.tileSolid(tx, ty) && !(d && (d.k === 'water' || d.k === 'bay'))) break;
+      len += 4;
+    }
+    const x1 = x0 + dx * len, y1 = y0 + dy * len;
+    const r = dx ? [Math.min(x0, x1), y0 - 8, Math.max(x0, x1), y0 + 10] : [x0 - 7, Math.min(y0, y1) - 6, x0 + 7, Math.max(y0, y1) + 8];
+    w.fx.push({ beam: true, x0, y0, x1, y1, w: BEAM_W, life: 28, max: 28, color: '#ffffff', glow: '#a8e0ff', x: x0, y: y0, vx: 0, vy: 0 });
+    for (let i = 0; i < 16; i++) {
+      const k = Math.random();
+      w.fx.push({ x: x0 + (x1 - x0) * k + (Math.random() * 2 - 1) * (dy ? 5 : 1), y: y0 + (y1 - y0) * k + (Math.random() * 2 - 1) * (dx ? 5 : 1), vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3, life: 18 + Math.random() * 16, color: i % 3 ? '#d8f4ff' : '#ffffff', size: 1 });
+    }
+    G.audio.sfx('dash');
+    w.pop(p.x, p.y - 34, '~ I PRAY TO JESUS ~', '#a8e0ff');
     for (const e of w.ents) {
-      if (!e.enemy || e.boss || e.dead || Math.hypot(e.x - p.x, e.y - p.y) > ICY_RADIUS) continue;
+      if (!e.enemy || e.boss || e.dead || !e.hurtBox || !G.overlap(r, e.hurtBox())) continue;
       e.frozen = 300;
-      n++;
+      w.burst(e.x, e.y - 8, ['#ffffff', '#d8f4ff', '#a8e0ff'], 6, { speed: 1, life: 20, size: 1 });
     }
     // some places have water worth freezing
     const def = G.MAPS[w.id];
-    if (def && def.onIcy && def.onIcy(w, p)) n++;
-    if (!n) w.pop(p.x, p.y - 24, '(nothing to freeze)', '#c8c8d0');
+    if (def && def.onIcy) def.onIcy(w, p, r);
+  };
+
+  // Jamie Lee Curtis (taught by Michelle): everything nearby gets the fright of its
+  // life and runs from Nate for 3 seconds (no attacks while it runs, and it can
+  // still be bonked). Gulls get startled right off their lights.
+  const JLC_RADIUS = 80;
+  S.signalJlc = function () {
+    const p = P(), w = G.play.world;
+    w.fx.push({ x: p.x, y: p.y - 6, vx: 0, vy: 0, circle: true, r: JLC_RADIUS - 6, max: 24, life: 24, color: '#ffb8e0' });
+    G.audio.sfx('yell');
+    G.play.shake(10, 2);
+    w.pop(p.x, p.y - 34, 'JAMIE LEE CURTIS!!!', '#e8a0d8');
+    let n = 0;
+    for (const e of w.ents) {
+      if (!e.enemy || e.boss || e.dead || Math.hypot(e.x - p.x, e.y - p.y) > JLC_RADIUS) continue;
+      n++;
+      if (e instanceof G.Seagull) { e.startle(); continue; }
+      e.scared = 180;
+      e.calm = 0;
+    }
+    // the protest at the fair: "nothing scares us"
+    if (w.organizer && !w.organizer.dead && Math.hypot(w.organizer.x - p.x, w.organizer.y - p.y) < 110) { n++; G.script.run(S.protestScatter()); }
+    // Mom does not appreciate it
+    const m = w.ents.find((e) => e instanceof G.NPC && e.name === 'Michelle' && Math.hypot(e.x - p.x, e.y - p.y) < 120);
+    if (m) w.pop(m.x, m.y - 34, 'NATE!!!', '#e8a0d8');
+    else if (!n) w.pop(p.x, p.y - 24, '(nobody to startle)', '#c8c8d0');
   };
 
   S.dadArena = function* () {
@@ -1999,8 +2044,26 @@
     yield G.banner('MICHELLE\'S FLOWERS', 'now open!', 130);
     yield G.say('Michelle', 'Welcome to {p}Michelle\'s Flower Stand{/}! Not "the pastor\'s wife\'s flower stand." MICHELLE\'s.');
     yield G.say('Michelle', 'Fresh flowers, Doosh for the road... and one very special hen.');
+    standOpening = true;
     yield* S.michelleShop();
+    standOpening = false;
   }
+  let standOpening = false;
+
+  // Michelle's pipe song: the first time Nate stops by her stand with Dad's pipe
+  S.momSong = function* () {
+    const f = flags(), p = P();
+    yield G.say('Michelle', 'Is that your father\'s pipe? Did he teach you any of his little songs?');
+    yield G.say('Nate', 'Peace Be With You.');
+    yield G.say('Michelle', 'Of course he did. Here\'s one he\'ll never teach you. He made it up the first time I yelled "Jamie Lee Curtis" in his ear.');
+    yield G.say('Michelle', 'Right, left, right. Fast. Like you just got the fright of your life.');
+    f.signal_jlc = true;
+    G.audio.sfx('fanfare');
+    yield G.itemGet(G.spr.pipe, 'You learned a new pipe song: {p}Jamie Lee Curtis{/}  ' + G.arrows(['right', 'left', 'right']));
+    yield G.say(null, 'Puff it on Dad\'s pipe and anything nearby gets the fright of its life and runs. The songs you know are under {y}Dad\'s Pipe{/} in the {y}ITEMS{/} menu.');
+    p.dir = 'up';
+    yield G.say('Michelle', 'And do NOT puff it at me.');
+  };
 
   // Shark teeth for prices (no sacred numbers on the price tags, of course).
   function* momPay(n) {
@@ -2018,6 +2081,7 @@
   S.michelleShop = function* () {
     const f = flags(), s = G.state;
     if (f.snackQuest && !s.items.candyCorn && !f.snacksDone && !f.momDenied) { yield* S.momCandy(); return; }
+    if (s.items.pipe && !f.signal_jlc && !standOpening) yield* S.momSong();
     const menu = [];
     if (!s.items.chicken) menu.push(['The Chicken: 30', function* () {
       if (!(yield* momPay(30))) return;
@@ -2561,6 +2625,7 @@
     { id: 'cementrock', area: 'easton', name: 'Cement Rock', r: 0, crush: { teeth: 5 }, how: 'Top prize at the balloon game. Nobody can pop those balloons. Not with darts, anyway.', fact: 'Shaly limestone from the Jacksonburg Formation. The Lehigh Valley ground it into Portland cement and was once the cement capital of America.' },
     { id: 'serpentine', area: 'easton', name: 'Serpentine', r: 1, crush: { package: 2 }, how: 'That pile of old quarry rubble is too solid to hammer. Maybe something explosive?', fact: 'Green "verdolite" from the Chestnut Hill quarries in Easton, cut for ornamental stone. Smooth, waxy and mottled like a snake.' },
     { id: 'eastonite', area: 'easton', name: 'Eastonite', r: 2, crush: { teeth: 30 }, how: 'Grandma Rose would trade for a funnel cake. Somebody has to order it, though.', fact: 'A mica named after Easton itself, found in the Chestnut Hill quarry. Collectors still find it there.' },
+    { id: 'cavepearl', area: 'easton', name: 'Cave Pearl', r: 3, crush: { teeth: 40 }, how: 'The protesters won\'t let anybody down the trail to the little cave. Something would have to really startle them.', fact: 'Calcite that grew layer by layer around a grain of sand in a dripping cave pool, rolled smooth like a pearl. The limestone under the Lehigh Valley is full of caves.' },
     // Bedminster (home)
     { id: 'shale', area: 'bedminster', name: 'Passaic Red Shale', r: 0, crush: { teeth: 5 }, how: 'Red rock out on the little island in Brady Brook. If only the water would hold still.', fact: 'Red mud from the Newark Basin, Triassic and Jurassic. Dinosaurs left footprints in mud like this all over New Jersey.' },
     { id: 'basalt', area: 'bedminster', name: 'Watchung Basalt', r: 1, crush: { teeth: 15 }, how: 'The big black boulder by Brady Brook is way too heavy for Nate. Doron, though...', fact: 'Jurassic lava flows that built the Watchung Mountains just east of Bedminster.' },
@@ -2829,7 +2894,7 @@
     { name: 'Return Mom\'s books (shop)', map: 'home', at: [34, 20, 'left'], flags: { globMet: true, globBeaten: true, baitPlaced: true, basementOpened: true }, items: { books: true, bait: false } },
     { name: 'Dad\'s snacks (workshop)', map: 'garage', at: [10, 10, 'up'], flags: { shopOpen: true }, items: { books: false }, teeth: 120 },
     { name: 'Ice JJ Fish (north)', map: 'north', at: [10, 13, 'up'], flags: { snackQuest: true, snacksDone: true, momDenied: true, jjGig: true } },
-    { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, momHeart: true, phDone: true, chemMet: true, chemPassed: true, chemPerfect: true, engMet: true, engPassed: true, engPerfect: true, ticketQuest: true, ticketsGiven: true, ticketsDone: true, protestReward: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10, tickets: 0, andoverKey: true }, maxHp: 10, teeth: 300 },
+    { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, signal_jlc: true, momHeart: true, phDone: true, chemMet: true, chemPassed: true, chemPerfect: true, engMet: true, engPassed: true, engPerfect: true, ticketQuest: true, ticketsGiven: true, ticketsDone: true, protestReward: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10, tickets: 0, andoverKey: true }, maxHp: 10, teeth: 300 },
     { name: 'Bay Bridge-Tunnel (the toll)', map: 'cbbt', at: [21, 20, 'left'], teeth: 520 },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
@@ -2843,6 +2908,7 @@
     { name: 'Van Wickle Hall (geology)', map: 'geology', at: [10, 12, 'up'] },
     { name: 'Easton Fairgrounds', map: 'fair', at: [9, 12, 'down'] },
     { name: 'Expo Hall', map: 'arena', at: [11, 15, 'up'] },
+    { name: 'The cave under the fair', map: 'fairCave', at: [7, 2, 'down'] },
     { name: 'Home: the yard', map: 'home', at: [42, 38, 'down'] },
     { name: 'Home: downstairs', map: 'homeDown', at: [20, 15, 'up'] },
     { name: 'Home: upstairs', map: 'homeUp', at: [13, 12, 'down'] },
@@ -2865,7 +2931,7 @@
     const s = G.state, f = s.flags;
     Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, andoverKey: true, mikeyNote: true });
     s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40;
-    f.signal_peace = true; f.signal_icy = true; f.doronDeal = true; f.hadDoosh = true; f.capHeart = true;
+    f.signal_peace = true; f.signal_icy = true; f.signal_jlc = true; f.doronDeal = true; f.hadDoosh = true; f.capHeart = true;
   };
 
   // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)
@@ -3052,8 +3118,8 @@
     yield G.say('Ice JJ Fish', 'I\'ll bring the snow.');
     yield G.say('Ice JJ Fish', 'Hold up. Is that a pipe? Lemme teach you a little something. Three notes. Real smooth.');
     f.signal_icy = true;
-    yield G.itemGet(G.spr.pipe, 'You learned a new pipe song: {c}Stay Icy{/}  ' + G.arrows(['left', 'right', 'up']));
-    yield G.say(null, 'Puff it on Dad\'s pipe and nearby enemies freeze solid for a few seconds. Frozen enemies can still be bonked.');
+    yield G.itemGet(G.spr.pipe, 'You learned a new pipe song: {c}I Pray to Jesus{/}  ' + G.arrows(['left', 'right', 'up']));
+    yield G.say(null, 'Puff it on Dad\'s pipe to fire an ice beam the way you\'re facing. Whatever it hits freezes solid for a few seconds, and frozen enemies can still be bonked.');
     w.pop(boss.x, boss.y - 36, '~ I PRAY TO JESUUUS ~', '#a8e0ff');
     yield G.walkTo(boss, boss.x + 200, boss.y - 10, 1.6);
     boss.dead = true;
@@ -3109,6 +3175,46 @@
       yield G.say(null, 'The protesters pass a hat around. Nate gets {y}20 shark teeth{/} from the protest fund.');
       yield G.say('Nate', 'Solidarity.');
     }
+  };
+  // The organizer keeps the trail to the little cave closed. "Nothing scares us."
+  S.organizer = function* () {
+    const f = flags();
+    yield G.say('Organizer', 'Whoa, whoa. This trail is part of the protest. Nobody goes down to the cave.');
+    if (!f.organizerMet) {
+      f.organizerMet = true;
+      yield G.say('Nate', 'What does a cave have to do with the quad?');
+      yield G.say('Organizer', 'Nothing. That\'s what makes it a statement.');
+      yield G.say('Organizer', 'We are not moving until Lafayette gives back the quad. Not one inch. Nothing scares us.');
+    } else yield G.say('Organizer', 'Not one inch. Nothing scares us.');
+    if (G.state.items.pipe && f.signal_jlc) yield G.say('Nate', '...Nothing, huh?');
+    else yield G.say('Nate', 'There\'s a cave down there. I can smell the limestone from here.');
+  };
+  // Jamie Lee Curtis on the pipe, right at the picket line
+  S.protestScatter = function* () {
+    const f = flags(), w = G.play.world, p = P(), cam = G.play.cam;
+    f.protestScattered = true;
+    const org = w.organizer;
+    const crowd = w.ents.filter((e) => e instanceof G.NPC && !e.dead && (e.name === 'Protester' || e === org));
+    const yells = ['AAAAH!', 'EEEK!', 'RUN!', 'NOT LIKE THIS!', 'MY SIGN!', 'WHAT WAS THAT?!'];
+    yield G.wait(12);
+    G.audio.sfx('yell');
+    crowd.forEach((e, i) => { e.dir = 'down'; if (e !== org && i % 2 === 0) w.pop(e.x, e.y - 58, yells[i % yells.length], '#f8f8f0'); });
+    if (org) w.pop(org.x, org.y - 44, 'NOTHING SCARES-- AAAH!', '#c898ff');
+    yield G.shakeCmd(20, 2);
+    yield G.wait(30);
+    // everybody runs for it, off whichever side of the screen is closer
+    yield G.together(...crowd.map((e) => G.walkTo(e, e.x < p.x ? cam.x - 40 : cam.x + G.W + 40, e.y - 30 - Math.random() * 40, 3)));
+    for (const e of crowd) e.dead = true;
+    if (w.caveSign) {
+      w.burst(20 * 16 - 4, 29 * 16 + 4, ['#c8b090', '#8a6a48'], 8, { speed: 1, up: 0.8, g: 0.08, life: 24, size: 2 });
+      w.props.splice(w.props.indexOf(w.caveSign), 1);
+      w.caveSign = null;
+    }
+    w.block[29 * w.w + 20] = 0; w.block[29 * w.w + 21] = 0;
+    w.organizer = null;
+    yield G.wait(20);
+    yield G.say('Nate', '...Sorry! Sorry. You can come back. It\'s a free country.');
+    yield G.say('Nate', 'And the trail to the cave is wide open.');
   };
   const CHANTS = ['GIVE BACK THE QUAD!', 'SAVE THE GRASS!', 'WHO APPROVED THIS?!', 'RESPECT LITTLE PEOPLE!', 'WHERE\'S THE MONEY?!', 'PIZZA?'];
 
@@ -4567,9 +4673,9 @@
         else w.addTrigger(35, 46, 15, 9, () => G.script.run(S.mikeyGoldenHour()));
       }
     },
-    // "Stay Icy" on the pipe, near the pool: it freezes over (for this visit)
-    onIcy(w, p) {
-      if (w.poolFrozen || Math.hypot(p.x - 8 * 16, p.y - 4 * 16) > 110) return false;
+    // "I Pray to Jesus" on the pipe, beamed at the pool: it freezes over (for this visit)
+    onIcy(w, p, beam) {
+      if (w.poolFrozen || !G.overlap(beam, [4 * 16, 1 * 16, 12 * 16, 6 * 16])) return false;
       w.poolFrozen = true;
       for (let y = 1; y <= 5; y++) for (let x = 4; x <= 11; x++) if (w.tileAt(x, y) === '~') w.setTile(x, y, 'I');
       w.burst(8 * 16, 3 * 16, ['#ffffff', '#d8f4ff', '#a8e0ff'], 24, { speed: 1.8, life: 34, size: 2 });
@@ -5376,8 +5482,10 @@
       fill(31, 15, 5, 3, '"');
       fill(3, 4, 4, 3, '"');
       [[11, 9], [12, 9], [28, 9], [29, 9], [3, 10], [4, 10], [36, 18], [36, 20]].forEach(([x, y]) => set(x, y, 'b'));
-      // tree border (gap on the west edge for the road back to campus)
-      for (let x = 0; x < W; x += 2) { set(x, 0, 'T'); set(x, 30, 'T'); }
+      // tree border (gaps on the west edge for the road back to campus, and at
+      // the bottom for the trail down to the little cave)
+      for (let x = 0; x < W; x += 2) { set(x, 0, 'T'); if (x !== 20) set(x, 30, 'T'); }
+      fill(20, 29, 2, 3, '=');
       for (let y = 2; y < 30; y += 2) { if (y !== 12) set(0, y, 'T'); set(38, y, 'T'); }
       [[8, 3], [24, 26], [34, 12]].forEach(([x, y]) => set(x, y, 'T'));
       return g.map((r) => r.join(''));
@@ -5433,6 +5541,16 @@
       // tall grass (Lafayette's event village took the quad); you have to go looking
       w.protesters = [[14, 28, 'protest1', 'people'], [18, 28, 'protest2', 'grass'], [22, 28, 'protest3', 'money'], [26, 28, 'protest4', 'quad'], [30, 28, 'protest5', 'who'], [34, 28, 'protest6', 'pizza']]
         .map(([x, y, spr, sign]) => npc(spr, 'Protester', x, y, S.protester(sign), { sign: G.spr.signs[sign] }));
+      // the trail down to the little cave, with the protest dug in across it
+      // (Jamie Lee Curtis on the pipe scatters them: S.protestScatter)
+      w.addTrigger(20, 31, 2, 1, () => G.play.warp('fairCave', 7, 1, 'down'));
+      if (!flags().protestScattered) {
+        // (the sign stands at the left edge of the trail, the organizer on the right)
+        w.organizer = npc('organizer', 'Organizer', 21, 29, S.organizer, { held: G.spr.megaphone });
+        const img = G.spr.signs.cave;
+        w.caveSign = w.addProp({ img, tx: 20, ty: 29, dx: -4 - Math.floor(img.width / 2), solid: [20, 29, 1, 1], hit: [20, 29, 1, 1], talk: S.organizer });
+        w.blockTiles(21, 29, 1, 1);
+      }
 
       w.add(new G.Sign(5, 11, ['EASTON FAIRGROUNDS', 'Tonight: {y}MICRO MAYHEM WRESTLING{/}! Doors at 7.']));
       w.add(new G.Sign(18, 14, 'PARKING. Do not leave valuables in your car. Or near the wrestlers.'));
@@ -5449,8 +5567,65 @@
     // the protesters chant every so often
     tick(w) {
       if (G.script.busy || !w.protesters || G.tick % 150) return;
-      const p = w.protesters[Math.floor(Math.random() * w.protesters.length)];
+      const live = w.protesters.filter((q) => !q.dead);
+      if (!live.length) return;
+      const p = live[Math.floor(Math.random() * live.length)];
       w.pop(p.x, p.y - 52, CHANTS[Math.floor(Math.random() * CHANTS.length)], '#f8f8f0');
+    },
+  };
+
+  // The little cave under the fairgrounds (past the protest): a limestone hollow
+  // with a still pool, and cave pearls on the bottom of it.
+  S.cavePool = function* () {
+    const f = flags();
+    if (f.cavePearl) { yield G.say('Nate', 'The rest of the cave pearls stay right here. Some things belong in caves.'); return; }
+    yield G.say(null, 'A still little pool under a dripping ceiling. The bottom is covered in smooth, round white stones.');
+    yield G.say('Nate', 'No way. Are those... CAVE PEARLS?');
+    f.cavePearl = true;
+    yield* S.rockGive('cavepearl');
+    yield G.say('Nate', 'Just one. The rest stay here. Some things belong in caves.');
+  };
+  G.MAPS.fairCave = {
+    name: 'The Cave Under the Fair',
+    music: 'mine',
+    tiles() {
+      const W = 15, H = 10;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(6, 0, 2, 3, '@');   // the way in, from the trail
+      fill(2, 3, 11, 6, '@');  // the chamber
+      fill(9, 7, 3, 2, '~');   // a still little pool in the back
+      for (let y = 0; y < H - 1; y++) for (let x = 0; x < W; x++) if (g[y][x] === 'w' && g[y + 1][x] !== 'w') g[y][x] = '&';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      w.addProp({ img: G.spr.cavePearls, tx: 9, ty: 7, h: 2, dx: 11, dy: -9, flat: true });
+      w.addProp({ tx: 9, ty: 7, h: 2, hit: [9, 7, 3, 2], talk: S.cavePool });
+      w.addTrigger(6, 0, 2, 1, () => G.play.warp('fair', 20, 29, 'up'));
+    },
+    // drips from the ceiling into the pool
+    tick(w) {
+      if (G.tick % 64) return;
+      w.fx.push({ x: 9 * 16 + 8 + Math.floor(Math.random() * 3) * 16, y: 5 * 16, vx: 0, vy: 1.4, life: 26, color: '#a8d8f0', size: 1 });
+    },
+    // daylight from the trail fades into the dark
+    tint(ctx) {
+      const p = G.play.player, cam = G.play.cam;
+      if (!p) return;
+      const x = Math.round(p.x - cam.x), y = Math.round(p.y - 10 - cam.y), r = 72 + Math.sin(G.tick * 0.13) * 2;
+      const grad = ctx.createRadialGradient(x, y, r * 0.3, x, y, r);
+      grad.addColorStop(0, 'rgba(6,8,14,0)');
+      grad.addColorStop(1, 'rgba(6,8,14,0.92)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, G.W, G.H);
+    },
+    onEnter() {
+      return (function* () {
+        if (flags().caveSeen) return;
+        flags().caveSeen = true;
+        yield G.wait(20);
+        yield G.say('Nate', 'Limestone. The whole Lehigh Valley sits on it, and it\'s full of holes like this.');
+      })();
     },
   };
 

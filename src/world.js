@@ -259,6 +259,18 @@
       for (const e of this.ents) {
         if (e.dead || !e.update) continue;
         if (e.frozen > 0) { e.frozen--; if (e.hurtT > 0) e.hurtT--; continue; }
+        if (e.scared > 0) {
+          // startled (Jamie Lee Curtis on the pipe): runs from Nate instead of doing anything
+          e.scared--;
+          if (e.hurtT > 0) e.hurtT--;
+          const p = G.play.player;
+          if (p && !G.script.busy) {
+            const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1;
+            this.move(e, (dx / d) * 1.6, 0); this.move(e, 0, (dy / d) * 1.6);
+            e.moving = true; e.anim = (e.anim || 0) + 1;
+          }
+          continue;
+        }
         e.update(this);
       }
       this.ents = this.ents.filter((e) => !e.dead);
@@ -326,6 +338,12 @@
           ctx.strokeStyle = '#e8f8ff'; ctx.lineWidth = 1; ctx.strokeRect(x + 0.5, y + 0.5, bw - 1, bh - 1);
           ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 2, y + 2, 2, 4);
         }
+        if (d.scared > 0 && d.hurtBox && (d.scared > 40 || (d.scared >> 2) & 1)) {
+          // startled: a little "!!" over its head
+          const r = d.hurtBox(), x = Math.round((r[0] + r[2]) / 2) - cx, y = Math.round(r[1]) - 10 - cy + ((d.scared >> 3) & 1);
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(x - 3, y - 1, 3, 8); ctx.fillRect(x + 1, y - 1, 3, 8);
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 2, y, 1, 4); ctx.fillRect(x - 2, y + 5, 1, 1); ctx.fillRect(x + 2, y, 1, 4); ctx.fillRect(x + 2, y + 5, 1, 1);
+        }
       }
       for (const f of this.fx) {
         if (f.ring) {
@@ -345,6 +363,19 @@
           ctx.globalAlpha = Math.min(1, f.life / 10);
           ctx.strokeStyle = f.color; ctx.lineWidth = 3;
           ctx.beginPath(); ctx.arc(Math.round(f.x - cx), Math.round(f.y - cy), r, 0, Math.PI * 2); ctx.stroke();
+          ctx.globalAlpha = 1;
+          continue;
+        }
+        if (f.beam) {
+          // ice beam: shoots out from Nate, then a bright core in a pale glow thins away
+          const k = f.life / f.max, ext = Math.min(1, (f.max - f.life + 1) / 5);
+          const ex = f.x0 + (f.x1 - f.x0) * ext, ey = f.y0 + (f.y1 - f.y0) * ext, horiz = f.y0 === f.y1;
+          const ax = Math.round(Math.min(f.x0, ex) - cx), ay = Math.round(Math.min(f.y0, ey) - cy);
+          const len = Math.round(Math.abs(ex - f.x0) + Math.abs(ey - f.y0)) + 1;
+          const gw = Math.max(1, Math.round(f.w * k)), cw = Math.max(1, Math.round(f.w * 0.35 * k));
+          const bar = (t) => (horiz ? ctx.fillRect(ax, ay - Math.floor(t / 2), len, t) : ctx.fillRect(ax - Math.floor(t / 2), ay, t, len));
+          ctx.globalAlpha = 0.5 * k; ctx.fillStyle = f.glow; bar(gw);
+          ctx.globalAlpha = Math.min(1, k * 1.6); ctx.fillStyle = f.color; bar(cw);
           ctx.globalAlpha = 1;
           continue;
         }

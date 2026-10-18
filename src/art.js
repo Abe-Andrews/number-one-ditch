@@ -3683,6 +3683,22 @@
     rows.forEach((r, i) => G.font.draw(x, r, 1 + Math.round((W - G.font.width(r)) / 2), 2 + i * 9, '#2a1a10'));
     return c;
   }
+  // The protest organizer's megaphone.
+  function megaphone() {
+    const p = new Pix(10, 7);
+    p.rect(0, 2, 3, 3, '#3a3a44'); p.set(0, 2, '#5a5a64');
+    for (let i = 0; i < 7; i++) p.vline(3 + i, 3 - Math.floor(i / 2), 3 + Math.floor(i / 2), i === 1 || i === 4 ? '#e83838' : '#f4f2f0');
+    p.vline(9, 0, 6, '#c82828');
+    return finish(p);
+  }
+  // A few cave pearls on the bottom of a still pool (drawn flat, over the water).
+  function cavePearls() {
+    const p = new Pix(26, 14);
+    for (const [x, y] of [[3, 6], [8, 3], [13, 7], [18, 4], [10, 10], [21, 9]]) {
+      p.rect(x, y, 3, 3, '#e8e2d2'); p.set(x, y, '#ffffff'); p.set(x + 2, y + 2, '#a8a090');
+    }
+    return finish(p);
+  }
   // Michelle's flower stand: a wooden cart with buckets of cut flowers.
   function flowerStand() {
     const p = new Pix(48, 36);
@@ -4002,6 +4018,12 @@
       case 'shale': for (let i = 0; i < 3; i++) { p.rect(1 + i, 9 - i * 3, 12 - i * 2, 3, i % 2 ? '#a85040' : '#9a4a3a'); p.hline(1 + i, 12 - i, 9 - i * 3, '#c8705a'); } p.set(6, 7, '#5a2a20'); p.set(7, 7, '#5a2a20'); break;
       case 'basalt': blob('#2e2e34', '#46464e'); for (const [x, y] of [[4, 6], [8, 5], [6, 9], [10, 8]]) { p.set(x, y, '#1a1a20'); p.set(x + 1, y, '#5a5a64'); } break;
       case 'prehnite': blob('#2e2e34', '#46464e'); for (const [x, y] of [[4, 5], [5, 5], [6, 4], [5, 6], [8, 6], [9, 7], [8, 7]]) p.set(x, y, '#b8e898'); p.set(5, 4, '#e8fcd8'); p.set(9, 6, '#e8fcd8'); break;
+      case 'cavepearl':
+        for (const [ox, oy, r] of [[4.5, 7.5, 3.2], [9.5, 5, 3.4], [9.5, 9.8, 2]]) for (let y = 0; y < 12; y++) for (let x = 0; x < 14; x++) {
+          const d = (x - ox) ** 2 + (y - oy) ** 2;
+          if (d <= r * r) p.set(x, y, d <= 1.2 && x <= ox && y <= oy ? '#ffffff' : x < ox && y < oy ? '#fbf8ee' : '#e0d8c6');
+        }
+        break;
       case 'cannonball': for (let y = 1; y < 12; y++) for (let x = 1; x < 13; x++) if ((x - 6.5) ** 2 + (y - 6.5) ** 2 <= 27) p.set(x, y, '#2a2a2e'); p.set(4, 4, '#8a8a94'); p.set(5, 3, '#6a6a74'); p.set(8, 9, '#4a3a2a'); break;
     }
     return finish(p);
@@ -4872,6 +4894,7 @@
       people: protestSign('RESPECT|LITTLE|PEOPLE', '#f8e8a0'), grass: protestSign('SAVE THE|GRASS', '#c8e8b0'),
       money: protestSign('WASTE OF|MONEY', '#f0d0c0'), quad: protestSign('GIVE BACK|THE QUAD', '#d0e0f0'),
       who: protestSign('WHO|APPROVED|THIS?', '#f4f0e0'), pizza: protestSign('FREE|PIZZA?', '#f8d8e8'),
+      cave: protestSign('CAVE|CLOSED', '#f8d0c0'),
     };
     S.bookPiles = [bookPile(1, 5), bookPile(2, 4), bookPile(3, 6)]; S.furnace = furnace(); S.storageBoxes = storageBoxes();
     S.flyingBook = [flyingBook(true), flyingBook(false)];
@@ -4901,9 +4924,10 @@
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
     S.vanWickle = vanWickle();
-    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite']) S.rockIcons[k] = rockIcon(k);
+    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl']) S.rockIcons[k] = rockIcon(k);
     S.oreVein = [oreVein(0), oreVein(1), oreVein(2)]; S.dumpPile = dumpPile(false); S.slagPile = dumpPile(true);
     S.furnaceRuin = furnaceRuin(); S.adit = adit(); S.bat = [batFrame(true), batFrame(false)];
+    S.megaphone = megaphone(); S.cavePearls = cavePearls();
     S.outcrops = { laf: outcrop('laf'), eas: outcrop('eas'), bed: outcrop('bed') };
     S.quarryRubble = quarryRubble(); S.bigBasalt = bigRock('basalt'); S.bigDolomite = bigRock('dolomite'); S.gravelBar = gravelBar();
     S.fc = { idle: fatherChristmas(false, false), up: fatherChristmas(true, false), idleRage: fatherChristmas(false, true), upRage: fatherChristmas(true, true), sweater: fatherChristmas(false, false, true) };

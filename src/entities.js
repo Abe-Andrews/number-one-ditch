@@ -2371,6 +2371,11 @@
         this.z = k < f ? Math.max(2, this.from.z * ((f - k) / f) ** 2) : 2 + 26 * ((k - f) / (1 - f));
         if (this.z < 10 && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
         if (k >= 1) this.rise();
+      } else if (this.state === 'fall') {
+        // startled off its light: drops to the ground in a flurry
+        const k = Math.min(1, ++this.k / 16);
+        this.z = this.from.z + (3 - this.from.z) * k * k;
+        if (k >= 1) Object.assign(this, { state: 'grounded', st: 90 });
       } else if (this.state === 'grounded') {
         // hooked and yanked down: flapping on the ground, easy to bonk
         this.z = 2 + Math.abs(Math.sin(this.t * 0.4)) * 3;
@@ -2394,6 +2399,13 @@
       this.x = p.x + (dx / d) * 22; this.y = p.y + (dy / d) * 18;
       Object.assign(this, { state: 'grounded', st: 80, z: 3, hurtT: 0 });
       this.world.pop(this.x, this.y - 20, this.laughing ? 'HA-- HUH?!' : 'SKRAWK!', '#f8f8f0');
+    }
+    // Jamie Lee Curtis on the pipe: the fright knocks it right off its light
+    startle() {
+      if (this.state === 'grounded' || this.state === 'fall') return;
+      Object.assign(this, { state: 'fall', from: { x: this.x, y: this.y, z: this.z }, k: 0, calm: 0, hurtT: 0 });
+      this.world.burst(this.x, this.y - this.z - 6, this.bits, 6, { speed: 0.9, up: 0.5, g: 0.05, life: 24, size: 1 });
+      this.world.pop(this.x, this.y - this.z - 16, this.laughing ? 'HA-- AAAH!' : 'SKRAWK?!', '#f8f8f0');
     }
     rise() {
       this.state = 'rise';

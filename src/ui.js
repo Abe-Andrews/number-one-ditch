@@ -354,7 +354,7 @@
   const PLACES = [
     { id: 'laf', name: 'LAFAYETTE', x: 30, y: 36, icon: 'college', key: 'Lafayette',
       maps: [['lab', 'Nate\'s Lab'], ['campus', 'The Quad'], ['science', 'Science Center'], ['geology', 'Van Wickle Hall'], ['pardee', 'Pardee Hall']] },
-    { id: 'fair', name: 'EASTON FAIR', x: 98, y: 32, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall']] },
+    { id: 'fair', name: 'EASTON FAIR', x: 98, y: 32, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
     { id: 'home', name: 'HOME', x: 44, y: 72, icon: 'house', key: 'Home',
       maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['north', 'The Frozen Pond']] },
     { id: 'andover', name: 'ANDOVER', x: 112, y: 64, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverDeep', 'The Deep Stope']] },
@@ -366,7 +366,7 @@
   // somewhere Nate has been (older saves didn't keep track, so the story fills in)
   const SEEN_IF = {
     lab: () => true, campus: () => true, science: (f) => f.chemMet, pardee: (f) => f.engMet, geology: (f) => f.profTalk,
-    fair: (f) => f.doronChat || f.doronDeal, arena: (f) => f.dadBeaten, home: (f) => f.homeArrived, homeDown: (f) => f.badlandsMet,
+    fair: (f) => f.doronChat || f.doronDeal, arena: (f) => f.dadBeaten, fairCave: (f) => f.caveSeen, home: (f) => f.homeArrived, homeDown: (f) => f.badlandsMet,
     garage: (f) => f.snackQuest, basement: (f) => f.globMet, north: (f) => f.jjSeen, andover: (f) => f.andover || f.andoverMine,
     andoverMine: (f) => f.andoverMine, andoverDeep: (f) => f.fcAwake, cbbt: (f) => f.cbbtArrived, cbbtTunnel: (f) => f.tunnelSeen,
   };
@@ -891,7 +891,19 @@
       const n = G.itemCount(id);
       if (n != null) TXT(ctx, 'x' + G.sayable(n), 159, 52, C.gold);
       ctx.fillStyle = '#3e3460'; ctx.fillRect(116, 64, 115, 1);
-      F().wrap(G.itemDesc(id), 112).slice(0, 7).forEach((l, i) => TXT(ctx, l, 118, 68 + i * 10));
+      if (id !== 'pipe') { F().wrap(G.itemDesc(id), 112).slice(0, 7).forEach((l, i) => TXT(ctx, l, 118, 68 + i * 10)); return; }
+      // Dad's pipe: its songbook (the pipe itself doesn't show them, so learn them here)
+      F().wrap(G.itemDesc(id), 112).slice(0, 2).forEach((l, i) => TXT(ctx, l, 118, 68 + i * 10));
+      const known = G.SIGNALS.filter((sg) => sg.known()).length, tally = G.sayable(known) + '/' + G.sayable(G.SIGNALS.length);
+      TXT(ctx, 'SONGS', 118, 91, C.gold);
+      TXT(ctx, tally, 231 - F().width(tally), 91, C.dim);
+      G.SIGNALS.forEach((sg, i) => {
+        const y = 102 + i * 10;
+        if (!sg.known()) { TXT(ctx, '???', 118, y, C.faint); return; }
+        const a = G.arrows(sg.seq);
+        TXT(ctx, fit(sg.name, 108 - F().width(a)), 118, y, C.cyan);
+        TXT(ctx, a, 231 - F().width(a), y);
+      });
     }
 
     // ---- PEOPLE: the party and everyone important Nate has met

@@ -67,7 +67,7 @@
     Nate: '#78e070', Lily: '#ff98d0', Abe: '#ffa848', Hannah: '#c898ff', Doron: '#68c8ff',
     Dad: '#f8d850', 'Father Eggmas': '#f86858', Tyler: '#78e8e8', Mikey: '#ff98d0',
     Nani: '#ffb8e0', 'El EEENGLISH': '#f86858', 'Pyro Pete': '#ffa848', 'Badlands Chugs': '#ff9a28', 'Little Nate': '#a8f098',
-    Michelle: '#e8a0d8', Globglogabgalab: '#f8a8c8', 'Ice JJ Fish': '#a8e0ff', 'Father Christmas': '#ff6a5a', 'Hooded Figure': '#b8a8e8', 'Old Fisherman': '#a8d0e0', Carny: '#f8d040', 'Professor Pembrook': '#9ab8f8',
+    Michelle: '#e8a0d8', Globglogabgalab: '#f8a8c8', 'Ice JJ Fish': '#a8e0ff', 'Father Christmas': '#ff6a5a', 'Hooded Figure': '#b8a8e8', 'Old Fisherman': '#a8d0e0', Organizer: '#c898ff', Carny: '#f8d040', 'Professor Pembrook': '#9ab8f8',
   };
 
   const BOX = { x: 6, w: 228, h: 44, lineH: 11, lines: 3 };
@@ -377,9 +377,9 @@
       G.box(ctx, 6, y, 228, 36);
       F().draw(ctx, 'DAD\'S PIPE', 12, y + 4, '#f8d850', { shadow: '#0c0814' });
       F().draw(ctx, this.seq.length ? G.arrows(this.seq) : '{d}Puff with the arrow keys...', 70, y + 4, '#f8f8f0', { shadow: '#0c0814' });
-      const known = G.SIGNALS.filter((sg) => sg.known());
-      const line = known.length ? known.map((sg) => sg.name + ' ' + G.arrows(sg.seq)).join('   ') : 'No smoke signals learned yet.';
-      F().draw(ctx, this.matched ? '{g}' + G.SIGNALS.find((sg) => sg.id === this.matched).name + '!' : '{c}' + line, 12, y + 15, '#f8f8f0', { shadow: '#0c0814' });
+      // (the songs themselves live in the menu, under Dad's Pipe, to memorize)
+      const line = this.matched ? '{g}' + G.SIGNALS.find((sg) => sg.id === this.matched).name + '!' : '{d}Songs: see Dad\'s Pipe in the ITEMS menu.';
+      F().draw(ctx, line, 12, y + 15, '#f8f8f0', { shadow: '#0c0814' });
       F().draw(ctx, 'Z: put the pipe away   (enemies don\'t wait!)', 12, y + 25, '#9890a8', { shadow: '#0c0814' });
     },
   };
