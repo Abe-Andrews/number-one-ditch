@@ -460,7 +460,7 @@
     const leadHint = { Michelle: 'Mom is out in the garden. Something is going on with her books.', Dad: 'Dad is in his workshop (the garage). He needs something.', Lily: 'Take the trail north, past the bridge over Brady Brook.', Doron: 'Pick "The Andover mines" when you leave home.' };
     if (f.mikeyBeaten) for (const [who, , where, hint] of homeLeads()) side.push({ name: where, status: hint, kind: 'rumor', where: 'Home', hint: leadHint[who] });
     if (f.andoverLocked) add('The Andover mines', s.items.andoverKey && 'Key in hand!', f.shopOpen ? 'Mom sells a key' : 'Need a key', 'Home - Andover', s.items.andoverKey ? 'Pick "The Andover mines" when you leave home.' : f.shopOpen ? 'Mom\'s flower stand sells the gate key. It isn\'t cheap.' : 'The mines are on private land. Mom knows everybody at church.');
-    if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number. Somebody has to say it out loud.');
+    if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number, and Nate can\'t say it.');
     if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
     if (f.snackQuest) {
@@ -2631,7 +2631,7 @@
     // Easton (the fairgrounds)
     { id: 'cementrock', area: 'easton', name: 'Cement Rock', r: 0, crush: { teeth: 5 }, how: 'Top prize at the balloon game. Nobody can pop those balloons. Not with darts, anyway.', fact: 'Shaly limestone from the Jacksonburg Formation. The Lehigh Valley ground it into Portland cement and was once the cement capital of America.' },
     { id: 'serpentine', area: 'easton', name: 'Serpentine', r: 1, crush: { package: 2 }, how: 'That pile of old quarry rubble is too solid to hammer. Maybe something explosive?', fact: 'Green "verdolite" from the Chestnut Hill quarries in Easton, cut for ornamental stone. Smooth, waxy and mottled like a snake.' },
-    { id: 'eastonite', area: 'easton', name: 'Eastonite', r: 2, crush: { teeth: 30 }, how: 'Grandma Rose would trade for a funnel cake. Somebody has to order it, though.', fact: 'A mica named after Easton itself, found in the Chestnut Hill quarry. Collectors still find it there.' },
+    { id: 'eastonite', area: 'easton', name: 'Eastonite', r: 2, crush: { teeth: 30 }, how: 'Grandma Rose would trade for a funnel cake. It costs the sacred number, and Nate can\'t say it.', fact: 'A mica named after Easton itself, found in the Chestnut Hill quarry. Collectors still find it there.' },
     { id: 'cavepearl', area: 'easton', name: 'Cave Pearl', r: 3, crush: { teeth: 40 }, how: 'The protesters won\'t let anybody down the trail to the little cave. Something would have to really startle them.', fact: 'Calcite that grew layer by layer around a grain of sand in a dripping cave pool, rolled smooth like a pearl. The limestone under the Lehigh Valley is full of caves.' },
     // Bedminster (home)
     { id: 'shale', area: 'bedminster', name: 'Passaic Red Shale', r: 0, crush: { teeth: 5 }, how: 'Red rock out on the little island in Brady Brook. If only the water would hold still.', fact: 'Red mud from the Newark Basin, Triassic and Jurassic. Dinosaurs left footprints in mud like this all over New Jersey.' },
@@ -3793,9 +3793,8 @@
     yield G.say(null, 'FUNNEL CAKE: {r}6{/} shark teeth.');
     if (s.items.funnelCake) { yield G.say('Nate', 'I already have one. It\'s for Grandma Rose. I am NOT eating it. ...Much.'); return; }
     if (!G.with('doron')) {
-      yield G.say('Nate', '...I can\'t order that. I\'d have to say the price out loud.');
+      yield G.say('Nate', '...I can\'t order that. The price is the sacred number. I can\'t say it.');
       if (G.with('lily')) yield G.say('Lily', 'Don\'t look at me. I can\'t say it either.');
-      else if (f.roseRocks && !f.roseTraded) yield G.say('Nate', 'Doron could order it. Doron isn\'t afraid of anything.');
       return;
     }
     if (s.teeth < 6) { yield G.say('Doron', 'We\'re short a few teeth, Nate.'); return; }
