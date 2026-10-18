@@ -427,6 +427,8 @@
       side.push(['Doron\'s spare tickets', f.ticketsDone ? '{g}Done!' : left ? G.sayable(left) + ' left' + (f.dadBeaten ? ' (next show)' : '') : 'Go tell Doron!']);
     }
     if (G.rocksFound()) side.push(['Nate\'s rocks', G.rocksFound() >= G.ROCKS.length ? '{g}All found!' : G.sayable(G.rocksFound()) + '/' + G.ROCKS.length]);
+    // rumors: things going on around home that Nate hasn't looked into yet
+    if (f.mikeyBeaten) for (const [, , where, hint] of homeLeads()) side.push([where, '{c}' + hint]);
     if (f.andoverLocked) side.push(['The Andover mines', s.items.andoverKey ? '{g}Key in hand!' : f.shopOpen ? 'Mom\'s stand sells a key' : 'Need a key to the gate']);
     if (f.roseRocks) side.push(['Grandma Rose\'s funnel cake', f.roseTraded ? '{g}Done!' : s.items.funnelCake ? 'Bring it to her' : 'Someone has to order it']);
     if (f.rodQuest || s.items.rod) side.push(['The old fisherman', s.items.rod ? '{g}Done!' : 'Gulls: ' + G.sayable(f.gullBonks || 0) + '/5']);
@@ -439,8 +441,9 @@
         : !f.cluesDone ? 'Clues: ' + G.sayable(G.clueCount()) + '/' + CLUES_NEEDED
         : !f.momReport ? 'Tell Mom' : !s.items.basementKey && !f.globBeaten ? 'Find Dad\'s keys' : 'The basement']);
     }
-    // unfinished ones first
-    side.sort((a, b) => (a[1].startsWith('{g}') ? 1 : 0) - (b[1].startsWith('{g}') ? 1 : 0));
+    // unfinished ones first, then rumors, then the done ones
+    const rank = (e) => (e[1].startsWith('{g}') ? 2 : e[1].startsWith('{c}') ? 1 : 0);
+    side.sort((a, b) => rank(a) - rank(b));
     return { goal, side };
   };
 
@@ -1338,16 +1341,10 @@
     yield G.say('Doron', 'The Army. We suplexed boulders every morning before breakfast.');
     yield G.say('Nate', 'I don\'t think that\'s true.');
     yield G.say('Doron', 'You weren\'t there.');
-    yield G.say('Nate', 'The road to Chesapeake is open!');
+    yield G.say('Nate', 'The south road is open! First stop: home. Then Chesapeake.');
     d.hold = false;
   };
 
-  S.southRoad = function* () {
-    const p = P();
-    yield G.say('Nate', 'Chesapeake is this way. Hang on, Number One Ditch. We\'re coming.');
-    yield G.banner('TO BE CONTINUED...', 'The road south opens in the next update!', 300);
-    yield G.walkTo(p, p.x, p.y - 18, 1);
-  };
 
   // ---------------------------------------------------------------- home
 
@@ -1522,7 +1519,28 @@
     yield G.walkTo(p, p.x + back * 24, p.y, 1.2);
   };
 
+  // what's still going on around home (for the heads-up and the journal)
+  const homeLeads = () => {
+    const f = flags(), s = G.state, leads = [];
+    if (!f.booksQuest) leads.push(['Michelle', 'Nate! Are you leaving already? Come find me in the garden first. Something strange is going on with my books.', 'Mom\'s garden', 'Mom wants to talk']);
+    if (!f.snackQuest) leads.push(['Dad', 'Nate. Workshop. When you have a minute. Bring snacks.', 'Dad\'s workshop', 'Dad needs something']);
+    if (!f.jjSeen && !f.jjBeaten) leads.push(['Lily', 'there is singing coming from past the bridge. in the snow. it is july', 'Past the bridge', 'Someone is singing']);
+    if (!f.andoverLocked && !s.items.andoverKey) leads.push(['Doron', 'when are we going rock hunting at the andover mines. you promised. you ALWAYS promise', 'The Andover mines', 'Doron wants to go']);
+    return leads;
+  };
+  G.homeLeads = homeLeads;
   S.homeEast = function* () {
+    const f = flags(), p = P(), leads = homeLeads();
+    if (!f.leaveNudge && leads.length) {
+      f.leaveNudge = true;
+      G.audio.sfx('buzz');
+      yield G.say(null, 'Before Nate can even get to the car, his phone buzzes. And buzzes.');
+      for (const [who, line] of leads) yield G.text(who, line);
+      yield G.say('Nate', 'Huh. Sounds like there\'s still plenty going on around here.');
+      yield G.say(null, '(None of it is required. Check the {y}JOURNAL{/} for everything going on around home.)');
+      const c = yield G.ask('Nate', 'Head out anyway?', ['Drive to Chesapeake', 'Stay a while']);
+      if (c) { yield G.walkTo(p, p.x + (p.x < 30 * 16 ? 24 : -24), p.y, 1); return; }
+    }
     yield G.say('Nate', 'Chesapeake. Down the Eastern Shore, then straight across the bay. Hang on, Number One Ditch.');
     G.play.warp('cbbt', 21, 20, 'left');
   };
@@ -1894,14 +1912,15 @@
       yield G.itemGet(G.spr.egg, 'You got {y}a dozen eggs{/}! (' + G.sayable(s.items.eggs) + ' loaded)');
       if (!f.eggJoke) { f.eggJoke = true; yield G.say('Michelle', 'Fresh from the coop this morning. Henrietta\'s cousins.'); }
     }]);
-    if (!s.items.andoverKey) menu.push(['Andover Mines Key: 40', function* () {
-      if (!(yield* momPay(40))) return;
+    if (!s.items.andoverKey) menu.push(['Andover Mines Key: 200', function* () {
+      if (!(yield* momPay(200))) return;
       s.items.andoverKey = true;
       yield G.say('Michelle', 'The Andover mines? The man who owns that land goes to my church. He gave me a key to the gate years ago. "For the rock boy."');
       yield G.say('Nate', 'The rock boy?');
       yield G.say('Michelle', 'You, hon. Everyone at church calls you the rock boy.');
       yield G.itemGet(G.spr.gateKey, 'You got the {y}Andover Mines Key{/}! Pick {y}The Andover mines{/} when you leave home.');
-      yield G.say('Michelle', 'The forty teeth go to the flower fund. And wear a HELMET.');
+      yield G.say('Nate', 'Two HUNDRED teeth for a key?');
+      yield G.say('Michelle', 'It\'s a very special key. The flower fund thanks you. And wear a HELMET.');
     }]);
     if (!f.momHeart) menu.push(['Heart Container: 100', function* () {
       if (!(yield* momPay(100))) return;
@@ -2062,6 +2081,15 @@
       yield G.say('Nate', 'Sure you were.');
       doron.hold = false;
     }
+    // something flutters down out of the duct after him
+    yield G.wait(20);
+    w.pop(3 * 16 + 8, 3 * 16, '*flutter*', '#f4ecd8');
+    yield G.say(null, 'Something flutters down out of the duct: a note, in shaky red marker.');
+    yield G.say(null, '{r}"ENJOY THE BOOKS. HO HO HO. -E"{/}');
+    yield G.say('Nate', '..."E." Father Eggmas let that thing into our BASEMENT?');
+    if (G.with('doron')) yield G.say('Doron', 'That egg gets around.');
+    else if (G.with('lily')) yield G.say('Lily', 'He was in our HOUSE.');
+    w.eggNote = true;
     f.globBeaten = true;
     s.items.books = true;
     yield G.itemGet(G.spr.flyingBook[1], 'You got {y}Mom\'s Books{/}! Slightly chewed. Bring them to Mom in the garden.');
@@ -2170,7 +2198,7 @@
       yield G.say('Father Christmas', 'Then came the move. Then came the box. Then came a long, dark drive. Then came THE MINE.');
       yield G.say('Father Christmas', 'And who sits on MY mantel now?');
       yield G.say('Nate', '...Father Eggmas.');
-      yield G.say('Father Christmas', 'AN EGG. A plush EGG in a Santa hat. My REPLACEMENT. He even took HALF MY NAME!');
+      yield G.say('Father Christmas', 'AN EGG. A plush EGG in a paisley suit. My REPLACEMENT. He even took HALF MY NAME!');
       yield G.say('Father Christmas', 'You did EVERYTHING, Nate. Every quest. Every rock in three counties. All that hammering woke me up.');
       yield G.say('Father Christmas', 'Now I\'m taking back my mantel. And then I\'m taking back CHRISTMAS.');
     } else {
@@ -2729,9 +2757,20 @@
       return;
     }
     if (f.jjGig) { yield G.say('Dad', 'Did you book him yet? Tell him we have a fog machine. We don\'t. But we could.'); return; }
+    // (Mom's looking for his keys to the basement)
+    if (f.momReport && !s.items.basementKey && !f.globBeaten && !f.dadKeyHint) {
+      f.dadKeyHint = true;
+      yield G.say('Dad', 'My keys? I put them somewhere I would remember. Then I forgot where that was.');
+      yield G.say('Dad', 'Check the truck. I eat lunch in the truck.');
+      if (f.snackQuest) return;
+    }
     if (!f.snackQuest) {
       f.snackQuest = true;
       yield G.say('Dad', 'Nate! Just the man I wanted to see.');
+      if (!f.lilySaved) {
+        yield G.say('Nate', 'Dad, Lily is locked in the kitchen fridge.');
+        yield G.say('Dad', 'Then she\'s the only one in this family with access to snacks. Speaking of which.');
+      }
       yield G.say('Dad', 'I have been out here since lunch. I am running on fumes. And sawdust.');
       yield G.say('Dad', 'I need my snacks. Candy corn. And the blue Doritos.');
       yield G.say('Nate', 'Together?');
@@ -2835,7 +2874,7 @@
     const f = flags();
     yield G.say('Ice JJ Fish', 'Ayy, I\'m in the middle of a set. You want a real show? Get me a BOOKING.');
     yield G.say('Nate', '...Who even books Ice JJ Fish?');
-    if (f.globBeaten && !f.snacksDone) yield G.say('Nate', 'Dad might. Dad books everybody. Dad\'s in his workshop.');
+    if (!f.snacksDone) yield G.say('Nate', 'Dad might. Dad books everybody. Dad\'s in his workshop.');
   };
 
   // with Dad's booking: survive the whole set and he'll play Sunday service
@@ -3231,6 +3270,12 @@
     yield G.say('Mikey', 'Okay. Okay. I respect that.');
     yield G.say('Mikey', 'Can I at least keep the flowers?');
     yield G.say('Lily', 'Keep the flowers, Mikey.');
+    yield G.say('Mikey', 'Can I ask you something weird?');
+    yield G.say('Mikey', 'A little egg man in a paisley suit came up to me at the gas station. Long white beard.');
+    yield G.say('Mikey', 'He said if I sang to you at golden hour, with balloons, you\'d say yes. Guaranteed.');
+    yield G.say('Lily', '...Father Eggmas.');
+    yield G.say('Mikey', 'He seemed really trustworthy.');
+    yield G.say('Lily', 'He is an EGG, Mikey.');
     yield G.say('Mikey', 'Okay. One more thing.');
     yield G.say(null, 'Mikey pulls a piece of notebook paper out of his pocket, folded into a very small square, and holds it out.');
     yield G.say('Mikey', 'Read it later. When I\'m gone. Like, GONE gone.');
@@ -3244,6 +3289,8 @@
     yield G.say('Nate', 'That was the most powerful "No." I have ever witnessed.');
     yield G.say('Lily', 'Thank you. Here. Hold this. I can\'t look at it.');
     yield G.say(null, 'Lily hands Nate {p}Mikey\'s Note{/}. (Find it in KEY ITEMS and press Z to read it.)');
+    yield G.say('Lily', 'Also. Mikey says a little egg man in a paisley suit put him up to all of this.');
+    yield G.say('Nate', '...Father Eggmas. He\'s been messing with our family this whole time.');
     yield G.say('Lily', 'Now can we go? The ditch isn\'t going to save itself.');
     G.play.warp('home', 43, 50, 'down');
   };
@@ -4114,7 +4161,7 @@
       F.stand(sp.buckets, 20, 11, 1, look('Five-gallon buckets. Every garage has somewhere between four and four hundred.'));
       // Dad, hanging out at his workbench (once Mom's books are back and things calm down)
       const f = flags();
-      if (f.globBeaten) w.dad = w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'left', talk: S.dadWorkshop }));
+      if (f.homeArrived) w.dad = w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'left', talk: S.dadWorkshop }));
       // muddy paw prints leading out the open bay (whoever took the Doritos)
       if (f.snackQuest && !s.items.doritos && !f.snacksDone) w.addProp({ img: sp.pawPrints, tx: 9, ty: 10, dy: 2, flat: true, hit: [9, 10, 3, 1], talk: look('Muddy paw prints in the sawdust. BIG ones. A torn corner of a blue chip bag.', 'They lead out the open bay, toward the brook.') });
       // out through the open middle bay
@@ -4814,7 +4861,7 @@
     yield G.say('Tyler', 'THE. MOSASAUR. TOOTH.');
     yield G.say('Nate', 'What mosasaur tooth?');
     yield G.say('Tyler', 'MY mosasaur tooth! Five inches! Serrated! The best fossil I ever found!');
-    yield G.say('Tyler', 'A little egg in a Santa hat told me everything. A guy in a flat cap took it. A guy with a ROCK HAMMER.');
+    yield G.say('Tyler', 'A little egg in a paisley suit told me everything. A guy in a flat cap took it. A guy with a ROCK HAMMER.');
     yield G.say('Nate', '...Father Eggmas. Tyler, I didn\'t take your tooth! Look at your eyes, they\'re all swirly!');
     if (G.with('doron')) yield G.say('Doron', 'Same swirly eyes Dad had at Micro Mayhem. Eggmas got to him.');
     else if (G.with('lily')) yield G.say('Lily', 'his eyes are doing the swirly thing. i hate it here');
@@ -4888,7 +4935,7 @@
     G.audio.sfx('tooth');
     yield G.itemGet(G.spr.toothGold, 'Tyler hands back the velvet bag: {y}500 shark teeth{/}. Every single one.');
     yield G.say('Tyler', 'Last thing I remember, I was hunting shark teeth at the Number One Ditch. Best ditch in the world.');
-    yield G.say('Tyler', 'Then a little egg in a Santa hat walked up and said, "Nate has your mosasaur tooth." And everything went swirly.');
+    yield G.say('Tyler', 'Then a little egg in a paisley suit walked up and said, "Nate has your mosasaur tooth." And everything went swirly.');
     yield G.say('Nate', 'Father Eggmas is AT the Number One Ditch.');
     if (G.with('doron')) yield G.say('Doron', 'Then that\'s where we\'re going.');
     else if (G.with('lily')) yield G.say('Lily', 'nate i want to go home');
@@ -5117,7 +5164,11 @@
     setup(w) {
       const F = furnish(w), sp = G.spr, f = flags();
       const pile = look('A pile of chewed-up books. Bite marks on every cover.');
-      F.stand(sp.furnace, 2, 3, 2, look('The furnace. The ductwork goes up into every room of the house. That explains how Mom heard the singing.'));
+      F.stand(sp.furnace, 2, 3, 2, f.globBeaten
+        ? look('The furnace. A note is still pinned to it, in shaky red marker:', '{r}"ENJOY THE BOOKS. HO HO HO. -E"{/}', ['Nate', 'Father Eggmas. In our basement. I\'m keeping this as evidence.'])
+        : look('The furnace. The ductwork goes up into every room of the house. That explains how Mom heard the singing.'));
+      // Eggmas's note, pinned to the furnace (once the Globglogabgalab is gone)
+      w.props.push({ base: 4 * 16, draw(ctx, cx, cy) { if (flags().globBeaten || w.eggNote) ctx.drawImage(G.spr.eggNote, 2 * 16 + 12 - cx, 3 * 16 - 6 - cy); } });
       F.stand(sp.storageBoxes, 5, 3, 2, look('Storage boxes: CHRISTMAS, BABY CLOTHES, and one labeled "DO NOT OPEN (LILY)."'));
       F.stand(sp.bookshelf2, 14, 3, 1, look('An old bookshelf. Completely empty. Licked clean.'));
       F.stand(sp.bookshelf2, 15, 3, 1, look('Another empty bookshelf. There\'s a little bite out of the shelf itself.'));

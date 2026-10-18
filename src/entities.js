@@ -106,8 +106,8 @@
       // the half-finished bass: a big, slow, wide arc that hits twice as hard
       if (this.state === 'bass') {
         this.t++;
-        if (this.t >= 4 && this.t <= 13) this.swingHits(w, this.bassRect(), 2);
-        if (this.t >= 22) this.state = 'walk';
+        if (this.t >= 12 && this.t <= 26) this.swingHits(w, this.bassRect(), 2);
+        if (this.t >= 38) this.state = 'walk';
         return;
       }
 
@@ -338,7 +338,8 @@
     drawBass(ctx, cx, cy) {
       const img = G.spr.bassSwing;
       const base = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }[this.dir];
-      const k = Math.min(1, this.t / 13), flip = this.dir === 'left' || this.dir === 'down' ? -1 : 1;
+      // a slow wind-up, then the big sweep
+      const k = Math.max(0, Math.min(1, (this.t - 8) / 18)), flip = this.dir === 'left' || this.dir === 'down' ? -1 : 1;
       const a = base + flip * (-1.2 + k * 2.4);
       const hand = { right: [4, -9], left: [-4, -9], down: [2, -7], up: [-2, -12] }[this.dir];
       ctx.save();

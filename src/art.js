@@ -4086,6 +4086,13 @@
     return finish(p);
   }
 
+  // Father Eggmas's calling card: a scrap of paper in shaky red marker, pinned up
+  function eggNote() {
+    const p = new Pix(10, 11);
+    p.rect(1, 2, 8, 9, '#f4ecd8'); p.hline(1, 8, 10, '#c8bca0'); p.set(4, 1, '#c83030'); p.set(5, 1, '#e85050');
+    for (const [x, y, w] of [[2, 4, 3], [6, 4, 2], [2, 6, 5], [3, 8, 4]]) p.hline(x, x + w - 1, y, '#c83030');
+    return finish(p);
+  }
   // ---- Dad's snacks: a bag of candy corn, a bag of blue Doritos, and the
   // muddy bear tracks across the workshop floor
   function candyCorn() {
@@ -4890,7 +4897,7 @@
     S.outcrops = { laf: outcrop('laf'), eas: outcrop('eas'), bed: outcrop('bed') };
     S.quarryRubble = quarryRubble(); S.bigBasalt = bigRock('basalt'); S.bigDolomite = bigRock('dolomite'); S.gravelBar = gravelBar();
     S.fc = { idle: fatherChristmas(false, false), up: fatherChristmas(true, false), idleRage: fatherChristmas(false, true), upRage: fatherChristmas(true, true), sweater: fatherChristmas(false, false, true) };
-    S.candyCorn = candyCorn(); S.doritos = doritos(); S.pawPrints = pawPrints();
+    S.eggNote = eggNote(); S.candyCorn = candyCorn(); S.doritos = doritos(); S.pawPrints = pawPrints();
     S.balloonBooth = balloonBooth(false); S.balloonBoothEmpty = balloonBooth(true); S.funnelCake = funnelCake(); S.rockTray = rockTray();
     S.mikeyNote = mikeyNotePages(); S.noteIcon = noteIcon();
     S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);

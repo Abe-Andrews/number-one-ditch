@@ -187,6 +187,12 @@
           if (n !== (G.state.slot || 1) && G.readSave(n)) { this.confirm = n; G.audio.sfx('menu'); }
           else this.saveTo(n);
         }
+      } else if (this.tab === 4) {
+        // the journal: scroll the side quests
+        const n = G.journal().side.length, max = Math.max(0, n - 4);
+        this.jscroll = Math.min(this.jscroll || 0, max);
+        if (inp.hit('down') && this.jscroll < max) { this.jscroll++; G.audio.sfx('menu'); }
+        if (inp.hit('up')) { if (this.jscroll > 0) { this.jscroll--; G.audio.sfx('menu'); } else { this.onTabs = true; G.audio.sfx('menu'); } }
       } else if (inp.hit('up')) {
         this.onTabs = true;
         G.audio.sfx('menu');
@@ -450,10 +456,15 @@
       F().wrap(j.goal, 214).slice(0, 2).forEach((l, i) => TXT(ctx, l, 12, 33 + i * 10));
       TXT(ctx, 'SIDE QUESTS', 12, 55, '#f8d850');
       if (!j.side.length) TXT(ctx, '{d}None yet. Talk to people!', 12, 65);
-      j.side.slice(0, 4).forEach(([name, status], i) => {
+      // four at a time; up/down scrolls when there are more
+      const top = Math.min(this.jscroll || 0, Math.max(0, j.side.length - 4));
+      j.side.slice(top, top + 4).forEach(([name, status], i) => {
         TXT(ctx, name, 12, 65 + i * 9, '#78e8e8');
         TXT(ctx, status, 228 - F().width(status), 65 + i * 9);
       });
+      ctx.fillStyle = '#9890a8';
+      if (top > 0) { ctx.fillRect(110, 58, 5, 1); ctx.fillRect(111, 57, 3, 1); ctx.fillRect(112, 56, 1, 1); }
+      if (top + 4 < j.side.length) { TXT(ctx, '{d}' + (j.side.length - top - 4) + ' more', 196, 55); ctx.fillRect(110, 99, 5, 1); ctx.fillRect(111, 100, 3, 1); ctx.fillRect(112, 101, 1, 1); }
       TXT(ctx, 'ABE\'S RULES', 12, 101, '#ffa848');
       TXT(ctx, '1. Nate and Lily may not say the sacred number.', 12, 110);
       TXT(ctx, '2. Abe is the Master. See rule 1.', 12, 119);
