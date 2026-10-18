@@ -1051,7 +1051,6 @@
     }
   }
   G.PauseMenu = PauseMenu;
-  G.keycap = keycap;
 
   // Play time, keeping clear of the sacred number like everything else.
   G.playTimeText = (frames) => {

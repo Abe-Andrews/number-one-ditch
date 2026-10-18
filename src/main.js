@@ -452,9 +452,6 @@
       this.t = 0;
       this.sel = 0;
       this.opts = (G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game']).concat('Admin');
-      // which file Continue picks up (shown along the bottom)
-      const n = G.hasSave() && G.latestSave(), sv = n && G.readSave(n);
-      this.cont = sv ? ['File ' + n + ' - ' + ((G.MAPS[sv.map] || {}).name || '???') + ' - ' + G.playTimeText(sv.playTime), 'File ' + n + ' - ' + G.playTimeText(sv.playTime)] : null;
       G.audio.play('title');
     },
     update() {
@@ -504,13 +501,7 @@
       const cy = y + 6 + this.sel * 12, b = (this.t >> 3) & 1;
       ctx.fillStyle = '#f8d850';
       ctx.fillRect(x + 8 + b, cy, 1, 5); ctx.fillRect(x + 9 + b, cy + 1, 1, 3); ctx.fillRect(x + 10 + b, cy + 2, 1, 1);
-      ctx.fillStyle = 'rgba(12,8,20,0.55)'; ctx.fillRect(0, G.H - 15, G.W, 15);
-      const kw = G.keycap(ctx, 4, G.H - 13, 'Z');
-      F().draw(ctx, 'select', 7 + kw, G.H - 11, '#ffffff', { shadow: '#1c1424' });
-      if (this.cont && this.opts[this.sel] === 'Continue') {
-        const info = F().width(this.cont[0]) <= G.W - 50 - kw ? this.cont[0] : this.cont[1];
-        F().draw(ctx, info, G.W - 5 - F().width(info), G.H - 11, '#f8d850', { shadow: '#1c1424' });
-      }
+      F().draw(ctx, 'Z: select', 4, G.H - 10, '#ffffff', { shadow: '#1c1424' });
     },
   };
 
