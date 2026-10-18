@@ -2975,7 +2975,8 @@
     if (!f.snackQuest) {
       f.snackQuest = true;
       yield G.say('Dad', 'Nate! Just the man I wanted to see.');
-      if (!f.lilySaved) {
+      // (only once Nate's found her in there: Badlands Chugs in the kitchen)
+      if (f.badlandsMet && !f.lilySaved) {
         yield G.say('Nate', 'Dad, Lily is locked in the kitchen fridge.');
         yield G.say('Dad', 'Then she\'s the only one in this family with access to snacks. Speaking of which.');
       }
@@ -3050,7 +3051,8 @@
     G.audio.sfx('buzz');
     yield G.text('Lily', 'mom hides the good candy in the good china. living room');
     yield G.text('Lily', 'nobody is allowed to touch the good china so nobody ever looks');
-    yield G.text('Lily', f.lilySaved ? 'you didnt hear it from me' : 'also im still in a fridge. ok bye');
+    // (the fridge only comes up once Nate's found her in it)
+    yield G.text('Lily', f.badlandsMet && !f.lilySaved ? 'also im still in a fridge. ok bye' : 'you didnt hear it from me');
   };
 
   // the bear drops the bag
