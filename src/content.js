@@ -71,6 +71,12 @@
       shirt: '#2a2438', pants: '#1e1a28', shoes: '#16121c', cloak: '#2e2840', hood: '#2e2840', torso: 8, legs: 5,
     },
     // Campus NPCs
+    // Professor Pembrook of the Department of EEENGLISH: tweed, glasses, and (ever since
+    // Micro Mayhem) El EEENGLISH's own navy mask with the white trim and red emblem
+    pembrook: {
+      skin: '#f0c8a8', hair: '#5a4030', hairStyle: 'short', glasses: '#2a2a30', mask: '#1c2c6c', maskTrim: '#e8e8f0', maskEmblem: '#d03038',
+      coat: '#6a5a40', shirt: '#e8e0c8', pants: '#4a4038', shoes: '#3a2818', torso: 7, legs: 3,
+    },
     devin: { skin: '#b07850', hair: '#1c1418', hairStyle: 'short', shirt: '#8a2034', pants: '#3a4258', shoes: '#e8e8e8', torso: 6, legs: 3 },
     prof: {
       skin: '#f0c8a8', hair: '#d8d8e0', hairStyle: 'receding', beard: '#d8d8e0', glasses: '#2a2a30',
@@ -200,6 +206,10 @@
       kind: 'key', name: 'Blue Doritos', icon: () => G.spr.doritos, has: () => !!st().items.doritos && !fl().snacksDone,
       desc: 'Rescued from a bear. Slightly chewed. Dad will not mind. Dad will not notice.',
     },
+    engDiploma: {
+      kind: 'key', name: 'Diploma in EEENGLISH', icon: () => G.spr.diploma, has: () => !!fl().engPerfect,
+      desc: 'Certifies that Nate speaks EEENGLISH. Three Es. Signed by Professor Pembrook and, in crayon, El EEENGLISH.',
+    },
     mikeyNote: {
       kind: 'key', name: 'Mikey\'s Note', icon: () => G.spr.noteIcon, has: () => !!st().items.mikeyNote,
       desc: 'Folded into a very small square. Mikey gave it to Lily on his way out. Lily can\'t look at it. Press Z to read it.',
@@ -269,7 +279,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos'];
+  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -426,6 +436,8 @@
     const side = [];
     const add = (name, done, status, where, hint, prog) => side.push({ name, status: done ? (typeof done === 'string' ? done : 'Done!') : status, kind: done ? 'done' : 'active', where, hint, prog });
     if (f.capQuest || s.items.cap) add('Gus\'s lawn job', s.items.cap, G.sayable(G.capProgress()) + '/10 bonked', 'Lafayette', 'Bonk ten sacred numbers on the quad and Gus gives your hat back.', [G.capProgress(), 10]);
+    if (f.dadBeaten && !f.engMet) side.push({ name: 'Pardee Hall', status: 'The door is open', kind: 'rumor', where: 'Lafayette', hint: 'The Department of EEENGLISH finally opened its doors. Someone inside keeps shouting.' });
+    if (f.engMet) add('The EEENGLISH exam', f.engPerfect && 'Perfect!', f.engPassed ? 'Retake for diploma' : 'Not passed yet', 'Lafayette - Pardee Hall', f.engPassed ? 'Get all seven right without saying the sacred number.' : 'Professor Pembrook\'s exam: seven questions about things with "English" in the name.');
     if (f.chemMet) add('The Chem Final', f.chemPerfect && 'Perfect!', f.chemPassed ? 'Retake for a heart' : 'Not passed yet', 'Lafayette - Science Center', f.chemPassed ? 'Ace it without saying the sacred number for a heart container.' : 'Dr. Moles is giving the final in the Science Center.');
     if (f.ticketQuest) {
       const left = s.items.tickets || 0;
@@ -925,6 +937,96 @@
       yield G.say('Dr. Moles', 'A perfect score! But you said the sacred number. Retake it without saying it for {y}extra credit{/}.');
     } else {
       yield G.say('Dr. Moles', 'Get a perfect score without saying the sacred number for {y}extra credit{/}.');
+    }
+  };
+
+  // ================================================================ PARDEE HALL: THE EEENGLISH EXAM
+  // After El EEENGLISH's main event, the Department of EEENGLISH opens its doors.
+  // Professor Pembrook saw the match and rewrote the whole department around
+  // things with "English" in the name. Seven questions, and two of them are
+  // traps: say the sacred number (or a number with it in) and it's a slip.
+  const ENG_EXAM = [
+    { q: 'In pool, what does it mean to put "English" on the ball?', opts: ['Spin', 'A British accent', 'A tiny top hat'], answer: 0,
+      note: 'English is spin. You hit the cue ball off-center and it curves.' },
+    { q: 'Where was the English muffin invented?', opts: ['England', 'New York City', 'A muffin factory in Wales'], answer: 1,
+      note: 'New York City, 1880. An English baker made them there. The English had never heard of them.' },
+    { q: 'What is an English horn?', opts: ['A brass horn from England', 'A woodwind', 'A car horn that apologizes'], answer: 1,
+      note: 'It\'s a woodwind. A big oboe, really. It is neither English NOR a horn. Isn\'t that delicious?' },
+    { q: 'How many fluid ounces are in an English pint?', opts: ['Sixteen', 'Twenty', 'Twelve'], answer: 1, slip: 0, slipSay: 'Sixteen.',
+      note: 'An English pint is twenty ounces. Sixteen is the AMERICAN pint. Small. Timid. Disappointing.' },
+    { q: 'A full English breakfast. Which of these is on the plate?', opts: ['Waffles', 'Baked beans', 'Candy corn'], answer: 1,
+      note: 'Baked beans. Hot, from the can. NOT heated in the can, in a fire. Somebody in your family knows why.' },
+    { q: 'In English cricket, how many balls are bowled in one over?', opts: ['Six', 'Four', 'Five plus one'], answer: 2, slip: 0, slipSay: 'Six.', slipRight: true,
+      note: 'An over is... that many balls. You know the number. Everybody knows the number.' },
+    { q: 'And finally. Do you speak EEENGLISH?', opts: ['Yes', 'No', 'EEENGLISH'], answer: 2,
+      note: 'The answer is always EEENGLISH.' },
+  ];
+  S.englishExam = function* () {
+    const f = flags(), s = G.state;
+    if (f.engPerfect) {
+      yield G.say('Professor Pembrook', 'DO YOU SPEAK EEENGLISH?');
+      yield G.say('Nate', 'EEENGLISH.');
+      yield G.say('Professor Pembrook', '...Beautiful. Every time.');
+      return;
+    }
+    if (!f.engMet) {
+      f.engMet = true;
+      yield G.say('Professor Pembrook', 'DO YOU SPEAK EEENGLISH?!');
+      yield G.say('Nate', '...I speak English.');
+      yield G.say('Professor Pembrook', 'Not ENGLISH. EEENGLISH. Three Es. Feel them.');
+      yield G.say('Professor Pembrook', 'I saw El EEENGLISH at Micro Mayhem. The dropkicks. The letters. The QUESTION. It changed my life.');
+      yield G.say('Nate', 'That was my dad.');
+      yield G.say('Professor Pembrook', 'Your FATHER is El EEENGLISH?! Then the EEENGLISH is in your blood!');
+      yield G.say('Professor Pembrook', 'I\'ve rewritten the entire department. Every class is now about things with "English" in the name. Muffins. Channels. Horns.');
+      yield G.say('Professor Pembrook', 'The final exam has seven questions. Pass it, and you may say you speak EEENGLISH.');
+    } else {
+      yield G.say('Professor Pembrook', 'Back for a retake? Excellent. The EEENGLISH waits for no one.');
+    }
+    const ready = yield G.ask('Professor Pembrook', 'Are you ready for the EEENGLISH exam?', ['Ready.', 'Not yet.']);
+    if (ready !== 0) { yield G.say('Professor Pembrook', 'Go. Study. Eat a muffin. An ENGLISH one.'); return; }
+
+    let score = 0, slips = 0;
+    for (let i = 0; i < ENG_EXAM.length; i++) {
+      const Q = ENG_EXAM[i];
+      const a = yield G.ask('Professor Pembrook', 'Question ' + (i + 1) + ': ' + Q.q, Q.opts);
+      if (Q.slip !== undefined && a === Q.slip) {
+        // a trap: Nate says the number out loud
+        slips++;
+        yield G.say('Nate', Q.slipSay);
+        if (Q.slipSay !== 'Six.') yield G.say('Nate', '...SIX-teen. Oh no.');
+        yield* slip();
+        if (Q.slipRight) { score++; yield G.say('Professor Pembrook', '...Correct. But you didn\'t have to SHOUT it.'); }
+        else yield G.say('Professor Pembrook', 'Incorrect! ' + Q.note);
+      } else if (a === Q.answer) {
+        score++;
+        if (i === ENG_EXAM.length - 1) yield G.say('Professor Pembrook', 'YES. YES! That is the only answer!');
+        else if (Q.slip !== undefined && Q.slipRight) yield G.say('Professor Pembrook', 'Correct... I suppose. Interesting phrasing.');
+        else yield G.say('Professor Pembrook', ['Correct! ' + Q.note, 'Correct. ' + Q.note, 'Splendid! ' + Q.note][i % 3]);
+      } else {
+        yield G.say('Professor Pembrook', 'Incorrect! ' + Q.note);
+      }
+    }
+
+    yield G.say('Professor Pembrook', 'Final score: ' + G.sayable(score) + ' out of ' + ENG_EXAM.length + '.');
+    if (score < 5) { yield G.say('Professor Pembrook', 'You need five to pass. The EEENGLISH is not strong in you yet. Retake it anytime.'); return; }
+    if (!f.engPassed) {
+      f.engPassed = true;
+      G.play.addTeeth(30);
+      G.audio.sfx('tooth');
+      yield G.say('Professor Pembrook', 'You PASSED! Here: {y}30 shark teeth{/}. The department pays in teeth now. Don\'t ask.');
+    }
+    if (score === ENG_EXAM.length && slips === 0) {
+      f.engPerfect = true;
+      s.maxHp += 2;
+      s.hp = s.maxHp;
+      yield G.say('Professor Pembrook', 'A PERFECT score. You truly speak EEENGLISH.');
+      yield G.itemGet(G.spr.diploma, 'You got a {y}Diploma in EEENGLISH{/}! And a {r}Heart Container{/}! Max hearts +1.');
+      yield G.say('Professor Pembrook', 'Tell your father. Tell EVERYONE.');
+    } else if (score === ENG_EXAM.length) {
+      yield G.say('Professor Pembrook', 'Seven out of seven! ...But you said a certain number, didn\'t you. I heard it. Everyone heard it.');
+      yield G.say('Professor Pembrook', 'Retake it without saying the number for your {y}diploma{/}.');
+    } else {
+      yield G.say('Professor Pembrook', 'Get all seven right, and don\'t say anything... unfortunate, and the {y}diploma{/} is yours.');
     }
   };
 
@@ -2140,6 +2242,7 @@
       ['Gus\'s lawn job', !!s.items.cap],
       ['Devin\'s chem question', !!f.phDone],
       ['The Chem Final (perfect)', !!f.chemPerfect],
+      ['The EEENGLISH exam (perfect)', !!f.engPerfect],
       ['Doron\'s spare tickets', !!f.ticketsDone],
       ['The main event', !!f.dadBeaten],
       ['The boulder', !!f.boulderGone],
@@ -2726,7 +2829,7 @@
     { name: 'Return Mom\'s books (shop)', map: 'home', at: [34, 20, 'left'], flags: { globMet: true, globBeaten: true, baitPlaced: true, basementOpened: true }, items: { books: true, bait: false } },
     { name: 'Dad\'s snacks (workshop)', map: 'garage', at: [10, 10, 'up'], flags: { shopOpen: true }, items: { books: false }, teeth: 120 },
     { name: 'Ice JJ Fish (north)', map: 'north', at: [10, 13, 'up'], flags: { snackQuest: true, snacksDone: true, momDenied: true, jjGig: true } },
-    { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, momHeart: true, phDone: true, chemMet: true, chemPassed: true, chemPerfect: true, ticketQuest: true, ticketsGiven: true, ticketsDone: true, protestReward: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10, tickets: 0, andoverKey: true }, maxHp: 10, teeth: 300 },
+    { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, momHeart: true, phDone: true, chemMet: true, chemPassed: true, chemPerfect: true, engMet: true, engPassed: true, engPerfect: true, ticketQuest: true, ticketsGiven: true, ticketsDone: true, protestReward: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10, tickets: 0, andoverKey: true }, maxHp: 10, teeth: 300 },
     { name: 'Bay Bridge-Tunnel (the toll)', map: 'cbbt', at: [21, 20, 'left'], teeth: 520 },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
@@ -2736,6 +2839,7 @@
     { name: 'Nate\'s lab', map: 'lab', at: [3, 4, 'down'] },
     { name: 'Lafayette campus', map: 'campus', at: [20, 10, 'down'] },
     { name: 'Science Center', map: 'science', at: [7, 8, 'up'] },
+    { name: 'Pardee Hall (EEENGLISH)', map: 'pardee', at: [7, 8, 'up'] },
     { name: 'Van Wickle Hall (geology)', map: 'geology', at: [10, 12, 'up'] },
     { name: 'Easton Fairgrounds', map: 'fair', at: [9, 12, 'down'] },
     { name: 'Expo Hall', map: 'arena', at: [11, 15, 'up'] },
@@ -3767,7 +3871,8 @@
     },
     setup(w) {
       w.addBuilding({ x: 3, y: 3, w: 7, h: 4, door: 3, style: 'brick', roof: '#4a5070', sign: true, to: { map: 'lab', x: 6, y: 7 } });
-      w.addBuilding({ x: 14, y: 2, w: 11, h: 5, door: 5, style: 'stone', wall: '#c8bc9c', roof: '#50607a', tower: true, locked: S.pardeeDoor });
+      // Pardee Hall: the Department of EEENGLISH opens once El EEENGLISH has had his main event
+      w.addBuilding(Object.assign({ x: 14, y: 2, w: 11, h: 5, door: 5, style: 'stone', wall: '#c8bc9c', roof: '#50607a', tower: true }, flags().dadBeaten ? { to: { map: 'pardee', x: 7, y: 9 } } : { locked: S.pardeeDoor }));
       w.addBuilding({ x: 29, y: 3, w: 9, h: 4, door: 4, style: 'modern', wall: '#d8c8a0', roof: '#6a4a40', to: { map: 'science', x: 7, y: 9 } });
       // Van Wickle Hall: the geology building (walk into the arched front door)
       w.addProp({ img: G.spr.vanWickle, tx: 26, ty: 17, h: 4 });
@@ -3892,6 +3997,43 @@
     };
   }
   const look = (...pages) => function* () { for (const pg of pages) yield Array.isArray(pg) ? G.say(pg[0], pg[1]) : G.say(null, pg); };
+
+  // Pardee Hall: one lecture hall of the Department of EEENGLISH.
+  G.MAPS.pardee = {
+    name: 'Pardee Hall: EEENGLISH 101',
+    music: 'house',
+    tiles: [
+      'wwwwwwwwwwwwwww',
+      'wvvvvvvvvvvvvvw',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'w_____________w',
+      'wwwwwwwxwwwwwww',
+    ],
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      w.addProp({ img: sp.chalkboardEng, tx: 5, ty: 1, flat: true, dy: -1, hit: [5, 1, 5, 1], talk: look('The chalkboard: "EEENGLISH 101." Underneath, in smaller letters: "muffins, channels, horns, breakfast, pints, cricket."') });
+      F.hang(sp.sepiaPhoto, 1, 1, 2, look('A framed photo from Micro Mayhem: El EEENGLISH, mid-dropkick. Someone has written "OUR FOUNDER" on the frame.', ['Nate', 'That\'s my dad.']), 4);
+      F.stand(sp.bookshelf2, 12, 2, 1, look('"The Complete Works of EEENGLISH." Every book has had extra Es added in pen.'));
+      F.stand(sp.bookshelf2, 13, 2, 1, look('A whole shelf of English muffin cookbooks. All of them are from New York.'));
+      w.addProp({ img: sp.desk, tx: 6, ty: 3, solid: [6, 3, 2, 1] });
+      for (const y of [5, 7]) for (const x of [2, 4, 10, 12]) w.addProp({ img: sp.schoolDesk, tx: x, ty: y, solid: [x, y, 1, 1] });
+      w.prof = w.add(new G.NPC({ sprite: 'pembrook', name: 'Professor Pembrook', x: 8 * 16 + 8, y: 3 * 16 + 14, dir: 'down', talk: S.englishExam }));
+      w.addWarp(7, 10, 1, 1, 'campus', 19, 7, 'down');
+    },
+    onEnter() {
+      return (function* () {
+        if (flags().engMet) return;
+        yield G.wait(20);
+        yield* S.englishExam();
+      })();
+    },
+  };
 
   G.MAPS.homeDown = {
     name: 'Home: Downstairs',

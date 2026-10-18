@@ -1986,11 +1986,13 @@
   }
 
   function chalkboard(text = 'FINAL EXAM') {
-    const p = new Pix(80, 16);
-    p.rect(0, 0, 80, 16, '#7a5028');
-    p.rect(2, 2, 76, 11, '#2e5a3e');
-    for (let i = 0; i < 14; i++) p.hline(66 + (i % 3), 66 + (i % 3) + 4 + (i % 2) * 3, 3 + i % 9, '#c8dcc8');
-    p.hline(1, 78, 14, '#a07040'); p.set(10, 13, '#ffffff'); p.set(11, 13, '#ffffff');
+    // (wide enough for the text, with room for the scribbles after it)
+    const W = Math.max(80, G.font.width(text) + 24), sx = W - 14;
+    const p = new Pix(W, 16);
+    p.rect(0, 0, W, 16, '#7a5028');
+    p.rect(2, 2, W - 4, 11, '#2e5a3e');
+    for (let i = 0; i < 14; i++) p.hline(sx + (i % 3), sx + (i % 3) + 4 + (i % 2) * 3, 3 + i % 9, '#c8dcc8');
+    p.hline(1, W - 2, 14, '#a07040'); p.set(10, 13, '#ffffff'); p.set(11, 13, '#ffffff');
     p.outline();
     const c = p.canvas();
     G.font.draw(c.getContext('2d'), text, 5, 3, '#eef6ee');
@@ -4086,6 +4088,14 @@
     return finish(p);
   }
 
+  // a rolled-up diploma with a red ribbon
+  function diploma() {
+    const p = new Pix(16, 10);
+    p.rect(1, 2, 14, 6, '#f4ecd8'); p.hline(1, 14, 2, '#ffffff'); p.hline(1, 14, 7, '#c8bca0');
+    p.rect(0, 2, 2, 6, '#e0d4b8'); p.rect(14, 2, 2, 6, '#e0d4b8');
+    p.rect(7, 1, 2, 8, '#d03038'); p.set(6, 9, '#d03038'); p.set(9, 9, '#d03038');
+    return finish(p);
+  }
   // Father Eggmas's calling card: a scrap of paper in shaky red marker, pinned up
   function eggNote() {
     const p = new Pix(10, 11);
@@ -4897,7 +4907,7 @@
     S.outcrops = { laf: outcrop('laf'), eas: outcrop('eas'), bed: outcrop('bed') };
     S.quarryRubble = quarryRubble(); S.bigBasalt = bigRock('basalt'); S.bigDolomite = bigRock('dolomite'); S.gravelBar = gravelBar();
     S.fc = { idle: fatherChristmas(false, false), up: fatherChristmas(true, false), idleRage: fatherChristmas(false, true), upRage: fatherChristmas(true, true), sweater: fatherChristmas(false, false, true) };
-    S.eggNote = eggNote(); S.candyCorn = candyCorn(); S.doritos = doritos(); S.pawPrints = pawPrints();
+    S.diploma = diploma(); S.eggNote = eggNote(); S.candyCorn = candyCorn(); S.doritos = doritos(); S.pawPrints = pawPrints();
     S.balloonBooth = balloonBooth(false); S.balloonBoothEmpty = balloonBooth(true); S.funnelCake = funnelCake(); S.rockTray = rockTray();
     S.mikeyNote = mikeyNotePages(); S.noteIcon = noteIcon();
     S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);
@@ -4924,7 +4934,7 @@
     S.pipeSmall = pipeSmall();
     S.pipeSmallL = mirror(S.pipeSmall);
     S.paper = paperIcon();
-    S.chalkboard = chalkboard();
+    S.chalkboard = chalkboard(); S.chalkboardEng = chalkboard('EEENGLISH 101');
     S.chalkboardGeo = chalkboard('CRYSTALS!');
   };
 })();
