@@ -131,6 +131,14 @@
     coat: '#a88aa0', shirt: '#e8dce4', pants: '#4a6aa8', shoes: '#4a7a3a', boots: true, torso: 6, legs: 3,
   };
 
+  // Nani: silver hair pulled loosely back with wispy bangs, rosy cheeks, a big
+  // smile, amber drop earrings and a charcoal-navy knit sweater. (She mostly
+  // shows up in the group chat, so her face is on her texts.)
+  G.CAST.nani = {
+    skin: '#f2c2a8', hair: '#c8c4c0', hairStyle: 'shoulder', bangs: true, blush: true, smile: '#ffffff', earring: '#c8803a',
+    shirt: '#3a3e52', sleeves: 4, pants: '#5a5a68', shoes: '#6a4a38', torso: 6, legs: 3,
+  };
+
   // Ice JJ Fish: short dark hair, thin silver glasses, a big gap-toothed grin,
   // white tee with navy stars, a chain, a mic.
   G.CAST.icejj = {

@@ -261,6 +261,12 @@
   // Extras drawn over the head: messy tufts, sport sunglasses pushed up on the
   // forehead (Tyler), and hypnotized spiral eyes (whoever Father Eggmas got to).
   function headExtras(p, c, y0, view) {
+    if (c.bangs && view === 'front') {
+      // soft, wispy bangs parted in the middle (Nani)
+      const H = c.hair, D = c.hairD;
+      for (const [x, col] of [[4, D], [5, H], [6, D], [9, D], [10, H], [11, D]]) p.set(x, y0 + 3, col);
+      p.set(4, y0 + 4, D); p.set(11, y0 + 4, D);
+    }
     if (c.messy) {
       const H = c.hair, D = c.hairD;
       for (const [x, d] of [[4, 0], [6, 1], [8, 0], [10, 1], [11, 0]]) p.set(x, y0 - 1 + d, d ? D : H);

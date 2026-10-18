@@ -74,7 +74,7 @@
 
   // who gets a little face on their name plate (their sprite's head)
   const FACES = {
-    Lily: 'lily', Abe: 'abe', Hannah: 'hannah', Doron: 'doron', Dad: 'dad', Mikey: 'mikey', Michelle: 'michelle',
+    Lily: 'lily', Abe: 'abe', Hannah: 'hannah', Doron: 'doron', Dad: 'dad', Mikey: 'mikey', Michelle: 'michelle', Nani: 'nani',
     'Old Fisherman': 'fisherman', 'Hooded Figure': 'hooded', 'Professor Pembrook': 'pembrook', Devin: 'devin',
     'Prof. Schist': 'prof', Vendor: 'vendor', Maya: 'maya', Jordan: 'jordan', Superfan: 'superfan', Attendant: 'attendant',
     Lemonade: 'lemonade', Referee: 'ref', 'Pyro Pete': 'pete', Gus: 'gus', 'Dr. Moles': 'moles', 'Grandma Rose': 'rose',
