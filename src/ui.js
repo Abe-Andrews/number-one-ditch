@@ -243,8 +243,9 @@
       else if (this.tab === SAVE_TAB && G.state.admin) this.drawAdmin(ctx);
       else if (this.tab === SAVE_TAB) this.drawSave(ctx);
       else this.drawJournal(ctx);
-      let help = ['Z: set to X   X: save', 'Z: use   X: save', 'Z: bring along   X: save', 'Z: next area   X: save', 'X: save', 'Z: save to this file'][this.tab];
-      if (G.state.admin) help = ['Z: set to X', 'Z: use', 'Z: bring along', 'Z: next area', '', this.admList ? 'Z: go   X: back' : 'Z: do it'][this.tab];
+      const scroll = this.tab === 4 && G.journal().side.length > 4 ? 'Up/Down: scroll' : '';
+      let help = ['Z: set to X   X: save', 'Z: use   X: save', 'Z: bring along   X: save', 'Z: next area   X: save', scroll ? scroll + '   X: save' : 'X: save', 'Z: save to this file'][this.tab];
+      if (G.state.admin) help = ['Z: set to X', 'Z: use', 'Z: bring along', 'Z: next area', scroll, this.admList ? 'Z: go   X: back' : 'Z: do it'][this.tab];
       help += '   Q/E: tabs   ENTER: close';
       if (this.confirm) help = '{r}Save over File ' + this.confirm + '?{/}  Z: yes  X: no';
       TXT(ctx, this.msgT > 0 && !this.confirm ? '{g}' + this.msg : help, 8, 146, '#9890a8');
@@ -269,8 +270,13 @@
       const ty = 34 + Math.ceil(rocks.length / RCOLS) * 21 + 4;
       TXT(ctx, 'Here: {y}' + G.sayable(here) + '/' + rocks.length, 10, ty);
       TXT(ctx, 'All: {y}' + G.sayable(G.rocksFound()) + '/' + G.ROCKS.length, 10, ty + 10);
-      if (ty + 22 <= 128) TXT(ctx, 'Crush them at Van', 10, ty + 22, '#9890a8');
-      if (ty + 32 <= 128) TXT(ctx, 'Wickle Hall.', 10, ty + 32, '#9890a8');
+      // outside Andover, a rock you've found shows how to get another
+      const cur = rocks[this.sel];
+      if (area.id !== 'andover' && cur && found(cur) && cur.how) F().wrap(cur.how, 104).slice(0, Math.floor((128 - ty - 22) / 9) + 1).forEach((l, i) => TXT(ctx, l, 10, ty + 22 + i * 9, '#9890a8'));
+      else {
+        if (ty + 22 <= 128) TXT(ctx, 'Crush them at Van', 10, ty + 22, '#9890a8');
+        if (ty + 32 <= 128) TXT(ctx, 'Wickle Hall.', 10, ty + 32, '#9890a8');
+      }
       // details
       const r = rocks[this.sel];
       ctx.fillStyle = '#2a2240';

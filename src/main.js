@@ -39,6 +39,12 @@
       const s = Object.assign(newState(), JSON.parse(raw));
       // saves that got the cap before it came with a heart container get theirs now
       if (s.items.cap && !s.flags.capHeart) { s.flags.capHeart = true; s.maxHp += 2; }
+      // saves from before the Andover gate had a key: if they've been, they keep their way in
+      const f = s.flags;
+      if (!s.items.andoverKey && (f.andover || f.andoverMine)) s.items.andoverKey = true;
+      // ...from before Ice JJ needed a booking, and before Grandma Rose wanted a funnel cake
+      if (f.jjMet) f.jjSeen = true;
+      if (s.rocksFound && s.rocksFound.eastonite) f.roseTraded = true;
       s.slot = n;
       return s;
     } catch (e) { return null; }
@@ -289,7 +295,7 @@
       const s = G.state;
       let kind = 'tooth';
       if (s.hp < s.maxHp && Math.random() < 0.35) kind = 'heart';
-      else if (Math.random() < 0.15) kind = 'tooth5';
+      else if (Math.random() < 0.3) kind = 'tooth5';
       this.world.add(new G.Pickup(x, y, kind));
     },
 

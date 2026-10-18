@@ -257,7 +257,8 @@
     },
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
-  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bidet', 'bass', 'chicken', 'rod', null, null, null, null];
+  // (the Portable Bidet gets a slot once there's a way to find it)
+  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bass', 'chicken', 'rod', null, null, null, null, null];
 
   // ================================================================ SMOKE SIGNALS (Dad's pipe)
   // Like ocarina songs: learn a sequence, puff it with the pipe, something
@@ -1208,6 +1209,12 @@
     yield G.say('Doron', 'Give him a {y}present{/}, Nate! Set down a {y}Booby-Trapped Package{/} (press X)!');
   };
 
+  // a boss leaves a little stash of shark teeth behind
+  S.bossStash = function* (n, text) {
+    G.play.addTeeth(n);
+    G.audio.sfx('tooth');
+    yield G.itemGet(G.spr.toothGold, text);
+  };
   S.dadDefeated = function* (boss) {
     const w = G.play.world, p = P();
     G.audio.stop();
@@ -1235,6 +1242,7 @@
     yield G.say('Doron', 'You were incredible.');
     yield G.say('Dad', 'Before you boys go... Nate, I made you something in my workshop.');
     yield* S.pipeGift();
+    yield* S.bossStash(40, 'The promoter pays the winner of the main event: {y}40 shark teeth{/}.');
     yield G.say('Doron', 'Okay, Nate. A deal\'s a deal. Let\'s go move your boulder.');
     const s = G.state;
     if (!s.party.includes('doron')) s.party.push('doron');
@@ -2091,6 +2099,7 @@
     else if (G.with('lily')) yield G.say('Lily', 'He was in our HOUSE.');
     w.eggNote = true;
     f.globBeaten = true;
+    yield* S.bossStash(40, 'Behind the furnace: {y}40 shark teeth{/} the Globglogabgalab was using as bookmarks.');
     s.items.books = true;
     yield G.itemGet(G.spr.flyingBook[1], 'You got {y}Mom\'s Books{/}! Slightly chewed. Bring them to Mom in the garden.');
     G.audio.play('house');
@@ -2165,9 +2174,9 @@
     const lily = w.ents.find((e) => e instanceof G.Follower && e.id === 'lily' && !e.dead);
     const doron = w.ents.find((e) => e instanceof G.Follower && e.id === 'doron' && !e.dead);
     yield G.say(null, 'A cardboard box, way down here. In marker: {r}CHRISTMAS. DO NOT OPEN (LILY).{/} It\'s shaking. Something inside is humming. Slowly.');
-    if (lily) yield G.say('Lily', 'nate. NATE. it says do not open. it says LILY. that is ME.');
+    if (lily) yield G.say('Lily', 'Nate. NATE. It says do not open. It says LILY. That is ME.');
     const c = yield G.ask('Nate', f.fcMet ? 'Open it again?' : 'Open the box?', ['Open it', 'Absolutely not']);
-    if (c) { if (lily) yield G.say('Lily', 'thank you. thank you so much'); return; }
+    if (c) { if (lily) yield G.say('Lily', 'Thank you. Thank you so much.'); return; }
     const bx = w.fcBox.x + 9;
     yield G.walkTo(p, bx, 9 * 16 + 14, 1);
     p.dir = 'up';
@@ -2315,7 +2324,7 @@
   S.fcHome = function* () {
     const f = flags();
     f.fcLine = ((f.fcLine || 0) + 1) % 4;
-    if (G.with('lily')) { yield G.say('Lily', 'dont look at him. dont make eye contact.'); return; }
+    if (G.with('lily')) { yield G.say('Lily', 'Don\'t look at him. Don\'t make eye contact.'); return; }
     yield G.say('Father Christmas', [
       'Half a mantel. HALF. ...It\'s a start.',
       'The sweater itches. Don\'t tell Michelle.',
@@ -2794,6 +2803,7 @@
     f.snacksDone = true;
     yield G.say(null, 'Dad pours the candy corn into the Doritos bag, folds the top over, and shakes it.');
     yield G.say('Dad', 'Ahh. NOW we\'re talking.');
+    yield* S.bossStash(20, 'Dad slips you {y}20 shark teeth{/}. "For your trouble. Don\'t tell your mother."');
     // ...and the real reason he's been out here all day
     yield G.wait(30);
     const shop = G.play.world;
@@ -2929,6 +2939,7 @@
     yield G.walkTo(boss, boss.x + 200, boss.y - 10, 1.6);
     boss.dead = true;
     f.jjBeaten = true;
+    yield* S.bossStash(40, 'Ice JJ Fish left his tip jar on the ice: {y}40 shark teeth{/}.');
     G.audio.play('home');
     yield G.say('Nate', '...He slid off across the ice. Still singing. I think that means he\'s booked.');
   };
@@ -3181,6 +3192,7 @@
     yield G.say('Lily', '{d}(from inside the fridge){/} Did he just say "like and subscribe"?!');
     f.badlandsBeaten = true;
     if (fol) fol.hold = false;
+    yield* S.bossStash(40, 'Badlands left his sponsorship money on the counter: {y}40 shark teeth{/}.');
     yield* S.lilyRescue();
   };
 
@@ -3285,6 +3297,7 @@
     yield G.walkTo(mikey, mikey.x + 140, mikey.y, 1.1);
     mikey.dead = true;
     flags().mikeyBeaten = true;
+    yield* S.bossStash(30, 'Mikey dropped his gas station change: {y}30 shark teeth{/}.');
     s.playAs = null;
     yield G.say('Nate', 'That was the most powerful "No." I have ever witnessed.');
     yield G.say('Lily', 'Thank you. Here. Hold this. I can\'t look at it.');
@@ -4594,7 +4607,7 @@
           f.fcPassage = true;
           yield G.wait(20);
           yield G.say(null, 'The tunnels are humming. Way off to the {r}east{/}, past the east stope, a cave-in has shaken loose. Cold air is blowing out of a new passage.');
-          if (G.with('lily')) yield G.say('Lily', 'i said i was never coming to andover. why am i in andover');
+          if (G.with('lily')) yield G.say('Lily', 'I said I was never coming to Andover. Why am I in Andover?');
         }
         if (f.andoverMine) return;
         f.andoverMine = true;
@@ -4692,7 +4705,7 @@
         yield G.wait(30);
         yield G.say('Nate', 'The deep stope. The books say this part was sealed off before the Revolution.');
         yield G.say(null, 'At the back of the chamber, something goes {r}thump{/}.');
-        if (G.with('lily')) yield G.say('Lily', 'nope. no. i am going to stand right here by the tunnel.');
+        if (G.with('lily')) yield G.say('Lily', 'Nope. No. I am going to stand right here by the tunnel.');
       })();
     },
   };
@@ -4713,9 +4726,9 @@
       yield G.say('Doron', 'Why does a bridge turn into a tunnel?');
       yield G.say('Nate', 'Ships. Huge ones, headed into the bay. A bridge would be in their way, so the road dives under the channels. Twice.');
     } else if (G.with('lily')) {
-      yield G.say('Lily', 'why does the bridge turn into a tunnel');
+      yield G.say('Lily', 'Why does the bridge turn into a tunnel?');
       yield G.say('Nate', 'So the ships can get by. The road dives under the shipping channels. Twice.');
-      yield G.say('Lily', 'i do not like that');
+      yield G.say('Lily', 'I do not like that.');
     } else {
       yield G.say('Nate', 'Two tunnels under the shipping channels, so the ships can get by. Four man-made islands. This is one of them.');
     }
@@ -4814,7 +4827,7 @@
         yield G.say('Hooded Figure', 'You could not.');
         yield G.say('Doron', '...I could not.');
       } else if (G.with('lily')) {
-        yield G.say('Lily', 'nate. he doesnt have a face. why doesnt he have a face');
+        yield G.say('Lily', 'Nate. He doesn\'t have a face. Why doesn\'t he have a face?');
       }
       yield G.camFocus(null, null, 30);
       G.audio.play('tunnel');
@@ -4864,7 +4877,7 @@
     yield G.say('Tyler', 'A little egg in a paisley suit told me everything. A guy in a flat cap took it. A guy with a ROCK HAMMER.');
     yield G.say('Nate', '...Father Eggmas. Tyler, I didn\'t take your tooth! Look at your eyes, they\'re all swirly!');
     if (G.with('doron')) yield G.say('Doron', 'Same swirly eyes Dad had at Micro Mayhem. Eggmas got to him.');
-    else if (G.with('lily')) yield G.say('Lily', 'his eyes are doing the swirly thing. i hate it here');
+    else if (G.with('lily')) yield G.say('Lily', 'His eyes are doing the swirly thing. I hate it here.');
     yield G.say('Tyler', 'Fine. Then you can have your toll back... ONE TOOTH AT A TIME!');
     f.tylerMet = true;
     G.play.autosave();
@@ -4938,7 +4951,7 @@
     yield G.say('Tyler', 'Then a little egg in a paisley suit walked up and said, "Nate has your mosasaur tooth." And everything went swirly.');
     yield G.say('Nate', 'Father Eggmas is AT the Number One Ditch.');
     if (G.with('doron')) yield G.say('Doron', 'Then that\'s where we\'re going.');
-    else if (G.with('lily')) yield G.say('Lily', 'nate i want to go home');
+    else if (G.with('lily')) yield G.say('Lily', 'Nate, I want to go home.');
     yield G.say('Tyler', 'Go. I\'m right behind you.');
     yield G.say('Tyler', 'And Nate? If you see my mosasaur tooth...');
     yield G.say('Nate', 'I KNOW, Tyler.');
@@ -5094,7 +5107,7 @@
         f.tunnelSeen = true;
         yield G.wait(20);
         yield G.say('Nate', 'The Chesapeake Channel Tunnel. About a mile long, right under the shipping channel.');
-        if (G.with('lily')) yield G.say('Lily', 'there is a whole ocean on top of us right now');
+        if (G.with('lily')) yield G.say('Lily', 'There is a whole ocean on top of us right now.');
         else if (G.with('doron')) yield G.say('Doron', 'There are gulls in here. How are there gulls in here?');
         else yield G.say('Nate', '...Are those seagulls? In the TUNNEL?');
       })();
