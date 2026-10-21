@@ -1463,8 +1463,9 @@
       e.scared = 180;
       e.calm = 0;
     }
-    // the protest at the fair: "nothing scares us"
-    if (w.organizer && !w.organizer.dead && Math.hypot(w.organizer.x - p.x, w.organizer.y - p.y) < 110) { n++; G.script.run(S.protestScatter()); }
+    // the protest at the fair: "nothing scares us" (they always come back, and this always works)
+    const protest = [w.organizer, ...(w.protesters || [])].filter((e) => e && !e.dead);
+    if (protest.some((e) => Math.hypot(e.x - p.x, e.y - p.y) < 110)) { n++; G.script.run(S.protestScatter()); }
     // Mom does not appreciate it
     const m = w.ents.find((e) => e instanceof G.NPC && e.name === 'Michelle' && Math.hypot(e.x - p.x, e.y - p.y) < 120);
     if (m) w.pop(m.x, m.y - 34, 'NATE!!!', '#e8a0d8');
@@ -3235,7 +3236,9 @@
     if (G.state.items.pipe && f.signal_jlc) yield G.say('Nate', '...Nothing, huh?');
     else yield G.say('Nate', 'There\'s a cave down there. I can smell the limestone from here.');
   };
-  // Jamie Lee Curtis on the pipe, right at the picket line
+  // Jamie Lee Curtis on the pipe, right at the picket line. They come back every time
+  // Nate returns to the fairgrounds, and it scares them off every time. The first time
+  // also clears the organizer off the cave trail for good.
   S.protestScatter = function* () {
     const f = flags(), w = G.play.world, p = P(), cam = G.play.cam;
     f.protestScattered = true;
@@ -3251,6 +3254,7 @@
     // everybody runs for it, off whichever side of the screen is closer
     yield G.together(...crowd.map((e) => G.walkTo(e, e.x < p.x ? cam.x - 40 : cam.x + G.W + 40, e.y - 30 - Math.random() * 40, 3)));
     for (const e of crowd) e.dead = true;
+    if (!org) { w.pop(p.x, p.y - 34, '...Sorry!', '#78e070'); return; }
     if (w.caveSign) {
       w.burst(20 * 16 - 4, 29 * 16 + 4, ['#c8b090', '#8a6a48'], 8, { speed: 1, up: 0.8, g: 0.08, life: 24, size: 2 });
       w.props.splice(w.props.indexOf(w.caveSign), 1);
