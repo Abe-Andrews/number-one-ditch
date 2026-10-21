@@ -175,8 +175,26 @@
       }
     },
 
-    warp(map, tx, ty, dir) {
+    // Is a boss still standing in this room?
+    bossFight() {
+      return !!this.world && this.world.ents.some((e) => e.boss && !e.dead && e.state !== 'defeated' && e.hp > 0);
+    },
+
+    warp(map, tx, ty, dir, sure) {
       if (this.warping) return;
+      // walking out an exit in the middle of a boss fight asks first ("Keep fighting" is the
+      // default, so a stray step doesn't throw the fight); cutscene warps never ask
+      if (!sure && !G.script.busy && this.bossFight()) {
+        const self = this;
+        G.script.run((function* () {
+          const c = yield G.ask(null, 'Leave in the middle of the fight?', ['Keep fighting', 'Leave']);
+          if (c === 1) { self.warp(map, tx, ty, dir, true); return; }
+          const p = self.player, back = { up: [0, 1], down: [0, -1], left: [1, 0], right: [-1, 0] }[p.dir] || [0, 0];
+          yield G.walkTo(p, p.x + back[0] * 18, p.y + back[1] * 18, 1.5); // (ends facing back into the fight)
+          G.unstick(p);
+        })());
+        return;
+      }
       this.warping = true;
       G.audio.sfx('door');
       const self = this;
