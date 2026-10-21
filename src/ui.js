@@ -215,12 +215,17 @@
   };
 
   // ------------------------------------------------------------ pause menu
-  // GBA-style pages: QUESTS / MAP / ITEMS / KEYS / PEOPLE / ROCKS / SAVE (ADMIN in
-  // admin runs). Q/E flip pages (or press up into the tab bar, then left/right).
+  // GBA-style pages: QUESTS / MAP / ITEMS / KEYS / PEOPLE / COLLECTABLES / SAVE (ADMIN
+  // in admin runs). Q/E flip pages (or press up into the tab bar, then left/right).
   // The menu opens on whichever page you had open last (QUESTS the first time).
-  const TABS = ['QUESTS', 'MAP', 'ITEMS', 'KEYS', 'PEOPLE', 'ROCKS', 'SAVE'];
-  const QUEST_TAB = 0, MAP_TAB = 1, ITEM_TAB = 2, KEY_TAB = 3, PEOPLE_TAB = 4, ROCKS_TAB = 5, SAVE_TAB = 6;
-  const COLS = 4, ROWS = 3, RCOLS = 5;
+  const TABS = ['QUESTS', 'MAP', 'ITEMS', 'KEYS', 'PEOPLE', 'COLLECTABLES', 'SAVE'];
+  const QUEST_TAB = 0, MAP_TAB = 1, ITEM_TAB = 2, KEY_TAB = 3, PEOPLE_TAB = 4, COLL_TAB = 5, SAVE_TAB = 6;
+  const COLS = 4, ROWS = 3, RCOLS = 5, PCOLS = 3;
+  // COLLECTABLES opens on a list of sections; Z opens one, X backs out. Add new kinds here.
+  const COLLECTIONS = [
+    { id: 'rocks', name: 'Rocks', icon: 'rocks', count: () => [G.rocksFound(), G.ROCKS.length], blurb: 'Every specimen Nate has dug up, smashed out or sifted, area by area.' },
+    { id: 'photos', name: 'Photos', icon: 'photo', count: () => [G.photosFound(), G.PHOTOS.length], blurb: 'Old family photos, hidden all over. Some of them Mom would rather nobody saw.' },
+  ];
   const SEL = { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' };
   const TXT = (ctx, str, x, y, col) => F().draw(ctx, str, x, y, col || '#f8f8f0', { shadow: SH });
   const C = { gold: '#f8d850', cyan: '#78e8e8', green: '#78e070', red: '#f86858', dim: '#9890a8', faint: '#5a4e70', soft: '#c8c0d8', pink: '#ff98d0' };
@@ -249,6 +254,8 @@
     bridge: ['..k...k..', '.kgk.kgk.', 'kkgkkkgkk', 'ggggggggg', 'kkkkkkkkk', '.k.k.k.k.', 'ulululull', 'uuuuuuuuu', '.........'],
     trophy: ['kkkkkkkkk', 'kyyyyyyyk', 'kkyyyyykk', '.kyywyyk.', '..kyyyk..', '...kyk...', '...kyk...', '..kkkkk..', '..koook..'],
     party: ['.kk...kk.', 'khhk.kssk', 'kssk.kssk', '.kk...kk.', 'knnk.kuuk', 'nnnnkuuuu', 'nnnnkuuuu', 'nnnnkuuuu', '.........'],
+    collect: ['....k....', '...kyk...', 'kkkkykkkk', 'kyyyyyyyk', '.kyyyyyk.', '..kyyyk..', '.kyykyyk.', '.kyk.kyk.', '.kk...kk.'],
+    photo: ['kkkkkkkkk', 'kwwwwwwwk', 'kwllllwwk', 'kwlsslllk', 'kwlsslllk', 'kwlnnnllk', 'kwnnnnnwk', 'kwwwwwwwk', 'kkkkkkkkk'],
   };
   const iconCache = {};
   function icon(name) {
@@ -404,6 +411,33 @@
     }
   }
 
+  // A photo, full screen: framed on the left, its name and caption on the right.
+  const photoPages = new Map();
+  G.photoPage = (ph) => {
+    const ready = ph.img.complete && ph.img.naturalWidth;
+    if (ready && photoPages.has(ph.id)) return photoPages.get(ph.id);
+    const c = G.canvas(G.W, G.H), x = c.getContext('2d');
+    x.fillStyle = '#1c1424'; x.fillRect(0, 0, G.W, G.H);
+    x.fillStyle = '#0c0814'; x.fillRect(13, 15, 92, 130);
+    x.fillStyle = '#f6f4ee'; x.fillRect(10, 12, 90, 128);
+    x.fillStyle = '#d8d4c8'; x.fillRect(10, 139, 90, 1);
+    if (ready) x.drawImage(ph.img, 14, 16, 82, 120); else { x.fillStyle = '#3e3460'; x.fillRect(14, 16, 82, 120); }
+    TXT(x, ph.name, 110, 16, C.gold);
+    TXT(x, ph.place, 110, 26, C.cyan);
+    x.fillStyle = '#3e3460'; x.fillRect(110, 37, 122, 1);
+    F().wrap(ph.caption, 122).slice(0, 11).forEach((l, i) => TXT(x, l, 110, 42 + i * 9, C.soft));
+    if (ready) photoPages.set(ph.id, c);
+    return c;
+  };
+  // a tiny framed version, for the "you got it" fanfare
+  G.photoIcon = (ph) => {
+    const c = G.canvas(12, 15), x = c.getContext('2d');
+    x.fillStyle = '#1c1424'; x.fillRect(0, 0, 12, 15);
+    x.fillStyle = '#f6f4ee'; x.fillRect(1, 1, 10, 13);
+    if (ph.img.complete && ph.img.naturalWidth) { x.imageSmoothingEnabled = true; x.drawImage(ph.img, 2, 2, 8, 11); }
+    return c;
+  };
+
   class PauseMenu {
     constructor() {
       this.tab = lastTab;
@@ -432,6 +466,8 @@
       this.tab = (this.tab + d + TABS.length) % TABS.length;
       lastTab = this.tab;
       this.admList = null;
+      this.coll = null;
+      this.photoView = null;
       this.sel = 0;
       this.scroll = 0;
       G.audio.sfx('menu');
@@ -465,7 +501,8 @@
       if (inp.hit('start')) { G.audio.sfx('cancel'); return true; }
       if (inp.hit('l')) this.switchTab(-1);
       if (inp.hit('r')) this.switchTab(1);
-      if (inp.hit('b') && !G.state.admin) this.saveTo(G.state.slot || 1);
+      // (inside a COLLECTABLES section, X backs out instead)
+      if (inp.hit('b') && !G.state.admin && !(this.tab === COLL_TAB && this.coll)) this.saveTo(G.state.slot || 1);
 
       if (this.onTabs) {
         if (inp.hit('left')) this.switchTab(-1);
@@ -502,8 +539,32 @@
         if (inp.hit('down') && row < ROWS - 1) this.move(COLS, COLS * ROWS);
         if (inp.hit('up')) { if (row > 0) this.move(-COLS, COLS * ROWS); else { this.onTabs = true; G.audio.sfx('menu'); } }
         if (inp.hit('a')) return this.activate();
-      } else if (this.tab === ROCKS_TAB) {
-        // one page per area (Z flips pages), five to a row
+      } else if (this.tab === COLL_TAB && this.photoView) {
+        // looking at a photo: Z or X puts it away
+        if (inp.hit('a') || inp.hit('b')) { inp.eat('a'); inp.eat('b'); this.photoView = null; G.audio.sfx('cancel'); }
+      } else if (this.tab === COLL_TAB && this.coll && inp.hit('b')) {
+        inp.eat('b');
+        this.sel = COLLECTIONS.findIndex((c) => c.id === this.coll);
+        this.coll = null;
+        G.audio.sfx('cancel');
+      } else if (this.tab === COLL_TAB && !this.coll) {
+        // the list of sections
+        if (inp.hit('down')) this.move(1, COLLECTIONS.length);
+        if (inp.hit('up')) { if (this.sel > 0) this.move(-1, COLLECTIONS.length); else { this.onTabs = true; G.audio.sfx('menu'); } }
+        if (inp.hit('a')) { inp.eat('a'); this.coll = COLLECTIONS[this.sel].id; this.sel = 0; G.audio.sfx('select'); }
+      } else if (this.tab === COLL_TAB && this.coll === 'photos') {
+        const n = G.PHOTOS.length, col = this.sel % PCOLS, row = Math.floor(this.sel / PCOLS);
+        if (inp.hit('left') && col > 0) this.move(-1, n);
+        if (inp.hit('right') && col < PCOLS - 1) this.move(1, n);
+        if (inp.hit('down') && this.sel + PCOLS < n) this.move(PCOLS, n);
+        if (inp.hit('up')) { if (row > 0) this.move(-PCOLS, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
+        if (inp.hit('a')) {
+          inp.eat('a');
+          const ph = G.PHOTOS[this.sel];
+          if (ph && G.photoHas(ph.id)) { this.photoView = ph; G.audio.sfx('select'); } else G.audio.sfx('bump');
+        }
+      } else if (this.tab === COLL_TAB) {
+        // ROCKS: one page per area (Z flips pages), five to a row
         if (inp.hit('a')) { inp.eat('a'); this.rockArea = ((this.rockArea || 0) + 1) % G.ROCK_AREAS.length; this.sel = 0; G.audio.sfx('menu'); }
         const n = this.areaRocks().length, col = this.sel % RCOLS, row = Math.floor(this.sel / RCOLS);
         if (inp.hit('left') && col > 0) this.move(-1, n);
@@ -585,7 +646,7 @@
       else if (this.tab === MAP_TAB) this.drawMap(ctx);
       else if (this.tab === ITEM_TAB || this.tab === KEY_TAB) this.drawGrid(ctx);
       else if (this.tab === PEOPLE_TAB) this.drawPeople(ctx);
-      else if (this.tab === ROCKS_TAB) this.drawRocks(ctx);
+      else if (this.tab === COLL_TAB) this.drawCollect(ctx);
       else if (G.state.admin) this.drawAdmin(ctx);
       else this.drawSave(ctx);
       ctx.restore();
@@ -599,11 +660,13 @@
       if (this.msgT > 0) { TXT(ctx, '{g}' + this.msg, 6, y + 2); return; }
       const admin = G.state.admin, act = {
         [QUEST_TAB]: QMODES[(this.qmode + 1) % QMODES.length] === 'ACTIVE' ? 'quests' : QMODES[(this.qmode + 1) % QMODES.length] === '100%' ? '100% list' : 'rules',
-        [MAP_TAB]: null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along', [ROCKS_TAB]: 'next area',
+        [MAP_TAB]: null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
+        [COLL_TAB]: this.photoView ? 'put away' : !this.coll ? 'open' : this.coll === 'rocks' ? 'next area' : 'look',
         [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here',
       }[this.tab];
       const pairs = act ? [['Z', act]] : [['↑↓←→', 'look around']];
-      if (!admin) pairs.push(['X', 'quick save']);
+      if (this.tab === COLL_TAB && this.coll && !this.photoView) pairs.push(['X', 'back']);
+      else if (!admin && !(this.tab === COLL_TAB && this.photoView)) pairs.push(['X', 'quick save']);
       else if (this.tab === SAVE_TAB && this.admList) pairs.push(['X', 'back']);
       pairs.push(['Q/E', 'pages'], ['ENTER', 'close']);
       let x = 5;
@@ -618,7 +681,7 @@
 
     drawTabs(ctx) {
       const names = TABS.map((n, i) => (i === SAVE_TAB && G.state.admin ? 'ADMIN' : n));
-      const icons = ['quests', 'map', 'items', 'keys', 'people', 'rocks', G.state.admin ? 'admin' : 'save'];
+      const icons = ['quests', 'map', 'items', 'keys', 'people', 'collect', G.state.admin ? 'admin' : 'save'];
       const wOf = (i) => (i === this.tab ? 9 + 5 + F().width(names[i]) + 8 : 17);
       const gap = 2, total = names.reduce((a, _, i) => a + wOf(i), 0) + gap * (names.length - 1);
       let x = Math.round((G.W - total) / 2);
@@ -711,7 +774,8 @@
           ctx.fillStyle = '#0c0814'; ctx.fillRect(bx, y - 1, 7, 7);
           ctx.fillStyle = q.ok ? '#2a5a28' : '#2a2240'; ctx.fillRect(bx + 1, y, 5, 5);
           if (q.ok) check(bx + 1, y - 1, C.green);
-          const extra = q.name === 'Every rock' ? G.sayable(G.rocksFound()) + '/' + G.ROCKS.length : q.ok ? 'Done' : '';
+          const extra = q.name === 'Every rock' ? G.sayable(G.rocksFound()) + '/' + G.ROCKS.length
+            : q.name === 'Every photo' ? G.sayable(G.photosFound()) + '/' + G.PHOTOS.length : q.ok ? 'Done' : '';
           TXT(ctx, fit(q.name, RW - 30 - F().width(extra)), bx + 11, y - 1, q.ok ? C.dim : '#f8f8f0');
           if (extra) TXT(ctx, extra, RX + RW - 6 - F().width(extra), y - 1, q.ok ? C.green : C.gold);
           return;
@@ -946,6 +1010,56 @@
       const room = Math.floor((140 - 84) / 8) - skill.length;
       bio.slice(0, room).forEach((l, i) => TXT(ctx, l, 106, 84 + i * 8));
       skill.forEach((l, i) => TXT(ctx, l, 106, 84 + (Math.min(bio.length, room) + i) * 8 + 1));
+    }
+
+    // ---- COLLECTABLES: a list of sections (rocks, photos), each with its own page
+    drawCollect(ctx) {
+      if (this.coll === 'rocks') this.drawRocks(ctx);
+      else if (this.coll === 'photos') this.drawPhotos(ctx);
+      else this.drawCollectList(ctx);
+      if (this.photoView) ctx.drawImage(G.photoPage(this.photoView), 0, 0);
+    }
+    drawCollectList(ctx) {
+      card(ctx, 5, 21, 112, 121, 'COLLECTABLES');
+      COLLECTIONS.forEach((c, i) => {
+        const y = 39 + i * 26, sel = i === this.sel && !this.onTabs, [have, all] = c.count();
+        G.box(ctx, 9, y, 104, 22, sel ? SEL : { bg: '#1a1428', border: '#3e3460', inner: '#262038' });
+        ctx.drawImage(icon(c.icon), 14, y + 6);
+        TXT(ctx, c.name, 27, y + 4, sel ? C.gold : C.soft);
+        bar(ctx, 27, y + 14, 50, 5, have / all, have >= all ? C.green : C.cyan);
+        TXT(ctx, G.sayable(have) + '/' + G.sayable(all), 81, y + 12, C.gold);
+        if (sel) cursor(ctx, 3, y + 8);
+      });
+      const c = COLLECTIONS[this.sel];
+      card(ctx, 120, 21, 115, 121, c.name, C.cyan);
+      F().wrap(c.blurb, 104).slice(0, 8).forEach((l, i) => TXT(ctx, l, 125, 40 + i * 9, C.soft));
+    }
+
+    // ---- PHOTOS: thumbnails on the left, the one you're on at the right
+    drawPhotos(ctx) {
+      const has = (ph) => G.photoHas(ph.id);
+      card(ctx, 5, 21, 112, 121, 'PHOTOS', C.gold, G.sayable(G.photosFound()) + '/' + G.sayable(G.PHOTOS.length));
+      G.PHOTOS.forEach((ph, i) => {
+        const x = 11 + (i % PCOLS) * 35, y = 39 + Math.floor(i / PCOLS) * 46, sel = i === this.sel && !this.onTabs;
+        slot(ctx, x, y, 32, 44, has(ph) ? '#d8d4c8' : undefined);
+        if (has(ph) && ph.img.complete && ph.img.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(ph.img, x + 2, y + 2, 28, 40); ctx.imageSmoothingEnabled = false; }
+        else TXT(ctx, '?', x + 14, y + 18, C.faint);
+        if (sel) brackets(ctx, x - 1, y - 1, 34, 46);
+      });
+      const ph = G.PHOTOS[this.sel];
+      card(ctx, 120, 21, 115, 121);
+      if (!ph) return;
+      if (!has(ph)) {
+        TXT(ctx, '???', 125, 27, C.cyan);
+        TXT(ctx, ph.place, 125, 37, C.dim);
+        ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 48, 107, 1);
+        F().wrap(ph.how, 104).slice(0, 8).forEach((l, i) => TXT(ctx, l, 125, 52 + i * 9, C.dim));
+        return;
+      }
+      TXT(ctx, ph.name, 125, 27, C.cyan);
+      TXT(ctx, ph.place, 125, 37, C.dim);
+      ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 48, 107, 1);
+      F().wrap(ph.caption, 104).slice(0, 9).forEach((l, i) => TXT(ctx, l, 125, 52 + i * 9, C.soft));
     }
 
     // ---- ROCKS: every specimen Nate has found, a page for each area

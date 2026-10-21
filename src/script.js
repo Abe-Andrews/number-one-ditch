@@ -241,7 +241,7 @@
 
   // Full-screen pages of paper (a note, a letter): Z turns the page, and Z on
   // the last one puts it away.
-  G.noteView = (pages) => ({
+  G.noteView = (pages, doneHint = 'Z: fold it back up') => ({
     start() { this.i = 0; this.t = 0; G.audio.sfx('menu'); },
     update() {
       const inp = G.input;
@@ -255,7 +255,7 @@
     },
     draw(ctx) {
       ctx.drawImage(pages[Math.min(this.i, pages.length - 1)], 0, 0);
-      const hint = this.i < pages.length - 1 ? 'Z: turn it over' : 'Z: fold it back up';
+      const hint = this.i < pages.length - 1 ? 'Z: turn it over' : doneHint;
       G.font.draw(ctx, hint, G.W - G.font.width(hint) - 4, G.H - 9, '#f8f8f0', { shadow: '#000' });
     },
   });

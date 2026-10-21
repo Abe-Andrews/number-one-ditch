@@ -479,11 +479,11 @@
     return { goal, chapter, side };
   };
 
-  // How close to 100%: every item on the list, with rocks counted one by one.
+  // How close to 100%: every item on the list, with rocks and photos counted one by one.
   G.completionPct = () => {
     const c = G.completion(), n = c.length;
     let done = 0;
-    for (const [name, ok] of c) done += name === 'Every rock' ? G.rocksFound() / G.ROCKS.length : ok ? 1 : 0;
+    for (const [name, ok] of c) done += name === 'Every rock' ? G.rocksFound() / G.ROCKS.length : name === 'Every photo' ? G.photosFound() / G.PHOTOS.length : ok ? 1 : 0;
     return Math.floor((done / n) * 100);
   };
 
@@ -1817,9 +1817,28 @@
   };
 
   S.fridgeTalk = function* () {
-    if (flags().badlandsBeaten) { yield G.say(null, 'The fridge. Lily refuses to go near it ever again.'); return; }
+    if (flags().badlandsBeaten) {
+      if (!G.photoHas('nateSchool')) { yield* S.fridgePhoto(); return; }
+      yield G.say(null, 'The fridge. Lily refuses to go near it ever again.');
+      yield G.say(null, 'Nate\'s school picture is still stuck to the side. The eyes follow you around the kitchen.');
+      return;
+    }
     yield* fridgeThump();
     if (G.play.world.badlands) yield G.say('Badlands Chugs', 'Ah-ah-ah. Don\'t touch dat.');
+  };
+
+  // The first photo for the collection: Nate's school picture, on the side of the fridge.
+  S.fridgePhoto = function* () {
+    yield G.say(null, 'The fridge. Lily refuses to go near it ever again.');
+    yield G.say(null, 'Stuck to the side with a magnet: Nate\'s old school picture. Navy striped polo. Huge grin. Eyes VERY wide open.');
+    yield G.say('Nate', 'Oh no. Not this one.');
+    if (G.with('lily')) yield G.say('Lily', 'Oh, I LOVE this one.');
+    yield G.say(null, 'Mom asked Dad not to send this picture to anyone. Something about the look in Nate\'s eye.');
+    yield G.say('Nate', '...She said not to SEND it. She never said anything about taking a picture of it.');
+    G.audio.sfx('blip');
+    G.play.shake(4, 1);
+    yield G.wait(20);
+    yield* S.photoGive('nateSchool');
   };
 
   // ---- the ingredient hunt
@@ -2328,7 +2347,7 @@
   const FC_BOUNDS = [2 * 16 + 8, 5 * 16, 22 * 16 - 8, 13 * 16 + 8];
   const fcJunk = (e) => e instanceof G.FCOrnament || e instanceof G.FCGift || e instanceof G.FCCandyCane;
 
-  // 100%: the whole story, every sidequest, and every rock. That's what wakes him.
+  // 100%: the whole story, every sidequest, every rock and every photo. That's what wakes him.
   G.completion = () => {
     const f = flags(), s = G.state;
     return [
@@ -2347,6 +2366,7 @@
       ['The old fisherman', !!s.items.rod],
       ['Tyler', !!f.tylerBeaten],
       ['Every rock', G.rocksFound() >= G.ROCKS.length],
+      ['Every photo', G.photosFound() >= G.PHOTOS.length],
     ];
   };
   G.allDone = () => G.completion().every((c) => c[1]);
@@ -2363,7 +2383,7 @@
     if (f.fcAwake) return;
     yield G.wait(30);
     G.audio.sfx('fanfare');
-    yield G.banner('100%!', 'every quest, every rock', 170);
+    yield G.banner('100%!', 'every quest, rock and photo', 170);
     G.audio.sfx('buzz');
     yield G.say(null, 'Nate\'s phone buzzes. And buzzes. And buzzes.');
     yield G.say(null, '{c}~ FAMILY GROUP CHAT ~{/}');
@@ -2721,6 +2741,29 @@
     }
   };
 
+  // ================================================================ PHOTOS (collectables)
+  // Old family photos hidden around the world. Each one is a little picture file in
+  // assets/photos (shrunk to fit the screen), shown in COLLECTABLES > Photos.
+  G.PHOTOS = [
+    {
+      id: 'nateSchool', name: 'Picture Day', place: 'Home', file: 'assets/photos/nate-school.png',
+      how: 'Somewhere at home, where families stick the good pictures.',
+      caption: 'Nate\'s old school picture: the navy striped polo, the big grin, and a strange look in his eye. Mom asked Dad not to send it to anyone.',
+    },
+  ];
+  for (const ph of G.PHOTOS) { ph.img = new Image(); ph.img.src = ph.file; }
+  const photoState = () => (G.state.photos = G.state.photos || {});
+  G.photoHas = (id) => !!photoState()[id];
+  G.photosFound = () => G.PHOTOS.filter((ph) => G.photoHas(ph.id)).length;
+  // Inside a script: add a photo, announce it, and show it full screen.
+  S.photoGive = function* (id) {
+    const ph = G.PHOTOS.find((q) => q.id === id), isNew = !G.photoHas(id);
+    photoState()[id] = 1;
+    yield G.itemGet(G.photoIcon(ph), (isNew ? 'NEW PHOTO! ' : '') + '{y}' + ph.name + '{/}');
+    yield G.noteView([G.photoPage(ph)], 'Z: put it away');
+    if (isNew && !flags().photoTip) { flags().photoTip = true; yield G.say(null, 'Photos go in {y}COLLECTABLES{/} in the menu.'); }
+  };
+
   // A choice from a long list, seven at a time. Returns the index, or -1.
   function* pickFrom(name, text, labels) {
     for (let start = 0; ;) {
@@ -2975,6 +3018,7 @@
     Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, andoverKey: true, mikeyNote: true });
     s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40;
     f.signal_peace = true; f.signal_icy = true; f.signal_jlc = true; f.doronDeal = true; f.hadDoosh = true; f.capHeart = true;
+    s.photos = {}; for (const ph of G.PHOTOS) s.photos[ph.id] = 1;
   };
 
   // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)
