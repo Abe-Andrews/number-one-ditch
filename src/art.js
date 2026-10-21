@@ -2178,8 +2178,10 @@
   // blue blanket (with a wet spot on it). Daisy himself hops around in front (daisy()).
   function bunnyHouse() {
     const W = 48, H = 40, p = new Pix(W, H);
-    // grass inside the pen
+    // grass inside the pen, and the back of the fence (behind the hutch, so the roof covers it)
     p.rect(2, 12, 44, 24, '#6cc454');
+    p.hline(1, 46, 11, '#f6f4ee'); p.hline(1, 46, 12, '#d8d4c8');
+    for (let x = 1; x < 47; x += 5) p.vline(x, 9, 12, '#f6f4ee');
     for (let i = 0; i < 26; i++) p.set(2 + Math.floor(G.hash(i, 1, 70) * 44), 12 + Math.floor(G.hash(i, 2, 70) * 24), G.hash(i, 3, 70) < 0.5 ? '#5aae48' : '#84d868');
     // the hutch: plank walls...
     p.rect(5, 14, 20, 14, '#c8935a');
@@ -2199,8 +2201,6 @@
     p.rect(6, 28, 5, 2, '#d84848'); p.hline(7, 9, 27, '#e8a040');
     // the white picket fence all the way around
     const WH = '#f6f4ee', WD = '#d8d4c8';
-    p.hline(1, 46, 11, WH); p.hline(1, 46, 12, WD);
-    for (let x = 1; x < 47; x += 5) p.vline(x, 9, 12, WH);
     for (const x of [1, 46]) { p.vline(x, 9, 37, WH); for (let y = 13; y < 33; y += 5) p.set(x === 1 ? 2 : 45, y, WD); }
     for (let x = 1; x < 47; x += 3) { p.vline(x, 30, 37, WH); p.set(x, 29, WH); p.vline(x + 1, 31, 37, WD); }
     p.hline(1, 46, 32, WH); p.hline(1, 46, 35, WH);
