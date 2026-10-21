@@ -82,6 +82,15 @@
       skin: '#f0c8a8', hair: '#d8d8e0', hairStyle: 'receding', beard: '#d8d8e0', glasses: '#2a2a30',
       coat: '#7a5a3a', shirt: '#e8e0c8', pants: '#4a4038', shoes: '#3a2818', torso: 7, legs: 3,
     },
+    // Tom from Tom's Pizza (Union, NJ, and now Lafayette): older, salt-and-pepper hair and
+    // gray stubble, super bushy dark eyebrows, blue cap, navy shirt with white stripes across
+    // the chest, a navy apron, a gold chain
+    tom: {
+      skin: '#d4a486', hair: '#8c8884', hairStyle: 'cap', hat: '#4a88c8', hatStyle: 'ball', capHigh: true, brows: '#1c1614',
+      beard: '#ac9a8c', wrinkles: true,
+      shirt: '#26304e', pattern: 'chestStripes', neckline: true, necklace: '#e8c060',
+      pants: '#2a2e40', shoes: '#2a2a30', torso: 7, legs: 3,
+    },
     vendor: {
       skin: '#e0aa80', hair: '#3a2418', hairStyle: 'cap', hat: '#ffffff', hatStyle: 'ball', smile: '#ffffff',
       shirt: '#f8f8f8', pants: '#5878b8', shoes: '#303030', torso: 7, legs: 3,
@@ -2754,6 +2763,11 @@
       how: 'Somewhere at home, where families stick the good pictures.',
       caption: 'Nate\'s old school picture: the navy striped polo, the big grin, and a strange look in his eye. Mom asked Dad not to send it to anyone.',
     },
+    {
+      id: 'dadAndTom', name: 'Dad and Tom', place: 'Tom\'s Pizza', file: 'assets/photos/dad-and-tom.png',
+      how: 'Hanging on the wall of a pizza place.',
+      caption: 'Dad and Tom at the original Tom\'s Pizza in Union, NJ. The whole family calls in orders just to hear Tom pick up the phone: "TOM\'S PIZZA!"',
+    },
   ];
   for (const ph of G.PHOTOS) { ph.img = new Image(); ph.img.src = ph.file; }
   const photoState = () => (G.state.photos = G.state.photos || {});
@@ -2990,6 +3004,7 @@
     { name: 'Nate\'s lab', map: 'lab', at: [3, 4, 'down'] },
     { name: 'Lafayette campus', map: 'campus', at: [20, 10, 'down'] },
     { name: 'Science Center', map: 'science', at: [7, 8, 'up'] },
+    { name: 'Tom\'s Pizza', map: 'toms', at: [6, 8, 'up'] },
     { name: 'Pardee Hall (EEENGLISH)', map: 'pardee', at: [7, 8, 'up'] },
     { name: 'Van Wickle Hall (geology)', map: 'geology', at: [10, 12, 'up'] },
     { name: 'Easton Fairgrounds', map: 'fair', at: [9, 12, 'down'] },
@@ -3987,7 +4002,7 @@
   G.MAPS = {};
 
   // where Sixes appear on the campus lawns (first 7 at load, the rest for respawns)
-  const SIX_SPOTS = [[23, 17], [31, 23], [36, 25], [30, 25], [6, 22], [10, 24], [15, 26], [33, 24], [12, 21], [27, 26]];
+  const SIX_SPOTS = [[23, 17], [31, 23], [36, 25], [30, 25], [10, 22], [10, 24], [15, 26], [33, 24], [12, 21], [27, 26]];
 
   G.MAPS.lab = {
     name: 'Nate\'s Lab',
@@ -4056,7 +4071,8 @@
       // tall grass
       fill(32, 22, 4, 3, '"');
       fill(33, 25, 3, 2, '"');
-      fill(4, 23, 4, 3, '"');
+      // Tom's Pizza (x 2-7, y 22-25), with a little brick walk out front
+      fill(5, 26, 1, 1, 'p');
       fill(11, 25, 3, 2, '"');
       // bushes
       [[17, 15], [17, 17], [17, 19], [23, 18], [23, 20], [11, 9], [12, 9], [25, 9], [26, 9], [28, 23], [29, 23], [15, 23], [16, 23]]
@@ -4077,6 +4093,12 @@
       // Pardee Hall: the Department of EEENGLISH opens once El EEENGLISH has had his main event
       w.addBuilding(Object.assign({ x: 14, y: 2, w: 11, h: 5, door: 5, style: 'stone', wall: '#c8bc9c', roof: '#50607a', tower: true }, flags().dadBeaten ? { to: { map: 'pardee', x: 7, y: 9 } } : { locked: S.pardeeDoor }));
       w.addBuilding({ x: 29, y: 3, w: 9, h: 4, door: 4, style: 'modern', wall: '#d8c8a0', roof: '#6a4a40', to: { map: 'science', x: 7, y: 9 } });
+      // Tom's Pizza: Tom's second store (the first one's in Union, NJ)
+      w.addProp({ img: G.spr.tomsPizza, tx: 2, ty: 22, h: 4 });
+      w.blockTiles(2, 22, 6, 4);
+      w.block[25 * w.w + 5] = 0;
+      w.addWarp(5, 25, 1, 1, 'toms', 6, 8, 'up');
+      w.add(new G.Sign(8, 26, ['TOM\'S PIZZA', 'Our second location! (The first one is in Union, NJ.) Call ahead.']));
       // Van Wickle Hall: the geology building (walk into the arched front door)
       w.addProp({ img: G.spr.vanWickle, tx: 26, ty: 17, h: 4 });
       w.blockTiles(26, 17, 8, 4);
@@ -6178,6 +6200,66 @@
       F.hang(sp.closetRods, 21, 2, 5, look('The walk-in closet: a wire shelf and a hanging rod.'), 8);
       // ---- way down
       w.addTrigger(13, 17, 2, 1, () => G.play.warp('condoDown', 13, 18, 'down'));
+    },
+  };
+
+  // ================================================================ TOM'S PIZZA (Lafayette)
+  // A real family favorite in Union, NJ: Tom always picks up the phone with "TOM'S PIZZA!"
+  // and everybody calls in orders just to hear it. Here he's just opened his second store.
+  S.tom = function* () {
+    const f = flags();
+    if (!f.tomMet) {
+      f.tomMet = true;
+      yield G.say('Tom', 'TOM\'S PIZZA!');
+      yield G.say('Nate', '...Tom? From Union? What are you doing in Easton?');
+      yield G.say('Tom', 'I just opened my second store! Right here at Lafayette!');
+      yield G.say('Tom', 'Union, and now Lafayette. Two Tom\'s Pizzas.');
+      yield G.say('Nate', 'Dad is going to lose his mind.');
+      yield G.say('Tom', 'Your father! Tell him I said hello. His picture is on the wall over there.');
+      return;
+    }
+    f.tomLine = ((f.tomLine || 0) + 1) % 3;
+    yield G.say('Tom', ['TOM\'S PIZZA!', 'Two stores! Union and Lafayette. You tell everybody.', 'Next time, call ahead. I like to answer the phone.'][f.tomLine]);
+  };
+  // the framed photo of Dad and Tom on the wall
+  S.tomPhoto = function* () {
+    if (G.photoHas('dadAndTom')) { yield G.say(null, 'Dad and Tom, framed on the wall of Tom\'s Pizza.'); return; }
+    yield G.say(null, 'A framed photo on the wall: Dad and Tom, behind the counter at the original Tom\'s Pizza in Union.');
+    yield G.say('Nate', 'Dad looks thrilled. Tom looks like he has eleven pizzas in the oven.');
+    G.audio.sfx('blip');
+    yield G.wait(14);
+    yield* S.photoGive('dadAndTom');
+  };
+
+  G.MAPS.toms = {
+    name: 'Tom\'s Pizza',
+    music: 'house',
+    tiles() {
+      const W = 13, H = 10;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 11, 2, '6');        // tan tile walls
+      fill(1, 3, 11, 6, 'z');        // tile floor
+      fill(1, 9, 4, 1, 'G'); fill(8, 9, 4, 1, 'G'); g[9][6] = 'x'; // the front windows and the door
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      // behind the counter: the deck ovens under the hood, and Tom
+      F.hang(sp.ovenHood, 2, 2, 2, null, 18);
+      F.stand(sp.deckOven, 2, 3, 2, look('The deck ovens. Stainless steel, two high, and hot enough to melt a rock hammer.'));
+      F.stand(sp.pizzaBoxes, 1, 3, 1, look('A stack of pizza boxes, folded and ready.'));
+      w.add(new G.NPC({ sprite: 'tom', name: 'Tom', x: 5 * 16 + 8, y: 4 * 16 + 14, dir: 'down', talk: S.tom }));
+      // the counter, with the register and the glass pizza case (talk across it to order from Tom)
+      w.addProp({ img: sp.tomsCounter, tx: 1, ty: 5, solid: [1, 5, 7, 1], hit: [1, 5, 5, 1], talk: S.tom });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [6 * 16, 5 * 16, 8 * 16, 6 * 16], talk: look('The glass case: plain, pepperoni, and one slice nobody can identify.') });
+      // the customer side: the picture of Dad and Tom on the wall (looking at it gets the
+      // real photo for the collection), tables, more boxes
+      w.addProp({ img: sp.dadTomPicture, tx: 8, ty: 2, flat: true, dx: 0, dy: -5, hit: [8, 2, 2, 1], talk: S.tomPhoto });
+      F.stand(sp.checkTable, 2, 7, 2, look('A little table with a red-checkered tablecloth. The parmesan shaker is full. A miracle.'));
+      F.stand(sp.checkTable, 9, 6, 2, look('Another red-checkered table, by the window.'));
+      F.stand(sp.pizzaBoxes, 11, 3, 1, look('More pizza boxes. Tom is ready for a rush.'));
+      w.addWarp(6, 9, 1, 1, 'campus', 5, 26, 'down');
     },
   };
 

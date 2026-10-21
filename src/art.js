@@ -279,6 +279,23 @@
       p.hline(3, 12, y0 + 2, g); p.hline(4, 6, y0 + 3, g); p.hline(9, 11, y0 + 3, g);
       p.set(5, y0 + 2, '#5a7088'); p.set(10, y0 + 2, '#5a7088');
     }
+    // super bushy eyebrows (Tom): a heavy bar over each eye, nearly meeting in the middle,
+    // with tufts at the outer corners
+    if (c.brows && view === 'front') {
+      const B = c.brows, BL = shade(c.brows, 0.35);
+      p.hline(4, 11, y0 + 3, c.skin); // a clear forehead, so the brows stand out
+      for (const [x0, x1, t0, t1] of [[3, 6, 4, 5], [9, 12, 10, 11]]) {
+        p.hline(x0, x1, y0 + 4, B);
+        p.set(t0, y0 + 3, B); p.set(t1, y0 + 3, BL);
+      }
+      p.set(3, y0 + 5, B); p.set(12, y0 + 5, B);
+    }
+    // older faces: little lines under the eyes
+    if (c.wrinkles && view === 'front') { p.set(5, y0 + 7, c.skinD); p.set(10, y0 + 7, c.skinD); }
+    if (c.wrinkles && view === 'side') p.set(10, y0 + 7, c.skinD);
+    if (c.brows && view === 'side') {
+      p.hline(8, 12, y0 + 4, c.brows); p.set(12, y0 + 5, c.brows); p.set(10, y0 + 4, shade(c.brows, 0.35));
+    }
     if (c.swirl && view === 'front') {
       for (const ex of [5, 10]) { p.set(ex - 1, y0 + 5, '#f8f8f8'); p.set(ex + 1, y0 + 6, '#f8f8f8'); p.set(ex, y0 + 4, c.eyes); }
     }
@@ -334,6 +351,7 @@
       return edge ? c.shirtD : c.shirt;
     }
     if (c.pattern === 'stripes') return x % 2 ? '#1c1c24' : c.shirt;
+    if (c.pattern === 'chestStripes') { const r = y - ty; return r === 2 || r === 4 ? '#f0f0f0' : edge ? c.shirtD : c.shirt; }
     if (c.pattern === 'stars') return G.hash(x, y, 9) < 0.17 ? '#24305a' : edge ? c.shirtD : c.shirt;
     if (c.pattern === 'floral') {
       const h = G.hash(x, y, 7);
@@ -482,10 +500,12 @@
       p.hline(6, 9, y0, c.hatL);
       p.hline(2, 13, y0 + 3, c.hatD);
     } else {
-      for (let i = 0; i < 3; i++) p.hline(HEAD[i][0], HEAD[i][1], y0 + i, c.hat);
+      // (capHigh: worn up off the forehead, so big eyebrows show under the brim)
+      const brim = c.capHigh ? 2 : 3;
+      for (let i = 0; i < brim; i++) p.hline(HEAD[i][0], HEAD[i][1], y0 + i, c.hat);
       p.hline(5, 7, y0, c.hatL);
       if (c.patch) { p.set(7, y0 + 1, c.patch); p.set(8, y0 + 1, c.patch); }
-      p.hline(3, 12, y0 + 3, c.hatD);
+      p.hline(3, 12, y0 + brim, c.hatD);
     }
   }
 
@@ -5346,6 +5366,107 @@
     return p.canvas();
   }
 
+  // ================================================================ TOM'S PIZZA (Lafayette)
+  // Tom's second store (the first is in Union, NJ): a little storefront with a red, white
+  // and green awning, and inside, the deck ovens, the hood, the mosaic counter with its
+  // glass pizza case, stacks of boxes, and red-checkered tables.
+  function tomsPizza() {
+    const W = 96, H = 64, p = new Pix(W, H);
+    // flat roof and a brick front
+    p.rect(0, 0, W, 10, '#5a5c64'); p.hline(0, W - 1, 0, '#7a7c84'); p.hline(0, W - 1, 9, '#3a3c44');
+    for (let y = 10; y < H; y++) for (let x = 0; x < W; x++) {
+      const row = Math.floor(y / 4), off = row % 2 ? 4 : 0;
+      p.set(x, y, y % 4 === 3 || (x + off) % 8 === 0 ? '#c8a088' : G.hash(Math.floor((x + off) / 8), row, 21) < 0.3 ? '#9a4432' : '#ac4e38');
+    }
+    // the sign
+    p.rect(8, 12, 80, 13, '#f6f0e0'); p.rect(9, 13, 78, 11, '#c82828'); p.hline(9, 86, 13, '#e04040');
+    // the awning: red, white and green stripes, scalloped
+    for (let y = 27; y < 35; y++) for (let x = 2; x < W - 2; x++) p.set(x, y, ['#c82828', '#f6f4ee', '#2e8a3e'][Math.floor((x - 2) / 6) % 3]);
+    for (let x = 2; x < W - 2; x++) if ((x - 2) % 6 > 0 && (x - 2) % 6 < 5) p.set(x, 35, ['#c82828', '#f6f4ee', '#2e8a3e'][Math.floor((x - 2) / 6) % 3]);
+    p.hline(2, W - 3, 27, '#8a1c1c');
+    // the big front windows, with a pizza in each, and the glass door in the middle
+    for (const x0 of [6, 60]) {
+      p.rect(x0, 39, 30, 21, '#2a2a30'); p.rect(x0 + 2, 41, 26, 17, '#4a6a88'); p.set(x0 + 3, 42, '#a8c8e8'); p.set(x0 + 4, 42, '#a8c8e8');
+      for (let y = 0; y < 9; y++) for (let x = 0; x < 13; x++) if ((x - 6) ** 2 / 40 + (y - 4) ** 2 / 18 <= 1) p.set(x0 + 9 + x, 47 + y, (x + y) % 5 === 0 ? '#c83828' : '#f0c050');
+    }
+    p.rect(40, 38, 16, 26, '#2a2a30'); p.rect(42, 40, 12, 24, '#6a8aa8'); p.vline(47, 40, 63, '#2a2a30'); p.set(52, 52, '#d8b050');
+    p.rect(42, 46, 12, 4, '#f6f0e0'); p.hline(43, 52, 47, '#2e8a3e'); p.hline(43, 52, 48, '#c82828');
+    p.outline();
+    const cv = p.canvas(), x = cv.getContext('2d');
+    const label = 'TOM\'S PIZZA', tw = G.font.width(label);
+    G.font.draw(x, label, Math.round((W - tw) / 2), 15, '#fff4c0', { shadow: '#5a0c0c' });
+    return cv;
+  }
+  // stainless deck ovens, stacked two high
+  function deckOven() {
+    const p = new Pix(32, 40), st = '#b8bcc4', sd = '#8a8e96', sl = '#e0e2e8';
+    p.rect(0, 0, 32, 40, st); p.hline(0, 31, 0, sl);
+    for (const y of [4, 19]) { p.rect(2, y, 28, 12, sd); p.rect(3, y + 1, 26, 10, st); p.hline(5, 26, y + 3, '#5a5e66'); p.hline(5, 26, y + 4, sl); p.set(4, y + 8, '#d03030'); }
+    p.rect(0, 34, 32, 6, '#6a6e76'); p.vline(3, 34, 39, '#3a3c44'); p.vline(28, 34, 39, '#3a3c44');
+    return finish(p);
+  }
+  function ovenHood() {
+    const p = new Pix(40, 14);
+    p.rect(2, 0, 36, 4, '#a8acb4'); p.rect(0, 4, 40, 9, '#c8ccd2'); p.hline(0, 39, 4, '#e8eaf0'); p.hline(0, 39, 12, '#8a8e96');
+    for (let x = 4; x < 38; x += 4) p.vline(x, 6, 10, '#a8acb4');
+    return finish(p);
+  }
+  // the counter: a mosaic tile top (tan, with brown diamonds), and the glass pizza case at the end
+  function tomsCounter(tiles) {
+    const W = tiles * 16, p = new Pix(W, 22), caseX = W - 40;
+    for (let y = 0; y < 7; y++) for (let x = 0; x < caseX; x++) {
+      const d = Math.abs((x % 8) - 4) + Math.abs((y % 7) - 3);
+      p.set(x, y, d === 3 ? '#8a5a38' : d < 2 ? '#c8783a' : (x + y) % 3 ? '#e8d8b8' : '#d8c4a0');
+    }
+    p.rect(0, 7, caseX, 15, '#d8c8a8'); p.hline(0, caseX - 1, 7, '#8a6a48');
+    for (let x = 4; x < caseX - 4; x += 16) { p.rect(x, 10, 12, 9, '#c8b898'); p.rect(x + 1, 11, 10, 7, '#d8c8a8'); }
+    // the register
+    p.rect(6, 0, 10, 6, '#2a2a30'); p.rect(7, 1, 8, 2, '#58a858'); p.hline(7, 14, 4, '#4a4a54');
+    // the glass case, with pizzas on the shelves
+    p.rect(caseX, 0, 40, 22, '#b8bcc4'); p.rect(caseX + 2, 1, 36, 18, '#c8dce8'); p.hline(caseX + 2, caseX + 37, 10, '#9aa0a8');
+    for (const [px, py] of [[caseX + 4, 4], [caseX + 20, 4], [caseX + 8, 13]]) {
+      for (let y = 0; y < 5; y++) for (let x = 0; x < 14; x++) if ((x - 6.5) ** 2 / 45 + (y - 2) ** 2 / 6 <= 1) p.set(px + x, py + y, (x * 3 + y) % 7 === 0 ? '#c83828' : y === 0 || x === 0 ? '#d89a48' : '#f0c858');
+    }
+    p.set(caseX + 4, 2, '#ffffff'); p.set(caseX + 5, 2, '#ffffff');
+    return finish(p);
+  }
+  function pizzaBoxes() {
+    const p = new Pix(18, 26);
+    for (let i = 0; i < 6; i++) { const y = 22 - i * 4; p.rect(0, y, 18, 4, '#f4f0e8'); p.hline(0, 17, y, '#ffffff'); p.hline(2, 15, y + 2, i % 2 ? '#c82828' : '#d8d0c0'); }
+    return finish(p);
+  }
+  // the framed picture on the wall: Dad (glasses, beard, navy sweater) and Tom (blue cap,
+  // bushy brows, striped shirt) in front of the ovens at the original Tom's Pizza
+  function dadTomPicture() {
+    const p = new Pix(32, 26);
+    p.rect(0, 0, 32, 26, '#7a4a28'); p.hline(0, 31, 0, '#9a6a40'); p.vline(0, 0, 25, '#9a6a40'); p.hline(0, 31, 25, '#5a3418');
+    p.rect(2, 2, 28, 22, '#f6f4ee');
+    // the shop behind them: tan wall, the stainless oven and hood
+    p.rect(3, 3, 26, 20, '#d8c8a8');
+    p.rect(13, 4, 10, 3, '#a8acb4'); p.rect(14, 7, 8, 9, '#b8bcc4'); p.hline(15, 20, 9, '#7a7e86'); p.hline(15, 20, 13, '#7a7e86');
+    // Dad, up front on the left
+    p.rect(4, 17, 11, 6, '#26304e'); p.set(8, 17, '#e8e8e4'); p.set(9, 18, '#e8e8e4');
+    p.rect(6, 9, 7, 8, '#e8b898'); p.hline(6, 12, 8, '#8a7a6a'); p.hline(7, 11, 7, '#8a7a6a');
+    p.hline(6, 8, 11, '#2a2a30'); p.hline(10, 12, 11, '#2a2a30'); p.set(9, 11, '#2a2a30'); p.set(7, 11, '#d8e8f0'); p.set(11, 11, '#d8e8f0');
+    p.rect(6, 14, 7, 3, '#a8886a'); p.hline(8, 10, 14, '#c88878');
+    // Tom, behind the counter on the right
+    p.rect(19, 17, 9, 6, '#26304e'); p.hline(19, 27, 18, '#f0f0f0'); p.hline(19, 27, 20, '#f0f0f0');
+    p.rect(21, 11, 5, 6, '#d4a486'); p.rect(20, 9, 7, 3, '#4a88c8'); p.hline(19, 25, 11, '#345f8c');
+    p.hline(21, 22, 13, '#1c1614'); p.hline(24, 25, 13, '#1c1614'); p.hline(22, 24, 16, '#ac9a8c');
+    p.rect(3, 22, 26, 1, '#c8b898');
+    return finish(p);
+  }
+
+  // a little table with a red-checkered cloth and two chairs
+  function checkTable() {
+    const p = new Pix(32, 26);
+    for (const x of [0, 26]) { p.rect(x, 8, 6, 10, '#7a4a28'); p.hline(x, x + 5, 8, '#9a6a40'); p.vline(x + 1, 18, 25, '#5a3418'); p.vline(x + 4, 18, 25, '#5a3418'); }
+    for (let y = 4; y < 16; y++) for (let x = 6; x < 26; x++) p.set(x, y, (Math.floor(x / 3) + Math.floor(y / 3)) % 2 ? '#d83838' : '#f6f4ee');
+    p.hline(6, 25, 16, '#a82828'); p.vline(15, 17, 25, '#4a4a54'); p.vline(16, 17, 25, '#4a4a54'); p.hline(12, 19, 25, '#4a4a54');
+    p.rect(13, 7, 6, 4, '#f0c050'); p.set(15, 8, '#c83828');
+    return finish(p);
+  }
+
   // ================================================================ EXPORTS
   G.art = {
     OUT, shade, Pix, fromRows, mirror, flash, person, P, scale2, buildingExtra,
@@ -5519,6 +5640,9 @@
     S.paper = paperIcon();
     S.chalkboard = chalkboard(); S.chalkboardEng = chalkboard('EEENGLISH 101');
     S.chalkboardGeo = chalkboard('CRYSTALS!');
+    // Tom's Pizza
+    S.tomsPizza = tomsPizza(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
+    S.pizzaBoxes = pizzaBoxes(); S.checkTable = checkTable(); S.dadTomPicture = dadTomPicture();
     // Abe and Hannah's condo
     S.condo = condoBuilding(); S.brickStep = brickStep();
     S.boxwood = shrub(16, 13, 3); S.azalea = shrub(17, 14, 5, 16); S.bigShrub = shrub(36, 32, 7);

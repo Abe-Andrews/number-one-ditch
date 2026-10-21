@@ -360,7 +360,7 @@
   // ---- the MAP page: where Nate has been, where he is, and where the quests are
   const PLACES = [
     { id: 'laf', name: 'LAFAYETTE', x: 30, y: 36, icon: 'college', key: 'Lafayette',
-      maps: [['lab', 'Nate\'s Lab'], ['campus', 'The Quad'], ['science', 'Science Center'], ['geology', 'Van Wickle Hall'], ['pardee', 'Pardee Hall']] },
+      maps: [['lab', 'Nate\'s Lab'], ['campus', 'The Quad'], ['science', 'Science Center'], ['geology', 'Van Wickle Hall'], ['pardee', 'Pardee Hall'], ['toms', 'Tom\'s Pizza']] },
     { id: 'fair', name: 'EASTON FAIR', x: 98, y: 32, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
     { id: 'home', name: 'HOME', x: 44, y: 72, icon: 'house', key: 'Home',
       maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['north', 'The Frozen Pond']] },
@@ -417,15 +417,18 @@
     const ready = ph.img.complete && ph.img.naturalWidth;
     if (ready && photoPages.has(ph.id)) return photoPages.get(ph.id);
     const c = G.canvas(G.W, G.H), x = c.getContext('2d');
+    // the picture at its own size (they're made to fit: 82x120 tall, 120x90 wide), framed on the left
+    const iw = ready ? ph.img.naturalWidth : 82, ih = ready ? ph.img.naturalHeight : 120;
+    const fx = 10, fy = Math.round((G.H - 6 - (ih + 8)) / 2), tx = fx + iw + 18, tw = G.W - tx - 6;
     x.fillStyle = '#1c1424'; x.fillRect(0, 0, G.W, G.H);
-    x.fillStyle = '#0c0814'; x.fillRect(13, 15, 92, 130);
-    x.fillStyle = '#f6f4ee'; x.fillRect(10, 12, 90, 128);
-    x.fillStyle = '#d8d4c8'; x.fillRect(10, 139, 90, 1);
-    if (ready) x.drawImage(ph.img, 14, 16, 82, 120); else { x.fillStyle = '#3e3460'; x.fillRect(14, 16, 82, 120); }
-    TXT(x, ph.name, 110, 16, C.gold);
-    TXT(x, ph.place, 110, 26, C.cyan);
-    x.fillStyle = '#3e3460'; x.fillRect(110, 37, 122, 1);
-    F().wrap(ph.caption, 122).slice(0, 11).forEach((l, i) => TXT(x, l, 110, 42 + i * 9, C.soft));
+    x.fillStyle = '#0c0814'; x.fillRect(fx + 3, fy + 3, iw + 10, ih + 10);
+    x.fillStyle = '#f6f4ee'; x.fillRect(fx, fy, iw + 8, ih + 8);
+    x.fillStyle = '#d8d4c8'; x.fillRect(fx, fy + ih + 7, iw + 8, 1);
+    if (ready) x.drawImage(ph.img, fx + 4, fy + 4); else { x.fillStyle = '#3e3460'; x.fillRect(fx + 4, fy + 4, iw, ih); }
+    TXT(x, ph.name, tx, 16, C.gold);
+    TXT(x, ph.place, tx, 26, C.cyan);
+    x.fillStyle = '#3e3460'; x.fillRect(tx, 37, tw, 1);
+    F().wrap(ph.caption, tw).slice(0, 12).forEach((l, i) => TXT(x, l, tx, 42 + i * 9, C.soft));
     if (ready) photoPages.set(ph.id, c);
     return c;
   };
@@ -434,9 +437,14 @@
     const c = G.canvas(12, 15), x = c.getContext('2d');
     x.fillStyle = '#1c1424'; x.fillRect(0, 0, 12, 15);
     x.fillStyle = '#f6f4ee'; x.fillRect(1, 1, 10, 13);
-    if (ph.img.complete && ph.img.naturalWidth) { x.imageSmoothingEnabled = true; x.drawImage(ph.img, 2, 2, 8, 11); }
+    if (ph.img.complete && ph.img.naturalWidth) { x.imageSmoothingEnabled = true; fitImage(x, ph.img, 2, 2, 8, 11); }
     return c;
   };
+  // draw an image scaled to fit inside w x h, centered, keeping its shape
+  function fitImage(ctx, img, x, y, w, h) {
+    const k = Math.min(w / img.naturalWidth, h / img.naturalHeight), dw = Math.round(img.naturalWidth * k), dh = Math.round(img.naturalHeight * k);
+    ctx.drawImage(img, x + Math.round((w - dw) / 2), y + Math.round((h - dh) / 2), dw, dh);
+  }
 
   class PauseMenu {
     constructor() {
@@ -1042,7 +1050,7 @@
       G.PHOTOS.forEach((ph, i) => {
         const x = 11 + (i % PCOLS) * 35, y = 39 + Math.floor(i / PCOLS) * 46, sel = i === this.sel && !this.onTabs;
         slot(ctx, x, y, 32, 44, has(ph) ? '#d8d4c8' : undefined);
-        if (has(ph) && ph.img.complete && ph.img.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(ph.img, x + 2, y + 2, 28, 40); ctx.imageSmoothingEnabled = false; }
+        if (has(ph) && ph.img.complete && ph.img.naturalWidth) { ctx.imageSmoothingEnabled = true; fitImage(ctx, ph.img, x + 2, y + 2, 28, 40); ctx.imageSmoothingEnabled = false; }
         else TXT(ctx, '?', x + 14, y + 18, C.faint);
         if (sel) brackets(ctx, x - 1, y - 1, 34, 46);
       });
