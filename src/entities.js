@@ -287,9 +287,36 @@
 
     hurtBox() { return [this.x - 6, this.y - 14, this.x + 6, this.y]; }
 
+    // Fainting (G.play.dying counts the frames): a dizzy spin, a wobble, then he tips
+    // over onto his back and the stars come out.
+    drawFaint(ctx, cx, cy) {
+      const S = this.spr, d = G.play.dying, land = G.FAINT_LAND, start = land - 18;
+      const k = d < start ? 0 : Math.min(1, (d - start) / (land - start));
+      const wobble = d >= 36 && d < start ? Math.sin((d - 36) * 0.9) * 0.18 : 0;
+      const ang = wobble + k * k * (Math.PI / 2);
+      drawShadow(ctx, this.x + k * 6, this.y, cx, cy, k > 0.5);
+      const flash = d < 36 && (d >> 1) & 1;
+      const img = S[this.dir][0];
+      ctx.save();
+      ctx.translate(Math.round(this.x) - cx, Math.round(this.y) + 1 - cy);
+      ctx.rotate(ang);
+      ctx.drawImage(flash ? G.art.flash(img) : img, -8, -S.h + 1);
+      ctx.restore();
+      if (d < land) return;
+      // seeing stars, circling his head (which is off to the right once he's down)
+      const hx = this.x + S.h - 6 - cx, hy = this.y - 9 - cy;
+      for (let i = 0; i < 3; i++) {
+        const a = d / 9 + (i * Math.PI * 2) / 3, sx = Math.round(hx + Math.cos(a) * 7), sy = Math.round(hy + Math.sin(a) * 2.5);
+        ctx.fillStyle = '#1c1424'; ctx.fillRect(sx - 2, sy - 1, 5, 3); ctx.fillRect(sx - 1, sy - 2, 3, 5);
+        ctx.fillStyle = Math.sin(a) > 0 ? '#f8d850' : '#c89838'; ctx.fillRect(sx - 1, sy, 3, 1); ctx.fillRect(sx, sy - 1, 1, 3);
+      }
+    }
+
     draw(ctx, cx, cy) {
       if (this.hidden) return;
       const S = this.spr;
+      // (fainting comes before the after-hit blink, which would otherwise freeze him invisible)
+      if (this.state === 'dead') { this.drawFaint(ctx, cx, cy); return; }
       drawShadow(ctx, this.x, this.y, cx, cy);
       if (this.inv > 0 && this.state !== 'hurt' && (this.inv >> 2) & 1) return;
       let img;

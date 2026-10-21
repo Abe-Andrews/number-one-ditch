@@ -69,6 +69,10 @@
     try { localStorage.setItem(fileKey(s.slot), JSON.stringify(s)); return true; } catch (e) { return false; }
   };
 
+  // Fainting: the frame Nate hits the ground, and the share of his shark teeth he drops.
+  const FAINT_LAND = G.FAINT_LAND = 54;
+  const FAINT_COST = 0.2;
+
   // ================================================================ PLAY SCENE
   G.play = {
     world: null,
@@ -325,10 +329,15 @@
       G.areaBanner.update();
       if (this.shakeT > 0) this.shakeT--;
 
+      // fainting: a dizzy spin, a wobble, then he tips over (Player.drawFaint), the stars
+      // come out, and the screen fades to the fainted screen
       if (this.dying) {
-        this.dying++;
-        if (this.dying % 6 === 0) this.player.dir = ['down', 'left', 'up', 'right'][(this.dying / 6) % 4];
-        if (this.dying > 90) G.gameOver.enter();
+        const d = ++this.dying;
+        if (d < 36 && d % 6 === 0) this.player.dir = ['down', 'left', 'up', 'right'][(d / 6) % 4];
+        if (d === 36) this.player.dir = 'down';
+        if (d === FAINT_LAND) { G.audio.sfx('bump'); this.shake(8, 2); }
+        if (d > 96) G.fade = Math.min(1, (d - 96) / 24);
+        if (d > 122) G.gameOver.enter();
         return;
       }
 
@@ -689,6 +698,14 @@
       this.t = 0;
       this.sel = 0;
       G.script.reset();
+      // fainting drops a fifth of Nate's shark teeth: taken out of the save file he'll
+      // continue from (admin runs never touch the files, so they just show it)
+      const cur = G.state, saved = cur.admin ? null : G.loadSave(cur.slot);
+      this.lost = Math.floor(((saved || cur).teeth || 0) * FAINT_COST);
+      if (saved && this.lost) {
+        saved.teeth -= this.lost;
+        G.state = saved; G.writeSave(saved.slot || cur.slot); G.state = cur;
+      }
     },
     update() {
       this.t++;
@@ -726,6 +743,12 @@
         const a = this.t / 14 + (i * Math.PI * 2) / 3, sx = Math.round(126 + Math.cos(a) * 8), sy = Math.round(45 + Math.sin(a) * 2.5);
         ctx.fillStyle = '#1c1424'; ctx.fillRect(sx - 2, sy - 1, 5, 3); ctx.fillRect(sx - 1, sy - 2, 3, 5);
         ctx.fillStyle = Math.sin(a) > 0 ? '#f8d850' : '#c89838'; ctx.fillRect(sx - 1, sy, 3, 1); ctx.fillRect(sx, sy - 1, 1, 3);
+      }
+      // the shark teeth that fell out of his pockets
+      if (this.lost) {
+        const tt = '-' + G.sayable(this.lost) + ' shark teeth', tw = 10 + F().width(tt), tx = Math.round((G.W - tw) / 2);
+        ctx.drawImage(G.spr.tooth, tx, 13);
+        F().draw(ctx, tt, tx + 10, 14, '#f86858', { shadow: '#1c1424' });
       }
       const lily = G.state.playAs === 'lily';
       const t1 = (lily ? 'Lily' : 'Nate') + ' fainted...';
