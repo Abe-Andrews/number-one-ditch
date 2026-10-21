@@ -87,6 +87,22 @@
     '!': { k: 'parapet', solid: true },
     ':': { k: 'tunnelWall', solid: true },
     '-': { k: 'catwalk' },
+    // Abe and Hannah's condo (Chesapeake)
+    '$': { k: 'faceCondo', solid: true, edge: true },
+    '*': { k: 'lvp' },
+    '(': { k: 'carpet' },
+    ')': { k: 'whiteTile' },
+    '/': { k: 'condoCounter', solid: true },
+    '[': { k: 'sideWindow', solid: true },
+    '}': { k: 'sideSlider' },
+    ']': { k: 'loftRail', solid: true },
+    '{': { k: 'openBelow', solid: true },
+    ';': { k: 'carpetStairsUp', edge: true },
+    '?': { k: 'carpetStairsDown', edge: true },
+    '>': { k: 'condoMat' },
+    '<': { k: 'mulch' },
+    "'": { k: 'fairwayL', group: 'fairway' },
+    '`': { k: 'fairwayD', group: 'fairway' },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 

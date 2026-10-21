@@ -2934,6 +2934,7 @@
     { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, signal_jlc: true, momHeart: true, phDone: true, chemMet: true, chemPassed: true, chemPerfect: true, engMet: true, engPassed: true, engPerfect: true, ticketQuest: true, ticketsGiven: true, ticketsDone: true, protestReward: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10, tickets: 0, andoverKey: true }, maxHp: 10, teeth: 300 },
     { name: 'Bay Bridge-Tunnel (the toll)', map: 'cbbt', at: [21, 20, 'left'], teeth: 520 },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
+    { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [39, 1, 'down'], flags: { tylerBeaten: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -2957,6 +2958,10 @@
     { name: 'Andover: the deep stope', map: 'andoverDeep', at: [2, 8, 'right'] },
     { name: 'Bay Bridge-Tunnel: the island', map: 'cbbt', at: [14, 20, 'up'] },
     { name: 'Chesapeake Channel Tunnel', map: 'cbbtTunnel', at: [7, 60, 'up'] },
+    { name: 'Abe & Hannah\'s: outside', map: 'condo', at: [39, 15, 'left'] },
+    { name: 'Abe & Hannah\'s: downstairs', map: 'condoDown', at: [13, 18, 'up'] },
+    { name: 'Abe & Hannah\'s: upstairs', map: 'condoUp', at: [13, 11, 'down'] },
+    { name: 'Abe & Hannah\'s: storage', map: 'condoStorage', at: [10, 5, 'left'] },
   ];
   // Admin: one of every rock.
   G.adminAllRocks = () => {
@@ -5287,9 +5292,9 @@
   S.tunnelEnd = function* () {
     const p = P();
     if (!flags().tylerBeaten) { yield G.walkTo(p, p.x, p.y + 24, 1); return; }
-    yield G.say('Nate', 'Daylight! Chesapeake is right on the other side.');
-    yield G.banner('TO BE CONTINUED...', 'Chesapeake and the Number One Ditch: next update!', 240);
-    yield G.walkTo(p, p.x, p.y + 24, 1);
+    if (!flags().condoArrived) yield G.say('Nate', 'Daylight! Chesapeake is right on the other side.');
+    // out the far end and into Chesapeake: Abe and Hannah's street
+    G.play.warp('condo', 39, 1, 'down');
   };
 
   G.MAPS.cbbt = {
@@ -5747,6 +5752,410 @@
     onEnter() {
       return (function* () {
         if (!flags().dadBeaten) yield* S.ringIntro();
+      })();
+    },
+  };
+
+  // ================================================================ ABE AND HANNAH'S CONDO (Chesapeake)
+  // Their condo by the golf course: the left half (Unit A) of a duplex, built
+  // from the listing photos and Abe's answers about the layout. Hannah is at
+  // work (she joins on the next level).
+  // These maps are turned so their blue front door faces the camera:
+  //   up = east (Unit B, the neighbors)    down = west (their front walk)
+  //   left = north (the patio, the yard, the trees, then the golf course)
+  //   right = south (the street side: the storage garage door and Unit B's front)
+  // FURNITURE: Abe is sending photos of their furniture. Each room below has a
+  // "FURNITURE (photos pending)" note with its open floor and wall spots, in tiles.
+
+  // Jump an entity to (x, y) in an arc (z = height off the ground), ignoring collision.
+  const hop = (e, x, y, h = 24, n = 24) => ({
+    start() { this.t = 0; this.x0 = e.x; this.y0 = e.y; e.walking = true; },
+    update() {
+      const k = Math.min(1, ++this.t / n);
+      e.x = this.x0 + (x - this.x0) * k; e.y = this.y0 + (y - this.y0) * k;
+      e.z = Math.sin(k * Math.PI) * h;
+      e.dir = G.dirToward(x - this.x0, y - this.y0);
+      if (k < 1) return false;
+      e.z = 0; e.walking = false;
+      return true;
+    },
+  });
+
+  // Abe has been crouched behind the big bush by the corner, waiting.
+  S.abeScare = function* () {
+    const f = flags(), w = G.play.world, p = P();
+    if (f.condoScare) return;
+    f.condoScare = true;
+    const fol = w.ents.find((e) => e instanceof G.Follower && !e.dead);
+    if (fol) fol.hold = true;
+    const abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: 18 * 16, y: 18 * 16 + 12, dir: 'right' }));
+    G.audio.sfx('dash');
+    yield hop(abe, Math.max(19 * 16 + 8, p.x - 28), p.y, 26, 22);
+    abe.dir = 'right';
+    G.audio.sfx('yell');
+    G.play.shake(18, 3);
+    w.pop(abe.x, abe.y - 48, 'RAAAAAH!', '#ffa848');
+    yield G.together(
+      G.emote(p, 'bang', 36), fol && G.emote(fol, 'bang', 36),
+      G.walkTo(p, p.x + 14, p.y + 4, 2.6), fol && G.walkTo(fol, fol.x + 12, fol.y + 6, 2.6),
+    );
+    p.dir = 'left';
+    if (fol) fol.dir = 'left';
+    yield G.say('Nate', 'ABE!!');
+    if (G.with('lily')) {
+      yield G.say('Lily', 'No. NO. Absolutely not. No.');
+      yield G.say('Abe', 'Got you. Got BOTH of you.');
+    } else if (G.with('doron')) {
+      yield G.say('Doron', 'I could see your hat sticking out of that bush from the street.');
+      yield G.say('Abe', '...Nate couldn\'t.');
+    } else {
+      yield G.say('Abe', 'Got you. Got you SO good.');
+    }
+    yield G.say('Abe', 'You made it! Welcome to Chesapeake.');
+    yield G.say('Nate', 'Where\'s Hannah?');
+    yield G.say('Abe', 'At work. She\'ll be home later.');
+    yield G.say('Abe', 'Oh, quick question. How many strings are on a guitar?');
+    const c = yield G.ask('Nate', 'How many strings are on a guitar...', ['Six!', 'One more than five.', 'Not answering that.']);
+    if (c === 0) {
+      yield* slip();
+      yield G.say('Abe', 'GOT HIM.');
+    } else if (c === 1) {
+      yield G.say('Abe', '...He\'s learning.');
+    } else {
+      yield G.say('Abe', 'Coward.');
+    }
+    yield G.say('Abe', 'Come on in. Door\'s open.');
+    yield G.walkTo(abe, 23 * 16 + 8, 19 * 16 + 4, 1.4);
+    yield G.walkTo(abe, 23 * 16 + 8, 17 * 16 + 12, 1.4);
+    G.audio.sfx('door');
+    abe.dead = true;
+    if (fol) fol.hold = false;
+    G.play.autosave();
+  };
+
+  // Abe, inside, after the scare.
+  S.abeCondo = function* () {
+    const f = flags();
+    f.abeLine = ((f.abeLine || 0) + 1) % 3;
+    yield G.say('Abe', [
+      'Hannah gets off work later. Make yourselves at home.',
+      'The yellow cables in the storage room are inventory. Do NOT touch the inventory.',
+      'I\'m working from home today. Technically. My office is upstairs.',
+    ][f.abeLine]);
+  };
+
+  S.condoTraeger = look('Abe\'s Traeger pellet grill. It smells like hickory smoke.');
+
+  // The top of their street leads back to the Bay Bridge-Tunnel.
+  S.condoStreetEnd = function* () {
+    const p = P();
+    const c = yield G.ask('Nate', 'Head back to the Bay Bridge-Tunnel?', ['Back to the tunnel', 'Stay']);
+    if (c === 0) G.play.warp('cbbtTunnel', 7, 2, 'down');
+    else yield G.walkTo(p, p.x, p.y + 14, 1);
+  };
+
+  // ---------------------------------------------------------------- outside
+  G.MAPS.condo = {
+    name: 'Abe & Hannah\'s Condo',
+    music: 'home',
+    tiles() {
+      const W = 46, H = 26;
+      const g = Array.from({ length: H }, (_, y) => Array.from({ length: W }, () => ((y >> 1) % 2 ? 'L' : 'M')));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
+      // the golf course along the left: mowed fairway stripes, then the rough
+      for (let y = 0; y < H; y++) for (let x = 0; x <= 6; x++) g[y][x] = (x >> 1) % 2 ? "'" : '`';
+      fill(7, 0, 2, H, '.');
+      // two sand bunkers
+      fill(2, 5, 3, 2, 's'); set(3, 7, 's'); set(1, 6, 's');
+      fill(1, 21, 2, 2, 's'); set(3, 22, 's');
+      // the strip of woods between the yard and the course (the trees themselves go in in setup)
+      fill(9, 0, 4, H, '.');
+      // out back: their patio (by the dining room slider) and the neighbors' patio
+      fill(14, 12, 4, 3, 'C');
+      fill(14, 8, 4, 3, 'C');
+      // out front: the mulch bed along the house, the brick step, and the walk around to the driveway
+      fill(18, 18, 12, 1, '<');
+      fill(22, 18, 3, 1, 'C');
+      fill(22, 19, 10, 1, 'C');
+      fill(30, 17, 2, 2, 'C');
+      // the driveway up to the storage garage door, and the street
+      fill(30, 14, 8, 3, 'C');
+      fill(38, 0, 3, H, 'a');
+      // the neighbors' side: their front walk, stoop and planting beds
+      fill(30, 9, 8, 2, 'C');
+      fill(30, 6, 1, 3, '<'); fill(30, 11, 1, 2, '<');
+      // more trees around the lots, and across the street
+      for (const [x, y] of [[16, 1], [24, 2], [33, 1], [14, 23], [20, 24], [27, 22], [34, 23], [42, 3], [43, 12], [42, 19], [44, 24]]) set(x, y, 'T');
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr, f = flags();
+      // ---- the building (Unit A in front, Unit B's roof running back behind it)
+      w.addProp({ img: sp.condo, tx: 18, ty: 8, h: 10 });
+      w.blockTiles(18, 8, 12, 10);
+      // the front door, under the portico
+      w.block[17 * w.w + 23] = 0;
+      w.addWarp(23, 17, 1, 1, 'condoDown', 13, 18, 'up');
+      // the dining room slider, off the back patio
+      for (const y of [12, 13]) w.block[y * w.w + 18] = 0;
+      w.addWarp(18, 12, 1, 2, 'condoDown', 1, 4, 'right');
+      // the storage garage door, at the top of the driveway
+      for (const y of [14, 15, 16]) w.block[y * w.w + 29] = 0;
+      w.addWarp(29, 14, 1, 3, 'condoStorage', 10, 5, 'left');
+      // up the street: back to the Bay Bridge-Tunnel (Nate arrives from there at 39, 1)
+      w.addTrigger(38, 0, 3, 1, () => G.script.run(S.condoStreetEnd()));
+      // the neighbors' front door
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [29 * 16, 9 * 16, 30 * 16, 12 * 16], talk: look('The neighbors\' front door. They get the street side.') });
+
+      // ---- out front: the brick step, boxwoods and azaleas in the mulch
+      w.addProp({ img: sp.brickStep, tx: 22, ty: 18, dx: 4, dy: -6, flat: true });
+      const shrub = (img, x, y, talk) => w.addProp({ img, tx: x, ty: y, dx: Math.round((16 - img.width) / 2), solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk });
+      const boxwood = look('A round boxwood.'), azalea = look('An azalea.');
+      for (const [x, y] of [[20, 18], [21, 18], [25, 18], [27, 18], [29, 18], [30, 6], [30, 8], [30, 11]]) shrub(sp.boxwood, x, y, boxwood);
+      for (const [x, y] of [[26, 18], [28, 18], [30, 7], [30, 12]]) shrub(sp.azalea, x, y, azalea);
+      // the big bush at the corner of the house (it rustles until Abe jumps out of it)
+      w.bigShrub = w.addProp({
+        img: sp.bigShrub, tx: 17, ty: 18, h: 2, dx: -2, solid: [17, 18, 2, 2], hit: [17, 18, 2, 2],
+        talk: () => (flags().condoScare ? look('A big round bush by the corner of the house. Abe\'s hiding spot.')() : S.abeScare()),
+      });
+      w.bigShrub.draw = function (ctx, cx, cy) {
+        const rustle = !flags().condoScare && G.tick % 170 < 12;
+        ctx.drawImage(this.img, this.x + (rustle ? ((G.tick >> 1) & 1 ? 1 : -1) : 0) - cx, this.y - cy);
+      };
+      if (!f.condoScare) w.addTrigger(20, 18, 5, 4, () => { if (!flags().condoScare) G.script.run(S.abeScare()); });
+      // the little fenced-in spot for the trash cans, beside the driveway
+      w.addProp({ img: sp.trashEnclosure, tx: 30, ty: 13, dx: 1, solid: [30, 13, 2, 1], hit: [30, 13, 2, 1], talk: look('A little fenced-in spot for the trash and recycling.') });
+
+      // ---- out back: the patio, the Traeger, two plastic lawn chairs, the air
+      // conditioners, and the privacy fence between their patio and the neighbors'
+      // FURNITURE (photos pending): anything else on the patio goes on x 14-17, y 12-14
+      // (keep x 17, y 12-13 clear: that's the way to the slider).
+      w.addProp({ img: sp.privacyFence, tx: 14, ty: 11, solid: [14, 11, 4, 1], hit: [14, 11, 4, 1], talk: look('A wood privacy fence between their patio and the neighbors\'.') });
+      w.addProp({ img: sp.traeger, tx: 15, ty: 12, dx: 1, solid: [15, 12, 2, 1], hit: [15, 12, 2, 1], talk: S.condoTraeger });
+      for (const x of [14, 16]) w.addProp({ img: sp.lawnChair, tx: x, ty: 14, dx: 1, solid: [x, 14, 1, 1], hit: [x, 14, 1, 1], talk: look('A white plastic lawn chair, pointed at the golf course. Front-row seats.') });
+      for (const y of [7, 15]) w.addProp({ img: sp.acUnit, tx: 17, ty: y, dx: -1, solid: [17, y, 1, 1], hit: [17, y, 1, 1], talk: look('An air conditioner, humming away. Virginia summers do not mess around.') });
+
+      // ---- the strip of woods between the yard and the golf course (x 9-12): too thick to get through.
+      // TODO (the item that gets Nate through, coming later): open a gap here, e.g. straight out from
+      // the patio at y 12-13, and let him onto the course.
+      for (let y = 0; y < w.h - 1; y += 2) {
+        w.addTree(9, y, y % 6 === 2 ? 'pine' : null);
+        if (y + 1 < w.h - 1) w.addTree(11, y + 1, y % 6 === 4 ? null : 'pine');
+      }
+      w.blockTiles(9, 0, 4, w.h);
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [9 * 16, 0, 13 * 16, w.h * 16], talk: look('The woods are too thick to get through. The golf course is right there on the other side.') });
+      // ---- the golf course (out of reach for now)
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [1 * 16, 5 * 16, 5 * 16, 8 * 16], talk: look('A sand bunker. Nate the geologist: mostly quartz. Nate the golfer: avoid.') });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [1 * 16, 21 * 16, 4 * 16, 23 * 16], talk: look('Another sand bunker. There is a golf ball buried in it. Nate leaves it for its owner.') });
+    },
+    onEnter() {
+      return (function* () {
+        const f = flags();
+        if (f.condoArrived) return;
+        f.condoArrived = true;
+        if (P().x < 30 * 16) return;
+        yield G.wait(20);
+        yield G.say('Nate', 'Abe and Hannah\'s place. Their front door is around the side, past the garage.');
+      })();
+    },
+  };
+
+  // ---------------------------------------------------------------- downstairs
+  //   x: 0 left wall (golf course side) ... 26 right wall (the storage garage is beyond it)
+  //   dining room x 1-9, y 3-7 | galley kitchen x 10-16, y 3-6 | laundry x 18-20, y 3-5
+  //   living room x 1-9, y 8-18 | front hall x 10-12, y 7-18, stairs x 13-14, y 12-17
+  //   back hall x 13-25, y 9-10 | bath x 16-19, y 14-18 | Abe and Hannah's room x 21-25, y 14-18
+  G.MAPS.condoDown = {
+    name: 'Abe & Hannah\'s',
+    music: 'house',
+    tiles() {
+      const W = 27, H = 20;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
+      const room = (x, y, w, h, face, floor) => { fill(x, y, w, 2, face); fill(x, y + 2, w, h - 2, floor); };
+      room(1, 1, 9, 18, '$', '*');   // dining room (top) and living room (bottom): one open space
+      room(10, 1, 7, 6, '$', ')');   // galley kitchen
+      fill(11, 3, 6, 1, '/');        // counters along the wall (the fridge stands at x 10)
+      fill(12, 6, 5, 1, '/');        // the breakfast bar
+      set(17, 4, ')');               // kitchen / laundry
+      room(18, 1, 3, 5, '$', ')');   // laundry
+      fill(10, 7, 3, 12, '*');       // front hall
+      fill(13, 7, 4, 4, '*');        // the breakfast-bar side
+      fill(13, 11, 2, 1, '*');       // the top of the stairs
+      room(17, 7, 9, 4, '$', '*');   // back hall
+      fill(13, 12, 2, 6, ';');       // stairs up
+      fill(13, 18, 2, 1, '*');       // the foot of the stairs
+      room(16, 12, 4, 7, '$', ')');  // bath
+      room(21, 12, 5, 7, '$', '*');  // Abe and Hannah's room
+      // doorways
+      fill(19, 11, 1, 3, ')');       // back hall / bath
+      fill(20, 15, 1, 2, '*');       // bath / bedroom
+      fill(21, 11, 1, 3, '*');       // back hall / bedroom
+      // the outside walls: the slider and the windows on either side of the fireplace (left),
+      // the big window nook, the front door and the bedroom windows (bottom)
+      fill(0, 4, 1, 2, '}');
+      set(0, 12, '['); set(0, 16, '[');
+      fill(3, 19, 5, 1, 'G'); set(13, 19, '>'); fill(22, 19, 3, 1, 'G');
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr, f = flags();
+      const spot = (x, y, wt, ht, talk) => w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [x * 16, y * 16, (x + wt) * 16, (y + ht) * 16], talk });
+      // ---- dining room (x 1-9, y 3-7): under the loft, with a brass chandelier and the slider out to the patio
+      // FURNITURE (photos pending): the dining table and chairs go under the chandelier, around x 3-7, y 4-6
+      // (keep x 1, y 4-5 clear in front of the slider).
+      w.props.push({ img: sp.brassChandelier, x: 5 * 16 - 12, y: 42, base: 7 * 16 });
+      spot(0, 4, 1, 2, look('The sliding glass door out to the patio.'));
+      // ---- living room (x 1-9, y 8-18): vaulted ceiling, the loft looks down on it from upstairs
+      // FURNITURE (photos pending): couch, coffee table, TV, chairs, lamps, rugs. Open floor x 3-9, y 8-18
+      // (the fireplace and its hearth take x 1-2, y 13-15 on the left wall). Wall art: none on top (it's open to the dining room).
+      w.addProp({ img: sp.condoFireplace, tx: 1, ty: 13, h: 3, flat: true, solid: [1, 13, 1, 3], hit: [1, 13, 2, 3], talk: look('The fireplace: a white mantel and a marble surround, with a window on each side looking out at the golf course.') });
+      spot(0, 12, 1, 1, look('A window looking out toward the golf course.'));
+      spot(0, 16, 1, 1, look('A window looking out toward the golf course.'));
+      spot(3, 19, 5, 1, look('The big window nook, looking out at the front walk.'));
+      // ---- front hall (x 10-12, y 7-18): the front door at the bottom, the stairs straight ahead, a brass lantern overhead
+      // FURNITURE (photos pending): a console table, coat rack or wall art along x 10, y 13-17.
+      w.props.push({ img: sp.entryLantern, x: 11 * 16 + 3, y: 14 * 16, base: 18 * 16 });
+      // ---- galley kitchen (x 10-16, y 3-6): stainless fridge, light gray cabinets, white counters,
+      // glass-top range with the microwave over it, the sink and dishwasher, and the breakfast bar
+      // FURNITURE (photos pending): barstools along the breakfast bar at y 7, x 12-16; anything that lives on the counters.
+      F.stand(sp.condoFridge, 10, 3, 1, look('A stainless fridge. Nate checks it, just in case. Nobody\'s inside. Good.'));
+      F.hang(sp.condoUppers.two, 11, 2, 2, null, 10);
+      F.hang(sp.condoUppers.micro, 13, 2, 1, null, 10);
+      F.hang(sp.condoUppers.three, 14, 2, 3, null, 10);
+      spot(11, 3, 2, 1, look('White countertops and light gray cabinets.'));
+      w.addProp({ img: sp.glassRange, tx: 13, ty: 3, hit: [13, 3, 1, 1], talk: look('A glass-top range, with the microwave right above it.') });
+      w.addProp({ img: sp.dishwasher, tx: 14, ty: 3, flat: true, hit: [14, 3, 1, 1], talk: look('The dishwasher.') });
+      w.addProp({ img: sp.sinkTop, tx: 15, ty: 3, flat: true, dy: -10, hit: [15, 3, 2, 1], talk: look('The kitchen sink.') });
+      spot(12, 6, 5, 1, look('The breakfast bar.'));
+      if (f.condoScare) w.abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'down', talk: S.abeCondo }));
+      // ---- laundry (x 18-20, y 3-5), at the far end of the kitchen
+      F.stand(sp.washerFront, 19, 3, 1, look('The washer and dryer face each other across the laundry room. Like a standoff.'));
+      F.hang(sp.wireShelf, 19, 2, 1, null, 16);
+      F.stand(sp.dryerBack, 19, 5, 1, look('The dryer, staring down the washer.'));
+      // ---- back hall (x 13-25, y 9-10)
+      // FURNITURE (photos pending): wall art on the hall wall, x 17-25, y 7-8.
+      // ---- the downstairs bath (x 16-19, y 14-18): doors to the hall and to the bedroom
+      // FURNITURE (photos pending): towels, a bath mat, decor (keep x 19, y 14-16 clear: both doors).
+      F.hang(sp.bathMirror, 16, 13, 2, null, 8);
+      F.stand(sp.condoVanity, 16, 14, 2, look('A long vanity under a big mirror and a light box.'));
+      F.hang(sp.openShelves, 18, 13, 1, look('Open shelves over the toilet.'), 4);
+      F.stand(sp.toilet, 18, 14, 1, look('...It\'s a toilet, Nate.'));
+      F.stand(sp.tubCurtain, 16, 17, 3, look('A bathtub with a shower curtain.'), { ht: 2 });
+      // ---- Abe and Hannah's room (x 21-25, y 14-18): two sets of white bifold closets, windows facing the front walk
+      // FURNITURE (photos pending): the bed, nightstands, dresser, TV, lamps, rugs, wall art. Open floor x 21-25, y 14-18
+      // (keep x 21, y 14-16 clear: the doors from the hall and from the bath). Wall art: x 21, y 12-13 (the closets take x 22-25).
+      F.hang(sp.bifoldCloset, 22, 13, 2, look('A closet with white bifold doors.'), 1);
+      F.hang(sp.bifoldCloset, 24, 13, 2, look('The other closet. Also white bifold doors. Two closets: one each.'), 1);
+      spot(22, 19, 3, 1, look('Windows looking out at the front walk.'));
+      // ---- ways out
+      w.addTrigger(13, 12, 2, 1, () => G.play.warp('condoUp', 13, 11, 'up'));
+      w.addWarp(13, 19, 1, 1, 'condo', 23, 18, 'down');
+      w.addWarp(0, 4, 1, 2, 'condo', 17, 12, 'left');
+    },
+  };
+
+  // ---------------------------------------------------------------- upstairs
+  //   the loft x 1-14, y 3-11 (over the dining room and kitchen), its railing looking down on the
+  //   living room (x 1-9, y 9-18) and the front hall (x 10-12, y 13-18); stairs down x 13-14, y 12-17
+  //   the bedroom / Abe's office x 16-25, y 11-18, with its bath (x 16-19, y 3-7) and walk-in closet (x 21-25, y 3-7)
+  G.MAPS.condoUp = {
+    name: 'Abe & Hannah\'s: Upstairs',
+    music: 'house',
+    tiles() {
+      const W = 27, H = 20;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
+      const room = (x, y, w, h, face, floor) => { fill(x, y, w, 2, face); fill(x, y + 2, w, h - 2, floor); };
+      room(1, 1, 14, 11, '$', '(');  // the loft
+      fill(1, 8, 9, 1, ']');         // its railing over the living room...
+      fill(1, 9, 9, 10, '{');        // ...two stories down
+      fill(10, 12, 3, 1, ']');       // and over the front hall
+      fill(10, 13, 3, 6, '{');
+      fill(13, 12, 2, 6, '?');       // stairs down
+      fill(13, 18, 2, 1, '{');
+      fill(0, 4, 1, 3, '[');         // the big loft window, toward the golf course
+      room(16, 1, 4, 7, '$', ')');   // bath
+      room(21, 1, 5, 7, '$', '(');   // walk-in closet
+      room(16, 9, 10, 10, '$', '('); // bedroom / Abe's office
+      set(15, 11, '(');              // the door off the loft
+      fill(18, 8, 1, 3, ')');        // bedroom / bath
+      fill(23, 8, 1, 3, '(');        // bedroom / closet
+      fill(18, 19, 2, 1, 'G');       // the double window over the front door
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      const spot = (x, y, wt, ht, talk) => w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [x * 16, y * 16, (x + wt) * 16, (y + ht) * 16], talk });
+      // ---- the loft (x 1-14, y 3-11): carpet, the big window, the railing over the living room
+      // FURNITURE (photos pending): the sectional couch and the TV. Open floor x 1-9, y 3-7 and x 10-14, y 3-10
+      // (keep x 13-14, y 11 clear at the top of the stairs, and x 14, y 11 for the bedroom door).
+      // Wall art: the top wall, x 1-14, y 1-2.
+      spot(0, 4, 1, 3, look('The big loft window, looking out over the golf course.'));
+      spot(1, 8, 9, 1, look('The loft railing. Straight down: the living room.'));
+      spot(10, 12, 3, 1, look('The railing over the front hall.'));
+      // ---- the bedroom, which doubles as Abe's office (x 16-25, y 11-18). Abe is an AI and machine learning engineer.
+      // FURNITURE (photos pending): the guest bed, and Abe's work desk, monitors and chair. Open floor x 16-25, y 11-18
+      // (keep x 16, y 11 clear for the door from the loft, and x 18 and x 23 at y 11 for the bath and closet doors).
+      // Wall art: x 16-17, 19-22 and 24, y 9-10.
+      F.hang(sp.atticHatch, 25, 10, 1, look('A little attic hatch. Whatever is up there can stay up there.'), 8);
+      spot(18, 19, 2, 1, look('A double window, right over the front door.'));
+      // ---- the upstairs bath (x 16-19, y 3-7): tub with sliding glass doors, vanity, toilet
+      // FURNITURE (photos pending): towels, a bath mat, decor.
+      F.stand(sp.tubGlass, 16, 3, 2, look('A bathtub behind sliding glass doors.'), { ht: 2 });
+      F.hang(sp.bathMirror, 18, 2, 2, null, 6);
+      F.stand(sp.condoVanity, 18, 3, 2, look('The upstairs vanity.'));
+      F.stand(sp.toilet, 19, 5, 1, look('Another toilet. Still a toilet, Nate.'));
+      // ---- walk-in closet (x 21-25, y 3-7)
+      // FURNITURE (photos pending): whatever's stored in here (open floor x 21-25, y 4-7; keep x 23, y 7 clear for the door).
+      F.hang(sp.closetRods, 21, 2, 5, look('The walk-in closet: a wire shelf and a hanging rod.'), 8);
+      // ---- way down
+      w.addTrigger(13, 17, 2, 1, () => G.play.warp('condoDown', 13, 18, 'down'));
+    },
+  };
+
+  // ---------------------------------------------------------------- the storage garage
+  // No room to park: it's all junk, and a TON of yellow guitar cables Abe bought to sell on eBay.
+  G.MAPS.condoStorage = {
+    name: 'The Storage Room',
+    music: 'house',
+    tiles() {
+      const W = 12, H = 9;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 10, 2, '$');
+      fill(1, 3, 10, 5, 'C');
+      fill(11, 4, 1, 3, 'C');        // the garage door, rolled up
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      // FURNITURE (photos pending): anything else that lives in storage (open floor around x 3-9, y 4-5).
+      const cables = [
+        look('Yellow guitar cables. A TON of them. Abe bought them to sell on eBay.'),
+        look('More yellow guitar cables. They might be multiplying.'),
+        look('Yellow guitar cables, all the way down. The eBay empire is still in the warehouse phase.'),
+      ];
+      F.stand(sp.cableTotes, 1, 3, 1, cables[0]);
+      F.stand(sp.storageBoxes, 2, 3, 2, look('Boxes. Taped, half taped, and not taped at all.'));
+      F.stand(sp.cableBox, 4, 3, 2, cables[1]);
+      F.stand(sp.cableTotes, 6, 3, 1, cables[2]);
+      F.stand(sp.junkPile, 7, 3, 2, look('A pile of junk: boxes, a box fan, and an orange extension cord that has given up.'));
+      F.stand(sp.cableTotes, 9, 3, 1, cables[0]);
+      F.stand(sp.cableHeaps[0], 1, 6, 2, cables[1]);
+      F.stand(sp.cableHeaps[1], 4, 7, 2, cables[2]);
+      F.stand(sp.cableHeaps[2], 7, 6, 2, cables[0]);
+      w.addWarp(11, 4, 1, 3, 'condo', 30, 15, 'right');
+    },
+    onEnter() {
+      return (function* () {
+        if (flags().condoStorage) return;
+        flags().condoStorage = true;
+        yield G.wait(16);
+        yield G.say('Nate', 'Whoa. That is a LOT of yellow guitar cables.');
       })();
     },
   };

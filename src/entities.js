@@ -460,7 +460,8 @@
       }
       const can = this.held === G.spr.wateringCan;
       if (can && this.dir === 'up') this.drawCan(ctx, cx, cy);
-      ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
+      // (z: up in the air, e.g. Abe leaping out of a bush)
+      ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2 - (this.z || 0)) - cy);
       if (can && this.dir !== 'up') this.drawCan(ctx, cx, cy);
       else if (this.held && !can) ctx.drawImage(this.held, Math.round(this.x - this.held.width / 2) - cx, Math.round(this.y - S.h + 10) - cy);
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, Math.round(this.y - S.h - 10) - cy);
