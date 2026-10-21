@@ -2173,14 +2173,52 @@
     return p.canvas();
   }
 
-  function greenhouse() {
-    const p = new Pix(40, 36);
-    for (let y = 0; y < 10; y++) for (let x = 0; x < 40; x++) p.set(x, y, x % 5 === 0 ? '#b8bcc4' : '#e0e4ea');
-    p.rect(1, 10, 38, 22, '#cfe4ea');
-    for (let x = 1; x < 40; x += 8) p.vline(x, 10, 31, '#9a7a58');
-    p.hline(1, 38, 20, '#9a7a58');
-    for (let i = 0; i < 8; i++) p.set(3 + i * 4, 24 + (i % 2) * 3, '#4aa040');
-    p.rect(1, 32, 38, 4, '#8a6a48');
+  // Daisy's house, where the greenhouse used to be: a little wooden bunny hutch with an
+  // A-frame roof and a white picket fence all the way around. Through the doorway: his
+  // blue blanket (with a wet spot on it). Daisy himself hops around in front (daisy()).
+  function bunnyHouse() {
+    const W = 48, H = 40, p = new Pix(W, H);
+    // grass inside the pen
+    p.rect(2, 12, 44, 24, '#6cc454');
+    for (let i = 0; i < 26; i++) p.set(2 + Math.floor(G.hash(i, 1, 70) * 44), 12 + Math.floor(G.hash(i, 2, 70) * 24), G.hash(i, 3, 70) < 0.5 ? '#5aae48' : '#84d868');
+    // the hutch: plank walls...
+    p.rect(5, 14, 20, 14, '#c8935a');
+    for (let x = 8; x < 25; x += 4) p.vline(x, 14, 27, '#a87440');
+    p.hline(5, 24, 27, '#8a5a30');
+    // ...an A-frame roof...
+    for (let y = 1; y < 15; y++) {
+      const half = Math.round(y * 0.95) + 1;
+      for (let x = 15 - half; x <= 14 + half; x++) p.set(x, y, y % 3 === 0 ? '#6a3428' : x <= 14 ? '#9a5040' : '#843e32');
+    }
+    p.hline(1, 28, 15, '#5a2a20');
+    // ...and an arched doorway, with the blue blanket (and its wet spot) inside
+    p.rect(11, 19, 8, 9, '#2a1c18'); p.hline(12, 17, 18, '#2a1c18');
+    p.rect(11, 24, 8, 4, '#4a78c8'); p.hline(11, 18, 24, '#6a98e0'); p.set(13, 25, '#6a98e0');
+    p.rect(15, 25, 2, 2, '#2c4a8a'); p.set(17, 26, '#2c4a8a');
+    // a food bowl and a carrot top by the door
+    p.rect(6, 28, 5, 2, '#d84848'); p.hline(7, 9, 27, '#e8a040');
+    // the white picket fence all the way around
+    const WH = '#f6f4ee', WD = '#d8d4c8';
+    p.hline(1, 46, 11, WH); p.hline(1, 46, 12, WD);
+    for (let x = 1; x < 47; x += 5) p.vline(x, 9, 12, WH);
+    for (const x of [1, 46]) { p.vline(x, 9, 37, WH); for (let y = 13; y < 33; y += 5) p.set(x === 1 ? 2 : 45, y, WD); }
+    for (let x = 1; x < 47; x += 3) { p.vline(x, 30, 37, WH); p.set(x, 29, WH); p.vline(x + 1, 31, 37, WD); }
+    p.hline(1, 46, 32, WH); p.hline(1, 46, 35, WH);
+    p.outline();
+    return p.canvas();
+  }
+  // Daisy (a gray boy bunny; they found out he was a boy after they named him): sitting, and mid-hop
+  function daisy(hop) {
+    const p = new Pix(11, 10), fur = '#6e6e78', furD = '#50505a', ear = '#c8a0a8';
+    if (hop) {
+      p.rect(2, 5, 7, 3, fur); p.hline(2, 8, 7, furD); p.rect(8, 3, 3, 3, fur);
+      p.vline(8, 0, 2, fur); p.vline(9, 0, 2, furD); p.set(8, 1, ear); p.set(10, 4, '#1c1424');
+      p.set(1, 5, '#ffffff'); p.set(0, 6, '#ffffff'); p.set(3, 8, furD); p.set(8, 8, furD);
+    } else {
+      p.rect(2, 5, 6, 4, fur); p.hline(2, 7, 8, furD); p.rect(6, 3, 4, 4, fur);
+      p.vline(7, 0, 2, fur); p.vline(8, 0, 2, furD); p.set(7, 1, ear); p.set(9, 4, '#1c1424'); p.set(10, 5, '#f0a0a8');
+      p.set(1, 6, '#ffffff'); p.set(1, 7, '#ffffff');
+    }
     p.outline();
     return p.canvas();
   }
@@ -5340,7 +5378,7 @@
     // home
     S.truck = truck();
     S.coop = coop();
-    S.greenhouse = greenhouse();
+    S.bunnyHouse = bunnyHouse(); S.daisy = { sit: daisy(false), hop: daisy(true), sitL: mirror(daisy(false)), hopL: mirror(daisy(true)) };
     S.firewood = firewood();
     S.sawhorses = sawhorses();
     S.patio = patio();

@@ -1648,8 +1648,12 @@
     yield G.say(null, 'The chicken coop. Somebody has been laying eggs in there.');
     yield G.say('Nate', '...Hopefully not Father Eggmas.');
   };
-  S.homeGreenhouse = function* () {
-    yield G.say(null, 'The little greenhouse, packed with seedlings.');
+  // Daisy's house, in the corner of Mom's garden
+  S.daisyHouse = function* () {
+    yield G.say(null, 'Daisy\'s house: a little wooden bunny hutch with a white picket fence around it.');
+    yield G.say(null, 'Daisy is a boy. Everybody found that out after he was already named Daisy. It stuck.');
+    yield G.say(null, 'Inside, there\'s a blue blanket with a wet spot on it.');
+    yield G.say('Nate', 'I don\'t know how that thing is still alive.');
   };
   S.homeFirewood = function* () {
     yield G.say(null, 'A neat stack of split firewood. Dad did all of it by hand.');
@@ -4716,7 +4720,19 @@
       // behind it all: the picnic table and the garden
       w.addProp({ img: G.spr.picnicTable, tx: 29, ty: 24, solid: [29, 24, 2, 1], hit: [29, 24, 2, 1], talk: S.homePicnic });
       w.addProp({ img: G.spr.coop, tx: 28, ty: 16, h: 2, solid: [28, 16, 6, 2], hit: [28, 16, 6, 2], talk: S.homeCoop });
-      w.addProp({ img: G.spr.greenhouse, tx: 36, ty: 16, h: 2, solid: [36, 16, 3, 2], hit: [36, 16, 3, 2], talk: S.homeGreenhouse });
+      // Daisy's house (where the greenhouse used to be), and Daisy, hopping around his pen
+      w.addProp({ img: G.spr.bunnyHouse, tx: 36, ty: 16, h: 2, solid: [36, 16, 3, 2], hit: [36, 16, 3, 2], talk: S.daisyHouse });
+      w.props.push({
+        base: 18 * 16, hit: null,
+        draw(ctx, cx, cy) {
+          // sits a while, then hops; back and forth across the front of the pen
+          const PER = 80, ph = Math.floor(G.tick / PER), t = G.tick % PER, spots = [0, 4, 8, 11, 8, 4];
+          const from = spots[ph % spots.length], to = spots[(ph + 1) % spots.length], k = t < 56 ? 0 : (t - 56) / 24;
+          const x = 36 * 16 + 22 + from + (to - from) * k, z = Math.sin(k * Math.PI) * 4, left = to < from;
+          const img = G.spr.daisy[(k > 0 && k < 1 ? 'hop' : 'sit') + (left ? 'L' : '')];
+          ctx.drawImage(img, Math.round(x) - cx, Math.round(16 * 16 + 11 - z) - cy);
+        },
+      });
       w.addProp({ img: G.spr.mailbox, tx: 46, ty: 51, dx: 2, solid: [46, 51, 1, 1], hit: [46, 51, 1, 1], talk: S.homeMailbox });
       w.addProp({ img: G.spr.streetSign, tx: 40, ty: 51, solid: [40, 51, 1, 1], hit: [40, 51, 1, 1], talk: S.homeStreetSign });
       for (const x of [42, 45]) w.addProp({ img: G.spr.gatePost, tx: x, ty: 52, dx: 1, solid: [x, 52, 1, 1], hit: [x, 52, 1, 1], talk: S.homeGatepost });
