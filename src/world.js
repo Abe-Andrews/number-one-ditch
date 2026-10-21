@@ -34,7 +34,7 @@
     'g': { k: 'gravel', edge: true, group: 'gravel' },
     'p': { k: 'pavers' },
     'Y': { k: 'roadLine', edge: true, group: 'asphalt' },
-    'X': { k: 'rusticFence', solid: true },
+    'X': { k: 'rusticFence', solid: true, edge: true },
     'e': { k: 'raisedBed', solid: true },
     'F': { k: 'flowerBed', solid: true },
     'k': { k: 'fabric' },

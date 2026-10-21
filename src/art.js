@@ -1141,14 +1141,36 @@
       TILE_DRAW.asphalt(p, r, v, mask & ~1);
       p.rect(2, 0, 7, 1, '#f0c838'); p.rect(2, 1, 7, 1, '#d8a828');
     },
-    rusticFence(p, r) {
+    // Mom's garden fence. Along the top and bottom you see the X-braced panels; down the
+    // sides you look along the fence, so it's a rail with posts; corners and the ends at
+    // the gate get a post.
+    rusticFence(p, r, v, mask) {
       grassBase(p, r);
-      const wood = '#9a7a58', woodD = '#6a5038', wire = '#a8b0a0';
-      for (let y = 3; y < 14; y += 2) p.hline(0, 15, y, wire);
-      p.hline(0, 15, 2, OUT); p.hline(0, 15, 3, wood); p.hline(0, 15, 4, woodD);
-      p.hline(0, 15, 12, wood); p.hline(0, 15, 13, woodD);
-      for (let t = 0; t < 8; t++) { p.set(2 + t, 4 + t, wood); p.set(13 - t, 4 + t, wood); }
-      p.rect(0, 1, 2, 14, wood); p.vline(1, 1, 14, woodD);
+      const wood = '#9a7a58', woodD = '#6a5038', woodL = '#b8946a', wire = '#a8b0a0';
+      const L = !(mask & 8), R = !(mask & 2), U = !(mask & 1), D = !(mask & 4);
+      const horiz = L || R, vert = U || D;
+      if (vert) {
+        const y0 = U ? 0 : 7, y1 = D ? 15 : 9;
+        p.rect(6, y0, 4, y1 - y0 + 1, wood); p.vline(6, y0, y1, woodL); p.vline(9, y0, y1, woodD);
+        p.vline(5, y0, y1, OUT); p.vline(10, y0, y1, OUT);
+      }
+      if (horiz) {
+        const x0 = L ? 0 : 8, x1 = R ? 15 : 8;
+        for (let y = 5; y < 12; y += 2) p.hline(x0, x1, y, wire);
+        p.hline(x0, x1, 2, OUT); p.hline(x0, x1, 3, woodL); p.hline(x0, x1, 4, woodD);
+        p.hline(x0, x1, 11, wood); p.hline(x0, x1, 12, woodD); p.hline(x0, x1, 13, OUT);
+        if (L && R) {
+          for (let t = 0; t < 7; t++) { p.set(3 + t, 5 + t, wood); p.set(12 - t, 5 + t, wood); }
+          p.rect(0, 1, 2, 14, wood); p.vline(1, 1, 14, woodD); p.vline(0, 1, 14, woodL);
+        }
+      }
+      // a post wherever the fence turns, ends or runs along the side
+      if (!(horiz && L && R && !vert)) {
+        const top = vert && !horiz ? 5 : 1, bot = vert && !horiz ? 11 : 14;
+        p.rect(6, top, 4, bot - top + 1, wood); p.vline(6, top, bot, woodL); p.vline(9, top, bot, woodD);
+        p.hline(6, 9, top, woodL);
+        p.vline(5, top, bot, OUT); p.vline(10, top, bot, OUT); p.hline(5, 10, top - 1, OUT); p.hline(5, 10, bot + 1, OUT);
+      }
     },
     raisedBed(p, r) {
       p.rect(0, 0, 16, 16, '#7a5a3a');
