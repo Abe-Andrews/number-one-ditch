@@ -680,20 +680,22 @@
     return fromRows(toothRows, pal).canvas();
   }
 
+  // a pint of dulce de leche ice cream: maroon lid, caramel swirl band, the oval label, caramel cubes
+  const DOOSH_PAL = Object.assign({}, ICON_PAL, { K: '#9e3a56', M: '#7a1e38', m: '#561226', T: '#ecc898', O: '#d8842c', h: '#f6bc64' });
   const dooshRows = [
+    '.oooooooooo.',
+    'oKKKKKKKKKKo',
+    'oMMMMMMMMMMo',
+    'ommmmmmmmmmo',
+    '.oTTOTTOOTo.',
+    '.oOMMMMMMTo.',
+    '.oMWWWWWWMo.',
+    '.oTMMMMMMOo.',
+    '.oWWWWWWWWo.',
+    '..oWOhcWWo..',
+    '..oWccWWWo..',
+    '..oWWWWWWo..',
     '...oooooo...',
-    '..oWWLLLCo..',
-    '.oWLLLLLCCo.',
-    '.oLLLLdLCCo.',
-    '.odLLLLdCdo.',
-    '..oddddddo..',
-    '..oyyyyyyo..',
-    '..oyYyYyYo..',
-    '...oyyyyo...',
-    '...oYyYyo...',
-    '....oyyo....',
-    '....oYyo....',
-    '.....oo.....',
   ];
 
   function hammerSprites() {
@@ -5296,7 +5298,7 @@
     S.heart = { full: heartIcon('full'), half: heartIcon('half'), empty: heartIcon('empty') };
     S.tooth = toothIcon(false);
     S.toothGold = toothIcon(true);
-    S.doosh = fromRows(dooshRows, ICON_PAL).canvas();
+    S.doosh = fromRows(dooshRows, DOOSH_PAL).canvas();
     S.hammer = hammerSprites();
     S.six = sixFrames();
     S.chest = chestSprites();

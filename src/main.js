@@ -626,8 +626,8 @@
     pages: [
       { pic: 'ditch', text: 'Chesapeake, Virginia.' },
       { pic: 'ditch', text: 'Off a quiet road lies a ditch. But not just any ditch...' },
-      { pic: 'ditch', text: 'The {y}NUMBER ONE DITCH{/}. Google Maps says so. The best ditch in the whole world.' },
-      { pic: 'dark', text: 'But deep in the back of a thrift store, something stirred...' },
+      { pic: 'ditch', text: 'The {y}NUMBER ONE DITCH{/}. Apple Maps says so. The best ditch in the whole world.' },
+      { pic: 'dark', text: 'But deep in the Andrews\' basement, something stirred...' },
       { pic: 'eggmas', name: 'Father Eggmas', text: 'HO HO HO! The Number One Ditch shall be MINE!' },
       { pic: 'eggmas', name: 'Father Eggmas', text: 'I will turn it into... the Number {r}TWO{/} Ditch!', shake: true },
       { pic: 'black', text: 'Meanwhile, at Lafayette College in Easton, Pennsylvania...' },

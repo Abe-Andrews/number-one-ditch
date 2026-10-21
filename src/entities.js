@@ -463,7 +463,11 @@
       // (z: up in the air, e.g. Abe leaping out of a bush)
       ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2 - (this.z || 0)) - cy);
       if (can && this.dir !== 'up') this.drawCan(ctx, cx, cy);
-      else if (this.held && !can) ctx.drawImage(this.held, Math.round(this.x - this.held.width / 2) - cx, Math.round(this.y - S.h + 10) - cy);
+      else if (this.held && !can) {
+        // (heldAt: [dx, dy] to hold it off to one side, e.g. Mikey's bouquet, so it doesn't cover him)
+        const [hx, hy] = this.heldAt || [0, 0];
+        ctx.drawImage(this.held, Math.round(this.x - this.held.width / 2 + hx) - cx, Math.round(this.y - S.h + 10 + hy - (this.z || 0)) - cy);
+      }
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, Math.round(this.y - S.h - 10) - cy);
     }
 
@@ -1060,7 +1064,7 @@
       };
       back.forEach(balloon);
       ctx.drawImage(img, sx, sy);
-      ctx.drawImage(G.spr.bouquet, Math.round(this.x - G.spr.bouquet.width / 2) - cx, sy + 8);
+      ctx.drawImage(G.spr.bouquet, Math.round(this.x - G.spr.bouquet.width / 2 - 7) - cx, sy + 11);
       front.forEach(balloon);
       if (this.state === 'open') {
         ctx.fillStyle = '#78c8ff';

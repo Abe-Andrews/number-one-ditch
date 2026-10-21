@@ -3548,7 +3548,7 @@
     yield G.wait(60);
     yield G.banner('YOU WIN!', 'Lily said no.', 160);
     const mikey = w.add(new G.NPC({ sprite: 'mikey', name: 'Mikey', x: boss.x, y: boss.y, dir: 'left' }));
-    mikey.held = G.spr.bouquet;
+    mikey.held = G.spr.bouquet; mikey.heldAt = [-7, 3];
     boss.dead = true;
     yield G.say('Mikey', '...Was it the song?');
     yield G.say('Lily', 'It wasn\'t the song, Mikey. It was the balloons, the roadblock, AND the song.');
@@ -4721,7 +4721,7 @@
       // Once Lily is out of the fridge, walking by him starts his serenade.
       if (!flags().mikeyBeaten) {
         const mikey = w.add(new G.NPC({ sprite: 'mikey', name: 'Mikey', x: 41 * 16 + 8, y: 50 * 16 + 14, dir: 'down', talk: S.mikey, balloons: true }));
-        mikey.held = G.spr.bouquet;
+        mikey.held = G.spr.bouquet; mikey.heldAt = [-7, 3];
         w.mikey = mikey;
         if (!flags().lilySaved) w.addTrigger(38, 50, 10, 5, () => { if (!flags().mikeyMet) G.script.run(S.mikeyIntro()); });
         else w.addTrigger(35, 46, 15, 9, () => G.script.run(S.mikeyGoldenHour()));
