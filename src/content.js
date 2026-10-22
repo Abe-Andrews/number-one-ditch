@@ -6730,9 +6730,13 @@
     yield G.say('Nate', 'He was the size of a golf cart.');
     yield G.say('Abe', 'Huh. And why is he soaking wet?');
     yield G.say('Nate', '...');
-    yield G.say('Abe', 'Is that our BIDET?');
-    if (G.with('lily')) yield G.say('Lily', 'He\'s still scared of Nate, though.');
-    else yield G.say('Abe', 'You know what, I don\'t want to know.');
+    yield G.say('Abe', 'Is that my BIDET?');
+    // (Abe gave it to Nate for Christmas, then got jealous and took it back)
+    yield G.say('Nate', 'YOUR bidet? You gave it to me for Christmas!');
+    yield G.say('Abe', 'And then I tried it. And I got jealous. So I took it back.');
+    yield G.say('Nate', 'You took back a Christmas present.');
+    yield G.say('Abe', 'Have you USED it, Nate? You would have taken it back too.');
+    if (G.with('lily')) yield G.say('Lily', 'Romulus is still scared of Nate, though.');
     f.romulusBeaten = true;
     yield G.banner('YOU WIN!', 'who\'s a good boy', 150);
     G.play.autosave();
