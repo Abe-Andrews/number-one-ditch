@@ -91,6 +91,11 @@
       shirt: '#26304e', pattern: 'chestStripes', neckline: true, necklace: '#e8c060',
       pants: '#2a2e40', shoes: '#2a2a30', torso: 7, legs: 3,
     },
+    // Campus Safety, keeping everybody on campus during finals week
+    officer: {
+      skin: '#e0b090', hair: '#4a3a2a', hairStyle: 'cap', hat: '#1c2a4a', hatStyle: 'ball', patch: '#e8c060',
+      shirt: '#2a3a6a', pants: '#1c2440', shoes: '#1c1c22', torso: 7, legs: 4,
+    },
     vendor: {
       skin: '#e0aa80', hair: '#3a2418', hairStyle: 'cap', hat: '#ffffff', hatStyle: 'ball', smile: '#ffffff',
       shirt: '#f8f8f8', pants: '#5878b8', shoes: '#303030', torso: 7, legs: 3,
@@ -834,6 +839,16 @@
   // Abe's Rule #1 applies to on-screen counters too: 6 is shown as "5+1".
   G.sayable = (n) => (String(n).includes('6') ? (n - 1) + '+1' : String(n));
 
+  // Finals week: no leaving campus for College Hill until the Chem Final is done.
+  S.campusSafety = function* (walkedUp) {
+    const f = flags(), p = P();
+    if (walkedUp) p.dir = 'left';
+    yield G.say('Campus Safety', 'Whoa there. It\'s finals week. Nobody leaves campus until their exams are done.');
+    if (f.chemMet) yield G.say('Nate', 'I still have Dr. Moles\'s chem final...');
+    else yield G.say('Nate', '...What exams?');
+    yield G.say('Campus Safety', 'Chemistry final. Science Center. Pass it, and College Hill is all yours.');
+    if (walkedUp) yield G.walkTo(p, p.x + 16, p.y, 1.2);
+  };
   S.gus = function* () {
     const f = flags(), s = G.state;
     if (s.items.cap) {
@@ -4098,8 +4113,14 @@
       // Pardee Hall: the Department of EEENGLISH opens once El EEENGLISH has had his main event
       w.addBuilding(Object.assign({ x: 14, y: 2, w: 11, h: 5, door: 5, style: 'stone', wall: '#c8bc9c', roof: '#50607a', tower: true }, flags().dadBeaten ? { to: { map: 'pardee', x: 7, y: 9 } } : { locked: S.pardeeDoor }));
       w.addBuilding({ x: 29, y: 3, w: 9, h: 4, door: 4, style: 'modern', wall: '#d8c8a0', roof: '#6a4a40', to: { map: 'science', x: 7, y: 9 } });
-      // west, off the end of the main path: College Hill (Tom's Pizza, the grocery store)
-      w.addTrigger(0, 12, 1, 2, () => G.play.warp('collegeHill', 30, 6, 'left'));
+      // west, off the end of the main path: College Hill (Tom's Pizza, the grocery store).
+      // It's finals week: Campus Safety keeps Nate on campus until he's passed the Chem Final.
+      w.addTrigger(0, 12, 1, 2, () => G.play.warp('collegeHill', 30, 8, 'left'));
+      if (!flags().chemPassed) {
+        w.officer = w.add(new G.NPC({ sprite: 'officer', name: 'Campus Safety', x: 1 * 16 + 8, y: 12 * 16 + 14, dir: 'right', talk: S.campusSafety }));
+        w.blockTiles(0, 12, 1, 2);
+        w.addTrigger(2, 12, 1, 2, () => { if (!flags().chemPassed) G.script.run(S.campusSafety(true)); });
+      }
       w.add(new G.Sign(2, 11, 'WEST: College Hill. Shops, groceries, and {y}Tom\'s Pizza{/}.'));
       // Van Wickle Hall: the geology building (walk into the arched front door)
       w.addProp({ img: G.spr.vanWickle, tx: 26, ty: 17, h: 4 });
@@ -6264,8 +6285,9 @@
       for (const x of [1, 11, 21, 28]) w.addProp({ img: sp.lamppost, tx: x, ty: 6, dx: 2, solid: [x, 6, 1, 1] });
       w.add(new G.Sign(29, 10, ['COLLEGE HILL', 'EAST: back to campus.']));
       w.add(new G.Sign(17, 7, ['TOM\'S PIZZA', 'Our second location! (The first one is in Union, NJ.) Call ahead.']));
-      // back east to campus
-      w.addTrigger(31, 6, 1, 2, () => G.play.warp('campus', 1, 12, 'right'));
+      // the street runs east, back to campus (onto the main path)
+      w.addTrigger(31, 8, 1, 2, () => G.play.warp('campus', 1, 12, 'right'));
+      w.blockTiles(31, 6, 1, 2); w.blockTiles(31, 10, 1, 1);
     },
   };
 
