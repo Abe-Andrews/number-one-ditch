@@ -360,7 +360,7 @@
   // ---- the MAP page: where Nate has been, where he is, and where the quests are
   const PLACES = [
     { id: 'laf', name: 'LAFAYETTE', x: 30, y: 36, icon: 'college', key: 'Lafayette',
-      maps: [['lab', 'Nate\'s Lab'], ['campus', 'The Quad'], ['science', 'Science Center'], ['geology', 'Van Wickle Hall'], ['pardee', 'Pardee Hall'], ['toms', 'Tom\'s Pizza']] },
+      maps: [['lab', 'Nate\'s Lab'], ['campus', 'The Quad'], ['science', 'Science Center'], ['geology', 'Van Wickle Hall'], ['pardee', 'Pardee Hall'], ['collegeHill', 'College Hill'], ['toms', 'Tom\'s Pizza']] },
     { id: 'fair', name: 'EASTON FAIR', x: 98, y: 32, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
     { id: 'home', name: 'HOME', x: 44, y: 72, icon: 'house', key: 'Home',
       maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['north', 'The Frozen Pond']] },

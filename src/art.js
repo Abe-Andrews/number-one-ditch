@@ -5370,32 +5370,58 @@
   // Tom's second store (the first is in Union, NJ): a little storefront with a red, white
   // and green awning, and inside, the deck ovens, the hood, the mosaic counter with its
   // glass pizza case, stacks of boxes, and red-checkered tables.
-  function tomsPizza() {
+  // A College Hill storefront: flat roof, brick front, a sign, a striped scalloped awning,
+  // two big windows (what's in them depends on the shop) and a glass door.
+  function storefront(o) {
     const W = 96, H = 64, p = new Pix(W, H);
-    // flat roof and a brick front
     p.rect(0, 0, W, 10, '#5a5c64'); p.hline(0, W - 1, 0, '#7a7c84'); p.hline(0, W - 1, 9, '#3a3c44');
     for (let y = 10; y < H; y++) for (let x = 0; x < W; x++) {
       const row = Math.floor(y / 4), off = row % 2 ? 4 : 0;
-      p.set(x, y, y % 4 === 3 || (x + off) % 8 === 0 ? '#c8a088' : G.hash(Math.floor((x + off) / 8), row, 21) < 0.3 ? '#9a4432' : '#ac4e38');
+      p.set(x, y, y % 4 === 3 || (x + off) % 8 === 0 ? '#c8a088' : G.hash(Math.floor((x + off) / 8), row, o.seed || 21) < 0.3 ? shade(o.brick, -0.12) : o.brick);
     }
-    // the sign
-    p.rect(8, 12, 80, 13, '#f6f0e0'); p.rect(9, 13, 78, 11, '#c82828'); p.hline(9, 86, 13, '#e04040');
-    // the awning: red, white and green stripes, scalloped
-    for (let y = 27; y < 35; y++) for (let x = 2; x < W - 2; x++) p.set(x, y, ['#c82828', '#f6f4ee', '#2e8a3e'][Math.floor((x - 2) / 6) % 3]);
-    for (let x = 2; x < W - 2; x++) if ((x - 2) % 6 > 0 && (x - 2) % 6 < 5) p.set(x, 35, ['#c82828', '#f6f4ee', '#2e8a3e'][Math.floor((x - 2) / 6) % 3]);
-    p.hline(2, W - 3, 27, '#8a1c1c');
-    // the big front windows, with a pizza in each, and the glass door in the middle
+    p.rect(8, 12, 80, 13, '#f6f0e0'); p.rect(9, 13, 78, 11, o.signBg); p.hline(9, 86, 13, shade(o.signBg, 0.15));
+    const aw = o.awning;
+    for (let y = 27; y < 35; y++) for (let x = 2; x < W - 2; x++) p.set(x, y, aw[Math.floor((x - 2) / 6) % aw.length]);
+    for (let x = 2; x < W - 2; x++) if ((x - 2) % 6 > 0 && (x - 2) % 6 < 5) p.set(x, 35, aw[Math.floor((x - 2) / 6) % aw.length]);
+    p.hline(2, W - 3, 27, shade(aw[0], -0.35));
     for (const x0 of [6, 60]) {
-      p.rect(x0, 39, 30, 21, '#2a2a30'); p.rect(x0 + 2, 41, 26, 17, '#4a6a88'); p.set(x0 + 3, 42, '#a8c8e8'); p.set(x0 + 4, 42, '#a8c8e8');
-      for (let y = 0; y < 9; y++) for (let x = 0; x < 13; x++) if ((x - 6) ** 2 / 40 + (y - 4) ** 2 / 18 <= 1) p.set(x0 + 9 + x, 47 + y, (x + y) % 5 === 0 ? '#c83828' : '#f0c050');
+      p.rect(x0, 39, 30, 21, '#2a2a30'); p.rect(x0 + 2, 41, 26, 17, o.lease ? '#3a4048' : '#4a6a88'); p.set(x0 + 3, 42, '#a8c8e8'); p.set(x0 + 4, 42, '#a8c8e8');
+      if (o.window) o.window(p, x0);
     }
-    p.rect(40, 38, 16, 26, '#2a2a30'); p.rect(42, 40, 12, 24, '#6a8aa8'); p.vline(47, 40, 63, '#2a2a30'); p.set(52, 52, '#d8b050');
-    p.rect(42, 46, 12, 4, '#f6f0e0'); p.hline(43, 52, 47, '#2e8a3e'); p.hline(43, 52, 48, '#c82828');
+    p.rect(40, 38, 16, 26, '#2a2a30'); p.rect(42, 40, 12, 24, o.lease ? '#4a5058' : '#6a8aa8'); p.vline(47, 40, 63, '#2a2a30'); p.set(52, 52, '#d8b050');
+    if (o.door) o.door(p);
     p.outline();
     const cv = p.canvas(), x = cv.getContext('2d');
-    const label = 'TOM\'S PIZZA', tw = G.font.width(label);
-    G.font.draw(x, label, Math.round((W - tw) / 2), 15, '#fff4c0', { shadow: '#5a0c0c' });
+    if (o.sign) { const tw = G.font.width(o.sign); G.font.draw(x, o.sign, Math.round((W - tw) / 2), 15, o.signText || '#fff4c0', { shadow: shade(o.signBg, -0.55) }); }
     return cv;
+  }
+  function tomsPizza() {
+    return storefront({
+      sign: 'TOM\'S PIZZA', signBg: '#c82828', brick: '#ac4e38', awning: ['#c82828', '#f6f4ee', '#2e8a3e'],
+      window: (p, x0) => { for (let y = 0; y < 9; y++) for (let x = 0; x < 13; x++) if ((x - 6) ** 2 / 40 + (y - 4) ** 2 / 18 <= 1) p.set(x0 + 9 + x, 47 + y, (x + y) % 5 === 0 ? '#c83828' : '#f0c050'); },
+      door: (p) => { p.rect(42, 46, 12, 4, '#f6f0e0'); p.hline(43, 52, 47, '#2e8a3e'); p.hline(43, 52, 48, '#c82828'); },
+    });
+  }
+  // the grocery store: green awning, crates of produce in the windows
+  function groceryStore() {
+    return storefront({
+      sign: 'GROCERY', signBg: '#2e7a3e', brick: '#b8805a', seed: 23, awning: ['#2e8a3e', '#f6f4ee'],
+      window: (p, x0) => {
+        for (const [cx, cols] of [[x0 + 4, ['#d83030', '#e84848']], [x0 + 12, ['#f0a020', '#f8c040']], [x0 + 20, ['#58a838', '#78c848']]]) {
+          p.rect(cx, 52, 7, 5, '#a87848'); p.hline(cx, cx + 6, 52, '#c89868');
+          for (let i = 0; i < 5; i++) p.set(cx + 1 + i, 50 + (i % 2), cols[i % 2]);
+          p.hline(cx + 1, cx + 5, 51, cols[0]);
+        }
+      },
+      door: (p) => { p.rect(43, 45, 10, 5, '#f6f0e0'); p.hline(44, 51, 47, '#2e7a3e'); },
+    });
+  }
+  // an empty shop, waiting for a tenant
+  function forLeaseShop() {
+    return storefront({
+      sign: '', signBg: '#6a6c74', brick: '#9a6a52', seed: 25, awning: ['#7a7c84', '#a8aab0'], lease: true,
+      window: (p, x0) => { p.rect(x0 + 8, 44, 14, 9, '#f6f4ee'); p.hline(x0 + 10, x0 + 19, 46, '#c82828'); p.hline(x0 + 10, x0 + 17, 48, '#3a3a40'); p.hline(x0 + 10, x0 + 18, 50, '#3a3a40'); },
+    });
   }
   // stainless deck ovens, stacked two high
   function deckOven() {
@@ -5641,7 +5667,7 @@
     S.chalkboard = chalkboard(); S.chalkboardEng = chalkboard('EEENGLISH 101');
     S.chalkboardGeo = chalkboard('CRYSTALS!');
     // Tom's Pizza
-    S.tomsPizza = tomsPizza(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
+    S.tomsPizza = tomsPizza(); S.groceryStore = groceryStore(); S.forLeaseShop = forLeaseShop(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
     S.pizzaBoxes = pizzaBoxes(); S.checkTable = checkTable(); S.dadTomPicture = dadTomPicture();
     // Abe and Hannah's condo
     S.condo = condoBuilding(); S.brickStep = brickStep();

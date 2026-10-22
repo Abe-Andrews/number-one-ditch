@@ -3004,6 +3004,7 @@
     { name: 'Nate\'s lab', map: 'lab', at: [3, 4, 'down'] },
     { name: 'Lafayette campus', map: 'campus', at: [20, 10, 'down'] },
     { name: 'Science Center', map: 'science', at: [7, 8, 'up'] },
+    { name: 'College Hill', map: 'collegeHill', at: [16, 7, 'up'] },
     { name: 'Tom\'s Pizza', map: 'toms', at: [6, 8, 'up'] },
     { name: 'Pardee Hall (EEENGLISH)', map: 'pardee', at: [7, 8, 'up'] },
     { name: 'Van Wickle Hall (geology)', map: 'geology', at: [10, 12, 'up'] },
@@ -4002,7 +4003,7 @@
   G.MAPS = {};
 
   // where Sixes appear on the campus lawns (first 7 at load, the rest for respawns)
-  const SIX_SPOTS = [[23, 17], [31, 23], [36, 25], [30, 25], [10, 22], [10, 24], [15, 26], [33, 24], [12, 21], [27, 26]];
+  const SIX_SPOTS = [[23, 17], [31, 23], [36, 25], [30, 25], [6, 22], [10, 24], [15, 26], [33, 24], [12, 21], [27, 26]];
 
   G.MAPS.lab = {
     name: 'Nate\'s Lab',
@@ -4060,7 +4061,7 @@
       const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
       for (let i = 0; i < 90; i++) set(Math.floor(G.hash(i, 5) * W), Math.floor(G.hash(i, 6) * H), ',');
       // paths (the main path runs off the east edge toward the fairgrounds)
-      fill(2, 12, 38, 2, '=');
+      fill(0, 12, 40, 2, '='); // (off the west edge to College Hill, off the east toward the fairgrounds)
       fill(19, 14, 2, 16, '=');
       fill(6, 7, 1, 5, '=');
       fill(19, 7, 1, 5, '=');
@@ -4071,8 +4072,7 @@
       // tall grass
       fill(32, 22, 4, 3, '"');
       fill(33, 25, 3, 2, '"');
-      // Tom's Pizza (x 2-7, y 22-25), with a little brick walk out front
-      fill(5, 26, 1, 1, 'p');
+      fill(4, 23, 4, 3, '"');
       fill(11, 25, 3, 2, '"');
       // bushes
       [[17, 15], [17, 17], [17, 19], [23, 18], [23, 20], [11, 9], [12, 9], [25, 9], [26, 9], [28, 23], [29, 23], [15, 23], [16, 23]]
@@ -4083,7 +4083,7 @@
       fill(34, 20, 4, 2, 'g');
       // tree border with a gap for the south road
       for (let x = 0; x < W; x += 2) { set(x, 0, 'T'); if (x < 18 || x > 20) set(x, 28, 'T'); }
-      for (let y = 2; y < 28; y += 2) { set(0, y, 'T'); if (y !== 12) set(38, y, 'T'); }
+      for (let y = 2; y < 28; y += 2) { if (y !== 12) { set(0, y, 'T'); set(38, y, 'T'); } }
       // scattered trees
       [[3, 16], [4, 20], [24, 23], [34, 17], [13, 22]].forEach(([x, y]) => set(x, y, 'T'));
       return g.map((r) => r.join(''));
@@ -4093,12 +4093,9 @@
       // Pardee Hall: the Department of EEENGLISH opens once El EEENGLISH has had his main event
       w.addBuilding(Object.assign({ x: 14, y: 2, w: 11, h: 5, door: 5, style: 'stone', wall: '#c8bc9c', roof: '#50607a', tower: true }, flags().dadBeaten ? { to: { map: 'pardee', x: 7, y: 9 } } : { locked: S.pardeeDoor }));
       w.addBuilding({ x: 29, y: 3, w: 9, h: 4, door: 4, style: 'modern', wall: '#d8c8a0', roof: '#6a4a40', to: { map: 'science', x: 7, y: 9 } });
-      // Tom's Pizza: Tom's second store (the first one's in Union, NJ)
-      w.addProp({ img: G.spr.tomsPizza, tx: 2, ty: 22, h: 4 });
-      w.blockTiles(2, 22, 6, 4);
-      w.block[25 * w.w + 5] = 0;
-      w.addWarp(5, 25, 1, 1, 'toms', 6, 8, 'up');
-      w.add(new G.Sign(8, 26, ['TOM\'S PIZZA', 'Our second location! (The first one is in Union, NJ.) Call ahead.']));
+      // west, off the end of the main path: College Hill (Tom's Pizza, the grocery store)
+      w.addTrigger(0, 12, 1, 2, () => G.play.warp('collegeHill', 30, 6, 'left'));
+      w.add(new G.Sign(2, 11, 'WEST: College Hill. Shops, groceries, and {y}Tom\'s Pizza{/}.'));
       // Van Wickle Hall: the geology building (walk into the arched front door)
       w.addProp({ img: G.spr.vanWickle, tx: 26, ty: 17, h: 4 });
       w.blockTiles(26, 17, 8, 4);
@@ -6212,14 +6209,14 @@
       f.tomMet = true;
       yield G.say('Tom', 'TOM\'S PIZZA!');
       yield G.say('Nate', '...Tom? From Union? What are you doing in Easton?');
-      yield G.say('Tom', 'I just opened my second store! Right here at Lafayette!');
-      yield G.say('Tom', 'Union, and now Lafayette. Two Tom\'s Pizzas.');
+      yield G.say('Tom', 'I just opened my second store! Right here on College Hill, by Lafayette!');
+      yield G.say('Tom', 'Union, and now College Hill. Two Tom\'s Pizzas.');
       yield G.say('Nate', 'Dad is going to lose his mind.');
       yield G.say('Tom', 'Your father! Tell him I said hello. His picture is on the wall over there.');
       return;
     }
     f.tomLine = ((f.tomLine || 0) + 1) % 3;
-    yield G.say('Tom', ['TOM\'S PIZZA!', 'Two stores! Union and Lafayette. You tell everybody.', 'Next time, call ahead. I like to answer the phone.'][f.tomLine]);
+    yield G.say('Tom', ['TOM\'S PIZZA!', 'Two stores! Union and College Hill. You tell everybody.', 'Next time, call ahead. I like to answer the phone.'][f.tomLine]);
   };
   // the framed photo of Dad and Tom on the wall
   S.tomPhoto = function* () {
@@ -6229,6 +6226,42 @@
     G.audio.sfx('blip');
     yield G.wait(14);
     yield* S.photoGive('dadAndTom');
+  };
+
+  // College Hill: a little street of shops just west of campus. Tom's Pizza in the middle,
+  // the grocery store (set up for a joke later; locked for now) and an empty shop for lease.
+  G.MAPS.collegeHill = {
+    name: 'College Hill',
+    music: 'field',
+    tiles() {
+      const W = 32, H = 14;
+      const g = Array.from({ length: H }, () => Array(W).fill('.'));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
+      for (let x = 0; x < W; x += 2) set(x, 0, 'T');   // trees behind the shops
+      fill(0, 6, W, 2, 'C');                           // the sidewalk in front of the shops
+      fill(0, 8, W, 1, 'a'); fill(0, 9, W, 1, 'Y');   // the street (two lanes)
+      fill(0, 10, W, 1, 'C');                          // the far sidewalk
+      for (let x = 1; x < W; x += 4) set(x, 12, 'T');  // trees across the street
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr;
+      // the shops (doors at x + 3): the grocery store, Tom's Pizza, an empty one
+      const shop = (img, x) => { w.addProp({ img, tx: x, ty: 2, h: 4 }); w.blockTiles(x, 2, 6, 4); };
+      shop(sp.groceryStore, 3); shop(sp.tomsPizza, 13); shop(sp.forLeaseShop, 23);
+      w.block[5 * w.w + 16] = 0;
+      w.addWarp(16, 5, 1, 1, 'toms', 6, 8, 'up');
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [6 * 16, 5 * 16, 7 * 16, 6 * 16], talk: look('The grocery store. The doors are locked. A sign on the glass says BACK SOON.') });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [26 * 16, 5 * 16, 27 * 16, 6 * 16], talk: look('An empty shop. FOR LEASE. Somebody should open a rock shop.') });
+      for (const x of [10, 20]) w.addTree(x, 3);
+      // lampposts along the sidewalk
+      for (const x of [1, 11, 21, 28]) w.addProp({ img: sp.lamppost, tx: x, ty: 6, dx: 2, solid: [x, 6, 1, 1] });
+      w.add(new G.Sign(29, 10, ['COLLEGE HILL', 'EAST: back to campus.']));
+      w.add(new G.Sign(17, 7, ['TOM\'S PIZZA', 'Our second location! (The first one is in Union, NJ.) Call ahead.']));
+      // back east to campus
+      w.addTrigger(31, 6, 1, 2, () => G.play.warp('campus', 1, 12, 'right'));
+    },
   };
 
   G.MAPS.toms = {
@@ -6259,7 +6292,7 @@
       F.stand(sp.checkTable, 2, 7, 2, look('A little table with a red-checkered tablecloth. The parmesan shaker is full. A miracle.'));
       F.stand(sp.checkTable, 9, 6, 2, look('Another red-checkered table, by the window.'));
       F.stand(sp.pizzaBoxes, 11, 3, 1, look('More pizza boxes. Tom is ready for a rush.'));
-      w.addWarp(6, 9, 1, 1, 'campus', 5, 26, 'down');
+      w.addWarp(6, 9, 1, 1, 'collegeHill', 16, 6, 'down');
     },
   };
 
