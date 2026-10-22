@@ -2561,6 +2561,11 @@
     // Right after he gets back up he's watching for the hook, so it slides off.
     onHook(p) {
       if (this.state === 'defeated' || this.state === 'yank' || this.state === 'reeled') return false;
+      // the hook only catches him while his screen is down: sifting, or dizzy after a charge
+      if (this.state !== 'sift' && this.state !== 'dizzy') {
+        if (G.tick - (this.clangT || -99) > 30) { this.clangT = G.tick; this.world.pop(this.x, this.y - 34, 'CLANG!', '#c8c8d0'); }
+        return false;
+      }
       if (this.hookCool > 0) {
         if (G.tick - (this.dodgeT || -99) > 30) { this.dodgeT = G.tick; this.world.pop(this.x, this.y - 34, 'NOT AGAIN!', '#78e8e8'); }
         return false;
@@ -2713,7 +2718,7 @@
       ctx.drawImage(img, sx, sy);
       // the sifting screen: shaken during a sift, dropped when reeled in, otherwise held up as a shield
       if (this.state === 'sift') ctx.drawImage(G.spr.sifter, sx - 1 + ((this.t >> 1) & 1 ? 1 : -1), sy + S.h - 15);
-      else if (this.open || this.state === 'yank') ctx.drawImage(G.spr.sifter, sx + 12, sy + S.h - 8);
+      else if (this.open || this.state === 'yank' || this.state === 'dizzy') ctx.drawImage(G.spr.sifter, sx + 12, sy + S.h - 8);
       else if (this.dir !== 'up') ctx.drawImage(G.spr.sifter, sx - 1 + (this.dir === 'left' ? -5 : this.dir === 'right' ? 5 : 0), sy + S.h - 17);
       if (this.state === 'dizzy' || this.open) {
         ctx.fillStyle = '#d040f0';

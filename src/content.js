@@ -282,6 +282,10 @@
       kind: 'key', name: '"Being a Wonderful Pastor\'s Wife"', short: 'The Bait', icon: () => G.spr.pastorBook, has: () => !!st().items.bait,
       desc: 'A gift to Mom from the church ladies. Mom has been waiting YEARS to get rid of it. Bait for whatever eats books.',
     },
+    sifter: {
+      kind: 'key', name: 'Tyler\'s Sifter', icon: () => G.spr.sifter, has: () => !!st().items.sifter || !!fl().tylerBeaten,
+      desc: 'Tyler\'s sifting screen, for shark teeth at the Number One Ditch. He\'s done sifting forever. Shake gravel through it to find the small stuff.',
+    },
     earplugs: {
       kind: 'key', name: 'Earplugs', icon: () => G.spr.earplugs, has: () => !!st().items.earplugs,
       desc: 'Cotton balls rolled in Lily\'s vanilla candle wax. A song can\'t get stuck in your head if you can\'t hear it.',
@@ -305,7 +309,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma'];
+  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'sifter'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -2715,7 +2719,7 @@
     // Bedminster (home)
     { id: 'shale', area: 'bedminster', name: 'Passaic Red Shale', r: 0, crush: { teeth: 5 }, how: 'Red rock out on the little island in Brady Brook. If only the water would hold still.', fact: 'Red mud from the Newark Basin, Triassic and Jurassic. Dinosaurs left footprints in mud like this all over New Jersey.' },
     { id: 'basalt', area: 'bedminster', name: 'Watchung Basalt', r: 1, crush: { teeth: 15 }, how: 'The big black boulder by Brady Brook is way too heavy for Nate. Doron, though...', fact: 'Jurassic lava flows that built the Watchung Mountains just east of Bedminster.' },
-    { id: 'prehnite', area: 'bedminster', name: 'Prehnite', r: 2, crush: { heart: 1 }, how: 'Try sifting the gravel in Brady Brook.', fact: 'Pale green crystals that grow in the gas bubbles of New Jersey basalt. Mindat lists prehnite in Bedminster Township.' },
+    { id: 'prehnite', area: 'bedminster', name: 'Prehnite', r: 2, crush: { heart: 1 }, how: 'The gravel bar in Brady Brook. You\'d need a sifting screen.', fact: 'Pale green crystals that grow in the gas bubbles of New Jersey basalt. Mindat lists prehnite in Bedminster Township.' },
   ];
   G.rockById = (id) => G.ROCKS.find((r) => r.id === id);
   G.ROCK_AREAS = [
@@ -2864,10 +2868,15 @@
   S.brookSift = function* () {
     const w = G.play.world, f = flags();
     if (w.sifted) { yield G.say('Nate', 'I\'ve sifted this gravel bar down to sand. The brook will bring more.'); return; }
+    if (!G.itemHas('sifter')) {
+      yield G.say(null, 'A gravel bar in Brady Brook: red shale, black basalt, a little quartz.');
+      yield G.say('Nate', 'Anything good in here is too small to pick out by hand. I need a sifting screen.');
+      return;
+    }
     const c = yield G.ask(null, 'A gravel bar in Brady Brook: red shale, black basalt, a little quartz.', ['Sift through it', 'Leave it']);
     if (c) return;
     w.sifted = true;
-    yield G.say(null, 'Nate kneels at the edge of the brook and sifts through handfuls of cold, wet gravel...');
+    yield G.say(null, 'Nate shakes scoop after scoop of cold, wet gravel through Tyler\'s sifter...');
     G.audio.sfx('slip');
     yield G.wait(30);
     f.siftTries = (f.siftTries || 0) + 1;
@@ -3063,6 +3072,7 @@
     s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40;
     f.signal_peace = true; f.signal_icy = true; f.signal_jlc = true; f.doronDeal = true; f.hadDoosh = true; f.capHeart = true;
     s.photos = {}; for (const ph of G.PHOTOS) s.photos[ph.id] = 1;
+    s.items.sifter = true;
   };
 
   // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)
@@ -5328,7 +5338,8 @@
     if (!f.tylerTutorial) {
       f.tylerTutorial = true;
       yield G.say(null, 'Tyler blocks everything with his {y}sifting screen{/}. Hook him with the {y}Surf Rod{/} (X) to reel him in, then let him have it.');
-      yield G.say(null, 'Watch the road: a {y}dark swirl{/} means something is coming up from below. When he yells {y}HERE I COME{/}, he charges, and he\'s dizzy afterward. Easy to hook.');
+      yield G.say(null, 'The hook only catches him when his {y}screen is down{/}: while he\'s sifting, or while he\'s dizzy after a charge (he yells {y}HERE I COME{/} first).');
+      yield G.say(null, 'Watch the road: a {y}dark swirl{/} means something is coming up from below.');
     }
     // the fight takes the end of the tunnel: closed off above and below
     h.dead = true;
@@ -5391,6 +5402,10 @@
       yield G.say('Tyler', 'Perfectly good shark teeth. Into the BAY. I feel terrible. Those were GOOD teeth, Nate.');
       if (lost > 300) yield G.say('Nate', 'Somewhere down there, a crab is very rich.');
     }
+    yield G.say('Tyler', 'And take my sifter. I am never sifting anything ever again.');
+    G.state.items.sifter = true;
+    yield G.itemGet(G.spr.sifter, 'You got {y}Tyler\'s Sifter{/}! Shake gravel through it to find the small stuff.');
+    yield G.say('Nate', 'There\'s a gravel bar in Brady Brook back home...');
     yield G.say('Tyler', 'Last thing I remember, I was hunting shark teeth at the Number One Ditch. Best ditch in the world.');
     yield G.say('Tyler', 'Then a little egg in a paisley suit walked up and said, "Nate has your mosasaur tooth." And everything went swirly.');
     yield G.say('Nate', 'Father Eggmas is AT the Number One Ditch.');
