@@ -189,6 +189,8 @@ G.audio = (function () {
     bell: (t) => { [0, 0.18, 0.36].forEach((d) => { tone(1568, t + d, 0.3, 'triangle', 0.14); tone(2349, t + d, 0.2, 'sine', 0.06); }); },
     woof: (t) => { tone(240, t, 0.16, 'sawtooth', 0.13, sfxBus, 130); noise(t, 0.1, 0.22, sfxBus, 900); },
     yelp: (t) => { tone(900, t, 0.08, 'square', 0.08, sfxBus, 1500); tone(1400, t + 0.09, 0.14, 'square', 0.07, sfxBus, 800); },
+    whine: (t) => { tone(820, t, 0.22, 'triangle', 0.07, sfxBus, 1180); tone(1180, t + 0.22, 0.16, 'triangle', 0.05, sfxBus, 760); },
+    spray: (t) => noise(t, 0.16, 0.1, sfxBus, 5200),
     honk: (t) => { [0, 0.28].forEach((d) => { tone(370, t + d, 0.2, 'square', 0.07); tone(466, t + d, 0.2, 'square', 0.06); }); },
   };
 

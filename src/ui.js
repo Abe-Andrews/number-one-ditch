@@ -59,6 +59,12 @@
         // the chicken needs a moment between eggs
         const cool = s.xItem === 'chicken' && G.play.eggCool > 0 ? G.play.eggCool / 40 : 0;
         if (cool) { ctx.fillStyle = 'rgba(12,8,20,0.6)'; ctx.fillRect(G.W - 50, 7 + Math.round(18 * (1 - cool)), 18, Math.round(18 * cool)); }
+        // the bidet's water level, down the right side of its box (red when it's nearly dry)
+        if (s.xItem === 'bidet') {
+          const k = G.bidetWater() / G.BIDET_MAX, hh = Math.round(16 * k);
+          ctx.fillStyle = '#1c2a3a'; ctx.fillRect(G.W - 34, 8, 2, 16);
+          ctx.fillStyle = k > 0.25 ? '#5aa8e8' : '#f86858'; ctx.fillRect(G.W - 34, 24 - hh, 2, hh);
+        }
         itemBox(ctx, G.W - 27, 5, 'Z', s.items.hammer ? G.ITEMS.hammer.icon() : null);
       }
       if (s.admin) F().draw(ctx, s.god ? 'ADMIN (INVINCIBLE)' : 'ADMIN', 5, 15 + Math.floor((s.maxHp / 2 - 1) / 10) * 8, '#ff98d0', { shadow: SH });

@@ -286,6 +286,8 @@
         this.eggCool = 40;
         p.chickenT = 20;
         G.audio.sfx('bawk');
+      } else if (s.xItem === 'bidet') {
+        this.bidetStart();
       } else if (s.xItem === 'sifter') {
         // scoop and shake: a gravel spot in front of Nate gives up its find, anywhere else it's just dirt
         const w = this.world, p = this.player, [dx, dy] = G.DIRS[p.dir];
@@ -312,6 +314,48 @@
       } else {
         G.audio.sfx('bump');
       }
+    },
+
+    // The Portable Bidet: hold X to spray (a tank holds G.BIDET_MAX frames of it). Facing
+    // water, X refills it instead. Anything with onSpray() gets called every frame it's wet.
+    bidetStart() {
+      const s = G.state, p = this.player, w = this.world, [dx, dy] = G.DIRS[p.dir];
+      const fx = p.x + dx * 14, fy = p.y - 4 + dy * 14, d = G.TILE_DEFS[w.tileAt(Math.floor(fx / 16), Math.floor(fy / 16))];
+      if (d && ['water', 'bay', 'iceHole'].includes(d.k)) {
+        if (G.bidetWater() >= G.BIDET_MAX) { w.pop(p.x, p.y - 30, 'It\'s already full.', '#a8d8ff'); return; }
+        s.items.bidetWater = G.BIDET_MAX;
+        G.audio.sfx('gulp');
+        w.pop(p.x, p.y - 30, '*glug glug glug*', '#a8d8ff');
+        w.burst(fx, fy, ['#5aa8e8', '#a8d8ff', '#ffffff'], 8, { speed: 1, up: 1, g: 0.1, life: 18, size: 2 });
+        return;
+      }
+      if (G.bidetWater() <= 0) { G.audio.sfx('bump'); this.bidetEmpty(); return; }
+      this.spraying = true;
+    },
+    bidetTick() {
+      if (!this.spraying) return;
+      const s = G.state, p = this.player, w = this.world;
+      if (!G.input.down('b') || G.script.busy || p.state !== 'walk' || s.xItem !== 'bidet') { this.spraying = false; return; }
+      s.items.bidetWater = G.bidetWater() - 1;
+      if (G.tick % 10 === 0) G.audio.sfx('spray');
+      // the stream goes out the way Nate faces until it hits something solid (it carries over water)
+      const [dx, dy] = G.DIRS[p.dir], x0 = p.x + dx * 8, y0 = p.y - 8 + dy * 6;
+      let len = 8;
+      while (len < 72) {
+        const d = G.TILE_DEFS[w.tileAt(Math.floor((x0 + dx * len) / 16), Math.floor((y0 + 6 + dy * len) / 16))];
+        if (d && d.solid && !['water', 'bay'].includes(d.k)) break;
+        len += 4;
+      }
+      this.sprayLen = len;
+      const x1 = x0 + dx * len, y1 = y0 + dy * len, r = [Math.min(x0, x1) - 4, Math.min(y0, y1) - 6, Math.max(x0, x1) + 4, Math.max(y0, y1) + 10];
+      for (const e of w.ents) if (e.onSpray && !e.dead && G.overlap(r, e.hurtBox ? e.hurtBox() : e.box())) e.onSpray(p);
+      if (G.tick % 3 === 0) w.burst(x1, y1 + 4, ['#a8d8ff', '#ffffff'], 1, { speed: 0.6, up: 0.6, g: 0.1, life: 12, size: 1 });
+      if (G.bidetWater() <= 0) { this.spraying = false; this.bidetEmpty(); }
+    },
+    bidetEmpty() {
+      const p = this.player;
+      this.world.pop(p.x, p.y - 30, 'EMPTY!', '#a8d8ff');
+      if (!G.state.flags.bidetEmptyHint) { G.state.flags.bidetEmptyHint = true; G.script.run(G.SCRIPTS.bidetEmpty()); }
     },
 
     addTeeth(n) {
@@ -407,6 +451,7 @@
 
       G.script.update();
       this.world.update();
+      this.bidetTick();
 
       // remember Nate's footsteps for the party to follow
       const pl = this.player, t0 = this.trail[0];

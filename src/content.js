@@ -93,6 +93,10 @@
     },
     // Campus Safety, keeping everybody on campus during finals week
     // the toll collector at the Eastern Shore end of the Bay Bridge-Tunnel
+    // golfers on the course behind the condos (not thrilled about a giant dog on the fairway)
+    golferA: { skin: '#f0c8a8', hair: '#6a4a30', hairStyle: 'cap', hat: '#f4f4f0', hatStyle: 'ball', patch: '#2a5a9a', shirt: '#e8c838', collar: '#f8e070', pants: '#c8b48a', shoes: '#f4f4f0', torso: 7, legs: 4 },
+    golferB: { skin: '#c88a64', hair: '#2a1c18', hairStyle: 'cap', hat: '#2a4a8a', hatStyle: 'ball', shirt: '#e86a8a', collar: '#f8a0b8', pants: '#3a4a6a', shoes: '#f4f4f0', torso: 7, legs: 4 },
+    golferC: { skin: '#e8b898', hair: '#d0d0d4', hairStyle: 'short', shirt: '#5aa86a', collar: '#8ad89a', pants: '#f0ece0', shoes: '#3a3028', torso: 7, legs: 4 },
     tollWorker: {
       skin: '#c88a64', hair: '#2a1c18', hairStyle: 'long', shirt: '#c8e830', collar: '#f0c020',
       pants: '#2a2e40', shoes: '#2a2a30', torso: 6, legs: 3,
@@ -215,7 +219,10 @@
         return 'Hand-carved by Dad. Press X and puff a song.';
       },
     },
-    bidet: { kind: 'gear', name: 'Portable Bidet', icon: () => null, desc: '', has: () => !!st().items.bidet },
+    bidet: {
+      kind: 'gear', equip: true, name: 'Portable Bidet', short: 'Bidet', icon: () => G.spr.bidetIcon, has: () => !!st().items.bidet,
+      desc: 'From under the sink in Abe and Hannah\'s downstairs bathroom. Hold X to spray. It runs dry fast: face any water and press X to fill it back up.',
+    },
     bass: {
       kind: 'gear', equip: true, name: 'Half-Finished Bass', short: 'Bass', icon: () => G.spr.bassIcon, has: () => !!st().items.bass,
       desc: 'Nate\'s homemade bass: walnut body, maple neck, no strings. Press X to swing it in a huge arc. Hits twice as hard as the hammer.',
@@ -297,8 +304,10 @@
     },
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
-  // (the Portable Bidet gets a slot once there's a way to find it)
-  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bass', 'chicken', 'rod', 'sifter', null, null, null, null];
+  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bass', 'chicken', 'rod', 'sifter', 'bidet', null, null, null];
+  // how much spray the Portable Bidet holds (frames of holding X), and how much is in it
+  G.BIDET_MAX = 150;
+  G.bidetWater = () => { const v = st().items.bidetWater; return v == null ? G.BIDET_MAX : v; };
 
   // ================================================================ SMOKE SIGNALS (Dad's pipe)
   // Like ocarina songs: learn a sequence, puff it with the pipe, something
@@ -3041,7 +3050,7 @@
     { name: 'The Two-Liter (Chesapeake Channel Tunnel)', map: 'chesTunnel', at: [7, 26, 'up'], flags: { cbbtArrived: true, tollMet: true, chesSeen: true }, items: { rod: true } },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
     { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [55, 1, 'down'], flags: { tylerBeaten: true } },
-    { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { condoArrived: true, condoScare: true, romulusMet: true } },
+    { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { condoArrived: true, condoScare: true, romulusMet: true }, items: { bidet: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -6558,6 +6567,22 @@
   // Abe and Hannah's border collie (from the user's photos: black and white, a white blaze,
   // his red plaid bandana with the green tag). He isn't scared of anybody. Except Nate,
   // for no reason anyone can figure out (this really happened).
+  // The downstairs bathroom sink: there's a portable bidet in the cabinet under it.
+  S.condoSink = function* () {
+    const s = G.state;
+    if (s.items.bidet) { yield G.say(null, 'A long vanity under a big mirror and a light box. The cabinet under the sink has a bidet-shaped empty spot.'); return; }
+    yield G.say(null, 'A long vanity under a big mirror and a light box.');
+    yield G.say(null, 'Something is rattling around in the cabinet under the sink...');
+    G.audio.sfx('chest');
+    s.items.bidet = true; s.items.bidetWater = G.BIDET_MAX;
+    yield G.itemGet(G.spr.bidetIcon, 'You got the {y}Portable Bidet{/}!');
+    yield G.say(null, 'Nate gives it a careful sniff, to see if it\'s been used.');
+    yield G.say('Nate', '*sniff sniff*');
+    yield G.say('Nate', '...Inconclusive.');
+    yield G.say('Nate', 'It\'s coming with me anyway.');
+    yield G.say(null, 'Set it to X in ITEMS, then hold X to spray. Face any water and press X to fill it back up.');
+  };
+
   S.romulusMeet = function* () {
     const f = flags(), w = G.play.world, p = P(), r = w.romulus, abe = w.abe;
     if (f.romulusMet || !r) return;
@@ -6619,10 +6644,11 @@
   // (Not connected to anything yet. The user is deciding how Nate gets out here; for now it's
   // an admin checkpoint and an admin place. The strip of woods between the condo's yard and the
   // course is where the way through will go: see the TODO in G.MAPS.condo.)
+  // Romulus hates water (he really does), so the way to beat him is the Portable Bidet from
+  // under the downstairs bathroom sink. Golfers tee off at Nate the whole time.
   S.romulusFight = function* () {
-    const f = flags(), w = G.play.world, p = P(), r = w.romulus;
+    const f = flags(), w = G.play.world, p = P(), r = w.romulus, s = G.state;
     if (f.romulusBeaten || w.romFight || !r) return;
-    w.romFight = true;
     yield G.wait(30);
     yield G.camFocus(r.x, r.y - 40, 40);
     yield G.say('Nate', '...Romulus?');
@@ -6631,13 +6657,24 @@
     w.pop(r.x, r.y - 100, 'WOOF.', '#f8f8f0');
     yield G.wait(40);
     yield G.say('Nate', 'Why are you the size of a GOLF CART?!');
+    if (!G.itemHas('bidet')) {
+      // (no way to deal with him yet)
+      yield G.say('Nate', 'Nope. Not without a plan. Romulus hates water... if only I had something that sprays.');
+      yield G.camFocus(null, null, 20);
+      G.play.warp('condo', 16, 13, 'left');
+      return;
+    }
+    w.romFight = true;
     if (G.with('lily')) yield G.say('Lily', 'Who\'s a big boy? ...Who\'s a VERY big boy?');
     else if (G.with('doron')) { yield G.say('Doron', 'I\'m not fighting a dog.'); yield G.say('Nate', 'NOBODY is fighting Romulus.'); }
     r.pose = 'stalk';
     yield G.wait(30);
     yield G.say('Nate', 'He doesn\'t look scared of me now. He\'s too big to be scared of anything.');
-    yield G.say('Nate', 'Okay. Think. There are golf balls all over this course... and Romulus would chase a ball off a cliff.');
-    yield G.say(null, 'Hit a golf ball with your {y}rock hammer{/} (Z). Romulus can\'t help chasing it.');
+    yield G.say('Nate', 'But there\'s one thing Romulus hates more than anything in the world...');
+    yield G.say('Nate', 'Water.');
+    yield G.say('Nate', 'Good thing I brought a portable bidet. ...I never thought I\'d say that.');
+    s.xItem = 'bidet';
+    yield G.say(null, 'Hold X to spray Romulus with the {y}Portable Bidet{/}. When it runs dry, face the pond and press X to fill it back up.');
     r.pose = null;
     yield G.camFocus(null, null, 30);
     yield G.banner('ROMULUS', 'a very good boy (huge)', 150);
@@ -6646,23 +6683,27 @@
   };
   S.romulusHint = function* (what) {
     const f = flags();
-    if (what === 'scared') {
-      yield G.say('Nate', 'Ha! He IS still scared of me. He just forgets when he\'s that big.');
-      return;
+    if (what === 'soak') {
+      f.romSoakHint = true;
+      yield G.say('Nate', 'He HATES it! Keep spraying!');
+    } else if (what === 'shrink') {
+      yield G.say('Nate', 'It\'s working! He\'s shrinking back down!');
+      yield G.say(null, 'Watch out for the golfers. They are NOT happy about a giant dog on the course.');
     }
-    if (f.romDigHint) return;
-    f.romDigHint = true;
-    yield G.say('Nate', what === 'dig' ? 'He\'s digging for it! He\'s busy...' : 'He\'s shaking off! He\'s busy...');
-    yield G.say(null, 'Sneak up on him while he\'s busy. ' + (what === 'dig' ? 'Sand flies out behind him, and he looks up now and then, so come at him from the side.' : 'Quick, before he\'s done!'));
+  };
+  S.bidetEmpty = function* () {
+    yield G.say(null, 'The bidet is empty. Face some water (like the pond) and press X to fill it back up.');
   };
   S.romulusBeaten = function* (r) {
     const f = flags(), w = G.play.world, p = P();
     G.audio.stop();
-    for (const e of w.ents) if (e instanceof G.BarkRing || e instanceof G.Shot) e.dead = true;
+    G.play.spraying = false;
+    for (const e of w.ents) if (e instanceof G.BarkRing || e instanceof G.GolfShot) e.dead = true;
+    w.romFight = false;
     yield G.wait(40);
-    // regular size again, sitting there blinking...
+    // regular size again, sitting there dripping...
     r.face = p.x > r.x ? 1 : -1;
-    yield G.say(null, 'Romulus is back to his regular size.');
+    yield G.say(null, 'Romulus is back to his regular size. And very, very wet.');
     yield G.wait(20);
     // ...until he notices who's standing there
     r.pose = 'scared';
@@ -6681,10 +6722,11 @@
     r.pose = 'scared'; r.face = -1;
     yield G.say('Abe', '...Was he HUGE a minute ago? I swear I saw him from the patio.');
     yield G.say('Nate', 'He was the size of a golf cart.');
-    yield G.say('Abe', 'Huh. Well. He seems fine now.');
+    yield G.say('Abe', 'Huh. And why is he soaking wet?');
+    yield G.say('Nate', '...');
+    yield G.say('Abe', 'Is that our BIDET?');
     if (G.with('lily')) yield G.say('Lily', 'He\'s still scared of Nate, though.');
-    else yield G.say('Abe', 'Still scared of you, though.');
-    yield G.say('Nate', 'WHY.');
+    else yield G.say('Abe', 'You know what, I don\'t want to know.');
     f.romulusBeaten = true;
     yield G.banner('YOU WIN!', 'who\'s a good boy', 150);
     G.play.autosave();
@@ -6695,6 +6737,13 @@
     const c = yield G.ask('Nate', 'Head back to Abe and Hannah\'s?', ['Go back', 'Stay']);
     if (c === 0) G.play.warp('condo', 16, 13, 'left');
     else yield G.walkTo(p, p.x, p.y - 14, 1);
+  };
+  S.golferTalk = function* () {
+    const f = flags();
+    f.golfLine = ((f.golfLine || 0) + 1) % 3;
+    yield G.say('Golfer', f.romulusBeaten
+      ? ['Was that your dog? He was the size of a golf cart.', 'I lost six balls today. SIX.', 'Did you spray him with a... never mind.'][f.golfLine]
+      : ['Fore.', 'Kid, you\'re standing on the fairway.', 'Is that a dog or a golf cart?'][f.golfLine]);
   };
 
   // The course behind the condos: the fairway, three bunkers, a pond, the green with its pin.
@@ -6733,9 +6782,10 @@
       } });
       w.addProp({ img: sp.golfFlag, tx: 31, ty: 10, h: 2, dx: 7, dy: 3, solid: [31, 11, 1, 1], hit: [31, 11, 1, 1], talk: look('The pin on the green. Somebody has chewed the flagstick.') });
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [36 * T, 0, 40 * T, w.h * T], talk: look('The woods between the golf course and the condos. Abe and Hannah\'s is on the other side.') });
-      // golf balls all over the course
-      w.ballArena = { x0: 3 * T, y0: 3 * T, x1: 35 * T, y1: 26 * T };
-      for (const [x, y] of [[12, 12], [20, 9], [24, 15], [19, 21], [28, 13], [7, 15], [16, 25]]) w.add(new G.GolfBall(x * T + 8, y * T + 10));
+      // golfers around the edges (they tee off at Nate during the fight)
+      for (const [x, y, sprite, delay] of [[2, 13, 'golferA', 90], [20, 2, 'golferB', 160], [33, 26, 'golferC', 230]]) {
+        w.add(new G.Golfer({ x: x * T + 8, y: y * T + 12, sprite, delay, name: 'Golfer', talk: S.golferTalk }));
+      }
       // Romulus, on the green
       if (!f.romulusBeaten) {
         const P = GOLF_POND;
@@ -6830,7 +6880,7 @@
       // ---- the downstairs bath (x 16-19, y 14-18): doors to the hall and to the bedroom
       // FURNITURE (photos pending): towels, a bath mat, decor (keep x 19, y 14-16 clear: both doors).
       F.hang(sp.bathMirror, 16, 13, 2, null, 8);
-      F.stand(sp.condoVanity, 16, 14, 2, look('A long vanity under a big mirror and a light box.'));
+      F.stand(sp.condoVanity, 16, 14, 2, S.condoSink);
       F.hang(sp.openShelves, 18, 13, 1, look('Open shelves over the toilet.'), 4);
       F.stand(sp.toilet, 18, 14, 1, look('...It\'s a toilet, Nate.'));
       F.stand(sp.tubCurtain, 16, 17, 3, look('A bathtub with a shower curtain.'), { ht: 2 });
