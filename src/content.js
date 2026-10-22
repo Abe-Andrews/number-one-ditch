@@ -506,6 +506,7 @@
   // (the tune is the fallback if the file can't load).
   G.SONG_FILES = {
     bookworm: 'assets/music/globglogabgalab.m4a', // the 8-bit Globglogabgalab, in the basement until he's beaten
+    serenade: 'assets/music/golden-hour.m4a', // the 8-bit "Golden Hour", for Lily vs. Mikey at the end of the driveway
   };
   // (Father Christmas's theme speeds up as he gets angrier: fc2, fc3 are set below)
   G.SONGS = {
