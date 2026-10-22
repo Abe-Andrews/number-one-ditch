@@ -1814,7 +1814,7 @@
   G.EggShot = EggShot;
 
   // ============================================================== THE GLOBGLOGABGALAB (boss)
-  // Lives in the basement, eats Michelle's books, and never stops dancing.
+  // Lives in the basement and eats Michelle's books. He loves books.
   class BookShot extends Ent {
     constructor(x, y, vx, vy) { super(x, y); Object.assign(this, { vx, vy, life: 200 }); }
     hurtBox() { return [this.x - 5, this.y - 14, this.x + 5, this.y - 4]; }

@@ -386,7 +386,7 @@
       tag: () => (fl().globBeaten ? '{o}Boss: sings quietly' : '{r}Boss'),
       bio: () => (fl().globBeaten
         ? 'A bookworm who lived in the basement and ate Mom\'s books. Lost a dance battle to Nate. Now sings quietly.'
-        : 'Something pink in the basement, eating Mom\'s books and singing a song she can\'t stand. Never stops dancing.'),
+        : 'Something pink in the basement, eating Mom\'s books and singing a song she can\'t stand. He loves books.'),
     },
     {
       // the hooded figure in the tunnel, until the hood comes down
@@ -2326,7 +2326,7 @@
       yield G.say('Globglogabgalab', 'She bangs on the ceiling every time I sing. No appreciation for the arts.');
       yield G.say('Globglogabgalab', 'The devotionals are so nourishing. And the mystery novels! I eat the last chapter first. I never know who did it.');
       yield G.say('Nate', 'Well, I\'m taking them back.');
-      yield G.say('Globglogabgalab', 'Then you\'ll have to keep up with me, little bookmark. I never. Stop. DANCING.');
+      yield G.say('Globglogabgalab', 'Then you\'ll have to catch me first, little bookmark.');
       yield G.camFocus(null, null, 30);
     } else {
       yield G.say('Globglogabgalab', 'Back for an encore? Wonderful! Take it from the top!');
@@ -2334,7 +2334,7 @@
     if (s.items.earplugs) yield G.say(null, 'Nate pops in his earplugs. He can\'t hear a thing.');
     else yield G.say(null, 'No earplugs! When he sings, the song gets stuck in Nate\'s head and {r}his controls get scrambled{/}.');
     g.noBar = false;
-    yield G.banner('THE GLOBGLOGABGALAB', 'he never stops dancing', 150);
+    yield G.banner('THE GLOBGLOGABGALAB', 'he loves books', 150);
   };
 
   S.globDefeated = function* (boss) {
@@ -5944,7 +5944,11 @@
       for (const [x, y, k] of [[8, 4, 0], [3, 7, 1], [17, 11, 2], [12, 12, 0]]) F.stand(sp.bookPiles[k], x, y, 1, pile);
       w.addTrigger(18, 3, 2, 1, () => G.play.warp('homeDown', 22, 8, 'down'));
       // (no health bar until the fight actually starts, at the end of S.globIntro: it's a surprise)
-      if (!f.globBeaten) { w.glob = w.add(new G.Globglog(10 * 16 + 8, 8 * 16 + 14)); w.glob.noBar = true; }
+      if (!f.globBeaten) {
+        w.glob = w.add(new G.Globglog(10 * 16 + 8, 8 * 16 + 14)); w.glob.noBar = true;
+        // still up in the ducts until the bait goes down (hidden from the first frame, not after the fade-in)
+        if (!f.globMet && G.state.items.bait) w.glob.hidden = true;
+      }
     },
     onEnter() { return (function* () { if (!flags().globBeaten) yield* S.globIntro(); })(); },
   };
