@@ -4563,6 +4563,15 @@
     p.rect(150, 4, 14, 18, '#f0f0f0'); p.hline(150, 163, 7, '#3a4a5a'); p.hline(150, 163, 11, '#3a4a5a'); p.rect(156, 0, 3, 4, '#3a3a40');
     return finish(p);
   }
+  // a little fishing boat (small enough to slip under the trestle, unlike the ships)
+  function fishingBoat() {
+    const p = new Pix(38, 18);
+    p.rect(2, 10, 32, 5, '#f0f0ec'); p.hline(2, 33, 12, '#2a5aa8'); p.hline(3, 33, 14, '#8a2424');
+    p.rect(34, 9, 1, 4, '#f0f0ec'); p.rect(35, 8, 1, 3, '#f0f0ec'); p.set(36, 8, '#f0f0ec');
+    p.rect(6, 4, 11, 6, '#e8e8e4'); p.hline(5, 17, 3, '#c83838'); p.rect(8, 6, 2, 2, '#2a3a4a'); p.rect(12, 6, 3, 2, '#2a3a4a');
+    p.vline(21, 0, 9, '#5a5a60'); p.hline(21, 28, 2, '#5a5a60'); p.vline(28, 3, 9, '#8a8a90');
+    return finish(p);
+  }
   // a brown pelican on the rocks
   function pelican() {
     const p = new Pix(16, 16);
@@ -5771,7 +5780,7 @@
     S.mikeyNote = mikeyNotePages(); S.noteIcon = noteIcon();
     S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);
     S.gull = [false, true].map((l) => ({ sit: gullFrame(l, 'sit'), up: gullFrame(l, 'up'), down: gullFrame(l, 'down') }));
-    S.tunnelPortal = tunnelPortal(); S.tunnelPortalTS = tunnelPortal('THIMBLE SHOAL CHANNEL TUNNEL'); S.containerShip = containerShip(); S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
+    S.tunnelPortal = tunnelPortal(); S.tunnelPortalTS = tunnelPortal('THIMBLE SHOAL CHANNEL TUNNEL'); S.containerShip = containerShip(); S.fishingBoat = fishingBoat(); S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
     S.bayViewer = bayViewer(); S.tunnelLight = tunnelLight(); S.tunnelSign = tunnelSign();
     S.gateKey = gateKey(); S.rodIcon = rodIcon(); S.rodHeld = rodHeld(); S.lure = lure(); S.bobber = bobber();
     S.mosasaur = [mosasaurSkull(true), mosasaurSkull(false)]; S.pebble = pebble(); S.sifter = sifter();

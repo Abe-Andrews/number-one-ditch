@@ -5682,7 +5682,17 @@
     },
     setup(w) {
       const sp = G.spr;
-      w.props.push({ base: -1000, draw(ctx, cx, cy) { ctx.drawImage(sp.containerShip, Math.round((G.tick * 0.25 + 300) % 760 - 190) - cx, 26 * 16 - cy); } });
+      // no ships out here (they cross over the tunnels, not the trestle): just a fishing boat
+      // puttering across, under the bridge (hidden behind the deck while it's underneath)
+      w.props.push({ base: -1000, draw(ctx, cx, cy) {
+        const x = Math.round((G.tick * 0.35 + 120) % 600 - 60) - cx, y = 29 * 16 - cy, img = sp.fishingBoat;
+        ctx.save();
+        ctx.beginPath(); ctx.rect(-1000, -1000, 12 * 16 - cx + 1000, 4000); ctx.rect(18 * 16 - cx, -1000, 4000, 4000); ctx.clip();
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        for (let i = 1; i <= 4; i++) ctx.fillRect(x - i * 6, y + 15 + (i & 1), 4, 1);
+        ctx.drawImage(img, x, y);
+        ctx.restore();
+      } });
       // the Thimble Shoal Channel Tunnel portal on island 2
       w.addProp({ img: sp.tunnelPortalTS, tx: 9, ty: 0, h: 6 });
       w.blockTiles(9, 0, 12, 6);
