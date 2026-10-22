@@ -2308,13 +2308,15 @@
       yield G.wait(40);
       f.globMet = true;
       yield G.say('Globglogabgalab', 'Mmm. "Being a Wonderful Pastor\'s Wife." Bland. A little preachy. Needs salt.');
-      yield G.say('Globglogabgalab', 'Ah! A visitor! Have you come to share in my... literature?');
-      yield G.say('Nate', 'You\'re the Globglogabgalab.');
-      yield G.say('Globglogabgalab', 'In the flesh. Such as it is.');
-      yield G.say('Nate', 'My mom can\'t STAND you.');
-      yield G.say('Globglogabgalab', 'Yes, she bangs on the ceiling every time I sing. No appreciation for the arts.');
+      yield G.say('Globglogabgalab', 'Ah! A visitor!');
+      yield G.say('Globglogabgalab', 'I\'m the Globglogabgalab.');
+      yield G.say('Globglogabgalab', 'I love books.');
+      yield G.say('Globglogabgalab', 'And this basement is a true treasure trove.');
+      yield G.say('Nate', 'Those are my mom\'s books. She can\'t STAND you.');
+      yield G.say('Globglogabgalab', 'Pity. Her books are simply delicious.');
+      yield G.say('Globglogabgalab', 'She bangs on the ceiling every time I sing. No appreciation for the arts.');
       yield G.say('Globglogabgalab', 'The devotionals are so nourishing. And the mystery novels! I eat the last chapter first. I never know who did it.');
-      yield G.say('Nate', 'Those are my mom\'s books. I\'m taking them back.');
+      yield G.say('Nate', 'Well, I\'m taking them back.');
       yield G.say('Globglogabgalab', 'Then you\'ll have to keep up with me, little bookmark. I never. Stop. DANCING.');
       yield G.camFocus(null, null, 30);
     } else {
