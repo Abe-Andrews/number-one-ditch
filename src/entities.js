@@ -376,15 +376,14 @@
         }
       }
       if (G.play.spraying && G.play.sprayLen) {
-        // the Portable Bidet in his hand, and a wobbly stream of water
-        const [dx, dy] = DIRS[this.dir], len = G.play.sprayLen, x0 = this.x + dx * 8, y0 = this.y - 8 + dy * 6;
-        for (let d = 2; d < len; d += 2) {
-          const wob = Math.sin((G.tick + d) * 0.6) * Math.min(1.5, d / 30), droop = dx ? (d * d) / 1400 : 0;
+        // the Portable Bidet in his hand, and the stream arcing out of its nozzle down to the ground
+        const len = G.play.sprayLen, b = this.dir === 'left' ? G.spr.bidetHandL : G.spr.bidetHand, [nx, ny] = G.play.bidetNozzle(this);
+        for (let d = 0; d < len; d += 2) {
+          const [x, y] = G.play.bidetArc(this, d, len), wob = Math.round(Math.sin((G.tick + d) * 0.6) * Math.min(1, d / 24));
           ctx.fillStyle = ((d >> 1) + (G.tick >> 1)) % 3 ? '#a8d8ff' : '#ffffff';
-          ctx.fillRect(Math.round(x0 + dx * d + (dy ? wob : 0)) - cx, Math.round(y0 + dy * d + (dx ? wob : 0) + droop) - cy, 2, 2);
+          ctx.fillRect(Math.round(x + (this.dir === 'up' || this.dir === 'down' ? wob : 0)) - cx, Math.round(y + (this.dir === 'left' || this.dir === 'right' ? wob : 0)) - cy, 2, 2);
         }
-        const b = G.spr.bidetHand;
-        ctx.drawImage(dx < 0 ? G.spr.bidetHandL : b, Math.round(this.x + dx * 6 - b.width / 2) - cx, Math.round(this.y - 13 + (dy > 0 ? 2 : 0)) - cy);
+        ctx.drawImage(b, nx - (this.dir === 'left' ? 0 : b.width - 1) - cx, ny - cy);
       }
       if (this.chickenT > 0) {
         this.chickenT--;

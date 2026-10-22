@@ -221,7 +221,7 @@
     },
     bidet: {
       kind: 'gear', equip: true, name: 'Portable Bidet', short: 'Bidet', icon: () => G.spr.bidetIcon, has: () => !!st().items.bidet,
-      desc: 'From under the sink in Abe and Hannah\'s downstairs bathroom. Hold X to spray. It runs dry fast: face any water and press X to fill it back up.',
+      desc: 'From under the sink in Abe and Hannah\'s downstairs bathroom. Hold X to spray. It runs dry fast: face any water, sink or toilet and press X to fill it back up.',
     },
     bass: {
       kind: 'gear', equip: true, name: 'Half-Finished Bass', short: 'Bass', icon: () => G.spr.bassIcon, has: () => !!st().items.bass,
@@ -308,6 +308,8 @@
   // how much spray the Portable Bidet holds (frames of holding X), and how much is in it
   G.BIDET_MAX = 150;
   G.bidetWater = () => { const v = st().items.bidetWater; return v == null ? G.BIDET_MAX : v; };
+  // every toilet and sink in the game (by its sprite) fills the bidet back up
+  G.waterFixture = (img) => !!img && [G.spr.toilet, G.spr.sinkTop, G.spr.demilune, G.spr.doubleVanity, G.spr.condoVanity].includes(img);
 
   // ================================================================ SMOKE SIGNALS (Dad's pipe)
   // Like ocarina songs: learn a sequence, puff it with the pipe, something
@@ -6580,7 +6582,7 @@
     yield G.say('Nate', '*sniff sniff*');
     yield G.say('Nate', '...Inconclusive.');
     yield G.say('Nate', 'It\'s coming with me anyway.');
-    yield G.say(null, 'Set it to X in ITEMS, then hold X to spray. Face any water and press X to fill it back up.');
+    yield G.say(null, 'Set it to X in ITEMS, then hold X to spray. Face any water, sink or toilet and press X to fill it back up.');
   };
 
   S.romulusMeet = function* () {
@@ -6692,7 +6694,11 @@
     }
   };
   S.bidetEmpty = function* () {
-    yield G.say(null, 'The bidet is empty. Face some water (like the pond) and press X to fill it back up.');
+    yield G.say(null, 'The bidet is empty. Face some water (like a pond), a sink or a toilet and press X to fill it back up.');
+  };
+  S.bidetToilet = function* () {
+    yield G.say('Nate', 'Filling a bidet from a toilet.');
+    yield G.say('Nate', 'I\'m not going to think about it.');
   };
   S.romulusBeaten = function* (r) {
     const f = flags(), w = G.play.world, p = P();

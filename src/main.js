@@ -317,20 +317,35 @@
     },
 
     // The Portable Bidet: hold X to spray (a tank holds G.BIDET_MAX frames of it). Facing
-    // water, X refills it instead. Anything with onSpray() gets called every frame it's wet.
+    // water, a sink or a toilet, X fills it back up instead. Anything with onSpray() gets
+    // called every frame the stream is on it.
     bidetStart() {
       const s = G.state, p = this.player, w = this.world, [dx, dy] = G.DIRS[p.dir];
       const fx = p.x + dx * 14, fy = p.y - 4 + dy * 14, d = G.TILE_DEFS[w.tileAt(Math.floor(fx / 16), Math.floor(fy / 16))];
-      if (d && ['water', 'bay', 'iceHole'].includes(d.k)) {
+      const tp = [p.x + dx * 12 - 3, p.y - 4 + dy * 12 - 3, p.x + dx * 12 + 3, p.y - 4 + dy * 12 + 3];
+      const fixture = w.props.find((pr) => pr.hit && G.waterFixture(pr.img) && G.overlap(pr.hit, tp));
+      if (fixture || (d && ['water', 'bay', 'iceHole'].includes(d.k))) {
         if (G.bidetWater() >= G.BIDET_MAX) { w.pop(p.x, p.y - 30, 'It\'s already full.', '#a8d8ff'); return; }
         s.items.bidetWater = G.BIDET_MAX;
         G.audio.sfx('gulp');
-        w.pop(p.x, p.y - 30, '*glug glug glug*', '#a8d8ff');
-        w.burst(fx, fy, ['#5aa8e8', '#a8d8ff', '#ffffff'], 8, { speed: 1, up: 1, g: 0.1, life: 18, size: 2 });
+        const toilet = fixture && fixture.img === G.spr.toilet;
+        w.pop(p.x, p.y - 30, toilet ? '*fills it from the toilet*' : fixture ? '*fills it at the sink*' : '*glug glug glug*', '#a8d8ff');
+        w.burst(fx, fy - (fixture ? 10 : 0), ['#5aa8e8', '#a8d8ff', '#ffffff'], 8, { speed: 1, up: 1, g: 0.1, life: 18, size: 2 });
+        if (toilet && !s.flags.bidetToilet) { s.flags.bidetToilet = true; G.script.run(G.SCRIPTS.bidetToilet()); }
         return;
       }
       if (G.bidetWater() <= 0) { G.audio.sfx('bump'); this.bidetEmpty(); return; }
       this.spraying = true;
+    },
+    // Where the stream is d pixels out: it leaves the nozzle (up by Nate's hand), arcs up a
+    // little and comes down to the ground `len` pixels out the way he's facing.
+    bidetNozzle(p) {
+      return { right: [p.x + 10, p.y - 13], left: [p.x - 11, p.y - 13], down: [p.x + 4, p.y - 11], up: [p.x + 4, p.y - 13] }[p.dir];
+    },
+    bidetArc(p, d, len) {
+      const [dx, dy] = G.DIRS[p.dir], [nx, ny] = this.bidetNozzle(p), k = d / len;
+      const h = (p.y - ny) * (1 - k) + (8 + len / 8) * 4 * k * (1 - k);
+      return [nx + dx * d, p.y + dy * d - h];
     },
     bidetTick() {
       if (!this.spraying) return;
@@ -338,18 +353,26 @@
       if (!G.input.down('b') || G.script.busy || p.state !== 'walk' || s.xItem !== 'bidet') { this.spraying = false; return; }
       s.items.bidetWater = G.bidetWater() - 1;
       if (G.tick % 10 === 0) G.audio.sfx('spray');
-      // the stream goes out the way Nate faces until it hits something solid (it carries over water)
-      const [dx, dy] = G.DIRS[p.dir], x0 = p.x + dx * 8, y0 = p.y - 8 + dy * 6;
+      // it reaches 72px, or less if it lands against something solid (it carries over water)
+      const [dx, dy] = G.DIRS[p.dir], [nx] = this.bidetNozzle(p);
       let len = 8;
       while (len < 72) {
-        const d = G.TILE_DEFS[w.tileAt(Math.floor((x0 + dx * len) / 16), Math.floor((y0 + 6 + dy * len) / 16))];
+        const d = G.TILE_DEFS[w.tileAt(Math.floor((nx + dx * len) / 16), Math.floor((p.y - 2 + dy * len) / 16))];
         if (d && d.solid && !['water', 'bay'].includes(d.k)) break;
         len += 4;
       }
       this.sprayLen = len;
-      const x1 = x0 + dx * len, y1 = y0 + dy * len, r = [Math.min(x0, x1) - 4, Math.min(y0, y1) - 6, Math.max(x0, x1) + 4, Math.max(y0, y1) + 10];
-      for (const e of w.ents) if (e.onSpray && !e.dead && G.overlap(r, e.hurtBox ? e.hurtBox() : e.box())) e.onSpray(p);
-      if (G.tick % 3 === 0) w.burst(x1, y1 + 4, ['#a8d8ff', '#ffffff'], 1, { speed: 0.6, up: 0.6, g: 0.1, life: 12, size: 1 });
+      // anything the arc passes through gets wet (things without a hurt box are about 20px tall)
+      const pts = [];
+      for (let d = 0; d <= len; d += 4) pts.push(this.bidetArc(p, d, len));
+      for (const e of w.ents) {
+        if (!e.onSpray || e.dead || e === p) continue;
+        let b = e.hurtBox ? e.hurtBox() : e.box();
+        if (!e.hurtBox) b = [b[0], b[1] - 20, b[2], b[3]];
+        if (pts.some(([x, y]) => x >= b[0] && x <= b[2] && y >= b[1] && y <= b[3])) e.onSpray(p);
+      }
+      const [ex, ey] = pts[pts.length - 1];
+      if (G.tick % 3 === 0) w.burst(ex, ey, ['#a8d8ff', '#ffffff'], 1, { speed: 0.6, up: 0.6, g: 0.1, life: 12, size: 1 });
       if (G.bidetWater() <= 0) { this.spraying = false; this.bidetEmpty(); }
     },
     bidetEmpty() {
