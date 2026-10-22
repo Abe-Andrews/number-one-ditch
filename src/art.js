@@ -4189,6 +4189,15 @@
       case 'shale': for (let i = 0; i < 3; i++) { p.rect(1 + i, 9 - i * 3, 12 - i * 2, 3, i % 2 ? '#a85040' : '#9a4a3a'); p.hline(1 + i, 12 - i, 9 - i * 3, '#c8705a'); } p.set(6, 7, '#5a2a20'); p.set(7, 7, '#5a2a20'); break;
       case 'basalt': blob('#2e2e34', '#46464e'); for (const [x, y] of [[4, 6], [8, 5], [6, 9], [10, 8]]) { p.set(x, y, '#1a1a20'); p.set(x + 1, y, '#5a5a64'); } break;
       case 'prehnite': blob('#2e2e34', '#46464e'); for (const [x, y] of [[4, 5], [5, 5], [6, 4], [5, 6], [8, 6], [9, 7], [8, 7]]) p.set(x, y, '#b8e898'); p.set(5, 4, '#e8fcd8'); p.set(9, 6, '#e8fcd8'); break;
+      case 'megalodon':
+        // a big triangular fossil tooth: dark enamel, serrated edges, a brown root band
+        for (let y = 0; y < 12; y++) for (let x = 0; x < 14; x++) {
+          const half = (y - 1) * 0.62;
+          if (y >= 1 && Math.abs(x - 6.5) <= half) p.set(x, y, y >= 9 ? '#7a5638' : (x - 6.5) < -half + 1.2 ? '#8a8e96' : '#4a4e58');
+        }
+        for (let y = 2; y < 9; y += 2) { p.set(Math.round(6.5 - (y - 1) * 0.62), y, '#2a2e36'); p.set(Math.round(6.5 + (y - 1) * 0.62), y, '#2a2e36'); }
+        p.set(6, 3, '#c8ccd4'); p.set(5, 5, '#a8acb4'); p.hline(1, 12, 9, '#5a3e28');
+        break;
       case 'cavepearl':
         for (const [ox, oy, r] of [[4.5, 7.5, 3.2], [9.5, 5, 3.4], [9.5, 9.8, 2]]) for (let y = 0; y < 12; y++) for (let x = 0; x < 14; x++) {
           const d = (x - ox) ** 2 + (y - oy) ** 2;
@@ -4523,7 +4532,7 @@
   }
   // The ventilation building over the tunnel portal: louvered concrete with
   // the road diving into the dark under a green sign.
-  function tunnelPortal() {
+  function tunnelPortal(label) {
     const W = 192, H = 100, p = new Pix(W, H);
     p.rect(0, 0, W, 22, '#9aa0a8'); p.hline(0, W - 1, 0, '#c0c4ca'); p.hline(0, W - 1, 21, '#7a8088');
     for (const cx of [36, 156]) for (let y = 4; y < 18; y++) for (let x = cx - 8; x <= cx + 8; x++) if ((x - cx) ** 2 + (y - 11) ** 2 <= 49) p.set(x, y, (x + y) % 3 ? '#5a6068' : '#3a4048');
@@ -4537,7 +4546,7 @@
     p.vline(96, 86, 99, '#c8a030');
     p.outline();
     const c = p.canvas(), x = c.getContext('2d');
-    const text = 'CHESAPEAKE CHANNEL TUNNEL', tw = G.font.width(text), sw = tw + 10, sx = Math.round((W - sw) / 2);
+    const text = label || 'CHESAPEAKE CHANNEL TUNNEL', tw = G.font.width(text), sw = tw + 10, sx = Math.round((W - sw) / 2);
     x.fillStyle = OUT; x.fillRect(sx - 1, 33, sw + 2, 15);
     x.fillStyle = '#ffffff'; x.fillRect(sx, 34, sw, 13);
     x.fillStyle = '#1e6a3a'; x.fillRect(sx + 1, 35, sw - 2, 11);
@@ -5493,6 +5502,126 @@
     return finish(p);
   }
 
+  // ================================================================ THE BAY: RoFo Pop and the toll plaza
+  // RoFo Pop, blue raspberry: what Abe and Hannah grab on the Eastern Shore as a "gift"
+  // every time they visit. It does not taste good. A 2-liter: white cap, blue soda, the
+  // round green RoFo POP label with a raspberry, and (being an enemy) angry little eyes.
+  function twoLiter(W, H, o = {}) {
+    const p = new Pix(W, H), blue = '#2a7ae0', blueL = '#78c0ff', blueD = '#1a4ea8', cx = (W - 1) / 2;
+    const capW = Math.max(3, Math.round(W * 0.38)), capH = Math.max(2, Math.round(H * 0.09)), neck = Math.round(H * 0.17), base = Math.max(2, Math.round(H * 0.06));
+    const c0 = Math.round(cx - capW / 2 + 0.5);
+    p.rect(c0, 0, capW, capH, '#f4f4f0'); p.hline(c0, c0 + capW - 1, 0, '#ffffff'); p.hline(c0, c0 + capW - 1, capH - 1, '#c8c8c4');
+    for (let y = 0; y < neck; y++) {
+      const k = (y + 1) / neck, half = capW / 2 + (W / 2 - capW / 2) * Math.sin(k * Math.PI / 2);
+      p.hline(Math.round(cx - half + 0.5), Math.round(cx + half - 0.5), capH + y, blue);
+    }
+    p.rect(0, capH + neck, W, H - capH - neck - base, blue);
+    for (let x = 0; x < W; x++) if (x % Math.max(3, Math.round(W / 5)) !== 0) p.vline(x, H - base, H - 1, blueD);
+    // shine down the left side, shadow down the right
+    p.vline(Math.max(1, Math.round(W * 0.18)), capH + 2, H - base - 2, blueL);
+    p.vline(W - 1, capH + neck, H - base - 1, blueD);
+    // the label: a green ring around a white middle, a red raspberry under it
+    const ly = Math.round(H * 0.52), lw = Math.round(W * (W >= 30 ? 0.46 : 0.42)), lh = Math.max(3, Math.round(H * (W >= 30 ? 0.16 : 0.13)));
+    for (let y = -lh; y <= lh; y++) for (let x = -lw; x <= lw; x++) {
+      const e = (x / lw) ** 2 + (y / lh) ** 2;
+      if (e <= 1) p.set(Math.round(cx + x), ly + y, e > 0.62 ? '#38a83a' : '#f4f8f0');
+    }
+    if (W >= 20) { p.rect(Math.round(cx + lw * 0.2), ly + lh + 2, 3, 3, '#d83848'); p.set(Math.round(cx + lw * 0.2) + 1, ly + lh + 1, '#58b040'); }
+    else { p.set(Math.round(cx), ly, '#2a5ab8'); p.set(Math.round(cx) + 1, ly + lh, '#d83848'); }
+    // angry eyes above the label
+    const ey = Math.round(H * 0.34), ex = Math.max(2, Math.round(W * 0.22)), es = W >= 20 ? 2 : 1;
+    for (const sx of [-1, 1]) {
+      const x0 = Math.round(cx + sx * ex - (es - 1) / 2);
+      p.rect(x0, ey, es, es + 1, '#0c0814');
+      p.hline(x0 - (sx < 0 ? 1 : 0), x0 + es - (sx < 0 ? 1 : 0), ey - 1 - (sx < 0 ? 0 : 0), '#0c0814');
+      p.set(sx < 0 ? x0 - 1 : x0 + es, ey - 2, '#0c0814');
+    }
+    if (o.flat) { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const c = p.get(x, y); if (c === blue) p.set(x, y, (x + y) % 3 ? '#a8c8e0' : '#c8dcec'); } }
+    p.outline();
+    const cv = p.canvas();
+    if (W >= 30) {
+      const x = cv.getContext('2d'), F = G.font;
+      F.draw(x, 'RoFo', Math.round(cx - F.width('RoFo') / 2), ly - 8, '#2a5ab8');
+      F.draw(x, 'POP', Math.round(cx - F.width('POP') / 2), ly, '#e8c020', { shadow: '#2a5ab8' });
+    }
+    return cv;
+  }
+  // The Two-Liter with arms and legs: rubber-hose arms in white cartoon gloves, stubby
+  // legs in red sneakers. Poses: stand, walk1/walk2 (a foot up, the arms swinging),
+  // raise (both fists overhead, about to slam), slam (fists down on the road), pour
+  // (one glove up over the cap, where it holds a little bottle to pour in).
+  function twoLiterBrute(pose, flat) {
+    const body = twoLiter(34, 64, { flat }), W = 60, H = 84, BX = 13, BY = 8, p = new Pix(W, H);
+    const limb = flat ? '#6a7a98' : '#14306a', limbL = flat ? '#8a9ab8' : '#2a4a98';
+    const glove = '#f4f4f0', gloveD = '#c8c8c4', shoe = flat ? '#b87880' : '#d83848', shoeL = flat ? '#d0a0a8' : '#f06070';
+    // big rubber-hose arms, thicker toward the fist
+    const arm = (pts) => {
+      const segs = pts.length - 1;
+      for (let s = 0; s < segs; s++) {
+        const [x0, y0] = pts[s], [x1, y1] = pts[s + 1], n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0), 1);
+        for (let i = 0; i <= n; i++) {
+          const k = (s + i / n) / segs, r = k < 0.5 ? 2 : 3, x = Math.round(x0 + (x1 - x0) * i / n), y = Math.round(y0 + (y1 - y0) * i / n);
+          p.rect(x - r + 1, y - r + 1, r * 2 - 1, r * 2 - 1, limb);
+        }
+        for (let i = 0; i <= n; i++) p.set(Math.round(x0 + (x1 - x0) * i / n) - 1, Math.round(y0 + (y1 - y0) * i / n) - 1, limbL);
+      }
+      const [x, y] = pts[segs];
+      p.hline(x - 3, x + 2, y - 4, glove); p.rect(x - 4, y - 3, 8, 6, glove); p.hline(x - 3, x + 2, y + 3, gloveD); p.vline(x + 3, y - 3, y + 2, gloveD);
+      p.hline(x - 3, x + 1, y - 3, '#ffffff'); p.set(x - 2, y + 1, gloveD); p.set(x, y + 1, gloveD);
+    };
+    const leg = (x, up) => {
+      const top = BY + 58, foot = BY + 70 - up;
+      p.rect(x, top, 8, foot - top, limb); p.vline(x + 1, top, foot - 1, limbL);
+      p.rect(x - 2, foot, 12, 4, shoe); p.hline(x - 1, x + 8, foot, shoeL); p.hline(x - 2, x + 9, foot + 4, glove);
+    };
+    const L = [15, 36], R = [44, 36];
+    const hands = {
+      stand: [[5, 53], [54, 53]], walk1: [[5, 47], [54, 57]], walk2: [[5, 57], [54, 47]],
+      raise: [[8, 6], [51, 6]], slam: [[5, 76], [54, 76]], pour: [[5, 53], null],
+    }[pose];
+    arm([L, hands[0]]);
+    if (hands[1]) arm([R, hands[1]]); else arm([R, [54, 22], [43, 7]]);
+    leg(19, pose === 'walk1' ? 3 : 0); leg(33, pose === 'walk2' ? 3 : 0);
+    p.outline();
+    const cv = p.canvas();
+    cv.getContext('2d').drawImage(body, BX, BY);
+    return cv;
+  }
+  // a little bottle on the ground (the "heal": it does not taste good)
+  function rofoBottleIcon() {
+    const p = new Pix(8, 14);
+    p.rect(3, 0, 2, 2, '#f4f4f0'); p.rect(2, 2, 4, 2, '#2a7ae0'); p.rect(1, 4, 6, 9, '#2a7ae0'); p.vline(2, 4, 12, '#78c0ff');
+    p.rect(2, 7, 4, 3, '#f4f8f0'); p.set(3, 8, '#38a83a'); p.set(4, 8, '#d83848'); p.hline(1, 6, 13, '#1a4ea8');
+    p.outline();
+    return p.canvas();
+  }
+  // a drop of blue fizz
+  function fizzDrop() {
+    const p = new Pix(5, 5);
+    p.rect(1, 1, 3, 3, '#3a8ae8'); p.set(2, 0, '#3a8ae8'); p.set(1, 1, '#a8d8ff');
+    p.outline('#1a3a78');
+    return p.canvas();
+  }
+  // the toll plaza at the Eastern Shore end: a canopy over four booths
+  function tollPlaza() {
+    const W = 160, H = 64, p = new Pix(W, H);
+    // canopy roof and its blue fascia
+    p.rect(0, 6, W, 12, '#e8e8e4'); p.hline(0, W - 1, 6, '#ffffff'); p.rect(0, 18, W, 8, '#2a4a8a'); p.hline(0, W - 1, 18, '#3a5aa0'); p.hline(0, W - 1, 25, '#1a2a5a');
+    // lane signs hanging off the fascia: E-ZPass (purple) and CASH (green)
+    for (const [x, col] of [[20, '#5a2a8a'], [68, '#5a2a8a'], [116, '#2e8a3e']]) { p.rect(x, 26, 24, 9, col); p.hline(x, x + 23, 26, shade(col, 0.3)); p.hline(x + 3, x + 20, 30, '#f4f4f0'); }
+    // posts and booths (on the islands at 0, 48, 96 and 144)
+    for (const bx of [0, 48, 96, 144]) {
+      p.rect(bx + 6, 26, 4, 16, '#b8b8c0');
+      p.rect(bx + 1, 38, 14, 22, '#f2f2ee'); p.hline(bx + 1, bx + 14, 38, '#ffffff'); p.rect(bx + 1, 38, 14, 3, '#c83838');
+      p.rect(bx + 3, 43, 10, 8, '#4a6a88'); p.set(bx + 4, 44, '#a8c8e8'); p.vline(bx + 8, 43, 50, '#f2f2ee');
+      p.rect(bx + 1, 58, 14, 2, '#f8d040');
+    }
+    p.outline();
+    const cv = p.canvas(), x = cv.getContext('2d');
+    G.font.draw(x, 'TOLL', Math.round((W - G.font.width('TOLL')) / 2), 8, '#2a4a8a');
+    return cv;
+  }
+
   // ================================================================ EXPORTS
   G.art = {
     OUT, shade, Pix, fromRows, mirror, flash, person, P, scale2, buildingExtra,
@@ -5630,7 +5759,7 @@
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
     S.vanWickle = vanWickle();
-    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl']) S.rockIcons[k] = rockIcon(k);
+    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl', 'megalodon']) S.rockIcons[k] = rockIcon(k);
     S.oreVein = [oreVein(0), oreVein(1), oreVein(2)]; S.dumpPile = dumpPile(false); S.slagPile = dumpPile(true);
     S.furnaceRuin = furnaceRuin(); S.adit = adit(); S.bat = [batFrame(true), batFrame(false)];
     S.megaphone = megaphone(); S.cavePearls = cavePearls();
@@ -5642,7 +5771,7 @@
     S.mikeyNote = mikeyNotePages(); S.noteIcon = noteIcon();
     S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);
     S.gull = [false, true].map((l) => ({ sit: gullFrame(l, 'sit'), up: gullFrame(l, 'up'), down: gullFrame(l, 'down') }));
-    S.tunnelPortal = tunnelPortal(); S.containerShip = containerShip(); S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
+    S.tunnelPortal = tunnelPortal(); S.tunnelPortalTS = tunnelPortal('THIMBLE SHOAL CHANNEL TUNNEL'); S.containerShip = containerShip(); S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
     S.bayViewer = bayViewer(); S.tunnelLight = tunnelLight(); S.tunnelSign = tunnelSign();
     S.gateKey = gateKey(); S.rodIcon = rodIcon(); S.rodHeld = rodHeld(); S.lure = lure(); S.bobber = bobber();
     S.mosasaur = [mosasaurSkull(true), mosasaurSkull(false)]; S.pebble = pebble(); S.sifter = sifter();
@@ -5666,6 +5795,11 @@
     S.paper = paperIcon();
     S.chalkboard = chalkboard(); S.chalkboardEng = chalkboard('EEENGLISH 101');
     S.chalkboardGeo = chalkboard('CRYSTALS!');
+    // the bay: RoFo Pop (the small fizzers and the Two-Liter), and the toll plaza
+    S.rofo = { idle: twoLiter(12, 22), flat: twoLiter(12, 22, { flat: true }), bottle: rofoBottleIcon() };
+    S.twoLiter = { flat: twoLiterBrute('slam', true) };
+    for (const pose of ['stand', 'walk1', 'walk2', 'raise', 'slam', 'pour']) S.twoLiter[pose] = twoLiterBrute(pose);
+    S.fizzDrop = fizzDrop(); S.tollPlaza = tollPlaza();
     // Tom's Pizza
     S.tomsPizza = tomsPizza(); S.groceryStore = groceryStore(); S.forLeaseShop = forLeaseShop(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
     S.pizzaBoxes = pizzaBoxes(); S.checkTable = checkTable(); S.dadTomPicture = dadTomPicture();

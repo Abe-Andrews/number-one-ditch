@@ -365,7 +365,7 @@
     { id: 'home', name: 'HOME', x: 44, y: 72, icon: 'house', key: 'Home',
       maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['north', 'The Frozen Pond']] },
     { id: 'andover', name: 'ANDOVER', x: 112, y: 64, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverDeep', 'The Deep Stope']] },
-    { id: 'bay', name: 'THE BAY', x: 74, y: 98, icon: 'bridge', key: 'Bay', maps: [['cbbt', 'The Bridge'], ['cbbtTunnel', 'Channel Tunnel']] },
+    { id: 'bay', name: 'THE BAY', x: 74, y: 98, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel']] },
     { id: 'ditch', name: 'THE DITCH', x: 118, y: 94, icon: 'trophy', key: '-', maps: [] },
   ];
   const ROADS = [['laf', 'fair'], ['laf', 'home'], ['home', 'andover'], ['home', 'bay'], ['bay', 'ditch']];
@@ -375,7 +375,7 @@
     lab: () => true, campus: () => true, science: (f) => f.chemMet, pardee: (f) => f.engMet, geology: (f) => f.profTalk,
     fair: (f) => f.doronChat || f.doronDeal, arena: (f) => f.dadBeaten, fairCave: (f) => f.caveSeen, home: (f) => f.homeArrived, homeDown: (f) => f.badlandsMet,
     garage: (f) => f.snackQuest, basement: (f) => f.globMet, north: (f) => f.jjSeen, andover: (f) => f.andover || f.andoverMine,
-    andoverMine: (f) => f.andoverMine, andoverDeep: (f) => f.fcAwake, cbbt: (f) => f.cbbtArrived, cbbtTunnel: (f) => f.tunnelSeen,
+    andoverMine: (f) => f.andoverMine, andoverDeep: (f) => f.fcAwake, cbbt: (f) => f.cbbtArrived, cbbtTunnel: (f) => f.tunnelSeen, cbbtToll: (f) => f.tollMet, chesTunnel: (f) => f.chesSeen, cbbtMid: (f) => f.midSeen,
   };
   const beenTo = (id) => !!((G.state.visited && G.state.visited[id]) || (SEEN_IF[id] && SEEN_IF[id](G.state.flags)));
   const placeVisited = (pl) => pl.maps.some(([id]) => beenTo(id));

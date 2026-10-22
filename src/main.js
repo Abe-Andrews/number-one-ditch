@@ -327,6 +327,12 @@
       if (kind === 'tooth') { this.addTeeth(1); G.audio.sfx('tooth'); }
       else if (kind === 'tooth5') { this.addTeeth(5); G.audio.sfx('tooth'); }
       else if (kind === 'heart') { this.healQ += 2; G.audio.sfx('heart'); }
+      else if (kind === 'rofo') {
+        // a bottle of RoFo Pop: a heart back. It does not taste good.
+        this.healQ += 2; G.audio.sfx('gulp');
+        const p = this.player;
+        this.world.pop(p.x, p.y - 34, ['Blegh.', '...It does not taste good.', 'Why is it BLUE?', 'Nate shudders.'][Math.floor(Math.random() * 4)], '#78c0ff');
+      }
       else if (kind === 'package') {
         const s = G.state;
         s.items.package = Math.min(10, (s.items.package || 0) + 1);
@@ -412,9 +418,9 @@
         }
       }
 
-      // camera follows Nate (or a cutscene focus point)
-      const w = this.world, p = this.player, f = this.camFocus;
-      const tx = (f ? f.x : p.x) - G.W / 2, ty = (f ? f.y : p.y - 12) - G.H / 2;
+      // camera follows Nate (or a cutscene focus point); a map can lean it, e.g. up to keep a tall boss in view
+      const w = this.world, p = this.player, f = this.camFocus, lean = !f && w.camLean ? w.camLean(p) : 0;
+      const tx = (f ? f.x : p.x) - G.W / 2, ty = (f ? f.y : p.y - 12) - G.H / 2 - lean;
       if (w.pw > G.W) this.cam.x += (G.clamp(tx, 0, w.pw - G.W) - this.cam.x) * 0.2;
       if (w.ph > G.H) this.cam.y += (G.clamp(ty, 0, w.ph - G.H) - this.cam.y) * 0.2;
     },

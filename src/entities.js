@@ -131,7 +131,9 @@
       const d0 = inp.dir(), d = G.play.earworm > 0 ? { x: -d0.x, y: -d0.y } : d0;
       this.moving = !!(d.x || d.y);
       const under = G.TILE_DEFS[w.tileAt(Math.floor(this.x / 16), Math.floor((this.y - 3) / 16))];
-      const sp = d.x && d.y ? 1.0 : 1.35;
+      // (standing in spilled RoFo Pop: sticky, half speed)
+      if (this.sticky > 0) this.sticky--;
+      const sp = (d.x && d.y ? 1.0 : 1.35) * (this.sticky > 0 ? 0.5 : 1);
       if (this.moving) {
         if (d.x && d.y) {
           const okH = (d.x < 0 && this.dir === 'left') || (d.x > 0 && this.dir === 'right');
@@ -1197,6 +1199,288 @@
     }
   }
   G.Shot = Shot;
+
+  // ============================================================== ROFO POP (the bay)
+  // Blue raspberry 2-liters in the Chesapeake Channel Tunnel. Abe and Hannah bring
+  // RoFo Pop from the Eastern Shore every time they visit. Nobody drinks it.
+  // A spill of it on the road: sticky, slows Nate to half speed while he's in it.
+  class StickyPuddle extends Ent {
+    constructor(x, y, big) { super(x, y); this.life = big ? 420 : 300; this.r = 2; this.max = big ? 18 : 12; this.flat = true; }
+    update() {
+      if (G.script.busy) return;
+      if (this.r < this.max) this.r += 0.6;
+      if (--this.life <= 0) { this.dead = true; return; }
+      const p = G.play.player;
+      if (((p.x - this.x) / this.r) ** 2 + ((p.y - 2 - this.y) / (this.r * 0.55)) ** 2 <= 1) {
+        if (!p.sticky && G.tick - (this.popT || -99) > 50) { this.popT = G.tick; this.world.pop(p.x, p.y - 30, 'sticky...', '#78c0ff'); }
+        p.sticky = 3;
+      }
+    }
+    draw(ctx, cx, cy) {
+      const a = Math.min(1, this.life / 60) * 0.85, x = this.x - cx, y = this.y - cy;
+      ctx.save(); ctx.globalAlpha = a;
+      ctx.fillStyle = '#1a4ea8'; ctx.beginPath(); ctx.ellipse(x, y, this.r + 1, this.r * 0.55 + 1, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#2a7ae0'; ctx.beginPath(); ctx.ellipse(x, y, this.r, this.r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#a8d8ff'; ctx.fillRect(Math.round(x - this.r * 0.4), Math.round(y - 1), 2, 1);
+      ctx.restore();
+    }
+  }
+  G.StickyPuddle = StickyPuddle;
+
+  // The fizzer: hops after Nate, stops to shake itself up (fizz everywhere), then
+  // FWOOSH: a spray of fizz and a sticky puddle. Flat for a bit afterward.
+  class RofoPop extends Critter {
+    constructor(x, y) {
+      super(x, y, 2);
+      this.intro = 'rofo';
+      this.state = 'hop';
+      this.st = 60 + Math.random() * 60;
+      this.bits = ['#2a7ae0', '#78c0ff', '#ffffff', '#38a83a'];
+      this.dropChance = 0.7;
+      this.lift = 0;
+      this.reelable = true;
+    }
+    onHook() { this.called = null; this.fly = null; this.lift = 0; this.touch = false; this.state = 'flat'; this.st = 200; }
+    // flung out of the Two-Liter's cap: up from the top of it, an arc, and down where it lands
+    launch(tx, ty, n) { this.fly = { x0: this.x, y0: this.y, x1: tx, y1: ty, t: 0, n }; this.touch = false; this.lift = 66; }
+    onReeled() { this.state = 'flat'; this.st = 80; this.touch = false; this.lift = 0; this.world.pop(this.x, this.y - 28, '@_@', '#78c0ff'); }
+    think(w, p, dx, dy, dist) {
+      if (this.carried) { if ((this.carryT = (this.carryT || 0) + 1) > 150) this.carried = false; return; }
+      this.carryT = 0;
+      if (this.fly) {
+        const f = this.fly, k = ++f.t / f.n;
+        this.x = f.x0 + (f.x1 - f.x0) * k; this.y = f.y0 + (f.y1 - f.y0) * k;
+        this.lift = (1 - k) * 66 + Math.sin(k * Math.PI) * 24;
+        if (k >= 1) {
+          Object.assign(this, { fly: null, lift: 0, touch: true, state: 'hop', st: 40 + Math.random() * 40 });
+          G.audio.sfx('bump');
+          w.burst(this.x, this.y, ['#78c0ff', '#ffffff'], 4, { speed: 0.8, up: 0.4, life: 14, size: 1 });
+        }
+        return;
+      }
+      // the Two-Liter is calling: waddle back to be poured in
+      const boss = this.called;
+      if (boss && !boss.dead && boss.state === 'refill' && this.state !== 'flat') {
+        const bx = boss.x - this.x, by = boss.y + 6 - this.y, bd = Math.hypot(bx, by) || 1;
+        this.hopT = (this.hopT || 0) + 1;
+        this.lift = Math.abs(Math.sin(this.hopT * Math.PI / 16)) * 4;
+        this.vx = (bx / bd) * 0.9; this.vy = (by / bd) * 0.9; this.step(w);
+        if (bd < 18) boss.drink(this);
+        return;
+      }
+      this.called = null;
+      if (this.state === 'hop') {
+        this.hopT = (this.hopT || 0) + 1;
+        this.lift = Math.abs(Math.sin(this.hopT * Math.PI / 24)) * 4;
+        if (dist < 150) this.chase(w, dx, dy, dist, 0.5); else this.wander(w, 0.3);
+        if (--this.st <= 0 && dist < 100) { this.state = 'shake'; this.st = 48; this.lift = 0; }
+      } else if (this.state === 'shake') {
+        if (this.st % 4 === 0) w.burst(this.x, this.y - 24, ['#ffffff', '#a8d8ff'], 1, { speed: 0.6, up: 1.2, life: 14, size: 1 });
+        if (this.st === 24) G.audio.sfx('fuse');
+        if (--this.st <= 0) { this.spray(w, p); this.state = 'flat'; this.st = 70; }
+      } else if (--this.st <= 0) { this.state = 'hop'; this.st = 90 + Math.random() * 60; this.touch = true; }
+    }
+    spray(w, p) {
+      const dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1, a = Math.atan2(dy, dx);
+      G.audio.sfx('dash');
+      w.pop(this.x, this.y - 32, 'FWOOSH!', '#78c0ff');
+      w.burst(this.x, this.y - 22, ['#2a7ae0', '#78c0ff', '#ffffff'], 10, { speed: 1.6, up: 1, g: 0.06, life: 22, size: 2 });
+      w.add(new StickyPuddle(this.x + (dx / d) * Math.min(d, 34), this.y + (dy / d) * Math.min(d, 34)));
+      for (let i = -1; i <= 1; i++) w.add(new Shot(this.x, this.y - 14, Math.cos(a + i * 0.3) * 1.8, Math.sin(a + i * 0.3) * 1.8, G.spr.fizzDrop, { life: 45, z: 4 }));
+    }
+    die() {
+      super.die();
+      // sometimes a bottle survives: drinking it gets a heart back. It does not taste good.
+      if (Math.random() < 0.35) this.world.add(new Pickup(this.x + 6, this.y, 'rofo'));
+    }
+    draw(ctx, cx, cy) {
+      const j = this.state === 'shake' ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
+      this.drawSprite(ctx, cx - j, cy, this.state === 'flat' ? G.spr.rofo.flat : G.spr.rofo.idle, this.lift);
+    }
+  }
+  G.RofoPop = RofoPop;
+
+  // THE TWO-LITER: the boss at the end of the Chesapeake Channel Tunnel. A giant RoFo
+  // Pop with arms and legs. Slow: it lumbers after Nate and the road thumps with every
+  // step. But it hits like a truck: a stomp is a heart, and a fist slam is two. The hard
+  // part is the little ones. It keeps popping its cap and flinging more fizzers out, and
+  // faster once it's half empty. Running low, it calls them back to pour them in.
+  class TwoLiter extends Ent {
+    constructor(x, y, bounds) {
+      super(x, y);
+      Object.assign(this, { enemy: true, boss: true, name: 'THE TWO-LITER', hp: 20, maxHp: 20, hb: { w: 20, h: 10 }, bounds, t: 0,
+        state: 'rest', st: 60, stepT: 0, foot: 0, spawnT: 90, slamOk: 0, phase: 1, hurtT: 0, home: { x, y }, pours: [], refillCool: 0, ring: null });
+    }
+    // (only the little bottles in the arena with it; the ones back down the tunnel can't get here)
+    fizzers() { const yMax = this.arenaBottom || 1e9; return this.world.ents.filter((e) => e instanceof RofoPop && !e.dead && e.y < yMax); }
+    // a little bottle made it back: picked up, held over the cap and poured in (health back when it's done)
+    drink(f) {
+      f.dead = true; f.called = null;
+      this.pours.push({ t: 0 });
+      G.audio.sfx('blip');
+      this.world.pop(this.x, this.y - 88, '*slurp*', '#78c0ff');
+    }
+    hurtBox() { return [this.x - 16, this.y - 70, this.x + 16, this.y]; }
+    // its feet: walking into them hurts
+    footBox() { return [this.x - 17, this.y - 16, this.x + 17, this.y + 2]; }
+    // a fist comes down on either side: everything in this oval gets it
+    inSlam(p, grow = 2) { return ((p.x - this.x) / (40 + grow)) ** 2 + ((p.y - this.y - 4) / (22 + grow)) ** 2 <= 1; }
+    hit(dmg, sx, sy) {
+      if (this.state === 'defeated') return;
+      this.hp = Math.max(0, this.hp - dmg);
+      this.hurtT = 12;
+      G.audio.sfx('hit');
+      this.world.burst(this.x, this.y - 40, ['#2a7ae0', '#78c0ff', '#ffffff'], 6, { speed: 1.4, up: 0.6, g: 0.06, life: 24, size: 2 });
+      if (Math.random() < 0.3) this.world.pop(this.x, this.y - 84, ['*fzzt*', 'GLUG!', 'FIZZ!', '*sploosh*'][Math.floor(Math.random() * 4)], '#78c0ff');
+      if (this.hp <= 0) { this.state = 'defeated'; this.ring = null; G.script.run(G.SCRIPTS.popDefeated(this)); }
+    }
+    bomb(sx, sy) { this.hit(3, sx, sy); }
+    // pops its cap and flings out more little ones
+    spawn(force) {
+      const hot = this.phase === 2;
+      if (!force && this.fizzers().length >= (hot ? 6 : 4)) { this.spawnT = 60; return; }
+      Object.assign(this, { state: 'spawn', st: 44, spawnT: hot ? 210 : 300 });
+    }
+    update(w) {
+      if (G.script.busy || this.state === 'defeated') return;
+      this.t++;
+      const p = G.play.player, b = this.bounds, hot = this.phase === 2;
+      if (this.hurtT > 0) this.hurtT--;
+      if (this.refillCool > 0) this.refillCool--;
+      if (this.phase === 1 && this.hp <= this.maxHp / 2) { this.phase = 2; w.pop(this.x, this.y - 84, 'HALF EMPTY!', '#f86858'); }
+      for (const pr of this.pours) {
+        if (++pr.t === 26) {
+          this.hp = Math.min(this.maxHp, this.hp + 3);
+          G.audio.sfx('gulp');
+          w.pop(this.x, this.y - 94, '+GLUG!', '#78c0ff');
+          w.burst(this.x, this.y - 72, ['#2a7ae0', '#78c0ff'], 6, { speed: 0.8, up: 0.8, life: 16, size: 2 });
+        }
+      }
+      this.pours = this.pours.filter((pr) => pr.t < 34);
+      if (this.ring && (this.ring.r += 3) > 52) this.ring = null;
+      if (G.overlap(this.footBox(), p.hurtBox())) p.hurt(2, this.x, this.y);
+      switch (this.state) {
+        case 'walk': {
+          // running low: call the little bottles back (fling some out first if there aren't any)
+          if (this.hp <= this.maxHp * 0.4 && this.refillCool <= 0) {
+            if (this.fizzers().length) {
+              Object.assign(this, { state: 'refill', st: 240, refillCool: 480 });
+              w.pop(this.x, this.y - 88, 'REFILL TIME!', '#f86858');
+              if (!G.state.flags.popRefillHint) G.script.run(G.SCRIPTS.popRefillHint());
+            } else { this.spawn(true); this.refillCool = 100; }
+            break;
+          }
+          if (--this.spawnT <= 0) { this.spawn(); if (this.state === 'spawn') break; }
+          // close enough to reach: both fists go up
+          if (this.t >= this.slamOk && this.inSlam(p, 0)) {
+            Object.assign(this, { state: 'windup', st: hot ? 30 : 40 });
+            w.pop(this.x, this.y - 88, '!', '#f86858');
+            G.audio.sfx('fuse');
+            break;
+          }
+          // lumbering after Nate, one heavy step at a time
+          const dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1, sp = hot ? 0.42 : 0.32;
+          this.x = Math.max(b[0], Math.min(b[2], this.x + (dx / d) * sp));
+          this.y = Math.max(b[1], Math.min(b[3], this.y + (dy / d) * sp));
+          if (++this.stepT >= (hot ? 20 : 24)) {
+            this.stepT = 0; this.foot ^= 1;
+            G.audio.sfx('bump'); G.play.shake(4, 1);
+            w.burst(this.x + (this.foot ? 7 : -7), this.y, ['#8a8a90', '#b0b0b4'], 3, { speed: 0.6, up: 0.3, life: 14, size: 1 });
+          }
+          break;
+        }
+        case 'windup':
+          if (--this.st <= 0) {
+            // SLAM: two hearts if Nate's in it
+            G.audio.sfx('boom'); G.play.shake(16, 3);
+            w.pop(this.x, this.y - 88, 'SLAM!', '#f86858');
+            this.ring = { r: 8 };
+            for (const sx of [-22, 22]) w.burst(this.x + sx, this.y + 2, ['#8a8a90', '#b0b0b4', '#78c0ff'], 8, { speed: 1.4, up: 0.8, life: 20, size: 2 });
+            if (this.inSlam(p)) p.hurt(4, this.x, this.y - 10);
+            if (hot) for (const sx of [-22, 22]) w.add(new StickyPuddle(this.x + sx, this.y + 4));
+            Object.assign(this, { state: 'stuck', st: hot ? 45 : 60 });
+          }
+          break;
+        case 'stuck':
+          // fists still on the road, catching its breath: the time to get some hits in
+          if (this.st === 30) w.pop(this.x, this.y - 84, '*huff*', '#a8d8ff');
+          if (--this.st <= 0) Object.assign(this, { state: 'walk', stepT: 0, slamOk: this.t + 50 });
+          break;
+        case 'spawn':
+          if (this.st === 44) { G.audio.sfx('fuse'); w.pop(this.x, this.y - 88, '*shake shake*', '#78c0ff'); }
+          if (--this.st === 18) {
+            G.audio.sfx('poof'); w.pop(this.x, this.y - 88, '*POP*', '#f4f4f0');
+            w.burst(this.x, this.y - 72, ['#ffffff', '#a8d8ff', '#78c0ff'], 8, { speed: 1.2, up: 1.4, life: 20, size: 2 });
+            const live = this.fizzers().length, cap = hot ? 6 : 4, yMax = (this.arenaBottom || b[3] + 80) - 20;
+            for (let i = 0, n = hot ? 3 : 2; i < n && live + i < cap; i++) {
+              const tx = Math.max(b[0] - 6, Math.min(b[2] + 6, this.x + (i - (n - 1) / 2) * 34 + (Math.random() * 2 - 1) * 8));
+              const ty = Math.max(b[1] + 8, Math.min(yMax, this.y + 26 + Math.random() * 36));
+              const f = w.add(new RofoPop(this.x, this.y + 2));
+              f.intro = null; f.launch(tx, ty, 30 + i * 6);
+            }
+          }
+          if (this.st <= 0) Object.assign(this, { state: 'walk', stepT: 0 });
+          break;
+        case 'refill': {
+          // stands still and calls them in; the ones Nate hooks away (or bonks) don't make it
+          const live = this.fizzers().filter((f) => !f.carried && !f.fly && f.state !== 'flat');
+          for (const f of live) f.called = this;
+          if (this.t % 20 === 0) w.pop(this.x + (Math.random() * 20 - 10), this.y - 90, '*glug glug*', '#78c0ff');
+          if (--this.st <= 0 || (!live.length && !this.pours.length)) { for (const f of this.fizzers()) f.called = null; Object.assign(this, { state: 'walk', stepT: 0 }); }
+          break;
+        }
+        case 'rest':
+          if (--this.st <= 0) Object.assign(this, { state: 'walk', stepT: 0 });
+          break;
+      }
+    }
+    // the ground under the slam: a warning while the fists are up, then the shockwave
+    drawGround(ctx, cx, cy) {
+      const x = Math.round(this.x) - cx, y = Math.round(this.y + 4) - cy;
+      ctx.save();
+      if (this.state === 'windup') {
+        ctx.globalAlpha = (G.tick >> 2) & 1 ? 0.45 : 0.25;
+        ctx.fillStyle = '#f86858'; ctx.beginPath(); ctx.ellipse(x, y, 42, 24, 0, 0, Math.PI * 2); ctx.fill();
+      }
+      if (this.ring) {
+        ctx.globalAlpha = Math.max(0, 1 - this.ring.r / 52); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(x, y, this.ring.r, this.ring.r * 0.55, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+    draw(ctx, cx, cy) {
+      const S = G.spr.twoLiter, st = this.state, shake = (G.tick >> 1) & 1 ? 1 : -1;
+      let pose = 'stand', jx = 0, bob = 0;
+      if (st === 'defeated') pose = 'flat';
+      else if (this.pours.length) pose = 'pour';
+      else if (st === 'walk') { pose = this.foot ? 'walk2' : 'walk1'; bob = this.stepT < 5 ? 1 : 0; }
+      else if (st === 'windup') { pose = 'raise'; jx = shake; }
+      else if (st === 'stuck') pose = 'slam';
+      else if (st === 'spawn' && this.st > 18) jx = shake;
+      let img = S[pose];
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 22) - cx, Math.round(this.y - 4) - cy, 44, 7);
+      ctx.drawImage(img, Math.round(this.x - img.width / 2 + jx) - cx, Math.round(this.y - img.height + 2 + bob) - cy);
+      // a little bottle in the raised glove, tipped over the cap and poured in
+      const b = G.spr.rofo.idle;
+      for (const pr of this.pours) {
+        const k = Math.min(1, pr.t / 26), a = -2.2 * Math.min(1, k * 1.6), hx = Math.round(this.x + 13) - cx, hy = Math.round(this.y - 80) - cy;
+        ctx.save(); ctx.translate(hx, hy); ctx.rotate(a); ctx.drawImage(b, -b.width / 2, -b.height / 2); ctx.restore();
+        if (k > 0.6 && pr.t < 30) {
+          const mx = Math.round(hx + Math.sin(a) * 11), my = Math.round(hy - Math.cos(a) * 11);
+          ctx.fillStyle = '#2a7ae0'; ctx.fillRect(mx - 1, my, 2, Math.max(1, Math.round(this.y - 73) - cy - my));
+        }
+      }
+    }
+  }
+  G.TwoLiter = TwoLiter;
+  // the Two-Liter's slam warning and shockwave, drawn flat on the road under everything
+  class SlamZone extends Ent {
+    constructor(boss) { super(boss.x, boss.y); this.boss = boss; this.flat = true; }
+    update() { const b = this.boss; this.x = b.x; this.y = b.y; if (b.dead || b.state === 'defeated') this.dead = true; }
+    draw(ctx, cx, cy) { this.boss.drawGround(ctx, cx, cy); }
+  }
+  G.SlamZone = SlamZone;
 
   // Corn on the cob: hops after Nate and spits kernels.
   class Corncob extends Critter {
@@ -2319,7 +2603,14 @@
         const dx = p.x - this.x, dy = p.y - 6 - this.y, d = Math.hypot(dx, dy);
         if (d < 8) {
           this.dead = true;
-          if (this.carry && !this.carry.dead) { this.carry.x = p.x; this.carry.y = p.y; }
+          const c = this.carry;
+          if (c && !c.dead && !(c instanceof G.Pickup)) {
+            // a reeled-in critter lands in front of Nate, dazed
+            const [fx, fy] = DIRS[this.dir];
+            w.move(c, (p.x + fx * 16) - c.x, 0); w.move(c, 0, (p.y + fy * 14) - c.y);
+            c.carried = false;
+            if (c.onReeled) c.onReeled(p);
+          } else if (c && !c.dead) { c.x = p.x; c.y = p.y; }
           return;
         }
         this.x += (dx / d) * 5.5; this.y += (dy / d) * 5.5;
@@ -2333,6 +2624,7 @@
       if (e.onHook && e.onHook(p) === false) { G.audio.sfx('clank'); return; }
       G.audio.sfx('select');
       w.pop(this.x, this.y - 22, 'HOOKED!', '#f8f8f0');
+      if (e.reelable) { this.carry = e; e.carried = true; return; }
       if (!e.onHook) e.hit(1, e.x * 2 - p.x, e.y * 2 - p.y); // (knocked back TOWARD Nate)
     }
     draw(ctx, cx, cy) {
@@ -3183,7 +3475,7 @@
     }
 
     get img() {
-      return { tooth: G.spr.tooth, tooth5: G.spr.toothGold, heart: G.spr.heart.full, doosh: G.spr.doosh, package: G.spr.gift }[this.kind];
+      return { tooth: G.spr.tooth, tooth5: G.spr.toothGold, heart: G.spr.heart.full, doosh: G.spr.doosh, package: G.spr.gift, rofo: G.spr.rofo.bottle }[this.kind];
     }
 
     update() {

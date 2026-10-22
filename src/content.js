@@ -92,6 +92,11 @@
       pants: '#2a2e40', shoes: '#2a2a30', torso: 7, legs: 3,
     },
     // Campus Safety, keeping everybody on campus during finals week
+    // the toll collector at the Eastern Shore end of the Bay Bridge-Tunnel
+    tollWorker: {
+      skin: '#c88a64', hair: '#2a1c18', hairStyle: 'long', shirt: '#c8e830', collar: '#f0c020',
+      pants: '#2a2e40', shoes: '#2a2a30', torso: 6, legs: 3,
+    },
     officer: {
       skin: '#e0b090', hair: '#4a3a2a', hairStyle: 'cap', hat: '#1c2a4a', hatStyle: 'ball', patch: '#e8c060',
       shirt: '#2a3a6a', pants: '#1c2440', shoes: '#1c1c22', torso: 7, legs: 4,
@@ -1756,7 +1761,7 @@
       if (c) { yield G.walkTo(p, p.x + (p.x < 30 * 16 ? 24 : -24), p.y, 1); return; }
     }
     yield G.say('Nate', 'Chesapeake. Down the Eastern Shore, then straight across the bay. Hang on, Number One Ditch.');
-    G.play.warp('cbbt', 21, 20, 'left');
+    G.play.warp('cbbtToll', 17, 13, 'left');
   };
   // ---------------------------------------------------------------- Badlands Chugs and the refrigerator game
   // Lily is locked in the kitchen fridge. The only way to get her out: beat
@@ -2719,6 +2724,7 @@
     // Bedminster (home)
     { id: 'shale', area: 'bedminster', name: 'Passaic Red Shale', r: 0, crush: { teeth: 5 }, how: 'Red rock out on the little island in Brady Brook. If only the water would hold still.', fact: 'Red mud from the Newark Basin, Triassic and Jurassic. Dinosaurs left footprints in mud like this all over New Jersey.' },
     { id: 'basalt', area: 'bedminster', name: 'Watchung Basalt', r: 1, crush: { teeth: 15 }, how: 'The big black boulder by Brady Brook is way too heavy for Nate. Doron, though...', fact: 'Jurassic lava flows that built the Watchung Mountains just east of Bedminster.' },
+    { id: 'megalodon', area: 'bay', name: 'Megalodon Tooth', r: 4, crush: null, how: 'A patch of gravel and shell on the island between the two tunnels. Too fine to pick through by hand.', fact: 'A fossil tooth from Otodus megalodon, a giant shark that lived millions of years ago. Fossil shark teeth turn up all over the Chesapeake Bay region.' },
     { id: 'prehnite', area: 'bedminster', name: 'Prehnite', r: 2, crush: { heart: 1 }, how: 'The gravel bar in Brady Brook. You\'d need a sifting screen.', fact: 'Pale green crystals that grow in the gas bubbles of New Jersey basalt. Mindat lists prehnite in Bedminster Township.' },
   ];
   G.rockById = (id) => G.ROCKS.find((r) => r.id === id);
@@ -2727,6 +2733,7 @@
     { id: 'lafayette', name: 'LAFAYETTE' },
     { id: 'easton', name: 'EASTON FAIR' },
     { id: 'bedminster', name: 'BEDMINSTER' },
+    { id: 'bay', name: 'THE BAY' },
   ];
   const rockState = () => { const s = G.state; s.rocks = s.rocks || {}; s.rocksFound = s.rocksFound || {}; return s; };
   G.rocksFound = () => G.ROCKS.filter((r) => rockState().rocksFound[r.id]).length;
@@ -3027,8 +3034,9 @@
     { name: 'Dad\'s snacks (workshop)', map: 'garage', at: [10, 10, 'up'], flags: { shopOpen: true }, items: { books: false }, teeth: 120 },
     { name: 'Ice JJ Fish (north)', map: 'north', at: [10, 13, 'up'], flags: { snackQuest: true, snacksDone: true, momDenied: true, jjGig: true } },
     { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, signal_jlc: true, momHeart: true, phDone: true, chemMet: true, chemPassed: true, chemPerfect: true, engMet: true, engPassed: true, engPerfect: true, ticketQuest: true, ticketsGiven: true, ticketsDone: true, protestReward: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10, tickets: 0, andoverKey: true }, maxHp: 10, teeth: 300 },
-    { name: 'Bay Bridge-Tunnel (the toll)', map: 'cbbt', at: [21, 20, 'left'], teeth: 520 },
-    { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
+    { name: 'Bay Bridge-Tunnel: the toll plaza', map: 'cbbtToll', at: [17, 13, 'left'], teeth: 520 },
+    { name: 'The Two-Liter (Chesapeake Channel Tunnel)', map: 'chesTunnel', at: [7, 26, 'up'], flags: { cbbtArrived: true, tollMet: true, chesSeen: true }, items: { rod: true } },
+    { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
     { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [39, 1, 'down'], flags: { tylerBeaten: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
@@ -3053,8 +3061,11 @@
     { name: 'Andover mines (outside)', map: 'andover', at: [27, 15, 'left'] },
     { name: 'Andover mines (tunnels)', map: 'andoverMine', at: [13, 20, 'up'] },
     { name: 'Andover: the deep stope', map: 'andoverDeep', at: [2, 8, 'right'] },
+    { name: 'Bay Bridge-Tunnel: the toll plaza', map: 'cbbtToll', at: [17, 13, 'left'] },
     { name: 'Bay Bridge-Tunnel: the island', map: 'cbbt', at: [14, 20, 'up'] },
-    { name: 'Chesapeake Channel Tunnel', map: 'cbbtTunnel', at: [7, 60, 'up'] },
+    { name: 'Chesapeake Channel Tunnel', map: 'chesTunnel', at: [7, 60, 'up'] },
+    { name: 'Between the tunnels', map: 'cbbtMid', at: [14, 55, 'up'] },
+    { name: 'Thimble Shoal Tunnel (Tyler)', map: 'cbbtTunnel', at: [7, 60, 'up'] },
     { name: 'Abe & Hannah\'s: outside', map: 'condo', at: [39, 15, 'left'] },
     { name: 'Abe & Hannah\'s: downstairs', map: 'condoDown', at: [13, 18, 'up'] },
     { name: 'Abe & Hannah\'s: upstairs', map: 'condoUp', at: [13, 11, 'down'] },
@@ -3710,6 +3721,7 @@
 
   // ---------------------------------------------------------------- home critters
   const CRITTER_LINES = {
+    rofo: [['Nate', '...Is that RoFo Pop? Blue raspberry RoFo Pop?'], ['Nate', 'Abe and Hannah bring us this from the Eastern Shore every time they visit. Every. Time. Nobody drinks it.'], ['Nate', 'And now it\'s ANGRY.']],
     corn: [['Nate', 'My CORN?! I kept a bunch of corn on the cob in my room and now it\'s ALIVE.'], ['Nate', 'Father Eggmas, you monster.']],
     cereal: [['Nate', 'That\'s my cereal! I go through a box a day. I guess they finally fought back.']],
     firework: [['Nate', 'Those are MY fireworks! I knew I should have stored them in the garage.']],
@@ -5174,7 +5186,7 @@
       yield G.say(null, 'There is a seagull on every light. Every single one of them is looking at Nate.');
       yield G.camFocus(null, null, 30);
     }
-    yield G.say('Nate', 'Chesapeake is on the other side of that tunnel. Let\'s go.');
+    yield G.say('Nate', 'Two tunnels and a whole lot of bridge between here and Chesapeake. Let\'s go.');
   };
   S.cbbtCar = function* () {
     const c = yield G.ask('Nate', 'Head home?', ['Head home', 'Keep going']);
@@ -5426,6 +5438,286 @@
     G.audio.play('tunnel');
     G.play.autosave();
   };
+  // ================================================================ THE BAY, HEADING SOUTH
+  // Real-world order across the Chesapeake Bay Bridge-Tunnel: the toll plaza at the
+  // Eastern Shore end, the first island (the old fisherman), the Chesapeake Channel
+  // Tunnel (RoFo Pop, and the Two-Liter), the bridge between the tunnels (island with
+  // the megalodon gravel), then the Thimble Shoal Channel Tunnel (Tyler), then Chesapeake.
+
+  // ---------------------------------------------------------------- the toll plaza
+  S.tollWorker = function* () {
+    const f = flags();
+    if (!f.tollMet) {
+      f.tollMet = true;
+      yield G.say('Toll Collector', 'Welcome to the Chesapeake Bay Bridge-Tunnel! Seventeen-point-six miles, shore to shore.');
+      yield G.say('Nate', 'Do you take shark teeth?');
+      yield G.say('Toll Collector', '...We take cash, cards and E-ZPass.');
+      yield G.say('Toll Collector', 'But it\'s funny you ask. All week, people have been calling in about somebody down in the tunnels charging a toll of FIVE HUNDRED SHARK TEETH.');
+      yield G.say('Toll Collector', 'That is NOT us. Please do not pay anybody shark teeth.');
+      yield G.say('Toll Collector', 'Oh, and drive careful. A truck full of soda tipped over somewhere past the first island. Blue soda. Very sticky.');
+      yield G.say(null, 'Dad\'s E-ZPass beeps from the windshield of the car. Nate\'s all paid up.');
+      return;
+    }
+    f.tollLine = ((f.tollLine || 0) + 1) % 3;
+    yield G.say('Toll Collector', [
+      'Five hundred shark teeth. Can you imagine? Who even HAS five hundred shark teeth?',
+      'Watch for the gulls on the islands. They will take a sandwich right out of your hand.',
+      'Seventeen-point-six miles. Two tunnels. Four islands. And now, apparently, soda.',
+    ][f.tollLine]);
+  };
+  S.tollCar = function* () {
+    const c = yield G.ask('Nate', 'The car\'s right here.', ['Drive onto the bridge', 'Head home', 'Not yet']);
+    if (c === 0) G.play.warp('cbbt', 21, 20, 'left');
+    else if (c === 1) G.play.warp('home', 1, 53, 'right');
+  };
+  S.tollEdge = (line) => function* () {
+    const p = P();
+    yield G.say('Nate', line);
+    yield G.walkTo(p, p.x, p.y + (p.y < 8 * 16 ? 20 : -20), 1);
+  };
+
+  G.MAPS.cbbtToll = {
+    name: 'Bay Bridge-Tunnel: Toll Plaza',
+    music: 'bay',
+    tiles() {
+      const W = 22, H = 16;
+      const g = Array.from({ length: H }, () => Array(W).fill('.'));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
+      // the bay at the top, with the start of the trestle heading out over it
+      fill(0, 0, W, 3, 'y');
+      fill(7, 0, 6, 3, '+'); for (let y = 0; y < 3; y++) { set(6, y, '!'); set(13, y, '!'); }
+      // the plaza: four lanes through the booths, then the road on down the Eastern Shore
+      fill(5, 3, 10, H - 3, 'a');
+      for (const x of [5, 8, 11, 14]) fill(x, 6, 1, 4, 'C');   // the booth islands
+      fill(16, 9, 5, 6, 'C');                                   // a little lot by the plaza
+      for (const [x, y] of [[1, 4], [1, 9], [2, 13], [18, 4]]) set(x, y, 'T');
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr;
+      w.addProp({ img: sp.tollPlaza, tx: 5, ty: 6, h: 4, dx: 0 });
+      for (const x of [5, 8, 11, 14]) w.blockTiles(x, 8, 1, 2);
+      w.add(new G.NPC({ sprite: 'tollWorker', name: 'Toll Collector', x: 9 * 16 + 8, y: 10 * 16 + 14, dir: 'down', talk: S.tollWorker }));
+      w.addProp({ img: sp.suv, tx: 17, ty: 10, h: 3, dx: 3, solid: [17, 11, 2, 2], hit: [17, 11, 2, 2], talk: S.tollCar });
+      w.add(new G.Sign(16, 7, ['CHESAPEAKE BAY BRIDGE-TUNNEL', '17.6 miles across the mouth of the Chesapeake Bay. Two tunnels. Four man-made islands.']));
+      w.add(new G.Sign(4, 12, ['NOTICE', 'Tolls are paid HERE, at the plaza. Never in the tunnels. Never in shark teeth.']));
+      w.addTrigger(7, 0, 6, 1, () => G.script.run(S.tollEdge('Seventeen-point-six miles of bridge. I am DRIVING.')()));
+      w.addTrigger(5, 15, 10, 1, () => G.script.run(S.tollEdge('Home is back that way. If I\'m going home, I\'m taking the car.')()));
+    },
+    onEnter() {
+      return (function* () {
+        if (flags().tollMet) return;
+        yield G.wait(20);
+        yield G.say('Nate', 'The toll plaza. Last stop on the Eastern Shore before the bridge-tunnel.');
+        yield* S.tollWorker();
+      })();
+    },
+  };
+
+  // ---------------------------------------------------------------- the Chesapeake Channel Tunnel
+  // RoFo Pop: a truck full of it tipped over, and Father Eggmas got to the soda. Blue
+  // raspberry fizzers all down the tunnel, and the Two-Liter at the far end.
+  S.popRefillHint = function* () {
+    flags().popRefillHint = true;
+    yield G.say(null, 'The Two-Liter is calling the little bottles back to pour them in and fill itself up!');
+    if (G.state.items.rod) yield G.say(null, 'Hook them away with the {y}Surf Rod{/} (X) before it gets them, or bonk them first.');
+    else yield G.say(null, 'Bonk them before it gets them!');
+  };
+  S.popFight = function* () {
+    const f = flags(), w = G.play.world, p = P();
+    if (f.popBeaten || w.popFight) return;
+    w.popFight = true;
+    // the way back closes behind Nate
+    w.blockTiles(5, 24, 6, 1);
+    const b = w.pop2l = w.add(new G.TwoLiter(8 * 16, 9 * 16 + 14, [5 * 16 + 18, 5 * 16, 11 * 16 - 18, 21 * 16]));
+    b.arenaBottom = 24 * 16;
+    w.add(new G.SlamZone(b));
+    // it's tall: when Nate is right under it, the camera leans up so its fists stay on screen
+    w.camLean = (q) => (b.state === 'defeated' ? 0 : G.clamp(q.y - b.y - 8, 0, 28));
+    yield G.camFocus(b.x, b.y - 36, 30);
+    G.audio.sfx('fuse');
+    w.pop(b.x, b.y - 88, '*fzzzzzzzt*', '#78c0ff');
+    yield G.wait(30);
+    yield G.say('Nate', 'That is the biggest RoFo Pop I have ever seen.');
+    yield G.say('Nate', '...Why does it have LEGS?');
+    if (G.with('lily')) yield G.say('Lily', 'I am not drinking that.');
+    else if (G.with('doron')) yield G.say('Doron', 'I\'m not drinking that.');
+    yield G.camFocus(null, null, 20);
+    yield G.banner('THE TWO-LITER', 'RoFo Pop, blue raspberry', 150);
+    G.audio.play('boss');
+  };
+  S.popDefeated = function* (boss) {
+    const f = flags(), w = G.play.world, p = P();
+    G.audio.stop();
+    for (const e of w.ents) if (e instanceof G.RofoPop || e instanceof G.Shot) { e.dead = true; w.burst(e.x, e.y - 8, ['#2a7ae0', '#78c0ff'], 4); }
+    boss.pours = [];
+    G.audio.sfx('bell');
+    yield G.shakeCmd(30, 3);
+    // all the fizz goes out of it
+    for (let i = 0; i < 4; i++) { w.burst(boss.x, boss.y - 72, ['#ffffff', '#a8d8ff', '#78c0ff'], 6, { speed: 1, up: 1.4, life: 20, size: 2 }); G.audio.sfx('blip'); yield G.wait(12); }
+    w.pop(boss.x, boss.y - 88, 'pssssshhhhhh...', '#a8d8ff');
+    yield G.wait(50);
+    w.popFight = false;
+    w.camLean = null;
+    f.popBeaten = true;
+    for (let x = 5; x <= 10; x++) w.block[24 * w.w + x] = 0;
+    yield G.banner('YOU WIN!', 'flat as a pancake', 150);
+    yield G.say('Nate', '...Flat. Just like every bottle of RoFo Pop in our garage.');
+    G.audio.sfx('buzz');
+    yield G.say(null, 'Nate texts the group chat.');
+    yield G.text('Nate', 'why is there a giant rofo pop in the chesapeake channel tunnel');
+    yield G.text('Abe', 'OMG. we always grab u guys some at the royal farms on the eastern shore');
+    yield G.text('Hannah', 'it\'s the thought that counts!!');
+    yield G.text('Lily', 'it is BLUE');
+    yield G.text('Nate', 'it does not taste good');
+    yield G.text('Abe', 'more for us then');
+    yield G.text('Hannah', 'we are not drinking it either');
+    boss.dead = true;
+    w.burst(boss.x, boss.y - 20, ['#a8c8e0', '#ffffff'], 12, { speed: 1.2, life: 26, size: 3 });
+    w.add(new G.Pickup(boss.x, boss.y, 'rofo'));
+    G.audio.play('tunnel');
+    G.play.autosave();
+  };
+
+  G.MAPS.chesTunnel = {
+    name: 'Chesapeake Channel Tunnel',
+    music: 'tunnel',
+    tiles() {
+      return Array.from({ length: 64 }, () => '    :-++t+-:    ');
+    },
+    setup(w) {
+      const f = flags();
+      for (let ty = 2; ty < 64; ty += 4) {
+        for (const x of [5 * 16 - 9, 11 * 16 + 1]) {
+          w.props.push({ base: ty * 16, draw(ctx, cx, cy) { ctx.drawImage(G.spr.tunnelLight, x - cx, ty * 16 + 4 - cy); w.glows.push({ x: x + 4, y: ty * 16 + 7, color: '#f8a040' }); } });
+        }
+      }
+      for (const [ty, side, text] of [
+        [58, 0, ['CHESAPEAKE CHANNEL TUNNEL', 'About a mile long: 5,237 feet, under the main shipping channel into the bay.']],
+        [40, 1, ['CAUTION', 'Spilled soda ahead. Extremely sticky. Do NOT drink it.']],
+        [26, 0, ['YOU ARE NOW UNDER THE SHIPPING CHANNEL', 'Container ships are passing right over your head. Try not to think about it.']],
+      ]) {
+        const tx = side ? 11 : 4;
+        w.addProp({ img: G.spr.tunnelSign, tx, ty, dx: -4, flat: true, hit: [tx, ty, 1, 1], talk: look(...text) });
+      }
+      // a few old spills on the road, and the fizzers
+      for (const [x, y] of [[7, 50], [9, 41], [6, 33]]) w.add(new G.StickyPuddle(x * 16 + 8, y * 16 + 8, true)).life = 1e9;
+      if (!f.popBeaten) {
+        for (const [x, y] of [[8, 48], [6, 43], [9, 38], [7, 33], [9, 29]]) w.add(new G.RofoPop(x * 16 + 8, y * 16 + 14));
+        w.addTrigger(5, 20, 6, 1, () => { if (!flags().popBeaten && !w.popFight) G.script.run(S.popFight()); });
+      }
+      // back to the first island, and on out the far end to the bridge between the tunnels
+      w.addTrigger(5, 63, 6, 1, () => G.play.warp('cbbt', 14, 10, 'down'));
+      w.addTrigger(5, 0, 6, 1, () => {
+        if (flags().popBeaten) G.play.warp('cbbtMid', 14, 57, 'up');
+        else G.script.run(S.tollEdge('The Two-Liter is still blocking the tunnel.')());
+      });
+    },
+    tint(ctx) {
+      ctx.fillStyle = 'rgba(24,10,0,0.2)';
+      ctx.fillRect(0, 0, G.W, G.H);
+      ctx.fillStyle = 'rgba(80,140,255,0.05)';
+      ctx.fillRect(0, 0, G.W, G.H);
+    },
+    onEnter() {
+      return (function* () {
+        const f = flags();
+        if (f.chesSeen) return;
+        f.chesSeen = true;
+        yield G.wait(20);
+        yield G.say('Nate', 'The Chesapeake Channel Tunnel. About a mile long, right under the shipping channel.');
+        yield G.say('Nate', '...Why is the road sticky?');
+      })();
+    },
+  };
+
+  // ---------------------------------------------------------------- between the tunnels
+  // Out of the Chesapeake Channel Tunnel onto island 3, a long stretch of trestle over
+  // open water, then island 2 and the Thimble Shoal Channel Tunnel. On island 2: a patch
+  // of gravel and old shell where a fossil megalodon tooth is waiting (needs Tyler's sifter).
+  S.megalodonSift = function* () {
+    const f = flags();
+    if (!G.itemHas('sifter')) {
+      yield G.say(null, 'A patch of gravel and crushed shell, washed up between the rocks. Tiny fossil bits glint in it.');
+      yield G.say('Nate', 'There could be shark teeth in here. Real ones. It\'s way too fine to pick through by hand, though. I need a sifting screen.');
+      return;
+    }
+    if (f.megalodon) { yield G.say(null, 'Gravel, shell and a few tiny fossil shark teeth. Nothing like the big one.'); return; }
+    const c = yield G.ask(null, 'A patch of gravel and crushed shell. Tiny fossil bits glint in it.', ['Sift it with Tyler\'s sifter', 'Leave it']);
+    if (c) return;
+    yield G.say(null, 'Nate shakes scoop after scoop through the sifter. Shell, pebbles, a few tiny fossil teeth...');
+    G.audio.sfx('slip');
+    yield G.wait(30);
+    yield G.say(null, '...and then something big and heavy rattles in the screen.');
+    f.megalodon = true;
+    yield* S.rockGive('megalodon');
+    yield G.say('Nate', 'A MEGALODON tooth. Off the bottom of the Chesapeake Bay. This is the greatest day of my life.');
+    yield G.say('Nate', 'Tyler is going to lose his MIND.');
+  };
+
+  G.MAPS.cbbtMid = {
+    name: 'Bay Bridge-Tunnel: Between the Tunnels',
+    music: 'bay',
+    tiles() {
+      const W = 30, H = 60;
+      const g = Array.from({ length: H }, () => Array(W).fill('y'));
+      const island = (cy) => {
+        for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+          const d = Math.abs((x - 14.5) / 11.5) ** 4 + Math.abs((y - cy) / 8) ** 4;
+          if (d <= 1) g[y][x] = d > 0.5 ? '^' : '.';
+        }
+        for (let y = cy - 6; y <= cy + 6; y++) for (let x = 11; x <= 18; x++) if (y >= 0 && y < H && g[y][x] === '.') g[y][x] = 'C';
+      };
+      island(8);   // island 2, the Thimble Shoal Channel Tunnel up top
+      island(51);  // island 3, out of the Chesapeake Channel Tunnel at the bottom
+      // the road straight up the middle, with parapets along the trestle
+      for (let y = 0; y < H; y++) {
+        for (let x = 13; x <= 16; x++) g[y][x] = x === 15 ? 't' : '+';
+        if (y >= 16 && y <= 43) { g[y][12] = '!'; g[y][17] = '!'; }
+      }
+      // the gravel and shell patch on island 2
+      for (const [x, y] of [[6, 9], [7, 9], [6, 10], [7, 10], [8, 10], [7, 11]]) g[y][x] = 'g';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr;
+      w.props.push({ base: -1000, draw(ctx, cx, cy) { ctx.drawImage(sp.containerShip, Math.round((G.tick * 0.25 + 300) % 760 - 190) - cx, 26 * 16 - cy); } });
+      // the Thimble Shoal Channel Tunnel portal on island 2
+      w.addProp({ img: sp.tunnelPortalTS, tx: 9, ty: 0, h: 6 });
+      w.blockTiles(9, 0, 12, 6);
+      for (let y = 4; y <= 5; y++) for (let x = 13; x <= 16; x++) w.block[y * w.w + x] = 0;
+      w.addTrigger(13, 4, 4, 1, () => G.play.warp('cbbtTunnel', 7, 61, 'up'));
+      // and back down into the Chesapeake Channel Tunnel off the bottom of island 3
+      w.addTrigger(13, 59, 4, 1, () => G.play.warp('chesTunnel', 7, 2, 'down'));
+      // lamps along the trestle, gulls on most of them
+      const lamp = (tx, ty, armRight, gull) => {
+        const bx = tx * 16 + 8, by = ty * 16 + 15;
+        w.props.push({ img: armRight ? sp.lampPost : sp.lampPostL, x: armRight ? bx - 3 : bx - 26, y: by - 59, base: by });
+        w.blockTiles(tx, ty, 1, 1);
+        if (gull !== undefined) w.add(new G.Seagull(bx + (armRight ? 19 : -19), by + 1, 59, gull));
+      };
+      lamp(12, 12, true); lamp(17, 14, false, false);
+      lamp(12, 20, true, true); lamp(17, 26, false, false); lamp(12, 32, true, false); lamp(17, 38, false, true);
+      lamp(12, 46, true); lamp(17, 50, false, false);
+      w.add(new G.Sign(18, 52, ['ISLAND 3', 'Behind you: the Chesapeake Channel Tunnel. Ahead: the Thimble Shoal Channel Tunnel.']));
+      w.add(new G.Sign(11, 9, ['ISLAND 2', 'Ahead: the Thimble Shoal Channel Tunnel. The way in to Hampton Roads runs right over it.']));
+      for (const [x, y, flip, line] of [[4, 50, false, 'A brown pelican, wings out, drying off on the rocks.'], [25, 7, true, 'A brown pelican. It has clearly seen some things.']]) {
+        w.addProp({ img: flip ? sp.pelicanL : sp.pelican, tx: x, ty: y, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: look(line) });
+      }
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [6 * 16, 9 * 16, 9 * 16, 12 * 16], talk: S.megalodonSift });
+    },
+    onEnter() {
+      return (function* () {
+        const f = flags();
+        if (f.midSeen) return;
+        f.midSeen = true;
+        yield G.wait(20);
+        yield G.say('Nate', 'Out of the first tunnel. Open water both ways, and the second tunnel at the end of the bridge.');
+      })();
+    },
+  };
+
   S.tunnelEnd = function* () {
     const p = P();
     if (!flags().tylerBeaten) { yield G.walkTo(p, p.x, p.y + 24, 1); return; }
@@ -5463,7 +5755,7 @@
       w.addProp({ img: G.spr.tunnelPortal, tx: 9, ty: 4, h: 6 });
       w.blockTiles(9, 4, 12, 6);
       for (let y = 8; y <= 9; y++) for (let x = 13; x <= 16; x++) w.block[y * w.w + x] = 0;
-      w.addTrigger(13, 8, 4, 1, () => G.play.warp('cbbtTunnel', 7, 61, 'up'));
+      w.addTrigger(13, 8, 4, 1, () => G.play.warp('chesTunnel', 7, 61, 'up'));
       // light poles on the island and along the trestle, most of them with a gull on top
       const lamp = (tx, ty, armRight, gull) => {
         const bx = tx * 16 + 8, by = ty * 16 + 15;
@@ -5509,10 +5801,11 @@
     onEnter() { return S.cbbtArrive(); },
   };
 
-  // The Chesapeake Channel Tunnel: about a mile of tiled tube under the bay,
-  // sodium lights, a catwalk on each side, and (at the far end) the toll.
+  // The Thimble Shoal Channel Tunnel (the second tunnel heading south; the map id is
+  // still cbbtTunnel for older saves): about a mile of tiled tube under the bay, sodium
+  // lights, a catwalk on each side, and (at the far end) the "toll". Tyler.
   G.MAPS.cbbtTunnel = {
-    name: 'Chesapeake Channel Tunnel',
+    name: 'Thimble Shoal Channel Tunnel',
     music: 'tunnel',
     tiles() {
       return Array.from({ length: 64 }, () => '    :-++t+-:    ');
@@ -5528,7 +5821,7 @@
         w.add(new G.Seagull(side ? 11 * 16 - 4 : 5 * 16 + 4, ty * 16 + 26, 22, laughing));
       }
       for (const [ty, side, text] of [
-        [58, 0, ['CHESAPEAKE CHANNEL TUNNEL', 'About a mile long: 5,237 feet, under the main shipping channel into the bay.']],
+        [58, 0, ['THIMBLE SHOAL CHANNEL TUNNEL', 'About a mile long: 5,552 feet, under the Thimble Shoal Channel, the way in to Hampton Roads.']],
         [32, 1, ['YOU ARE NOW UNDER THE SHIPPING CHANNEL', 'Container ships are passing right over your head. Try not to think about it.']],
         [12, 0, ['NO STOPPING IN TUNNEL', 'Somebody has scratched underneath: "except for the toll."']],
       ]) {
@@ -5543,7 +5836,7 @@
         w.addTrigger(5, 6, 6, 2, () => { if (!flags().tylerBeaten && !w.tylerFight) G.script.run(S.hooded()); });
       }
       w.addTrigger(5, 0, 6, 1, () => G.script.run(S.tunnelEnd()));
-      w.addTrigger(5, 63, 6, 1, () => G.play.warp('cbbt', 14, 10, 'down'));
+      w.addTrigger(5, 63, 6, 1, () => G.play.warp('cbbtMid', 14, 7, 'down'));
     },
     // ships rumble by overhead now and then
     tick(w) {
@@ -5568,7 +5861,7 @@
         if (f.tunnelSeen) return;
         f.tunnelSeen = true;
         yield G.wait(20);
-        yield G.say('Nate', 'The Chesapeake Channel Tunnel. About a mile long, right under the shipping channel.');
+        yield G.say('Nate', 'The Thimble Shoal Channel Tunnel. The second one. Chesapeake is right on the other side.');
         if (G.with('lily')) yield G.say('Lily', 'There is a whole ocean on top of us right now.');
         else if (G.with('doron')) yield G.say('Doron', 'There are gulls in here. How are there gulls in here?');
         else yield G.say('Nate', '...Are those seagulls? In the TUNNEL?');
