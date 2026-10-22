@@ -308,9 +308,12 @@
       let t = s.teeth + n, skipped = false;
       while (/6/.test(String(t))) { t += n >= 0 ? 1 : -1; skipped = true; }
       s.teeth = G.clamp(t, 0, 999);
+      // the joke about it only ever plays once on this device (not again for every new game or admin start)
       if (skipped && !s.flags.skipNote) {
         s.flags.skipNote = true;
-        G.script.run(G.SCRIPTS.skipNote());
+        let seen = false;
+        try { seen = localStorage.getItem('ditch-skipNote') === '1'; localStorage.setItem('ditch-skipNote', '1'); } catch (e) { /* no storage: just show it */ }
+        if (!seen) G.script.run(G.SCRIPTS.skipNote());
       }
     },
 
