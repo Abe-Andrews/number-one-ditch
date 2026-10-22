@@ -288,8 +288,8 @@
       desc: 'A gift to Mom from the church ladies. Mom has been waiting YEARS to get rid of it. Bait for whatever eats books.',
     },
     sifter: {
-      kind: 'key', name: 'Tyler\'s Sifter', icon: () => G.spr.sifter, has: () => !!st().items.sifter || !!fl().tylerBeaten,
-      desc: 'Tyler\'s sifting screen, for shark teeth at the Number One Ditch. He\'s done sifting forever. Shake gravel through it to find the small stuff.',
+      kind: 'gear', equip: true, name: 'Tyler\'s Sifter', short: 'Sifter', icon: () => G.spr.sifter, has: () => !!st().items.sifter || !!fl().tylerBeaten,
+      desc: 'Tyler\'s sifting screen, for shark teeth at the Number One Ditch. He\'s done sifting forever. Press X to shake the gravel in front of you through it and find the small stuff.',
     },
     earplugs: {
       kind: 'key', name: 'Earplugs', icon: () => G.spr.earplugs, has: () => !!st().items.earplugs,
@@ -298,7 +298,7 @@
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
   // (the Portable Bidet gets a slot once there's a way to find it)
-  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bass', 'chicken', 'rod', null, null, null, null, null];
+  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bass', 'chicken', 'rod', 'sifter', null, null, null, null];
 
   // ================================================================ SMOKE SIGNALS (Dad's pipe)
   // Like ocarina songs: learn a sequence, puff it with the pipe, something
@@ -314,7 +314,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'sifter'];
+  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -2872,7 +2872,8 @@
 
   // Sifting the gravel bar in Brady Brook (once a visit). Prehnite washes out of
   // the basalt upstream; it turns up for sure by the third try.
-  S.brookSift = function* () {
+  // (direct: Nate is already sifting with X, so no question first)
+  S.brookSift = function* (direct) {
     const w = G.play.world, f = flags();
     if (w.sifted) { yield G.say('Nate', 'I\'ve sifted this gravel bar down to sand. The brook will bring more.'); return; }
     if (!G.itemHas('sifter')) {
@@ -2880,8 +2881,10 @@
       yield G.say('Nate', 'Anything good in here is too small to pick out by hand. I need a sifting screen.');
       return;
     }
-    const c = yield G.ask(null, 'A gravel bar in Brady Brook: red shale, black basalt, a little quartz.', ['Sift through it', 'Leave it']);
-    if (c) return;
+    if (!direct) {
+      const c = yield G.ask(null, 'A gravel bar in Brady Brook: red shale, black basalt, a little quartz.', ['Sift through it', 'Leave it']);
+      if (c) return;
+    }
     w.sifted = true;
     yield G.say(null, 'Nate shakes scoop after scoop of cold, wet gravel through Tyler\'s sifter...');
     G.audio.sfx('slip');
@@ -5416,7 +5419,7 @@
     }
     yield G.say('Tyler', 'And take my sifter. I am never sifting anything ever again.');
     G.state.items.sifter = true;
-    yield G.itemGet(G.spr.sifter, 'You got {y}Tyler\'s Sifter{/}! Shake gravel through it to find the small stuff.');
+    yield G.itemGet(G.spr.sifter, 'You got {y}Tyler\'s Sifter{/}! Equip it in ITEMS and press X to sift the gravel in front of you.');
     yield G.say('Nate', 'There\'s a gravel bar in Brady Brook back home...');
     yield G.say('Tyler', 'Last thing I remember, I was hunting shark teeth at the Number One Ditch. Best ditch in the world.');
     yield G.say('Tyler', 'Then a little egg in a paisley suit walked up and said, "Nate has your mosasaur tooth." And everything went swirly.');
@@ -5636,7 +5639,7 @@
   // Out of the Chesapeake Channel Tunnel onto island 3, a long stretch of trestle over
   // open water, then island 2 and the Thimble Shoal Channel Tunnel. On island 2: a patch
   // of gravel and old shell where a fossil megalodon tooth is waiting (needs Tyler's sifter).
-  S.megalodonSift = function* () {
+  S.megalodonSift = function* (direct) {
     const f = flags();
     if (!G.itemHas('sifter')) {
       yield G.say(null, 'A patch of gravel and crushed shell, washed up between the rocks. Tiny fossil bits glint in it.');
@@ -5644,8 +5647,10 @@
       return;
     }
     if (f.megalodon) { yield G.say(null, 'Gravel, shell and a few tiny fossil shark teeth. Nothing like the big one.'); return; }
-    const c = yield G.ask(null, 'A patch of gravel and crushed shell. Tiny fossil bits glint in it.', ['Sift it with Tyler\'s sifter', 'Leave it']);
-    if (c) return;
+    if (!direct) {
+      const c = yield G.ask(null, 'A patch of gravel and crushed shell. Tiny fossil bits glint in it.', ['Sift it with Tyler\'s sifter', 'Leave it']);
+      if (c) return;
+    }
     yield G.say(null, 'Nate shakes scoop after scoop through the sifter. Shell, pebbles, a few tiny fossil teeth...');
     G.audio.sfx('slip');
     yield G.wait(30);
