@@ -2479,7 +2479,7 @@
   // ============================================================== TYLER (boss)
   // Hypnotized by Father Eggmas, collecting a "toll" in the Chesapeake Channel
   // Tunnel. He throws the toll back at Nate (shark teeth), sifts gravel down on
-  // him, flips his shades down and charges (then he's dizzy), and when he
+  // him, yells HERE I COME and charges (then he's dizzy), and when he
   // screams about his mosasaur tooth, a mosasaur skull bursts up out of the road.
   class FallingRock extends Ent {
     constructor(x, y, delay) { super(x, y); this.t = -(delay || 0); this.fall = 34; }
@@ -2555,7 +2555,7 @@
     }
     get S() { return G.sprites.tylerHypno; }
     hurtBox() { return [this.x - 7, this.y - 24, this.x + 7, this.y]; }
-    toPace() { this.state = 'pace'; this.st = this.phase === 2 ? 50 : 75; this.shadesDown = false; }
+    toPace() { this.state = 'pace'; this.st = this.phase === 2 ? 50 : 75; }
     get open() { return this.state === 'reeled'; }
     // hooked with the surf rod: yanked down the tunnel to Nate, screen dropped.
     // Right after he gets back up he's watching for the hook, so it slides off.
@@ -2566,7 +2566,7 @@
         return false;
       }
       const ty = Math.max(3 * 16, Math.min(21 * 16, p.y - 22));
-      Object.assign(this, { state: 'yank', k: 0, from: { x: this.x, y: this.y }, to: { x: Math.max(5 * 16 + 8, Math.min(11 * 16 - 8, p.x)), y: ty }, shadesDown: false });
+      Object.assign(this, { state: 'yank', k: 0, from: { x: this.x, y: this.y }, to: { x: Math.max(5 * 16 + 8, Math.min(11 * 16 - 8, p.x)), y: ty } });
       this.world.pop(this.x, this.y - 34, 'WHOA-OA-OA!', '#78e8e8');
     }
     pick() {
@@ -2633,6 +2633,7 @@
             this.reps--;
             const a = Math.atan2(dy, dx), n = hot ? 5 : 3, sp = hot ? 1.9 : 1.6;
             for (let i = 0; i < n; i++) { const b = a + (i - (n - 1) / 2) * 0.24; w.add(new Shot(this.x, this.y - 10, Math.cos(b) * sp, Math.sin(b) * sp, G.spr.tooth, { life: 200, z: 4 })); }
+            this.thrown = (this.thrown || 0) + n; // every tooth he throws is one Nate doesn't get back (S.tylerDefeated)
             G.audio.sfx('swing');
           }
           if (--this.st <= 0) this.toPace();
@@ -2654,8 +2655,8 @@
           break;
         }
         case 'aim': {
-          // SHADES DOWN. then a charge straight at Nate
-          if (this.st === 30) { w.pop(this.x, this.y - 34, 'SHADES DOWN.', '#78e8e8'); G.audio.sfx('select'); this.shadesDown = true; }
+          // HERE I COME! then a charge straight at Nate
+          if (this.st === 30) { w.pop(this.x, this.y - 34, 'HERE I COME!', '#78e8e8'); G.audio.sfx('select'); }
           this.dir = G.dirToward(dx, dy);
           if (--this.st <= 0) {
             const sp = hot ? 4.2 : 3.4;
@@ -2668,7 +2669,7 @@
           this.moving = true; this.anim += 2;
           const h = w.move(this, this.vx, this.vy);
           if (h.hitX || h.hitY || --this.st <= 0) {
-            Object.assign(this, { state: 'dizzy', st: hot ? 50 : 70, shadesDown: false });
+            Object.assign(this, { state: 'dizzy', st: hot ? 50 : 70 });
             G.audio.sfx('bump');
             G.play.shake(8, 2);
             w.pop(this.x, this.y - 34, 'OOF.', '#78e8e8');
@@ -2710,13 +2711,6 @@
       if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
       const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2) - cy;
       ctx.drawImage(img, sx, sy);
-      // shades flipped down over the swirly eyes
-      if (this.shadesDown && this.dir !== 'up') {
-        const side = this.dir === 'left' || this.dir === 'right';
-        ctx.fillStyle = '#141418';
-        ctx.fillRect(sx + (side ? (this.dir === 'right' ? 8 : 3) : 3), sy + 6, side ? 5 : 10, 2);
-        ctx.fillStyle = '#5a7088'; ctx.fillRect(sx + (this.dir === 'left' ? 4 : 10), sy + 6, 1, 1);
-      }
       // the sifting screen: shaken during a sift, dropped when reeled in, otherwise held up as a shield
       if (this.state === 'sift') ctx.drawImage(G.spr.sifter, sx - 1 + ((this.t >> 1) & 1 ? 1 : -1), sy + S.h - 15);
       else if (this.open || this.state === 'yank') ctx.drawImage(G.spr.sifter, sx + 12, sy + S.h - 8);

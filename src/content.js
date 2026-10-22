@@ -384,7 +384,7 @@
       get id() { return fl().tylerBeaten ? 'tyler' : fl().tollPaid ? 'tylerHypno' : 'hooded'; },
       get name() { return fl().tollPaid ? 'Tyler' : '???'; },
       met: () => fl().hoodedMet,
-      tag: () => (fl().tylerBeaten ? '{o}Boss: shades up' : fl().tollPaid ? '{r}Boss' : '{r}Toll: 500 teeth'),
+      tag: () => (fl().tylerBeaten ? '{o}Boss: snapped out of it' : fl().tollPaid ? '{r}Boss' : '{r}Toll: 500 teeth'),
       bio: () => (fl().tylerBeaten
         ? 'Shark tooth hunter. Screams about mosasaurs. Snapped out of it, gave back the toll, ran for the ditch.'
         : fl().tollPaid
@@ -2556,7 +2556,7 @@
     yield G.text('Michelle', 'I did NOT throw him away.');
     yield G.text('Michelle', 'I put him in a box, labeled it DO NOT OPEN (LILY), and drove him to the Andover mines.');
     yield G.text('Nate', 'WHY');
-    yield G.text('Michelle', 'He was NAKED, Nate. On the MANTEL. The church ladies came over for Advent.');
+    yield G.text('Michelle', 'He was NAKED, Nate. On the MANTEL. The church ladies came over for MOPs.');
     yield G.text('Michelle', 'And I knew you\'d never look at anything down there but the rocks.');
     yield G.say('Nate', 'Abe and I KNEW it.');
     yield G.text('Abe', 'I KNEW IT. she told us he got LOST');
@@ -5328,7 +5328,7 @@
     if (!f.tylerTutorial) {
       f.tylerTutorial = true;
       yield G.say(null, 'Tyler blocks everything with his {y}sifting screen{/}. Hook him with the {y}Surf Rod{/} (X) to reel him in, then let him have it.');
-      yield G.say(null, 'Watch the road: a {y}dark swirl{/} means something is coming up from below. When he flips his {y}shades down{/}, he charges, and he\'s dizzy afterward. Easy to hook.');
+      yield G.say(null, 'Watch the road: a {y}dark swirl{/} means something is coming up from below. When he yells {y}HERE I COME{/}, he charges, and he\'s dizzy afterward. Easy to hook.');
     }
     // the fight takes the end of the tunnel: closed off above and below
     h.dead = true;
@@ -5371,7 +5371,7 @@
     t.flashT = 30;
     w.tylerFight = false;
     yield G.wait(50);
-    yield G.banner('YOU WIN!', 'shades up', 150);
+    yield G.banner('YOU WIN!', 'snapped out of it', 150);
     t.dir = G.dirToward(p.x - t.x, p.y - t.y);
     yield G.say('Tyler', '...Nate? What are you doing under the bay?');
     yield G.say('Tyler', 'Why am I wearing a CLOAK?');
@@ -5379,9 +5379,18 @@
     yield G.say('Tyler', '...Did anybody pay it?');
     yield G.say('Nate', 'I paid it.');
     yield G.say('Tyler', 'Oh no. Oh, Nate. Here.');
-    G.play.addTeeth(TOLL);
+    // every tooth he threw at Nate during the fight is gone (the longer the fight, the lighter the bag)
+    const lost = Math.min(TOLL - 10, boss.thrown || 0), back = TOLL - lost;
+    G.play.addTeeth(back);
     G.audio.sfx('tooth');
-    yield G.itemGet(G.spr.toothGold, 'Tyler hands back the velvet bag: {y}500 shark teeth{/}. Every single one.');
+    if (!lost) yield G.itemGet(G.spr.toothGold, 'Tyler hands back the velvet bag: {y}500 shark teeth{/}. Every single one.');
+    else {
+      yield G.itemGet(G.spr.toothGold, 'Tyler hands back the velvet bag: {y}' + G.sayable(back) + ' shark teeth{/}.');
+      yield G.say('Nate', 'Tyler. This bag is a lot lighter than five hundred.');
+      yield G.say('Tyler', 'I... might have thrown some at you. During the fight.' + (lost > 200 ? ' A LOT of them.' : ''));
+      yield G.say('Tyler', 'Perfectly good shark teeth. Into the BAY. I feel terrible. Those were GOOD teeth, Nate.');
+      if (lost > 300) yield G.say('Nate', 'Somewhere down there, a crab is very rich.');
+    }
     yield G.say('Tyler', 'Last thing I remember, I was hunting shark teeth at the Number One Ditch. Best ditch in the world.');
     yield G.say('Tyler', 'Then a little egg in a paisley suit walked up and said, "Nate has your mosasaur tooth." And everything went swirly.');
     yield G.say('Nate', 'Father Eggmas is AT the Number One Ditch.');
