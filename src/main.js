@@ -462,7 +462,8 @@
       }
       G.hud.draw(ctx);
       G.pipe.draw(ctx);
-      const boss = this.world.ents.find((e) => e.boss && e.state !== 'defeated');
+      // (noBar: a boss whose fight hasn't started yet, so it stays a surprise)
+      const boss = this.world.ents.find((e) => e.boss && e.state !== 'defeated' && !e.noBar && !e.hidden);
       if (boss) G.hud.bossBar(ctx, boss);
       if (!this.menu) G.toasts.draw(ctx, !!boss);
       G.areaBanner.draw(ctx);

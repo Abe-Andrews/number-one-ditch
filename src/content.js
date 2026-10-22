@@ -2324,6 +2324,7 @@
     }
     if (s.items.earplugs) yield G.say(null, 'Nate pops in his earplugs. He can\'t hear a thing.');
     else yield G.say(null, 'No earplugs! When he sings, the song gets stuck in Nate\'s head and {r}his controls get scrambled{/}.');
+    g.noBar = false;
     yield G.banner('THE GLOBGLOGABGALAB', 'he never stops dancing', 150);
   };
 
@@ -5625,7 +5626,8 @@
       F.stand(sp.storageBoxes, 1, 11, 2, look('More boxes. One is full of old VHS tapes. Somebody labeled one "DO NOT RECORD OVER." It was recorded over.'));
       for (const [x, y, k] of [[8, 4, 0], [3, 7, 1], [17, 11, 2], [12, 12, 0]]) F.stand(sp.bookPiles[k], x, y, 1, pile);
       w.addTrigger(18, 3, 2, 1, () => G.play.warp('homeDown', 22, 8, 'down'));
-      if (!f.globBeaten) w.glob = w.add(new G.Globglog(10 * 16 + 8, 8 * 16 + 14));
+      // (no health bar until the fight actually starts, at the end of S.globIntro: it's a surprise)
+      if (!f.globBeaten) { w.glob = w.add(new G.Globglog(10 * 16 + 8, 8 * 16 + 14)); w.glob.noBar = true; }
     },
     onEnter() { return (function* () { if (!flags().globBeaten) yield* S.globIntro(); })(); },
   };
