@@ -208,8 +208,37 @@ G.audio = (function () {
     });
   }
 
+  // Recorded songs (a few real tracks the family picked) play from a file in a loop;
+  // if the file can't load, the tune in G.SONGS under the same name plays instead.
+  const recorded = {}; // name -> AudioBuffer, or false if it failed
+  let recSource = null;
+  function startRecorded(name, file) {
+    song = { name, recorded: true };
+    const go = (buf) => {
+      if (!song || song.name !== name) return; // something else started while it loaded
+      if (!buf) { song = null; startSynth(name); return; }
+      recSource = ctx.createBufferSource();
+      recSource.buffer = buf;
+      recSource.loop = true;
+      const g = ctx.createGain();
+      g.gain.value = 0.7;
+      recSource.connect(g); g.connect(master);
+      recSource.start();
+    };
+    if (name in recorded) { go(recorded[name]); return; }
+    fetch(file).then((r) => r.arrayBuffer()).then((ab) => new Promise((ok, no) => ctx.decodeAudioData(ab, ok, no)))
+      .then((buf) => { recorded[name] = buf; go(buf); }, () => { recorded[name] = false; go(false); });
+  }
+
   function startSong(name) {
     stopSong();
+    if (!ctx) return;
+    const file = G.SONG_FILES && G.SONG_FILES[name];
+    if (file && recorded[name] !== false) { startRecorded(name, file); return; }
+    startSynth(name);
+  }
+
+  function startSynth(name) {
     const def = G.SONGS && G.SONGS[name];
     if (!def || !ctx) return;
     const now = ctx.currentTime + 0.08;
@@ -223,7 +252,7 @@ G.audio = (function () {
   }
 
   function schedule() {
-    if (!song) return;
+    if (!song || song.recorded) return;
     const horizon = ctx.currentTime + 0.2;
     for (const tr of song.tracks) {
       while (tr.t < horizon) {
@@ -243,6 +272,7 @@ G.audio = (function () {
     if (timer) clearInterval(timer);
     timer = null;
     song = null;
+    if (recSource) { try { recSource.stop(); } catch (e) { /* already stopped */ } recSource = null; }
   }
 
   return {

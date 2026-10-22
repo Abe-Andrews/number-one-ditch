@@ -497,6 +497,11 @@
   };
 
   // ================================================================ MUSIC (original tunes)
+  // Recorded songs, played from a file instead of the tune below with the same name
+  // (the tune is the fallback if the file can't load).
+  G.SONG_FILES = {
+    bookworm: 'assets/music/globglogabgalab.m4a', // the 8-bit Globglogabgalab, in the basement until he's beaten
+  };
   // (Father Christmas's theme speeds up as he gets angrier: fc2, fc3 are set below)
   G.SONGS = {
     title: {
