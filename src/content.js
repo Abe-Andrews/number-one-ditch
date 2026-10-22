@@ -3041,6 +3041,7 @@
     { name: 'The Two-Liter (Chesapeake Channel Tunnel)', map: 'chesTunnel', at: [7, 26, 'up'], flags: { cbbtArrived: true, tollMet: true, chesSeen: true }, items: { rod: true } },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
     { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [55, 1, 'down'], flags: { tylerBeaten: true } },
+    { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { condoArrived: true, condoScare: true, romulusMet: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -3073,6 +3074,7 @@
     { name: 'Abe & Hannah\'s: downstairs', map: 'condoDown', at: [13, 18, 'up'] },
     { name: 'Abe & Hannah\'s: upstairs', map: 'condoUp', at: [13, 11, 'down'] },
     { name: 'Abe & Hannah\'s: storage', map: 'condoStorage', at: [10, 5, 'left'] },
+    { name: 'The golf course (Romulus)', map: 'golf', at: [20, 26, 'up'] },
   ];
   // Admin: one of every rock.
   G.adminAllRocks = () => {
@@ -6552,6 +6554,201 @@
     },
   };
 
+  // ================================================================ ROMULUS
+  // Abe and Hannah's border collie (from the user's photos: black and white, a white blaze,
+  // his red plaid bandana with the green tag). He isn't scared of anybody. Except Nate,
+  // for no reason anyone can figure out (this really happened).
+  S.romulusMeet = function* () {
+    const f = flags(), w = G.play.world, p = P(), r = w.romulus, abe = w.abe;
+    if (f.romulusMet || !r) return;
+    f.romulusMet = true;
+    yield G.wait(30);
+    yield G.camFocus(r.x, r.y - 10, 30);
+    yield G.say(null, 'A black and white border collie is stretched out on the living room floor.');
+    if (abe) yield G.say('Abe', 'Oh, that\'s Romulus. Nothing scares him. He\'s not scared of anybody.');
+    r.state = 'alert'; r.dir = p.x > r.x ? 'right' : 'left';
+    G.audio.sfx('blip');
+    yield G.wait(24);
+    yield G.emote(r, 'bang', 30);
+    G.audio.sfx('yelp');
+    w.pop(r.x, r.y - 28, 'YELP!', '#f8f8f0');
+    // ...and he bolts for the kitchen and hides behind the breakfast bar
+    yield G.walkTo(r, 11 * 16 + 8, 9 * 16 + 12, 3.2);
+    yield G.walkTo(r, 11 * 16 + 8, 6 * 16 + 10, 3.2);
+    yield G.walkTo(r, 15 * 16 + 8, 5 * 16 + 12, 3.2);
+    r.state = 'hide';
+    yield G.camFocus(null, null, 20);
+    yield G.say('Nate', '...Romulus? Buddy? It\'s me!');
+    w.pop(r.x, r.y - 26, '*whimper*', '#c8c8d0');
+    if (abe) {
+      yield G.say('Abe', 'Huh. He\'s not scared of ANYBODY.');
+      yield G.say('Abe', '...He\'s scared of you?');
+      yield G.say('Nate', 'What did I DO?');
+      yield G.say('Abe', 'I genuinely have no idea.');
+    } else {
+      yield G.say('Nate', 'He\'s not scared of anybody. Why is he scared of ME?');
+    }
+    if (G.with('lily')) yield G.say('Lily', 'He likes me fine.');
+    else if (G.with('doron')) yield G.say('Doron', 'Smart dog.');
+  };
+  S.romulusTalk = function* (r) {
+    const f = flags(), w = G.play.world;
+    f.romLine = ((f.romLine || 0) + 1) % 4;
+    if (G.with('doron') && f.romLine === 0) {
+      r.state = 'happy';
+      yield G.say('Doron', 'Romulus! Good boy. GOOD boy.');
+      w.pop(r.x, r.y - 26, '*wag wag wag*', '#f8f8f0');
+      yield G.say('Nate', 'Oh, so he LOVES Doron.');
+      r.state = 'hide';
+      return;
+    }
+    if (G.with('lily') && f.romLine === 0) {
+      r.state = 'happy';
+      yield G.say('Lily', 'Hi, Romulus! Hi!');
+      w.pop(r.x, r.y - 26, '*wag wag wag*', '#f8f8f0');
+      yield G.say('Nate', 'He let LILY pet him?');
+      r.state = 'hide';
+      return;
+    }
+    yield G.say('Nate', ['Hey, buddy. It\'s just me.', 'Romulus. I have never done anything to you.', 'Who\'s a good boy? ...Who\'s a good boy who\'s scared of me for no reason?', 'Come here, Romulus! ...No? Okay.'][f.romLine]);
+    G.audio.sfx('yelp');
+    w.pop(r.x, r.y - 26, '*whimper*', '#c8c8d0');
+  };
+
+  // ---------------------------------------------------------------- the golf course: Romulus, huge
+  // (Not connected to anything yet. The user is deciding how Nate gets out here; for now it's
+  // an admin checkpoint and an admin place. The strip of woods between the condo's yard and the
+  // course is where the way through will go: see the TODO in G.MAPS.condo.)
+  S.romulusFight = function* () {
+    const f = flags(), w = G.play.world, p = P(), r = w.romulus;
+    if (f.romulusBeaten || w.romFight || !r) return;
+    w.romFight = true;
+    yield G.wait(30);
+    yield G.camFocus(r.x, r.y - 40, 40);
+    yield G.say('Nate', '...Romulus?');
+    r.face = p.x > r.x ? 1 : -1;
+    G.audio.sfx('woof'); G.play.shake(20, 2);
+    w.pop(r.x, r.y - 100, 'WOOF.', '#f8f8f0');
+    yield G.wait(40);
+    yield G.say('Nate', 'Why are you the size of a GOLF CART?!');
+    if (G.with('lily')) yield G.say('Lily', 'Who\'s a big boy? ...Who\'s a VERY big boy?');
+    else if (G.with('doron')) { yield G.say('Doron', 'I\'m not fighting a dog.'); yield G.say('Nate', 'NOBODY is fighting Romulus.'); }
+    r.pose = 'stalk';
+    yield G.wait(30);
+    yield G.say('Nate', 'He doesn\'t look scared of me now. He\'s too big to be scared of anything.');
+    yield G.say('Nate', 'Okay. Think. There are golf balls all over this course... and Romulus would chase a ball off a cliff.');
+    yield G.say(null, 'Hit a golf ball with your {y}rock hammer{/} (Z). Romulus can\'t help chasing it.');
+    r.pose = null;
+    yield G.camFocus(null, null, 30);
+    yield G.banner('ROMULUS', 'a very good boy (huge)', 150);
+    G.audio.play('boss');
+    r.state = 'roam'; r.st = 90;
+  };
+  S.romulusHint = function* (what) {
+    const f = flags();
+    if (what === 'scared') {
+      yield G.say('Nate', 'Ha! He IS still scared of me. He just forgets when he\'s that big.');
+      return;
+    }
+    if (f.romDigHint) return;
+    f.romDigHint = true;
+    yield G.say('Nate', what === 'dig' ? 'He\'s digging for it! He\'s busy...' : 'He\'s shaking off! He\'s busy...');
+    yield G.say(null, 'Sneak up on him while he\'s busy. ' + (what === 'dig' ? 'Sand flies out behind him, and he looks up now and then, so come at him from the side.' : 'Quick, before he\'s done!'));
+  };
+  S.romulusBeaten = function* (r) {
+    const f = flags(), w = G.play.world, p = P();
+    G.audio.stop();
+    for (const e of w.ents) if (e instanceof G.BarkRing || e instanceof G.Shot) e.dead = true;
+    yield G.wait(40);
+    // regular size again, sitting there blinking...
+    r.face = p.x > r.x ? 1 : -1;
+    yield G.say(null, 'Romulus is back to his regular size.');
+    yield G.wait(20);
+    // ...until he notices who's standing there
+    r.pose = 'scared';
+    G.audio.sfx('yelp');
+    w.pop(r.x, r.y - 28, 'YELP!', '#f8f8f0');
+    r.pose = null;
+    yield G.walkTo(r, r.x + (r.x > p.x ? 40 : -40), r.y, 3);
+    r.pose = 'scared'; r.face = p.x > r.x ? 1 : -1;
+    yield G.say('Nate', 'And he\'s scared of me again. Of course he is.');
+    // Abe comes looking for him
+    const abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: 37 * 16, y: r.y, dir: 'left' }));
+    yield G.walkTo(abe, Math.min(34 * 16, r.x + 60), r.y, 1.6);
+    yield G.say('Abe', 'ROMULUS! There you are. You can\'t just take off onto the course, buddy.');
+    r.pose = null;
+    yield G.walkTo(r, abe.x + 14, abe.y + 4, 3);
+    r.pose = 'scared'; r.face = -1;
+    yield G.say('Abe', '...Was he HUGE a minute ago? I swear I saw him from the patio.');
+    yield G.say('Nate', 'He was the size of a golf cart.');
+    yield G.say('Abe', 'Huh. Well. He seems fine now.');
+    if (G.with('lily')) yield G.say('Lily', 'He\'s still scared of Nate, though.');
+    else yield G.say('Abe', 'Still scared of you, though.');
+    yield G.say('Nate', 'WHY.');
+    f.romulusBeaten = true;
+    yield G.banner('YOU WIN!', 'who\'s a good boy', 150);
+    G.play.autosave();
+    G.play.warp('condo', 16, 13, 'left');
+  };
+  S.golfLeave = function* () {
+    const p = P();
+    const c = yield G.ask('Nate', 'Head back to Abe and Hannah\'s?', ['Go back', 'Stay']);
+    if (c === 0) G.play.warp('condo', 16, 13, 'left');
+    else yield G.walkTo(p, p.x, p.y - 14, 1);
+  };
+
+  // The course behind the condos: the fairway, three bunkers, a pond, the green with its pin.
+  const GOLF_POND = { x: 13, y: 19, rx: 4.8, ry: 3.1 };
+  G.MAPS.golf = {
+    name: 'The Golf Course',
+    get music() { return flags().romulusBeaten ? 'home' : 'boss'; },
+    tiles() {
+      const W = 40, H = 30;
+      const g = Array.from({ length: H }, () => Array(W).fill('.'));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const blob = (cx, cy, rx, ry, c) => { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1) set(x, y, c); };
+      // the fairway: mowed stripes in a long oval, with the rough all around it
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (((x + 0.5 - 19.5) / 17.5) ** 2 + ((y + 0.5 - 15) / 12.5) ** 2 <= 1) set(x, y, (x >> 1) % 2 ? "'" : '`');
+      // three bunkers and the pond
+      blob(9, 8.5, 3, 1.9, 's'); blob(26, 7, 2.4, 1.5, 's'); blob(29, 21.5, 3.2, 1.8, 's');
+      blob(GOLF_POND.x, GOLF_POND.y, GOLF_POND.rx, GOLF_POND.ry, '~');
+      // the cart path along the bottom
+      for (let x = 0; x < 37; x++) { set(x, 27, '='); set(x, 28, '='); }
+      // trees around the edges (the woods on the right, with the condos beyond)
+      for (let x = 0; x < 36; x += 3) { set(x, 0, 'T'); }
+      for (let y = 3; y < 26; y += 3) set(0, y, 'T');
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const f = flags(), sp = G.spr, T = 16;
+      // the woods between the course and the condos' yards
+      for (let y = 0; y < w.h - 1; y += 2) { w.addTree(36, y, y % 4 ? 'pine' : null); w.addTree(38, y + 1 < w.h - 1 ? y + 1 : y, 'pine'); }
+      w.blockTiles(36, 0, 4, w.h);
+      // the green and its pin
+      w.props.push({ img: null, x: 0, y: 0, flat: true, base: 0, draw(ctx, cx, cy) {
+        const x = 31 * T - cx, y = 11.5 * T - cy;
+        ctx.fillStyle = '#4aa83e'; ctx.beginPath(); ctx.ellipse(x, y, 46, 30, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#7ad866'; ctx.beginPath(); ctx.ellipse(x, y, 43, 27, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#1c3a1c'; ctx.fillRect(x + 8, y - 2, 5, 3);
+      } });
+      w.addProp({ img: sp.golfFlag, tx: 31, ty: 10, h: 2, dx: 7, dy: 3, solid: [31, 11, 1, 1], hit: [31, 11, 1, 1], talk: look('The pin on the green. Somebody has chewed the flagstick.') });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [36 * T, 0, 40 * T, w.h * T], talk: look('The woods between the golf course and the condos. Abe and Hannah\'s is on the other side.') });
+      // golf balls all over the course
+      w.ballArena = { x0: 3 * T, y0: 3 * T, x1: 35 * T, y1: 26 * T };
+      for (const [x, y] of [[12, 12], [20, 9], [24, 15], [19, 21], [28, 13], [7, 15], [16, 25]]) w.add(new G.GolfBall(x * T + 8, y * T + 10));
+      // Romulus, on the green
+      if (!f.romulusBeaten) {
+        const P = GOLF_POND;
+        w.romulus = w.add(new G.GiantRomulus(30 * T, 12 * T, { x0: 4 * T, y0: 5 * T, x1: 34 * T, y1: 26 * T, pond: { x: P.x * T, y: P.y * T, rx: P.rx * T, ry: P.ry * T } }));
+        w.romulus.pose = 'happy';
+      }
+      // the cart path: the way back (once Romulus is himself again)
+      w.addTrigger(0, 27, 1, 2, () => { if (!w.romFight) G.script.run(S.golfLeave()); });
+      w.addTrigger(20, 29, 4, 1, () => { if (!w.romFight) G.script.run(S.golfLeave()); });
+    },
+    onEnter() { return (function* () { if (!flags().romulusBeaten) yield* S.romulusFight(); })(); },
+  };
+
   // ---------------------------------------------------------------- downstairs
   //   x: 0 left wall (golf course side) ... 26 right wall (the storage garage is beyond it)
   //   dining room x 1-9, y 3-7 | galley kitchen x 10-16, y 3-6 | laundry x 18-20, y 3-5
@@ -6622,6 +6819,8 @@
       w.addProp({ img: sp.sinkTop, tx: 15, ty: 3, flat: true, dy: -10, hit: [15, 3, 2, 1], talk: look('The kitchen sink.') });
       spot(12, 6, 5, 1, look('The breakfast bar.'));
       if (f.condoScare) w.abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'down', talk: S.abeCondo }));
+      // Romulus: on the living room floor the first time, and behind the breakfast bar (hiding from Nate) after that
+      w.romulus = w.add(f.romulusMet ? new G.Romulus(15 * 16 + 8, 5 * 16 + 12, 'hide') : new G.Romulus(5 * 16 + 8, 12 * 16 + 12, 'lie'));
       // ---- laundry (x 18-20, y 3-5), at the far end of the kitchen
       F.stand(sp.washerFront, 19, 3, 1, look('The washer and dryer face each other across the laundry room. Like a standoff.'));
       F.hang(sp.wireShelf, 19, 2, 1, null, 16);
@@ -6646,6 +6845,7 @@
       w.addWarp(13, 19, 1, 1, 'condo', 23, 18, 'down');
       w.addWarp(0, 4, 1, 2, 'condo', 17, 12, 'left');
     },
+    onEnter() { return (function* () { if (!flags().romulusMet) yield* S.romulusMeet(); })(); },
   };
 
   // ---------------------------------------------------------------- upstairs

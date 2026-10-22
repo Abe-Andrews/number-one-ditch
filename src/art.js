@@ -5342,6 +5342,156 @@
     return finish(p);
   }
 
+  // ================================================================ ROMULUS
+  // Abe and Hannah's border collie, from the user's photos: black with a white blaze down
+  // his face, white muzzle, chest, paws and tail tip, brown eyes, ears up with the tips
+  // folded, and his red plaid bandana with the green tag. Drawn from shapes in a 32x22
+  // grid, so the same dog comes out crisp at any size: s = 1 in the house, 2-4 on the
+  // golf course. Facing right; mirror for left. The paws touch the ground 2 units
+  // above the bottom of the canvas (24.5 x s tall).
+  function borderCollie(s, pose) {
+    const TOP = 2.5, W = Math.ceil(32 * s), H = Math.ceil((22 + TOP) * s), p = new Pix(W, H);
+    const BLK = '#1e1e26', BLK_L = '#3c3c4c', BLK_D = '#121218', WHT = '#f4f2ee', WHT_D = '#d4d0c8';
+    const o = Object.assign({ cf: 0, cr: 0, hx: 0, hy: 0, mouth: 1, ears: 'up', tail: 'low', legs: 'stand', eye: 'normal', tilt: 0 }, {
+      stand: {}, run1: { legs: 'run1', tail: 'flow' }, run2: { legs: 'run2', tail: 'flow', cf: 0.5, cr: 0.5 }, run3: { legs: 'run3', tail: 'flow' },
+      stalk: { cf: 3, cr: 1.5, hx: 1.5, hy: 3.5, mouth: 0, ears: 'fwd', legs: 'crouch', eye: 'stare' },
+      bark: { hy: -1.2, mouth: 2, legs: 'brace' },
+      dig1: { cf: 4.5, cr: -1, hx: 1.8, hy: 9.5, mouth: 0, tail: 'up', legs: 'dig1', tilt: 0.22 },
+      dig2: { cf: 4.5, cr: -1, hx: 1.8, hy: 9.5, mouth: 0, tail: 'up2', legs: 'dig2', tilt: 0.22 },
+      scared: { cf: 1.5, cr: 3, hx: -0.6, hy: 2.6, mouth: 0, ears: 'back', tail: 'tuck', legs: 'cower', eye: 'wide' },
+      lie: { cf: 5.5, cr: 5.5, hy: 4.5, mouth: 1, legs: 'lie', tail: 'lie' },
+      happy: { tail: 'up', mouth: 1 },
+    }[pose]);
+    const { cf, cr, hx, hy } = o;
+    // ---- shapes, back to front; each is (u, v) => color or null
+    const shapes = [];
+    const ell = (cx, cy, rx, ry, col, a = 0) => shapes.push((u, v) => {
+      const du = u - cx, dv = v - cy, c = Math.cos(a), sn = Math.sin(a), x = du * c + dv * sn, y = -du * sn + dv * c;
+      return (x / rx) ** 2 + (y / ry) ** 2 <= 1 ? (typeof col === 'function' ? col(u, v, x, y) : col) : null;
+    });
+    const seg = (x0, y0, x1, y1, r0, col, r1 = r0) => shapes.push((u, v) => {
+      const dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy || 1, k = Math.max(0, Math.min(1, ((u - x0) * dx + (v - y0) * dy) / L2));
+      const r = r0 + (r1 - r0) * k;
+      return Math.hypot(u - x0 - dx * k, v - y0 - dy * k) <= r ? (typeof col === 'function' ? col(u, v, k) : col) : null;
+    });
+    const tri = (a, b, c, col) => shapes.push((u, v) => {
+      const sgn = (p1, p2) => (u - p2[0]) * (p1[1] - p2[1]) - (p1[0] - p2[0]) * (v - p2[1]);
+      const d1 = sgn(a, b), d2 = sgn(b, c), d3 = sgn(c, a);
+      return (d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0) ? null : typeof col === 'function' ? col(u, v) : col;
+    });
+    const G0 = 19.6; // where the paws touch the ground
+    // the legs: [far front, far hind, near front, near hind] foot x positions (and how high a foot is lifted)
+    const L = {
+      stand: [[18.2, 0], [6.6, 0], [19.8, 0], [8.0, 0]], brace: [[19.5, 0], [6.0, 0], [21.2, 0], [7.4, 0]],
+      run1: [[22.4, 1.2], [4.8, 0.6], [24.2, 0.4], [3.4, 1.4]], run2: [[16.4, 0.4], [10.4, 1.0], [17.8, 1.4], [11.6, 0.2]], run3: [[20.6, 0.2], [5.4, 1.6], [19.0, 1.4], [8.8, 0]],
+      crouch: [[20.4, 0], [6.4, 0], [21.8, 0], [7.8, 0]], cower: [[18.6, 0], [8.4, 0], [19.8, 0], [9.6, 0]],
+      dig1: [[23.2, 0.4], [6.8, 0], [24.6, 1.6], [8.2, 0]], dig2: [[24.6, 1.6], [6.8, 0], [23.0, 0.2], [8.2, 0]],
+      lie: null,
+    }[o.legs];
+    const fur = (base, lit) => (u, v, x, y) => (y < -0.55 * 4.3 ? lit : base);
+    // tail (behind everything): a feathery sweep with a white tip
+    const tailPts = {
+      low: [[5.8, 8.6 + cr], [3.0, 11.4 + cr], [1.4, 14.6 + cr]], flow: [[5.8, 8.6 + cr], [2.6, 9.4 + cr], [0.6, 11.2 + cr]],
+      up: [[5.8, 8.4 + cr], [3.4, 5.6 + cr], [2.6, 2.6 + cr]], up2: [[5.8, 8.4 + cr], [2.6, 6.4 + cr], [1.0, 4.0 + cr]],
+      tuck: [[6.4, 9.6 + cr], [6.2, 13.2 + cr], [8.6, 16.4 + cr]], lie: [[5.8, 9.6 + cr], [2.6, 12.6 + cr], [0.8, 14.0 + cr]],
+    }[o.tail];
+    seg(...tailPts[0], ...tailPts[1], 1.9, BLK, 1.6);
+    seg(...tailPts[1], ...tailPts[2], 1.6, (u, v, k) => (k > 0.62 ? WHT : BLK), 1.1);
+    // the far legs (a shade darker)
+    if (L) {
+      seg(18.4, 12.6 + cf, L[0][0], G0 - L[0][1] - 0.6, 1.05, WHT_D);
+      ell(L[0][0] + 0.5, G0 - L[0][1], 1.2, 0.7, WHT_D);
+      ell(8.2, 12.2 + cr, 2.3, 3.0, BLK_D);
+      seg(7.6, 14.2 + cr, L[1][0], G0 - L[1][1] - 0.6, 0.95, (u, v) => (v > G0 - L[1][1] - 1.6 ? WHT_D : BLK_D));
+      ell(L[1][0] + 0.5, G0 - L[1][1], 1.15, 0.7, WHT_D);
+    }
+    // the body, tipped forward when he's digging
+    const by = 10 + (cf + cr) / 2;
+    ell(13.6, by, 8.6, 4.4, (u, v, x, y) => (y > 2.7 && x > 2.5 ? WHT : y < -2.6 ? BLK_L : BLK), o.tilt);
+    // the near legs
+    if (L) {
+      seg(19.6, 12.6 + cf, L[2][0], G0 - L[2][1] - 0.6, 1.15, WHT);
+      ell(L[2][0] + 0.6, G0 - L[2][1], 1.35, 0.75, WHT);
+      ell(9.2, 12.0 + cr, 2.6, 3.3, (u, v, x, y) => (y < -1.6 ? BLK_L : BLK));
+      seg(8.8, 14.4 + cr, L[3][0], G0 - L[3][1] - 0.6, 1.05, (u, v) => (v > G0 - L[3][1] - 1.7 ? WHT : BLK));
+      ell(L[3][0] + 0.6, G0 - L[3][1], 1.25, 0.75, WHT);
+    } else {
+      // lying down: front legs stretched out in front, back leg tucked under
+      seg(18.4, 16.2, 25.6, 18.6, 1.1, WHT_D); seg(19.6, 16.6, 26.8, 19.2, 1.15, WHT);
+      ell(26.2, 18.8, 1.4, 0.8, WHT_D); ell(27.4, 19.3, 1.5, 0.8, WHT);
+      ell(9.4, 16.0, 3.2, 2.8, BLK); ell(12.2, 19.0, 1.6, 0.8, WHT);
+    }
+    // the neck, the big white chest, the bandana
+    seg(18.6, 8.6 + cf, 21.4 + hx, 5.6 + hy, 2.7, BLK);
+    ell(20.1, 9.6 + cf * 0.85 + Math.max(0, hy) * 0.15, 3.1, 4.1, (u, v, x, y) => (x < -1.8 && y > 1.2 ? WHT_D : WHT));
+    const plaid = (u, v) => ((Math.floor(u * 2) + Math.floor(v * 2)) % 2 ? '#c02838' : '#8a1c2c');
+    seg(20.6 + hx * 0.5, 4.6 + cf * 0.4 + hy * 0.5, 19.4 + hx * 0.2, 9.2 + cf * 0.7 + hy * 0.15, 0.85, plaid);
+    tri([19.8 + hx * 0.2, 8.4 + cf * 0.7], [21.8 + hx * 0.3, 8.6 + cf * 0.7], [20.6 + hx * 0.2, 10.6 + cf * 0.7], plaid);
+    ell(20.2 + hx * 0.2, 10.4 + cf * 0.7, 0.62, 0.62, '#3aa860');
+    // the head: black, the white blaze and muzzle, nose, eye, ear
+    const ex = 21.6 + hx, ey = 2.4 + hy;
+    if (o.ears === 'back') tri([ex - 1.4, ey + 0.6], [ex + 0.6, ey + 0.2], [ex - 3.8, ey + 0.4], BLK);
+    else if (o.ears === 'fwd') { tri([ex - 1.2, ey + 0.6], [ex + 0.8, ey], [ex + 0.4, ey - 3.2], BLK); }
+    else { tri([ex - 1.2, ey + 0.6], [ex + 0.8, ey], [ex - 0.6, ey - 3.0], BLK); tri([ex - 0.6, ey - 3.0], [ex + 0.6, ey - 2.4], [ex + 0.6, ey - 1.2], BLK_L); }
+    ell(22.6 + hx, 4.8 + hy, 3.5, 3.1, (u, v, x, y) => (y < -1.6 ? BLK_L : BLK));
+    seg(23.8 + hx, 1.9 + hy, 25.3 + hx, 4.8 + hy, 0.6, WHT);
+    if (o.mouth) {
+      const open = o.mouth === 2 ? 1.6 : 0.8;
+      ell(25.4 + hx, 7.4 + hy + open * 0.4, 2.0, 0.9 + open * 0.3, '#5a1a24');
+      seg(25.2 + hx, 7.4 + hy, 25.6 + hx, 8.6 + hy + open, 0.8, '#e86a8a');
+      ell(25.0 + hx, 8.2 + hy + open, 1.9, 0.7, WHT);
+    }
+    ell(25.7 + hx, 6.0 + hy, 2.6, 1.5, (u, v, x, y) => (y > 0.7 ? WHT_D : WHT));
+    ell(28.1 + hx, 5.4 + hy, 0.9, 0.75, '#101014');
+    if (o.eye === 'wide') ell(24.0 + hx, 3.8 + hy, 0.85, 0.85, WHT);
+    ell(24.0 + hx, 3.8 + hy, 0.55, 0.55, o.eye === 'stare' ? '#a85a1a' : '#6a3a18');
+    // ---- rasterize: last shape that covers the pixel's center wins
+    for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+      const u = (px + 0.5) / s, v = (py + 0.5) / s - TOP;
+      let col = null;
+      for (const f of shapes) { const c = f(u, v); if (c) col = c; }
+      if (col) p.set(px, py, col);
+    }
+    // the little details that can fall between pixel centers at small sizes
+    const dot = (u, v, col) => p.set(Math.floor(u * s), Math.floor((v + TOP) * s), col);
+    dot(24.0 + hx, 3.8 + hy, o.eye === 'stare' ? '#a85a1a' : '#6a3a18'); dot(28.1 + hx, 5.4 + hy, '#101014');
+    if (s >= 2) dot(23.8 + hx, 3.6 + hy, o.eye === 'stare' ? '#fff0a0' : '#f0e0c8');
+    p.outline();
+    return p.canvas();
+  }
+  // his orange rubber ball
+  function dogBall(s) {
+    const r = Math.max(3, Math.round(2.6 * s)), p = new Pix(r * 2 + 1, r * 2 + 1);
+    for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) {
+      const d = Math.hypot(x, y);
+      if (d > r + 0.3) continue;
+      p.set(x + r, y + r, Math.abs(x + y) % Math.max(2, Math.round(r * 0.7)) === 0 ? '#c0441c' : d < r * 0.5 && x < 0 && y < 0 ? '#f8a050' : '#e8642c');
+    }
+    p.outline();
+    return p.canvas();
+  }
+  // a clump of bunker sand (Romulus kicks these out behind him when he digs)
+  function sandClod() {
+    const p = new Pix(5, 4);
+    p.rect(1, 0, 3, 4, '#d8c088'); p.rect(0, 1, 5, 2, '#d8c088'); p.set(1, 1, '#f0dca8'); p.set(3, 2, '#b89a60');
+    return finish(p);
+  }
+  // a golf ball, and one half-buried in a bunker
+  function golfBall() {
+    const p = new Pix(5, 5);
+    p.rect(1, 0, 3, 5, '#f8f8f4'); p.rect(0, 1, 5, 3, '#f8f8f4'); p.set(1, 1, '#ffffff'); p.set(3, 3, '#d8d8d0'); p.set(2, 2, '#e4e4dc');
+    return finish(p);
+  }
+  // the pin on the green: a flagstick with a red flag
+  function golfFlag() {
+    const p = new Pix(14, 38);
+    p.vline(2, 4, 35, '#f4f4f0'); p.vline(3, 4, 35, '#c8c8c0');
+    for (let y = 4; y < 13; y++) p.hline(4, 4 + Math.round((y - 4) * 0.4 + 6 - Math.abs(y - 8.5) * 0.9), y, '#d83040');
+    p.hline(4, 9, 4, '#f05060');
+    p.rect(0, 35, 6, 3, '#1c3a1c');
+    return finish(p);
+  }
+
   // The living room fireplace on the side wall, seen from above: the white
   // mantel, the marble surround, the firebox and the hearth.
   function condoFireplace() {
@@ -5990,6 +6140,13 @@
     // Abe and Hannah's condo
     S.condo = condoBuilding(); S.brickStep = brickStep();
     S.condoTan = condoNeighborTan(); S.condoCream = condoNeighborCream(); S.postLamp = postLamp(); S.arborvitae = arborvitae(); S.schoolBus = schoolBus();
+    // Romulus: the house-size dog, and the giant on the golf course at three sizes
+    const DOG_POSES = ['stand', 'run1', 'run2', 'run3', 'stalk', 'bark', 'dig1', 'dig2', 'scared', 'happy'];
+    const dogSet = (s, poses) => { const r = {}, l = {}; for (const k of poses) { r[k] = borderCollie(s, k); l[k] = mirror(r[k]); } return { right: r, left: l }; };
+    S.romulus = dogSet(1, [...DOG_POSES, 'lie']);
+    S.romulusBig = { 4: dogSet(4, DOG_POSES), 3: dogSet(3, DOG_POSES), 2: dogSet(2, DOG_POSES) };
+    S.dogBall = { 1: dogBall(1), 2: dogBall(2), 3: dogBall(3), 4: dogBall(4) };
+    S.golfBall = golfBall(); S.golfFlag = golfFlag(); S.sandClod = sandClod();
     S.condoCars = { jeep: rot90(suvTop('#c4c8cc'), false), black: suvTop('#2a2a30'), escape: rot90(suvTop('#26262c')), crv: rot90(suvTop('#6a98a8')) };
     S.boxwood = shrub(16, 13, 3); S.azalea = shrub(17, 14, 5, 16); S.bigShrub = shrub(36, 32, 7);
     S.traeger = traeger(); S.lawnChair = lawnChair(); S.acUnit = acUnit(); S.privacyFence = privacyFence(4); S.trashEnclosure = trashEnclosure();

@@ -1482,6 +1482,367 @@
   }
   G.SlamZone = SlamZone;
 
+  // ============================================================== ROMULUS
+  // Abe and Hannah's border collie. He isn't scared of anybody... except Nate. In the condo
+  // he hides behind the breakfast bar and trembles whenever Nate gets close.
+  const RUN = ['run1', 'run2', 'run3', 'run2'];
+  class Romulus extends Ent {
+    constructor(x, y, state) {
+      super(x, y);
+      Object.assign(this, { state: state || 'hide', face: 1, dir: 'right', solid: true, hb: { w: 20, h: 6 }, anim: 0, t: 0, near: false });
+      this.talk = () => G.SCRIPTS.romulusTalk(this);
+    }
+    update(w) {
+      this.t++;
+      if (this.dir === 'left' || this.dir === 'right') this.face = this.dir === 'right' ? 1 : -1;
+      if (this.walking || G.script.busy) return;
+      const p = G.play.player;
+      this.near = Math.hypot(p.x - this.x, p.y - this.y) < 60;
+      if (this.state === 'hide') {
+        // keeps one eye on Nate at all times
+        this.dir = p.x > this.x ? 'right' : 'left';
+        if (this.near && this.t % 100 === 0) w.pop(this.x, this.y - 26, '*whimper*', '#c8c8d0');
+      }
+    }
+    draw(ctx, cx, cy) {
+      const S = G.spr.romulus[this.face > 0 ? 'right' : 'left'];
+      const img = this.walking ? S[RUN[(this.anim >> 2) % 4]] : S[{ lie: 'lie', happy: 'happy', alert: 'stand' }[this.state] || 'scared'];
+      const j = this.state === 'hide' && this.near && !this.walking ? (G.tick >> 1) & 1 : 0;
+      drawShadow(ctx, this.x, this.y, cx, cy, false);
+      ctx.drawImage(img, Math.round(this.x - img.width / 2 + j) - cx, Math.round(this.y - 22) - cy);
+    }
+  }
+  G.Romulus = Romulus;
+
+  // A golf ball on the course. Nate tees off with the rock hammer; it flies the way he's facing.
+  class GolfBall extends Ent {
+    constructor(x, y) { super(x, y); Object.assign(this, { state: 'rest', z: 0, hb: { w: 10, h: 8 }, terrain: 'grass' }); }
+    onHammer(p) {
+      if (this.state !== 'rest') return;
+      const A = this.world.ballArena, [dx, dy] = DIRS[p.dir];
+      const tx = Math.max(A.x0, Math.min(A.x1, this.x + dx * 128)), ty = Math.max(A.y0, Math.min(A.y1, this.y + dy * 112));
+      Object.assign(this, { state: 'fly', fx: this.x, fy: this.y, tx, ty, ft: 0, fn: 44, chased: false });
+      G.audio.sfx('clank');
+      if (!G.state.flags.golfFore) { G.state.flags.golfFore = true; this.world.pop(p.x, p.y - 34, 'FORE!', '#f8f8f0'); }
+    }
+    update(w) {
+      if (G.script.busy) return;
+      if (this.state === 'fly') {
+        const k = ++this.ft / this.fn;
+        this.x = this.fx + (this.tx - this.fx) * k; this.y = this.fy + (this.ty - this.fy) * k;
+        this.z = Math.sin(k * Math.PI) * 30;
+        if (k >= 1) this.land(w);
+      } else if (this.state === 'held') {
+        const h = this.holder;
+        this.x = h.x + h.face * 10.8 * h.s; this.y = h.y + 1; this.z = 12 * h.s - 2;
+      }
+    }
+    land(w) {
+      this.z = 0;
+      const ch = w.tileAt(Math.floor(this.x / 16), Math.floor(this.y / 16));
+      this.terrain = ch === '~' ? 'water' : ch === 's' ? 'sand' : 'grass';
+      if (this.terrain === 'water') {
+        this.state = 'sunk';
+        G.audio.sfx('slip');
+        w.burst(this.x, this.y - 2, ['#5aa8e8', '#a8d8ff', '#ffffff'], 10, { speed: 1.2, up: 1.4, g: 0.1, life: 22, size: 2 });
+      } else {
+        this.state = 'rest';
+        G.audio.sfx('bump');
+        if (this.terrain === 'sand') w.burst(this.x, this.y - 2, ['#e8d098', '#c8a868'], 6, { speed: 0.8, up: 0.8, g: 0.1, life: 16, size: 1 });
+      }
+    }
+    drop(x, y) {
+      Object.assign(this, { state: 'rest', holder: null, x, y, z: 0 });
+      const ch = this.world.tileAt(Math.floor(x / 16), Math.floor(y / 16));
+      this.terrain = ch === 's' ? 'sand' : 'grass';
+    }
+    draw(ctx, cx, cy) {
+      const img = G.spr.golfBall, x = Math.round(this.x - 2) - cx, y = Math.round(this.y - 5 - this.z) - cy;
+      if (this.state === 'sunk') {
+        // just ripples where it went in
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)'; ctx.beginPath(); ctx.ellipse(this.x - cx, this.y - 2 - cy, 4 + (G.tick >> 3) % 4, 2, 0, 0, Math.PI * 2); ctx.stroke();
+        return;
+      }
+      if (this.z > 1) drawShadow(ctx, this.x, this.y, cx, cy, false);
+      if (this.state === 'rest' && this.terrain === 'sand') ctx.drawImage(img, 0, 0, 5, 3, x, y + 2, 5, 3);
+      else ctx.drawImage(img, x, y);
+    }
+  }
+  G.GolfBall = GolfBall;
+
+  // A bark: a ring that rolls out across the grass (once per ring, it knocks Nate back).
+  class BarkRing extends Ent {
+    constructor(x, y, max) { super(x, y); Object.assign(this, { r: 8, max, flat: true, done: false }); }
+    update() {
+      if (G.script.busy) return;
+      this.r += 2.6;
+      const p = G.play.player, d = Math.hypot(p.x - this.x, (p.y - this.y) * 1.4);
+      if (!this.done && Math.abs(d - this.r) < 7) { this.done = true; p.hurt(1, this.x, this.y); }
+      if (this.r > this.max) this.dead = true;
+    }
+    draw(ctx, cx, cy) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - this.r / this.max) * 0.9;
+      ctx.strokeStyle = '#f8f8f0'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(this.x - cx, this.y - cy, this.r, this.r / 1.4, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.restore();
+    }
+  }
+  G.BarkRing = BarkRing;
+
+  // ROMULUS, HUGE: on the golf course, the size of a golf cart. Nate never hits him (the
+  // hammer just gets "Nate would NEVER hit a dog"). Golf balls are the way: Nate tees off
+  // with his rock hammer and Romulus has to chase every ball. In a bunker he digs for it
+  // (kicking sand out behind him, and looking up now and then); in the pond he swims out
+  // for it and climbs out to shake off; on the fairway he just brings it back. While he's
+  // busy, Nate sneaks up on him, and Romulus remembers he's scared of Nate: YELP, and he
+  // shrinks a size. Three sizes and he's back to normal. On his own he stalks (the border
+  // collie crouch) and dashes to herd Nate, does zoomies laps around the course, and barks.
+  class GiantRomulus extends Ent {
+    constructor(x, y, arena) {
+      super(x, y);
+      Object.assign(this, { enemy: true, boss: true, name: 'ROMULUS', hp: 3, maxHp: 3, stage: 3, arena, t: 0, state: 'pose', st: 0, face: -1,
+        anim: 0, z: 0, cycle: 0, orbit: 0, ball: null, hb: { w: 40, h: 12 }, hitMsgT: 0, vx: 0, vy: 0, peek: 0, scares: 0 });
+    }
+    get s() { return this.stage + 1; }
+    // how worked up he is: 1 when he's huge, 3 when he's down to the last size
+    get heat() { return 4 - Math.max(1, this.stage); }
+    footBox(m = 0) { const s = this.s; return [this.x - 10 * s - m, this.y - 5 * s - m, this.x + 10 * s + m, this.y + 2 + m]; }
+    hurtBox() { const s = this.s; return [this.x - 11 * s, this.y - 18 * s, this.x + 11 * s, this.y]; }
+    hit() {
+      if (this.state === 'defeated') return;
+      G.audio.sfx('bump');
+      if (this.hitMsgT > 0) return;
+      this.hitMsgT = 150;
+      const p = G.play.player;
+      this.world.pop(p.x, p.y - 34, ['Nate would NEVER hit a dog.', 'Not Romulus. Never.', 'He\'s a GOOD BOY.'][this.cycle % 3], '#f8f8f0');
+    }
+    bomb() { this.hit(); }
+    onHook() { this.world.pop(this.x, this.y - 22 * this.s, 'WAY too big to reel in.', '#f8f8f0'); return false; }
+    wet(x, y) { const P = this.arena.pond; return ((x - P.x) / (P.rx + 6)) ** 2 + ((y - P.y) / (P.ry + 6)) ** 2 < 1; }
+    // move by (vx, vy) inside the course, sliding around the pond unless he's swimming
+    step(vx, vy, swim) {
+      const A = this.arena, nx = Math.max(A.x0, Math.min(A.x1, this.x + vx)), ny = Math.max(A.y0, Math.min(A.y1, this.y + vy));
+      if (Math.abs(vx) > 0.2) this.face = vx > 0 ? 1 : -1;
+      this.anim += Math.min(2, Math.hypot(vx, vy) * 0.6);
+      if (!swim && this.wet(nx, ny)) {
+        if (!this.wet(nx, this.y)) { this.x = nx; return true; }
+        if (!this.wet(this.x, ny)) { this.y = ny; return true; }
+        return false;
+      }
+      const free = nx === this.x + vx && ny === this.y + vy;
+      this.x = nx; this.y = ny;
+      return free;
+    }
+    go(tx, ty, sp, swim) {
+      const dx = tx - this.x, dy = ty - this.y, d = Math.hypot(dx, dy);
+      if (d <= sp) { this.step(dx, dy, swim); return true; }
+      this.step((dx / d) * sp, (dy / d) * sp, swim);
+      return false;
+    }
+    toRoam(n) { Object.assign(this, { state: 'roam', st: n, orbit: Math.atan2(this.y - G.play.player.y, this.x - G.play.player.x) }); }
+    canChase() { return ['roam', 'stalk', 'dash', 'skid', 'zoomies', 'bark', 'return'].includes(this.state); }
+    chase(b) {
+      if (this.ball && this.ball !== b && this.ball.state === 'held') this.ball.drop(this.ball.x, this.y + 2);
+      Object.assign(this, { state: 'chase', ball: b });
+      this.world.pop(this.x, this.y - 22 * this.s, 'BALL!', '#f8d850');
+    }
+    pickAttack() {
+      const order = ['stalk', 'bark', 'zoomies', 'stalk', 'bark', 'stalk'], m = order[this.cycle++ % order.length], h = this.heat;
+      if (m === 'stalk') { Object.assign(this, { state: 'stalk', st: [46, 38, 30][h - 1] }); this.world.pop(this.x, this.y - 22 * this.s, '!', '#f86858'); }
+      else if (m === 'bark') Object.assign(this, { state: 'bark', st: h === 3 ? 80 : 50 });
+      else {
+        const A = this.arena;
+        Object.assign(this, { state: 'zoomies', st: 150 + h * 20, zDir: Math.random() < 0.5 ? 1 : -1, zA: Math.atan2(this.y - (A.y0 + A.y1) / 2, this.x - (A.x0 + A.x1) / 2) });
+        this.world.pop(this.x, this.y - 22 * this.s, 'ZOOMIES!', '#f8d850');
+      }
+    }
+    scare() {
+      const w = this.world;
+      if (this.ball && this.ball.state === 'held') this.ball.drop(this.ball.x, this.y + 2);
+      this.ball = null;
+      Object.assign(this, { state: 'yelp', st: 44 });
+      G.audio.sfx('yelp');
+      w.pop(this.x, this.y - 24 * this.s, 'YELP!', '#f8f8f0');
+    }
+    update(w) {
+      if (G.script.busy || this.state === 'defeated' || this.state === 'pose') return;
+      this.t++;
+      if (this.hitMsgT > 0) this.hitMsgT--;
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1, s = this.s, h = this.heat;
+      // a ball in the air: he can't help himself
+      const fresh = w.ents.find((e) => e instanceof GolfBall && e.state === 'fly' && !e.chased);
+      if (fresh && this.canChase()) { fresh.chased = true; this.chase(fresh); }
+      // bumping into him: a dash or zoomies knocks Nate flat; otherwise he just nudges him
+      const touching = G.overlap(this.footBox(), p.hurtBox());
+      if (touching && ['dash', 'skid', 'zoomies', 'chase'].includes(this.state)) p.hurt(2, this.x, this.y);
+      else if (touching && !['dig', 'shake'].includes(this.state)) w.move(p, Math.sign(dx || 1) * 1.6, Math.sign(dy || 1) * 0.6);
+      // ...and while he's busy, Nate can sneak up on him
+      if (['dig', 'shake'].includes(this.state) && G.overlap(this.footBox(8), p.hurtBox())) { this.scare(); return; }
+      switch (this.state) {
+        case 'roam': {
+          // trots in a wide circle around Nate, keeping him herded
+          this.orbit += (0.01 + 0.004 * h) * (this.cycle % 2 ? 1 : -1);
+          const R = 100 - h * 8;
+          this.go(p.x + Math.cos(this.orbit) * R, p.y + Math.sin(this.orbit) * R * 0.7, 1.1 + 0.3 * h);
+          if (--this.st <= 0) this.pickAttack();
+          break;
+        }
+        case 'stalk':
+          // the border collie crouch: eyes locked on Nate, then he goes
+          this.face = dx > 0 ? 1 : -1;
+          if (--this.st <= 0) { const sp = 3.6 + 0.5 * h; Object.assign(this, { state: 'dash', st: 46, vx: (dx / dist) * sp, vy: (dy / dist) * sp }); G.audio.sfx('dash'); }
+          break;
+        case 'dash':
+          if (this.t % 4 === 0) w.burst(this.x - this.face * 8 * s, this.y, ['#4a8a34', '#6aa848', '#7a5a38'], 2, { speed: 1, up: 1, g: 0.12, life: 18, size: 2 });
+          if (!this.step(this.vx, this.vy) || --this.st <= 0) Object.assign(this, { state: 'skid', st: 22 });
+          break;
+        case 'skid':
+          this.vx *= 0.86; this.vy *= 0.86; this.step(this.vx, this.vy);
+          if (--this.st <= 0) this.toRoam(110 - h * 15);
+          break;
+        case 'zoomies': {
+          // laps around the course at full tilt
+          const A = this.arena, cx = (A.x0 + A.x1) / 2, cy = (A.y0 + A.y1) / 2;
+          this.zA += (0.032 + 0.006 * h) * this.zDir;
+          this.go(cx + Math.cos(this.zA) * (A.x1 - A.x0) * 0.4, cy + Math.sin(this.zA) * (A.y1 - A.y0) * 0.38, 4 + h * 0.4);
+          if (this.t % 5 === 0) w.burst(this.x, this.y, ['#4a8a34', '#6aa848'], 2, { speed: 1, up: 1, g: 0.12, life: 16, size: 2 });
+          if (--this.st <= 0) this.toRoam(100 - h * 15);
+          break;
+        }
+        case 'bark':
+          this.face = dx > 0 ? 1 : -1;
+          if (this.st % 30 === 10 && this.st > 0) {
+            G.audio.sfx('woof'); G.play.shake(6, 2);
+            w.pop(this.x + this.face * 10 * s, this.y - 22 * s, 'WOOF!', '#f8f8f0');
+            w.add(new BarkRing(this.x + this.face * 8 * s, this.y - 2, 88 + h * 14));
+          }
+          if (--this.st <= 0) this.toRoam(100 - h * 15);
+          break;
+        case 'chase': {
+          const b = this.ball;
+          if (!b || b.dead || b.state === 'held') { this.toRoam(40); break; }
+          if (b.state === 'fly') { this.go(b.tx, b.ty, 2.6 + 0.4 * h); break; }
+          if (b.state === 'sunk') {
+            // into the pond after it
+            if (this.go(b.x, b.y, this.wet(this.x, this.y) ? 1.1 : 2.6 + 0.4 * h, true)) { b.state = 'held'; b.holder = this; this.state = 'swimBack'; }
+            break;
+          }
+          // come at it from whichever side he's on, then face it (his mouth ends up right at the ball)
+          const side = this.x < b.x ? -1 : 1;
+          if (this.go(b.x + side * 9 * s, b.y, 2.6 + 0.4 * h)) {
+            this.face = -side;
+            if (b.terrain === 'sand') {
+              Object.assign(this, { state: 'dig', st: [210, 170, 130][h - 1], peek: 0 });
+              if (!G.state.flags.romDigHint) G.script.run(G.SCRIPTS.romulusHint('dig'));
+            } else { b.state = 'held'; b.holder = this; this.state = 'return'; }
+          }
+          break;
+        }
+        case 'dig':
+          // digging for it, sand flying out behind him; every so often he looks up
+          if (this.peek > 0) {
+            if (--this.peek === 10 && dx * this.face > 0 && Math.abs(dx) < 110 && Math.abs(dy) < 50) {
+              // spotted Nate coming straight at him
+              w.pop(this.x, this.y - 22 * s, '!', '#f86858');
+              this.ball = null;
+              Object.assign(this, { state: 'bark', st: 50 });
+            }
+            break;
+          }
+          if (this.t % 70 === 0) { this.peek = 24; break; }
+          if (this.t % 6 === 0) {
+            w.add(new Shot(this.x - this.face * 9 * s, this.y - 3 * s, -this.face * (1.6 + Math.random() * 1.2), (Math.random() - 0.5) * 1.4, G.spr.sandClod, { life: 36, z: 4 + 2 * s, dmg: 1 }));
+            w.burst(this.x + this.face * 9 * s, this.y, ['#e8d098', '#c8a868'], 2, { speed: 0.8, up: 1.2, g: 0.12, life: 14, size: 2 });
+          }
+          if (--this.st <= 0) {
+            const b = this.ball;
+            if (b && !b.dead && b.state === 'rest') { b.state = 'held'; b.holder = this; this.state = 'return'; } else this.toRoam(60);
+          }
+          break;
+        case 'swimBack': {
+          // paddles back to the bank nearest Nate, climbs out and shakes off
+          const P = this.arena.pond, a = Math.atan2(p.y - P.y, p.x - P.x);
+          if (this.go(P.x + Math.cos(a) * (P.rx + 10 + 4 * s), P.y + Math.sin(a) * (P.ry + 10 + 2 * s), 1.2, true)) {
+            Object.assign(this, { state: 'shake', st: [80, 64, 50][h - 1] });
+            if (!G.state.flags.romDigHint) G.script.run(G.SCRIPTS.romulusHint('shake'));
+          }
+          break;
+        }
+        case 'shake':
+          if (this.st % 6 === 0) w.burst(this.x, this.y - 10 * s, ['#5aa8e8', '#a8d8ff', '#ffffff'], 6, { speed: 2.2, up: 1, g: 0.1, life: 20, size: 2 });
+          if (this.st % 24 === 0) w.pop(this.x, this.y - 22 * s, '*shake shake*', '#a8d8ff');
+          if (--this.st <= 0) this.state = this.ball && this.ball.state === 'held' ? 'return' : 'roam';
+          break;
+        case 'return': {
+          // brings it right back to Nate and drops it
+          const b = this.ball;
+          if (!b || b.state !== 'held') { this.toRoam(40); break; }
+          if (dist < 30 + 8 * s || this.go(p.x - Math.sign(dx) * (24 + 8 * s), p.y, 1.6 + 0.3 * h)) {
+            b.drop(b.x, this.y + 2);
+            this.ball = null;
+            G.audio.sfx('bump');
+            w.pop(this.x + this.face * 10 * s, this.y - 18 * s, '*plop*', '#f8f8f0');
+            this.toRoam(80);
+          }
+          break;
+        }
+        case 'yelp': {
+          // jumps straight up, and comes down a size smaller
+          const k = 1 - this.st / 44;
+          this.z = Math.sin(k * Math.PI) * 12 * s;
+          if (this.st === 22) {
+            this.stage--; this.hp = this.stage;
+            G.audio.sfx('poof');
+            w.burst(this.x, this.y - 10 * this.s, ['#ffffff', '#e8e8f0', '#c8c8d8'], 18, { speed: 2, life: 26, size: 3 });
+            if (this.stage <= 0) { Object.assign(this, { state: 'defeated', z: 0 }); G.script.run(G.SCRIPTS.romulusBeaten(this)); return; }
+          }
+          if (--this.st <= 0) {
+            this.z = 0; this.scares++;
+            Object.assign(this, { state: 'flee', st: 70 });
+            if (this.scares === 1) G.script.run(G.SCRIPTS.romulusHint('scared'));
+          }
+          break;
+        }
+        case 'flee':
+          this.go(this.x - (dx / dist) * 100, this.y - (dy / dist) * 100, 3.4);
+          if (--this.st <= 0) this.toRoam(60);
+          break;
+      }
+    }
+    draw(ctx, cx, cy) {
+      const s = this.s, set = this.stage <= 0 ? G.spr.romulus : G.spr.romulusBig[s], dir = this.face > 0 ? 'right' : 'left', st = this.state;
+      const run = RUN[Math.floor(this.anim / 5) % 4];
+      let pose = this.pose || 'stand', jx = 0;
+      if (st === 'defeated') pose = this.pose || (this.walking ? RUN[(this.anim >> 2) % 4] : 'stand');
+      else if (['roam', 'chase', 'return', 'flee', 'dash', 'zoomies', 'swimBack'].includes(st)) pose = st === 'flee' ? 'scared' : run;
+      else if (st === 'stalk' || st === 'skid') pose = 'stalk';
+      else if (st === 'bark') pose = this.st % 30 < 16 ? 'bark' : 'stand';
+      else if (st === 'dig') pose = this.peek > 0 ? 'stand' : (this.t >> 3) & 1 ? 'dig1' : 'dig2';
+      else if (st === 'yelp') pose = 'scared';
+      else if (st === 'shake') { pose = 'stand'; jx = (G.tick >> 1) & 1 ? 2 : -2; }
+      const img = set[dir][pose] || set[dir].stand;
+      const swimming = this.stage > 0 && this.wet(this.x, this.y) && ['chase', 'swimBack'].includes(st);
+      if (this.walking && this.dir && (this.dir === 'left' || this.dir === 'right')) this.face = this.dir === 'right' ? 1 : -1;
+      if (!swimming) {
+        if (this.stage <= 0) drawShadow(ctx, this.x, this.y, cx, cy, true);
+        else { ctx.fillStyle = 'rgba(20,40,20,0.28)'; ctx.beginPath(); ctx.ellipse(Math.round(this.x) - cx, Math.round(this.y) - cy, 10 * s, 2.2 * s, 0, 0, Math.PI * 2); ctx.fill(); }
+      }
+      const x = Math.round(this.x - img.width / 2 + jx) - cx, y = Math.round(this.y - 22.1 * s - this.z) - cy;
+      if (swimming) {
+        // sunk to his shoulders: only his head and back above the waterline, with ripples
+        const wl = Math.round(this.y - 4 * s) - cy;
+        ctx.save(); ctx.beginPath(); ctx.rect(x - 4, wl - img.height, img.width + 8, img.height); ctx.clip();
+        ctx.drawImage(img, x, y + Math.round(10 * s)); ctx.restore();
+        ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.ellipse(Math.round(this.x) - cx, wl, 9 * s + ((G.tick >> 3) % 3) * 2, 2 * s, 0, 0, Math.PI * 2); ctx.stroke();
+        return;
+      }
+      ctx.drawImage(img, x, y);
+    }
+  }
+  G.GiantRomulus = GiantRomulus;
+
   // Corn on the cob: hops after Nate and spits kernels.
   class Corncob extends Critter {
     constructor(x, y) {
