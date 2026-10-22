@@ -3040,7 +3040,7 @@
     { name: 'Bay Bridge-Tunnel: the toll plaza', map: 'cbbtToll', at: [17, 13, 'left'], teeth: 520 },
     { name: 'The Two-Liter (Chesapeake Channel Tunnel)', map: 'chesTunnel', at: [7, 26, 'up'], flags: { cbbtArrived: true, tollMet: true, chesSeen: true }, items: { rod: true } },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
-    { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [39, 1, 'down'], flags: { tylerBeaten: true } },
+    { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [55, 1, 'down'], flags: { tylerBeaten: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -5738,7 +5738,7 @@
     if (!flags().tylerBeaten) { yield G.walkTo(p, p.x, p.y + 24, 1); return; }
     if (!flags().condoArrived) yield G.say('Nate', 'Daylight! Chesapeake is right on the other side.');
     // out the far end and into Chesapeake: Abe and Hannah's street
-    G.play.warp('condo', 39, 1, 'down');
+    G.play.warp('condo', 55, 1, 'down');
   };
 
   G.MAPS.cbbt = {
@@ -6304,12 +6304,89 @@
     else yield G.walkTo(p, p.x, p.y + 14, 1);
   };
 
+  // ---------------------------------------------------------------- their street
+  // From the user's photos and the satellite view. Across from their driveway: the
+  // visitor parking (two spots on each side of a mulch island with a big tree), then
+  // a mulch strip of round bushes and tall trees, then the main road. Their street
+  // bends at the top over to the main road, and curves away at the bottom past the
+  // neighbors. The asphalt and curbs are painted once onto one big canvas (smooth
+  // curves that tiles can't do) and laid flat over the grass.
+  const CONDO_STREET = (() => {
+    const T = 16, street = new Path2D(), main = new Path2D();
+    street.moveTo(56 * T, 2.5 * T);
+    street.lineTo(43 * T, 2.5 * T);
+    street.quadraticCurveTo(39.5 * T, 2.5 * T, 39.5 * T, 6 * T);
+    street.lineTo(39.5 * T, 22 * T);
+    street.quadraticCurveTo(39.5 * T, 34 * T, 14 * T, 41.5 * T);
+    main.moveTo(56 * T, -2 * T); main.lineTo(56 * T, 42 * T);
+    // the two halves of the visitor parking [x, y, w, h], flush with the street on their left
+    const pockets = [[41 * T - 6, 8 * T, 3 * T + 6, 4 * T], [41 * T - 6, 17 * T, 3 * T + 6, 4 * T]];
+    const probe = G.canvas(1, 1).getContext('2d');
+    // is this point on a road (curbs included)?
+    const onRoad = (x, y) => {
+      probe.lineWidth = 48 + 8;
+      if (probe.isPointInStroke(street, x, y)) return true;
+      probe.lineWidth = 64 + 8;
+      return probe.isPointInStroke(main, x, y);
+    };
+    return { street, main, pockets, onRoad, lane: 55 * T };
+  })();
+  let condoStreetArt = null;
+  function condoStreetCanvas(pw, ph) {
+    if (condoStreetArt) return condoStreetArt;
+    const R = CONDO_STREET, c = G.canvas(pw, ph), x = c.getContext('2d');
+    const CURB_D = '#86867e', CURB = '#c8c8c0', ASPH = '#4c4c56', CONC = '#b4b4bc';
+    // the cream duplex's driveway runs in under the curb at the corner
+    x.fillStyle = CONC; x.fillRect(37 * 16, 3 * 16, 2.5 * 16, 3 * 16);
+    // curbs first (a dark line, then the curb top), then the asphalt over them
+    x.lineJoin = 'round';
+    for (const [grow, col] of [[8, CURB_D], [6, CURB], [0, ASPH]]) {
+      x.strokeStyle = col; x.fillStyle = col;
+      x.lineWidth = 48 + grow; x.stroke(R.street);
+      x.lineWidth = 64 + grow; x.stroke(R.main);
+      for (const [px, py, w, h] of R.pockets) x.fillRect(px, py - grow / 2, w + grow / 2, h + grow);
+    }
+    // crisp pixel edges (no smoothing), and speckles like the asphalt and concrete tiles
+    const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+    const pal = [CURB_D, CURB, ASPH, CONC].map(rgb), speck = [null, null, ['#5e5e6a', '#3e3e48'].map(rgb), ['#c4c4cc', '#a0a0aa'].map(rgb)];
+    const img = x.getImageData(0, 0, pw, ph), d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 128) { d[i + 3] = 0; continue; }
+      let best = 0, bd = 1e9;
+      for (let k = 0; k < pal.length; k++) { const q = pal[k], e = (d[i] - q[0]) ** 2 + (d[i + 1] - q[1]) ** 2 + (d[i + 2] - q[2]) ** 2; if (e < bd) { bd = e; best = k; } }
+      let q = pal[best];
+      const px = (i >> 2) % pw, py = Math.floor((i >> 2) / pw);
+      if (speck[best] && G.hash(px, py, 41) < 0.05) q = speck[best][G.hash(px, py, 43) < 0.5 ? 0 : 1];
+      d[i] = q[0]; d[i + 1] = q[1]; d[i + 2] = q[2]; d[i + 3] = 255;
+    }
+    x.putImageData(img, 0, 0);
+    const dot = (col, px, py, w = 1, h = 1) => { x.fillStyle = col; x.fillRect(px, py, w, h); };
+    // the stall lines in the visitor spots, and white river stones along the curb behind them
+    for (const [, py, , h] of R.pockets) {
+      for (const ly of [py + 1, py + 31, py + h - 2]) { dot('#e8e8e0', 660, ly, 42); dot('#c4c4bc', 660, ly + 1, 42); }
+      for (let yy = py - 6; yy < py + h + 6; yy += 3) if (G.hash(yy, py, 47) < 0.7) { const sx = 709 + Math.floor(G.hash(yy, 3, 48) * 6); dot('#ece8e0', sx, yy, 2, 2); dot('#b8b4ac', sx + 1, yy + 1); }
+    }
+    for (let yy = 13 * 16 - 4; yy < 17 * 16 + 2; yy += 3) if (G.hash(yy, 9, 47) < 0.7) { const sx = 661 + Math.floor(G.hash(yy, 5, 48) * 6); dot('#ece8e0', sx, yy, 2, 2); dot('#b8b4ac', sx + 1, yy + 1); }
+    // a manhole cover in the street, out past their driveway
+    for (let dy = -3; dy <= 3; dy++) for (let dx = -7; dx <= 7; dx++) {
+      if ((dx / 7.5) ** 2 + (dy / 3.6) ** 2 > 1) continue;
+      dot(dy === -3 ? '#5a5a64' : (dy & 1) ? '#26262e' : '#34343c', 632 + dx, 19 * 16 + 4 + dy);
+    }
+    return (condoStreetArt = c);
+  }
+  // Off the bottom of the map: the street (and the main road) just keep going.
+  S.condoNeighborhood = function* () {
+    const p = P();
+    yield G.say('Nate', 'That way is just more of the neighborhood. Abe and Hannah\'s is back this way.');
+    yield G.walkTo(p, p.x, p.y - 18, 1);
+  };
+
   // ---------------------------------------------------------------- outside
   G.MAPS.condo = {
     name: 'Abe & Hannah\'s Condo',
     music: 'home',
     tiles() {
-      const W = 46, H = 26;
+      const W = 62, H = 40;
       const g = Array.from({ length: H }, (_, y) => Array.from({ length: W }, () => ((y >> 1) % 2 ? 'L' : 'M')));
       const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
       const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
@@ -6329,18 +6406,29 @@
       fill(22, 18, 3, 1, 'C');
       fill(22, 19, 10, 1, 'C');
       fill(30, 17, 2, 2, 'C');
-      // the driveway up to the storage garage door, and the street
+      // the driveway up to the storage garage door (the street itself is painted over the grass in setup)
       fill(30, 14, 8, 3, 'C');
-      fill(38, 0, 3, H, 'a');
       // the neighbors' side: their front walk, stoop and planting beds
       fill(30, 9, 8, 2, 'C');
       fill(30, 6, 1, 3, '<'); fill(30, 11, 1, 2, '<');
-      // more trees around the lots, and across the street
-      for (const [x, y] of [[16, 1], [24, 2], [33, 1], [14, 23], [20, 24], [27, 22], [34, 23], [42, 3], [43, 12], [42, 19], [44, 24]]) set(x, y, 'T');
+      // the cream duplex at the corner: its bed, stoop, and driveway in to the bend
+      fill(19, 6, 6, 1, '<'); fill(25, 6, 2, 1, 'C'); fill(31, 3, 7, 3, 'C');
+      // the tan duplex next door: its bed, front walk, and driveway down to where the street curves
+      fill(17, 30, 2, 1, '<'); fill(19, 30, 2, 1, 'C'); fill(21, 30, 6, 8, 'C');
+      // across the street: mulch above the visitor parking and on the island between its two
+      // halves, the long mulch strip behind it, and the beds further down
+      fill(41, 4, 13, 4, '<'); fill(41, 12, 3, 5, '<'); fill(44, 8, 10, 14, '<');
+      fill(43, 22, 11, 17, '<'); fill(32, 30, 5, 2, '<');
+      set(16, 1, 'T');
       return g.map((r) => r.join(''));
     },
     setup(w) {
-      const sp = G.spr, f = flags();
+      const sp = G.spr, f = flags(), R = CONDO_STREET;
+      // ---- the streets, painted flat over the grass (see CONDO_STREET)
+      const roads = condoStreetCanvas(w.pw, w.ph);
+      w.props.push({ img: null, x: 0, y: 0, flat: true, base: 0, draw(ctx, cx, cy) { ctx.drawImage(roads, -cx, -cy); } });
+      // (nothing gets planted on a road)
+      const clear = (tx, ty, tw = 1, th = 1) => [[0, 0], [1, 0], [0, 1], [1, 1], [0.5, 0.5]].every(([a, b]) => !R.onRoad(tx * 16 + 5 + a * (tw * 16 - 10), ty * 16 + 5 + b * (th * 16 - 10)));
       // ---- the building (Unit A in front, Unit B's roof running back behind it)
       w.addProp({ img: sp.condo, tx: 18, ty: 8, h: 10 });
       w.blockTiles(18, 8, 12, 10);
@@ -6353,8 +6441,10 @@
       // the storage garage door, at the top of the driveway
       for (const y of [14, 15, 16]) w.block[y * w.w + 29] = 0;
       w.addWarp(29, 14, 1, 3, 'condoStorage', 10, 5, 'left');
-      // up the street: back to the Bay Bridge-Tunnel (Nate arrives from there at 39, 1)
-      w.addTrigger(38, 0, 3, 1, () => G.script.run(S.condoStreetEnd()));
+      // up the main road: back to the Bay Bridge-Tunnel (Nate arrives from there at 55, 1)
+      w.addTrigger(54, 0, 4, 1, () => G.script.run(S.condoStreetEnd()));
+      // off the bottom, where the street and the main road keep going
+      for (let x = 0; x < w.w; x++) if (R.onRoad(x * 16 + 8, (w.h - 1) * 16 + 8)) w.addTrigger(x, w.h - 1, 1, 1, () => G.script.run(S.condoNeighborhood()));
       // the neighbors' front door
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [29 * 16, 9 * 16, 30 * 16, 12 * 16], talk: look('The neighbors\' front door. They get the street side.') });
 
@@ -6364,6 +6454,45 @@
       const boxwood = look('A round boxwood.'), azalea = look('An azalea.');
       for (const [x, y] of [[20, 18], [21, 18], [25, 18], [27, 18], [29, 18], [30, 6], [30, 8], [30, 11]]) shrub(sp.boxwood, x, y, boxwood);
       for (const [x, y] of [[26, 18], [28, 18], [30, 7], [30, 12]]) shrub(sp.azalea, x, y, azalea);
+
+      // ---- the neighbors: a cream duplex at the corner where the street bends, and the tan one
+      // next door with two garage doors (Unit B, the other half of theirs, is the roof behind)
+      w.addProp({ img: sp.condoCream, tx: 19, ty: 0, h: 6 });
+      w.blockTiles(19, 0, 12, 6);
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [25 * 16, 5 * 16, 27 * 16, 6 * 16], talk: look('Another duplex, a lot like Abe and Hannah\'s, with a big half-round window. Nobody answers.') });
+      for (const x of [19, 21, 23]) shrub(sp.boxwood, x, 6, boxwood);
+      w.addProp({ img: sp.condoTan, tx: 17, ty: 22, h: 8 });
+      w.blockTiles(17, 22, 11, 8);
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [18 * 16, 29 * 16, 21 * 16, 30 * 16], talk: look('The neighbors\' front door. Nobody\'s home.') });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [21 * 16, 29 * 16, 27 * 16, 30 * 16], talk: look('Two garage doors. The neighbors take their cars seriously.') });
+      for (const x of [17, 18]) shrub(sp.boxwood, x, 30, boxwood);
+      // ---- cars: a silver Jeep in their driveway, the neighbors' black SUV, and two in the visitor spots
+      const car = (img, tx, ty, h, dx, dy, solid, text) => w.addProp({ img, tx, ty, h, dx, dy, solid, hit: solid, talk: look(text) });
+      car(sp.condoCars.jeep, 32, 14, 2, 0, -3, [32, 14, 3, 2], 'A silver Jeep, parked in the driveway.');
+      car(sp.condoCars.black, 24, 30, 3, 14, 0, [25, 31, 2, 2], 'The neighbors\' black SUV. Very shiny.');
+      car(sp.condoCars.escape, 41, 10, 2, 6, -3, [41, 10, 3, 2], 'A black SUV in one of the visitor spots.');
+      car(sp.condoCars.crv, 41, 17, 2, 6, -3, [41, 17, 3, 2], 'A blue SUV in a visitor spot. Somebody has company.');
+      // ---- black lamp posts along the street, and a tall street light by the visitor parking
+      for (const [x, y] of [[37, 12], [37, 21]]) if (clear(x, y)) w.addProp({ img: sp.postLamp, tx: x, ty: y, dx: 3, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: look('A black lamp post.') });
+      w.addProp({ img: sp.lampPostL, tx: 41, ty: 21, h: 4, dx: -6, solid: [42, 24, 1, 1] });
+      // ---- across the street: tall trees over rows of round bushes in the mulch, and a row
+      // of skinny evergreens further down
+      // (the big tree on the island between the two halves of the visitor parking)
+      w.props.push({ img: sp.trees[1], x: 41 * 16 + 8, y: 13 * 16 - 2, base: 13 * 16 + 31 });
+      w.blockTiles(41, 13, 3, 2);
+      for (const [x, y, k] of [[46, 4, 'pine'], [50, 5], [44, 8], [48, 9, 'pine'], [52, 8], [51, 12, 'pine'], [45, 13], [48, 16], [44, 18, 'pine'], [52, 16], [50, 20],
+        [47, 23], [51, 25, 'pine'], [48, 28], [52, 31], [47, 33, 'pine'], [50, 36], [46, 38],
+        [59, 1, 'pine'], [60, 6], [59, 11], [60, 16, 'pine'], [59, 21], [60, 26], [59, 31, 'pine'], [60, 36],
+        [13, 24], [13, 31, 'pine'], [14, 36], [31, 24], [36, 35], [30, 38], [40, 31], [41, 37, 'pine']]) if (clear(x, y, 2, 2)) w.addTree(x, y, k);
+      for (let y = 5; y <= 38; y++) for (let x = 44 + (y % 2); x <= 53; x += 2) {
+        if (y % 4 === 1 && y > 4 && !(y > 21 && x < 46) && !w.block[y * w.w + x] && clear(x, y)) shrub((x + y) % 6 ? sp.boxwood : sp.azalea, x, y, (x + y) % 6 ? boxwood : azalea);
+      }
+      for (const x of [32, 34, 36]) if (clear(x, 30)) shrub(sp.boxwood, x, 30, boxwood);
+      for (let y = 23; y <= 37; y += 2) if (!w.block[(y + 1) * w.w + 44] && clear(44, y, 1, 2)) w.addProp({ img: sp.arborvitae, tx: 44, ty: y, h: 2, dx: 2, solid: [44, y + 1, 1, 1], hit: [44, y + 1, 1, 1], talk: look('A tall, skinny evergreen. There\'s a whole row of them.') });
+      // ---- the school bus, every so often, down the main road (see tick)
+      w.busT = 300;
+      w.busProp = { img: null, x: 0, y: 0, base: -1, draw(ctx, cx, cy) { if (w.bus) ctx.drawImage(sp.schoolBus, R.lane - 15 - cx, Math.round(w.bus.y) - 78 - cy); } };
+      w.props.push(w.busProp);
       // the big bush at the corner of the house (it rustles until Abe jumps out of it)
       w.bigShrub = w.addProp({
         img: sp.bigShrub, tx: 17, ty: 18, h: 2, dx: -2, solid: [17, 18, 2, 2], hit: [17, 18, 2, 2],
@@ -6406,8 +6535,20 @@
         f.condoArrived = true;
         if (P().x < 30 * 16) return;
         yield G.wait(20);
-        yield G.say('Nate', 'Abe and Hannah\'s place. Their front door is around the side, past the garage.');
+        yield G.say('Nate', 'This is Abe and Hannah\'s street. Their place is across from the visitor parking, and the front door is around the side, past the garage.');
       })();
+    },
+    // the school bus comes down the main road every so often (it stops and honks if Nate's in the way)
+    tick(w) {
+      if (G.script.busy) return;
+      const b = w.bus, p = G.play.player, R = CONDO_STREET;
+      if (!b) { if (--w.busT <= 0) w.bus = { y: -90, honk: 0 }; return; }
+      const inWay = Math.abs(p.x - R.lane) < 22 && p.y > b.y - 4 && p.y < b.y + 30;
+      if (inWay) {
+        if (b.honk-- <= 0) { b.honk = 100; G.audio.sfx('honk'); w.pop(R.lane, b.y - 84, 'HONK!', '#f8d850'); }
+      } else { b.y += 1.3; b.honk = Math.min(b.honk, 20); }
+      w.busProp.base = b.y;
+      if (b.y > w.ph + 100) { w.bus = null; w.busT = 1500 + Math.floor(Math.random() * 900); }
     },
   };
 

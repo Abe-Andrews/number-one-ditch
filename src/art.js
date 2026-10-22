@@ -5167,6 +5167,181 @@
     return p.canvas();
   }
 
+  // ---- their street (from the user's photos and the satellite view)
+  // shared bits for the neighbors' duplexes: shingles, siding and a white-trimmed window
+  function condoKit(p, pal) {
+    const cols = {};
+    return {
+      shingle(x, y, base) {
+        const c = cols[base] || (cols[base] = [base, shade(base, -0.3), shade(base, 0.2)]);
+        const off = Math.floor(y / 4) % 2 ? 4 : 0;
+        p.set(x, y, y % 4 === 3 || (x + off) % 8 === 0 ? c[1] : y % 4 === 0 ? c[2] : c[0]);
+      },
+      siding(x, y0, y1) { for (let y = y0; y <= y1; y++) p.set(x, y, y % 3 === 2 ? pal.sidLn : pal.sid); },
+      win(x, y, w, h) {
+        p.rect(x - 2, y - 2, w + 4, h + 4, pal.trim); p.hline(x - 3, x + w + 2, y + h + 2, pal.trim); p.hline(x - 3, x + w + 2, y + h + 3, pal.trimD);
+        p.rect(x, y, w, h, pal.glass);
+        const mid = y + Math.floor(h / 2);
+        p.hline(x, x + w - 1, mid, pal.trim);
+        for (let gx = x + 3; gx < x + w - 1; gx += 4) p.vline(gx, y, mid - 1, pal.trim);
+        p.set(x + 1, y + 1, pal.glassL); p.set(x + 2, y + 1, pal.glassL); p.set(x + 1, mid + 1, pal.glassL);
+      },
+      // a white garage door with a row of little windows across the top
+      garage(x, y, w, h) {
+        p.rect(x - 2, y - 2, w + 4, h + 2, pal.trim);
+        p.rect(x, y, w, h, '#f2f2ee');
+        for (let gy = y + 8; gy < y + h; gy += 6) p.hline(x, x + w - 1, gy, '#d6d6ce');
+        for (let wx = x + 3; wx + 6 <= x + w - 2; wx += 9) { p.rect(wx, y + 3, 6, 3, '#4a5468'); p.hline(wx, wx + 5, y + 3, '#7a8aa0'); }
+      },
+      lantern(x, y) { p.rect(x, y, 3, 5, '#2a2a30'); p.set(x + 1, y + 1, '#f8d878'); p.set(x + 1, y + 2, '#f0b848'); },
+    };
+  }
+  // The neighbors next door, where the street curves: tan siding, a light brown hip
+  // roof with the second floor's gable at the back, and two white garage doors.
+  function condoNeighborTan() {
+    const W = 176, H = 128, GY = H - 1, p = new Pix(W, H);
+    const pal = { sid: '#d6c6a2', sidLn: '#c2b08a', trim: '#f6f4ee', trimD: '#d8d4c8', glass: '#3e5068', glassL: '#9ab8d8' };
+    const roof = '#a8825a', roofR = shade(roof, -0.16), hip = shade(roof, -0.34), K = condoKit(p, pal);
+    const EAVE = 84, two = (x) => x >= 8 && x <= 76, rake = (x) => 8 + Math.floor(Math.abs(x - 42) * 0.5);
+    const top = (x) => (x < 8 ? 56 + (8 - x) * 3 : two(x) ? 56 : x <= 150 ? 40 : 40 + Math.floor((x - 150) * 1.7));
+    for (let x = 0; x < W; x++) {
+      if (two(x)) {
+        // the second floor: its gable roof, then its wall with the double window
+        for (let y = 0; y < rake(x); y++) K.shingle(x, y, x <= 42 ? roof : roofR);
+        p.set(x, rake(x), pal.trim); p.set(x, rake(x) + 1, pal.trim);
+        K.siding(x, rake(x) + 2, top(x) - 1);
+      }
+      for (let y = top(x); y < EAVE; y++) K.shingle(x, y, x > 150 ? roofR : roof);
+      p.set(x, EAVE, pal.trim); p.set(x, EAVE + 1, pal.trimD);
+      K.siding(x, EAVE + 2, GY);
+    }
+    p.hline(77, 150, 40, shade(roof, 0.3)); p.hline(8, 76, 56, hip);
+    for (let x = 151; x < W; x++) p.set(x, top(x), hip);
+    p.vline(42, 0, 8, shade(roof, 0.3));
+    K.win(26, 30, 12, 14); K.win(44, 30, 12, 14);
+    // the front door and a window on either side of it
+    K.win(8, 98, 12, 15); K.win(54, 98, 12, 15);
+    p.rect(30, 94, 18, 34, pal.trim); p.rect(32, 96, 14, 32, '#ece6da');
+    for (const [x, y] of [[34, 99], [40, 99], [34, 112], [40, 112]]) { p.rect(x, y, 4, 9, '#dcd4c6'); p.hline(x, x + 3, y, '#f8f4ec'); }
+    p.set(44, 112, BRASS); K.lantern(25, 100);
+    // two garage doors and a coach light between them
+    K.garage(76, 94, 38, 34); K.garage(122, 94, 38, 34); K.lantern(116, 100);
+    for (const x of [0, 70, 174]) p.rect(x, EAVE + 2, 2, GY - EAVE - 1, pal.trim);
+    p.outline();
+    return p.canvas();
+  }
+  // Another duplex at the corner where the street bends, cream with a gray roof like
+  // Abe and Hannah's: a front gable with a big half-round window, and a dormer.
+  function condoNeighborCream() {
+    const W = 192, H = 112, GY = H - 1, p = new Pix(W, H), C = CONDO, K = condoKit(p, C);
+    const roofR = shade(C.roof, -0.16), hip = shade(C.roof, -0.36);
+    const EAVE = 70, gab = (x) => x >= 16 && x <= 80, rake = (x) => 6 + Math.floor(Math.abs(x - 48) * 0.62);
+    const dor = (x) => x >= 118 && x <= 162, drake = (x) => 4 + Math.floor(Math.abs(x - 140) * 0.6);
+    const top = (x) => (x < 16 ? 30 + Math.floor((16 - x) * 2.5) : x > 175 ? 22 + Math.floor((x - 175) * 2.8) : 22);
+    for (let x = 0; x < W; x++) {
+      if (gab(x)) {
+        // the two-story front gable comes all the way down to the ground
+        for (let y = 0; y < rake(x); y++) K.shingle(x, y, x <= 48 ? C.roof : roofR);
+        p.set(x, rake(x), C.trim); p.set(x, rake(x) + 1, C.trim);
+        K.siding(x, rake(x) + 2, GY);
+        continue;
+      }
+      if (dor(x)) {
+        for (let y = 0; y < drake(x); y++) K.shingle(x, y, x <= 140 ? C.roof : roofR);
+        p.set(x, drake(x), C.trim); p.set(x, drake(x) + 1, C.trim);
+        K.siding(x, drake(x) + 2, 45);
+        for (let y = 46; y < EAVE; y++) K.shingle(x, y, C.roof);
+      } else for (let y = top(x); y < EAVE; y++) K.shingle(x, y, x > 175 || x < 16 ? roofR : C.roof);
+      p.set(x, EAVE, C.trim); p.set(x, EAVE + 1, C.trimD);
+      K.siding(x, EAVE + 2, GY);
+    }
+    p.hline(81, 175, 22, shade(C.roof, 0.3)); p.hline(118, 162, 46, hip);
+    // the attic vent up in the gable, and the big window with its half-round top
+    p.rect(42, 16, 12, 9, C.trim); for (let y = 18; y < 24; y += 2) p.hline(44, 51, y, '#9a9ca4');
+    p.rect(34, 58, 29, 42, C.trim);
+    for (let y = 44; y < 58; y++) for (let x = 34; x <= 62; x++) if (Math.hypot(x - 48, y - 58) <= 14.5) p.set(x, y, C.trim);
+    for (let y = 46; y < 98; y++) for (let x = 36; x <= 60; x++) {
+      if (y < 58 && Math.hypot(x - 48, y - 58) > 12.5) continue;
+      p.set(x, y, C.glass);
+    }
+    for (let a = 1; a < 4; a++) for (let r = 0; r < 12; r++) p.set(48 - Math.round(Math.cos(a * Math.PI / 4) * r), 58 - Math.round(Math.sin(a * Math.PI / 4) * r), C.trim);
+    p.hline(36, 60, 58, C.trim); p.hline(36, 60, 78, C.trim); for (let x = 40; x < 60; x += 5) p.vline(x, 59, 77, C.trim);
+    p.set(38, 60, C.glassL); p.set(39, 60, C.glassL); p.set(38, 80, C.glassL);
+    // the dormer's double window
+    K.win(124, 22, 12, 14); K.win(144, 22, 12, 14);
+    // the front door with a coach light, the windows, the end of the garage
+    p.rect(96, 78, 18, 34, C.trim); p.rect(98, 80, 14, 32, '#f0ece4');
+    for (const [x, y] of [[100, 83], [106, 83], [100, 96], [106, 96]]) { p.rect(x, y, 4, 9, '#dcd6ca'); p.hline(x, x + 3, y, '#f8f6f0'); }
+    p.set(110, 96, BRASS); K.lantern(89, 84);
+    K.win(124, 80, 12, 17); K.win(146, 80, 12, 17); K.lantern(184, 84);
+    for (const x of [0, 16, 79, 176, 190]) p.rect(x, gab(x) ? rake(x) + 2 : EAVE + 2, 2, 104 - (gab(x) ? rake(x) + 2 : EAVE + 2), C.trim);
+    // a red brick base, like theirs
+    for (let y = 104; y <= GY; y++) for (let x = 0; x < W; x++) {
+      if (x >= 96 && x <= 113) continue;
+      const row = Math.floor(y / 3), off = row % 2 ? 2 : 0;
+      p.set(x, y, y % 3 === 2 || (x + off) % 5 === 0 ? '#c49c88' : G.hash(Math.floor((x + off) / 5), row, 9) < 0.3 ? '#963e2c' : '#aa4a34');
+    }
+    p.outline();
+    return p.canvas();
+  }
+  // an SUV seen from above, nose up, in any color
+  function suvTop(c) {
+    const p = new Pix(26, 40), L = shade(c, 0.22), D = shade(c, -0.3), glass = '#2a3a50';
+    for (const [x, y] of [[0, 6], [22, 6], [0, 28], [22, 28]]) p.rect(x, y, 4, 7, '#1c1c22');
+    p.rect(2, 1, 22, 38, c);
+    p.vline(2, 1, 38, L); p.vline(23, 1, 38, D);
+    p.rect(4, 2, 18, 8, L); p.set(4, 2, '#f8f0b0'); p.set(21, 2, '#f8f0b0');
+    p.rect(4, 10, 18, 5, glass); p.hline(5, 10, 11, '#8ab0d8');
+    p.rect(4, 15, 18, 13, c); p.vline(6, 16, 27, '#9aa0a8'); p.vline(19, 16, 27, '#9aa0a8');
+    p.rect(4, 28, 18, 4, glass);
+    p.rect(3, 33, 20, 5, D); p.set(3, 36, '#e03030'); p.set(22, 36, '#e03030');
+    p.outline();
+    return p.canvas();
+  }
+  // a quarter turn (clockwise: nose up becomes nose right)
+  function rot90(src, cw = true) {
+    const c = G.canvas(src.height, src.width), x = c.getContext('2d');
+    if (cw) { x.translate(src.height, 0); x.rotate(Math.PI / 2); } else { x.translate(0, src.width); x.rotate(-Math.PI / 2); }
+    x.drawImage(src, 0, 0);
+    return c;
+  }
+  // a black carriage lamp on a post, along the street
+  function postLamp() {
+    const p = new Pix(10, 36), b = '#24242a', bL = '#4a4a54';
+    p.rect(4, 10, 2, 24, b); p.vline(4, 11, 33, bL);
+    p.rect(2, 33, 6, 3, b);
+    p.rect(3, 0, 4, 2, b); p.rect(1, 2, 8, 2, b);
+    p.rect(2, 4, 6, 6, '#f8e8a8'); p.vline(5, 4, 9, b); p.hline(2, 7, 7, '#f0d070'); p.rect(3, 10, 4, 1, b);
+    return finish(p);
+  }
+  // a tall, skinny evergreen (a row of them along the street)
+  function arborvitae() {
+    const p = new Pix(12, 30), g = '#2e6a34', gL = '#4a8a44', gD = '#1e4a26';
+    for (let y = 0; y < 27; y++) {
+      const hw = Math.max(1, Math.round(5 * Math.sin(Math.PI * (y + 3) / 32)));
+      p.hline(6 - hw, 5 + hw, y, g);
+      if (y % 3 === 1) p.set(6 - hw + 1, y, gL);
+      p.set(5 + hw, y, gD);
+      if (y % 4 === 2) p.set(6, y, gL);
+    }
+    p.rect(5, 27, 2, 3, '#6a4a30');
+    return finish(p);
+  }
+  // a school bus seen from above, headed down the main road
+  function schoolBus() {
+    const p = new Pix(30, 80), y0 = '#f0b828', yL = '#f8cc48', yD = '#c88c18', blk = '#24242a';
+    for (const y of [10, 56]) { p.rect(0, y, 2, 9, blk); p.rect(28, y, 2, 9, blk); }
+    p.rect(2, 0, 26, 74, y0);
+    p.rect(5, 2, 20, 58, yL); p.vline(2, 0, 73, yD); p.vline(27, 0, 73, yD);
+    for (const x of [3, 26]) p.vline(x, 3, 70, blk);
+    for (const y of [12, 38]) { p.rect(11, y, 8, 6, '#e8e8e0'); p.hline(11, 18, y, '#ffffff'); }
+    p.rect(5, 61, 20, 6, '#34496a'); p.hline(6, 12, 62, '#8ab0d8');
+    p.rect(6, 67, 18, 9, y0); p.hline(6, 23, 67, yD); p.set(7, 74, '#fff0b0'); p.set(22, 74, '#fff0b0');
+    for (const x of [4, 24]) { p.set(x, 60, '#f86030'); p.set(x + 1, 60, '#f8a020'); }
+    p.rect(5, 76, 20, 3, blk);
+    return finish(p);
+  }
+
   // The living room fireplace on the side wall, seen from above: the white
   // mantel, the marble surround, the firebox and the hearth.
   function condoFireplace() {
@@ -5814,6 +5989,8 @@
     S.pizzaBoxes = pizzaBoxes(); S.checkTable = checkTable(); S.dadTomPicture = dadTomPicture();
     // Abe and Hannah's condo
     S.condo = condoBuilding(); S.brickStep = brickStep();
+    S.condoTan = condoNeighborTan(); S.condoCream = condoNeighborCream(); S.postLamp = postLamp(); S.arborvitae = arborvitae(); S.schoolBus = schoolBus();
+    S.condoCars = { jeep: rot90(suvTop('#c4c8cc'), false), black: suvTop('#2a2a30'), escape: rot90(suvTop('#26262c')), crv: rot90(suvTop('#6a98a8')) };
     S.boxwood = shrub(16, 13, 3); S.azalea = shrub(17, 14, 5, 16); S.bigShrub = shrub(36, 32, 7);
     S.traeger = traeger(); S.lawnChair = lawnChair(); S.acUnit = acUnit(); S.privacyFence = privacyFence(4); S.trashEnclosure = trashEnclosure();
     S.condoFireplace = condoFireplace(); S.brassChandelier = chandelier(true); S.entryLantern = entryLantern();
