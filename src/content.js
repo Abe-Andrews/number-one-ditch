@@ -6882,8 +6882,9 @@
       // FURNITURE (photos pending): a console table, coat rack or wall art along x 10, y 13-17.
       w.props.push({ img: sp.entryLantern, x: 11 * 16 + 3, y: 14 * 16, base: 18 * 16 });
       // ---- galley kitchen (x 10-16, y 3-6): stainless fridge, light gray cabinets, white counters,
-      // glass-top range with the microwave over it, the sink and dishwasher, and the breakfast bar
-      // FURNITURE (photos pending): barstools along the breakfast bar at y 7, x 12-16; anything that lives on the counters.
+      // glass-top range with the microwave over it, the sink and dishwasher, and the breakfast bar. From the
+      // user's photo: a white pantry hutch at the end of the galley (16,5; x 16, y 4 stays clear for the
+      // laundry door), a runner rug, and a crock of wooden spoons on the counter.
       F.stand(sp.condoFridge, 10, 3, 1, look('A stainless fridge. Nate checks it, just in case. Nobody\'s inside. Good.'));
       F.hang(sp.condoUppers.two, 11, 2, 2, null, 10);
       F.hang(sp.condoUppers.micro, 13, 2, 1, null, 10);
@@ -6893,6 +6894,9 @@
       w.addProp({ img: sp.dishwasher, tx: 14, ty: 3, flat: true, hit: [14, 3, 1, 1], talk: look('The dishwasher.') });
       w.addProp({ img: sp.sinkTop, tx: 15, ty: 3, flat: true, dy: -10, hit: [15, 3, 2, 1], talk: look('The kitchen sink.') });
       spot(12, 6, 5, 1, look('The breakfast bar.'));
+      w.props.push({ img: sp.kitchenRunner, x: 11 * 16 - 1, y: 4 * 16 + 5, flat: true, base: 0 });
+      F.onCounter(sp.utensilCrock, 12, 3, null);
+      F.stand(sp.pantryHutch, 16, 5, 1, look('A white pantry hutch: gold-rimmed glasses, a brown teapot, cookbooks, jars and wicker baskets.'));
       if (f.condoScare) w.abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'down', talk: S.abeCondo }));
       // Romulus: curled up in his bed the first time, and behind the breakfast bar (hiding from Nate) after that
       w.romulus = w.add(f.romulusMet ? new G.Romulus(15 * 16 + 8, 5 * 16 + 12, 'hide') : new G.Romulus(2 * 16, 11 * 16 + 12, 'lie'));
@@ -6903,18 +6907,28 @@
       // ---- back hall (x 13-25, y 9-10)
       // FURNITURE (photos pending): wall art on the hall wall, x 17-25, y 7-8.
       // ---- the downstairs bath (x 16-19, y 14-18): doors to the hall and to the bedroom
-      // FURNITURE (photos pending): towels, a bath mat, decor (keep x 19, y 14-16 clear: both doors).
+      // From the user's photo: the leafy shower curtain, a fluffy bath mat, a little basket on the toilet tank
+      // (keep x 19, y 14-16 clear: both doors).
       F.hang(sp.bathMirror, 16, 13, 2, null, 8);
       F.stand(sp.condoVanity, 16, 14, 2, S.condoSink);
       F.hang(sp.openShelves, 18, 13, 1, look('Open shelves over the toilet.'), 4);
       F.stand(sp.toilet, 18, 14, 1, look('...It\'s a toilet, Nate.'));
-      F.stand(sp.tubCurtain, 16, 17, 3, look('A bathtub with a shower curtain.'), { ht: 2 });
+      F.stand(sp.tubCurtain, 16, 17, 3, look('A bathtub with a leafy shower curtain: green leaves and little yellow flowers.'), { ht: 2 });
+      w.props.push({ img: sp.bathMat, x: 16 * 16 + 2, y: 15 * 16 + 2, flat: true, base: 0 });
+      w.props.push({ img: sp.tankBasket, x: 18 * 16 + 3, y: 14 * 16 - 6, base: 14 * 16 + 16 });
       // ---- Abe and Hannah's room (x 21-25, y 14-18): two sets of white bifold closets, windows facing the front walk
-      // FURNITURE (photos pending): the bed, nightstands, dresser, TV, lamps, rugs, wall art. Open floor x 21-25, y 14-18
-      // (keep x 21, y 14-16 clear: the doors from the hall and from the bath). Wall art: x 21, y 12-13 (the closets take x 22-25).
+      // From the user's photos: the bed in rumpled white bedding with its head against the outside wall (x 23-25,
+      // y 16-17), a white nightstand with an amber glass-ball lamp above it and a dark wood one below, the cream
+      // dresser in the corner, and a white ceiling fan over the bed (keep x 21, y 14-16 clear: the doors from
+      // the hall and from the bath). Wall art: x 21, y 12-13 (the closets take x 22-25).
       F.hang(sp.bifoldCloset, 22, 13, 2, look('A closet with white bifold doors.'), 1);
       F.hang(sp.bifoldCloset, 24, 13, 2, look('The other closet. Also white bifold doors. Two closets: one each.'), 1);
       spot(22, 19, 3, 1, look('Windows looking out at the front walk.'));
+      F.stand(sp.nightstandAmber, 25, 15, 1, look('A white nightstand, and a lamp made of stacked amber glass balls under a burlap shade.'));
+      F.stand(sp.condoBed, 23, 16, 3, look('Abe and Hannah\'s bed. Unmade. Fluffy white everything.'), { ht: 2 });
+      F.stand(sp.nightstandDark, 25, 18, 1, look('A dark wood nightstand, with a white-shaded lamp.'));
+      F.stand(sp.creamDresser, 21, 18, 1, look('A cream dresser with fancy brass pulls.'));
+      w.props.push({ img: null, x: 22 * 16 + 4, y: 14 * 16 - 4, base: 20 * 16, draw(ctx, cx, cy) { ctx.drawImage(sp.ceilingFan[(G.tick >> 2) % 4], this.x - cx, this.y - cy); } });
       // ---- ways out
       w.addTrigger(13, 12, 2, 1, () => G.play.warp('condoUp', 13, 11, 'up'));
       w.addWarp(13, 19, 1, 1, 'condo', 23, 18, 'down');
@@ -6956,11 +6970,21 @@
     setup(w) {
       const F = furnish(w), sp = G.spr;
       const spot = (x, y, wt, ht, talk) => w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [x * 16, y * 16, (x + wt) * 16, (y + ht) * 16], talk });
-      // ---- the loft (x 1-14, y 3-11): carpet, the big window, the railing over the living room
-      // FURNITURE (photos pending): the sectional couch and the TV. Open floor x 1-9, y 3-7 and x 10-14, y 3-10
+      // ---- the loft (x 1-14, y 3-11): carpet, the big window, the railing over the living room. From the user's
+      // photos: the TV on its cherry console against the back wall, the big gray ottoman, and the light gray
+      // couch facing the TV with its back to the railing; in the corner by the window (teal curtains), the
+      // bookshelf, a brass floor lamp and Abe's yellow electric guitar; Romulus's crate by the stairs
       // (keep x 13-14, y 11 clear at the top of the stairs, and x 14, y 11 for the bedroom door).
       // Wall art: the top wall, x 1-14, y 1-2.
       spot(0, 4, 1, 3, look('The big loft window, looking out over the golf course.'));
+      for (const y of [4 * 16 + 4, 7 * 16 + 4]) w.props.push({ img: sp.tealCurtain, x: 16, y: y - 44, base: y });
+      F.stand(sp.bookshelf, 1, 3, 1, look('A tall bookshelf packed with books, flowers on top, and a little lighthouse lamp glowing on the bottom shelf.'));
+      F.stand(sp.floorLamp, 2, 3, 1, look('A brass floor lamp with a pleated shade.'));
+      F.stand(sp.yellowGuitar, 3, 3, 1, look('A yellow electric guitar. Abe\'s, obviously. Nate knows better than to touch it.'));
+      F.stand(sp.loftTV, 5, 3, 3, look('A big TV on a cherry console. It\'s showing the ocean. Very relaxing.'));
+      F.stand(sp.grayOttoman, 5, 5, 3, look('A big gray ottoman. Somebody left a game of cards on it.'));
+      F.stand(sp.loftSofaBack, 4, 7, 5, look('A light gray couch, piled with striped pillows and a fuzzy white throw.'));
+      F.stand(sp.dogCrate, 11, 3, 2, look('Romulus\'s wooden crate. The door\'s open. He is not in it. He\'s hiding from Nate.'));
       spot(1, 8, 9, 1, look('The loft railing. Straight down: the living room.'));
       spot(10, 12, 3, 1, look('The railing over the front hall.'));
       // ---- the bedroom, which doubles as Abe's office (x 16-25, y 11-18). Abe is an AI and machine learning engineer.
