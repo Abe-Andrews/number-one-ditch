@@ -6040,6 +6040,149 @@
     return finish(p);
   }
 
+  // ---- Abe's office / the spare room (from the user's photos, tidied up)
+  // The spare bed: a black iron headboard (on the left, against the wall), a white comforter
+  // with gray vines, gray pillows and a rust paisley one. Made, for once.
+  function guestBed() {
+    const W = 52, H = 50, p = new Pix(W, H), iron = '#24242a', ironL = '#4a4a54';
+    // the iron headboard: a rounded top rail over vertical bars
+    p.vline(1, 2, 49, iron); p.vline(2, 2, 49, ironL);
+    for (let y = 2; y < 40; y++) { const x = 1 + Math.round(Math.max(0, 5 - Math.abs(y - 21) / 4)); p.set(x, y, iron); }
+    for (let y = 6; y < 38; y += 4) p.hline(2, 5, y, iron);
+    p.vline(5, 4, 38, iron);
+    // the mattress top: gray sheets showing at the head, the comforter with its vine print
+    p.rect(6, 8, 45, 26, '#9a9ca4');
+    for (let y = 8; y < 34; y++) for (let x = 16; x < 51; x++) p.set(x, y, '#f4f2ee');
+    // little gray vines and leaves scattered across it
+    for (let i = 0; i < 26; i++) {
+      const x = 18 + Math.floor(G.hash(i, 1, 91) * 30), y = 10 + Math.floor(G.hash(i, 2, 91) * 22);
+      p.set(x, y, '#a8acb4'); p.set(x + 1, y - 1, '#a8acb4'); if (i % 2) p.set(x - 1, y - 1, '#c4c8ce');
+    }
+    p.vline(16, 8, 33, '#dcdad4');
+    // pillows: two gray ones, and the rust paisley one leaning on them
+    for (const y of [9, 21]) { p.rect(7, y, 8, 11, '#7a7e88'); p.hline(7, 14, y, '#9a9ea8'); }
+    p.rect(9, 14, 6, 9, '#a8584a'); for (const [x, y] of [[10, 15], [12, 18], [10, 20], [13, 21]]) p.set(x, y, '#e8c8b8');
+    // the front: the comforter hanging over the side, then the dark frame and legs
+    for (let y = 34; y < 42; y++) for (let x = 6; x < 51; x++) p.set(x, y, x < 16 ? '#8a8c94' : (x * 5 + y * 3) % 13 === 0 ? '#b0b4bc' : '#e8e6e0');
+    p.rect(6, 42, 45, 3, '#3a3a42'); p.rect(48, 45, 2, 5, iron);
+    return finish(p);
+  }
+  // The white desk: two monitors up on a little wooden riser, a keyboard, a mug, a can.
+  function officeDesk() {
+    const W = 50, H = 42, p = new Pix(W, H);
+    for (const x of [4, 24]) { p.rect(x, 0, 21, 14, '#16161c'); p.rect(x + 1, 1, 19, 12, '#2a2e3a'); p.hline(x + 2, x + 8, 2, '#4a5468'); }
+    p.rect(22, 0, 6, 2, '#2a2a30'); p.rect(23, 0, 4, 1, '#8a8a92');
+    p.rect(12, 14, 3, 3, '#16161c'); p.rect(34, 14, 3, 3, '#16161c');
+    p.rect(6, 17, 38, 4, '#c8a06a'); p.hline(6, 43, 17, '#e0bc84');
+    p.rect(0, 21, 50, 3, '#8a8c92'); p.hline(0, 49, 21, '#a8aab0');
+    p.rect(14, 22, 20, 2, '#1c1c22'); p.hline(15, 32, 22, '#3a3a44');
+    p.rect(38, 18, 4, 4, '#f4f4f0'); p.set(42, 19, '#f4f4f0'); p.rect(8, 18, 3, 4, '#3a9a5a');
+    p.rect(0, 24, 50, 2, '#f4f4f0');
+    for (const x of [1, 47]) p.rect(x, 26, 2, 16, '#f4f4f0');
+    p.hline(3, 46, 30, '#e0e0dc');
+    return finish(p);
+  }
+  // A gray mesh office chair with a white frame, from behind.
+  function officeChair() {
+    const W = 18, H = 28, p = new Pix(W, H);
+    p.rect(3, 0, 12, 13, '#f0f0ec'); p.rect(4, 1, 10, 11, '#7a7e88'); for (let y = 2; y < 12; y += 2) p.hline(5, 12, y, '#8a8e98');
+    p.rect(1, 12, 3, 6, '#f0f0ec'); p.rect(14, 12, 3, 6, '#f0f0ec');
+    p.rect(3, 15, 12, 5, '#6a6e78'); p.vline(8, 20, 23, '#c8ccd2'); p.vline(9, 20, 23, '#f0f0ec');
+    p.hline(2, 15, 24, '#f0f0ec'); for (const x of [2, 8, 15]) p.rect(x, 25, 2, 2, '#3a3a42');
+    return finish(p);
+  }
+  function blackFloorLamp() {
+    const W = 16, H = 48, p = new Pix(W, H);
+    for (let y = 0; y < 11; y++) p.hline(3, 12, y, y < 2 ? '#fffbf0' : (y % 3 === 0 ? '#f0ead8' : '#f8f4e8'));
+    p.hline(3, 12, 10, '#e0d8c4');
+    p.vline(7, 11, 44, '#24242a'); p.vline(8, 11, 44, '#3a3a42'); p.rect(4, 44, 8, 3, '#24242a');
+    return finish(p);
+  }
+  // A dark wood chest at the foot of the bed, brass corners and latch.
+  function woodChest() {
+    const W = 18, H = 34, p = new Pix(W, H), wd = '#4a2a1c', wdL = '#6a3e28';
+    p.rect(0, 0, 18, 26, wdL); p.hline(0, 17, 0, '#8a5638'); for (let y = 6; y < 26; y += 7) p.hline(1, 16, y, wd);
+    p.rect(0, 26, 18, 8, wd); p.hline(0, 17, 26, '#3a1e12');
+    for (const [x, y] of [[0, 0], [16, 0], [0, 24], [16, 24], [0, 32], [16, 32]]) p.rect(x, y, 2, 2, BRASS);
+    p.rect(8, 27, 2, 3, BRASS);
+    return finish(p);
+  }
+  // The white cube shelf: books, a whole row of records, two Catan boxes, little speakers, a
+  // basket, a lighthouse lamp; a printer, a record player and a pleated lamp up top.
+  function cubeShelf() {
+    const W = 36, H = 54, p = new Pix(W, H);
+    // up top: the printer, the record player, the lamp
+    p.rect(1, 6, 11, 7, '#2a2a30'); p.hline(1, 11, 6, '#4a4a54'); p.rect(3, 8, 6, 1, '#6a6a74');
+    p.rect(14, 9, 11, 4, '#e8e4dc'); p.rect(15, 9, 8, 2, '#1c1c22'); p.set(19, 9, '#c83838');
+    for (let y = 0; y < 5; y++) p.hline(27 - Math.floor(y / 2), 32 + Math.floor(y / 2), y, y % 2 ? '#f0e8d0' : '#f8f2e0');
+    p.rect(28, 5, 4, 8, '#e8e0d0'); p.set(29, 7, '#78a888'); p.set(30, 9, '#e898a8');
+    // the 4x4 cubes
+    p.rect(0, 13, 36, 41, '#f6f4ee'); p.vline(35, 13, 53, '#dcd8ce');
+    const cube = (cx, cy) => [2 + cx * 8, 15 + cy * 9];
+    for (let cy = 0; cy < 4; cy++) for (let cx = 0; cx < 4; cx++) { const [x, y] = cube(cx, cy); p.rect(x, y, 7, 8, '#3a3a40'); }
+    const books = ['#e8e0d0', '#3a5a8a', '#c86a3a', '#4a7a4a', '#e8c060', '#8a3a3a', '#2a2a40', '#5a8aa8'];
+    { const [x, y] = cube(0, 0); for (let i = 0; i < 7; i++) p.vline(x + i, y + 1 + (i % 3 === 0 ? 1 : 0), y + 7, books[i]); }
+    { const [x, y] = cube(1, 0); p.rect(x + 1, y + 2, 3, 6, '#1c1c22'); p.set(x + 2, y + 4, '#5a5a64'); p.rect(x + 5, y + 4, 2, 4, '#f8f0e0'); p.set(x + 5, y + 3, '#f8d878'); }
+    { const [x, y] = cube(2, 0); p.rect(x, y + 3, 7, 5, '#e8e4dc'); p.rect(x + 1, y + 4, 2, 2, '#c8a0b0'); }
+    { const [x, y] = cube(3, 0); p.rect(x + 1, y + 2, 3, 6, '#1c1c22'); p.set(x + 2, y + 4, '#5a5a64'); p.rect(x + 4, y + 5, 3, 3, '#2a2a30'); }
+    { const [x, y] = cube(0, 1); for (const yy of [y + 2, y + 4, y + 6]) { p.hline(x, x + 6, yy, '#c83030'); p.hline(x, x + 6, yy + 1, '#e8b040'); } }
+    { const [x, y] = cube(1, 1); p.rect(x + 2, y + 6, 3, 2, '#e8e4dc'); }
+    { const [x, y] = cube(2, 1); p.rect(x, y + 3, 7, 5, '#c8a068'); for (let xx = x; xx < x + 7; xx += 2) p.vline(xx, y + 3, y + 7, '#a88048'); }
+    { const [x, y] = cube(3, 1); for (let i = 0; i < 5; i++) p.hline(x, x + 6, y + 3 + i, books[(i + 3) % 8]); }
+    for (let cx = 0; cx < 4; cx++) { const [x, y] = cube(cx, 2); for (let i = 0; i < 7; i++) p.vline(x + i, y + 1, y + 7, books[(i * 3 + cx) % 8]); }
+    // the bottom row: records, packed in
+    for (let cx = 0; cx < 4; cx++) { const [x, y] = cube(cx, 3); for (let i = 0; i < 7; i++) p.vline(x + i, y + 1, y + 7, i % 2 ? '#1c1c22' : ['#c8a878', '#d86a4a', '#5a8ac8', '#e8e0d0'][(i + cx) % 4]); }
+    return finish(p);
+  }
+  // Three more electric guitars leaning in the corner (sunburst, white, black).
+  function guitarTrio() {
+    const W = 26, H = 44, p = new Pix(W, H);
+    const gtr = (x, body, guard) => {
+      p.rect(x, 0, 3, 5, '#e8c888'); p.set(x - 1, 1, '#c8ccd2'); p.set(x - 1, 3, '#c8ccd2');
+      p.vline(x + 1, 5, 25, '#e8c888'); p.vline(x + 2, 5, 25, '#d8b878');
+      for (let y = 25; y < 43; y++) { const half = y < 30 ? 3 : y < 33 ? 2 : 4; for (let xx = x + 1 - half; xx <= x + 2 + half; xx++) p.set(xx, y, typeof body === 'function' ? body(xx - x, y) : body); }
+      p.rect(x - 1, 31, 5, 7, guard); p.hline(x, x + 2, 33, '#c8ccd2');
+    };
+    gtr(4, (dx, y) => (Math.abs(dx - 1.5) > 3 ? '#3a1c10' : Math.abs(dx - 1.5) > 1.5 ? '#a8501c' : '#e8a040'), '#1c1c22');
+    gtr(12, '#f0ece0', '#f8f8f4');
+    gtr(20, '#1c1c22', '#f8f8f4');
+    return finish(p);
+  }
+  // A little vintage amp: black, a silver grille cloth, a chrome panel.
+  function vibroAmp() {
+    const W = 22, H = 18, p = new Pix(W, H);
+    p.rect(0, 0, 22, 17, '#1c1c22'); p.hline(0, 21, 0, '#3a3a44');
+    p.rect(2, 2, 18, 3, '#c8ccd2'); for (const x of [4, 8, 12, 16]) p.set(x, 3, '#2a2a30'); p.set(18, 3, '#e83030');
+    p.rect(2, 6, 18, 9, '#a8acb4'); for (let y = 7; y < 15; y += 2) for (let x = 3; x < 20; x += 2) p.set(x, y, '#8a8e96');
+    p.rect(2, 17, 3, 1, '#0e0e12'); p.rect(17, 17, 3, 1, '#0e0e12');
+    return finish(p);
+  }
+  // Two framed vintage guitar ads, stacked (wood frames, white mats, old paintings with speech bubbles).
+  function guitarAdPrints() {
+    const W = 14, H = 30, p = new Pix(W, H), fr = '#6a3e24';
+    for (const [y, tint] of [[0, '#d8b8c0'], [15, '#c8c8c8']]) {
+      p.rect(0, y, 14, 14, fr); p.rect(1, y + 1, 12, 12, '#f8f6f0');
+      p.rect(3, y + 3, 8, 8, tint); p.rect(5, y + 5, 2, 4, '#3a2a2a'); p.rect(6, y + 7, 4, 1, '#f0f0ec'); p.rect(8, y + 3, 3, 2, '#ffffff');
+    }
+    return finish(p);
+  }
+  // The framed WILCO poster from the show at the Dome in Virginia Beach: blue sky, the name in
+  // big dark letters, seagulls, a striped beach umbrella and checkered towels on the sand.
+  function wilcoPoster() {
+    const W = 16, H = 24, p = new Pix(W, H);
+    p.rect(0, 0, 16, 24, '#6a3a20'); p.rect(1, 1, 14, 22, '#4a8ac8');
+    // "WILCO", in tiny letters
+    const L = { W: ['1.1', '1.1', '111'], I: ['1', '1', '1'], L: ['1.', '1.', '11'], C: ['11', '1.', '11'], O: ['11', '11', '11'] };
+    let x = 1;
+    for (const ch of 'WILCO') { const g = L[ch]; g.forEach((row, j) => [...row].forEach((c, i) => { if (c === '1') p.set(x + i, 2 + j, '#1c2030'); })); x += g[0].length + 1; }
+    for (const [gx, gy] of [[3, 7], [10, 6], [7, 10]]) { p.set(gx, gy, '#f8e8d8'); p.set(gx + 1, gy + 1, '#f8e8d8'); p.set(gx + 2, gy, '#f8e8d8'); }
+    for (let yy = 12; yy < 23; yy++) for (let xx = 1; xx < 15; xx++) if (yy > 19 - xx * 0.4) p.set(xx, yy, '#f0d4c0');
+    for (let i = 0; i < 4; i++) p.hline(9 + i, 14 - i, 11 + i, i % 2 ? '#f8f0e8' : '#e8703a');
+    p.vline(11, 15, 20, '#e8703a');
+    for (let yy = 18; yy < 22; yy++) for (let xx = 2; xx < 9; xx++) p.set(xx, yy, ((xx >> 1) + yy) % 2 ? '#1c2030' : (xx + yy) % 3 ? '#c8d048' : '#e8703a');
+    return finish(p);
+  }
+
   // The living room fireplace on the side wall, seen from above: the white
   // mantel, the marble surround, the firebox and the hearth.
   function condoFireplace() {
@@ -6712,6 +6855,8 @@
     S.loftTV = loftTV(); S.grayOttoman = grayOttoman(); S.loftSofaBack = loftSofaBack(); S.bookshelf = bookshelf(); S.floorLamp = floorLamp();
     S.yellowGuitar = yellowGuitar(); S.tealCurtain = tealCurtain();
     S.plants = {}; for (const k of ['hydrangea', 'petunia', 'fern', 'geranium', 'rose']) S.plants[k] = [pottedPlant(k, false), pottedPlant(k, true)];
+    S.guestBed = guestBed(); S.officeDesk = officeDesk(); S.officeChair = officeChair(); S.blackFloorLamp = blackFloorLamp(); S.woodChest = woodChest();
+    S.cubeShelf = cubeShelf(); S.guitarTrio = guitarTrio(); S.vibroAmp = vibroAmp(); S.guitarAdPrints = guitarAdPrints(); S.wilcoPoster = wilcoPoster();
     S.closetShelves = closetShelves(); S.hangingClothes = hangingClothes(); S.closetJunk = closetJunk(); S.miniAmp = miniAmp();
     S.guitarAcoustic = guitarOnStand('acoustic'); S.guitarElectric = guitarOnStand('electric'); S.caseBlack = guitarCase('black'); S.caseTweed = guitarCase('tweed');
     S.condoFridge = condoFridge(); S.glassRange = glassRange(); S.dishwasher = dishwasher();

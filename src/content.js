@@ -7056,11 +7056,24 @@
       spot(1, 8, 9, 1, look('The loft railing. Straight down: the living room.'));
       spot(10, 12, 3, 1, look('The railing over the front hall.'));
       // ---- the bedroom, which doubles as Abe's office (x 16-25, y 11-18). Abe is an AI and machine learning engineer.
-      // FURNITURE (photos pending): the guest bed, and Abe's work desk, monitors and chair. Open floor x 16-25, y 11-18
-      // (keep x 16, y 11 clear for the door from the loft, and x 18 and x 23 at y 11 for the bath and closet doors).
-      // Wall art: x 16-17, 19-22 and 24, y 9-10.
+      // From the user's photos, tidied up (no suitcases, clothes or clutter): the white desk with two monitors and a
+      // gray office chair between the bath and closet doors, a black floor lamp, the spare bed with its iron headboard
+      // against the left wall and a wood chest at its foot, the white cube shelf (books, records, Catan, speakers; a
+      // printer, record player and lamp on top) and three guitars and an amp in the corner, two framed vintage guitar
+      // ads and the WILCO poster on the wall (keep x 16, y 11 clear for the door from the loft, and x 18 and x 23 at
+      // y 11 for the bath and closet doors).
       F.hang(sp.atticHatch, 25, 10, 1, look('A little attic hatch. Whatever is up there can stay up there.'), 8);
       spot(18, 19, 2, 1, look('A double window, right over the front door.'));
+      F.hang(sp.guitarAdPrints, 22, 10, 1, look('Two framed vintage guitar ads: old-timey paintings, with speech bubbles about guitars.'), 2);
+      F.hang(sp.wilcoPoster, 24, 10, 1, look('A framed concert poster: WILCO, at the Dome in Virginia Beach. Seagulls and beach umbrellas.'), 3);
+      F.stand(sp.blackFloorLamp, 17, 11, 1, look('A black floor lamp with a white shade.'));
+      F.stand(sp.officeDesk, 19, 11, 3, look('Abe\'s desk: two monitors up on a little wooden stand, a keyboard and a mug. This is where the AI and machine learning happens. Or the guitar videos.'));
+      F.stand(sp.officeChair, 20, 12, 1, look('A gray office chair. It spins. Nate spins it.'));
+      F.stand(sp.guestBed, 16, 14, 3, look('The spare bed: a black iron headboard and a white comforter with gray vines. Made, for once.'), { ht: 2 });
+      F.stand(sp.woodChest, 19, 14, 1, look('A dark wood chest at the foot of the bed.'), { ht: 2 });
+      F.stand(sp.cubeShelf, 22, 18, 2, look('A white cube shelf: books, a whole row of records, two Catan boxes and little speakers, with a printer, a record player and a lamp on top.'));
+      F.stand(sp.guitarTrio, 24, 17, 2, look('Three more of Abe\'s guitars, leaning in the corner. How many guitars does one man need? More. The answer is always more.'));
+      F.stand(sp.vibroAmp, 24, 18, 2, look('A little vintage guitar amp.'));
       // ---- the upstairs bath (x 16-19, y 3-7): tub with sliding glass doors, vanity, toilet
       // FURNITURE (photos pending): towels, a bath mat, decor.
       F.stand(sp.tubGlass, 16, 3, 2, look('A bathtub behind sliding glass doors.'), { ht: 2 });
