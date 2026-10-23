@@ -324,7 +324,8 @@
       let img;
       if (this.pose === 'hold') img = S.hold;
       else img = S[this.dir][this.state === 'walk' ? walkFrame(this.anim, this.moving) : 0];
-      const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2) - cy;
+      // (z: up in the air, e.g. Abe boosting Nate over a hedge)
+      const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2 - (this.z || 0)) - cy;
       const swinging = this.state === 'swing', bassing = this.state === 'bass';
       if (swinging && this.dir === 'up') this.drawHammer(ctx, cx, cy);
       if (bassing && this.dir === 'up') this.drawBass(ctx, cx, cy);
@@ -566,7 +567,8 @@
       if (this.hidden) return;
       const S = this.S;
       drawShadow(ctx, this.x, this.y, cx, cy, S.h > 24);
-      ctx.drawImage(S[this.dir][walkFrame(this.anim, this.moving)], Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
+      // (pose 'hold': arms up, e.g. Abe reaching for something way up high)
+      ctx.drawImage(this.pose === 'hold' ? S.hold : S[this.dir][walkFrame(this.anim, this.moving)], Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, Math.round(this.y - S.h - 10) - cy);
     }
   }

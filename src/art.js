@@ -6882,6 +6882,73 @@
     return p.canvas();
   }
 
+  // ================================================================ ABE'S REACH (he's 6'5")
+  // A kite stuck high in the tree on the visitor parking island (with a pouch tied to its tail)
+  function kiteInTree() {
+    const p = new Pix(18, 32), cx = 8;
+    for (let y = 0; y <= 15; y++) {
+      const h = y <= 5 ? Math.round(y * 1.2) : Math.round((15 - y) * 0.6);
+      for (let x = cx - h; x <= cx + h; x++) p.set(x, y, (x < cx) === (y < 6) ? '#d83030' : '#f0c830');
+    }
+    p.vline(cx, 0, 15, '#7a5430'); p.hline(cx - 6, cx + 6, 5, '#7a5430');
+    for (let y = 16; y < 29; y++) p.set(cx + Math.round(Math.sin(y * 0.6) * 2), y, '#e8e8e0');
+    for (const y of [19, 23, 27]) { const x = cx + Math.round(Math.sin(y * 0.6) * 2); p.set(x - 1, y, '#3a6ad8'); p.set(x + 1, y, '#3a6ad8'); }
+    p.rect(cx - 2, 29, 4, 3, '#8a6a3a'); p.hline(cx - 2, cx + 1, 29, '#a88a5a');
+    return finish(p);
+  }
+  // Anette's old garden, walled in by a tall hedge: a section of hedge (a top and a front face),
+  // the little wooden gate (latched, then open), a stone birdbath, a bench, a gnome, roses
+  function tallHedge() {
+    const p = new Pix(16, 28);
+    for (let y = 0; y < 28; y++) for (let x = 0; x < 16; x++) {
+      const top = y < 12, h = G.hash(x, y, 71);
+      p.set(x, y, top ? (h < 0.25 ? '#7ab858' : h < 0.7 ? '#5a9a44' : '#4a8a3a') : (h < 0.2 ? '#4a8a3a' : h < 0.75 ? '#3e7a34' : '#2a5a2a'));
+    }
+    p.hline(0, 15, 12, '#24562a');
+    for (let x = 0; x < 16; x += 3) p.set(x, 0, '#9ad070');
+    return p.canvas();
+  }
+  function gardenGate(open) {
+    const p = new Pix(16, 28);
+    if (open) {
+      p.rect(0, 10, 3, 18, '#8a6a42'); p.vline(1, 10, 27, '#a8865a'); p.set(1, 9, '#8a6a42');
+      return finish(p);
+    }
+    p.rect(1, 10, 14, 18, '#8a6a42');
+    for (let x = 2; x < 15; x += 3) { p.vline(x, 10, 27, '#a8865a'); p.set(x, 9, '#8a6a42'); }
+    p.hline(1, 14, 14, '#6a4a2a'); p.hline(1, 14, 23, '#6a4a2a');
+    p.rect(11, 17, 3, 3, '#7a7a80'); p.set(12, 18, '#c86a3a'); p.set(11, 19, '#c86a3a');
+    return finish(p);
+  }
+  function birdbath() {
+    const p = new Pix(16, 22);
+    p.rect(1, 2, 14, 5, '#a8a8a0'); p.hline(1, 14, 2, '#c8c8c0'); p.rect(3, 3, 10, 2, '#7ab0d8'); p.hline(4, 9, 3, '#b8e0f8');
+    p.rect(6, 7, 4, 11, '#9a9a92'); p.vline(6, 7, 17, '#b8b8b0');
+    p.rect(3, 18, 10, 4, '#8a8a82'); p.hline(3, 12, 18, '#a8a8a0');
+    p.set(4, 1, '#5a8a3a'); p.set(12, 1, '#5a8a3a');
+    return finish(p);
+  }
+  function stoneBench() {
+    const p = new Pix(30, 14);
+    p.rect(0, 2, 30, 5, '#a8a8a0'); p.hline(0, 29, 2, '#c8c8c0'); p.hline(0, 29, 6, '#7a7a72');
+    for (const x of [3, 23]) { p.rect(x, 7, 4, 7, '#8a8a82'); p.vline(x, 7, 13, '#a8a8a0'); }
+    p.set(8, 3, '#7a9a5a'); p.set(9, 3, '#7a9a5a'); p.set(20, 4, '#7a9a5a');
+    return finish(p);
+  }
+  function gardenGnome() {
+    const p = new Pix(10, 16);
+    for (let y = 0; y < 6; y++) p.hline(5 - Math.ceil(y / 2), 4 + Math.ceil(y / 2), y, '#d83030');
+    p.rect(3, 6, 4, 2, '#f2c8a8'); p.set(4, 6, '#2a2a30'); p.set(6, 6, '#2a2a30');
+    p.rect(2, 8, 6, 3, '#f4f4f0'); p.rect(2, 11, 6, 3, '#3a6ad8'); p.rect(2, 14, 6, 2, '#5a3a24');
+    return finish(p);
+  }
+  function roseBush() {
+    const p = new Pix(16, 16);
+    for (let y = 2; y < 16; y++) for (let x = 0; x < 16; x++) if (((x - 7.5) / 7.5) ** 2 + ((y - 9) / 7) ** 2 <= 1) p.set(x, y, G.hash(x, y, 73) < 0.3 ? '#4a8a3a' : '#2e6a2e');
+    for (const [x, y] of [[4, 5], [9, 4], [12, 8], [6, 9], [3, 11], [10, 12]]) { p.set(x, y, '#d82838'); p.set(x + 1, y, '#f04858'); p.set(x, y + 1, '#a81828'); }
+    return finish(p);
+  }
+
   // ================================================================ THE BAY: RoFo Pop and the toll plaza
   // RoFo Pop, blue raspberry: what Abe and Hannah grab on the Eastern Shore as a "gift"
   // every time they visit. It does not taste good. A 2-liter: white cap, blue soda, the
@@ -7207,6 +7274,8 @@
     S.toroMural = toroMural(); S.buntingWall = bunting(288, 2); S.buntingRoom = bunting(288, 5); S.toroLamp = toroLamp(); S.garlicPillar = garlicPillar();
     S.beerSurf = beerSurf(); S.beerGreen = beerGreen(); S.soccerBall = soccerBall(); S.sunFace = sunFace(); S.kitchenDoor = kitchenDoor();
     S.toroBar = toroBar(); S.toroBottles = toroBottles(); S.barStool = barStool(); S.toroStage = toroStage(); S.openMicSign = openMicSign();
+    S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
+    S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();
     S.slothPlush = slothPlush(); S.slothIcon = slothIcon(); S.abeBassIcon = abeBassIcon(); S.bassHeld = bassHeld(); S.cableIcon = cableIcon(); S.romSnout = romSnout();
     S.condoBed = condoBed(); S.nightstandAmber = nightstandAmber(); S.nightstandDark = nightstandDark(); S.creamDresser = creamDresser();
     S.ceilingFan = [0, 1, 2, 3].map(ceilingFan);

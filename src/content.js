@@ -383,7 +383,7 @@
     nate: { name: 'Nate', bio: 'Geology major at Lafayette. Makes his own fireworks. Thinks about pH often.', skill: 'Rock hammer, chemistry, explosive presents' },
     doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Never skips leg day. Owns three luchador masks. Responsible for the Alligator Incident.', skill: 'Lifts and smashes heavy things' },
     lily: { name: 'Lily', bio: 'Nate\'s sister. Survived a refrigerator. Still subscribed to Badlands Chugs.', skill: 'A "No." that pops balloons' },
-    abe: { name: 'Abe', bio: '', skill: '' },
+    abe: { name: 'Abe', bio: '6\'5". Lives in Chesapeake with Hannah and Romulus. Sells yellow guitar cables on eBay (eventually). Gave Nate a bidet for Christmas, then took it back.', skill: 'He\'s 6\'5": reaches things up high, and boosts Nate over tall hedges' },
     hannah: { name: 'Hannah', bio: '', skill: '' },
   };
 
@@ -520,7 +520,7 @@
     else if (!f.romulusBeaten && f.slothQuest === 2) goal = 'The lady at El Toro Loco who looks exactly like Paul McCartney will trade the sloth for a bass and a cable. Try Abe\'s closet and the storage room. (' + G.sayable((s.items.abeBass ? 1 : 0) + (s.items.yellowCable ? 1 : 0)) + '/2)';
     else if (!f.romulusBeaten && f.slothQuest === 3) goal = 'Squeak Romulus\'s sloth at the gap in the woods behind Abe and Hannah\'s patio.';
     else if (!f.romulusBeaten) goal = 'Romulus is out on the golf course, and he\'s HUGE. Go get him!';
-    else goal = 'Romulus is home safe (and still scared of Nate). (More story soon!)';
+    else goal = 'Romulus is home safe (and still scared of Nate), and Abe joined the party! With Abe along, Nate can reach things way up high. (More story soon!)';
     // which chapter of the road trip Nate is on
     const chapter = !f.doronDeal ? 'CH. 1 - LAFAYETTE' : !f.boulderGone ? 'CH. 2 - EASTON FAIR' : !f.mikeyBeaten ? 'CH. 3 - HOME' : !f.condoArrived ? 'CH. 4 - THE BAY' : 'CH. 5 - CHESAPEAKE';
     // side quests: { name, status, kind (active / rumor / done), prog [n, of], where, hint }
@@ -541,6 +541,7 @@
     if (f.andoverLocked) add('The Andover mines', s.items.andoverKey && 'Key in hand!', f.shopOpen ? 'Mom sells a key' : 'Need a key', 'Home - Andover', s.items.andoverKey ? 'Pick "The Andover mines" when you leave home.' : f.shopOpen ? 'Mom\'s flower stand sells the gate key. It isn\'t cheap.' : 'The mines are on private land. Mom knows everybody at church.');
     if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number, and Nate can\'t say it.');
     if (f.plantQuest) add('Anette\'s thirsty plants', f.plantsDone, f.plantsDone ? 'Done' : G.sayable(G.plantsWatered()) + '/5 watered', 'Chesapeake - the condo', G.plantsWatered() >= 5 ? 'All five are watered. Go tell Anette.' : 'Water Anette\'s five potted plants around the street with the Portable Bidet.', [G.plantsWatered(), 5]);
+    if (s.party.includes('abe')) add('Abe\'s reach', G.abeReachCount() >= 4 && 'All found!', G.sayable(G.abeReachCount()) + '/4 found', 'Chesapeake', 'Abe is 6\'5". With him along, check things that are way up high around Abe and Hannah\'s (press Z under them), and the tall hedge up by Anette\'s.', [G.abeReachCount(), 4]);
     if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
     if (f.snackQuest) {
@@ -3103,6 +3104,7 @@
     { name: 'Romulus: hide and seek outside', map: 'condo', at: [24, 20, 'down'], flags: { condoArrived: true, condoScare: true, romulusMet: true, romHide: 4 }, items: { bidet: true } },
     { name: 'El Toro Loco: Romulus\'s sloth', map: 'toroLoco', at: [11, 8, 'up'], flags: { romHide: 8, romToGolf: true, slothQuest: 1 } },
     { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { slothQuest: 4, ladyMet: true, bassGiven: true, romGap: true }, items: { abeBass: true, yellowCable: true, sloth: true } },
+    { name: 'Abe joined: his reach', map: 'condo', at: [16, 13, 'right'], flags: { romulusBeaten: true }, party: ['abe'], follower: 'abe' },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -3944,7 +3946,14 @@
   };
 
   S.partyTalk = function* (id) {
+    if (id === 'abe' && flags().bassGiven && !flags().abeBassAsk) { yield* S.abeBass(); return; }
     const lines = {
+      abe: [
+        'I can see over everything from up here. You should try it sometime.',
+        'The yellow cables are an investment. The market will come around.',
+        'Romulus isn\'t scared of ANYBODY. Except you. Still no idea why.',
+        'Keep the bidet topped off. You never know.',
+      ],
       doron: [
         'Leg day is every day.',
         'Still can\'t believe Dad was the main event.',
@@ -6358,20 +6367,145 @@
       return;
     }
     if (f.romToGolf && !f.romulusBeaten) { yield* S.abeSloth(); return; }
-    if (f.bassGiven && f.romulusBeaten && !f.abeBassAsk) {
-      f.abeBassAsk = true;
-      yield G.say('Abe', 'Hey, have you seen my bass? The one in the black case?');
-      yield G.say('Nate', '...It\'s at El Toro Loco. With a woman who looks exactly like Paul McCartney.');
-      yield G.say('Abe', '......');
-      yield G.say('Abe', 'Okay. Honestly? That\'s where it belongs.');
-      return;
-    }
+    if (f.bassGiven && f.romulusBeaten && !f.abeBassAsk) { yield* S.abeBass(); return; }
     f.abeLine = ((f.abeLine || 0) + 1) % 3;
     yield G.say('Abe', [
       'Hannah gets off work later. Make yourselves at home.',
       'The yellow cables in the storage room are inventory. Do NOT touch the inventory.',
       'I\'m working from home today. Technically. My office is upstairs.',
     ][f.abeLine]);
+  };
+
+  S.abeBass = function* () {
+    flags().abeBassAsk = true;
+    yield G.say('Abe', 'Hey, have you seen my bass? The one in the black case?');
+    yield G.say('Nate', '...It\'s at El Toro Loco. With a woman who looks exactly like Paul McCartney.');
+    yield G.say('Abe', '......');
+    yield G.say('Abe', 'Okay. Honestly? That\'s where it belongs.');
+  };
+  // ---------------------------------------------------------------- Abe: he's 6'5"
+  // Once Abe joins (after the Romulus fight), he gets things down from way up high, and boosts
+  // Nate over the tall hedge around Anette's old garden. If he's in the party but somebody else
+  // is following Nate, he's called in (S.callIn). `at` is where Abe stands to reach (tiles).
+  const ABE_REACH = {
+    fridge: {
+      map: 'condoDown', at: [11, 4.75],
+      look: 'A stainless fridge. Nate checks it, just in case. Nobody\'s inside. Good.',
+      high: 'There\'s something on top of the fridge, way at the back. Way too high.',
+      after: 'A stainless fridge. Nothing on top of it anymore. Hannah may never know.',
+      lines: [['Abe', 'My emergency stash. Hannah can\'t reach it up here.'], ['Nate', 'Hannah is five foot two.'], ['Abe', 'That\'s the point.']],
+      *reward() {
+        const s = G.state;
+        s.items.doosh = (s.items.doosh || 0) + 1; flags().hadDoosh = true;
+        G.audio.sfx('chest');
+        yield G.itemGet(G.spr.doosh, 'Abe hands down a {y}Doosh De Luche{/}!');
+      },
+    },
+    bookshelf: {
+      map: 'condoUp', at: [2, 4.75],
+      look: 'A tall bookshelf packed with books, flowers on top, and a little lighthouse lamp glowing on the bottom shelf.',
+      high: 'There\'s a shoebox way up on top of the bookshelf, behind the flowers. Way too high.',
+      after: 'A tall bookshelf packed with books, flowers on top, and a little lighthouse lamp glowing on the bottom shelf.',
+      lines: [['Abe', 'My shark tooth collection! From when I was a kid. I hid it up here so Romulus wouldn\'t eat it.'], ['Nate', 'Abe. Some of these are just rocks.'], ['Abe', 'Don\'t tell me which ones.']],
+      *reward() { yield* S.bossStash(30, 'Abe gives you his old collection: {y}30 shark teeth{/}. (Probably.)'); },
+    },
+    kite: {
+      map: 'condo', at: [40.5, 15.75],
+      look: 'A big tree on the island in the visitor parking.',
+      high: 'There\'s a kite stuck way up in the tree, with a little pouch tied to its tail. Way too high.',
+      after: 'A big tree on the island in the visitor parking. No more kite.',
+      lines: [['Abe', 'Somebody tied a pouch of shark teeth to a kite.'], ['Nate', 'Some kid is going to be very sad.'], ['Abe', 'Some kid should have known better.']],
+      *reward() { yield* S.bossStash(20, 'The pouch has {y}20 shark teeth{/} in it.'); },
+    },
+  };
+  G.abeReachCount = () => Object.keys(ABE_REACH).filter((id) => flags()['reach_' + id]).length + (flags().gardenOpen ? 1 : 0);
+  const abeFollower = () => G.play.world.ents.find((e) => e instanceof G.Follower && e.id === 'abe' && !e.dead);
+  S.abeReach = function* (id) {
+    const f = flags(), s = G.state, spot = ABE_REACH[id];
+    if (f['reach_' + id]) { yield G.say(null, spot.after); return; }
+    if (!s.party.includes('abe')) {
+      yield G.say(null, spot.look);
+      yield G.say(null, spot.high);
+      return;
+    }
+    yield G.say(null, spot.high.replace(' Way too high.', ''));
+    yield* S.callIn('abe', 'Need something from up high?');
+    const abe = abeFollower();
+    if (abe) {
+      abe.hold = true;
+      yield G.walkTo(abe, spot.at[0] * 16, spot.at[1] * 16, 1.6);
+      abe.dir = 'up'; abe.pose = 'hold'; abe.moving = false;
+    }
+    yield G.say(null, 'Abe reaches up and grabs it. He doesn\'t even go up on his tiptoes.');
+    if (abe) abe.pose = null;
+    f['reach_' + id] = true;
+    for (const [who, line] of spot.lines) yield G.say(who, line);
+    yield* spot.reward();
+    if (abe) abe.hold = false;
+  };
+
+  // The tall hedge around Anette's old garden (up by her place): the gate latch rusted shut from
+  // the inside years ago, and her knees can't get her over it. Abe boosts Nate over; Nate gets
+  // the gate open from inside, and Anette gets her garden back (and gives Nate a heart container).
+  S.gardenHedge = function* () {
+    const f = flags(), s = G.state, p = P(), w = G.play.world;
+    if (f.gardenOpen) { yield G.say(null, 'Anette\'s garden, behind a tall hedge. The gate is open now.'); return; }
+    if (p.y < 4 * 16) { yield* S.gardenGateOpen(); return; }
+    yield G.say(null, 'A tall hedge, way over Nate\'s head. There\'s a little wooden gate in it, latched shut from the inside.');
+    if (!s.party.includes('abe')) { yield G.say('Nate', 'There\'s no way over that. Not without a ladder. Or somebody really tall.'); return; }
+    yield* S.callIn('abe', 'Need a boost?');
+    const abe = abeFollower();
+    const x = G.clamp(p.x, 14 * 16 + 8, 17 * 16 + 8);
+    yield G.walkTo(p, x, 5 * 16 + 10, 1.2);
+    p.dir = 'up';
+    if (abe) {
+      abe.hold = true;
+      yield G.walkTo(abe, x + 14, 5 * 16 + 12, 1.6);
+      abe.dir = 'up'; abe.pose = 'hold'; abe.moving = false;
+    }
+    yield G.say('Abe', 'Foot in my hands. On three. One, two...');
+    G.audio.sfx('swing');
+    yield hop(p, x, 3 * 16 + 12, 40, 30);
+    p.dir = 'down';
+    if (abe) abe.pose = null;
+    yield G.say('Abe', '...I didn\'t say three.');
+    yield G.say('Nate', 'Whoa. A whole garden back here. Roses, a birdbath... and the gate\'s latched shut from this side.');
+    f.gardenIn = true;
+  };
+  S.gardenGateOpen = function* () {
+    const f = flags(), s = G.state, p = P(), w = G.play.world, an = w.anette;
+    yield G.say(null, 'The gate\'s latch is rusted solid. Nate gives it a whack with his rock hammer.');
+    G.audio.sfx('clank'); G.play.shake(6, 1);
+    yield G.wait(20);
+    G.audio.sfx('door');
+    f.gardenOpen = true;
+    w.gardenGate.img = G.spr.gardenGateOpen;
+    w.block[4 * w.w + 16] = 0;
+    const abe = abeFollower();
+    if (abe) abe.hold = false;
+    yield G.say(null, 'The gate creaks open!');
+    if (an) {
+      yield G.wait(20);
+      yield G.walkTo(an, 19 * 16 + 8, 7 * 16 + 12, 1);
+      yield G.walkTo(an, 16 * 16 + 8, 5 * 16 + 12, 1);
+      an.dir = 'up';
+      yield G.say('Anette', 'Oh! Oh my goodness. My GARDEN!');
+      yield G.say('Anette', 'That latch rusted shut years ago, and my knees can\'t get over that hedge. I\'ve been peeking at it through the leaves ever since.');
+      yield G.say('Nate', 'Abe gave me a boost.');
+      if (G.with('abe')) yield G.say('Abe', 'I\'m six foot five. It\'s what I do.');
+      yield G.say('Anette', 'My roses are still blooming! Here, dear. This has been sitting under the birdbath the whole time. I always said whoever got that gate open could have it.');
+      s.maxHp += 2; s.hp = s.maxHp;
+      G.audio.sfx('heart');
+      yield G.itemGet(G.spr.heartBig, 'You got a {r}Heart Container{/}! Max hearts +1.');
+      yield G.walkTo(an, 16 * 16 + 8, 3 * 16 + 12, 1);
+      yield G.walkTo(an, 15 * 16 + 8, 2 * 16 + 12, 1);
+      an.dir = 'down';
+    } else {
+      s.maxHp += 2; s.hp = s.maxHp;
+      G.audio.sfx('heart');
+      yield G.itemGet(G.spr.heartBig, 'Under the birdbath: a {r}Heart Container{/}! Max hearts +1.');
+    }
+    G.play.autosave();
   };
 
   // Romulus is out on the golf course: the only thing that'll bring him back is his sloth, and
@@ -6616,7 +6750,8 @@
       // halves, the long mulch strip behind it, and the beds further down
       fill(41, 4, 13, 4, '<'); fill(41, 12, 3, 5, '<'); fill(44, 8, 10, 14, '<');
       fill(43, 22, 11, 17, '<'); fill(32, 30, 5, 2, '<');
-      set(16, 1, 'T');
+      // Anette's old garden: flowers inside the tall hedge
+      fill(14, 1, 4, 3, ',');
       return g.map((r) => r.join(''));
     },
     setup(w) {
@@ -6676,6 +6811,9 @@
       // of skinny evergreens further down
       // (the big tree on the island between the two halves of the visitor parking)
       w.props.push({ img: sp.trees[1], x: 41 * 16 + 8, y: 13 * 16 - 2, base: 13 * 16 + 31 });
+      // (a kite stuck way up in it, until Abe gets it down)
+      w.props.push({ img: sp.kiteInTree, x: 42 * 16 + 6, y: 11 * 16 + 4, base: 13 * 16 + 32, draw(ctx, cx, cy) { if (!flags().reach_kite) ctx.drawImage(this.img, this.x - cx, this.y - cy); } });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [41 * 16, 13 * 16, 44 * 16, 15 * 16], talk: () => S.abeReach('kite') });
       w.blockTiles(41, 13, 3, 2);
       for (const [x, y, k] of [[46, 4, 'pine'], [50, 5], [44, 8], [48, 9, 'pine'], [52, 8], [51, 12, 'pine'], [45, 13], [48, 16], [44, 18, 'pine'], [52, 16], [50, 20],
         [47, 23], [51, 25, 'pine'], [48, 28], [52, 31], [47, 33, 'pine'], [50, 36], [46, 38],
@@ -6689,7 +6827,24 @@
       // ---- Romulus, if he got out and he's hiding out here
       S.romSpawn(w, 'condo');
       // ---- Anette, out front of the cream duplex at the corner, and her five thirsty potted plants
-      w.add(new G.NPC({ sprite: 'anette', name: 'Anette', x: 23 * 16 + 8, y: 7 * 16 + 12, dir: 'down', talk: S.anette }));
+      // (once her old garden is open again, she's out in it)
+      w.anette = w.add(new G.NPC({ sprite: 'anette', name: 'Anette', x: f.gardenOpen ? 15 * 16 + 8 : 23 * 16 + 8, y: f.gardenOpen ? 2 * 16 + 12 : 7 * 16 + 12, dir: 'down', talk: S.anette }));
+      // ---- Anette's old garden, behind a tall hedge (x 13-18, y 0-4): the gate latch rusted shut from
+      // the inside years ago. Abe can boost Nate over (S.gardenHedge).
+      for (let y = 0; y <= 4; y++) for (let x = 13; x <= 18; x++) {
+        if (!(x === 13 || x === 18 || y === 0 || y === 4)) continue;
+        w.blockTiles(x, y, 1, 1);
+        if (x === 16 && y === 4) continue;
+        w.props.push({ img: sp.tallHedge, x: x * 16, y: y * 16 - 12, base: y * 16 + 15 });
+      }
+      w.gardenGate = { img: f.gardenOpen ? sp.gardenGateOpen : sp.gardenGate, x: 16 * 16, y: 4 * 16 - 12, base: 4 * 16 + 15 };
+      w.props.push(w.gardenGate);
+      if (f.gardenOpen) w.block[4 * w.w + 16] = 0;
+      for (const [x, y, w2, h2] of [[13, 0, 6, 1], [13, 4, 6, 1], [13, 1, 1, 3], [18, 1, 1, 3]]) w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [x * 16, y * 16, (x + w2) * 16, (y + h2) * 16], talk: () => S.gardenHedge() });
+      w.addProp({ img: sp.stoneBench, tx: 14, ty: 1, dx: 1, solid: [14, 1, 2, 1], hit: [14, 1, 2, 1], talk: look('A stone bench, with moss on it. Nobody has sat here in years.') });
+      w.addProp({ img: sp.birdbath, tx: 16, ty: 2, solid: [16, 2, 1, 1], hit: [16, 2, 1, 1], talk: look('A stone birdbath. There\'s still a little rainwater in it.') });
+      w.addProp({ img: sp.gardenGnome, tx: 17, ty: 3, dx: 3, solid: [17, 3, 1, 1], hit: [17, 3, 1, 1], talk: look('A garden gnome. He has seen things.') });
+      for (const [x, y] of [[17, 1], [14, 2]]) w.addProp({ img: sp.roseBush, tx: x, ty: y, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: look('Anette\'s roses. A little wild, but still blooming.') });
       for (const pl of ANETTE_PLANTS) w.add(new G.ThirstyPlant(pl.at[0] * 16 + 8, pl.at[1] * 16 + 12, { id: pl.id, kind: pl.kind }));
       // ---- the school bus, every so often, down the main road (see tick)
       w.busT = 300;
@@ -7162,6 +7317,20 @@
     if (G.with('lily')) yield G.say('Lily', 'Romulus is still scared of Nate, though.');
     f.romulusBeaten = true;
     yield G.banner('YOU WIN!', 'who\'s a good boy', 150);
+    // ...and Abe joins the party
+    yield G.say('Abe', 'So. Tyler says Father Eggmas is at the Number One Ditch?');
+    yield G.say('Nate', 'Somewhere out there. I\'m going to find him.');
+    yield G.say('Abe', 'Then I\'m coming with you. Romulus is home, Hannah\'s at work, and somebody has to keep an eye on my bidet.');
+    yield G.say('Nate', 'It\'s MY bidet.');
+    yield G.say('Abe', 'Agree to disagree.');
+    r.pose = 'scared'; w.pop(r.x, r.y - 26, '*whimper*', '#c8c8d0');
+    yield G.say('Abe', 'Romulus. Guard the house. ...Don\'t look at Nate like that.');
+    const s = G.state;
+    if (!s.party.includes('abe')) s.party.push('abe');
+    s.follower = 'abe';
+    G.audio.sfx('fanfare');
+    yield G.banner('ABE JOINED THE PARTY!', 'He\'s 6\'5". He can reach anything.', 220);
+    yield G.say(null, 'With Abe along, Nate can get at things way up high (press Z under them), and Abe can boost him over tall hedges. Swap who tags along in the {y}PEOPLE{/} menu.');
     G.play.autosave();
     G.play.warp('condo', 16, 13, 'left');
   };
@@ -7306,7 +7475,7 @@
       // glass-top range with the microwave over it, the sink and dishwasher, and the breakfast bar. From the
       // user's photo: a runner rug and a crock of wooden spoons on the counter. (The white pantry hutch at the
       // end of the galley is gone: the user asked for it out, it hid Romulus behind the breakfast bar.)
-      F.stand(sp.condoFridge, 10, 3, 1, look('A stainless fridge. Nate checks it, just in case. Nobody\'s inside. Good.'));
+      F.stand(sp.condoFridge, 10, 3, 1, () => S.abeReach('fridge'));
       F.hang(sp.condoUppers.two, 11, 2, 2, null, 10);
       F.hang(sp.condoUppers.micro, 13, 2, 1, null, 10);
       F.hang(sp.condoUppers.three, 14, 2, 3, null, 10);
@@ -7317,7 +7486,7 @@
       spot(12, 6, 5, 1, look('The breakfast bar.'));
       w.props.push({ img: sp.kitchenRunner, x: 11 * 16 - 1, y: 4 * 16 + 5, flat: true, base: 0 });
       F.onCounter(sp.utensilCrock, 12, 3, null);
-      if (f.condoScare) w.abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'down', talk: S.abeCondo }));
+      if (f.condoScare && !G.state.party.includes('abe')) w.abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'down', talk: S.abeCondo }));
       // Romulus: curled up in his bed the first time; then hiding from Nate all over (ROM_SPOTS); back behind
       // the breakfast bar for good once the golf course is behind him
       if (!f.romulusMet) w.romulus = w.add(new G.Romulus(2 * 16, 11 * 16 + 12, 'lie'));
@@ -7401,7 +7570,7 @@
       // Wall art: the top wall, x 1-14, y 1-2.
       spot(0, 4, 1, 3, look('The big loft window, looking out over the golf course.'));
       for (const y of [4 * 16 + 4, 7 * 16 + 4]) w.props.push({ img: sp.tealCurtain, x: 16, y: y - 44, base: y });
-      F.stand(sp.bookshelf, 1, 3, 1, look('A tall bookshelf packed with books, flowers on top, and a little lighthouse lamp glowing on the bottom shelf.'));
+      F.stand(sp.bookshelf, 1, 3, 1, () => S.abeReach('bookshelf'));
       F.stand(sp.floorLamp, 2, 3, 1, look('A brass floor lamp with a pleated shade.'));
       F.stand(sp.yellowGuitar, 3, 3, 1, look('A yellow electric guitar. Abe\'s, obviously. Nate knows better than to touch it.'));
       F.stand(sp.loftTV, 5, 3, 3, look('A big TV on a cherry console. It\'s showing the ocean. Very relaxing.'));
@@ -7632,6 +7801,13 @@
         return;
       }
       yield* S.ladyTrade();
+      return;
+    }
+    if (G.with('abe') && !f.ladyAbe) {
+      f.ladyAbe = true;
+      yield G.say('Abe', '...That\'s my bass.');
+      yield G.say(L, 'And doesn\'t she sound beautiful, honey?');
+      yield G.say('Abe', '...She really does.');
       return;
     }
     f.ladyLine = ((f.ladyLine || 0) + 1) % 3;
