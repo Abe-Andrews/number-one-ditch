@@ -5898,6 +5898,107 @@
     return finish(p);
   }
 
+  // ---- the upstairs walk-in closet (from the user's photo): junk, and guitars
+  // The white shelves, crammed: a gray bin, a flowered bag and a box on top, a coil of
+  // (yellow, of course) guitar cable and a framed signed jersey number 5, a LEGO Technic
+  // box and a shoe box, a pink box and folded black clothes, a white basket and a black case.
+  function closetShelves() {
+    const W = 34, H = 62, p = new Pix(W, H);
+    p.rect(0, 0, 34, 62, WHITE); p.vline(33, 0, 61, WHITE_D);
+    const shelf = (y) => { p.hline(1, 32, y, '#ffffff'); p.hline(1, 32, y + 1, WHITE_D); };
+    for (const y of [12, 24, 36, 48]) shelf(y);
+    for (const [y0, y1] of [[1, 11], [14, 23], [26, 35], [38, 47], [50, 60]]) p.rect(2, y0, 30, y1 - y0 + 1, '#e8e6e0');
+    // top: a gray fabric bin, a flowered bag, a cardboard box
+    p.rect(3, 3, 9, 8, '#9a9ca2'); p.hline(3, 11, 3, '#b8bac0');
+    p.rect(13, 4, 8, 7, '#2a3a5a'); for (const [x, y, c] of [[14, 5, '#e87a3a'], [17, 7, '#e8c048'], [19, 5, '#d84868'], [15, 9, '#78c0b0']]) p.rect(x, y, 2, 2, c);
+    p.rect(22, 5, 10, 6, '#c8a06a'); p.hline(22, 31, 5, '#d8b47e'); p.vline(27, 5, 10, '#a88048');
+    // a coil of yellow guitar cable, and the framed jersey number 5 (signed all over)
+    cableCoil(p, 9, 19, 5);
+    p.rect(17, 14, 13, 9, '#1c1c22'); p.rect(18, 15, 11, 7, '#f8f8f4');
+    p.rect(22, 16, 3, 1, '#1c1c22'); p.set(22, 17, '#1c1c22'); p.rect(22, 18, 3, 1, '#1c1c22'); p.set(24, 19, '#1c1c22'); p.rect(22, 20, 3, 1, '#1c1c22');
+    for (const [x, y] of [[19, 16], [26, 17], [19, 20], [27, 20], [20, 18]]) p.set(x, y, '#5a5a6a');
+    // a LEGO Technic box, a shoe box
+    p.rect(3, 29, 16, 7, '#1c1c22'); p.rect(4, 30, 3, 2, '#e83030'); p.rect(4, 32, 3, 1, '#f8d040'); p.hline(9, 17, 31, '#c8ccd2');
+    p.rect(20, 30, 11, 6, '#f4f4f0'); p.hline(20, 30, 30, '#3a6ac8'); p.rect(23, 32, 4, 2, '#3a6ac8');
+    // a pink box, folded black clothes
+    p.rect(3, 41, 11, 7, '#e8909a'); p.hline(3, 13, 41, '#f8b0b8'); p.rect(16, 42, 14, 6, '#2a2a30'); p.hline(16, 29, 44, '#3a3a42');
+    // a white basket full of odds and ends, a black case
+    p.rect(3, 53, 13, 7, '#f4f4f0'); for (let x = 4; x < 16; x += 2) p.vline(x, 54, 59, '#dcdad4'); p.rect(5, 51, 3, 2, '#3a6ac8'); p.rect(10, 50, 4, 3, '#f8f8f4');
+    p.rect(18, 52, 13, 8, '#22222a'); p.hline(18, 30, 52, '#3a3a44'); p.rect(23, 55, 3, 1, '#8a8a92');
+    return finish(p);
+  }
+  // Jackets on the rod: black, brown, a red plaid shirt, olive, and a white garment bag.
+  function hangingClothes() {
+    const W = 48, H = 36, p = new Pix(W, H);
+    p.hline(0, 47, 0, '#9aa0a8');
+    const coat = (x, w, c, plaid) => {
+      p.set(x + (w >> 1), 1, '#e8e8e8'); p.hline(x + 1, x + w - 2, 2, '#e8e8e8');
+      for (let y = 3; y < H - 2; y++) for (let i = 0; i < w; i++) {
+        const col = plaid ? (((i >> 1) + (y >> 1)) % 2 ? '#a82828' : '#1c1c22') : i === 0 ? shade(c, -0.2) : c;
+        p.set(x + i, y, col);
+      }
+    };
+    coat(0, 9, '#26262c'); coat(8, 9, '#6a4428'); coat(16, 8, null, true); coat(23, 8, '#5a6040');
+    // the garment bag, a little see-through
+    p.hline(31, 46, 2, '#e8e8e8');
+    for (let y = 3; y < H; y++) for (let x = 31; x < 47; x++) p.set(x, y, (x + y) % 5 === 0 ? '#dcdcdc' : '#f4f4f4');
+    p.rect(35, 10, 6, 10, '#c8c8cc');
+    return finish(p);
+  }
+  // Abe's guitars: two on stands, two hard cases, and a little amp.
+  function guitarOnStand(kind) {
+    const W = 16, H = 38, p = new Pix(W, H), acoustic = kind === 'acoustic';
+    p.vline(8, 30, 37, '#2a2a30'); p.hline(4, 12, 37, '#2a2a30'); p.set(5, 36, '#2a2a30'); p.set(11, 36, '#2a2a30');
+    p.rect(6, 0, 4, 4, acoustic ? '#3a2418' : '#1c1c22'); p.set(5, 1, '#c8ccd2'); p.set(10, 1, '#c8ccd2'); p.set(5, 3, '#c8ccd2'); p.set(10, 3, '#c8ccd2');
+    p.rect(7, 4, 2, 13, acoustic ? '#6a4428' : '#e8c888');
+    if (acoustic) {
+      // a sunburst acoustic
+      for (let y = 17; y < 33; y++) { const half = y < 22 ? 5 : y < 25 ? 4 : 6; for (let x = 8 - half; x < 8 + half; x++) { const e = Math.abs(x - 7.5) / half; p.set(x, y, e > 0.75 ? '#3a1c10' : e > 0.45 ? '#a8501c' : '#e8a040'); } }
+      for (let y = 23; y < 27; y++) for (let x = 6; x < 10; x++) if ((x - 7.5) ** 2 + (y - 25) ** 2 <= 4) p.set(x, y, '#1c1c22');
+      p.hline(5, 10, 30, '#2a1810');
+    } else {
+      // a black electric with a white pickguard
+      for (let y = 17; y < 32; y++) { const half = y < 21 ? 4 : y < 24 ? 3 : 5; p.hline(8 - half, 7 + half, y, '#1c1c22'); }
+      p.rect(5, 21, 5, 8, '#f8f8f4'); p.hline(6, 9, 24, '#c8ccd2'); p.hline(6, 9, 27, '#c8ccd2');
+    }
+    return finish(p);
+  }
+  function guitarCase(kind) {
+    const W = 16, H = 36, p = new Pix(W, H), tweed = kind === 'tweed';
+    const c = tweed ? '#c8a874' : '#1c1c22', cD = tweed ? '#8a6a44' : '#0e0e12', cL = tweed ? '#e0c494' : '#3a3a44';
+    for (let y = 0; y < H; y++) {
+      const half = y < 12 ? 3 : y < 18 ? 4 + Math.round((y - 12) / 3) : y < 24 ? 6 : 7;
+      for (let x = 8 - half; x < 8 + half; x++) p.set(x, y, tweed && (x + y) % 3 === 0 ? cD : c);
+    }
+    p.vline(8 - 6, 18, 34, cL); p.set(8, 1, cL);
+    if (tweed) { p.hline(1, 14, 26, '#6a3a1c'); p.rect(6, 22, 4, 2, '#4a2a14'); }
+    else { p.rect(6, 22, 4, 2, '#8a8a92'); for (const y of [10, 30]) p.set(8, y, '#8a8a92'); }
+    return finish(p);
+  }
+  function miniAmp() {
+    const W = 18, H = 16, p = new Pix(W, H);
+    p.rect(0, 0, 18, 15, '#1c1c22'); p.hline(0, 17, 0, '#3a3a44');
+    p.rect(2, 2, 14, 3, '#2a2a30'); for (const x of [4, 8, 12]) p.set(x, 3, '#c8ccd2');
+    p.rect(2, 6, 14, 8, '#4a4038'); for (let y = 7; y < 14; y += 2) for (let x = 3; x < 16; x += 2) p.set(x, y, '#5e544a');
+    p.set(14, 3, '#e83030'); p.rect(1, 15, 2, 1, '#0e0e12'); p.rect(15, 15, 2, 1, '#0e0e12');
+    return finish(p);
+  }
+  // On the floor: boxes, a red zippered storage bag, a gray one, and the ugly Christmas
+  // sweater (red, white snowflakes, a gingerbread man) dumped on top.
+  function closetJunk() {
+    const W = 34, H = 30, p = new Pix(W, H);
+    p.rect(1, 8, 14, 14, '#c8a06a'); p.hline(1, 14, 8, '#d8b47e'); p.vline(8, 8, 21, '#a88048');
+    p.rect(17, 12, 16, 12, '#8a8c92'); p.hline(17, 32, 12, '#a8aab0'); p.hline(17, 32, 17, '#c8ccd2');
+    p.rect(3, 20, 18, 9, '#c83838'); p.hline(3, 20, 20, '#e85858'); p.hline(4, 19, 24, '#a82828'); for (let x = 5; x < 20; x += 3) p.set(x, 22, '#e8a0a0');
+    // the sweater
+    for (let y = 0; y < 12; y++) for (let x = 10; x < 30; x++) {
+      if ((x < 13 || x > 26) && y > 7) continue;
+      p.set(x, y, (x + y * 2) % 7 === 0 ? '#f8f8f4' : y === 3 || y === 9 ? '#2a6a3a' : '#c82828');
+    }
+    p.rect(18, 4, 3, 3, '#a8662e'); p.set(19, 3, '#a8662e'); p.set(17, 5, '#a8662e'); p.set(21, 5, '#a8662e'); p.set(18, 7, '#a8662e'); p.set(20, 7, '#a8662e');
+    return finish(p);
+  }
+
   // The living room fireplace on the side wall, seen from above: the white
   // mantel, the marble surround, the firebox and the hearth.
   function condoFireplace() {
@@ -6569,6 +6670,8 @@
     S.ceilingFan = [0, 1, 2, 3].map(ceilingFan);
     S.loftTV = loftTV(); S.grayOttoman = grayOttoman(); S.loftSofaBack = loftSofaBack(); S.bookshelf = bookshelf(); S.floorLamp = floorLamp();
     S.yellowGuitar = yellowGuitar(); S.dogCrate = dogCrate(); S.tealCurtain = tealCurtain();
+    S.closetShelves = closetShelves(); S.hangingClothes = hangingClothes(); S.closetJunk = closetJunk(); S.miniAmp = miniAmp();
+    S.guitarAcoustic = guitarOnStand('acoustic'); S.guitarElectric = guitarOnStand('electric'); S.caseBlack = guitarCase('black'); S.caseTweed = guitarCase('tweed');
     S.condoFridge = condoFridge(); S.glassRange = glassRange(); S.dishwasher = dishwasher();
     S.condoUppers = { two: condoUpperCabs(2), micro: condoUpperCabs(1, 0), three: condoUpperCabs(3) };
     S.washerFront = washerFront(); S.dryerBack = dryerBack(); S.wireShelf = wireShelf(1);

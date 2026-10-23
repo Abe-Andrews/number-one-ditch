@@ -6999,9 +6999,19 @@
       F.hang(sp.bathMirror, 18, 2, 2, null, 6);
       F.stand(sp.condoVanity, 18, 3, 2, look('The upstairs vanity.'));
       F.stand(sp.toilet, 19, 5, 1, look('Another toilet. Still a toilet, Nate.'));
-      // ---- walk-in closet (x 21-25, y 3-7)
-      // FURNITURE (photos pending): whatever's stored in here (open floor x 21-25, y 4-7; keep x 23, y 7 clear for the door).
+      // ---- walk-in closet (x 21-25, y 3-7), from the user's photo: junk, and guitars. The white shelves crammed
+      // full on the left, jackets and a garment bag on the rod, Abe's guitars on stands and in cases, a little
+      // amp, and a pile of boxes, storage bags and an ugly Christmas sweater (x 23, y 4-7 stays clear from the door).
       F.hang(sp.closetRods, 21, 2, 5, look('The walk-in closet: a wire shelf and a hanging rod.'), 8);
+      F.stand(sp.closetShelves, 21, 3, 2, look('Shelves crammed with stuff: a LEGO Technic box, a shoe box, a coil of yellow guitar cable, and a framed jersey number 5, signed by everybody.'));
+      w.props.push({ img: sp.hangingClothes, x: 23 * 16, y: 35, base: 3 * 16 + 15, hit: [23 * 16, 3 * 16, 26 * 16, 4 * 16], talk: look('Jackets, a plaid shirt, and a garment bag on the rod.') });
+      w.blockTiles(23, 3, 3, 1);
+      F.stand(sp.caseBlack, 24, 4, 1, look('A black guitar case. Probably a guitar in it. Probably.'));
+      F.stand(sp.caseTweed, 25, 4, 1, look('A tweed guitar case. "Vintage," Abe would say.'));
+      F.stand(sp.guitarAcoustic, 21, 5, 1, look('A sunburst acoustic guitar on a stand. One of Abe\'s. There are a LOT of Abe\'s guitars.'));
+      F.stand(sp.guitarElectric, 22, 5, 1, look('A black electric guitar with a white pickguard. Another one of Abe\'s.'));
+      F.stand(sp.miniAmp, 21, 7, 1, look('A little guitar amp. Nate leaves the volume knob alone.'));
+      F.stand(sp.closetJunk, 24, 7, 2, look('Boxes, zippered storage bags, and an ugly Christmas sweater with a gingerbread man on it, dumped on top.'));
       // ---- way down
       w.addTrigger(13, 17, 2, 1, () => G.play.warp('condoDown', 13, 18, 'down'));
     },
