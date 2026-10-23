@@ -6917,7 +6917,7 @@
       w.props.push({ img: sp.bathMat, x: 16 * 16 + 2, y: 15 * 16 + 2, flat: true, base: 0 });
       w.props.push({ img: sp.tankBasket, x: 18 * 16 + 3, y: 14 * 16 - 6, base: 14 * 16 + 16 });
       // ---- Abe and Hannah's room (x 21-25, y 14-18): two sets of white bifold closets, windows facing the front walk
-      // From the user's photos: the bed in rumpled white bedding with its head against the outside wall (x 23-25,
+      // From the user's photos: the bed (green and white sheets, per the user) with its head against the outside wall (x 23-25,
       // y 16-17), a white nightstand with an amber glass-ball lamp above it and a dark wood one below, the cream
       // dresser in the corner, and a white ceiling fan over the bed (keep x 21, y 14-16 clear: the doors from
       // the hall and from the bath). Wall art: x 21, y 12-13 (the closets take x 22-25).
@@ -6925,7 +6925,7 @@
       F.hang(sp.bifoldCloset, 24, 13, 2, look('The other closet. Also white bifold doors. Two closets: one each.'), 1);
       spot(22, 19, 3, 1, look('Windows looking out at the front walk.'));
       F.stand(sp.nightstandAmber, 25, 15, 1, look('A white nightstand, and a lamp made of stacked amber glass balls under a burlap shade.'));
-      F.stand(sp.condoBed, 23, 16, 3, look('Abe and Hannah\'s bed. Unmade. Fluffy white everything.'), { ht: 2 });
+      F.stand(sp.condoBed, 23, 16, 3, look('Abe and Hannah\'s bed: green and white sheets, green pillowcases. Unmade.'), { ht: 2 });
       F.stand(sp.nightstandDark, 25, 18, 1, look('A dark wood nightstand, with a white-shaded lamp.'));
       F.stand(sp.creamDresser, 21, 18, 1, look('A cream dresser with fancy brass pulls.'));
       w.props.push({ img: null, x: 22 * 16 + 4, y: 14 * 16 - 4, base: 20 * 16, draw(ctx, cx, cy) { ctx.drawImage(sp.ceilingFan[(G.tick >> 2) % 4], this.x - cx, this.y - cy); } });
@@ -6973,7 +6973,7 @@
       // ---- the loft (x 1-14, y 3-11): carpet, the big window, the railing over the living room. From the user's
       // photos: the TV on its cherry console against the back wall, the big gray ottoman, and the light gray
       // couch facing the TV with its back to the railing; in the corner by the window (teal curtains), the
-      // bookshelf, a brass floor lamp and Abe's yellow electric guitar; Romulus's crate by the stairs
+      // bookshelf, a brass floor lamp and Abe's yellow electric guitar (no dog crate: Romulus doesn't have one)
       // (keep x 13-14, y 11 clear at the top of the stairs, and x 14, y 11 for the bedroom door).
       // Wall art: the top wall, x 1-14, y 1-2.
       spot(0, 4, 1, 3, look('The big loft window, looking out over the golf course.'));
@@ -6984,7 +6984,6 @@
       F.stand(sp.loftTV, 5, 3, 3, look('A big TV on a cherry console. It\'s showing the ocean. Very relaxing.'));
       F.stand(sp.grayOttoman, 5, 5, 3, look('A big gray ottoman. Somebody left a game of cards on it.'));
       F.stand(sp.loftSofaBack, 4, 7, 5, look('A light gray couch, piled with striped pillows and a fuzzy white throw.'));
-      F.stand(sp.dogCrate, 11, 3, 2, look('Romulus\'s wooden crate. The door\'s open. He is not in it. He\'s hiding from Nate.'));
       spot(1, 8, 9, 1, look('The loft railing. Straight down: the living room.'));
       spot(10, 12, 3, 1, look('The railing over the front hall.'));
       // ---- the bedroom, which doubles as Abe's office (x 16-25, y 11-18). Abe is an AI and machine learning engineer.

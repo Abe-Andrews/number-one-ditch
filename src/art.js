@@ -5751,14 +5751,21 @@
   // with a white-shaded lamp, a cream dresser with brass pulls, and a white ceiling fan.
   function condoBed() {
     const W = 50, H = 44, p = new Pix(W, H), wh = '#f6f4ee', whD = '#dcd8ce', whS = '#c8c4b8';
-    // the mattress top: the duvet in soft rumples, the pillows up at the head (right)
-    p.rect(1, 2, 48, 26, wh);
-    for (let i = 0; i < 22; i++) { const x = 3 + Math.floor(G.hash(i, 1, 71) * 32), y = 5 + Math.floor(G.hash(i, 2, 71) * 20); p.hline(x, x + 3 + (i % 3), y, whD); }
-    p.rect(37, 3, 11, 10, '#ffffff'); p.rect(37, 15, 11, 10, '#ffffff'); p.hline(37, 47, 12, whD); p.hline(37, 47, 24, whD);
-    p.rect(33, 9, 5, 10, '#d8d4c4'); for (let y = 10; y < 19; y += 2) p.hline(33, 37, y, '#b8b0a0');
-    p.vline(48, 2, 27, whS);
-    // the front: duvet hanging over the side, then the white bed skirt and the frame
-    p.rect(1, 28, 48, 6, whD); p.hline(1, 48, 28, wh);
+    const gr = '#6aa87a', grD = '#4e8a5e', grL = '#8ac49a';
+    // green and white sheets: the duvet in wide stripes running across the bed, softly rumpled
+    const stripe = (x, y, dark) => ((x >> 2) % 2 ? (dark ? grD : gr) : (dark ? whD : wh));
+    for (let y = 2; y < 28; y++) for (let x = 1; x < 33; x++) p.set(x, y, stripe(x, y, false));
+    for (let i = 0; i < 22; i++) {
+      const x = 3 + Math.floor(G.hash(i, 1, 71) * 28), y = 5 + Math.floor(G.hash(i, 2, 71) * 20);
+      for (let k = 0; k <= 3 + (i % 3); k++) p.set(x + k, y, stripe(x + k, y, true));
+    }
+    // the top sheet turned down at the head: white with a green band
+    p.rect(30, 2, 4, 26, wh); p.vline(31, 2, 27, gr); p.vline(33, 2, 27, whD);
+    // pillows: green pillowcases with white edges
+    for (const y of [3, 15]) { p.rect(36, y, 12, 10, grL); p.hline(36, 47, y, '#ffffff'); p.vline(36, y, y + 9, '#ffffff'); p.hline(36, 47, y + 9, gr); }
+    p.rect(34, 2, 2, 26, wh); p.vline(48, 2, 27, whS);
+    // the front: the striped duvet hanging over the side, then the white bed skirt and the frame
+    for (let y = 28; y < 34; y++) for (let x = 1; x < 49; x++) p.set(x, y, x >= 30 ? (y === 28 ? wh : whD) : stripe(x, y, y > 30));
     p.rect(2, 34, 46, 8, wh); for (let x = 3; x < 48; x += 3) p.vline(x, 35, 41, whD);
     p.rect(2, 42, 2, 2, '#2a2a30'); p.rect(46, 42, 2, 2, '#2a2a30');
     return finish(p);
@@ -5816,7 +5823,7 @@
   // Upstairs loft: the TV on its cherry console (showing the ocean), the big gray ottoman with
   // a game of cards on it, the light gray couch (from behind) with striped pillows and a sherpa
   // throw, a dark wood bookshelf with flowers on top and a little lighthouse lamp, a brass floor
-  // lamp, Abe's yellow electric guitar, Romulus's wooden crate, and teal curtains.
+  // lamp, Abe's yellow electric guitar, and teal curtains.
   function loftTV() {
     const W = 52, H = 46, p = new Pix(W, H);
     p.rect(2, 0, 48, 28, '#16161c'); p.rect(4, 2, 44, 24, '#2a5ab8');
@@ -5880,15 +5887,6 @@
     p.rect(5, 4, 2, 13, '#e8c888'); for (let y = 6; y < 17; y += 3) p.set(5, y, '#8a6a3a');
     for (let y = 17; y < 31; y++) { const half = y < 22 ? 3 : y < 25 ? 4 : 5; p.hline(6 - half, 5 + half, y, '#e8b040'); }
     p.rect(3, 22, 4, 6, '#f8f6f0'); p.hline(4, 8, 25, '#c8ccd2'); p.set(8, 27, '#2a2a30');
-    return finish(p);
-  }
-  function dogCrate() {
-    const W = 32, H = 26, p = new Pix(W, H), wd = '#8a5a34', wdL = '#a8784a';
-    p.rect(0, 0, 32, 4, wdL); p.hline(0, 31, 0, '#c8945e');
-    p.rect(0, 4, 32, 20, '#3a2a20');
-    for (let x = 0; x < 32; x += 4) p.rect(x, 4, 2, 20, wd);
-    p.rect(0, 22, 32, 2, wd); p.rect(1, 24, 2, 2, '#4a3020'); p.rect(29, 24, 2, 2, '#4a3020');
-    p.rect(10, 6, 9, 15, '#4a3a2a'); p.rect(11, 14, 7, 6, '#d8ccb4');
     return finish(p);
   }
   function tealCurtain() {
@@ -6669,7 +6667,7 @@
     S.condoBed = condoBed(); S.nightstandAmber = nightstandAmber(); S.nightstandDark = nightstandDark(); S.creamDresser = creamDresser();
     S.ceilingFan = [0, 1, 2, 3].map(ceilingFan);
     S.loftTV = loftTV(); S.grayOttoman = grayOttoman(); S.loftSofaBack = loftSofaBack(); S.bookshelf = bookshelf(); S.floorLamp = floorLamp();
-    S.yellowGuitar = yellowGuitar(); S.dogCrate = dogCrate(); S.tealCurtain = tealCurtain();
+    S.yellowGuitar = yellowGuitar(); S.tealCurtain = tealCurtain();
     S.closetShelves = closetShelves(); S.hangingClothes = hangingClothes(); S.closetJunk = closetJunk(); S.miniAmp = miniAmp();
     S.guitarAcoustic = guitarOnStand('acoustic'); S.guitarElectric = guitarOnStand('electric'); S.caseBlack = guitarCase('black'); S.caseTweed = guitarCase('tweed');
     S.condoFridge = condoFridge(); S.glassRange = glassRange(); S.dishwasher = dishwasher();
