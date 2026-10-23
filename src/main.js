@@ -63,7 +63,9 @@
   // Write the game to file n (default: the file being played).
   G.writeSave = (n) => {
     const s = G.state;
-    if (s.admin) return true; // admin (testing) runs never touch the save files
+    // admin (testing) runs never touch the save files: they keep a copy in memory instead, so
+    // fainting continues from the last door walked through, like a real save
+    if (s.admin) { G.adminSnap = JSON.parse(JSON.stringify(s)); return true; }
     s.slot = n || s.slot || 1;
     s.savedAt = Date.now();
     try { localStorage.setItem(fileKey(s.slot), JSON.stringify(s)); return true; } catch (e) { return false; }
@@ -647,6 +649,7 @@
   // Start any story checkpoint (see G.ADMIN_CHECKPOINTS in content.js).
   G.adminStart = (i) => {
     const cps = G.ADMIN_CHECKPOINTS, s = newState();
+    G.adminSnap = null;
     s.admin = true;
     s.adminCp = i;
     s.teeth = 100;
@@ -827,13 +830,13 @@
       this.t = 0;
       this.sel = 0;
       G.script.reset();
-      // fainting drops a fifth of Nate's shark teeth: taken out of the save file he'll
-      // continue from (admin runs never touch the files, so they just show it)
-      const cur = G.state, saved = cur.admin ? null : G.loadSave(cur.slot);
+      // fainting drops a fifth of Nate's shark teeth: taken out of the save he'll continue from
+      // (an admin run's save is the copy it keeps in memory)
+      const cur = G.state, saved = cur.admin ? G.adminSnap : G.loadSave(cur.slot);
       this.lost = Math.floor(((saved || cur).teeth || 0) * FAINT_COST);
       if (saved && this.lost) {
         saved.teeth -= this.lost;
-        G.state = saved; G.writeSave(saved.slot || cur.slot); G.state = cur;
+        if (!cur.admin) { G.state = saved; G.writeSave(saved.slot || cur.slot); G.state = cur; }
       }
     },
     update() {
@@ -845,7 +848,14 @@
         inp.eat('a'); inp.eat('start');
         G.audio.sfx('select');
         if (this.sel === 0) {
-          if (G.state.admin) { G.adminStart(G.state.adminCp || 0); return; }
+          // admin runs pick up from the last door walked through (or the checkpoint, if none yet)
+          if (G.state.admin) {
+            if (!G.adminSnap) { G.adminStart(G.state.adminCp || 0); return; }
+            G.state = JSON.parse(JSON.stringify(G.adminSnap));
+            G.state.hp = G.state.maxHp;
+            G.play.enter(false);
+            return;
+          }
           G.state = G.loadSave(G.state.slot) || newState();
           G.state.hp = G.state.maxHp;
           G.play.enter(false);

@@ -7366,33 +7366,98 @@
     p.outline();
     return p.canvas();
   }
-  // a hypnotic spiral (the mobile shoots these) and a lullaby note
+  // a hypnotic spiral (the mech's antenna shoots these)
   function hypnoSpiral(frame) {
     const p = new Pix(12, 12);
     for (let i = 0; i < 40; i++) { const t = i * 0.32 + frame * Math.PI / 2, r = i * 0.14; p.set(Math.round(5.5 + Math.cos(t) * r), Math.round(5.5 + Math.sin(t) * r), i % 6 < 3 ? '#a85ae8' : '#f8f0ff'); }
     p.outline('#4a1a6a');
     return p.canvas();
   }
-  function lullabyNote() {
-    const p = new Pix(8, 10);
-    p.rect(0, 7, 3, 3, '#f8c8e8'); p.vline(2, 0, 8, '#f8c8e8'); p.hline(3, 5, 0, '#f8c8e8'); p.hline(4, 6, 1, '#f8c8e8');
-    p.outline('#8a3a7a');
-    return p.canvas();
-  }
-  // the Hypno-Mobile's egg ornaments (little Father Eggmas eggs) and its stars and moons
-  function mobileEgg(cracked) {
-    const p = new Pix(14, 18);
-    for (let y = 0; y < 18; y++) for (let x = 0; x < 14; x++) if (((x - 6.5) / 6.5) ** 2 + ((y - 9.5) / 8.4) ** 2 <= 1) p.set(x, y, x + y > 18 ? '#d4c8ac' : '#f2ead6');
-    p.set(4, 8, '#1e2230'); p.set(9, 8, '#1e2230'); p.set(6, 10, '#b8203a'); p.set(7, 10, '#b8203a');
-    for (let x = 2; x < 12; x++) p.set(x, 13 + (x % 2), '#7a1e2c');
-    for (const [x, y] of [[3, 15], [5, 16], [8, 16], [10, 15]]) p.set(x, y, '#fbfbf8');
-    if (cracked) { for (const [x, y] of [[3, 3], [4, 4], [5, 3], [6, 5], [7, 4], [8, 6], [9, 5], [10, 7]]) p.set(x, y, '#5a4a3a'); }
+  // little stars (circling the mech's dome when it's dizzy)
+  function tinyStar(c) {
+    const p = new Pix(10, 10);
+    for (const [x, y] of [[4, 0], [5, 0], [4, 1], [5, 1], [0, 3], [1, 3], [2, 3], [3, 3], [6, 3], [7, 3], [8, 3], [9, 3], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [7, 4], [3, 5], [4, 5], [5, 5], [6, 5], [2, 6], [3, 6], [6, 6], [7, 6], [1, 7], [2, 7], [7, 7], [8, 7], [3, 2], [4, 2], [5, 2], [6, 2], [4, 3], [5, 3]]) p.set(x, y, c);
     p.outline();
     return p.canvas();
   }
-  function mobileStar(c) {
+  // ---- MECHA-BABY (the NICU boss; the user's idea): a hypnotized baby piloting a mech suit
+  // built like a toy. A clear dome for a cockpit (the baby sits in it: knit cap, spiral eyes,
+  // pacifier), a pastel blue body with a white chest plate and a little heartbeat screen, a
+  // big padded diaper, stubby legs, a giant rattle for one arm and a baby-bottle cannon for
+  // the other (it fires pacifiers). The spinning spiral antenna on the dome is drawn in code.
+  // Poses (facing right: the rattle is on the right): 'idle' (two leg frames), 'raise' (the
+  // rattle overhead), 'smash' (the rattle down on the floor).
+  const MECH = { blue: '#8ab8e8', blueL: '#b8d8f8', blueD: '#5a88c0', white: '#f4f4f0', joint: '#3a3a4a', rivet: '#f0c830' };
+  function mechBody(pose, leg) {
+    const W = 72, H = 64, p = new Pix(W, H), M = MECH;
+    // legs and feet (one foot lifted on each walking frame)
+    for (const [lx, up] of [[24, leg === 1 ? 2 : 0], [41, leg === 2 ? 2 : 0]]) {
+      p.rect(lx, 48 - up, 8, 9, M.blue); p.vline(lx, 48 - up, 56 - up, M.blueL); p.vline(lx + 7, 48 - up, 56 - up, M.blueD);
+      p.rect(lx + 1, 51 - up, 6, 2, M.joint);
+      p.rect(lx - 3, 57 - up, 14, 6, '#4a4a5a'); p.hline(lx - 3, lx + 10, 57 - up, '#6a6a7a');
+    }
+    // the torso: a rounded box
+    for (let y = 22; y < 50; y++) for (let x = 16; x < 56; x++) {
+      const ex = Math.max(0, Math.abs(x - 35.5) - 14), ey = Math.max(0, Math.abs(y - 35.5) - 9);
+      if (ex * ex + ey * ey > 36) continue;
+      p.set(x, y, x < 20 ? M.blueL : x > 51 ? M.blueD : M.blue);
+    }
+    // the diaper
+    p.rect(19, 44, 34, 7, M.white); p.hline(19, 52, 44, '#ffffff'); p.hline(19, 52, 50, '#c8c8c0');
+    p.rect(20, 45, 4, 3, '#f8c8d8'); p.rect(48, 45, 4, 3, '#f8c8d8');
+    // the chest plate and its little screen (a green heartbeat)
+    p.rect(24, 25, 24, 17, M.white); p.hline(24, 47, 25, '#ffffff');
+    p.rect(27, 28, 18, 10, '#1a2a2a');
+    [3, 3, 3, 1, 6, 0, 3, 3, 3, 3, 2, 3, 3, 3, 3, 3].forEach((dy, i) => p.set(28 + i, 30 + dy, '#58e878'));
+    for (const [x, y] of [[25, 26], [46, 26], [25, 40], [46, 40], [18, 30], [53, 30]]) p.set(x, y, M.rivet);
+    // the neck ring the dome sits on
+    p.rect(26, 19, 20, 4, M.joint); p.hline(26, 45, 19, '#5a5a6a');
+    // the bottle-cannon arm (screen left): a big baby bottle, nipple down
+    p.rect(12, 26, 6, 6, M.joint);
+    p.rect(3, 26, 11, 20, '#e8f0f8'); p.rect(4, 32, 9, 13, '#f8f8f4'); p.vline(3, 26, 45, '#c8d8e8'); p.vline(13, 26, 45, '#a8b8c8');
+    for (const y of [30, 35, 40]) p.hline(10, 13, y, '#8aa8c8');
+    p.rect(3, 24, 11, 3, '#f4a8c8'); p.rect(5, 46, 7, 3, '#f4a8c8'); p.rect(6, 49, 5, 4, '#e8c8a0'); p.rect(7, 53, 3, 2, '#d8b088');
+    // the rattle arm (screen right)
+    p.rect(54, 26, 6, 6, M.joint);
+    const rattle = (hx, hy, bx, by) => {
+      const n = Math.max(Math.abs(bx - hx), Math.abs(by - hy)) || 1;
+      for (let i = 0; i <= n; i++) { const x = Math.round(hx + (bx - hx) * i / n), y = Math.round(hy + (by - hy) * i / n); p.rect(x - 1, y - 1, 3, 3, '#f4a8c8'); }
+      for (let y = -7; y <= 7; y++) for (let x = -7; x <= 7; x++) if (x * x + y * y <= 49) p.set(bx + x, by + y, Math.floor((x + 7) / 3) % 2 ? '#f0c830' : '#e85050');
+      p.set(bx - 3, by - 4, '#ffffff'); p.set(bx - 2, by - 4, '#ffffff');
+      p.rect(hx - 2, hy - 2, 5, 5, M.joint);
+    };
+    if (pose === 'raise') { p.rect(56, 17, 5, 10, M.blue); rattle(58, 16, 60, 8); }
+    else if (pose === 'smash') { p.rect(58, 30, 5, 9, M.blue); rattle(61, 40, 63, 55); }
+    else { p.rect(57, 31, 5, 8, M.blue); rattle(60, 40, 63, 26); }
+    p.outline();
+    return p.canvas();
+  }
+  // the cockpit dome, with the baby inside: hypnotized, crying, asleep, or empty
+  function mechDome(state) {
+    const W = 28, H = 24, p = new Pix(W, H), cx = 13.5;
+    for (let y = 0; y < 22; y++) for (let x = 0; x < W; x++) if (((x - cx) / 13.5) ** 2 + ((y - 21) / 21) ** 2 <= 1) p.set(x, y, '#d8ecf8');
+    if (state !== 'empty') {
+      for (let y = 6; y < 21; y++) for (let x = 6; x < 22; x++) if (((x - 13.5) / 7.5) ** 2 + ((y - 14) / 7.5) ** 2 <= 1) p.set(x, y, y < 10 ? '#8ab8e8' : '#f6d2bc');
+      p.hline(7, 20, 9, '#6a98c8'); p.set(13, 6, '#b8d8f8'); p.set(14, 6, '#b8d8f8');
+      if (state === 'asleep') { p.hline(9, 11, 13, '#5a3a3a'); p.hline(16, 18, 13, '#5a3a3a'); p.rect(12, 17, 4, 2, '#e8a0a0'); }
+      else {
+        for (const ex of [10, 17]) { p.rect(ex - 1, 12, 3, 3, '#f8f8f8'); p.set(ex, 13, '#8a3ac8'); p.set(ex + 1, 12, '#8a3ac8'); p.set(ex - 1, 14, '#8a3ac8'); }
+        if (state === 'cry') { p.rect(12, 16, 4, 3, '#5a1a2a'); p.set(8, 13, '#8ac8f8'); p.set(19, 13, '#8ac8f8'); }
+        else { p.rect(11, 16, 6, 3, '#f0a8c8'); p.rect(13, 17, 2, 1, '#f8f8f8'); }
+      }
+      p.set(8, 16, '#f0a8a8'); p.set(19, 16, '#f0a8a8');
+    }
+    p.vline(4, 10, 16, '#ffffff'); p.vline(5, 7, 9, '#ffffff');
+    p.hline(1, W - 2, 21, '#a8c8d8');
+    p.outline('#5a7a90');
+    return p.canvas();
+  }
+  // a pacifier (the bottle cannon fires these)
+  function pacifierShot() {
     const p = new Pix(10, 10);
-    for (const [x, y] of [[4, 0], [5, 0], [4, 1], [5, 1], [0, 3], [1, 3], [2, 3], [3, 3], [6, 3], [7, 3], [8, 3], [9, 3], [2, 4], [3, 4], [4, 4], [5, 4], [6, 4], [7, 4], [3, 5], [4, 5], [5, 5], [6, 5], [2, 6], [3, 6], [6, 6], [7, 6], [1, 7], [2, 7], [7, 7], [8, 7], [3, 2], [4, 2], [5, 2], [6, 2], [4, 3], [5, 3]]) p.set(x, y, c);
+    p.rect(3, 0, 4, 1, '#f8f8f4'); p.rect(3, 1, 4, 2, '#f8f8f4'); p.rect(4, 1, 2, 1, '#d8d8d0');
+    p.rect(1, 3, 8, 4, '#f4a8c8'); p.hline(2, 7, 3, '#f8c8e0');
+    p.rect(4, 7, 2, 2, '#e8c8a0');
     p.outline();
     return p.canvas();
   }
@@ -7730,8 +7795,10 @@
     S.ivPole = ivPole(); S.wheelchair = wheelchair(); S.crashCart = crashCart(); S.rockingHorse = rockingHorse(); S.ballPit = ballPit(); S.toyKitchen = toyKitchen(); S.blockTower = blockTower();
     S.isolettes = { blue: isolette('#8ab8e8'), pink: isolette('#f4a8c8'), mint: isolette('#a8e0c8') }; S.vitalsMonitor = vitalsMonitor(); S.glider = glider(); S.nicuDoors = nicuDoors(); S.badgeIcon = badgeIcon();
     S.babies = { blue: hypnoBaby(), pink: hypnoBaby({ cap: '#f4a8c8' }), tan: hypnoBaby({ cap: '#a8e0c8', skin: '#c88a60' }), brown: hypnoBaby({ cap: '#f8d890', skin: '#8a5a3a' }), badge: hypnoBaby({ badge: true }) };
-    S.bassinetBaby = bassinetBaby(); S.hypnoSpiral = [0, 1].map(hypnoSpiral); S.lullabyNote = lullabyNote(); S.mobileEgg = [mobileEgg(false), mobileEgg(true)];
-    S.mobileStars = [mobileStar('#f8e070'), mobileStar('#f8c8e8'), mobileStar('#a8d8f8')];
+    S.bassinetBaby = bassinetBaby(); S.hypnoSpiral = [0, 1].map(hypnoSpiral); S.tinyStars = [tinyStar('#f8e070'), tinyStar('#f8c8e8'), tinyStar('#a8d8f8')];
+    S.mech = { right: { idle: [mechBody('idle', 1), mechBody('idle', 2)], raise: mechBody('raise'), smash: mechBody('smash') } };
+    S.mech.left = { idle: S.mech.right.idle.map(mirror), raise: mirror(S.mech.right.raise), smash: mirror(S.mech.right.smash) };
+    S.mechDome = { hypno: mechDome('hypno'), cry: mechDome('cry'), asleep: mechDome('asleep'), empty: mechDome('empty') }; S.pacifierShot = pacifierShot();
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
     S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();
     S.slothPlush = slothPlush(); S.slothIcon = slothIcon(); S.abeBassIcon = abeBassIcon(); S.bassHeld = bassHeld(); S.cableIcon = cableIcon(); S.romSnout = romSnout();

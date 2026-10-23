@@ -638,13 +638,13 @@
         { wave: 'triangle', vol: 0.11, notes: 'A2:6 | E2:6 | F2:6 | E2:6 | A2:6 | D3:6 | E2:6 | A2:6' },
       ],
     },
-    // the Hypno-Mobile: the same lullaby, turned into a fast, spinning waltz (original)
-    mobile: {
-      bpm: 172,
+    // MECHA-BABY: the lullaby, turned into a stomping robot march (original)
+    mecha: {
+      bpm: 152,
       tracks: [
-        { wave: 'square', vol: 0.05, notes: 'A4:2 C5:2 E5:2 | A5:4 G#5:2 | F5:2 E5:2 D5:2 | E5:6 | C5:2 E5:2 A5:2 | B5:4 A5:2 | G#5:2 F5:2 E5:2 | A5:6' },
-        { wave: 'sawtooth', vol: 0.055, notes: 'A2:2 E3:2 E3:2 | A2:2 E3:2 E3:2 | D2:2 A2:2 A2:2 | E2:2 B2:2 B2:2 | A2:2 E3:2 E3:2 | F2:2 C3:2 C3:2 | E2:2 B2:2 B2:2 | A2:2 E3:2 E3:2' },
-        { wave: 'noise', vol: 0.05, notes: 'k:2 h:2 h:2 | k:2 h:2 h:2 | k:2 h:2 h:2 | k:2 h:2 s:2 | k:2 h:2 h:2 | k:2 h:2 h:2 | k:2 h:2 h:2 | k:2 s:2 s:2' },
+        { wave: 'square', vol: 0.05, notes: 'A4:2 A4:2 E5:2 A4:2 G4:2 A4:2 C5:4 | B4:2 B4:2 E5:2 B4:2 A4:2 B4:2 D5:4 | A4:2 A4:2 E5:2 A4:2 G4:2 A4:2 C5:2 E5:2 | F5:4 E5:4 D5:4 B4:4' },
+        { wave: 'sawtooth', vol: 0.055, notes: 'A2:2 A2:2 A3:2 A2:2 A2:2 A2:2 A3:2 A2:2 | E2:2 E2:2 E3:2 E2:2 E2:2 E2:2 E3:2 E2:2 | F2:2 F2:2 F3:2 F2:2 G2:2 G2:2 G3:2 G2:2 | E2:4 E3:4 E2:4 G#2:4' },
+        { wave: 'noise', vol: 0.06, notes: 'k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 k:2 s:2 s:2 s:2 s:2' },
       ],
     },
     // Mikey's serenade (an original tune, not the song he's been practicing)
@@ -3131,7 +3131,7 @@
     { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { slothQuest: 4, ladyMet: true, bassGiven: true, romGap: true }, items: { abeBass: true, yellowCable: true, sloth: true } },
     { name: 'Abe joined: his reach', map: 'condo', at: [16, 13, 'right'], flags: { romulusBeaten: true }, party: ['abe'], follower: 'abe' },
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'], flags: { healerTalk: true, chkdArrived: true } },
-    { name: 'CHKD: the Hypno-Mobile (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
+    { name: 'CHKD: MECHA-BABY (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -8049,12 +8049,14 @@
   // The next level (the user's story): Abe says that to take on Father Eggmas they'll need a
   // healer, and that's Hannah, a nurse in the NICU at CHKD. But Father Eggmas got there first:
   // the whole hospital is hypnotized (spiral eyes), the babies crawl around after Nate, and a
-  // giant crib mobile hung over the NICU is doing it (the Hypno-Mobile, the boss). Hannah's
+  // hypnotized baby piloting a mech suit has a spiral antenna that's doing it (MECHA-BABY, the
+  // boss). Father Eggmas himself isn't fought here (the user doesn't want him at the hospital). Hannah's
   // work badge works the NICU elevator, and a teething baby has it in the playroom. Bring the
-  // mobile down, everyone wakes up, and Hannah joins the party as the healer.
+  // mech down, everyone wakes up, and Hannah joins the party as the healer. (flags.mobileBeaten
+  // is named for the first version of the boss, a giant crib mobile.)
   // Flags: healerTalk, chkdArrived, chkdLobby, chkdWard, mobileBeaten (and items.badge).
 
-  // everyone at CHKD, hypnotized (spiral eyes) until the Hypno-Mobile comes down
+  // everyone at CHKD, hypnotized (spiral eyes) until MECHA-BABY goes down
   G.CAST.chkdDad = { skin: '#e8b890', hair: '#3a2a20', hairStyle: 'cap', hat: '#c83030', hatStyle: 'ball', shirt: '#6a7a9a', sleeves: 'long', pants: '#3a4a6a', shoes: '#4a3428', torso: 7, legs: 3 };
   G.CAST.chkdReception = { skin: '#c88a60', hair: '#2a1a14', hairStyle: 'long', shirt: '#d8a8e8', pants: '#3a3a44', shoes: '#2a2a2a', torso: 5, legs: 3, smile: '#ffffff' };
   G.CAST.chkdGuard = { skin: '#8a5a3a', hair: '#1a1010', hairStyle: 'cap', hat: '#1c2c4c', hatStyle: 'ball', shirt: '#2a3a5a', pants: '#1c2434', shoes: '#1a1a1a', wide: true, torso: 7, legs: 3 };
@@ -8196,9 +8198,9 @@
     } else yield G.say('Nate', 'Hannah\'s badge! Back to the elevator in the lobby.');
   };
 
-  // ---------------------------------------------------------------- the NICU: the Hypno-Mobile
+  // ---------------------------------------------------------------- the NICU: MECHA-BABY
   S.nicuEnter = function* () {
-    const f = flags(), w = G.play.world, p = P(), m = w.mobile, h = w.hannahNpc;
+    const f = flags(), w = G.play.world, p = P(), m = w.mech, h = w.hannahNpc;
     if (f.mobileBeaten || !m) return;
     yield G.wait(30);
     yield G.camFocus(h.x, h.y - 10, 40);
@@ -8210,36 +8212,53 @@
     yield G.say('Hannah', 'Shhhhh. The babies are sleeping.');
     yield G.say('Hannah', 'Visiting hours... are... over...');
     yield G.say('Nate', 'Her eyes are spirals.');
-    yield G.camFocus(m.x, m.y - 80, 40);
-    yield G.say(null, 'Over her head, a giant mobile turns slowly: little eggs with faces, stars, and a spiral glowing in the middle.');
-    yield G.say('Nate', 'Is that... a tiny Father Eggmas? Hanging in the middle?');
-    yield G.say('Abe', 'That thing is what\'s doing it. Listen. The lullaby.');
-    yield G.say('Nate', 'Then let\'s turn it OFF.');
+    // CLANK. CLANK. CLANK. Something comes stomping through the NICU doors.
+    for (let i = 0; i < 3; i++) { G.audio.sfx('clank'); G.play.shake(8, 2); yield G.wait(24); }
+    yield G.say(null, 'Something big is coming through the NICU doors.');
+    G.audio.sfx('door');
+    m.hidden = false; m.face = -1;
+    yield G.camFocus(m.x, m.y - 40, 30);
+    yield G.walkTo(m, 8 * 16, 7 * 16 + 8, 0.8);
+    m.walking = false;
+    yield G.say('Nate', 'Is that... a BABY? Driving a ROBOT?');
+    yield G.say('Abe', 'A robot with a BABY BOTTLE for an arm.');
+    yield G.say('Nate', 'And a spiral on its head. That antenna! That\'s where the lullaby is coming from!');
+    yield G.say('Abe', 'Father Eggmas must have built it. That thing is what has everybody hypnotized.');
+    yield G.say('Nate', 'Okay. We break the robot. NOT the baby.');
     yield G.camFocus(null, null, 30);
-    yield G.say(null, 'The mobile is up out of reach. When it dips low to spin, bonk it!');
+    yield G.say(null, 'Its armor is too tough to dent... until the rattle gets stuck in the floor, or its vents pop open. And don\'t let the spirals hypnotize you!');
     m.start();
-    yield G.banner('THE HYPNO-MOBILE', 'a lullaby you can\'t refuse', 150);
-    G.audio.play('mobile');
+    yield G.banner('MECHA-BABY', 'naptime is OVER', 150);
+    G.audio.play('mecha');
   };
-  S.mobileDefeated = function* (m) {
+  S.mechDefeated = function* (m) {
     const f = flags(), w = G.play.world, p = P(), h = w.hannahNpc, s = G.state;
     G.audio.stop();
-    for (const e of w.ents) if (e instanceof G.HypnoShot || e instanceof G.LullabyNote || e instanceof G.BarkRing) e.dead = true;
+    for (const e of w.ents) if (e instanceof G.HypnoShot || e instanceof G.HypnoRing || e instanceof G.PacifierShot || e instanceof G.BarkRing) e.dead = true;
     for (const e of w.ents) if (e instanceof G.HypnoBaby && !e.dead) { e.dead = true; w.burst(e.x, e.y - 8, ['#f8f8f0', '#a85ae8'], 6); }
     G.play.earworm = 0;
     yield G.wait(20);
-    // the mobile comes crashing down, and the tiny Father Eggmas doll drops out of it
-    for (let i = 0; i < 4; i++) { G.audio.sfx('clank'); G.play.shake(10, 2); w.burst(m.x + (Math.random() * 40 - 20), m.y - 30, ['#f2ead6', '#f8e070', '#a85ae8', '#c8a050'], 10, { speed: 1.8, up: 1, g: 0.1, life: 28, size: 2 }); yield G.wait(14); }
-    m.hidden = true; m.dead = true;
-    G.audio.sfx('boom');
-    w.burst(m.x, m.y - 10, ['#f2ead6', '#f8e070', '#a85ae8', '#f8f8f8'], 24, { speed: 2.2, up: 1.4, g: 0.1, life: 32, size: 3 });
-    const doll = { img: G.spr.eggmas, x: m.x - 9, y: m.y - 22, base: m.y, draw(ctx, cx, cy) { ctx.drawImage(this.img, Math.round(this.x) - cx, Math.round(this.y) - cy, 18, 22); } };
-    w.props.push(doll);
+    // the mech sputters and sits down, the dome pops open, and the baby giggles and dozes off
+    for (let i = 0; i < 4; i++) {
+      G.audio.sfx('clank'); G.play.shake(10, 2);
+      w.burst(m.x + (Math.random() * 40 - 20), m.y - 20 - Math.random() * 30, ['#f8e070', '#ffffff', '#8ab8e8', '#3a3a4a'], 10, { speed: 1.8, up: 1, g: 0.1, life: 26, size: 2 });
+      yield G.wait(14);
+    }
+    G.audio.sfx('boom'); G.play.shake(16, 3);
+    yield G.say(null, 'The mech sputters, sparks... and sits down. HARD.');
+    G.audio.sfx('door');
+    m.dome = 'cry';
+    yield G.wait(20);
+    yield G.say(null, 'The dome pops open.');
+    G.audio.sfx('giggle');
+    w.pop(m.x, m.y - 76, '*giggle*', '#f8c8e8');
     yield G.wait(40);
-    yield G.say(null, 'The little Father Eggmas doll drops to the floor. It\'s just a doll.');
-    yield G.say(null, '...It\'s still smiling.');
-    f.mobileBeaten = true;
+    m.dome = 'asleep';
+    w.pop(m.x, m.y - 76, '*yawn*', '#f8c8e8');
     yield G.wait(30);
+    yield G.say(null, 'The spiral antenna stops spinning. The lullaby stops.');
+    f.mobileBeaten = true;
+    yield G.wait(20);
     // the spell breaks: the babies yawn, and Hannah blinks
     G.audio.sfx('heart');
     for (const iso of w.isolettes || []) w.pop(iso.x, iso.y, ['*yawn*', '*coo*', '*hic*'][Math.floor(Math.random() * 3)], '#f8c8e8');
@@ -8254,6 +8273,10 @@
     }
     yield G.say('Abe', 'Hannah! Are you okay?');
     yield G.say('Hannah', 'Why are you in my NICU? Why is NATE in my NICU?');
+    yield G.say('Hannah', '...Why is there a ROBOT in my NICU? Is that baby DRIVING it?');
+    yield G.say('Nate', 'He was. He\'s off duty now.');
+    yield G.say(null, 'Hannah lifts the baby out of the dome, swaddles him up tight, and tucks him into an isolette. He\'s out cold.');
+    m.dome = 'empty';
     yield G.say('Nate', 'Father Eggmas hypnotized the whole hospital. You\'ve been rocking that isolette all day.');
     yield G.say('Hannah', '...That isolette is EMPTY.');
     yield G.say('Hannah', 'Wait. Father Eggmas? The egg man from the family group chat? That\'s REAL?');
@@ -8410,7 +8433,7 @@
       F.stand(sp.bigTeddy, 2, 9, 1, look('A giant teddy bear in a red bow tie. He\'s seen a lot.'));
       F.stand(sp.giftShop, 18, 10, 3, () => S.abeReach('giftShop'));
       for (const [x, y] of [[1, 3], [22, 3], [22, 12]]) F.stand(sp.monstera, x, y, 1, look('A big potted plant.'));
-      // babies (until the Hypno-Mobile comes down)
+      // babies (until MECHA-BABY goes down)
       if (!awake) for (const [x, y, k] of [[12, 8, 'blue'], [16, 9, 'pink'], [5, 11, 'tan']]) w.add(new G.HypnoBaby(x * 16 + 8, y * 16 + 12, k));
       w.addWarp(23, 6, 1, 2, 'chkdWard', 1, 7, 'right');
       w.addWarp(11, 13, 1, 1, 'chkd', 19, 11, 'down');
@@ -8465,11 +8488,11 @@
   };
 
   // The NICU: dim and quiet, rows of isolettes with monitors blinking, glider rockers, Hannah in
-  // the middle rocking an empty isolette, and the Hypno-Mobile turning over her head.
+  // the middle rocking an empty isolette, and MECHA-BABY stomping in through the NICU doors.
   G.MAPS.chkdNicu = {
     name: 'CHKD: the NICU',
     get music() { return flags().mobileBeaten ? 'house' : 'hospital'; },
-    // (small enough that the whole room, and the mobile, fit on the screen during the fight)
+    // (small enough that the whole room, and the mech, fit on the screen during the fight)
     tiles() {
       const W = 16, H = 11;
       const g = Array.from({ length: H }, () => Array(W).fill('w'));
@@ -8492,7 +8515,14 @@
       F.stand(sp.isolettes.blue, 7, 3, 2, look('An isolette. It\'s empty. Hannah was rocking it anyway.'));
       if (!f.mobileBeaten) {
         w.hannahNpc = w.add(new G.NPC({ sprite: 'hannahHypno', name: 'Hannah', x: 8 * 16, y: 4 * 16 + 14, dir: 'up', talk: function* () { yield G.say('Hannah', 'Shhhhh...'); } }));
-        w.mobile = w.add(new G.HypnoMobile(8 * 16, 7 * 16, { x0: 3 * 16 + 8, y0: 5 * 16 + 10, x1: 12 * 16 + 8, y1: 9 * 16 + 8 }));
+        // (MECHA-BABY waits out of sight behind the NICU doors until the intro)
+        w.mech = w.add(new G.MechaBaby(11 * 16, 4 * 16 + 4, { x0: 3 * 16 + 8, y0: 6 * 16, x1: 12 * 16 + 8, y1: 9 * 16 + 8 }));
+        w.mech.hidden = true;
+      } else {
+        // the mech, parked in the corner, out of order
+        w.props.push({ img: null, x: 0, y: 0, base: 8 * 16 + 14, draw(ctx, cx, cy) { const bx = 12 * 16 - 36 - cx, by = 8 * 16 + 14 - 62 - cy; ctx.drawImage(G.spr.mech.left.idle[0], bx, by); ctx.drawImage(G.spr.mechDome.empty, bx + 22, by - 3); } });
+        w.blockTiles(11, 8, 2, 1);
+        w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [11 * 16, 7 * 16, 13 * 16, 9 * 16], talk: look('The mech, parked in the corner. Somebody stuck a note on it: OUT OF ORDER. NO BABIES ALLOWED.') });
       }
       w.addWarp(7, 10, 1, 1, 'chkdLobby', 3, 4, 'down');
     },

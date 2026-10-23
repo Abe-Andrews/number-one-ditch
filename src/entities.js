@@ -368,7 +368,13 @@
         }
       }
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, sy - 12);
-      if (G.play.earworm > 0) {
+      if (G.play.earworm > 0 && G.play.earwormKind === 'hypno') {
+        // hypnotized: little purple spirals circling his head
+        for (let i = 0; i < 2; i++) {
+          const a = G.tick * 0.1 + i * Math.PI, nx = Math.round(this.x + Math.cos(a) * 9) - cx, ny = Math.round(sy - 2 + Math.sin(a) * 3);
+          ctx.drawImage(G.spr.hypnoSpiral[(G.tick >> 3) & 1], nx - 6, ny - 6);
+        }
+      } else if (G.play.earworm > 0) {
         // little pink notes circling his head
         ctx.fillStyle = '#f8a8c8';
         for (let i = 0; i < 3; i++) {
@@ -1953,8 +1959,20 @@
   }
   G.BassinetBaby = BassinetBaby;
 
-  // A hypno-spiral from the mobile: drifts after Nate. One touch scrambles his controls for a
-  // couple of seconds (no damage).
+  // Hypnosis (the mech's antenna): Nate's controls flip for a couple of seconds (no damage).
+  // It's the same flipped-controls effect as a song stuck in his head (G.play.earworm), but
+  // with spirals circling his head instead of notes.
+  G.hypnotize = (w, n = 150) => {
+    const p = G.play.player;
+    if (p.inv > 0 || p.state === 'dead' || G.play.earworm > 20) return false;
+    G.play.earworm = n; G.play.earwormKind = 'hypno';
+    G.audio.sfx('whine');
+    w.pop(p.x, p.y - 38, 'HYPNOTIZED!', '#c898ff'); w.pop(p.x, p.y - 28, 'controls flipped!', '#a8a0d8');
+    w.burst(p.x, p.y - 20, ['#a85ae8', '#f8f0ff'], 8, { speed: 1, life: 18, size: 2 });
+    return true;
+  };
+
+  // A hypno-spiral from the mech's antenna: drifts after Nate. One touch and he's hypnotized.
   class HypnoShot extends Ent {
     constructor(x, y, vx, vy) { super(x, y); Object.assign(this, { vx, vy, life: 210, z: 10 }); }
     update(w) {
@@ -1964,14 +1982,7 @@
       const sp = Math.hypot(this.vx, this.vy); if (sp > 1.35) { this.vx *= 1.35 / sp; this.vy *= 1.35 / sp; }
       this.x += this.vx; this.y += this.vy;
       if (--this.life <= 0) { this.dead = true; return; }
-      if (G.overlap([this.x - 5, this.y - 6, this.x + 5, this.y + 2], p.hurtBox())) {
-        this.dead = true;
-        if (p.inv > 0 || p.state === 'dead') return;
-        G.play.earworm = 150;
-        G.audio.sfx('whine');
-        w.pop(p.x, p.y - 32, 'HYPNOTIZED!', '#c898ff');
-        w.burst(p.x, p.y - 20, ['#a85ae8', '#f8f0ff'], 8, { speed: 1, life: 18, size: 2 });
-      }
+      if (G.overlap([this.x - 5, this.y - 6, this.x + 5, this.y + 2], p.hurtBox())) { this.dead = true; G.hypnotize(w); }
     }
     draw(ctx, cx, cy) {
       const img = G.spr.hypnoSpiral[(this.life >> 3) & 1];
@@ -1980,150 +1991,229 @@
   }
   G.HypnoShot = HypnoShot;
 
-  // A lullaby note, floating down from the mobile onto a marked spot.
-  class LullabyNote extends Ent {
-    constructor(x, y, tx, ty, h) { super(x, y); Object.assign(this, { fx: x, fy: y, tx, ty, t: 0, n: 64, h }); }
+  // A hypno-wave: a purple ring rolling out from the mech. Jump the gap... or get hypnotized.
+  class HypnoRing extends Ent {
+    constructor(x, y, max) { super(x, y); Object.assign(this, { r: 10, max, flat: true, done: false }); }
+    update(w) {
+      if (G.script.busy) return;
+      this.r += 1.9;
+      const p = G.play.player, d = Math.hypot(p.x - this.x, (p.y - this.y) * 1.4);
+      if (!this.done && Math.abs(d - this.r) < 6) { this.done = true; G.hypnotize(w, 170); }
+      if (this.r > this.max) this.dead = true;
+    }
+    draw(ctx, cx, cy) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - this.r / this.max) * 0.95;
+      for (let i = 0; i < 2; i++) {
+        ctx.strokeStyle = i ? '#f8f0ff' : '#a85ae8'; ctx.lineWidth = i ? 1 : 4;
+        ctx.setLineDash(i ? [3, 5] : []); ctx.lineDashOffset = -G.tick;
+        ctx.beginPath(); ctx.ellipse(this.x - cx, this.y - cy, this.r, this.r / 1.4, 0, 0, Math.PI * 2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+  }
+  G.HypnoRing = HypnoRing;
+
+  // A pacifier from the mech's bottle cannon: it arcs over onto a marked spot.
+  class PacifierShot extends Ent {
+    constructor(x, y, tx, ty) { super(x, y); Object.assign(this, { fx: x, fy: y, tx, ty, t: 0, n: 52, z: 30 }); }
     update() {
       if (G.script.busy) return;
       const k = ++this.t / this.n;
-      this.x = this.fx + (this.tx - this.fx) * k + Math.sin(this.t * 0.2) * 3; this.y = this.fy + (this.ty - this.fy) * k;
-      this.z = (1 - k) * this.h;
+      this.x = this.fx + (this.tx - this.fx) * k; this.y = this.fy + (this.ty - this.fy) * k;
+      this.z = 30 * (1 - k) + Math.sin(k * Math.PI) * 36;
       if (k >= 1) {
         this.dead = true;
+        G.audio.sfx('bump');
+        this.world.burst(this.tx, this.ty - 3, ['#f4a8c8', '#f8f8f4'], 5, { speed: 0.9, up: 0.6, life: 14, size: 1 });
         const p = G.play.player;
-        this.world.burst(this.tx, this.ty - 4, ['#f8c8e8', '#ffffff'], 5, { speed: 0.8, up: 0.5, life: 14, size: 1 });
         if (Math.abs(p.x - this.tx) < 10 && Math.abs(p.y - 4 - this.ty) < 9) p.hurt(1, this.tx, this.ty - 6);
       }
     }
     draw(ctx, cx, cy) {
       const k = this.t / this.n, r = 3 + k * 5;
-      ctx.save(); ctx.globalAlpha = 0.25 + k * 0.5; ctx.strokeStyle = '#f8a8e8'; ctx.lineWidth = 1;
+      ctx.save(); ctx.globalAlpha = 0.25 + k * 0.5; ctx.strokeStyle = '#f86858'; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.ellipse(Math.round(this.tx) - cx, Math.round(this.ty) - cy, r, r * 0.55, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
-      ctx.drawImage(G.spr.lullabyNote, Math.round(this.x - 4) - cx, Math.round(this.y - 10 - this.z) - cy);
+      drawShadow(ctx, this.x, this.y, cx, cy, false);
+      ctx.drawImage(G.spr.pacifierShot, Math.round(this.x - 5) - cx, Math.round(this.y - 8 - this.z) - cy);
     }
   }
-  G.LullabyNote = LullabyNote;
+  G.PacifierShot = PacifierShot;
 
-  // ============================================================== THE HYPNO-MOBILE (CHKD boss)
-  // Father Eggmas hung a giant crib mobile over the NICU: four little Father Eggmas eggs and
-  // a ring of stars going round and round, a spiral glowing in the middle with a tiny Father
-  // Eggmas doll hanging in front of it, and a lullaby that has the whole hospital under. It
-  // glides around up near the ceiling, out of reach, shooting hypno-spirals and floating
-  // lullaby notes down. Every so often it dips low and spins up: THAT's when Nate can bonk it
-  // (an egg cracks every few hits). Past half, it's faster, and hypnotized babies come
-  // crawling in.
-  class HypnoMobile extends Ent {
+  // ============================================================== MECHA-BABY (CHKD boss)
+  // The user's idea: a hypnotized baby piloting a mech suit, stomping around the NICU. (Father
+  // Eggmas isn't fought at the hospital; he's just the one who did the hypnotizing.) The
+  // spiral antenna on its dome plays the lullaby that has the whole hospital under, and it
+  // hypnotizes Nate too: spirals and hypno-waves flip his controls. Nate never touches the
+  // baby, he breaks the MECH, and its armor just goes CLANK except when it's open: the
+  // rattle stuck in the floor after a smash, the vents popped open after a volley of
+  // pacifiers, or (past half) dizzy after charging into a wall. Up to 4 damage per opening,
+  // then it shakes it off.
+  class MechaBaby extends Ent {
     constructor(x, y, bounds) {
       super(x, y);
       Object.assign(this, {
-        enemy: true, boss: true, noBar: true, name: 'THE HYPNO-MOBILE', hp: 16, maxHp: 16, bounds,
-        state: 'idle', st: 0, t: 0, h: 40, spin: 0, spinV: 0.03, hurtT: 0, home: { x, y }, flat: false,
+        enemy: true, boss: true, noBar: true, name: 'MECHA-BABY', hp: 24, maxHp: 24, bounds,
+        state: 'idle', st: 0, t: 0, face: 1, hurtT: 0, hb: { w: 30, h: 10 }, cycle: 0, dome: 'hypno',
       });
     }
     get angry() { return this.hp <= this.maxHp / 2; }
-    get low() { return this.h < 16; }
-    hurtBox() { return this.low ? [this.x - 24, this.y - 34, this.x + 24, this.y] : [-999, -999, -998, -998]; }
-    start() { this.state = 'float'; this.st = 150; this.noBar = false; }
+    get open() { return this.state === 'stuck' || this.state === 'vent' || this.state === 'dizzy'; }
+    hurtBox() { return [this.x - 24, this.y - 52, this.x + 24, this.y]; }
+    start() { this.state = 'walk'; this.st = 90; this.noBar = false; }
     update(w) {
-      if (G.script.busy || this.state === 'idle' || this.state === 'defeated') { this.t++; this.spin += this.spinV; return; }
       this.t++;
-      this.spin += this.spinV;
+      if (G.script.busy || this.state === 'idle' || this.state === 'defeated') return;
       if (this.hurtT > 0) this.hurtT--;
-      const p = G.play.player, b = this.bounds;
-      if (this.state === 'float') {
-        // a slow figure-eight up near the ceiling
-        const sp = this.angry ? 0.016 : 0.011;
-        const tx = this.home.x + Math.sin(this.t * sp) * (b.x1 - b.x0) * 0.42, ty = this.home.y + Math.sin(this.t * sp * 2) * (b.y1 - b.y0) * 0.3;
-        this.x += (tx - this.x) * 0.05; this.y += (ty - this.y) * 0.05;
-        this.spinV += (0.03 - this.spinV) * 0.05;
-        if (this.h < 40) this.h += 1;
-        if (this.t % (this.angry ? 60 : 85) === 0) {
-          const a = Math.atan2(p.y - this.y, p.x - this.x);
-          const n = this.angry ? 2 : 1;
-          for (let i = 0; i < n; i++) w.add(new HypnoShot(this.x, this.y - 20, Math.cos(a + (i - (n - 1) / 2) * 0.6) * 0.9, Math.sin(a + (i - (n - 1) / 2) * 0.6) * 0.9));
-          G.audio.sfx('whine');
+      const p = G.play.player, b = this.bounds, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      // stomping into Nate hurts (but not while it's stuck, venting or dizzy)
+      if (!this.open && G.overlap([this.x - 18, this.y - 14, this.x + 18, this.y], p.hurtBox())) p.hurt(1, this.x, this.y);
+      // past half: it cries for backup
+      if (this.angry && !this.babyCall) { this.babyCall = true; this.callBabies(w); G.audio.sfx('wah'); w.pop(this.x, this.y - 74, 'MAMA!', '#f8c8e8'); }
+      switch (this.state) {
+        case 'walk':
+          this.face = dx >= 0 ? 1 : -1;
+          if (dist > 40) { const sp = this.angry ? 0.6 : 0.42; this.x += (dx / dist) * sp; this.y += (dy / dist) * sp; }
+          if (this.t % 24 === 0) { G.audio.sfx('bump'); G.play.shake(2, 1); }
+          // the antenna: a hypno-spiral every few seconds
+          if (this.t % (this.angry ? 140 : 190) === 60) {
+            const a = Math.atan2(dy, dx);
+            w.add(new HypnoShot(this.x, this.y - 66, Math.cos(a) * 0.8, Math.sin(a) * 0.8));
+            G.audio.sfx('whine');
+          }
+          if (--this.st <= 0) this.pickAttack(w, p);
+          break;
+        case 'raise':   // winding up the rattle (where it'll land is marked)
+          if (--this.st <= 0) this.smash(w, p);
+          break;
+        case 'volley':  // pacifiers out of the bottle cannon
+          if (this.st % 14 === 0 && this.shots > 0) { this.fire(w, p); this.shots--; }
+          if (--this.st <= 0) { this.state = 'vent'; this.st = 100; this.dmgHere = 0; G.audio.sfx('dash'); w.pop(this.x, this.y - 74, 'The vents popped open!', '#f8e070'); }
+          break;
+        case 'beam':    // the antenna spins up and sends out a hypno-wave
+          if (this.st === 30) { w.add(new HypnoRing(this.x, this.y, 150)); G.audio.sfx('bell'); w.pop(this.x, this.y - 74, '~ la la laaa ~', '#c898ff'); }
+          if (--this.st <= 0) { this.state = 'walk'; this.st = 60; }
+          break;
+        case 'crouch':
+          if (--this.st <= 0) {
+            this.state = 'charge'; this.st = 90;
+            const a = Math.atan2(dy, dx); this.cv = [Math.cos(a) * 3.2, Math.sin(a) * 3.2];
+            G.audio.sfx('dash'); w.pop(this.x, this.y - 74, 'WHEEE!', '#a8d8ff');
+          }
+          break;
+        case 'charge': {
+          const nx = this.x + this.cv[0], ny = this.y + this.cv[1];
+          if (nx < b.x0 || nx > b.x1 || ny < b.y0 || ny > b.y1 || --this.st <= 0) {
+            this.state = 'dizzy'; this.st = 110; this.dmgHere = 0;
+            G.audio.sfx('boom'); G.play.shake(14, 3);
+            w.pop(this.x, this.y - 74, 'BONK! It\'s dizzy!', '#f8e070');
+          } else { this.x = nx; this.y = ny; }
+          break;
         }
-        if (this.t % (this.angry ? 45 : 70) === 20) {
-          const tx2 = G.clamp(p.x + (Math.random() * 60 - 30), b.x0, b.x1), ty2 = G.clamp(p.y + (Math.random() * 40 - 20), b.y0, b.y1);
-          w.add(new LullabyNote(this.x, this.y, tx2, ty2, this.h + 24));
-        }
-        if (--this.st <= 0) { this.state = 'dip'; this.st = 30; this.dipDmg = 0; G.audio.sfx('swing'); w.pop(this.x, this.y - this.h - 40, 'It\'s dipping low!', '#f8e070'); }
-      } else if (this.state === 'dip') {
-        this.h = Math.max(6, this.h - 1.6);
-        this.spinV += (0.16 - this.spinV) * 0.08;
-        if (--this.st <= 0) {
-          this.state = 'spin'; this.st = this.angry ? 110 : 140;
-          G.audio.sfx('bell');
-          w.add(new BarkRing(this.x, this.y, 90, '#f8a8e8'));
-          if (this.angry) this.callBabies(w);
-        }
-      } else if (this.state === 'spin') {
-        this.spinV += (0.2 - this.spinV) * 0.05;
-        if (G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
-        if (this.st === 60) w.add(new BarkRing(this.x, this.y, 80, '#f8a8e8'));
-        if (--this.st <= 0) { this.state = 'float'; this.st = this.angry ? 200 : 260; }
+        case 'stuck': case 'vent': case 'dizzy':
+          if (this.state === 'vent' && this.t % 6 === 0) w.burst(this.x + (Math.random() * 30 - 15), this.y - 40, ['#f8f8f8', '#d8d8e0'], 1, { speed: 0.4, up: 1, life: 20, size: 2 });
+          if (--this.st <= 0) this.recover();
+          break;
+      }
+      this.x = G.clamp(this.x, b.x0, b.x1); this.y = G.clamp(this.y, b.y0, b.y1);
+    }
+    pickAttack(w, p) {
+      const moves = this.angry ? ['smash', 'beam', 'charge', 'volley', 'charge', 'beam'] : ['smash', 'volley', 'beam', 'smash', 'volley'];
+      const m = moves[this.cycle++ % moves.length];
+      if (m === 'smash') {
+        this.state = 'raise'; this.st = this.angry ? 34 : 46;
+        this.face = p.x >= this.x ? 1 : -1;
+        this.target = { x: this.x + this.face * 27, y: this.y - 2 };
+        G.audio.sfx('swing'); w.pop(this.x, this.y - 74, '*whirr*', '#c8d8e8');
+      } else if (m === 'volley') {
+        this.state = 'volley'; this.shots = this.angry ? 5 : 3; this.st = this.shots * 14 + 20;
+      } else if (m === 'beam') {
+        this.state = 'beam'; this.st = 50;
+      } else {
+        this.state = 'crouch'; this.st = 34;
       }
     }
+    smash(w, p) {
+      const t = this.target;
+      this.state = 'stuck'; this.st = this.angry ? 90 : 110; this.dmgHere = 0;
+      G.audio.sfx('boom'); G.play.shake(12, 3);
+      w.burst(t.x, t.y - 4, ['#f0c830', '#e85050', '#f8f8f8'], 12, { speed: 1.6, up: 1, g: 0.1, life: 24, size: 2 });
+      w.add(new BarkRing(t.x, t.y, 70, '#f8e070'));
+      if (Math.hypot(p.x - t.x, (p.y - t.y) * 1.3) < 20) p.hurt(2, t.x, t.y);
+      w.pop(t.x, t.y - 30, 'The rattle\'s STUCK!', '#f8e070');
+    }
+    fire(w, p) {
+      const b = this.bounds;
+      const tx = G.clamp(p.x + (Math.random() * 50 - 25), b.x0 - 8, b.x1 + 8), ty = G.clamp(p.y + (Math.random() * 30 - 15), b.y0, b.y1 + 8);
+      w.add(new PacifierShot(this.x - this.face * 28, this.y - 12, tx, ty));
+      G.audio.sfx('swing');
+    }
+    recover() { this.state = 'walk'; this.st = this.angry ? 70 : 100; }
     // past half: two hypnotized babies crawl in from the sides
     callBabies(w) {
       const b = this.bounds, kinds = ['blue', 'pink', 'tan', 'brown'];
-      for (const x of [b.x0 + 8, b.x1 - 8]) {
+      for (const x of [b.x0, b.x1]) {
         if (w.ents.filter((e) => e instanceof HypnoBaby && !e.dead).length >= 4) break;
-        const baby = w.add(new HypnoBaby(x, b.y1 - 10, kinds[Math.floor(Math.random() * 4)], { intro: null, dropChance: 0.5 }));
+        const baby = w.add(new HypnoBaby(x, b.y1, kinds[Math.floor(Math.random() * 4)], { intro: null, dropChance: 0.5 }));
         w.burst(baby.x, baby.y - 8, ['#f8f0ff', '#a85ae8'], 6, { speed: 1, life: 16, size: 2 });
       }
     }
     hit(dmg, sx, sy) {
-      if (this.state === 'defeated') return;
-      if (!this.low) return;
-      if (this.hurtT > 0) return;
+      if (this.state === 'defeated' || this.state === 'idle' || this.hurtT > 0) return;
+      this.hurtT = 10;
+      if (!this.open) {
+        G.audio.sfx('clank');
+        if (G.tick - (this.clankPop || -99) > 40) { this.clankPop = G.tick; this.world.pop(this.x, this.y - 64, 'CLANK! Too tough!', '#c8d8e8'); }
+        return;
+      }
       const before = this.hp;
       this.hp = Math.max(0, this.hp - Math.min(dmg, 2));
-      this.hurtT = 10;
-      G.audio.sfx('clank');
-      this.world.burst(this.x, this.y - this.h - 20, ['#f2ead6', '#f8e070', '#a85ae8'], 6, { speed: 1.4, up: 0.8, g: 0.06, life: 22, size: 2 });
-      if (Math.floor(before / 4) !== Math.floor(this.hp / 4)) { this.world.pop(this.x, this.y - this.h - 44, 'CRACK!', '#f8f8f0'); G.play.shake(6, 2); }
-      if (this.hp <= 0) { this.state = 'defeated'; G.script.run(G.SCRIPTS.mobileDefeated(this)); return; }
-      // four hits and it jerks back up to the ceiling
-      if ((this.dipDmg = (this.dipDmg || 0) + (before - this.hp)) >= 4) { this.state = 'float'; this.st = this.angry ? 200 : 260; this.world.pop(this.x, this.y - 40, 'It jerks back up!', '#f8e070'); }
+      G.audio.sfx('hit');
+      this.world.burst(this.x, this.y - 30, ['#8ab8e8', '#f8e070', '#3a3a4a'], 6, { speed: 1.4, up: 0.8, g: 0.08, life: 22, size: 2 });
+      if (this.hp <= 0) { this.state = 'defeated'; G.script.run(G.SCRIPTS.mechDefeated(this)); return; }
+      if ((this.dmgHere = (this.dmgHere || 0) + (before - this.hp)) >= 4) { this.recover(); this.world.pop(this.x, this.y - 74, 'It shakes it off!', '#f8e070'); }
     }
-    bomb(sx, sy) { if (this.low) this.hit(2, sx, sy); }
+    bomb(sx, sy) { if (this.open) this.hit(2, sx, sy); }
     draw(ctx, cx, cy) {
       if (this.hidden) return;
-      const S = G.spr, x = Math.round(this.x) - cx, gy = Math.round(this.y) - cy, top = gy - Math.round(this.h) - 22;
-      // its shadow on the floor, and the string up to the ceiling
-      ctx.save(); ctx.globalAlpha = 0.25 + (40 - this.h) / 40 * 0.25; ctx.fillStyle = '#1a1a2a';
-      ctx.beginPath(); ctx.ellipse(x, gy, 26, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
-      ctx.fillStyle = '#d8d0c0'; ctx.fillRect(x, -cy - 4, 1, top - (-cy - 4));
-      // the ornaments go round (the back half first), hanging from a ring
-      const items = [];
-      for (let i = 0; i < 8; i++) {
-        const a = this.spin + i * Math.PI / 4, ox = Math.cos(a) * 34, oz = Math.sin(a);
-        items.push({ ox, oz, egg: i % 2 === 0, k: i >> 1, star: i >> 1 });
+      const set = G.spr.mech[this.face > 0 ? 'right' : 'left'];
+      const pose = this.state === 'raise' ? 'raise' : this.state === 'stuck' ? 'smash' : null;
+      const moving = this.state === 'walk' || this.state === 'charge' || this.walking;
+      let img = pose ? set[pose] : set.idle[moving ? (this.t >> 3) & 1 : 0];
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      const jx = this.state === 'crouch' || this.state === 'beam' ? ((this.t >> 1) & 1 ? 1 : -1) : 0;
+      const bx = Math.round(this.x - 36) - cx + jx, by = Math.round(this.y - 62) - cy;
+      // where the rattle is coming down
+      if (this.state === 'raise' && this.target) {
+        const k = 1 - this.st / 46;
+        ctx.save(); ctx.globalAlpha = 0.35 + k * 0.5; ctx.strokeStyle = '#f86858'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(Math.round(this.target.x) - cx, Math.round(this.target.y) - cy, 16, 9, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
       }
-      items.sort((a, b) => a.oz - b.oz);
-      const drawItem = (it) => {
-        const ix = x + Math.round(it.ox), iy = top + 10 + Math.round(it.oz * 7);
-        ctx.fillStyle = '#d8d0c0'; ctx.fillRect(ix, top + Math.round(it.oz * 7), 1, 10);
-        if (it.egg) {
-          const cracked = this.hp <= 12 - it.k * 4;
-          ctx.drawImage(S.mobileEgg[cracked ? 1 : 0], ix - 7, iy);
-        } else ctx.drawImage(S.mobileStars[it.star % 3], ix - 5, iy + 2);
-      };
-      items.filter((it) => it.oz < 0).forEach(drawItem);
-      // the ring, the glowing spiral, and the tiny Father Eggmas doll in the middle
-      ctx.strokeStyle = '#c8a050'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.ellipse(x, top, 34, 7, 0, 0, Math.PI * 2); ctx.stroke();
-      ctx.save(); ctx.translate(x, top + 16); ctx.rotate(this.spin * 2);
-      for (let i = 0; i < 60; i++) { const t = i * 0.3, r = i * 0.28; ctx.fillStyle = i % 8 < 4 ? '#a85ae8' : '#f8f0ff'; ctx.fillRect(Math.round(Math.cos(t) * r), Math.round(Math.sin(t) * r), 2, 2); }
-      ctx.restore();
-      let doll = S.eggmas;
-      if (this.hurtT && (this.hurtT >> 1) & 1) doll = G.art.flash(doll);
-      ctx.drawImage(doll, x - 9, top + 6, 18, 22);
-      items.filter((it) => it.oz >= 0).forEach(drawItem);
+      ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = '#1a1a2a';
+      ctx.beginPath(); ctx.ellipse(Math.round(this.x) - cx, Math.round(this.y) - cy, 24, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      ctx.drawImage(img, bx, by);
+      // the vents, glowing, when they pop open
+      if (this.state === 'vent') { ctx.fillStyle = (this.t >> 2) & 1 ? '#f86858' : '#f8a058'; for (let i = 0; i < 3; i++) ctx.fillRect(bx + 28, by + 29 + i * 3, 16, 2); }
+      // the dome (the baby cries when the mech is stuck or dizzy) and the spiral antenna
+      const dome = G.spr.mechDome[this.dome !== 'hypno' ? this.dome : this.state === 'stuck' || this.state === 'dizzy' ? 'cry' : 'hypno'];
+      ctx.drawImage(dome, bx + 22, by - 3);
+      if (this.dome === 'hypno') {
+        const ax = bx + 36, ay = by - 14, spin = this.state === 'beam' ? 0.5 : 0.12;
+        ctx.fillStyle = '#5a5a6a'; ctx.fillRect(ax, ay, 1, 11);
+        ctx.save(); ctx.translate(ax, ay); ctx.rotate(this.t * spin);
+        ctx.fillStyle = '#3a1a5a'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, Math.PI * 2); ctx.fill();
+        for (let i = 0; i < 30; i++) { const t = i * 0.35, r = i * 0.18; ctx.fillStyle = i % 6 < 3 ? '#a85ae8' : '#f8f0ff'; ctx.fillRect(Math.round(Math.cos(t) * r), Math.round(Math.sin(t) * r), 1, 1); }
+        ctx.restore();
+      }
+      // dizzy: stars going round the dome
+      if (this.state === 'dizzy') for (let i = 0; i < 3; i++) {
+        const a = this.t * 0.15 + i * Math.PI * 2 / 3;
+        ctx.drawImage(G.spr.tinyStars[i], Math.round(bx + 36 + Math.cos(a) * 16) - 5, Math.round(by - 6 + Math.sin(a) * 4) - 5);
+      }
+      if (this.dome === 'asleep' && (this.t >> 5) & 1) G.font.draw(ctx, 'z', bx + 50, by - 8 - ((this.t >> 3) & 3), '#f8f8f8');
     }
   }
-  G.HypnoMobile = HypnoMobile;
+  G.MechaBaby = MechaBaby;
 
 
   // Corn on the cob: hops after Nate and spits kernels.
@@ -2514,7 +2604,7 @@
           this.state = moves[this.cycle++ % moves.length];
           // no earplugs? his twirls get the song stuck in Nate's head (controls flip)
           if ((this.state === 'storm' || this.state === 'shimmy') && !G.state.items.earplugs) {
-            G.play.earworm = 170;
+            G.play.earworm = 170; G.play.earwormKind = 'song';
             w.pop(p.x, p.y - 30, 'SONG STUCK IN HEAD!', '#f8a8c8');
           }
           this.st = { toss: 60, storm: 90, shimmy: 60 }[this.state];
