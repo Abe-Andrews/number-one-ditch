@@ -192,6 +192,9 @@ G.audio = (function () {
     whine: (t) => { tone(820, t, 0.22, 'triangle', 0.07, sfxBus, 1180); tone(1180, t + 0.22, 0.16, 'triangle', 0.05, sfxBus, 760); },
     spray: (t) => noise(t, 0.16, 0.1, sfxBus, 5200),
     honk: (t) => { [0, 0.28].forEach((d) => { tone(370, t + d, 0.2, 'square', 0.07); tone(466, t + d, 0.2, 'square', 0.06); }); },
+    // a hypnotized baby: WAAAH (and the giggle when the bonk snaps them out of it)
+    wah: (t) => { tone(620, t, 0.18, 'sawtooth', 0.05, sfxBus, 820); tone(820, t + 0.18, 0.3, 'sawtooth', 0.05, sfxBus, 560); },
+    giggle: (t) => { [0, 0.07, 0.14, 0.21].forEach((d, i) => tone(1200 + i * 90 - (i % 2) * 200, t + d, 0.05, 'square', 0.04)); },
     // Romulus's sloth: a squeaky toy
     squeak: (t) => { [0, 0.16].forEach((d) => tone(1700, t + d, 0.1, 'square', 0.05, sfxBus, 2600)); },
     // a crowd clapping

@@ -106,6 +106,12 @@
     // El Toro Loco
     '\u00f1': { k: 'faceToro', solid: true, edge: true },
     '\u00f3': { k: 'toroFloor' },
+    // CHKD
+    '\u00e1': { k: 'faceChkd', solid: true, edge: true },
+    '\u00e9': { k: 'chkdFloor' },
+    '\u00ed': { k: 'playMat' },
+    '\u00fa': { k: 'faceNicu', solid: true, edge: true },
+    '\u00fc': { k: 'nicuFloor' },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 

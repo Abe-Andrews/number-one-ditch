@@ -1668,7 +1668,7 @@
 
   // A bark: a ring that rolls out across the grass (once per ring, it knocks Nate back).
   class BarkRing extends Ent {
-    constructor(x, y, max) { super(x, y); Object.assign(this, { r: 8, max, flat: true, done: false }); }
+    constructor(x, y, max, color) { super(x, y); Object.assign(this, { r: 8, max, flat: true, done: false, color: color || '#f8f8f0' }); }
     update() {
       if (G.script.busy) return;
       this.r += 2.6;
@@ -1679,7 +1679,7 @@
     draw(ctx, cx, cy) {
       ctx.save();
       ctx.globalAlpha = Math.max(0, 1 - this.r / this.max) * 0.9;
-      ctx.strokeStyle = '#f8f8f0'; ctx.lineWidth = 3;
+      ctx.strokeStyle = this.color; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.ellipse(this.x - cx, this.y - cy, this.r, this.r / 1.4, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.restore();
     }
@@ -1873,6 +1873,258 @@
     }
   }
   G.GiantRomulus = GiantRomulus;
+
+  // ============================================================== CHKD: the hypnotized babies
+  // Father Eggmas hypnotized the whole children's hospital, babies and all. They crawl after
+  // Nate (fast, for babies), and now and then sit back and WAAAH: a ring of crying rolls out.
+  // A bonk doesn't hurt them, it snaps them out of it: a giggle, a yawn, and they doze right
+  // off (poof, back to the nursery). The badge baby is teething on Hannah's work badge, and
+  // crawls away from Nate around the playroom.
+  class HypnoBaby extends Critter {
+    constructor(x, y, kind = 'blue', o = {}) {
+      super(x, y, 1);
+      Object.assign(this, { kind, state: 'crawl', st: 90 + Math.random() * 90, face: 1, bits: ['#f8f8f0', '#a85ae8', '#f8c8e8'], dropChance: 0.45, intro: 'baby' }, o);
+    }
+    hurtBox() { return [this.x - 9, this.y - 13, this.x + 9, this.y]; }
+    think(w, p, dx, dy, dist) {
+      if (this.badge) {
+        if (dist < 72) { this.vx = -(dx / dist) * 1.05; this.vy = -(dy / dist) * 1.05; this.step(w); }
+        else this.wander(w, 0.35);
+        if (this.vx) this.face = this.vx > 0 ? 1 : -1;
+        if (this.t % 170 === 0) w.pop(this.x, this.y - 22, '*chomp chomp*', '#f8c8e8');
+        return;
+      }
+      if (this.state === 'crawl') {
+        if (dist < 140) this.chase(w, dx, dy, dist, 0.62); else this.wander(w, 0.3);
+        if (this.vx) this.face = this.vx > 0 ? 1 : -1;
+        if (--this.st <= 0 && dist < 110) { this.state = 'cry'; this.st = 50; this.face = dx > 0 ? 1 : -1; }
+      } else if (this.state === 'cry') {
+        if (this.st === 40) {
+          G.audio.sfx('wah');
+          w.pop(this.x, this.y - 24, 'WAAAH!', '#a8d8ff');
+          w.add(new BarkRing(this.x, this.y - 2, 60, '#a8d8ff'));
+        }
+        if (--this.st <= 0) { this.state = 'crawl'; this.st = 130 + Math.random() * 90; }
+      }
+    }
+    die() {
+      this.dead = true;
+      G.audio.sfx('giggle');
+      this.world.pop(this.x, this.y - 22, ['*giggle*', 'goo goo!', '*yawn*', 'ba!'][Math.floor(Math.random() * 4)], '#f8c8e8');
+      this.world.burst(this.x, this.y - 8, this.bits, 10, { speed: 1, up: 0.8, life: 22, size: 2 });
+      this.markGone();
+      if (!this.badge) G.play.maybeDrop(this.x, this.y, this.dropChance);
+      if (this.onBonk) this.onBonk(this);
+    }
+    draw(ctx, cx, cy) {
+      const S = G.spr.babies[this.badge ? 'badge' : this.kind], r = this.face > 0;
+      const img = this.state === 'cry' ? (r ? S.cryR : S.cryL) : (r ? S.right : S.left)[(this.t >> 3) & 1];
+      this.drawSprite(ctx, cx, cy, img, this.state === 'cry' ? 0 : (this.t >> 3) & 1);
+    }
+  }
+  G.HypnoBaby = HypnoBaby;
+
+  // A baby in a rolling hospital bassinet, racing up and down the ward hallway. It picks up speed
+  // when Nate's in its lane. Two bonks stop it (and the baby giggles and dozes off).
+  class BassinetBaby extends Critter {
+    constructor(x, y, dir) {
+      super(x, y, 2);
+      Object.assign(this, { dir: dir || 1, heavy: true, bits: ['#f8f8f0', '#cfe6f2', '#a85ae8'], dropChance: 0.6, intro: 'bassinet' });
+    }
+    hurtBox() { return [this.x - 11, this.y - 18, this.x + 11, this.y]; }
+    think(w, p, dx, dy, dist) {
+      const inLane = Math.abs(dy) < 18 && Math.sign(dx) === this.dir;
+      const sp = inLane ? 2.4 : 1;
+      const h = w.move(this, this.dir * sp, 0);
+      if (h.hitX) { this.dir = -this.dir; G.audio.sfx('bump'); }
+      if (inLane && this.t % 50 === 0) w.pop(this.x, this.y - 28, 'WHEEE!', '#a8d8ff');
+    }
+    die() {
+      this.dead = true;
+      G.audio.sfx('giggle');
+      this.world.pop(this.x, this.y - 26, '*giggle*', '#f8c8e8');
+      this.world.burst(this.x, this.y - 10, this.bits, 12, { speed: 1, up: 0.8, life: 22, size: 2 });
+      G.play.maybeDrop(this.x, this.y, this.dropChance);
+    }
+    draw(ctx, cx, cy) {
+      const img = G.spr.bassinetBaby, jx = (this.t >> 2) & 1;
+      this.drawSprite(ctx, cx, cy, img, jx);
+    }
+  }
+  G.BassinetBaby = BassinetBaby;
+
+  // A hypno-spiral from the mobile: drifts after Nate. One touch scrambles his controls for a
+  // couple of seconds (no damage).
+  class HypnoShot extends Ent {
+    constructor(x, y, vx, vy) { super(x, y); Object.assign(this, { vx, vy, life: 210, z: 10 }); }
+    update(w) {
+      if (G.script.busy) return;
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - 6 - this.y, d = Math.hypot(dx, dy) || 1;
+      this.vx += (dx / d) * 0.025; this.vy += (dy / d) * 0.025;
+      const sp = Math.hypot(this.vx, this.vy); if (sp > 1.35) { this.vx *= 1.35 / sp; this.vy *= 1.35 / sp; }
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0) { this.dead = true; return; }
+      if (G.overlap([this.x - 5, this.y - 6, this.x + 5, this.y + 2], p.hurtBox())) {
+        this.dead = true;
+        if (p.inv > 0 || p.state === 'dead') return;
+        G.play.earworm = 150;
+        G.audio.sfx('whine');
+        w.pop(p.x, p.y - 32, 'HYPNOTIZED!', '#c898ff');
+        w.burst(p.x, p.y - 20, ['#a85ae8', '#f8f0ff'], 8, { speed: 1, life: 18, size: 2 });
+      }
+    }
+    draw(ctx, cx, cy) {
+      const img = G.spr.hypnoSpiral[(this.life >> 3) & 1];
+      ctx.drawImage(img, Math.round(this.x - 6) - cx, Math.round(this.y - 6 - this.z) - cy);
+    }
+  }
+  G.HypnoShot = HypnoShot;
+
+  // A lullaby note, floating down from the mobile onto a marked spot.
+  class LullabyNote extends Ent {
+    constructor(x, y, tx, ty, h) { super(x, y); Object.assign(this, { fx: x, fy: y, tx, ty, t: 0, n: 64, h }); }
+    update() {
+      if (G.script.busy) return;
+      const k = ++this.t / this.n;
+      this.x = this.fx + (this.tx - this.fx) * k + Math.sin(this.t * 0.2) * 3; this.y = this.fy + (this.ty - this.fy) * k;
+      this.z = (1 - k) * this.h;
+      if (k >= 1) {
+        this.dead = true;
+        const p = G.play.player;
+        this.world.burst(this.tx, this.ty - 4, ['#f8c8e8', '#ffffff'], 5, { speed: 0.8, up: 0.5, life: 14, size: 1 });
+        if (Math.abs(p.x - this.tx) < 10 && Math.abs(p.y - 4 - this.ty) < 9) p.hurt(1, this.tx, this.ty - 6);
+      }
+    }
+    draw(ctx, cx, cy) {
+      const k = this.t / this.n, r = 3 + k * 5;
+      ctx.save(); ctx.globalAlpha = 0.25 + k * 0.5; ctx.strokeStyle = '#f8a8e8'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.ellipse(Math.round(this.tx) - cx, Math.round(this.ty) - cy, r, r * 0.55, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+      ctx.drawImage(G.spr.lullabyNote, Math.round(this.x - 4) - cx, Math.round(this.y - 10 - this.z) - cy);
+    }
+  }
+  G.LullabyNote = LullabyNote;
+
+  // ============================================================== THE HYPNO-MOBILE (CHKD boss)
+  // Father Eggmas hung a giant crib mobile over the NICU: four little Father Eggmas eggs and
+  // a ring of stars going round and round, a spiral glowing in the middle with a tiny Father
+  // Eggmas doll hanging in front of it, and a lullaby that has the whole hospital under. It
+  // glides around up near the ceiling, out of reach, shooting hypno-spirals and floating
+  // lullaby notes down. Every so often it dips low and spins up: THAT's when Nate can bonk it
+  // (an egg cracks every few hits). Past half, it's faster, and hypnotized babies come
+  // crawling in.
+  class HypnoMobile extends Ent {
+    constructor(x, y, bounds) {
+      super(x, y);
+      Object.assign(this, {
+        enemy: true, boss: true, noBar: true, name: 'THE HYPNO-MOBILE', hp: 16, maxHp: 16, bounds,
+        state: 'idle', st: 0, t: 0, h: 40, spin: 0, spinV: 0.03, hurtT: 0, home: { x, y }, flat: false,
+      });
+    }
+    get angry() { return this.hp <= this.maxHp / 2; }
+    get low() { return this.h < 16; }
+    hurtBox() { return this.low ? [this.x - 24, this.y - 34, this.x + 24, this.y] : [-999, -999, -998, -998]; }
+    start() { this.state = 'float'; this.st = 150; this.noBar = false; }
+    update(w) {
+      if (G.script.busy || this.state === 'idle' || this.state === 'defeated') { this.t++; this.spin += this.spinV; return; }
+      this.t++;
+      this.spin += this.spinV;
+      if (this.hurtT > 0) this.hurtT--;
+      const p = G.play.player, b = this.bounds;
+      if (this.state === 'float') {
+        // a slow figure-eight up near the ceiling
+        const sp = this.angry ? 0.016 : 0.011;
+        const tx = this.home.x + Math.sin(this.t * sp) * (b.x1 - b.x0) * 0.42, ty = this.home.y + Math.sin(this.t * sp * 2) * (b.y1 - b.y0) * 0.3;
+        this.x += (tx - this.x) * 0.05; this.y += (ty - this.y) * 0.05;
+        this.spinV += (0.03 - this.spinV) * 0.05;
+        if (this.h < 40) this.h += 1;
+        if (this.t % (this.angry ? 60 : 85) === 0) {
+          const a = Math.atan2(p.y - this.y, p.x - this.x);
+          const n = this.angry ? 2 : 1;
+          for (let i = 0; i < n; i++) w.add(new HypnoShot(this.x, this.y - 20, Math.cos(a + (i - (n - 1) / 2) * 0.6) * 0.9, Math.sin(a + (i - (n - 1) / 2) * 0.6) * 0.9));
+          G.audio.sfx('whine');
+        }
+        if (this.t % (this.angry ? 45 : 70) === 20) {
+          const tx2 = G.clamp(p.x + (Math.random() * 60 - 30), b.x0, b.x1), ty2 = G.clamp(p.y + (Math.random() * 40 - 20), b.y0, b.y1);
+          w.add(new LullabyNote(this.x, this.y, tx2, ty2, this.h + 24));
+        }
+        if (--this.st <= 0) { this.state = 'dip'; this.st = 30; this.dipDmg = 0; G.audio.sfx('swing'); w.pop(this.x, this.y - this.h - 40, 'It\'s dipping low!', '#f8e070'); }
+      } else if (this.state === 'dip') {
+        this.h = Math.max(6, this.h - 1.6);
+        this.spinV += (0.16 - this.spinV) * 0.08;
+        if (--this.st <= 0) {
+          this.state = 'spin'; this.st = this.angry ? 110 : 140;
+          G.audio.sfx('bell');
+          w.add(new BarkRing(this.x, this.y, 90, '#f8a8e8'));
+          if (this.angry) this.callBabies(w);
+        }
+      } else if (this.state === 'spin') {
+        this.spinV += (0.2 - this.spinV) * 0.05;
+        if (G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
+        if (this.st === 60) w.add(new BarkRing(this.x, this.y, 80, '#f8a8e8'));
+        if (--this.st <= 0) { this.state = 'float'; this.st = this.angry ? 200 : 260; }
+      }
+    }
+    // past half: two hypnotized babies crawl in from the sides
+    callBabies(w) {
+      const b = this.bounds, kinds = ['blue', 'pink', 'tan', 'brown'];
+      for (const x of [b.x0 + 8, b.x1 - 8]) {
+        if (w.ents.filter((e) => e instanceof HypnoBaby && !e.dead).length >= 4) break;
+        const baby = w.add(new HypnoBaby(x, b.y1 - 10, kinds[Math.floor(Math.random() * 4)], { intro: null, dropChance: 0.5 }));
+        w.burst(baby.x, baby.y - 8, ['#f8f0ff', '#a85ae8'], 6, { speed: 1, life: 16, size: 2 });
+      }
+    }
+    hit(dmg, sx, sy) {
+      if (this.state === 'defeated') return;
+      if (!this.low) return;
+      if (this.hurtT > 0) return;
+      const before = this.hp;
+      this.hp = Math.max(0, this.hp - Math.min(dmg, 2));
+      this.hurtT = 10;
+      G.audio.sfx('clank');
+      this.world.burst(this.x, this.y - this.h - 20, ['#f2ead6', '#f8e070', '#a85ae8'], 6, { speed: 1.4, up: 0.8, g: 0.06, life: 22, size: 2 });
+      if (Math.floor(before / 4) !== Math.floor(this.hp / 4)) { this.world.pop(this.x, this.y - this.h - 44, 'CRACK!', '#f8f8f0'); G.play.shake(6, 2); }
+      if (this.hp <= 0) { this.state = 'defeated'; G.script.run(G.SCRIPTS.mobileDefeated(this)); return; }
+      // four hits and it jerks back up to the ceiling
+      if ((this.dipDmg = (this.dipDmg || 0) + (before - this.hp)) >= 4) { this.state = 'float'; this.st = this.angry ? 200 : 260; this.world.pop(this.x, this.y - 40, 'It jerks back up!', '#f8e070'); }
+    }
+    bomb(sx, sy) { if (this.low) this.hit(2, sx, sy); }
+    draw(ctx, cx, cy) {
+      if (this.hidden) return;
+      const S = G.spr, x = Math.round(this.x) - cx, gy = Math.round(this.y) - cy, top = gy - Math.round(this.h) - 22;
+      // its shadow on the floor, and the string up to the ceiling
+      ctx.save(); ctx.globalAlpha = 0.25 + (40 - this.h) / 40 * 0.25; ctx.fillStyle = '#1a1a2a';
+      ctx.beginPath(); ctx.ellipse(x, gy, 26, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      ctx.fillStyle = '#d8d0c0'; ctx.fillRect(x, -cy - 4, 1, top - (-cy - 4));
+      // the ornaments go round (the back half first), hanging from a ring
+      const items = [];
+      for (let i = 0; i < 8; i++) {
+        const a = this.spin + i * Math.PI / 4, ox = Math.cos(a) * 34, oz = Math.sin(a);
+        items.push({ ox, oz, egg: i % 2 === 0, k: i >> 1, star: i >> 1 });
+      }
+      items.sort((a, b) => a.oz - b.oz);
+      const drawItem = (it) => {
+        const ix = x + Math.round(it.ox), iy = top + 10 + Math.round(it.oz * 7);
+        ctx.fillStyle = '#d8d0c0'; ctx.fillRect(ix, top + Math.round(it.oz * 7), 1, 10);
+        if (it.egg) {
+          const cracked = this.hp <= 12 - it.k * 4;
+          ctx.drawImage(S.mobileEgg[cracked ? 1 : 0], ix - 7, iy);
+        } else ctx.drawImage(S.mobileStars[it.star % 3], ix - 5, iy + 2);
+      };
+      items.filter((it) => it.oz < 0).forEach(drawItem);
+      // the ring, the glowing spiral, and the tiny Father Eggmas doll in the middle
+      ctx.strokeStyle = '#c8a050'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(x, top, 34, 7, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.save(); ctx.translate(x, top + 16); ctx.rotate(this.spin * 2);
+      for (let i = 0; i < 60; i++) { const t = i * 0.3, r = i * 0.28; ctx.fillStyle = i % 8 < 4 ? '#a85ae8' : '#f8f0ff'; ctx.fillRect(Math.round(Math.cos(t) * r), Math.round(Math.sin(t) * r), 2, 2); }
+      ctx.restore();
+      let doll = S.eggmas;
+      if (this.hurtT && (this.hurtT >> 1) & 1) doll = G.art.flash(doll);
+      ctx.drawImage(doll, x - 9, top + 6, 18, 22);
+      items.filter((it) => it.oz >= 0).forEach(drawItem);
+    }
+  }
+  G.HypnoMobile = HypnoMobile;
+
 
   // Corn on the cob: hops after Nate and spits kernels.
   class Corncob extends Critter {

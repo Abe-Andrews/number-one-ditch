@@ -26,11 +26,11 @@
       shirt: '#3c3c42', pants: '#1e1e24', shorts: true, shoes: '#2a2a30', straps: '#3a4c74',
       wide: true, torso: 8, legs: 6,
     },
-    // 5'2": hooded cloak, floral bodice, cream skirt.
+    // 5'2", a NICU nurse at CHKD (from the user's photos): long, wavy honey-blonde hair, rosy
+    // cheeks, a big smile, her blue scrubs with her work badge clipped on, white sneakers.
     hannah: {
-      skin: '#f4d0b8', hair: '#c8a46c', hairStyle: 'shoulder', blush: true,
-      shirt: '#2c3848', pattern: 'floral', dress: '#d8d2a8', cloak: '#7c7658', hood: '#7c7658',
-      belt: '#1c1c20', beltStrap: true, shoes: '#202020', torso: 5, legs: 2,
+      skin: '#f6d0bc', hair: '#c8995a', hairStyle: 'wavy', hairEnd: 3, blush: true, smile: '#ffffff',
+      shirt: '#2e56a6', neckline: true, logo: '#f4f0e8', pants: '#2e56a6', shoes: '#f0f0ec', torso: 5, legs: 3,
     },
     // 6'2", army, fitness: gray polo, earring.
     doron: {
@@ -315,6 +315,10 @@
       kind: 'gear', equip: true, name: 'Tyler\'s Sifter', short: 'Sifter', icon: () => G.spr.sifter, has: () => !!st().items.sifter || !!fl().tylerBeaten,
       desc: 'Tyler\'s sifting screen, for shark teeth at the Number One Ditch. He\'s done sifting forever. Press X to shake the gravel in front of you through it and find the small stuff.',
     },
+    badge: {
+      kind: 'key', name: 'Hannah\'s Badge', short: 'Badge', icon: () => G.spr.badgeIcon, has: () => !!st().items.badge,
+      desc: 'Hannah\'s work badge: her photo, smiling, NICU. Works the elevator up from the CHKD lobby. A little slobbery (a baby was teething on it).',
+    },
     // the sloth quest (Romulus is on the golf course)
     abeBass: {
       kind: 'key', name: 'Abe\'s Bass', icon: () => G.spr.abeBassIcon, has: () => !!st().items.abeBass && !fl().bassGiven,
@@ -357,7 +361,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -384,7 +388,7 @@
     doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Never skips leg day. Owns three luchador masks. Responsible for the Alligator Incident.', skill: 'Lifts and smashes heavy things' },
     lily: { name: 'Lily', bio: 'Nate\'s sister. Survived a refrigerator. Still subscribed to Badlands Chugs.', skill: 'A "No." that pops balloons' },
     abe: { name: 'Abe', bio: '6\'5". Lives in Chesapeake with Hannah and Romulus. Sells yellow guitar cables on eBay (eventually). Gave Nate a bidet for Christmas, then took it back.', skill: 'He\'s 6\'5": reaches things up high, and boosts Nate over tall hedges' },
-    hannah: { name: 'Hannah', bio: '', skill: '' },
+    hannah: { name: 'Hannah', bio: '5\'2". A nurse in the NICU at CHKD. Married to Abe. Romulus\'s favorite person. Father Eggmas hypnotized her babies, and now it\'s personal.', skill: 'Heals: patches Nate up when he\'s low, and gives him a checkup when you talk to her' },
   };
 
   // ================================================================ PEOPLE (menu tab)
@@ -520,9 +524,13 @@
     else if (!f.romulusBeaten && f.slothQuest === 2) goal = 'The lady at El Toro Loco who looks exactly like Paul McCartney will trade the sloth for a bass and a cable. Try Abe\'s closet and the storage room. (' + G.sayable((s.items.abeBass ? 1 : 0) + (s.items.yellowCable ? 1 : 0)) + '/2)';
     else if (!f.romulusBeaten && f.slothQuest === 3) goal = 'Squeak Romulus\'s sloth at the gap in the woods behind Abe and Hannah\'s patio.';
     else if (!f.romulusBeaten) goal = 'Romulus is out on the golf course, and he\'s HUGE. Go get him!';
-    else goal = 'Romulus is home safe (and still scared of Nate), and Abe joined the party! With Abe along, Nate can reach things way up high. (More story soon!)';
+    else if (!f.healerTalk) goal = 'Romulus is home safe (and still scared of Nate), and Abe joined the party! Head back to the condo.';
+    else if (!f.chkdArrived) goal = 'Abe says you\'ll need a healer to take on Father Eggmas: Hannah, a nurse in the NICU at CHKD. Take Abe\'s Jeep (in the driveway).';
+    else if (!s.items.badge && !f.mobileBeaten) goal = 'Everyone at CHKD is hypnotized! The NICU is a locked unit upstairs: find a staff badge to work the lobby elevator.';
+    else if (!f.mobileBeaten) goal = 'Take the lobby elevator up to the NICU and find Hannah.';
+    else goal = 'Hannah joined the party! With a nurse along, you\'re ready for Father Eggmas. (More story soon!)';
     // which chapter of the road trip Nate is on
-    const chapter = !f.doronDeal ? 'CH. 1 - LAFAYETTE' : !f.boulderGone ? 'CH. 2 - EASTON FAIR' : !f.mikeyBeaten ? 'CH. 3 - HOME' : !f.condoArrived ? 'CH. 4 - THE BAY' : 'CH. 5 - CHESAPEAKE';
+    const chapter = !f.doronDeal ? 'CH. 1 - LAFAYETTE' : !f.boulderGone ? 'CH. 2 - EASTON FAIR' : !f.mikeyBeaten ? 'CH. 3 - HOME' : !f.condoArrived ? 'CH. 4 - THE BAY' : !f.healerTalk ? 'CH. 5 - CHESAPEAKE' : 'CH. 6 - CHKD';
     // side quests: { name, status, kind (active / rumor / done), prog [n, of], where, hint }
     const side = [];
     const add = (name, done, status, where, hint, prog) => side.push({ name, status: done ? (typeof done === 'string' ? done : 'Done!') : status, kind: done ? 'done' : 'active', where, hint, prog });
@@ -541,7 +549,7 @@
     if (f.andoverLocked) add('The Andover mines', s.items.andoverKey && 'Key in hand!', f.shopOpen ? 'Mom sells a key' : 'Need a key', 'Home - Andover', s.items.andoverKey ? 'Pick "The Andover mines" when you leave home.' : f.shopOpen ? 'Mom\'s flower stand sells the gate key. It isn\'t cheap.' : 'The mines are on private land. Mom knows everybody at church.');
     if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number, and Nate can\'t say it.');
     if (f.plantQuest) add('Anette\'s thirsty plants', f.plantsDone, f.plantsDone ? 'Done' : G.sayable(G.plantsWatered()) + '/5 watered', 'Chesapeake - the condo', G.plantsWatered() >= 5 ? 'All five are watered. Go tell Anette.' : 'Water Anette\'s five potted plants around the street with the Portable Bidet.', [G.plantsWatered(), 5]);
-    if (s.party.includes('abe')) add('Abe\'s reach', G.abeReachCount() >= 4 && 'All found!', G.sayable(G.abeReachCount()) + '/4 found', 'Chesapeake', 'Abe is 6\'5". With him along, check things that are way up high around Abe and Hannah\'s (press Z under them), and the tall hedge up by Anette\'s.', [G.abeReachCount(), 4]);
+    if (s.party.includes('abe')) add('Abe\'s reach', G.abeReachCount() >= 5 && 'All found!', G.sayable(G.abeReachCount()) + '/5 found', 'Chesapeake', 'Abe is 6\'5". With him along, check things that are way up high around Abe and Hannah\'s and at CHKD (press Z under them), and the tall hedge up by Anette\'s.', [G.abeReachCount(), 5]);
     if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
     if (f.snackQuest) {
@@ -620,6 +628,23 @@
         { wave: 'square', vol: 0.055, notes: 'A4:2 A4:2 C5:2 A4:2 D5:2 A4:2 E5:2 D5:2 | C5:2 C5:2 E5:2 C5:2 F5:4 E5:4 | A4:2 A4:2 C5:2 A4:2 D5:2 A4:2 E5:2 G5:2 | F5:4 E5:4 D5:4 C5:4' },
         { wave: 'sawtooth', vol: 0.06, notes: 'A2:2 A2:2 A3:2 A2:2 A2:2 A2:2 G2:2 A2:2 | F2:2 F2:2 F3:2 F2:2 G2:2 G2:2 G3:2 G2:2 | A2:2 A2:2 A3:2 A2:2 A2:2 A2:2 G2:2 A2:2 | D3:4 E3:4 E2:8' },
         { wave: 'noise', vol: 0.06, notes: 'k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 s:2 s:2 s:2' },
+      ],
+    },
+    // CHKD under Father Eggmas's spell: a slow music-box lullaby in a minor key (original)
+    hospital: {
+      bpm: 84,
+      tracks: [
+        { wave: 'triangle', vol: 0.09, notes: 'A5:2 E5:2 C5:2 | B4:2 E5:2 A4:2 | C5:2 B4:2 A4:2 | G#4:6 | A4:2 C5:2 E5:2 | F5:2 E5:2 D5:2 | C5:2 B4:2 G#4:2 | A4:6' },
+        { wave: 'triangle', vol: 0.11, notes: 'A2:6 | E2:6 | F2:6 | E2:6 | A2:6 | D3:6 | E2:6 | A2:6' },
+      ],
+    },
+    // the Hypno-Mobile: the same lullaby, turned into a fast, spinning waltz (original)
+    mobile: {
+      bpm: 172,
+      tracks: [
+        { wave: 'square', vol: 0.05, notes: 'A4:2 C5:2 E5:2 | A5:4 G#5:2 | F5:2 E5:2 D5:2 | E5:6 | C5:2 E5:2 A5:2 | B5:4 A5:2 | G#5:2 F5:2 E5:2 | A5:6' },
+        { wave: 'sawtooth', vol: 0.055, notes: 'A2:2 E3:2 E3:2 | A2:2 E3:2 E3:2 | D2:2 A2:2 A2:2 | E2:2 B2:2 B2:2 | A2:2 E3:2 E3:2 | F2:2 C3:2 C3:2 | E2:2 B2:2 B2:2 | A2:2 E3:2 E3:2' },
+        { wave: 'noise', vol: 0.05, notes: 'k:2 h:2 h:2 | k:2 h:2 h:2 | k:2 h:2 h:2 | k:2 h:2 s:2 | k:2 h:2 h:2 | k:2 h:2 h:2 | k:2 h:2 h:2 | k:2 s:2 s:2' },
       ],
     },
     // Mikey's serenade (an original tune, not the song he's been practicing)
@@ -3105,6 +3130,8 @@
     { name: 'El Toro Loco: Romulus\'s sloth', map: 'toroLoco', at: [11, 8, 'up'], flags: { romHide: 8, romToGolf: true, slothQuest: 1 } },
     { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { slothQuest: 4, ladyMet: true, bassGiven: true, romGap: true }, items: { abeBass: true, yellowCable: true, sloth: true } },
     { name: 'Abe joined: his reach', map: 'condo', at: [16, 13, 'right'], flags: { romulusBeaten: true }, party: ['abe'], follower: 'abe' },
+    { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'], flags: { healerTalk: true, chkdArrived: true } },
+    { name: 'CHKD: the Hypno-Mobile (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -3139,6 +3166,10 @@
     { name: 'Abe & Hannah\'s: storage', map: 'condoStorage', at: [10, 5, 'left'] },
     { name: 'The golf course (Romulus)', map: 'golf', at: [20, 26, 'up'] },
     { name: 'El Toro Loco (outside)', map: 'toroLoco', at: [11, 8, 'up'] },
+    { name: 'CHKD (outside)', map: 'chkd', at: [16, 21, 'up'] },
+    { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'] },
+    { name: 'CHKD: the ward', map: 'chkdWard', at: [1, 7, 'right'] },
+    { name: 'CHKD: the NICU', map: 'chkdNicu', at: [7, 9, 'up'] },
     { name: 'El Toro Loco (inside)', map: 'toroLocoIn', at: [9, 11, 'up'] },
   ];
   // Admin: one of every rock.
@@ -3947,6 +3978,7 @@
 
   S.partyTalk = function* (id) {
     if (id === 'abe' && flags().bassGiven && !flags().abeBassAsk) { yield* S.abeBass(); return; }
+    if (id === 'hannah') { yield* S.hannahCheckup(); return; }
     const lines = {
       abe: [
         'I can see over everything from up here. You should try it sometime.',
@@ -6417,6 +6449,14 @@
       lines: [['Abe', 'Somebody tied a pouch of shark teeth to a kite.'], ['Nate', 'Some kid is going to be very sad.'], ['Abe', 'Some kid should have known better.']],
       *reward() { yield* S.bossStash(20, 'The pouch has {y}20 shark teeth{/} in it.'); },
     },
+    giftShop: {
+      map: 'chkdLobby', at: [19.5, 11.75],
+      look: 'The gift shop: teddy bears, balloons, and a lot of very soft things. Nobody\'s at the register.',
+      high: 'Way up on the top shelf, there\'s a stuffed shark with a little pouch tied to its fin. Way too high.',
+      after: 'The gift shop. There\'s a note at the register: "IOU one shark. -Nate"',
+      lines: [['Abe', 'A stuffed shark. With a pouch of REAL shark teeth on it.'], ['Nate', 'A Number One Ditch souvenir! ...I\'ll leave a note at the register.']],
+      *reward() { yield* S.bossStash(25, 'The pouch has {y}25 shark teeth{/} in it.'); },
+    },
   };
   G.abeReachCount = () => Object.keys(ABE_REACH).filter((id) => flags()['reach_' + id]).length + (flags().gardenOpen ? 1 : 0);
   const abeFollower = () => G.play.world.ents.find((e) => e instanceof G.Follower && e.id === 'abe' && !e.dead);
@@ -6800,7 +6840,7 @@
       for (const x of [17, 18]) shrub(sp.boxwood, x, 30, boxwood);
       // ---- cars: a silver Jeep in their driveway, the neighbors' black SUV, and two in the visitor spots
       const car = (img, tx, ty, h, dx, dy, solid, text) => w.addProp({ img, tx, ty, h, dx, dy, solid, hit: solid, talk: look(text) });
-      car(sp.condoCars.jeep, 32, 14, 2, 0, -3, [32, 14, 3, 2], 'A silver Jeep, parked in the driveway.');
+      car(sp.condoCars.jeep, 32, 14, 2, 0, -3, [32, 14, 3, 2], 'A silver Jeep, parked in the driveway.').talk = () => S.condoJeep();
       car(sp.condoCars.black, 24, 30, 3, 14, 0, [25, 31, 2, 2], 'The neighbors\' black SUV. Very shiny.');
       car(sp.condoCars.escape, 41, 10, 2, 6, -3, [41, 10, 3, 2], 'A black SUV in one of the visitor spots.');
       car(sp.condoCars.crv, 41, 17, 2, 6, -3, [41, 17, 3, 2], 'A blue SUV in a visitor spot. Somebody has company.');
@@ -6889,6 +6929,7 @@
     onEnter() {
       return (function* () {
         const f = flags();
+        if (f.romulusBeaten && G.state.party.includes('abe') && !f.healerTalk) { yield* S.abeHealer(); return; }
         if (f.condoArrived) return;
         f.condoArrived = true;
         if (P().x < 30 * 16) return;
@@ -7191,6 +7232,15 @@
 
   S.romulusTalk = function* (r) {
     const f = flags(), w = G.play.world;
+    if (G.with('hannah')) {
+      r.state = 'happy';
+      yield G.say('Hannah', 'Romulus! Hi, baby! Who\'s my good boy? WHO\'S my good boy?');
+      w.pop(r.x, r.y - 26, '*wag wag wag wag*', '#f8f8f0');
+      yield G.say('Nate', 'He LOVES her.');
+      yield G.say('Hannah', 'Of course he does. ...He\'s still giving YOU the side-eye, though.');
+      r.state = 'hide';
+      return;
+    }
     f.romLine = ((f.romLine || 0) + 1) % 4;
     if (G.with('doron') && f.romLine === 0) {
       r.state = 'happy';
@@ -7994,5 +8044,458 @@
       w.addWarp(9, 12, 1, 1, 'toroLoco', 11, 7, 'down');
     },
     tick(w) { if (w.heldBass) w.heldBass.base = w.lady.y + 1; },
+  };
+  // ================================================================ CHKD (Children's Hospital of The King's Daughters)
+  // The next level (the user's story): Abe says that to take on Father Eggmas they'll need a
+  // healer, and that's Hannah, a nurse in the NICU at CHKD. But Father Eggmas got there first:
+  // the whole hospital is hypnotized (spiral eyes), the babies crawl around after Nate, and a
+  // giant crib mobile hung over the NICU is doing it (the Hypno-Mobile, the boss). Hannah's
+  // work badge works the NICU elevator, and a teething baby has it in the playroom. Bring the
+  // mobile down, everyone wakes up, and Hannah joins the party as the healer.
+  // Flags: healerTalk, chkdArrived, chkdLobby, chkdWard, mobileBeaten (and items.badge).
+
+  // everyone at CHKD, hypnotized (spiral eyes) until the Hypno-Mobile comes down
+  G.CAST.chkdDad = { skin: '#e8b890', hair: '#3a2a20', hairStyle: 'cap', hat: '#c83030', hatStyle: 'ball', shirt: '#6a7a9a', sleeves: 'long', pants: '#3a4a6a', shoes: '#4a3428', torso: 7, legs: 3 };
+  G.CAST.chkdReception = { skin: '#c88a60', hair: '#2a1a14', hairStyle: 'long', shirt: '#d8a8e8', pants: '#3a3a44', shoes: '#2a2a2a', torso: 5, legs: 3, smile: '#ffffff' };
+  G.CAST.chkdGuard = { skin: '#8a5a3a', hair: '#1a1010', hairStyle: 'cap', hat: '#1c2c4c', hatStyle: 'ball', shirt: '#2a3a5a', pants: '#1c2434', shoes: '#1a1a1a', wide: true, torso: 7, legs: 3 };
+  G.CAST.chkdNurse = { skin: '#f0c8a8', hair: '#6a4028', hairStyle: 'shoulder', shirt: '#7ac8b8', pants: '#7ac8b8', shoes: '#f0f0f0', torso: 5, legs: 3, smile: '#ffffff' };
+  for (const id of ['chkdDad', 'chkdReception', 'chkdGuard', 'chkdNurse', 'hannah']) G.CAST[id + 'Hypno'] = Object.assign({}, G.CAST[id], { swirl: true, smile: null, blush: false });
+
+  CRITTER_LINES.baby = [
+    ['Nate', 'Is that a BABY? With SPIRAL EYES?'],
+    ['Nate', 'Father Eggmas hypnotized the BABIES?!'],
+    ['Nate', 'Okay. Okay. A little bonk on the noggin should snap them out of it. GENTLY.'],
+  ];
+  CRITTER_LINES.bassinet = [
+    ['Nate', 'A baby in a bassinet, doing laps down the hall. Who put WHEELS on that?'],
+    ['Nate', '...They always have wheels. They just never go THAT fast.'],
+  ];
+
+  // Back at the condo after the Romulus fight: Abe has a plan
+  S.abeHealer = function* () {
+    const f = flags();
+    f.healerTalk = true;
+    yield G.wait(30);
+    yield* S.callIn('abe');
+    yield G.say('Abe', 'Nate. If we\'re really going after Father Eggmas, we\'re going to get beat up. A LOT.');
+    yield G.say('Abe', 'We need a healer. Somebody who can patch us up.');
+    yield G.say('Nate', 'Like a nurse?');
+    yield G.say('Abe', 'Like HANNAH. She\'s a nurse in the NICU at CHKD. She\'d never let us go without her.');
+    yield G.say('Abe', '...She hasn\'t answered a single text all day, though. That\'s not like her.');
+    yield G.say('Nate', 'You don\'t think...');
+    yield G.say('Abe', 'Father Eggmas got to Dad. He got to Tyler. My Jeep\'s in the driveway. Let\'s go.');
+  };
+  // Abe's Jeep, in their driveway (and parked out front of CHKD)
+  S.condoJeep = function* () {
+    const f = flags();
+    if (!f.healerTalk) { yield G.say(null, 'A silver Jeep, parked in the driveway.'); return; }
+    if (!G.state.party.includes('abe')) { yield G.say(null, 'Abe\'s Jeep. Abe has the keys.'); return; }
+    yield* S.callIn('abe');
+    const c = yield G.ask('Abe', f.chkdArrived ? 'Back to CHKD?' : 'Hop in. CHKD?', ['Drive to CHKD', 'Not yet']);
+    if (c !== 0) return;
+    G.audio.sfx('door');
+    yield G.say(null, f.chkdArrived ? 'Abe drives back to CHKD.' : 'Abe drives. Fast. He doesn\'t say a word the whole way there.');
+    G.play.warp('chkd', 16, 21, 'up');
+  };
+  S.chkdJeep = function* () {
+    const c = yield G.ask('Abe', 'Head back to the condo?', ['Back to the condo', 'Stay']);
+    if (c !== 0) return;
+    G.audio.sfx('door');
+    G.play.warp('condo', 35, 16, 'left');
+  };
+
+  // ---------------------------------------------------------------- outside
+  S.chkdArrive = function* () {
+    const f = flags();
+    if (f.chkdArrived) return;
+    f.chkdArrived = true;
+    yield G.wait(30);
+    yield* S.callIn('abe');
+    yield G.say('Abe', 'CHKD. Hannah\'s up in the NICU.');
+    yield G.say('Nate', 'It\'s so quiet.');
+    yield G.say('Abe', 'It\'s a children\'s hospital. It is NEVER quiet.');
+    yield G.say('Nate', '...Is that guy okay?');
+  };
+  S.chkdDad = function* () {
+    const f = flags();
+    if (f.mobileBeaten) {
+      f.dadLine = ((f.dadLine || 0) + 1) % 2;
+      yield G.say('Visitor', ['I came out to get the car seat. That was this MORNING. Where did the day go?', 'My wife had a baby! A little girl! ...I should probably go back inside.'][f.dadLine]);
+      return;
+    }
+    yield G.say('Visitor', 'Must... find... the parking garage...');
+    yield G.say('Nate', 'His eyes are SPIRALS.');
+    if (G.with('abe')) yield G.say('Abe', 'Father Eggmas. He was here.');
+  };
+
+  // ---------------------------------------------------------------- the lobby
+  S.chkdLobbyEnter = function* () {
+    const f = flags();
+    if (f.chkdLobby || f.mobileBeaten) return;
+    f.chkdLobby = true;
+    yield G.wait(24);
+    yield G.say(null, 'Everybody in the lobby is standing perfectly still. Somewhere, a music box is playing.');
+    yield* S.callIn('abe');
+    yield G.say('Abe', 'The NICU is upstairs, and it\'s a locked unit. You need a staff badge to work the elevator.');
+    yield G.say('Nate', 'Where do we get one of those?');
+    yield G.say('Abe', 'Hannah has one. ...Hannah is upstairs.');
+  };
+  S.chkdReception = function* () {
+    const f = flags();
+    if (f.mobileBeaten) {
+      f.recLine = ((f.recLine || 0) + 1) % 2;
+      yield G.say('Receptionist', ['Welcome to CHKD! Oh my gosh, why is it dark out? Where did the DAY go?', 'Hannah? From the NICU? She\'s the best. The babies love her.'][f.recLine]);
+      return;
+    }
+    yield G.say('Receptionist', 'Welcome... to... CHKD...');
+    yield G.say('Receptionist', 'Visiting hours... are... forever...');
+  };
+  S.chkdGuard = function* () {
+    if (flags().mobileBeaten) { yield G.say('Security Guard', 'I was standing here ALL day? My feet hurt so bad.'); return; }
+    yield G.say('Security Guard', 'Upstairs... staff... only. Badge... please...');
+  };
+  S.chkdElevator = function* () {
+    const f = flags(), s = G.state;
+    if (!s.items.badge) {
+      yield G.say(null, 'The elevator. There\'s a badge reader next to the buttons: STAFF ONLY ABOVE THE LOBBY.');
+      if (!f.mobileBeaten) yield G.say('Security Guard', 'Badge... please...');
+      return;
+    }
+    if (!f.badgeUsed) { f.badgeUsed = true; yield G.say(null, 'Nate taps Hannah\'s badge on the reader. *beep* The light turns green.'); }
+    const c = yield G.ask('Nate', 'Take the elevator up to the NICU?', ['Up to the NICU', 'Stay']);
+    if (c !== 0) return;
+    G.audio.sfx('bell');
+    G.play.warp('chkdNicu', 7, 9, 'up');
+  };
+
+  // ---------------------------------------------------------------- the ward
+  S.chkdWardEnter = function* () {
+    const f = flags();
+    if (f.chkdWard || f.mobileBeaten) return;
+    f.chkdWard = true;
+    yield G.wait(20);
+    yield G.say(null, 'From down the hall, in the playroom: a happy little *chomp chomp chomp*.');
+  };
+  S.chkdNurse = function* () {
+    const f = flags();
+    if (f.mobileBeaten) { yield G.say('Nurse', 'Did I chart ANYTHING today? ...I charted the word "lullaby" four hundred times.'); return; }
+    yield G.say('Nurse', 'Hannah... dropped... her badge...');
+    yield G.say('Nurse', 'A baby... took it... to the... playroom...');
+  };
+  // the badge baby gets bonked: Hannah's badge!
+  S.badgeFound = function* (baby) {
+    const s = G.state;
+    s.items.badge = true;
+    yield G.wait(20);
+    G.audio.sfx('chest');
+    yield G.itemGet(G.spr.badgeIcon, 'You got {y}Hannah\'s Badge{/}!');
+    yield G.say('Nate', 'It\'s a little slobbery.');
+    if (G.with('abe')) {
+      yield G.say('Abe', 'That\'s HANNAH\'S badge. She\'d never just leave it lying around.');
+      yield G.say('Abe', 'The elevator in the lobby. Let\'s go.');
+    } else yield G.say('Nate', 'Hannah\'s badge! Back to the elevator in the lobby.');
+  };
+
+  // ---------------------------------------------------------------- the NICU: the Hypno-Mobile
+  S.nicuEnter = function* () {
+    const f = flags(), w = G.play.world, p = P(), m = w.mobile, h = w.hannahNpc;
+    if (f.mobileBeaten || !m) return;
+    yield G.wait(30);
+    yield G.camFocus(h.x, h.y - 10, 40);
+    yield G.say(null, 'It\'s dim and quiet. Rows of isolettes, monitors blinking. And in the middle of it all, rocking an isolette and humming...');
+    yield* S.callIn('abe');
+    yield G.say('Abe', 'HANNAH!');
+    h.dir = 'down';
+    yield G.wait(20);
+    yield G.say('Hannah', 'Shhhhh. The babies are sleeping.');
+    yield G.say('Hannah', 'Visiting hours... are... over...');
+    yield G.say('Nate', 'Her eyes are spirals.');
+    yield G.camFocus(m.x, m.y - 80, 40);
+    yield G.say(null, 'Over her head, a giant mobile turns slowly: little eggs with faces, stars, and a spiral glowing in the middle.');
+    yield G.say('Nate', 'Is that... a tiny Father Eggmas? Hanging in the middle?');
+    yield G.say('Abe', 'That thing is what\'s doing it. Listen. The lullaby.');
+    yield G.say('Nate', 'Then let\'s turn it OFF.');
+    yield G.camFocus(null, null, 30);
+    yield G.say(null, 'The mobile is up out of reach. When it dips low to spin, bonk it!');
+    m.start();
+    yield G.banner('THE HYPNO-MOBILE', 'a lullaby you can\'t refuse', 150);
+    G.audio.play('mobile');
+  };
+  S.mobileDefeated = function* (m) {
+    const f = flags(), w = G.play.world, p = P(), h = w.hannahNpc, s = G.state;
+    G.audio.stop();
+    for (const e of w.ents) if (e instanceof G.HypnoShot || e instanceof G.LullabyNote || e instanceof G.BarkRing) e.dead = true;
+    for (const e of w.ents) if (e instanceof G.HypnoBaby && !e.dead) { e.dead = true; w.burst(e.x, e.y - 8, ['#f8f8f0', '#a85ae8'], 6); }
+    G.play.earworm = 0;
+    yield G.wait(20);
+    // the mobile comes crashing down, and the tiny Father Eggmas doll drops out of it
+    for (let i = 0; i < 4; i++) { G.audio.sfx('clank'); G.play.shake(10, 2); w.burst(m.x + (Math.random() * 40 - 20), m.y - 30, ['#f2ead6', '#f8e070', '#a85ae8', '#c8a050'], 10, { speed: 1.8, up: 1, g: 0.1, life: 28, size: 2 }); yield G.wait(14); }
+    m.hidden = true; m.dead = true;
+    G.audio.sfx('boom');
+    w.burst(m.x, m.y - 10, ['#f2ead6', '#f8e070', '#a85ae8', '#f8f8f8'], 24, { speed: 2.2, up: 1.4, g: 0.1, life: 32, size: 3 });
+    const doll = { img: G.spr.eggmas, x: m.x - 9, y: m.y - 22, base: m.y, draw(ctx, cx, cy) { ctx.drawImage(this.img, Math.round(this.x) - cx, Math.round(this.y) - cy, 18, 22); } };
+    w.props.push(doll);
+    yield G.wait(40);
+    yield G.say(null, 'The little Father Eggmas doll drops to the floor. It\'s just a doll.');
+    yield G.say(null, '...It\'s still smiling.');
+    f.mobileBeaten = true;
+    yield G.wait(30);
+    // the spell breaks: the babies yawn, and Hannah blinks
+    G.audio.sfx('heart');
+    for (const iso of w.isolettes || []) w.pop(iso.x, iso.y, ['*yawn*', '*coo*', '*hic*'][Math.floor(Math.random() * 3)], '#f8c8e8');
+    yield G.wait(40);
+    h.sprite = 'hannah';
+    w.burst(h.x, h.y - 20, ['#f8f8f8', '#f8e070'], 10, { speed: 1, life: 20, size: 2 });
+    yield G.wait(20);
+    yield G.say('Hannah', '...Abe?');
+    if (G.with('abe')) {
+      const abe = w.ents.find((e) => e instanceof G.Follower && e.id === 'abe');
+      if (abe) { abe.hold = true; yield G.walkTo(abe, h.x + 18, h.y + 6, 1.4); abe.dir = 'left'; }
+    }
+    yield G.say('Abe', 'Hannah! Are you okay?');
+    yield G.say('Hannah', 'Why are you in my NICU? Why is NATE in my NICU?');
+    yield G.say('Nate', 'Father Eggmas hypnotized the whole hospital. You\'ve been rocking that isolette all day.');
+    yield G.say('Hannah', '...That isolette is EMPTY.');
+    yield G.say('Hannah', 'Wait. Father Eggmas? The egg man from the family group chat? That\'s REAL?');
+    yield G.say('Nate', 'Very real. He\'s at the Number One Ditch. And we\'re going after him.');
+    yield G.say('Abe', 'And we need a healer.');
+    yield G.say('Hannah', 'He hypnotized my BABIES.');
+    yield G.say('Hannah', '...Let me get my bag.');
+    const fol = w.ents.find((e) => e instanceof G.Follower && e.id === 'abe');
+    if (fol) fol.hold = false;
+    if (!s.party.includes('hannah')) s.party.push('hannah');
+    G.audio.sfx('fanfare');
+    yield G.banner('HANNAH JOINED THE PARTY!', 'She\'s a nurse. She\'ll keep you alive.', 220);
+    h.dead = true;
+    w.hannahNpc = null;
+    G.play.setFollower('hannah', true);
+    yield G.say(null, 'With Hannah along, she patches Nate up when he\'s low on hearts. Talk to her for a checkup any time.');
+    yield G.say('Hannah', 'My charge nurse is going to KILL me. ...She\'s hypnotized too, isn\'t she. She\'ll never know.');
+    G.audio.play('house');
+    G.play.autosave();
+  };
+
+  // ---------------------------------------------------------------- Hannah, the healer
+  // When she's the one following Nate and he's down to two hearts or less, she patches him up
+  // (two hearts back, then she needs about 20 seconds before she can do it again).
+  G.hannahTick = () => {
+    const s = G.state, pl = G.play;
+    if (pl.healCd > 0) { pl.healCd--; return; }
+    if (!G.with('hannah') || s.hp > 4 || s.hp <= 0 || s.hp >= s.maxHp || pl.dying) return;
+    pl.healCd = 1200;
+    s.hp = Math.min(s.maxHp, s.hp + 4);
+    G.audio.sfx('heart');
+    const p = pl.player, w = pl.world;
+    w.pop(p.x, p.y - 34, 'Hannah: Hold still!', '#c898ff');
+    w.burst(p.x, p.y - 14, ['#f86868', '#ffffff', '#f8a8c8'], 10, { speed: 1, up: 0.8, life: 22, size: 2 });
+  };
+  // talking to her: a checkup (all hearts back, when nothing's attacking)
+  S.hannahCheckup = function* () {
+    const f = flags(), s = G.state, w = G.play.world, p = P();
+    const fighting = w.ents.some((e) => e.enemy && !e.dead && !e.hidden && e.state !== 'defeated' && Math.hypot(e.x - p.x, e.y - p.y) < 140);
+    if (s.hp < s.maxHp && !fighting) {
+      s.hp = s.maxHp;
+      G.audio.sfx('heart');
+      w.burst(p.x, p.y - 14, ['#f86868', '#ffffff', '#f8a8c8'], 12, { speed: 1, up: 0.8, life: 22, size: 2 });
+      yield G.say('Hannah', ['Let me see. ...Okay, you\'ll live. Drink some water.', 'Hold still. Hold STILL. There. Good as new.', 'You\'re the worst patient I\'ve ever had. And I work with babies.'][(f.checkup = ((f.checkup || 0) + 1) % 3)]);
+      return;
+    }
+    f.talk_hannah = ((f.talk_hannah || 0) + 1) % 4;
+    yield G.say('Hannah', [
+      'Romulus is home alone. He\'s fine. He\'s FINE.',
+      'Abe, did you bring snacks? You always bring snacks.',
+      'If you get hurt, tell me. Don\'t be a hero. Be a patient.',
+      'I can\'t believe he hypnotized the BABIES. Father Eggmas is going DOWN.',
+    ][f.talk_hannah]);
+  };
+
+  // ---------------------------------------------------------------- the maps
+  // Outside (from the user's photo): the building across the top, the plaza with the painted
+  // blue and yellow swirls, red ball bollards, yellow benches and the bronze kids, the flag,
+  // the striped canopy over the drop-off, and the street (Abe parks the Jeep at the curb).
+  G.MAPS.chkd = {
+    name: 'CHKD',
+    get music() { return flags().mobileBeaten ? 'home' : 'hospital'; },
+    tiles() {
+      const W = 40, H = 26;
+      const g = Array.from({ length: H }, () => Array(W).fill('C'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(0, 20, W, 6, 'a');          // the streets
+      fill(32, 14, 8, 6, 'a');         // the lot by the drop-off
+      fill(1, 12, 11, 3, '<');         // the bed along the left wing
+      fill(23, 13, 8, 4, '<');         // the garden with the statues
+      fill(0, 11, 2, 9, '.'); fill(38, 11, 2, 3, '.');
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr, f = flags();
+      // the painted ground: the blue swoosh up to the doors, the yellow ring around the garden, the
+      // red brick crosswalk and the white one
+      w.props.push({
+        img: null, x: 0, y: 0, flat: true, base: 0,
+        draw(ctx, cx, cy) {
+          ctx.save(); ctx.translate(-cx, -cy);
+          ctx.lineCap = 'round';
+          ctx.strokeStyle = '#3a8ad8'; ctx.lineWidth = 26;
+          ctx.beginPath(); ctx.moveTo(3 * 16, 18 * 16); ctx.quadraticCurveTo(12 * 16, 18 * 16, 19 * 16 + 8, 12 * 16); ctx.quadraticCurveTo(25 * 16, 19 * 16, 31 * 16, 18.4 * 16); ctx.stroke();
+          ctx.strokeStyle = '#f0c830'; ctx.lineWidth = 10;
+          ctx.beginPath(); ctx.ellipse(27 * 16, 15 * 16, 5.4 * 16, 2.8 * 16, 0, 0, Math.PI * 2); ctx.stroke();
+          ctx.fillStyle = '#a84a3a'; ctx.fillRect(0, 20 * 16 + 4, 13 * 16, 20);
+          ctx.fillStyle = '#c86a58'; for (let x = 0; x < 13 * 16; x += 8) ctx.fillRect(x, 20 * 16 + 4, 1, 20);
+          ctx.fillStyle = '#f4f4f0'; for (let x = 26 * 16; x < 39 * 16; x += 12) ctx.fillRect(x, 22 * 16, 7, 26);
+          ctx.fillStyle = '#c8c8c0'; ctx.fillRect(0, 20 * 16 - 2, w.pw, 3);
+          ctx.restore();
+        },
+      });
+      // the building
+      w.addProp({ img: sp.chkdFront, tx: 2, ty: 0, h: 11 });
+      w.blockTiles(2, 0, 36, 11);
+      for (const x of [18, 19, 20]) w.block[10 * w.w + x] = 0;
+      w.addWarp(18, 10, 3, 1, 'chkdLobby', 11, 12, 'up');
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [2 * 16, 9 * 16, 17 * 16, 11 * 16], talk: look('Children\'s Hospital of The King\'s Daughters. The windows are dark, and nothing is moving inside.') });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [21 * 16, 9 * 16, 30 * 16, 11 * 16], talk: look('Giant alphabet blocks over the entrance: a red cross, then C, H, K, D.') });
+      // the striped canopy over the drop-off (on posts)
+      w.addProp({ img: sp.chkdCanopy, tx: 30, ty: 11, h: 3, base: 14 * 16 + 8 });
+      for (const x of [30, 34, 38]) w.blockTiles(x, 13, 1, 1);
+      // the plaza: the flag, a lamp, the bronze kids, yellow benches, red ball bollards, shrubs
+      w.addProp({ img: sp.chkdFlag, tx: 24, ty: 12, dx: -2, solid: [24, 12, 1, 1], hit: [24, 12, 1, 1], talk: look('The flag, flying out front.') });
+      for (const x of [15, 22]) w.addProp({ img: sp.chkdLamp, tx: x, ty: 13, dx: 0, solid: [x, 13, 1, 1] });
+      w.addProp({ img: sp.kidStatues, tx: 25, ty: 14, h: 2, dx: 4, solid: [25, 15, 3, 1], hit: [25, 14, 3, 2], talk: look('Bronze statues of kids playing, with a little dog. Somebody put a knit cap on the dog.') });
+      for (const [x, y] of [[4, 15], [21, 13]]) w.addProp({ img: sp.yellowBench, tx: x, ty: y, solid: [x, y, 2, 1], hit: [x, y, 2, 1], talk: look('A big yellow bench, like a pill. Or a jellybean.') });
+      for (const [x, y] of [[8, 18], [12, 18], [16, 18], [23, 18], [28, 18], [31, 17]]) w.addProp({ img: sp.redBall, tx: x, ty: y, dx: 1, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: look('A giant red ball. It is not a toy. It is very much a bollard.') });
+      const shrub = (x, y) => w.addProp({ img: sp.boxwood, tx: x, ty: y, dx: Math.round((16 - sp.boxwood.width) / 2), solid: [x, y, 1, 1] });
+      for (const [x, y] of [[2, 12], [5, 12], [8, 12], [11, 12], [3, 14], [9, 14], [23, 13], [30, 15], [24, 16]]) shrub(x, y);
+      w.addTree(0, 11); w.addTree(38, 11, 'pine');
+      // cars: Abe's Jeep at the curb, and two in the lot by the drop-off
+      w.addProp({ img: sp.condoCars.jeep, tx: 12, ty: 21, h: 2, dy: -3, solid: [12, 21, 3, 2], hit: [12, 21, 3, 2], talk: () => S.chkdJeep() });
+      for (const [img, x, y] of [[sp.chkdCars.red, 33, 15], [sp.chkdCars.white, 36, 18]]) w.addProp({ img, tx: x, ty: y, h: 2, dy: -3, solid: [x, y, 3, 2], hit: [x, y, 3, 2], talk: look('A car in the lot. Parked. Very, very crooked.') });
+      // a hypnotized dad with a car seat, wandering the plaza
+      w.add(new G.NPC({ sprite: f.mobileBeaten ? 'chkdDad' : 'chkdDadHypno', name: 'Visitor', x: 17 * 16 + 8, y: 16 * 16 + 12, dir: 'down', wander: f.mobileBeaten ? 0 : 40, held: sp.carSeat, heldAt: [8, 8], talk: S.chkdDad }));
+      // the street goes on (left and right)
+      for (const x of [0, w.w - 1]) w.addTrigger(x, 20, 1, 6, () => G.script.run((function* () { const p = P(); yield G.say('Nate', 'Not without the Jeep. Abe parked it at the curb.'); yield G.walkTo(p, p.x + (p.x < 100 ? 18 : -18), p.y, 1); })()));
+    },
+    onEnter() { return S.chkdArrive(); },
+  };
+
+  // The lobby: elevators (a badge reader for the floors above), the information desk, a big
+  // fish tank, a giant teddy, rows of little chairs, the alphabet blocks again, the gift shop.
+  const CF = 'é', CW = 'á', PM = 'í', NW = 'ú', NF = 'ü';
+  G.MAPS.chkdLobby = {
+    name: 'CHKD: the Lobby',
+    get music() { return flags().mobileBeaten ? 'house' : 'hospital'; },
+    tiles() {
+      const W = 24, H = 14;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 22, 2, CW);
+      fill(1, 3, 22, 10, CF);
+      fill(23, 6, 1, 2, CF);                                    // the hallway east, to the ward
+      fill(1, 13, 10, 1, 'G'); fill(12, 13, 11, 1, 'G'); g[13][11] = 'x';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr, f = flags(), awake = !!f.mobileBeaten;
+      // the elevators, with the badge reader between them, and the guard in front
+      F.hang(sp.elevatorDoors, 2, 2, 2, () => S.chkdElevator(), 0);
+      F.hang(sp.elevatorDoors, 5, 2, 2, () => S.chkdElevator(), 0);
+      F.hang(sp.elevatorButtons, 4, 2, 1, () => S.chkdElevator(), 8);
+      w.add(new G.NPC({ sprite: awake ? 'chkdGuard' : 'chkdGuardHypno', name: 'Security Guard', x: 4 * 16 + 8, y: 4 * 16 + 12, dir: 'down', talk: S.chkdGuard }));
+      // the fish tank, the information desk (talk across it), the block sculpture
+      F.hang(sp.fishTank, 8, 2, 3, look('A big fish tank. The fish are swimming in slow, perfect circles. ...Even the FISH?'), 2);
+      F.stand(sp.receptionDesk, 13, 4, 4, () => S.chkdReception());
+      w.add(new G.NPC({ sprite: awake ? 'chkdReception' : 'chkdReceptionHypno', name: 'Receptionist', x: 14 * 16 + 16, y: 3 * 16 + 12, dir: 'down', talk: S.chkdReception }));
+      F.stand(sp.blockStack, 19, 4, 3, look('The alphabet blocks again: C, H, K, and a red cross on top.'));
+      // seats, the teddy, the gift shop, plants
+      for (const y of [7, 10]) F.stand(sp.kidChairs, 7, y, 3, look('Little chairs in red, blue, yellow and green.'));
+      F.stand(sp.bigTeddy, 2, 9, 1, look('A giant teddy bear in a red bow tie. He\'s seen a lot.'));
+      F.stand(sp.giftShop, 18, 10, 3, () => S.abeReach('giftShop'));
+      for (const [x, y] of [[1, 3], [22, 3], [22, 12]]) F.stand(sp.monstera, x, y, 1, look('A big potted plant.'));
+      // babies (until the Hypno-Mobile comes down)
+      if (!awake) for (const [x, y, k] of [[12, 8, 'blue'], [16, 9, 'pink'], [5, 11, 'tan']]) w.add(new G.HypnoBaby(x * 16 + 8, y * 16 + 12, k));
+      w.addWarp(23, 6, 1, 2, 'chkdWard', 1, 7, 'right');
+      w.addWarp(11, 13, 1, 1, 'chkd', 19, 11, 'down');
+    },
+    onEnter() { return S.chkdLobbyEnter(); },
+  };
+
+  // The ward: a long hallway of patient rooms, the nurses' station, bassinets racing up and
+  // down, and the playroom at the end (foam mats, a ball pit, a toy kitchen, a rocking horse),
+  // where the badge baby is teething on Hannah's badge.
+  G.MAPS.chkdWard = {
+    name: 'CHKD: the Ward',
+    get music() { return flags().mobileBeaten ? 'house' : 'hospital'; },
+    tiles() {
+      const W = 36, H = 13;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 24, 2, CW); fill(1, 3, 24, 9, CF);
+      fill(26, 1, 9, 2, CW); fill(26, 3, 9, 9, PM);
+      fill(25, 5, 1, 3, CF);                                    // the doorway into the playroom
+      fill(0, 6, 1, 2, CF);                                     // back to the lobby
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr, f = flags(), s = G.state, awake = !!f.mobileBeaten;
+      // patient rooms along the hall (quiet: everybody inside is asleep)
+      [3, 7, 11, 15, 19, 23].forEach((x, i) => F.hang(sp.roomDoors[i % 4], x, 2, 1, look(['A patient room. A kid is fast asleep in there, snoring.', 'A patient room. A cartoon is playing to nobody.', 'A patient room. Somebody drew a dinosaur on the whiteboard. It has spiral eyes.'][i % 3]), 0));
+      // the nurses' station, with a nurse behind it
+      F.stand(sp.nurseStation, 10, 6, 5, () => S.chkdNurse());
+      w.add(new G.NPC({ sprite: awake ? 'chkdNurse' : 'chkdNurseHypno', name: 'Nurse', x: 12 * 16 + 8, y: 5 * 16 + 12, dir: 'down', talk: S.chkdNurse }));
+      F.stand(sp.ivPole, 2, 3, 1, look('An IV pole.'));
+      F.stand(sp.ivPole, 18, 3, 1, look('Another IV pole. They\'re everywhere.'));
+      F.stand(sp.crashCart, 5, 11, 1, look('A crash cart. Nate does not touch the crash cart.'));
+      F.stand(sp.wheelchair, 21, 11, 1, look('A wheelchair. Somebody left a stuffed giraffe in it.'));
+      // the playroom
+      for (const [x, y] of [[26, 1], [30, 1], [33, 1]]) F.hang(sp.roomDoors[(x >> 1) % 4], x, 2, 1, null, 0);
+      w.addProp({ img: sp.ballPit, tx: 27, ty: 3, h: 2, solid: [27, 3, 3, 2], hit: [27, 3, 3, 2], talk: look('A ball pit. Nate has never wanted anything more in his life. Focus, Nate.') });
+      F.stand(sp.toyKitchen, 32, 3, 2, look('A little play kitchen. There\'s a plastic egg in the frying pan. Huh.'));
+      F.stand(sp.rockingHorse, 28, 9, 1, look('A rocking horse. It\'s rocking. Nobody\'s on it.'));
+      for (const [x, y] of [[33, 9], [26, 11]]) F.stand(sp.blockTower, x, y, 1, look('A tower of blocks.'));
+      F.stand(sp.kidChairs, 30, 11, 3, look('Little chairs.'));
+      // babies: crawling, and bassinets racing down the hall (and the badge baby, in the playroom)
+      if (!awake) {
+        for (const [x, y, k] of [[6, 9, 'pink'], [17, 8, 'brown'], [22, 4, 'blue'], [29, 7, 'tan']]) w.add(new G.HypnoBaby(x * 16 + 8, y * 16 + 12, k));
+        w.add(new G.BassinetBaby(4 * 16, 9 * 16 + 12, 1));
+        w.add(new G.BassinetBaby(20 * 16, 4 * 16 + 12, -1));
+      }
+      if (!s.items.badge) w.add(new G.HypnoBaby(31 * 16, 7 * 16 + 12, 'blue', { badge: true, intro: null, onBonk: () => G.script.run(S.badgeFound()) }));
+      w.addWarp(0, 6, 1, 2, 'chkdLobby', 22, 6, 'left');
+    },
+    onEnter() { return S.chkdWardEnter(); },
+  };
+
+  // The NICU: dim and quiet, rows of isolettes with monitors blinking, glider rockers, Hannah in
+  // the middle rocking an empty isolette, and the Hypno-Mobile turning over her head.
+  G.MAPS.chkdNicu = {
+    name: 'CHKD: the NICU',
+    get music() { return flags().mobileBeaten ? 'house' : 'hospital'; },
+    // (small enough that the whole room, and the mobile, fit on the screen during the fight)
+    tiles() {
+      const W = 16, H = 11;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 14, 2, NW); fill(1, 3, 14, 7, NF);
+      g[10][7] = 'x';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr, f = flags();
+      F.hang(sp.nicuDoors, 10, 2, 2, look('The doors to the rest of the NICU. Through the windows: more isolettes, and a lot of sleeping babies.'), 0);
+      // isolettes along the back wall, monitors, glider rockers
+      w.isolettes = [];
+      const iso = (x, y, kind) => { F.stand(sp.isolettes[kind], x, y, 2, look('An isolette. A tiny baby is sleeping inside, swaddled up tight.')); w.isolettes.push({ x: (x + 1) * 16, y: y * 16 - 10 }); };
+      iso(1, 3, 'blue'); iso(4, 3, 'pink'); iso(12, 3, 'mint'); iso(13, 6, 'pink'); iso(1, 6, 'mint');
+      F.stand(sp.vitalsMonitor, 3, 3, 1, look('A monitor. A steady little heartbeat. Beep. Beep. Beep.'));
+      F.stand(sp.vitalsMonitor, 14, 3, 1, look('A monitor. Beep. Beep. Beep.'));
+      for (const [x, y] of [[1, 9], [14, 9]]) F.stand(sp.glider, x, y, 1, look('A glider rocker, for feeding time.'));
+      // Hannah's empty isolette, in the middle
+      F.stand(sp.isolettes.blue, 7, 3, 2, look('An isolette. It\'s empty. Hannah was rocking it anyway.'));
+      if (!f.mobileBeaten) {
+        w.hannahNpc = w.add(new G.NPC({ sprite: 'hannahHypno', name: 'Hannah', x: 8 * 16, y: 4 * 16 + 14, dir: 'up', talk: function* () { yield G.say('Hannah', 'Shhhhh...'); } }));
+        w.mobile = w.add(new G.HypnoMobile(8 * 16, 7 * 16, { x0: 3 * 16 + 8, y0: 5 * 16 + 10, x1: 12 * 16 + 8, y1: 9 * 16 + 8 }));
+      }
+      w.addWarp(7, 10, 1, 1, 'chkdLobby', 3, 4, 'down');
+    },
+    onEnter() { return S.nicuEnter(); },
   };
 })();

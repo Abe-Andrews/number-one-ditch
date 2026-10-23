@@ -471,6 +471,8 @@
       if (this.siftCool > 0) this.siftCool--;
       if (this.earworm > 0 && !G.script.busy) this.earworm--;
       if (this.whiteout > 0) this.whiteout -= 0.03;
+      // Hannah (a nurse) patches Nate up when he's low
+      if (G.hannahTick && !G.script.busy && !this.warping && !this.menu) G.hannahTick();
 
       if (this.menu) {
         if (this.menu.update()) this.menu = null;
