@@ -112,6 +112,9 @@
     '\u00ed': { k: 'playMat' },
     '\u00fa': { k: 'faceNicu', solid: true, edge: true },
     '\u00fc': { k: 'nicuFloor' },
+    // the Number One Ditch (the finale)
+    '\u00e7': { k: 'ditchBed' },
+    '\u00ea': { k: 'bankFace', solid: true, edge: true },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 

@@ -354,10 +354,11 @@
     { id: 'peace', name: 'Peace Be With You', seq: ['up', 'down', 'up'], known: () => !!fl().signal_peace, effect: () => G.SCRIPTS.signalPeace() },
     { id: 'icy', name: 'I Pray to Jesus', seq: ['left', 'right', 'up'], known: () => !!fl().signal_icy, effect: () => G.SCRIPTS.signalIcy() },
     { id: 'jlc', name: 'Jamie Lee Curtis', seq: ['right', 'left', 'right'], known: () => !!fl().signal_jlc, effect: () => G.SCRIPTS.signalJlc() },
-    // TODO (with the Abe chapter / Father Eggmas boss fight): "Nice Crack" (down, down, left),
-    // taught by Abe when he joins ("Nice crack, Abe!"). Cracks marked walls and boulders to
-    // open secret spots, and cracks Father Eggmas's shell in the finale. Keep any new song's
-    // arrows from containing another song's arrows, or one will fire while puffing the other.
+    // "Nice Crack" (down, down, left): Abe teaches it in the finale, once he's free ("Nice
+    // crack, Abe!" was Lily, in cooking class). It cracks Father Eggmas's shell when he's down.
+    // (Keep any new song's arrows from containing another song's arrows, or one will fire
+    // while puffing the other.)
+    { id: 'crack', name: 'Nice Crack', seq: ['down', 'down', 'left'], known: () => !!fl().signal_crack, effect: () => G.SCRIPTS.signalCrack() },
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
@@ -636,6 +637,34 @@
       tracks: [
         { wave: 'triangle', vol: 0.09, notes: 'A5:2 E5:2 C5:2 | B4:2 E5:2 A4:2 | C5:2 B4:2 A4:2 | G#4:6 | A4:2 C5:2 E5:2 | F5:2 E5:2 D5:2 | C5:2 B4:2 G#4:2 | A4:6' },
         { wave: 'triangle', vol: 0.11, notes: 'A2:6 | E2:6 | F2:6 | E2:6 | A2:6 | D3:6 | E2:6 | A2:6' },
+      ],
+    },
+    // the finale (all original): the family, possessed (the home theme, in a minor key and
+    // driving), Father Eggmas (the title theme, twisted into a minor key), and the family
+    // turning it around (the title theme, heroic)
+    possessed: {
+      bpm: 150,
+      tracks: [
+        { wave: 'square', vol: 0.05, notes: 'A#4:4 D5:4 G5:6 F#5:2 | D#5:4 D5:4 A#4:8 | C5:4 D#5:4 A5:6 G5:2 | F#5:12 R:4 | A#4:4 D5:4 G5:6 A#5:2 | A5:4 G5:4 D#5:8 | C5:4 A#4:4 A4:4 D5:4 | G4:12 R:4' },
+        { wave: 'sawtooth', vol: 0.055, notes: 'G2:2 G2:2 G3:2 G2:2 G2:2 G2:2 D3:2 G2:2 | D#2:2 D#2:2 D#3:2 D#2:2 D#2:2 D#2:2 A#2:2 D#2:2 | C2:2 C2:2 C3:2 C2:2 C2:2 C2:2 G2:2 C2:2 | D2:2 D2:2 D3:2 D2:2 D2:2 D2:2 F#2:2 A2:2 | G2:2 G2:2 G3:2 G2:2 G2:2 G2:2 D3:2 G2:2 | C2:2 C2:2 C3:2 C2:2 D#2:2 D#2:2 D#3:2 D#2:2 | C2:2 C2:2 D2:2 D2:2 D2:2 D2:2 D3:2 D2:2 | G2:2 D2:2 G2:2 A#2:2 G2:8' },
+        { wave: 'noise', vol: 0.055, notes: 'k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 s:2 s:2 s:2 | k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 k:2 s:4 | k:4 s:4 k:2 k:2 s:4 | k:2 k:2 s:2 k:2 s:2 s:2 s:2 s:2' },
+      ],
+    },
+    eggmas: {
+      bpm: 176,
+      tracks: [
+        { wave: 'square', vol: 0.05, notes: 'G4:4 C5:4 D#5:6 D5:2 | C5:4 G#4:4 G4:8 | G#4:4 C5:4 F5:6 D#5:2 | D5:12 R:4 | G4:4 C5:4 D#5:6 G5:2 | G#5:4 G5:4 D#5:8 | F5:4 D#5:4 D5:4 B4:4 | C5:12 R:4' },
+        { wave: 'sawtooth', vol: 0.06, notes: 'C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 | G#1:2 G#2:2 G#1:2 G#2:2 G#1:2 G#2:2 G#1:2 G#2:2 | F1:2 F2:2 F1:2 F2:2 F1:2 F2:2 F1:2 F2:2 | G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 B1:2 D2:2 | C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 | G#1:2 G#2:2 G#1:2 G#2:2 G#1:2 G#2:2 G#1:2 G#2:2 | F1:2 F2:2 F1:2 F2:2 G1:2 G2:2 G1:2 G2:2 | C2:2 C3:2 C2:2 C3:2 C2:8' },
+        { wave: 'noise', vol: 0.06, notes: 'k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 s:2 s:2 s:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 s:2 k:2 s:2 s:2 s:2 s:2 s:2' },
+      ],
+    },
+    relay: {
+      bpm: 164,
+      tracks: [
+        { wave: 'square', vol: 0.05, notes: 'G4:4 C5:4 E5:6 D5:2 | C5:4 A4:4 G4:8 | A4:4 C5:4 F5:6 E5:2 | D5:12 R:4 | G4:4 C5:4 E5:6 G5:2 | A5:4 G5:4 E5:8 | F5:4 E5:4 D5:4 B4:4 | C5:12 R:4' },
+        { wave: 'triangle', vol: 0.12, notes: 'E4:8 G4:8 | E4:8 E4:8 | F4:8 A4:8 | G4:8 B4:8 | E4:8 G4:8 | F4:8 C5:8 | A4:8 G4:8 | E4:12 R:4' },
+        { wave: 'sawtooth', vol: 0.05, notes: 'C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 | A1:2 A2:2 A1:2 A2:2 A1:2 A2:2 A1:2 A2:2 | F1:2 F2:2 F1:2 F2:2 F1:2 F2:2 F1:2 F2:2 | G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 G1:2 G2:2 | C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 C2:2 C3:2 | F1:2 F2:2 F1:2 F2:2 F1:2 F2:2 F1:2 F2:2 | F1:2 F2:2 F1:2 F2:2 G1:2 G2:2 G1:2 G2:2 | C2:2 C3:2 C2:2 C3:2 C2:8' },
+        { wave: 'noise', vol: 0.055, notes: 'k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 s:2 s:2 s:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 h:2 s:2 h:2 k:2 k:2 s:2 h:2 | k:2 s:2 k:2 s:2 s:2 s:2 s:2 s:2' },
       ],
     },
     // MECHA-BABY: the lullaby, turned into a stomping robot march (original)
@@ -3132,6 +3161,9 @@
     { name: 'Abe joined: his reach', map: 'condo', at: [16, 13, 'right'], flags: { romulusBeaten: true }, party: ['abe'], follower: 'abe' },
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'], flags: { healerTalk: true, chkdArrived: true } },
     { name: 'CHKD: MECHA-BABY (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
+    { name: 'FINALE: the Number One Ditch', map: 'ditchFinal', at: [7, 17, 'up'], flags: { mobileBeaten: true }, party: ['abe', 'hannah'], items: { pipe: true, hammer: true }, maxHp: 12 },
+    { name: 'FINALE: Eggmas, the relay', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_intro: true, fin_freed: 6, fin_relay: 0, signal_crack: true } },
+    { name: 'FINALE: Nate\'s turn', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_relay: 6 } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -3167,6 +3199,7 @@
     { name: 'The golf course (Romulus)', map: 'golf', at: [20, 26, 'up'] },
     { name: 'El Toro Loco (outside)', map: 'toroLoco', at: [11, 8, 'up'] },
     { name: 'CHKD (outside)', map: 'chkd', at: [16, 21, 'up'] },
+    { name: 'The Number One Ditch (finale)', map: 'ditchFinal', at: [7, 17, 'up'] },
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'] },
     { name: 'CHKD: the ward', map: 'chkdWard', at: [1, 7, 'right'] },
     { name: 'CHKD: the NICU', map: 'chkdNicu', at: [7, 9, 'up'] },
@@ -8527,5 +8560,596 @@
       w.addWarp(7, 10, 1, 1, 'chkdLobby', 3, 4, 'down');
     },
     onEnter() { return S.nicuEnter(); },
+  };
+  // ================================================================ THE FINALE: the Number One Ditch
+  // (The user's design; not connected to the story yet: get here with the admin checkpoints.)
+  // Father Eggmas sits on a throne of egg cartons at the culvert end of the ditch. He
+  // possesses the whole family, and Nate has to fight them one at a time, in order: Doron,
+  // Dad, Lily, Mom, Abe, Hannah. Each one, freed, hugs him (a heart back) and sits on the bank;
+  // Abe teaches him Nice Crack on Dad's pipe; Hannah patches him all the way up. Then the
+  // relay: every one of them takes a turn against Father Eggmas with their own move (Doron
+  // throws rocks, Dad shouts EEENGLISH, Lily says "No.", Mom fires Henrietta's eggs, Abe
+  // reaches up and bonks him (and Lily: "Nice crack, Abe!"), Hannah throws ice packs), and
+  // Nate goes last: egg tennis, then Nice Crack.
+  // Flags: fin_intro, fin_freed (0-6), fin_relay (whose turn, 0-6), fin_done, signal_crack.
+  const FIN_ORDER = ['doron', 'dad', 'lily', 'michelle', 'abe', 'hannah'];
+  const FIN_NAME = { nate: 'Nate', doron: 'Doron', dad: 'Dad', lily: 'Lily', michelle: 'Michelle', abe: 'Abe', hannah: 'Hannah' };
+  const FIN_TITLE = { nate: 'NATE', doron: 'DORON', dad: 'DAD', lily: 'LILY', michelle: 'MOM', abe: 'ABE', hannah: 'HANNAH' };
+  // where everybody sits on the banks once they're free (tiles); the lineup by the throne
+  const FIN_SEAT = { doron: [0, 6], dad: [0, 9], lily: [0, 12], nate: [0, 15], michelle: [14, 6], abe: [14, 9], hannah: [14, 12] };
+  const FIN_LINE = { doron: [3, 7], dad: [4.2, 7.8], lily: [5.4, 8.4], michelle: [9.6, 8.4], abe: [10.8, 7.8], hannah: [12, 7] };
+  // (the bottom of the ditch stays clear of the boss's health bar)
+  const FIN_BOUNDS = { x0: 2 * 16 + 12, y0: 7 * 16, x1: 13 * 16 - 12, y1: 16 * 16 };
+  const MID = 7.5 * 16;
+  for (const id of FIN_ORDER) G.CAST[id + 'Possessed'] = Object.assign({}, G.CAST[id], { swirl: true, smile: null, blush: false });
+
+  const finFam = (w) => (w.finFam = w.finFam || {});
+  const finSeatXY = (id) => [FIN_SEAT[id][0] * 16 + 8, FIN_SEAT[id][1] * 16 + 12];
+  // everybody's attacks and leftovers, cleared off the ditch
+  G.finClear = (w) => {
+    for (const e of w.ents) {
+      if (e instanceof G.Lob || e instanceof G.BarkRing || e instanceof G.HypnoShot || e instanceof G.HypnoRing || e instanceof G.EnemyNo || e instanceof G.FinBalloon
+        || e instanceof G.HenMinion || e instanceof G.Snapdragon || e instanceof G.BeanBomb || e instanceof G.BandageStrip || e instanceof G.Letter || e instanceof G.Egglet
+        || e instanceof G.GoldenEgg || e instanceof G.LightWire || e instanceof G.RelayShot || e instanceof G.LiftRock || e instanceof G.NoShot || e instanceof G.EggShot
+        || (e.constructor && e.constructor.name === 'Shot')) {
+        e.dead = true;
+      }
+    }
+    G.play.earworm = 0;
+    G.play.player.sticky = 0;
+  };
+  const finCheer = (w, text) => {
+    for (const npc of Object.values(finFam(w))) if (npc && !npc.dead && npc.freed) w.pop(npc.x, npc.y - 28, text, '#f8f8f0');
+  };
+
+  // ---------------------------------------------------------------- the arrival
+  S.finEnter = function* () {
+    const f = flags();
+    if (f.fin_done) return;
+    if (!f.fin_intro) { yield* S.finIntro(); return; }
+    if ((f.fin_freed || 0) < 6) { yield* S.finNextFight(true); return; }
+    yield* S.finTurnStart(G.FIN_RELAY[f.fin_relay || 0], true);
+  };
+  S.finIntro = function* () {
+    const f = flags(), w = G.play.world, p = P(), boss = w.eggmas, fam = finFam(w);
+    // the family comes down the bank behind Nate
+    yield G.wait(20);
+    for (const [i, id] of FIN_ORDER.entries()) {
+      const npc = fam[id];
+      npc.hidden = false;
+      G.play.player.dir = 'up';
+      yield G.walkTo(npc, npc.x, npc.y - 18 - (i % 2) * 6, 2.2);
+    }
+    yield G.wait(20);
+    yield G.say('Nate', 'The Number One Ditch.');
+    yield G.say('Doron', 'Best ditch in the world.');
+    yield G.say('Lily', '...Why is it covered in Christmas lights?');
+    yield G.say('Michelle', 'Is that TINSEL? On the CATTAILS?');
+    yield G.say('Hannah', 'It\'s snowing. In Chesapeake. That\'s not... that doesn\'t happen.');
+    G.audio.sfx('hohoho');
+    yield G.camFocus(boss.x, boss.y - 30, 70);
+    yield G.say(null, 'HO. HO. HO.');
+    yield G.say('Father Eggmas', 'Welcome, Andrews family... to the Number TWO Ditch.');
+    yield G.say('Nate', 'It\'s the Number ONE Ditch. Apple Maps says so.');
+    yield G.say('Father Eggmas', 'Apple Maps can be CHANGED, Nate.');
+    yield G.say('Dad', 'Is that... the egg from our MANTEL?');
+    yield G.say('Father Eggmas', 'Do you know what it\'s like up on that mantel? Smiling. Every December. For YEARS.');
+    yield G.say('Father Eggmas', 'And then every January... back in the box. Back in the basement. In the DARK.');
+    yield G.say('Abe', 'I mean... that\'s just how Christmas decorations work.');
+    yield G.say('Father Eggmas', 'And YOU. Every Christmas, you chased the little one around the house with me.');
+    yield G.say('Lily', '...He did.');
+    yield G.say('Abe', 'That was a BIT.');
+    yield G.say('Father Eggmas', 'So I thought... why be part of the family for one month a year...');
+    G.audio.sfx('possess');
+    yield G.say('Father Eggmas', '...when I can HAVE the family. Forever.');
+    G.audio.play('possessed');
+    yield G.camFocus(null, null, 30);
+    // the possession: one at a time, the spiral gets them
+    const goodbye = {
+      doron: 'Nate... my legs... I can\'t move my LEGS...',
+      dad: 'Son... run...',
+      michelle: 'Nate! Wear a hel...',
+      abe: 'Nate, quick ques...',
+      hannah: 'Nate, GO! Get out of h...',
+    };
+    for (const id of ['doron', 'dad', 'michelle', 'abe', 'hannah']) {
+      const npc = fam[id];
+      yield G.say(FIN_NAME[id], goodbye[id]);
+      G.audio.sfx('possess'); G.play.shake(6, 2);
+      w.burst(npc.x, npc.y - 20, ['#a85ae8', '#6a2a9a', '#f8f0ff'], 12, { speed: 1.4, up: 1, life: 24, size: 2 });
+      npc.sprite = id + 'Possessed';
+      yield G.wait(20);
+    }
+    yield G.say('Lily', 'Nate...');
+    yield G.say('Lily', 'Nate, I\'m scared.');
+    G.audio.sfx('possess'); G.play.shake(8, 2);
+    w.burst(fam.lily.x, fam.lily.y - 20, ['#a85ae8', '#6a2a9a', '#f8f0ff'], 12, { speed: 1.4, up: 1, life: 24, size: 2 });
+    fam.lily.sprite = 'lilyPossessed';
+    yield G.wait(30);
+    // they walk up the ditch and line up by his throne
+    for (const id of FIN_ORDER) {
+      const [lx, ly] = FIN_LINE[id], npc = fam[id];
+      yield G.walkTo(npc, lx * 16, ly * 16, 2.4);
+      npc.dir = 'down';
+    }
+    yield G.say('Nate', '...Let them go.');
+    yield G.say('Father Eggmas', 'Every family needs a little fighting at Christmas. HO HO HO.');
+    yield G.say('Nate', 'I\'m getting you all back. Every single one of you.');
+    yield G.banner('THE NUMBER ONE DITCH', 'the final battle', 170);
+    f.fin_intro = true; f.fin_freed = 0;
+    G.play.autosave();
+    yield* S.finNextFight(false);
+  };
+
+  // ---------------------------------------------------------------- the gauntlet
+  const FIN_TAUNT = {
+    doron: [['Father Eggmas', 'Doron. Go play with your little brother.'], ['Doron', 'LEG... DAY...']],
+    dad: [['Father Eggmas', 'Christian. Show your son what EEENGLISH really means.'], ['Dad', 'Do you speak... EEENGLISH...?']],
+    lily: [['Father Eggmas', 'Little one. Tell him how you feel.'], ['Lily', 'no. no. NO.']],
+    michelle: [['Father Eggmas', 'Michelle. You put me in a box every January. Now put HIM in one.'], ['Michelle', 'Wear... a... helmet...']],
+    abe: [['Father Eggmas', 'Abe. Ask him a question. You know the one.'], ['Abe', 'Quick... question...']],
+    hannah: [['Father Eggmas', 'Nurse. He looks hurt. Go... HELP him.'], ['Hannah', 'This won\'t... hurt... a bit...']],
+  };
+  S.finNextFight = function* (resumed) {
+    const f = flags(), w = G.play.world, p = P(), id = FIN_ORDER[f.fin_freed || 0], npc = finFam(w)[id];
+    G.audio.play('possessed');
+    yield G.wait(resumed ? 30 : 20);
+    if (resumed) yield G.say('Father Eggmas', 'Back for more? HO HO HO.');
+    for (const [who, text] of FIN_TAUNT[id]) yield G.say(who, text);
+    // they come down into the ditch...
+    yield G.walkTo(npc, MID, 10 * 16, 2);
+    npc.dead = true;
+    const b = w.add(new G.Possessed(id, npc.x, npc.y, FIN_BOUNDS));
+    w.finBoss = b;
+    yield G.banner(G.POSSESSED[id].name, 'possessed by Father Eggmas', 120);
+    b.start();
+  };
+  // Dad, past half: the luchador mask goes back on
+  S.finDadMask = function* (b) {
+    yield G.wait(10);
+    yield G.say(null, 'Dad pulls a luchador mask out of his blazer pocket.');
+    yield G.say('Nate', 'Dad. No. Not again.');
+    G.audio.sfx('bell');
+    b.sprite = 'elenglish';
+    G.play.world.burst(b.x, b.y - 40, ['#1c2c6c', '#e8e8f0', '#d03038'], 14, { speed: 1.4, up: 1, life: 22, size: 2 });
+    yield G.say('Dad', 'EL... EEENGLISH... RETURNS!');
+  };
+  // Abe's favorite trap, mid-fight
+  const FIN_QS = [
+    ['How many legs does an insect have?', ['Six!', 'More than five.', 'Not answering that.']],
+    ['How many strings on a guitar? You know this one.', ['Six!', 'Five plus one.', 'Ask me later.']],
+    ['How many sides on a cube? QUICK!', ['Six!', 'A cube has... sides.', 'Nope.']],
+    ['Half a dozen eggs. How many eggs is that?', ['Six!', 'Half a carton.', 'I see what you\'re doing.']],
+  ];
+  S.finAbeQuestion = function* (b) {
+    const f = flags(), q = FIN_QS[(f.fin_q = (f.fin_q || 0) + 1) % FIN_QS.length];
+    yield G.say('Abe', 'QUICK QUESTION, NATE!');
+    const c = yield G.ask('Abe', q[0], q[1]);
+    if (c === 0) {
+      yield* S.slip();
+      yield G.say('Abe', 'GOT HIM. Every single time.');
+      b.toWalk(40);
+    } else {
+      yield G.say('Abe', '...He\'s learning.');
+      b.open(110, 'Stunned! Hit him!');
+    }
+  };
+  // freed, one at a time
+  const FIN_FREED = {
+    doron: [
+      ['Doron', '...Nate?'], ['Doron', 'Did I just clothesline my little brother?'], ['Nate', 'Like four times.'],
+      ['Doron', '...Sorry. My legs did it.'], ['Doron', 'Hey. Look at you, though. Taking on the whole family by yourself.'],
+      ['Doron', 'Go get the rest of them. I\'ll be right here. Cheering. LOUDLY.'],
+      [null, 'Doron gives Nate a hug. It\'s a lot of hug.'],
+    ],
+    dad: [
+      ['Dad', '...Nate? Was I speaking EEENGLISH at you again?'], ['Nate', 'A whole lot of it.'], ['Dad', 'I\'m sorry, son.'],
+      ['Dad', 'When I carved that pipe for you, I prayed you\'d never need it for something like this.'],
+      ['Dad', 'I\'m proud of you. Peace be with you, Nate.'], ['Nate', '...And also with you.'],
+      [null, 'Dad hugs Nate. His beard is scratchy. It always has been.'],
+    ],
+    lily: [
+      ['Lily', '...Nate?'], ['Lily', 'I could hear him. In my head. The whole time.'],
+      ['Lily', 'He\'s the scariest thing in the whole world. He always has been.'], ['Nate', 'I know.'],
+      ['Lily', '...I said "No." to you. A LOT.'], ['Nate', 'They were really good "No."s.'], ['Lily', '...Thanks.'],
+      [null, 'Lily hugs Nate. She doesn\'t let go for a while.'],
+      ['Lily', 'Go get Mom.'],
+    ],
+    michelle: [
+      ['Michelle', '...Nate? Oh, honey. Look at you.'], ['Michelle', 'Did I throw my good pots at you? My GOOD pots?'],
+      ['Nate', 'And the chickens.'], ['Michelle', 'Henrietta! ...Well. She\'s always been a fighter.'],
+      ['Michelle', 'Come here.'], [null, 'Mom hugs Nate. She smells like the garden.'],
+      ['Michelle', 'You are so brave. I\'m so proud of you.'], ['Michelle', '...You\'re not wearing a helmet.'],
+    ],
+    abe: [
+      ['Abe', '...Nate?'], ['Abe', 'Did I get you with the question?'], ['Nate', '...'], ['Abe', 'I\'m going to take that as a yes.'],
+      ['Abe', 'Hey. I chased Lily around the house with that egg every single Christmas. This is kind of my fault.'],
+      ['Nate', 'It\'s a LITTLE your fault.'], ['Abe', '...Fair.'],
+      ['Abe', 'Listen. Remember cooking class? I cracked an egg. One hand. Perfect. You know what Lily said.'],
+      ['Abe', 'There\'s a song for it. Down, down, left. Puff it on Dad\'s pipe when that egg is down, and CRACK him.'],
+    ],
+    hannah: [
+      ['Hannah', '...Nate? Oh my gosh. Look at you. You\'re a MESS.'], ['Hannah', 'Did I do this? ...I did some of this.'],
+      ['Hannah', 'Hold still. HOLD STILL.'],
+    ],
+  };
+  S.finFreed = function* (b) {
+    const f = flags(), w = G.play.world, p = P(), s = G.state, id = b.id, fam = finFam(w);
+    G.audio.stop();
+    G.finClear(w);
+    yield G.wait(20);
+    // the possession comes off them
+    for (let i = 0; i < 3; i++) { G.audio.sfx('poof'); w.burst(b.x, b.y - 30, ['#a85ae8', '#6a2a9a', '#f8f0ff'], 14, { speed: 1.8, up: 1.2, life: 26, size: 2 }); yield G.wait(14); }
+    b.dead = true; w.finBoss = null;
+    const npc = w.add(new G.NPC({ sprite: id, name: FIN_NAME[id], x: b.x, y: b.y, dir: 'down', talk: S.finFamTalk(id) }));
+    npc.freed = true; fam[id] = npc;
+    yield G.wait(30);
+    G.audio.play('house');
+    yield G.walkTo(p, npc.x, npc.y + 20, 1.4);
+    p.dir = 'up';
+    for (const [who, text] of FIN_FREED[id]) yield G.say(who, text);
+    if (id === 'abe') {
+      f.signal_crack = true;
+      G.audio.sfx('secret');
+      yield G.itemGet(G.spr.pipe, 'You learned {y}Nice Crack{/}! (down, down, left) Puff it on Dad\'s pipe.');
+    }
+    if (id === 'hannah') {
+      // the full patch-up
+      G.audio.sfx('heart');
+      w.burst(p.x, p.y - 14, ['#f86868', '#ffffff', '#f8a8c8', '#78e070'], 24, { speed: 1.6, up: 1, life: 30, size: 2 });
+      s.hp = s.maxHp;
+      yield G.say(null, 'Hannah patches Nate up. All of him. Every heart, back.');
+      yield G.say('Hannah', 'There. All better.');
+      yield G.say('Hannah', 'Now let\'s go crack an egg.');
+    } else {
+      // a hug: a heart back
+      s.hp = Math.min(s.maxHp, s.hp + 2);
+      G.audio.sfx('heart');
+      w.pop(p.x, p.y - 34, '+1 heart', '#f86868');
+    }
+    // up to the bank to cheer
+    const [sx, sy] = finSeatXY(id);
+    yield G.walkTo(npc, sx, sy, 2);
+    npc.dir = sx < MID ? 'right' : 'left'; npc.homeDir = npc.dir;
+    f.fin_freed = (f.fin_freed || 0) + 1;
+    G.play.autosave();
+    if (f.fin_freed < 6) yield* S.finNextFight(false);
+    else yield* S.finRelayStart();
+  };
+
+  // ---------------------------------------------------------------- the relay
+  S.finRelayStart = function* () {
+    const f = flags(), w = G.play.world, p = P(), boss = w.eggmas;
+    yield G.wait(30);
+    yield G.camFocus(boss.x, boss.y - 30, 40);
+    yield G.say('Father Eggmas', '...You beat them. ALL of them.');
+    yield G.say('Father Eggmas', 'FINE. If I can\'t have the family... I\'ll take the DITCH.');
+    G.audio.sfx('hohoho'); G.play.shake(16, 3);
+    yield G.say(null, 'Father Eggmas rises up off his throne.');
+    boss.state = 'risen'; boss.throneLeft = true; boss.targetH = 22;
+    yield G.wait(50);
+    yield G.camFocus(null, null, 30);
+    yield G.say('Nate', 'Everybody. Together.');
+    yield G.say('Doron', 'Me first. Nobody messes with my family. Or my ditch.');
+    yield G.banner('FATHER EGGMAS', 'the egg on the mantel', 170);
+    f.fin_relay = 0;
+    yield* S.finTurnStart('doron', false);
+  };
+  const FIN_TURN_IN = {
+    doron: [['Doron', 'Rocks. This ditch is FULL of rocks.']],
+    dad: [['Dad', 'Father Eggmas. Do YOU speak EEENGLISH?'], ['Father Eggmas', 'I speak EGGLISH. HO HO HO.']],
+    lily: [['Father Eggmas', 'Remember me, little one? HO HO HO.'], ['Lily', '...I remember.'], ['Lily', 'I\'ve been scared of you my whole life.'], ['Lily', 'I\'m still scared.'], ['Lily', 'I\'m doing it anyway.']],
+    michelle: [['Michelle', 'You took my family, you took my ditch, and you broke my GOOD pots.'], ['Michelle', 'Henrietta. Get him.'], [null, '*BAWK*']],
+    abe: [['Father Eggmas', 'HO HO HO! Can\'t reach me up HERE!'], ['Abe', 'Buddy. I\'m six foot five.']],
+    hannah: [['Hannah', 'I\'m a NICU nurse. I am not scared of a cranky little egg.'], ['Father Eggmas', 'I am NOT little!']],
+    nate: [['Nate', 'My turn.'], ['Doron', 'GO, NATE!'], ['Lily', 'Crack him!'], ['Father Eggmas', 'Come on, then, rock boy. HO HO HO!']],
+  };
+  // whoever's up takes over (they come down off the bank; whoever was fighting goes back up)
+  S.finTurnStart = function* (id, resumed) {
+    const f = flags(), w = G.play.world, p = P(), s = G.state, boss = w.eggmas, fam = finFam(w);
+    G.finClear(w);
+    if (boss.state === 'throne') { boss.state = 'risen'; boss.throneLeft = true; boss.targetH = 22; boss.h = 22; }
+    // (resuming after fainting: put the boss and his cracks back the way they were)
+    if (resumed) {
+      const done = G.FIN_RELAY.slice(0, f.fin_relay || 0);
+      boss.hp = boss.maxHp - done.reduce((n, d) => n + G.FIN_TURNS[d].need, 0);
+      boss.cracks = done.includes('abe') ? (done.includes('hannah') ? 2 : 1) : 0;
+      boss.x = MID; boss.y = 170;
+      G.audio.play(boss.cracks ? 'relay' : 'eggmas');
+      yield G.wait(30);
+      yield G.say('Father Eggmas', 'HO HO HO. Back for more?');
+    }
+    const cur = s.playAs || 'nate';
+    if (cur !== id) {
+      // the one coming in walks down; the one going out takes their spot on the bank
+      const incoming = fam[id], ox = G.clamp(p.x, FIN_BOUNDS.x0 + 16, FIN_BOUNDS.x1 - 16), oy = G.clamp(p.y, FIN_BOUNDS.y0, FIN_BOUNDS.y1);
+      if (incoming) yield G.walkTo(incoming, ox + 14, oy, 2.4);
+      if (fam[cur]) { fam[cur].dead = true; }
+      const out = w.add(new G.NPC({ sprite: cur, name: FIN_NAME[cur], x: ox, y: oy, dir: 'down', talk: S.finFamTalk(cur) }));
+      out.freed = true; fam[cur] = out;
+      if (incoming) { incoming.dead = true; fam[id] = null; }
+      G.audio.sfx('select');
+      w.burst(ox + 14, oy - 12, ['#ffffff', '#f8e070'], 10, { speed: 1, life: 16, size: 2 });
+      s.playAs = id === 'nate' ? null : id;
+      p.x = ox + 14; p.y = oy; p.carry = false; p.pose = null; p.state = 'walk';
+      const [sx, sy] = finSeatXY(cur);
+      yield G.walkTo(out, sx, sy, 2.4);
+      out.dir = sx < MID ? 'right' : 'left'; out.homeDir = out.dir;
+    }
+    // a fresh fighter: full hearts
+    s.hp = s.maxHp;
+    if (!resumed) for (const [who, text] of FIN_TURN_IN[id]) yield G.say(who, text);
+    if (id === 'nate' && G.ITEMS.pipe.has()) s.xItem = 'pipe';
+    yield G.banner(FIN_TITLE[id] + '\'S TURN', G.FIN_TURNS[id].tip, 150);
+    if (id === 'doron') for (let i = 0; i < 3; i++) w.add(new G.LiftRock(56 + i * 64, 200 + (i % 2) * 40));
+    if (!resumed && (f.fin_relay || 0) === 0) G.audio.play('eggmas');
+    G.play.autosave();
+    boss.beginTurn(id);
+  };
+  // whoever's turn it was got their hits in
+  const FIN_TURN_OUT = {
+    doron: [['Doron', 'That\'s for my little brother!'], ['Doron', 'Dad! You\'re up!']],
+    dad: [['Dad', 'Peace be with YOU.'], ['Dad', 'Lily. Your turn, sweetheart.'], ['Lily', '...Okay.']],
+    lily: [['Lily', 'I\'m not scared of you anymore.'], ['Lily', '...Okay, a LITTLE. But not as much.'], ['Lily', 'Mom!']],
+    michelle: [['Michelle', 'That\'s for my pots.'], ['Michelle', 'Abe, honey, he\'s floating away!']],
+    hannah: [['Hannah', 'Nurse\'s orders.'], ['Hannah', 'Nate. Finish it.']],
+  };
+  S.finTagOut = function* (boss) {
+    const f = flags(), w = G.play.world, p = P(), s = G.state, id = boss.turn;
+    G.finClear(w);
+    if (id === 'nate') { yield* S.finFinale(boss); return; }
+    yield G.wait(20);
+    if (id === 'abe') {
+      // the big crack
+      G.audio.sfx('crack'); G.play.shake(20, 4);
+      G.play.whiteout = 1;
+      boss.cracks = 1;
+      w.burst(boss.x, boss.y - boss.h - 40, ['#f2ead6', '#d4c8ac', '#ffffff'], 20, { speed: 2, up: 1.2, g: 0.1, life: 30, size: 2 });
+      yield G.wait(40);
+      yield G.say(null, 'CRACK! A crack runs right down Father Eggmas\'s shell.');
+      yield G.say('Lily', 'NICE CRACK, ABE!');
+      yield G.say('Abe', '...Thank you. I have been waiting YEARS for somebody to say that again.');
+      yield G.say('Father Eggmas', 'MY SHELL! You CRACKED my SHELL!');
+      yield G.say('Abe', 'Hannah! Tag in!');
+      G.audio.play('relay');
+    } else {
+      if (id === 'hannah') { boss.cracks = 2; G.audio.sfx('crack'); G.play.shake(10, 2); }
+      for (const [who, text] of FIN_TURN_OUT[id]) yield G.say(who, text);
+    }
+    f.fin_relay = (f.fin_relay || 0) + 1;
+    yield* S.finTurnStart(G.FIN_RELAY[f.fin_relay], false);
+  };
+  // Nice Crack (Dad's pipe): the egg is down, and Nate cracks him
+  S.signalCrack = function* () {
+    const w = G.play.world, p = P(), boss = w.ents.find((e) => e instanceof G.EggmasBoss && !e.dead);
+    if (!boss || boss.turn !== 'nate' || boss.state !== 'down' || Math.hypot(boss.x - p.x, boss.y - p.y) > 160) {
+      yield G.say(null, 'Nate puffs Nice Crack. ...Nothing around here needs cracking.');
+      return;
+    }
+    G.audio.sfx('crack'); G.play.shake(20, 4); G.play.whiteout = 1;
+    boss.cracks = Math.min(3, boss.cracks + 1);
+    w.burst(boss.x, boss.y - 30, ['#f2ead6', '#d4c8ac', '#ffffff', '#f8e070'], 24, { speed: 2.2, up: 1.4, g: 0.1, life: 30, size: 2 });
+    yield G.wait(30);
+    const last = boss.turnHits + 1 >= boss.td.need;
+    if (!last) {
+      yield G.say(null, 'CRACK!');
+      yield G.say('Lily', 'NICE CRACK!');
+      yield G.say('Father Eggmas', 'STOP. CRACKING. ME.');
+      boss.state = 'fight'; boss.targetH = boss.td.h;
+    }
+    boss.relayHit('crack');
+  };
+
+  // ---------------------------------------------------------------- the end
+  S.finFinale = function* (boss) {
+    const f = flags(), w = G.play.world, p = P(), s = G.state, fam = finFam(w);
+    G.audio.stop();
+    yield G.wait(20);
+    for (let i = 0; i < 5; i++) {
+      G.audio.sfx('crack'); G.play.shake(12 + i * 3, 3);
+      w.burst(boss.x + (Math.random() * 30 - 15), boss.y - 30 - Math.random() * 30, ['#f2ead6', '#d4c8ac', '#ffffff', '#a85ae8'], 14, { speed: 2, up: 1.2, g: 0.1, life: 28, size: 2 });
+      yield G.wait(16);
+    }
+    boss.cracks = 3;
+    yield G.say('Father Eggmas', 'NO... NO NO NO NO...');
+    G.audio.sfx('boom'); G.play.whiteout = 1; G.play.shake(30, 5);
+    w.burst(boss.x, boss.y - 30, ['#ffffff', '#f2ead6', '#f8e070', '#a85ae8'], 40, { speed: 3, up: 1.6, g: 0.08, life: 40, size: 3 });
+    boss.state = 'defeated'; boss.hidden = true;
+    w.finWeather = 'clear';
+    // just a doll, lying in the gravel
+    const doll = w.add(new G.NPC({ sprite: null, name: 'Father Eggmas', x: boss.x, y: boss.y, dir: 'down', talk: function* () { yield G.say(null, 'A little thrift-store doll with a cracked egg head. He\'s very quiet now.'); } }));
+    doll.draw = function (ctx, cx, cy) { ctx.drawImage(G.spr.eggmas, Math.round(this.x - 14) - cx, Math.round(this.y - 30) - cy); ctx.fillStyle = '#3a2a1a'; for (const [x, y] of [[13, 1], [12, 3], [14, 5], [12, 7], [7, 6], [9, 8], [21, 6], [19, 9]]) ctx.fillRect(Math.round(this.x - 14 + x) - cx, Math.round(this.y - 30 + y) - cy, 1, 1); };
+    w.finDoll = doll;
+    yield G.wait(80);
+    s.playAs = null;
+    // everyone comes down off the banks
+    G.audio.play('title');
+    const spots = { doron: [-30, 10], dad: [-20, 22], lily: [-8, -18], michelle: [14, 22], abe: [28, 8], hannah: [20, -14] };
+    boss.x = G.clamp(boss.x, FIN_BOUNDS.x0 + 30, FIN_BOUNDS.x1 - 30); boss.y = G.clamp(boss.y, FIN_BOUNDS.y0 + 20, FIN_BOUNDS.y1 - 26); w.finDoll.x = boss.x; w.finDoll.y = boss.y;
+    for (const id of FIN_ORDER) {
+      if (!fam[id] || fam[id].dead) fam[id] = w.add(new G.NPC({ sprite: id, name: FIN_NAME[id], x: finSeatXY(id)[0], y: finSeatXY(id)[1], dir: 'down', talk: S.finFamTalk(id) }));
+      fam[id].freed = true;
+    }
+    yield G.walkTo(p, boss.x, boss.y + 26, 1.4);
+    p.dir = 'up';
+    for (const id of FIN_ORDER) { const npc = fam[id]; yield G.walkTo(npc, boss.x + spots[id][0], boss.y + spots[id][1], 2.6); npc.dir = G.dirToward(boss.x - npc.x, boss.y - npc.y); }
+    yield G.say(null, 'The snow stops. The Christmas lights stop flickering and just... twinkle.');
+    yield G.say(null, 'In the gravel, there\'s a little thrift-store doll with a cracked egg head.');
+    yield G.say('Father Eggmas', '...I just wanted... a family.');
+    yield G.say('Lily', 'You HAD one.');
+    yield G.say('Lily', 'You were on our mantel every single Christmas. You were part of it. Even if you were the scariest part.');
+    yield G.say('Michelle', 'You scared Lily half to death for fifteen years. But you were OURS.');
+    yield G.say('Dad', 'Every family has a weird uncle. You\'re our weird egg.');
+    yield G.say('Father Eggmas', '...Oh.');
+    yield G.say('Father Eggmas', '...ho. ho. ho.');
+    yield G.say(null, 'And then he\'s just a doll.');
+    yield G.wait(40);
+    yield G.say('Lily', '...He can come home.');
+    yield G.say('Abe', '...Really?');
+    yield G.say('Lily', 'In the box. In the attic. FAR back in the attic.');
+    yield G.say('Hannah', 'Is everybody okay? Nate, let me see your hands.');
+    yield G.say('Doron', 'So. Now what?');
+    yield G.say('Nate', 'Now?');
+    yield G.say('Nate', '...Now we hunt for shark teeth. At the Number ONE Ditch.');
+    yield G.say(null, 'The whole family kneels down at the edge of the ditch and starts sifting through the gravel.');
+    yield G.wait(60);
+    yield G.say('Nate', '...Wait.');
+    yield G.say('Nate', 'Is that...');
+    G.audio.sfx('fanfare');
+    yield G.itemGet(G.spr.toothGold, 'THE MOSASAUR TOOTH!');
+    yield G.say('Doron', 'Tyler is going to be SO mad.');
+    yield G.banner('THE END', 'The Number One Ditch is still Number One.', 300);
+    f.fin_done = true;
+    G.play.autosave();
+  };
+  // talking to the family on the banks (during and after)
+  const FIN_TALK = {
+    doron: ['GO, NATE! LEG DAY!', 'Best ditch in the world. I said it and I meant it.'],
+    dad: ['Peace be with you, son.', 'I think about pH often. Here, it\'s about seven. Good ditch.'],
+    lily: ['I\'m okay. I\'m okay. ...I\'m okay.', 'He\'s going in the box. FAR back in the box.'],
+    michelle: ['Be careful, honey!', 'We\'re getting you a helmet for Christmas. I\'m serious.'],
+    abe: ['Nice crack. Still thinking about it.', 'How many sides on a... no. Not today. You earned a day off.'],
+    hannah: ['Let me know if anything hurts.', 'I\'m going to need to check EVERYBODY when we get home.'],
+  };
+  S.finFamTalk = (id) => function* () {
+    const f = flags(), k = 'finTalk_' + id;
+    f[k] = ((f[k] || 0) + 1) % 2;
+    yield G.say(FIN_NAME[id], FIN_TALK[id][f.fin_done ? 1 : 0]);
+  };
+
+  // ---------------------------------------------------------------- the map
+  // The Number One Ditch at night, the way Father Eggmas has done it up: Christmas lights strung
+  // across the ditch, snow falling (in Chesapeake), and his throne of egg cartons in front of
+  // the culvert at the north end. The ditch bed (gravel, mud, a trickle of water down the middle,
+  // shark teeth if you look closely) is the arena; the family sits on the banks.
+  const DB = 'ç', BF = 'ê';
+  G.MAPS.ditchFinal = {
+    name: 'The Number One Ditch',
+    noFollower: true,
+    get music() { const f = flags(); return f.fin_done ? 'title' : f.fin_intro ? 'possessed' : 'home'; },
+    tiles() {
+      const W = 15, H = 21;
+      const g = Array.from({ length: H }, () => Array(W).fill('.'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 2, 13, 2, BF);         // the north bank (the culvert is in it)
+      fill(1, 4, 1, 14, BF); fill(13, 4, 1, 14, BF);   // the side banks
+      fill(2, 4, 11, 14, DB);        // the ditch bed
+      fill(1, 18, 13, 1, BF); fill(7, 18, 2, 1, DB);   // the south bank, with a way down from the road
+      fill(0, 19, W, 2, 'a');        // the road
+      for (const [x, y] of [[1, 0], [6, 0], [11, 0]]) g[y][x] = 'T';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr, f = flags(), fam = finFam(w);
+      // the camera leans up to keep whoever Nate's fighting on the screen (Eggmas floats high)
+      w.camLean = (p) => {
+        const b = w.finBoss && !w.finBoss.dead ? w.finBoss : w.eggmas && !w.eggmas.hidden && w.eggmas.state !== 'throne' ? w.eggmas : null;
+        if (!b) return 0;
+        const top = b instanceof G.EggmasBoss ? b.y - b.h - 70 : b.y - 50;
+        return G.clamp(p.y - 84 - top, 0, 60);
+      };
+      // the trickle of water down the middle of the ditch
+      w.props.push({
+        img: null, x: 0, y: 0, flat: true, base: 0,
+        draw(ctx, cx, cy) {
+          for (let y = 4 * 16; y < 18 * 16; y += 2) {
+            const x = MID + Math.sin(y * 0.05) * 10 + Math.sin(y * 0.13) * 4;
+            ctx.fillStyle = '#2a4a6a'; ctx.fillRect(Math.round(x - 6) - cx, y - cy, 12, 2);
+            ctx.fillStyle = (y + (G.tick >> 2)) % 16 < 2 ? '#8ab8e0' : '#3a5a7a'; ctx.fillRect(Math.round(x - 4) - cx, y - cy, 8, 1);
+          }
+        },
+      });
+      w.addProp({ img: sp.culvert, tx: 5, ty: 2, h: 2, dx: -4, dy: 0 });
+      // the throne (solid) and Father Eggmas
+      w.blockTiles(5, 4, 5, 2);
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [5 * 16, 4 * 16, 10 * 16, 6 * 16], talk: function* () { yield G.say(null, flags().fin_done ? 'An empty throne made of egg cartons. Somebody should recycle it.' : 'A throne made of egg cartons, tinsel and ornaments.'); } });
+      if (!f.fin_done) {
+        w.eggmas = w.add(new G.EggmasBoss(MID, 66, FIN_BOUNDS));
+        w.eggmas.throneX = MID; w.eggmas.throneY = 98;
+        if ((f.fin_freed || 0) >= 6) { w.eggmas.state = 'risen'; w.eggmas.throneLeft = true; w.eggmas.h = 22; w.eggmas.targetH = 22; w.eggmas.x = MID; w.eggmas.y = 170; }
+      }
+      // the throne itself, once he's left it
+      w.props.push({ img: sp.eggThrone, x: MID - 44, y: 98 - 92, base: 98, draw(ctx, cx, cy) { if (!w.eggmas || w.eggmas.throneLeft || f.fin_done) ctx.drawImage(this.img, this.x - cx, this.y - cy); } });
+      // cattails along the banks, the sign by the road, a few bushes (Abe hides in these)
+      for (const [x, y] of [[0, 4], [14, 4], [0, 17], [14, 17], [4, 18], [10, 18]]) w.addProp({ img: sp.cattails, tx: x, ty: y, dx: 1 });
+      w.addProp({ img: sp.ditchSign, tx: 2, ty: 18, h: 1, dx: 0, dy: -4, talk: look('The sign: No.1 DITCH. Still standing.'), hit: [2, 18, 3, 1] });
+      w.finBushes = [[2.6 * 16, 9.5 * 16], [12.4 * 16, 9.5 * 16], [2.6 * 16, 15 * 16], [12.4 * 16, 15 * 16], [MID, 16.8 * 16]];
+      for (const b of w.finBushes) {
+        w.props.push({ img: sp.boxwood, x: b[0] - 8, y: b[1] - 14, base: b[1], draw(ctx, cx, cy) {
+          const r = w.finRustle && w.finRustle.b === b && w.finRustle.t > 0 ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
+          ctx.drawImage(this.img, this.x + r - cx, this.y - cy);
+        } });
+      }
+      // the family: possessed in a line by the throne (or, once freed, on the banks)
+      const freed = f.fin_freed || 0, relayAt = f.fin_relay || 0, inRelay = freed >= 6 && !f.fin_done;
+      for (const [i, id] of FIN_ORDER.entries()) {
+        let npc;
+        if (!f.fin_intro) {
+          npc = w.add(new G.NPC({ sprite: id, name: FIN_NAME[id], x: (5.5 + (i % 3) * 1.5) * 16 + (i > 2 ? 8 : 0), y: (19.4 + (i > 2 ? 1 : 0)) * 16, dir: 'up' }));
+          npc.hidden = true;
+        } else if (i >= freed && !f.fin_done) {
+          npc = w.add(new G.NPC({ sprite: id + 'Possessed', name: FIN_NAME[id], x: FIN_LINE[id][0] * 16, y: FIN_LINE[id][1] * 16, dir: 'down' }));
+        } else if (inRelay && G.state.playAs === id) {
+          npc = null; // (that's who Nate is playing right now)
+        } else {
+          const [sx, sy] = finSeatXY(id);
+          npc = w.add(new G.NPC({ sprite: id, name: FIN_NAME[id], x: sx, y: sy, dir: sx < MID ? 'right' : 'left', talk: S.finFamTalk(id) }));
+          npc.freed = true;
+        }
+        fam[id] = npc;
+      }
+      // during the relay, whoever isn't fighting (Nate too) watches from the bank
+      if (inRelay && G.state.playAs) {
+        const [sx, sy] = finSeatXY('nate');
+        fam.nate = w.add(new G.NPC({ sprite: 'nate', name: 'Nate', x: sx, y: sy, dir: 'right', talk: function* () { yield G.say('Nate', 'You got this!'); } }));
+        fam.nate.freed = true;
+      }
+      if (f.fin_done) {
+        // after: the family, sifting for shark teeth
+        for (const [i, id] of FIN_ORDER.entries()) { const npc = fam[id]; if (npc) { npc.x = (2.6 + i * 1.9) * 16; npc.y = 12 * 16; npc.dir = 'down'; } }
+      }
+      // overhead: Christmas lights strung across the ditch, falling snow, and the night
+      w.props.push({
+        img: null, x: 0, y: 0, base: 99990,
+        draw(ctx, cx, cy) {
+          if (!flags().fin_done) {
+            ctx.save(); ctx.globalAlpha = 0.28; ctx.fillStyle = '#140a28'; ctx.fillRect(0, 0, G.W, G.H); ctx.restore();
+          }
+          const cols = ['#f83838', '#38c848', '#f8e040', '#3878f8', '#f878d8'];
+          for (const [ri, row] of [6, 11, 16].entries()) {
+            const y0 = row * 16 - 30;
+            for (let x = 0; x < 15 * 16; x += 2) {
+              const y = y0 + Math.round(Math.sin((x / (15 * 16)) * Math.PI) * 10);
+              ctx.fillStyle = '#1a1a20'; ctx.fillRect(x - cx, y - cy, 2, 1);
+              if (x % 14 === 0) {
+                const k = (x / 14 + ri) % 5, on = flags().fin_done ? (x / 14 + (G.tick >> 4)) % 3 !== 0 : (x / 14 + (G.tick >> 3)) % 4 !== 0;
+                ctx.fillStyle = on ? cols[k] : '#3a3a44'; ctx.fillRect(x - cx, y + 1 - cy, 2, 3);
+                if (on) { ctx.save(); ctx.globalAlpha = 0.25; ctx.fillStyle = cols[k]; ctx.fillRect(x - 2 - cx, y - 1 - cy, 6, 7); ctx.restore(); }
+              }
+            }
+          }
+          if (w.finWeather !== 'clear' && !flags().fin_done) {
+            ctx.fillStyle = '#f8f8ff';
+            for (let i = 0; i < 46; i++) {
+              const sx0 = G.hash(i, 1, 177) * 260, spd = 0.3 + G.hash(i, 2, 177) * 0.5;
+              const y = (G.hash(i, 3, 177) * 200 + G.tick * spd) % 180 - 10, x = (sx0 + Math.sin((G.tick + i * 30) * 0.02) * 6) % 250;
+              ctx.fillRect(Math.round(x), Math.round(y), i % 3 ? 1 : 2, i % 3 ? 1 : 2);
+            }
+          }
+        },
+      });
+      if (f.fin_done) w.addTrigger(6, 20, 3, 1, () => G.script.run(function* () { const p = P(); yield G.say('Nate', 'The road home. (More to come!)'); yield G.walkTo(p, p.x, p.y - 16, 1); }()));
+    },
+    onEnter() { return S.finEnter(); },
+    tick(w) {
+      if (w.finRustle && w.finRustle.t > 0) w.finRustle.t--;
+      // the family cheers from the banks during the relay
+      const boss = w.eggmas;
+      if (boss && boss.state === 'fight' && !G.script.busy && G.tick % 170 === 0) {
+        const cheers = { doron: 'GO GO GO!', dad: 'Amen!', lily: 'Get him!', michelle: 'Be CAREFUL!', abe: 'NICE!', hannah: 'Breathe!', nate: 'You got this!' };
+        const fans = Object.entries(finFam(w)).filter(([k, n]) => n && !n.dead && n.freed);
+        if (fans.length) { const [k, n] = fans[Math.floor(Math.random() * fans.length)]; w.pop(n.x, n.y - 28, cheers[k] || 'GO!', '#f8f8f0'); }
+      }
+    },
   };
 })();

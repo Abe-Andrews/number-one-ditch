@@ -84,6 +84,7 @@
     update(w) {
       if (this.inv > 0) this.inv--;
       if (this.noT > 0) this.noT--;
+      if (this.relayCd > 0) this.relayCd--;
       if (G.script.busy) { if (!this.walking) this.moving = false; return; }
       const inp = G.input;
 
@@ -113,6 +114,14 @@
 
       // puffing Dad's pipe: Nate stands still, the world keeps going
       if (this.state === 'pipe') { G.pipe.update(); return; }
+
+      // Abe's reach (the finale): arms up, bonking whatever's over his head
+      if (this.state === 'reach') {
+        this.t++;
+        if (this.t >= 4 && this.t <= 10) G.relayReach(this, w);
+        if (this.t >= 16) { this.state = 'walk'; this.pose = this.carry ? 'hold' : null; }
+        return;
+      }
 
       // Lily winding up a "No.": she plants her feet while Z is held
       if (this.state === 'charge') {
@@ -189,6 +198,8 @@
     }
 
     startSwing() {
+      // the finale: each of the family has their own move on Z (Lily's is her "No.")
+      if (G.state.playAs && G.RELAY_MOVE[G.state.playAs]) { G.RELAY_MOVE[G.state.playAs](this, this.world); return; }
       if (G.state.playAs === 'lily') { this.chargeNo(); return; }
       if (!G.state.items.hammer) return;
       this.state = 'swing';
@@ -331,6 +342,8 @@
       if (bassing && this.dir === 'up') this.drawBass(ctx, cx, cy);
       const charged = this.state === 'charge' && this.t >= NO_FULL && (G.tick >> 2) & 1;
       ctx.drawImage((this.state === 'hurt' && (this.t >> 1) & 1) || charged ? G.art.flash(img) : img, sx, sy);
+      // (Doron, in the finale, with a rock over his head)
+      if (this.carry) ctx.drawImage(G.spr.tossRock, sx + 2, sy - 8);
       if (this.state === 'charge') {
         // wind-up meter over Lily's head
         const k = Math.min(1, this.t / NO_FULL), bx = Math.round(this.x - 8) - cx, by = sy - 6;
@@ -2214,6 +2227,956 @@
     }
   }
   G.MechaBaby = MechaBaby;
+
+  // ============================================================== THE FINALE: the Number One Ditch
+  // Father Eggmas has possessed the whole family. Nate fights them one at a time (Doron, Dad,
+  // Lily, Mom, Abe, Hannah), each with their own moves. Then, once they're all free and Hannah
+  // has patched him up, every one of them takes a turn against Father Eggmas himself, and
+  // Nate finishes it. (Not connected to the story yet: an admin checkpoint for now.)
+
+  // a silhouette of a sprite in one color (for the possessed glow), cached
+  const tintCache = new Map();
+  function tinted(img, color) {
+    let m = tintCache.get(img);
+    if (!m) tintCache.set(img, (m = {}));
+    if (m[color]) return m[color];
+    const c = G.canvas(img.width, img.height), x = c.getContext('2d');
+    x.drawImage(img, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = color; x.fillRect(0, 0, img.width, img.height);
+    return (m[color] = c);
+  }
+  // twice-size frames of anyone's sprite, cached
+  const bigCache = {};
+  function bigOf(id) {
+    if (bigCache[id]) return bigCache[id];
+    const S = G.sprites[id], B = { h: S.h * 2, hold: G.art.scale2(S.hold) };
+    for (const d of ['down', 'up', 'left', 'right']) B[d] = S[d].map(G.art.scale2);
+    return (bigCache[id] = B);
+  }
+  G.finBig = bigOf;
+
+  // Something lobbed in an arc onto a marked spot (rocks, flower pots, ornaments, cans).
+  class Lob extends Ent {
+    constructor(x, y, tx, ty, img, o = {}) {
+      super(x, y);
+      Object.assign(this, { fx: x, fy: y, tx, ty, img, t: 0, n: o.n || 50, h: o.h || 40, z0: o.z0 || 16, dmg: o.dmg == null ? 1 : o.dmg, onLand: o.onLand, color: o.color || '#f86858' });
+      this.z = this.z0;
+    }
+    update(w) {
+      if (G.script.busy) return;
+      const k = ++this.t / this.n;
+      this.x = this.fx + (this.tx - this.fx) * k; this.y = this.fy + (this.ty - this.fy) * k;
+      this.z = this.z0 * (1 - k) + Math.sin(k * Math.PI) * this.h;
+      if (k < 1) return;
+      this.dead = true;
+      const p = G.play.player;
+      if (this.dmg && Math.abs(p.x - this.tx) < 11 && Math.abs(p.y - 4 - this.ty) < 9) p.hurt(this.dmg, this.tx, this.ty - 6);
+      if (this.onLand) this.onLand(w, this.tx, this.ty);
+      else { G.audio.sfx('bump'); w.burst(this.tx, this.ty - 3, ['#c8c0b0', '#8a8274'], 5, { speed: 0.9, up: 0.6, life: 14, size: 1 }); }
+    }
+    draw(ctx, cx, cy) {
+      const k = this.t / this.n, r = 3 + k * 6;
+      if (this.color) {
+        ctx.save(); ctx.globalAlpha = 0.25 + k * 0.5; ctx.strokeStyle = this.color; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.ellipse(Math.round(this.tx) - cx, Math.round(this.ty) - cy, r, r * 0.55, 0, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+      }
+      drawShadow(ctx, this.x, this.y, cx, cy, false);
+      ctx.drawImage(this.img, Math.round(this.x - this.img.width / 2) - cx, Math.round(this.y - this.img.height - this.z) - cy);
+    }
+  }
+  G.Lob = Lob;
+  // an ornament lands and shatters into shards
+  G.ornamentShatter = (w, x, y) => {
+    G.audio.sfx('clank');
+    w.burst(x, y - 4, ['#d83030', '#f8e070', '#ffffff'], 8, { speed: 1.2, up: 0.6, life: 16, size: 2 });
+    const k = Math.floor(Math.random() * 3);
+    for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + 0.25; w.add(new Shot(x, y - 3, Math.cos(a) * 1.35, Math.sin(a) * 1.35, G.spr.shards[k], { life: 46, z: 4 })); }
+  };
+
+  // Abe's can of beans: it lands, hisses, and BLOWS (the Bean Incident), spraying beans.
+  class BeanBomb extends Ent {
+    constructor(x, y) { super(x, y); this.t = 75; }
+    update(w) {
+      if (G.script.busy) return;
+      if (--this.t % 12 === 0) G.audio.sfx('fuse');
+      if (this.t > 0) return;
+      this.dead = true;
+      G.audio.sfx('boom'); G.play.shake(8, 2);
+      w.burst(this.x, this.y - 6, ['#8a3a1a', '#c86a2a', '#f8a838', '#f8e070'], 18, { speed: 2, up: 1.2, g: 0.1, life: 26, size: 2 });
+      w.pop(this.x, this.y - 24, 'BEANS!', '#f8a838');
+      const p = G.play.player;
+      if (Math.hypot(p.x - this.x, (p.y - this.y) * 1.3) < 22) p.hurt(1, this.x, this.y);
+      for (let i = 0; i < 6; i++) { const a = i * Math.PI / 3 + 0.3; w.add(new Shot(this.x, this.y - 4, Math.cos(a) * 1.3, Math.sin(a) * 1.3, G.spr.bean, { life: 44, z: 4 })); }
+    }
+    draw(ctx, cx, cy) {
+      const img = G.spr.beanCan, j = this.t < 25 ? ((this.t >> 1) & 1 ? 1 : -1) : 0;
+      drawShadow(ctx, this.x, this.y, cx, cy, false);
+      ctx.drawImage(this.t < 25 && (this.t >> 2) & 1 ? G.art.flash(img) : img, Math.round(this.x - img.width / 2 + j) - cx, Math.round(this.y - img.height) - cy);
+    }
+  }
+  G.BeanBomb = BeanBomb;
+
+  // Hannah's bandage roll unrolls into a strip on the ground: walk through it and Nate gets
+  // tangled up (half speed).
+  class BandageStrip extends Ent {
+    constructor(x, y) { super(x, y); Object.assign(this, { life: 380, len: 0, flat: true }); }
+    update() {
+      if (G.script.busy) return;
+      if (this.len < 40) this.len += 2;
+      if (--this.life <= 0) { this.dead = true; return; }
+      const p = G.play.player;
+      if (Math.abs(p.x - this.x) < this.len / 2 + 2 && Math.abs(p.y - this.y) < 5) {
+        if (!p.sticky && G.tick - (this.popT || -99) > 50) { this.popT = G.tick; this.world.pop(p.x, p.y - 30, 'tangled!', '#f8f4ec'); }
+        p.sticky = 3;
+      }
+    }
+    draw(ctx, cx, cy) {
+      const x0 = Math.round(this.x - this.len / 2) - cx, y = Math.round(this.y) - cy;
+      ctx.save(); ctx.globalAlpha = Math.min(1, this.life / 60);
+      ctx.fillStyle = '#d8d0c0'; ctx.fillRect(x0, y - 2, this.len, 5); ctx.fillStyle = '#f8f4ec'; ctx.fillRect(x0, y - 2, this.len, 2);
+      ctx.fillStyle = '#c0b8a8'; for (let x = 2; x < this.len; x += 5) ctx.fillRect(x0 + x, y + 1, 1, 2);
+      ctx.restore();
+    }
+  }
+  G.BandageStrip = BandageStrip;
+
+  // One of Mom's chickens (Henrietta's sisters): runs around and fires eggs at Nate.
+  class HenMinion extends Critter {
+    constructor(x, y) {
+      super(x, y, 1);
+      Object.assign(this, { bits: ['#f4f2ec', '#e8c040', '#d83030'], dropChance: 0.5, face: 1, cool: 60 + Math.random() * 40 });
+    }
+    hurtBox() { return [this.x - 7, this.y - 13, this.x + 7, this.y]; }
+    think(w, p, dx, dy, dist) {
+      this.wander(w, 0.8);
+      if (this.vx) this.face = this.vx > 0 ? 1 : -1;
+      if (--this.cool <= 0) {
+        this.cool = 95;
+        G.audio.sfx('bawk');
+        w.add(new Shot(this.x, this.y - 6, (dx / dist) * 1.6, (dy / dist) * 1.6, G.spr.egg, { life: 110, z: 6 }));
+      }
+    }
+    draw(ctx, cx, cy) {
+      const S = G.spr.chickens.white[this.face > 0 ? 'right' : 'left'];
+      this.drawSprite(ctx, cx, cy, S[(this.t >> 3) & 1]);
+    }
+  }
+  G.HenMinion = HenMinion;
+
+  // Possessed Lily's "NO.": a big word that flies at Nate.
+  class EnemyNo extends Ent {
+    constructor(x, y, vx, vy) { super(x, y); Object.assign(this, { vx, vy, life: 130 }); }
+    update(w) {
+      if (G.script.busy) return;
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0 || w.tileSolid(Math.floor(this.x / 16), Math.floor((this.y - 8) / 16))) { this.dead = true; return; }
+      const p = G.play.player;
+      if (G.overlap([this.x - 9, this.y - 20, this.x + 9, this.y - 6], p.hurtBox())) { this.dead = true; p.hurt(1, this.x, this.y); }
+    }
+    draw(ctx, cx, cy) {
+      const t = 'NO.', w = G.font.width(t);
+      G.font.draw(ctx, t, Math.round(this.x - w / 2) - cx, Math.round(this.y - 18) - cy, '#f8d8f0', { shadow: '#6a1a7a' });
+    }
+  }
+  G.EnemyNo = EnemyNo;
+
+  // Possessed Lily's heart balloons: they drift after Nate. A bonk pops them (sometimes
+  // there's a heart inside).
+  class FinBalloon extends HeartShot {
+    constructor(x, y) { super(x, y); this.enemy = true; this.life = 380; }
+    hit() { this.pop(); if (Math.random() < 0.3) this.world.add(new Pickup(this.x, this.y + 4, 'heart')); }
+  }
+  G.FinBalloon = FinBalloon;
+
+  // ---- the family, possessed. Drawn twice size with spiral eyes and a purple glow. Nate's
+  // hammer only lands while they're OPEN (dizzy, out of breath, distracted), up to 3 hits per
+  // opening; any other time it's BLOCKED and Nate gets shoved back. A package always opens
+  // them up.
+  const POSSESSED = {
+    doron: { name: 'DORON', hp: 10, sub: 'the oldest brother', speed: 0.7, cycle: ['charge', 'rock', 'charge', 'flex'], cycle2: ['charge', 'rock', 'charge', 'rock', 'flex'] },
+    dad: { name: 'DAD', hp: 10, sub: 'the pastor', speed: 0.55, cycle: ['letters', 'charge', 'smoke'], cycle2: ['letters', 'charge', 'smoke', 'charge'] },
+    lily: { name: 'LILY', hp: 9, sub: 'the little sister', speed: 0.6, cycle: ['no', 'balloons', 'no', 'bigNo'], cycle2: ['no', 'balloons', 'bigNo', 'no', 'bigNo'] },
+    michelle: { name: 'MOM', hp: 10, sub: 'the flower farmer', speed: 0.55, cycle: ['pots', 'snap', 'water', 'hens', 'pots', 'water'], cycle2: ['pots', 'hens', 'snap', 'water', 'pots', 'water'] },
+    abe: { name: 'ABE', hp: 10, sub: 'the master', speed: 0.6, cycle: ['beans', 'bush', 'question', 'beans', 'bush'], cycle2: ['beans', 'bush', 'beans', 'question', 'bush'] },
+    hannah: { name: 'HANNAH', hp: 10, sub: 'the nurse', speed: 0.6, cycle: ['ice', 'bandage', 'heal', 'code', 'ice', 'heal'], cycle2: ['ice', 'code', 'heal', 'bandage', 'ice', 'heal'] },
+  };
+  G.POSSESSED = POSSESSED;
+  const LILY_INSIDE = ['...nate...?', 'i\'m scared...', 'make it stop...', 'nate, help...'];
+
+  class Possessed extends Ent {
+    constructor(id, x, y, bounds) {
+      super(x, y);
+      const d = POSSESSED[id];
+      Object.assign(this, {
+        id, d, enemy: true, boss: true, noBar: true, name: d.name, hp: d.hp, maxHp: d.hp, bounds,
+        state: 'idle', st: 0, t: 0, dir: 'down', anim: 0, hurtT: 0, kb: { x: 0, y: 0 }, hb: { w: 18, h: 8 },
+        cycle: 0, sprite: id + 'Possessed', z: 0, vx: 0, vy: 0,
+      });
+    }
+    get angry() { return this.hp <= this.maxHp / 2; }
+    get isOpen() { return this.state === 'open' || this.state === 'heal'; }
+    hurtBox() { return this.lurking ? [-999, -999, -998, -998] : [this.x - 13, this.y - 46 - this.z, this.x + 13, this.y - this.z]; }
+    start() { this.state = 'walk'; this.st = 60; this.noBar = false; }
+    open(n, label) {
+      this.state = 'open'; this.st = n; this.dmgHere = 0; this.vx = this.vy = 0;
+      if (label) this.world.pop(this.x, this.y - 58, label, '#f8e070');
+    }
+    toWalk(n) { this.state = 'walk'; this.st = n || 70; }
+    next() {
+      const c = this.angry ? this.d.cycle2 : this.d.cycle;
+      this.begin(c[this.cycle++ % c.length]);
+    }
+    update(w) {
+      this.t++;
+      if (G.script.busy || this.state === 'idle' || this.state === 'defeated') return;
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      if (this.hurtT > 0) { this.hurtT--; w.move(this, this.kb.x, 0); w.move(this, 0, this.kb.y); this.kb.x *= 0.8; this.kb.y *= 0.8; }
+      // the possession, coming off them as purple wisps
+      if (this.t % 16 === 0 && !this.lurking) w.burst(this.x + (Math.random() * 20 - 10), this.y - 40 - this.z, ['#a85ae8', '#6a2a9a', '#d8a8f8'], 1, { speed: 0.3, up: 0.7, g: -0.02, life: 28, size: 2 });
+      if (this.pendingSlip) { this.pendingSlip = false; p.hurt(1, p.x + 4, p.y); }
+      if (this.state === 'open') { if (--this.st <= 0) this.toWalk(60); return; }
+      this[this.id](w, p, dx, dy, dist);
+      const b = this.bounds;
+      this.x = G.clamp(this.x, b.x0, b.x1); this.y = G.clamp(this.y, b.y0, b.y1);
+    }
+    // walking: straight at Nate (keep: hang back at about that distance instead)
+    stroll(w, dx, dy, dist, keep) {
+      let sx = dx / dist, sy = dy / dist;
+      if (keep) { if (dist < keep - 20) { sx = -sx; sy = -sy; } else if (dist < keep + 20) { const t = sx; sx = -sy; sy = t; } }
+      const sp = this.d.speed * (this.angry ? 1.25 : 1);
+      w.move(this, sx * sp, 0); w.move(this, 0, sy * sp);
+      this.dir = G.dirToward(dx, dy); this.anim++;
+    }
+    charge(w, p, dx, dy, dist, bounceText) {
+      this.anim += 2;
+      this.dir = G.dirToward(this.vx, this.vy);
+      const h = w.move(this, this.vx, this.vy), b = this.bounds;
+      const out = this.x <= b.x0 || this.x >= b.x1 || this.y <= b.y0 || this.y >= b.y1;
+      if (h.hitX || h.hitY || out) {
+        if (this.bounces > 0) {
+          this.bounces--;
+          const sp = Math.hypot(this.vx, this.vy);
+          this.vx = (dx / dist) * sp; this.vy = (dy / dist) * sp;
+          this.x = G.clamp(this.x, b.x0 + 2, b.x1 - 2); this.y = G.clamp(this.y, b.y0 + 2, b.y1 - 2);
+          G.audio.sfx('bump'); w.pop(this.x, this.y - 58, bounceText, '#f8e070');
+        } else { G.audio.sfx('boom'); G.play.shake(10, 3); this.open(100, 'DIZZY!'); }
+      } else if (--this.st <= 0) this.open(60, 'DIZZY!');
+      if (this.state === 'charge' && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(2, this.x, this.y);
+    }
+    windupCharge(text, speed, bounces) { this.state = 'windup'; this.st = 34; this.chargeSp = speed; this.chargeBounces = bounces; if (text) this.world.pop(this.x, this.y - 58, text, '#f8e070'); }
+    windup(w, dx, dy, dist, popText) {
+      this.dir = G.dirToward(dx, dy);
+      if (--this.st > 0) return;
+      this.state = 'charge'; this.st = 90;
+      this.vx = (dx / dist) * this.chargeSp; this.vy = (dy / dist) * this.chargeSp; this.bounces = this.chargeBounces;
+      G.audio.sfx('dash'); if (popText) this.world.pop(this.x, this.y - 58, popText, '#f8e070');
+    }
+    lobAt(w, p, img, spread, o) {
+      const b = this.bounds, tx = G.clamp(p.x + (Math.random() * 2 - 1) * spread, b.x0, b.x1), ty = G.clamp(p.y + (Math.random() * 2 - 1) * spread * 0.6, b.y0, b.y1);
+      w.add(new Lob(this.x, this.y - 30, tx, ty, img, o));
+    }
+
+    // ---- the oldest brother: LEG DAY. Clotheslines that leave him dizzy when he hits the
+    // bank, rocks dug out of the ditch, and he can't help striking a pose for the crowd.
+    begin(m) {
+      const w = this.world;
+      switch (m) {
+        case 'charge': this.windupCharge(this.id === 'doron' ? 'LEG DAY!' : null, this.angry ? 3.8 : 3.2, this.angry ? 1 : 0); break;
+        case 'rock': this.state = 'dig'; this.st = 30; w.pop(this.x, this.y - 58, 'ROCK!', '#f8e070'); break;
+        case 'flex': this.state = 'flex'; this.st = 34; w.pop(this.x, this.y - 58, 'POSE FOR THE CROWD!', '#f8e070'); break;
+        case 'letters': this.state = 'yell'; this.st = 56; w.pop(this.x, this.y - 58, 'DO YOU SPEAK...', '#ffffff'); break;
+        case 'smoke': this.state = 'smoke'; this.st = 70; w.pop(this.x, this.y - 58, 'Peace be with you...', '#d8d8e0'); G.audio.sfx('blip'); break;
+        case 'no': this.state = 'no'; this.st = 3; this.shotT = 6; break;
+        case 'balloons': this.state = 'balloons'; this.st = 30; w.pop(this.x, this.y - 58, '*balloons*', '#ff98d0'); break;
+        case 'bigNo': this.state = 'bigNo'; this.st = 64; break;
+        case 'pots': this.state = 'pots'; this.st = 3; this.shotT = 8; w.pop(this.x, this.y - 58, 'Catch, honey!', '#e8a0d8'); break;
+        case 'snap': this.state = 'snap'; this.st = 26; w.pop(this.x, this.y - 58, 'Grow, my babies!', '#e8a0d8'); break;
+        case 'hens': this.state = 'hens'; this.st = 26; w.pop(this.x, this.y - 58, 'HENRIETTA! GET HIM!', '#e8a0d8'); break;
+        case 'water': this.state = 'watering'; this.st = 20; break;
+        case 'beans': this.state = 'beans'; this.st = 2; this.shotT = 10; w.pop(this.x, this.y - 58, 'THE BEAN INCIDENT!', '#f8a838'); break;
+        case 'bush': this.state = 'dive'; this.st = 26; w.pop(this.x, this.y - 58, '*rustle rustle*', '#8ad868'); break;
+        case 'question': this.state = 'asking'; G.script.run(G.SCRIPTS.finAbeQuestion(this)); break;
+        case 'ice': this.state = 'ice'; this.st = 2; this.shotT = 10; w.pop(this.x, this.y - 58, 'You need some ICE.', '#a8d8ff'); break;
+        case 'bandage': this.state = 'bandage'; this.st = 2; this.shotT = 10; w.pop(this.x, this.y - 58, 'Hold STILL.', '#a8d8ff'); break;
+        case 'heal': this.state = 'heal'; this.st = 150; this.dmgHere = 0; w.pop(this.x, this.y - 58, '*patching herself up*', '#78e070'); break;
+        case 'code': this.state = 'code'; this.st = 3; this.shotT = 12; w.pop(this.x, this.y - 58, 'CODE BLUE!', '#7ab8f8'); G.audio.sfx('bell'); break;
+        default: this.toWalk(60);
+      }
+    }
+    doron(w, p, dx, dy, dist) {
+      switch (this.state) {
+        case 'walk': this.stroll(w, dx, dy, dist); if (--this.st <= 0) this.next(); break;
+        case 'windup': this.windup(w, dx, dy, dist, 'CLOTHESLINE!'); break;
+        case 'charge': this.charge(w, p, dx, dy, dist, 'OFF THE BANK!'); break;
+        case 'dig':
+          if (--this.st <= 0) { this.state = 'throw'; this.st = this.angry ? 3 : 2; this.shotT = 0; }
+          break;
+        case 'throw':
+          if (--this.shotT <= 0) {
+            this.shotT = 20;
+            G.audio.sfx('swing');
+            this.lobAt(w, p, G.spr.tossRock, 26, { n: 44, h: 44, onLand: (ww, x, y) => { G.audio.sfx('bump'); G.play.shake(4, 1); ww.burst(x, y - 3, ['#a8a49c', '#5a5650'], 7, { speed: 1.1, up: 0.8, life: 18, size: 2 }); if (Math.random() < 0.22) ww.add(new Pickup(x, y, 'heart')); } });
+            if (--this.st <= 0) this.toWalk(60);
+          }
+          break;
+        case 'flex':
+          this.dir = 'down';
+          if (--this.st <= 0) this.open(80, 'FLEXING! Hit him!');
+          break;
+      }
+    }
+    // ---- Dad: "DO YOU SPEAK... EEENGLISH?!" (rings of letters), dropkicks off the bank,
+    // and smoke rings out of his pipe. Past half, he puts the luchador mask back on.
+    dad(w, p, dx, dy, dist) {
+      switch (this.state) {
+        case 'walk': this.stroll(w, dx, dy, dist); if (--this.st <= 0) this.next(); break;
+        case 'windup': this.windup(w, dx, dy, dist, ['FLYING ELBOW!', 'DROPKICK!', 'BODY SLAM!'][Math.floor(Math.random() * 3)]); break;
+        case 'charge': this.charge(w, p, dx, dy, dist, 'OFF THE ROPES!'); break;
+        case 'yell':
+          this.st--;
+          if (this.st === 30) { w.pop(this.x, this.y - 48, 'EEENGLISH?!', '#f8d850'); this.letters(w, this.angry ? 12 : 9, 0); }
+          if (this.angry && this.st === 8) this.letters(w, 12, Math.PI / 12);
+          if (this.st <= 0) this.open(56, '*huff huff*');
+          break;
+        case 'smoke':
+          if (this.st % 18 === 0) {
+            const off = this.st * 0.07;
+            for (let i = 0; i < 8; i++) { const a = off + i * Math.PI / 4; w.add(new Shot(this.x, this.y - 10, Math.cos(a) * 1.05, Math.sin(a) * 1.05, G.spr.smokeRing, { life: 100, z: 8 })); }
+            G.audio.sfx('blip');
+          }
+          if (--this.st <= 0) this.toWalk(70);
+          break;
+      }
+    }
+    letters(w, n, off) {
+      const word = 'EEENGLISH';
+      G.audio.sfx('yell');
+      for (let i = 0; i < n; i++) { const a = off + (i / n) * Math.PI * 2; w.add(new Letter(this.x, this.y - 4, Math.cos(a) * 1.3, Math.sin(a) * 1.3, word[i % word.length])); }
+    }
+    // ---- Lily: "NO." (lots of them), Mikey's heart balloons, and a giant "NOOOOO" that
+    // leaves her out of breath. Somewhere in there, the real Lily is scared.
+    lily(w, p, dx, dy, dist) {
+      switch (this.state) {
+        case 'walk':
+          this.stroll(w, dx, dy, dist, 90);
+          if (this.t % 330 === 100) w.pop(this.x, this.y - 58, LILY_INSIDE[Math.floor(this.t / 330) % LILY_INSIDE.length], '#9890a8');
+          if (--this.st <= 0) this.next();
+          break;
+        case 'no':
+          if (--this.shotT <= 0) {
+            this.shotT = 24;
+            G.audio.sfx('no');
+            const a = Math.atan2(dy, dx), n = this.angry ? 3 : 1;
+            for (let i = 0; i < n; i++) { const b = a + (i - (n - 1) / 2) * 0.35; w.add(new EnemyNo(this.x, this.y - 6, Math.cos(b) * 2.1, Math.sin(b) * 2.1)); }
+            if (--this.st <= 0) this.toWalk(70);
+          }
+          break;
+        case 'balloons':
+          if (--this.st <= 0) {
+            const alive = w.ents.filter((e) => e instanceof FinBalloon && !e.dead).length;
+            for (let i = 0; i < Math.min(3, 6 - alive); i++) w.add(new FinBalloon(this.x + (i - 1) * 16, this.y - 20));
+            G.audio.sfx('poof');
+            this.toWalk(60);
+          }
+          break;
+        case 'bigNo':
+          if (this.st % 8 === 0) w.burst(this.x, this.y - 30, ['#f8a8e8', '#a85ae8', '#ffffff'], 3, { speed: 1.4, life: 16, size: 2 });
+          if (--this.st <= 0) {
+            G.audio.sfx('no'); G.audio.sfx('boom'); G.play.shake(14, 3);
+            w.pop(this.x, this.y - 64, 'NOOOOOOOOOO!', '#ffffff');
+            w.add(new BarkRing(this.x, this.y, 120, '#f8a8e8'));
+            this.open(100, '*gasp* *gasp*');
+          }
+          break;
+      }
+    }
+    // ---- Mom: flower pots, snapdragons, the chickens, and she can't resist watering her
+    // flowers (distracted!). Sneak up on her and she shrieks "JAMIE LEE CURTIS!"
+    michelle(w, p, dx, dy, dist) {
+      if (this.state === 'walk' || this.state === 'pots') {
+        if (dist < 30) this.startle = (this.startle || 0) + 1; else this.startle = 0;
+        if (this.startle > 34) {
+          this.startle = 0;
+          G.audio.sfx('yell'); G.play.shake(12, 3);
+          w.pop(this.x, this.y - 64, 'JAMIE LEE CURTIS!!', '#ffffff');
+          w.add(new BarkRing(this.x, this.y, 80, '#f8f0a0'));
+          if (dist < 28) p.hurt(2, this.x, this.y);
+          this.open(50, '*catching her breath*');
+          return;
+        }
+      }
+      switch (this.state) {
+        case 'walk': this.stroll(w, dx, dy, dist, 80); if (--this.st <= 0) this.next(); break;
+        case 'pots':
+          if (--this.shotT <= 0) {
+            this.shotT = 18; G.audio.sfx('swing');
+            this.lobAt(w, p, G.spr.clayPot, 30, { n: 46, h: 40, onLand: (ww, x, y) => { G.audio.sfx('clank'); ww.burst(x, y - 4, ['#c8683a', '#4a3020', '#58a840', '#e83878'], 9, { speed: 1.2, up: 0.8, life: 18, size: 2 }); if (Math.random() < 0.2) ww.add(new Pickup(x, y, 'heart')); } });
+            if (--this.st <= 0) this.toWalk(70);
+          }
+          break;
+        case 'snap':
+          if (--this.st <= 0) {
+            const alive = w.ents.filter((e) => e instanceof G.Snapdragon && !e.dead).length, b = this.bounds;
+            for (let i = 0; i < Math.min(2, 3 - alive); i++) {
+              let x, y, k = 0;
+              do { x = b.x0 + Math.random() * (b.x1 - b.x0); y = b.y0 + 20 + Math.random() * (b.y1 - b.y0 - 20); } while ((Math.hypot(x - p.x, y - p.y) < 44 || Math.hypot(x - this.x, y - this.y) < 30) && ++k < 12);
+              const s = w.add(new G.Snapdragon(x, y)); s.intro = null; s.dropChance = 0.5;
+              w.burst(x, y - 6, ['#58a840', '#e83878', '#6a4220'], 8, { speed: 1, up: 0.8, life: 18, size: 2 });
+            }
+            this.toWalk(70);
+          }
+          break;
+        case 'hens':
+          if (--this.st <= 0) {
+            const alive = w.ents.filter((e) => e instanceof HenMinion && !e.dead).length;
+            for (let i = 0; i < Math.min(2, 3 - alive); i++) w.add(new HenMinion(this.x + (i ? 14 : -14), this.y + 6));
+            G.audio.sfx('bawk');
+            this.toWalk(70);
+          }
+          break;
+        case 'watering':
+          if (--this.st <= 0) this.open(100, '*watering her flowers*');
+          break;
+      }
+    }
+    // ---- Abe: cans of beans (the Bean Incident), diving into a bush and leaping out of a
+    // different one (RAAAAAH!), and his favorite trap: a quick question.
+    abe(w, p, dx, dy, dist) {
+      switch (this.state) {
+        case 'walk': this.stroll(w, dx, dy, dist); if (--this.st <= 0) this.next(); break;
+        case 'beans':
+          if (--this.shotT <= 0) {
+            this.shotT = 24; G.audio.sfx('swing');
+            this.lobAt(w, p, G.spr.beanCan, 34, { n: 46, h: 42, dmg: 0, color: '#f8a838', onLand: (ww, x, y) => { G.audio.sfx('bump'); ww.add(new BeanBomb(x, y)); } });
+            if (--this.st <= 0) this.toWalk(70);
+          }
+          break;
+        case 'dive': {
+          // he heads for the nearest bush and disappears into it...
+          const bush = (w.finBushes || []).reduce((best, b2) => (!best || Math.hypot(b2[0] - this.x, b2[1] - this.y) < Math.hypot(best[0] - this.x, best[1] - this.y) ? b2 : best), null);
+          if (bush) { const bx = bush[0] - this.x, by = bush[1] - this.y, bd = Math.hypot(bx, by) || 1; if (bd > 4) { this.x += (bx / bd) * 2.6; this.y += (by / bd) * 2.6; this.anim += 2; this.dir = G.dirToward(bx, by); } }
+          if (--this.st <= 0 || !bush) {
+            this.lurking = true; this.state = 'lurk'; this.st = 90 + Math.random() * 40;
+            const others = (w.finBushes || []).filter((b2) => b2 !== bush);
+            this.exitBush = others[Math.floor(Math.random() * others.length)] || bush;
+            G.audio.sfx('poof'); w.burst(this.x, this.y - 10, ['#3a7a34', '#5a9a44'], 10, { speed: 1.2, up: 1, life: 20, size: 2 });
+          }
+          break;
+        }
+        case 'lurk':
+          // ...the bushes rustle (the one he's in, more)...
+          if (this.t % 9 === 0) { const b2 = Math.random() < 0.55 ? this.exitBush : w.finBushes[Math.floor(Math.random() * w.finBushes.length)]; w.finRustle = { b: b2, t: 10 }; }
+          if (--this.st <= 0) {
+            // ...and RAAAAAH, out he comes, at Nate
+            this.lurking = false; this.x = this.exitBush[0]; this.y = this.exitBush[1];
+            this.state = 'leap'; this.st = 0; this.lx0 = this.x; this.ly0 = this.y; this.lx1 = p.x; this.ly1 = p.y;
+            G.audio.sfx('yell'); w.pop(this.x, this.y - 58, 'RAAAAAAH!', '#ffffff');
+          }
+          break;
+        case 'leap': {
+          const k = ++this.st / 34;
+          this.x = this.lx0 + (this.lx1 - this.lx0) * k; this.y = this.ly0 + (this.ly1 - this.ly0) * k; this.z = Math.sin(k * Math.PI) * 34;
+          if (k >= 1) {
+            this.z = 0; G.audio.sfx('boom'); G.play.shake(12, 3);
+            w.add(new BarkRing(this.x, this.y, 70, '#f8e070'));
+            if (Math.hypot(p.x - this.x, (p.y - this.y) * 1.3) < 20) p.hurt(2, this.x, this.y);
+            this.open(90, 'HA! GOT YOU!');
+          }
+          break;
+        }
+        case 'asking': break;   // (the question script is running)
+      }
+    }
+    // ---- Hannah: ice packs, bandage rolls that tangle Nate up, CODE BLUE, and she patches
+    // herself up (hit her while she does, or she gets 3 hp back).
+    hannah(w, p, dx, dy, dist) {
+      switch (this.state) {
+        case 'walk': this.stroll(w, dx, dy, dist, 85); if (--this.st <= 0) this.next(); break;
+        case 'ice':
+          if (--this.shotT <= 0) {
+            this.shotT = 32; G.audio.sfx('swing');
+            const a = Math.atan2(dy, dx), n = this.angry ? 7 : 5;
+            for (let i = 0; i < n; i++) { const b = a + (i - (n - 1) / 2) * 0.24; w.add(new Shot(this.x, this.y - 8, Math.cos(b) * 1.6, Math.sin(b) * 1.6, G.spr.icePack, { life: 120, z: 8 })); }
+            if (--this.st <= 0) this.toWalk(70);
+          }
+          break;
+        case 'bandage':
+          if (--this.shotT <= 0) {
+            this.shotT = 22; G.audio.sfx('swing');
+            this.lobAt(w, p, G.spr.bandageRoll, 30, { n: 44, h: 36, dmg: 1, color: '#f8f4ec', onLand: (ww, x, y) => { G.audio.sfx('bump'); ww.add(new BandageStrip(x, y)); } });
+            if (--this.st <= 0) this.toWalk(70);
+          }
+          break;
+        case 'heal':
+          if (this.t % 6 === 0) w.burst(this.x + (Math.random() * 20 - 10), this.y - 20 - Math.random() * 20, ['#78e070', '#c8f8b8', '#ffffff'], 1, { speed: 0.3, up: 0.8, g: -0.02, life: 24, size: 2 });
+          if (--this.st <= 0) {
+            const before = this.hp; this.hp = Math.min(this.maxHp, this.hp + 3);
+            G.audio.sfx('heart');
+            w.pop(this.x, this.y - 58, before < this.hp ? '+' + (this.hp - before) + ' (she healed!)' : 'All better!', '#78e070');
+            this.toWalk(60);
+          }
+          break;
+        case 'code':
+          if (--this.shotT <= 0) {
+            this.shotT = 22;
+            w.add(new BarkRing(this.x, this.y, 100, '#7ab8f8')); G.audio.sfx('blip');
+            if (--this.st <= 0) this.toWalk(70);
+          }
+          break;
+      }
+    }
+
+    hit(dmg, sx, sy) {
+      if (this.state === 'defeated' || this.state === 'idle' || this.lurking) return;
+      const p = G.play.player;
+      if (!this.isOpen) {
+        G.audio.sfx('clank');
+        if (G.tick - (this.blockPop || -99) > 30) { this.blockPop = G.tick; this.world.pop(this.x, this.y - 54, 'BLOCKED!', '#c8c8d0'); }
+        const dx = p.x - this.x, dy = p.y - this.y, m = Math.hypot(dx, dy) || 1;
+        if (p.state !== 'dead') { p.state = 'hurt'; p.t = 8; p.kb = { x: (dx / m) * 2.4, y: (dy / m) * 2.4 }; }
+        return;
+      }
+      if (this.hurtT > 0) return;
+      this.hp = Math.max(0, this.hp - Math.min(dmg, 2));
+      this.hurtT = 12;
+      const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
+      this.kb = { x: (dx / m) * 1.6, y: (dy / m) * 1.6 };
+      G.audio.sfx('hit');
+      this.world.burst(this.x, this.y - 28, ['#a85ae8', '#f8f0ff', '#d8a8f8'], 5, { speed: 1.2, up: 0.6, life: 20, size: 2 });
+      if (this.state === 'heal') { this.world.pop(this.x, this.y - 58, 'Interrupted!', '#f8e070'); this.state = 'open'; this.st = 50; this.dmgHere = 0; }
+      if (this.hp <= 0) { this.state = 'defeated'; this.vx = this.vy = 0; G.script.run(G.SCRIPTS.finFreed(this)); return; }
+      if (this.id === 'dad' && this.angry && !this.masked) { this.masked = true; this.state = 'walk'; this.st = 40; G.script.run(G.SCRIPTS.finDadMask(this)); return; }
+      if ((this.dmgHere = (this.dmgHere || 0) + 1) >= 3) { this.toWalk(50); this.world.pop(this.x, this.y - 58, 'Shakes it off!', '#c8a8f8'); }
+    }
+    bomb(sx, sy) { if (this.isOpen) this.hit(2, sx, sy); else if (!this.lurking) this.open(70, 'STUNNED!'); }
+
+    draw(ctx, cx, cy) {
+      if (this.hidden || this.lurking) return;
+      const B = bigOf(this.sprite);
+      const moving = this.state === 'walk' || this.state === 'charge' || this.state === 'dive';
+      let img = this.state === 'defeated' ? B.down[0] : B[this.dir][moving ? walkFrame(this.anim, true) : 0];
+      if (this.state === 'flex' || this.state === 'bigNo' || this.state === 'yell' || this.state === 'heal') img = B.hold;
+      if ((this.hurtT && (this.hurtT >> 1) & 1) || (this.state === 'windup' && (this.st >> 2) & 1)) img = G.art.flash(img);
+      ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 12) - cx, Math.round(this.y - 4) - cy, 24, 6);
+      const jx = this.state === 'windup' || this.state === 'bigNo' || this.state === 'dig' ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
+      const sx = Math.round(this.x - 16 + jx) - cx, sy = Math.round(this.y - B.h + 4 - this.z) - cy;
+      // the possession: a flickering purple glow around them
+      if (this.state !== 'defeated') {
+        const glow = tinted(img, '#a85ae8');
+        ctx.save(); ctx.globalAlpha = 0.45 + Math.sin(this.t * 0.15) * 0.25;
+        for (const [ox, oy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) ctx.drawImage(glow, sx + ox, sy + oy);
+        ctx.restore();
+      }
+      ctx.drawImage(img, sx, sy);
+      // Mom's watering can
+      if (this.state === 'watering' || (this.state === 'open' && this.id === 'michelle' && this.st > 50)) ctx.drawImage(G.spr.wateringCan, sx + 22, sy + 30);
+      // Hannah's heal: a green glow
+      if (this.state === 'heal') { ctx.save(); ctx.globalAlpha = 0.25 + Math.sin(this.t * 0.3) * 0.15; ctx.drawImage(tinted(img, '#78e070'), sx, sy); ctx.restore(); }
+      if (this.state === 'open') {
+        for (let i = 0; i < 4; i++) {
+          const a = G.tick * 0.12 + (i * Math.PI) / 2;
+          ctx.fillStyle = i % 2 ? '#f8d850' : '#ffffff';
+          ctx.fillRect(Math.round(this.x + Math.cos(a) * 12) - cx, Math.round(sy - 4 + Math.sin(a) * 3), 3, 3);
+        }
+      }
+    }
+  }
+  G.Possessed = Possessed;
+
+  // ============================================================== FATHER EGGMAS
+  // During the gauntlet he sits on his throne of egg cartons and watches. Then the relay:
+  // each of the family gets a turn against him with their own move, and he only takes
+  // damage from that move (TURNS). Every turn he fights a little differently, and nastier.
+  // Abe's turn ends with the first big crack in his shell ("Nice crack, Abe!"). Nate goes
+  // last: egg tennis with the golden egg knocks him down, and Abe's pipe song, Nice Crack,
+  // finishes the job.
+  const TURNS = {
+    doron: { weapon: 'rock', need: 5, h: 22, every: 100, attacks: ['lob', 'spirals', 'egglets', 'lob'], tip: 'Z: pick up a rock. Z again: throw it at Father Eggmas!' },
+    dad: { weapon: 'letter', need: 10, h: 22, every: 90, attacks: ['spirals', 'lob', 'egglets', 'lob'], tip: 'Z: "EEENGLISH!" Letters fly at Father Eggmas.' },
+    lily: { weapon: 'no', need: 5, h: 16, every: 85, attacks: ['spirals', 'spirals', 'lob', 'egglets'], tip: 'Hold Z to wind up a "No." Let go to say it. Only a full "No." counts!' },
+    michelle: { weapon: 'egg', need: 12, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'rain'], tip: 'Z: Henrietta fires an egg.' },
+    abe: { weapon: 'reach', need: 6, h: 50, every: 80, attacks: ['lights', 'lob', 'spirals', 'lights'], tip: 'He\'s floating too high for anybody else. Z: Abe reaches up and bonks him!' },
+    hannah: { weapon: 'ice', need: 9, h: 22, every: 72, attacks: ['spirals', 'rain', 'lights', 'egglets'], tip: 'Z: throw an ice pack.' },
+    nate: { weapon: 'crack', need: 3, h: 22, every: 70, attacks: ['golden', 'lob', 'spirals', 'golden', 'lights', 'egglets'], tip: 'Bat the golden egg back with your hammer until it knocks him down. Then puff NICE CRACK (X: down, down, left)!' },
+  };
+  G.FIN_TURNS = TURNS;
+  G.FIN_RELAY = ['doron', 'dad', 'lily', 'michelle', 'abe', 'hannah', 'nate'];
+  const RELAY_TOTAL = G.FIN_RELAY.reduce((n, id) => n + TURNS[id].need, 0);
+
+  class EggmasBoss extends Ent {
+    constructor(x, y, bounds) {
+      super(x, y);
+      Object.assign(this, {
+        enemy: true, boss: true, noBar: true, name: 'FATHER EGGMAS', bounds, state: 'throne', t: 0, h: 0, hurtT: 0, turn: null,
+        turnHits: 0, cracks: 0, cycle: 0, atkT: 120, home: { x, y }, hb: { w: 30, h: 10 }, scale: 2, throneX: x, throneY: y,
+      });
+      this.hp = this.maxHp = RELAY_TOTAL;
+    }
+    get td() { return TURNS[this.turn]; }
+    // what can hit him: everything near him on the ground (his shadow and up through him), or
+    // only his body when he's floating high (Abe's turn)
+    hurtBox() {
+      if (this.state !== 'fight' && this.state !== 'down') return [-999, -999, -998, -998];
+      return this.h > 40 ? [this.x - 18, this.y - this.h - 58, this.x + 18, this.y - this.h - 8] : [this.x - 22, this.y - this.h - 60, this.x + 22, this.y + 6];
+    }
+    // the relay: start someone's turn
+    beginTurn(id) {
+      this.turn = id; this.turnHits = 0; this.state = 'fight'; this.atkT = 80; this.cycle = 0; this.noBar = false;
+      this.targetH = this.td.h;
+    }
+    update(w) {
+      this.t++;
+      if (this.hurtT > 0) this.hurtT--;
+      if (this.h !== (this.targetH || 0) && this.state !== 'down') this.h += Math.sign((this.targetH || 0) - this.h) * Math.min(1.5, Math.abs((this.targetH || 0) - this.h));
+      if (G.script.busy) return;
+      if (this.state === 'throne') {
+        if (this.t % 260 === 120) w.pop(this.x, this.y - 92, ['HO HO HO.', 'Isn\'t this NICE? The whole family, together.', 'Merry Christmas, Nate.', 'HO. HO. HO.'][Math.floor(this.t / 260) % 4], '#f86858');
+        return;
+      }
+      if (this.state === 'down') {
+        if (--this.downT <= 0) { this.state = 'fight'; this.targetH = this.td.h; w.pop(this.x, this.y - 60, 'He\'s back up!', '#f86858'); }
+        return;
+      }
+      if (this.state !== 'fight') return;
+      // Doron's turn: the ditch keeps turning up rocks
+      if (this.turn === 'doron' && this.t % 90 === 0 && w.ents.filter((e) => e instanceof LiftRock && !e.dead).length < 3 && !G.play.player.carry) {
+        const b0 = this.bounds, r = w.add(new LiftRock(b0.x0 + 10 + Math.random() * (b0.x1 - b0.x0 - 20), b0.y0 + 40 + Math.random() * (b0.y1 - b0.y0 - 50)));
+        w.burst(r.x, r.y - 4, ['#a8a49c', '#5a4e40'], 6, { speed: 0.8, up: 0.8, life: 16, size: 1 });
+      }
+      // floating around the ditch in a slow figure-eight
+      const b = this.bounds, sp = 0.012 + this.cracks * 0.003 + (this.turn === 'nate' ? 0.004 : 0);
+      const tx = (b.x0 + b.x1) / 2 + Math.sin(this.t * sp) * (b.x1 - b.x0) * 0.38, ty = b.y0 + 40 + (Math.sin(this.t * sp * 2) + 1) * (b.y1 - b.y0 - 80) * 0.3;
+      this.x += (tx - this.x) * 0.04; this.y += (ty - this.y) * 0.04;
+      if (--this.atkT <= 0) {
+        const a = this.td.attacks[this.cycle++ % this.td.attacks.length];
+        this.attack(w, a);
+        this.atkT = this.td.every;
+      }
+    }
+    attack(w, a) {
+      const p = G.play.player, b = this.bounds;
+      if (a === 'lob' || a === 'rain') {
+        const n = a === 'rain' ? 6 : 3;
+        for (let i = 0; i < n; i++) {
+          const near = i === 0 || a === 'lob';
+          const tx = near ? G.clamp(p.x + (Math.random() * 60 - 30), b.x0, b.x1) : b.x0 + Math.random() * (b.x1 - b.x0);
+          const ty = near ? G.clamp(p.y + (Math.random() * 40 - 20), b.y0, b.y1) : b.y0 + Math.random() * (b.y1 - b.y0);
+          w.add(new Lob(this.x, this.y - this.h - 30, tx, ty, G.spr.ornaments[i % 3], { n: 48 + i * 6, h: 50, z0: this.h + 30, onLand: (ww, x, y) => G.ornamentShatter(ww, x, y) }));
+        }
+        G.audio.sfx('swing');
+        w.pop(this.x, this.y - this.h - 74, a === 'rain' ? 'DECK THE HALLS!' : 'HO HO HO!', '#f86858');
+      } else if (a === 'spirals') {
+        const n = this.cracks ? 4 : 3, base = Math.atan2(p.y - this.y, p.x - this.x);
+        for (let i = 0; i < n; i++) { const ang = base + (i - (n - 1) / 2) * 0.7; w.add(new HypnoShot(this.x, this.y - this.h - 30, Math.cos(ang) * 1, Math.sin(ang) * 1)); }
+        G.audio.sfx('whine');
+      } else if (a === 'egglets') {
+        const alive = w.ents.filter((e) => e instanceof Egglet && !e.dead).length;
+        for (let i = 0; i < Math.min(2, 4 - alive); i++) {
+          const e = w.add(new Egglet(this.x + (i ? 16 : -16), this.y + 4));
+          w.burst(e.x, e.y - 8, ['#f2ead6', '#7a1e2c'], 6, { speed: 1, life: 16, size: 2 });
+        }
+        w.pop(this.x, this.y - this.h - 74, 'Go, my little eggs!', '#f86858');
+      } else if (a === 'lights') {
+        // he yanks his Christmas lights: a string goes taut across the ditch and lights up
+        const rows = this.cracks ? 2 : 1;
+        for (let i = 0; i < rows; i++) {
+          const y = i === 0 ? G.clamp(p.y, b.y0, b.y1) : G.clamp(p.y + (Math.random() < 0.5 ? -40 : 40), b.y0, b.y1);
+          w.add(new LightWire(b.x0 - 24, b.x1 + 24, y));
+        }
+        G.audio.sfx('buzz');
+        w.pop(this.x, this.y - this.h - 74, 'LIGHT IT UP!', '#f8e070');
+      } else if (a === 'golden') {
+        if (w.ents.some((e) => e instanceof GoldenEgg && !e.dead)) return;
+        const rotten = this.cracks > 0 && Math.random() < 0.25;
+        w.add(new GoldenEgg(this, rotten));
+        G.audio.sfx('swing');
+        w.pop(this.x, this.y - this.h - 74, rotten ? 'Catch THIS!' : 'Catch, Nate!', '#f8e070');
+      }
+    }
+    // a hit from the move whose turn it is
+    relayHit(kind, src) {
+      if (this.state !== 'fight' && this.state !== 'down') return false;
+      if (!this.turn || kind !== this.td.weapon) return false;
+      if (kind !== 'crack' && this.hurtT > 0) return true;
+      this.hp = Math.max(0, this.hp - 1);
+      this.turnHits++;
+      this.hurtT = 14;
+      G.audio.sfx('hit'); G.play.shake(5, 2);
+      this.world.burst(this.x, this.y - this.h - 36, ['#f2ead6', '#7a1e2c', '#f8e070'], 8, { speed: 1.6, up: 0.8, g: 0.06, life: 24, size: 2 });
+      this.world.pop(this.x, this.y - this.h - 78, ['OOF!', 'HOW DARE YOU!', 'MY PAISLEY!', 'OW! OW!'][this.turnHits % 4], '#f86858');
+      if (this.turnHits >= this.td.need) { this.state = 'tagout'; G.script.run(G.SCRIPTS.finTagOut(this)); }
+      return true;
+    }
+    hit(dmg, sx, sy) {
+      if (this.turn === 'michelle') { this.relayHit('egg'); return; }
+      if (this.turn === 'nate' && G.tick - (this.slipPop || -99) > 40) {
+        this.slipPop = G.tick;
+        this.world.pop(this.x, this.y - this.h - 70, this.state === 'down' ? 'Puff NICE CRACK! (X: down, down, left)' : 'Too slippery! Bat the golden egg!', '#f8e070');
+      }
+    }
+    // Lily's "No."
+    onNo(shot) {
+      if (this.turn !== 'lily' || this.state !== 'fight') return false;
+      if (shot.weak) { this.world.pop(this.x, this.y - this.h - 74, 'WAS THAT A MAYBE? HO HO!', '#f86858'); return true; }
+      return this.relayHit('no');
+    }
+    noBox() { return this.hurtBox(); }
+    // the golden egg got him: down he goes, and Nate has a few seconds for Nice Crack
+    knockDown() {
+      this.state = 'down'; this.downT = 330; this.targetH = 0; this.h = Math.min(this.h, 10);
+      G.audio.sfx('boom'); G.play.shake(14, 3);
+      this.world.burst(this.x, this.y - 30, ['#f8e070', '#f2ead6', '#ffffff'], 16, { speed: 2, up: 1, g: 0.1, life: 26, size: 2 });
+      this.world.pop(this.x, this.y - 74, 'NOW! Puff NICE CRACK! (X: down, down, left)', '#f8e070');
+    }
+    draw(ctx, cx, cy) {
+      if (this.hidden) return;
+      const img0 = G.spr.eggmas, sc = this.scale, W = img0.width * sc, H = img0.height * sc;
+      const bob = this.state === 'throne' ? Math.round(Math.sin(this.t * 0.05) * 1) : this.state === 'down' ? 0 : Math.round(Math.sin(this.t * 0.08) * 3);
+      const x = Math.round(this.x - W / 2) - cx, gy = Math.round(this.y) - cy, y = gy - H - Math.round(this.h) + bob;
+      if (this.state === 'throne') ctx.drawImage(G.spr.eggThrone, Math.round(this.throneX - 44) - cx, Math.round(this.throneY - 92) - cy);
+      else {
+        // his shadow on the ditch bed
+        ctx.save(); ctx.globalAlpha = 0.35; ctx.fillStyle = '#100818';
+        ctx.beginPath(); ctx.ellipse(Math.round(this.x) - cx, gy, 20, 6, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+      }
+      // a dark purple glow around him
+      ctx.save(); ctx.globalAlpha = 0.3 + Math.sin(this.t * 0.07) * 0.12;
+      const g = tinted(img0, '#6a2a9a');
+      ctx.drawImage(g, x - 3, y - 3, W + 6, H + 6);
+      ctx.restore();
+      let img = img0;
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img0);
+      ctx.drawImage(img, x, y, W, H);
+      // cracks in his shell
+      const cr = this.cracks;
+      if (cr) {
+        ctx.fillStyle = '#3a2a1a';
+        const lines = [[[14, 1], [12, 4], [15, 6], [13, 9]], [[6, 5], [9, 7], [8, 10], [11, 12]], [[22, 5], [19, 8], [21, 11], [18, 13]]];
+        for (let i = 0; i < Math.min(cr, lines.length); i++) {
+          const L = lines[i];
+          for (let k = 0; k < L.length - 1; k++) {
+            const [ax, ay] = L[k], [bx, by] = L[k + 1], n = Math.max(Math.abs(bx - ax), Math.abs(by - ay)) * sc;
+            for (let s = 0; s <= n; s++) ctx.fillRect(x + Math.round((ax + (bx - ax) * s / n) * sc), y + Math.round((ay + (by - ay) * s / n) * sc), Math.max(1, sc >> 1), Math.max(1, sc >> 1));
+          }
+        }
+      }
+      if (this.state === 'down') for (let i = 0; i < 4; i++) {
+        const a = G.tick * 0.12 + (i * Math.PI) / 2;
+        ctx.fillStyle = i % 2 ? '#f8d850' : '#ffffff';
+        ctx.fillRect(Math.round(this.x + Math.cos(a) * 18) - cx, Math.round(y - 4 + Math.sin(a) * 4), 3, 3);
+      }
+    }
+  }
+  G.EggmasBoss = EggmasBoss;
+
+  // An egglet: a little Father Eggmas, waddling after whoever's up. One hit pops it (it
+  // might have a heart in it).
+  class Egglet extends Critter {
+    constructor(x, y) { super(x, y, 1); Object.assign(this, { bits: ['#f2ead6', '#7a1e2c', '#fbfbf8'], dropChance: 0.45, face: 1 }); }
+    hurtBox() { return [this.x - 7, this.y - 15, this.x + 7, this.y]; }
+    onNo() { this.hit(1, this.x, this.y + 10); return false; }
+    think(w, p, dx, dy, dist) {
+      this.chase(w, dx, dy, dist, 0.55);
+      this.face = dx > 0 ? 1 : -1;
+      if (this.t % 200 === 50) w.pop(this.x, this.y - 22, 'ho ho', '#f86858');
+    }
+    die() {
+      this.dead = true;
+      G.audio.sfx('poof');
+      this.world.burst(this.x, this.y - 8, this.bits, 10, { speed: 1.2, life: 20, size: 2 });
+      if (Math.random() < this.dropChance) this.world.add(new Pickup(this.x, this.y, G.state.hp < G.state.maxHp ? 'heart' : 'tooth'));
+    }
+    draw(ctx, cx, cy) {
+      const img = G.spr.egglet[this.face > 0 ? 'right' : 'left'][(this.t >> 3) & 1];
+      this.drawSprite(ctx, cx, cy, img);
+    }
+  }
+  G.Egglet = Egglet;
+
+  // The golden egg (egg tennis): bat it back with the hammer. He bats it back too, a little
+  // faster every time... until he misses, and it knocks him flat. The rotten one (green):
+  // DON'T swing at it, just get out of the way.
+  class GoldenEgg extends Ent {
+    constructor(boss, rotten) {
+      super(boss.x, boss.y + 4);
+      Object.assign(this, { boss, rotten, sp: 1.25, toBoss: false, z: boss.h + 34, life: 900, hb: { w: 16, h: 18 } });
+      // how many times he'll bat it back before he misses
+      this.bats = rotten ? 0 : Math.floor(Math.random() * (boss.cracks ? 3 : 2)) + (boss.turnHits ? 1 : 0);
+    }
+    update(w) {
+      if (G.script.busy) return;
+      if (--this.life <= 0) { this.shatter(w); return; }
+      const p = G.play.player, b = this.boss;
+      const tx = this.toBoss ? b.x : p.x, ty = this.toBoss ? b.y + 2 : p.y;
+      const dx = tx - this.x, dy = ty - this.y, d = Math.hypot(dx, dy) || 1;
+      this.x += (dx / d) * this.sp; this.y += (dy / d) * this.sp;
+      const zt = this.toBoss ? b.h + 30 : 10;
+      this.z += (zt - this.z) * 0.06;
+      this.t = (this.t || 0) + 1;
+      if (this.t % 4 === 0) w.burst(this.x, this.y - this.z - 4, this.rotten ? ['#8aaa4a'] : ['#f8e070', '#ffffff'], 1, { speed: 0.2, life: 14, size: 1 });
+      if (!this.toBoss && d < 9) {
+        p.hurt(this.rotten ? 1 : 2, this.x, this.y);
+        if (this.rotten) w.pop(this.x, this.y - 26, 'EW!', '#8aaa4a');
+        this.shatter(w);
+      } else if (this.toBoss && d < 16) {
+        if (b.state !== 'fight') { this.shatter(w); return; }
+        if (this.bats > 0) {
+          this.bats--; this.toBoss = false; this.sp += 0.3;
+          G.audio.sfx('clank'); w.pop(b.x, b.y - b.h - 74, ['HO!', 'HO HO!', 'NICE TRY!'][this.bats % 3], '#f86858');
+        } else { this.dead = true; b.knockDown(); }
+      }
+    }
+    onHammer(player) {
+      if (this.toBoss) return;
+      if (this.rotten) {
+        this.world.pop(this.x, this.y - 26, 'SPLAT! EW!', '#8aaa4a');
+        player.hurt(1, this.x, this.y);
+        this.shatter(this.world);
+        return;
+      }
+      this.toBoss = true; this.sp += 0.35;
+      G.audio.sfx('hit'); G.play.shake(3, 1);
+      this.world.pop(this.x, this.y - 30, 'THWACK!', '#f8e070');
+    }
+    shatter(w) {
+      this.dead = true;
+      G.audio.sfx('poof');
+      w.burst(this.x, this.y - this.z, this.rotten ? ['#6a8a3a', '#8aaa4a', '#f8f0d0'] : ['#f8e070', '#e8b830', '#ffffff'], 10, { speed: 1.4, up: 0.6, g: 0.08, life: 20, size: 2 });
+    }
+    draw(ctx, cx, cy) {
+      drawShadow(ctx, this.x, this.y, cx, cy, false);
+      ctx.drawImage(G.spr.goldenEgg[this.rotten ? 1 : 0], Math.round(this.x - 6) - cx, Math.round(this.y - 14 - this.z) - cy);
+    }
+  }
+  G.GoldenEgg = GoldenEgg;
+
+  // Father Eggmas's Christmas lights, yanked taut across the ditch: they blink while they
+  // tighten (get out from under them, or find a gap where a bulb's missing), then light up.
+  class LightWire extends Ent {
+    constructor(x0, x1, y) {
+      super((x0 + x1) / 2, y);
+      Object.assign(this, { x0, x1, t: 0, flat: true });
+      const n = Math.floor((x1 - x0) / 12), g = 2 + Math.floor(Math.random() * (n - 5));
+      this.gaps = [g, g + 1];
+    }
+    inGap(x) { const i = Math.floor((x - this.x0) / 12); return this.gaps.includes(i); }
+    update() {
+      if (G.script.busy) return;
+      this.t++;
+      if (this.t === 56) G.audio.sfx('buzz');
+      if (this.t > 56 && this.t < 92) {
+        const p = G.play.player;
+        if (Math.abs(p.y - this.y) < 7 && !this.inGap(p.x)) p.hurt(1, p.x, this.y - 10);
+      }
+      if (this.t >= 96) this.dead = true;
+    }
+    draw(ctx, cx, cy) {
+      const live = this.t > 56, n = Math.floor((this.x1 - this.x0) / 12), y = Math.round(this.y) - cy - 2;
+      ctx.fillStyle = live ? '#f8f0a0' : '#2a2a30';
+      ctx.fillRect(Math.round(this.x0) - cx, y, Math.round(this.x1 - this.x0), 1);
+      const cols = ['#f83838', '#38c848', '#f8e040', '#3878f8'];
+      for (let i = 0; i < n; i++) {
+        if (this.gaps.includes(i)) continue;
+        const bx = Math.round(this.x0 + i * 12 + 6) - cx, on = live || ((this.t >> 2) + i) % 3 === 0;
+        ctx.fillStyle = on ? cols[i % 4] : '#4a4a54';
+        ctx.fillRect(bx - 1, y + 1, 3, 4);
+        if (live && (this.t + i) % 4 < 2) { ctx.fillStyle = '#ffffff'; ctx.fillRect(bx, y - 2, 1, 2); }
+      }
+    }
+  }
+  G.LightWire = LightWire;
+
+  // ---- the family's moves against Father Eggmas (they hit his egglets, too)
+  class RelayShot extends Ent {
+    constructor(x, y, vx, vy, kind) { super(x, y); Object.assign(this, { vx, vy, kind, life: 80 }); }
+    update(w) {
+      if (G.script.busy) return;
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0 || w.tileSolid(Math.floor(this.x / 16), Math.floor((this.y - 6) / 16))) { this.dead = true; return; }
+      const r = [this.x - 6, this.y - 16, this.x + 6, this.y - 2];
+      for (const e of w.ents) {
+        if (e.dead) continue;
+        if (e instanceof EggmasBoss) { if (G.overlap(r, e.hurtBox()) && e.relayHit(this.kind)) { this.dead = true; return; } }
+        else if (e.enemy && e.hurtBox && !e.boss && G.overlap(r, e.hurtBox())) { e.hit(1, this.x - this.vx * 4, this.y - this.vy * 4); this.dead = true; return; }
+      }
+    }
+    draw(ctx, cx, cy) {
+      if (this.kind === 'letter') G.font.drawBig(ctx, this.ch || 'E', Math.round(this.x - 4) - cx, Math.round(this.y - 18) - cy, 1, '#f8d850', '#5a1020');
+      else ctx.drawImage(G.spr.icePack, Math.round(this.x - 6) - cx, Math.round(this.y - 14) - cy);
+    }
+  }
+  G.RelayShot = RelayShot;
+  // a rock Doron can pick up off the ditch bed
+  class LiftRock extends Ent {
+    constructor(x, y) { super(x, y); this.hb = { w: 14, h: 8 }; }
+    draw(ctx, cx, cy) { drawShadow(ctx, this.x, this.y, cx, cy, false); ctx.drawImage(G.spr.tossRock, Math.round(this.x - 6) - cx, Math.round(this.y - 9) - cy); }
+  }
+  G.LiftRock = LiftRock;
+
+  // what Z does for each of the family on their turn (Lily's is her "No.", built in)
+  G.RELAY_LABEL = { doron: 'ROCK', dad: 'ENG', lily: 'NO.', michelle: 'EGG', abe: 'BONK', hannah: 'ICE' };
+  const eggmasIn = (w) => w.ents.find((e) => e instanceof EggmasBoss && !e.dead);
+  G.RELAY_MOVE = {
+    // Doron: pick up a rock (Z), throw it at Father Eggmas (Z)
+    doron(p, w) {
+      if (p.relayCd > 0) return;
+      const boss = eggmasIn(w);
+      if (p.carry) {
+        p.carry = false; p.pose = null; p.relayCd = 18;
+        const tx = boss ? boss.x : p.x, ty = boss ? boss.y : p.y - 60;
+        G.audio.sfx('swing'); w.pop(p.x, p.y - 34, 'HRNGH!', '#68c8ff');
+        w.add(new Lob(p.x, p.y - 26, tx, ty, G.spr.tossRock, { n: 34, h: 30, z0: 22, dmg: 0, color: null, onLand: (ww, x, y) => {
+          G.audio.sfx('bump'); ww.burst(x, y - 3, ['#a8a49c', '#5a5650'], 7, { speed: 1.1, up: 0.8, life: 18, size: 2 });
+          const bb = eggmasIn(ww);
+          if (bb && Math.abs(bb.x - x) < 26 && Math.abs(bb.y - y) < 22) bb.relayHit('rock');
+          for (const e of ww.ents) if (e instanceof Egglet && !e.dead && Math.hypot(e.x - x, e.y - y) < 18) e.hit(1, x, y);
+        } }));
+        return;
+      }
+      const rock = w.ents.find((e) => e instanceof LiftRock && !e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 22);
+      if (!rock) { if (G.tick - (p.rockPop || -99) > 40) { p.rockPop = G.tick; w.pop(p.x, p.y - 32, 'Need a ROCK!', '#68c8ff'); } return; }
+      rock.dead = true; p.carry = true; p.pose = 'hold';
+      G.audio.sfx('bump'); w.pop(p.x, p.y - 34, 'ROCK!', '#68c8ff');
+    },
+    // Dad: "EEENGLISH!" three letters fly at Father Eggmas
+    dad(p, w) {
+      if (p.relayCd > 0) return;
+      p.relayCd = 34;
+      const boss = eggmasIn(w), base = boss ? Math.atan2(boss.y - p.y, boss.x - p.x) : Math.atan2(G.DIRS[p.dir][1], G.DIRS[p.dir][0]);
+      'ENG'.split('').forEach((ch, i) => { const a = base + (i - 1) * 0.22; const s = w.add(new RelayShot(p.x, p.y - 2, Math.cos(a) * 2.4, Math.sin(a) * 2.4, 'letter')); s.ch = ch; s.life = 100; });
+      G.audio.sfx('yell'); w.pop(p.x, p.y - 34, 'EEENGLISH!', '#f8d850');
+    },
+    // Mom: Henrietta fires an egg
+    michelle(p, w) {
+      if (p.relayCd > 0) return;
+      p.relayCd = 16;
+      w.add(new G.EggShot(p.x, p.y, p.dir));
+      G.audio.sfx('bawk');
+    },
+    // Abe: he's 6'5". He reaches up and bonks him
+    abe(p, w) {
+      if (p.relayCd > 0 || p.state !== 'walk') return;
+      p.relayCd = 22; p.state = 'reach'; p.t = 0; p.pose = 'hold'; p.hitSet.clear();
+      G.audio.sfx('swing');
+    },
+    // Hannah: an ice pack
+    hannah(p, w) {
+      if (p.relayCd > 0) return;
+      p.relayCd = 26;
+      const boss = eggmasIn(w), a = boss ? Math.atan2(boss.y - p.y, boss.x - p.x) : Math.atan2(G.DIRS[p.dir][1], G.DIRS[p.dir][0]);
+      w.add(new RelayShot(p.x, p.y - 2, Math.cos(a) * 2.2, Math.sin(a) * 2.2, 'ice'));
+      G.audio.sfx('swing');
+    },
+  };
+  // Abe's reach: a tall box straight up over his head
+  G.relayReach = (p, w) => {
+    const r = [p.x - 14, p.y - 96, p.x + 14, p.y - 8];
+    for (const e of w.ents) {
+      if (e.dead || p.hitSet.has(e)) continue;
+      if (e instanceof EggmasBoss) { if (G.overlap(r, e.hurtBox())) { p.hitSet.add(e); if (e.relayHit('reach')) w.pop(p.x, p.y - 60, 'BONK!', '#ffa848'); } }
+      else if (e.enemy && e.hurtBox && !e.boss && G.overlap([p.x - 16, p.y - 30, p.x + 16, p.y + 6], e.hurtBox())) { p.hitSet.add(e); e.hit(1, p.x, p.y); }
+    }
+  };
+
 
 
   // Corn on the cob: hops after Nate and spits kernels.

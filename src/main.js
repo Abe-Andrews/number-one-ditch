@@ -117,7 +117,8 @@
       for (let i = 0; i < 90; i++) this.trail.push({ x: x - ddx * i * 0.6, y: y - ddy * i * 0.6, dir });
       // one party member at a time trails behind Nate (picked in the PEOPLE menu)
       const fid = G.activeFollower();
-      if (fid && !G.state.playAs) {
+      // (some maps have the whole family there in person, like the finale: nobody trails behind)
+      if (fid && !G.state.playAs && !this.world.def.noFollower) {
         const t = this.trail[14];
         this.world.add(new G.Follower(fid, 0, t.x, t.y, dir));
       }
@@ -140,7 +141,7 @@
         e.dead = true;
         if (poof) w.burst(e.x, e.y - 8, ['#ffffff', '#e8e0f0'], 8);
       }
-      if (id && !G.state.playAs) {
+      if (id && !G.state.playAs && !w.def.noFollower) {
         const t = this.trail[Math.min(this.trail.length - 1, 14)];
         const f = w.add(new G.Follower(id, 0, t.x, t.y, p.dir));
         if (poof) w.burst(f.x, f.y - 8, ['#ffffff', '#f8d850'], 10);

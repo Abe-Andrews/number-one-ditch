@@ -1474,6 +1474,20 @@
         }
       }
     },
+    // ---- the Number One Ditch (the finale): wet gravel and mud on the ditch bed (with a
+    // little shark tooth here and there), and steep muddy banks with grass along the top
+    ditchBed(p, r, v) {
+      p.rect(0, 0, 16, 16, '#4e4438');
+      for (let i = 0; i < 14; i++) p.set(r() * 16, r() * 16, ['#6a5e4e', '#3e352a', '#7a6e5c', '#5a4e3e'][Math.floor(r() * 4)]);
+      if (r() < 0.25) { const x = 2 + Math.floor(r() * 11), y = 2 + Math.floor(r() * 11); p.rect(x, y, 3, 2, '#3a4a5a'); p.set(x, y, '#5a7a9a'); }
+      if (r() < 0.14) { const x = 2 + Math.floor(r() * 12), y = 2 + Math.floor(r() * 12); p.set(x, y, '#f4f0e0'); p.set(x, y + 1, '#d8d0b8'); }
+    },
+    bankFace(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#5a4a38');
+      for (let i = 0; i < 8; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#4a3c2c' : '#6a5844');
+      for (let x = 0; x < 16; x += 3) p.vline(x + (v % 3), 2 + Math.floor(r() * 6), 15, '#4e4030');
+      if (mask & 1) { p.rect(0, 0, 16, 4, '#3e7a34'); for (let x = 0; x < 16; x += 2) p.set(x, 4, '#2e6a2c'); p.set(r() * 16, 1, '#5a9a44'); }
+    },
     // ---- CHKD: butter-yellow walls with a band of bright squares, speckled floors with colored
     // inlays, foam mats in the playroom; the NICU is calm and blue, with a border of stars
     faceChkd(p, r, v, mask) {
@@ -7462,6 +7476,136 @@
     return p.canvas();
   }
 
+  // ================================================================ THE FINALE: the Number One Ditch
+  // Father Eggmas's throne: egg cartons stacked into a seat and a tall back, a red velvet
+  // cushion, tinsel draped over it, ornaments hanging off it, and a gold star on top.
+  function eggThrone() {
+    const W = 88, H = 92, p = new Pix(W, H), pulp = '#b8b0a0', pulpL = '#d0c8b8', pulpD = '#8a8274';
+    const carton = (x0, y0, w, h) => {
+      p.rect(x0, y0, w, h, pulp); p.hline(x0, x0 + w - 1, y0, pulpL); p.hline(x0, x0 + w - 1, y0 + h - 1, pulpD); p.vline(x0 + w - 1, y0, y0 + h - 1, pulpD);
+      for (let x = x0 + 3; x < x0 + w - 3; x += 6) for (let y = y0 + 3; y < y0 + h - 3; y += 6) { p.rect(x, y, 4, 4, pulpD); p.rect(x, y, 3, 3, pulpL); }
+    };
+    // the tall back: two cartons standing on end, one across the top
+    carton(16, 8, 26, 50); carton(46, 8, 26, 50); carton(12, 2, 64, 9);
+    // the seat and the base: cartons stacked flat
+    carton(8, 58, 72, 14); carton(2, 70, 84, 22);
+    // the red velvet cushion
+    p.rect(14, 50, 60, 10, '#9a1828'); p.hline(14, 73, 50, '#c83040'); p.hline(14, 73, 59, '#6a1018');
+    for (const x of [24, 44, 64]) p.set(x, 54, '#e8c050');
+    // tinsel draped across the back and the base, in silver and gold
+    for (let x = 6; x < 82; x++) {
+      const y1 = 18 + Math.round(Math.sin(x * 0.18) * 3), y2 = 76 + Math.round(Math.sin(x * 0.15 + 1) * 2);
+      p.set(x, y1, x % 3 ? '#e8e8f0' : '#f8f8ff'); p.set(x, y1 + 1, x % 4 ? '#a8a8b8' : '#f8e070');
+      p.set(x, y2, x % 3 ? '#f8d850' : '#fff8b0'); p.set(x, y2 + 1, '#c89828');
+    }
+    // ornaments hanging off it
+    for (const [x, y, c] of [[20, 26, '#d83030'], [36, 32, '#2e9a4a'], [52, 26, '#d8b040'], [68, 34, '#3a6ad8'], [8, 82, '#d83030'], [80, 84, '#2e9a4a']]) {
+      p.vline(x, y - 4, y - 2, '#c8c8c8');
+      for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) if (dx * dx + dy * dy <= 5) p.set(x + dx, y + dy, c);
+      p.set(x - 1, y - 1, '#ffffff');
+    }
+    // the gold star on top
+    for (const [dx, dy] of [[0, 0], [-1, 1], [0, 1], [1, 1], [-3, 2], [-2, 2], [-1, 2], [0, 2], [1, 2], [2, 2], [3, 2], [-1, 3], [0, 3], [1, 3], [-2, 4], [2, 4]]) p.set(44 + dx, dy, '#f8e070');
+    p.outline();
+    return p.canvas();
+  }
+  function bean() {
+    const p = new Pix(5, 4);
+    p.rect(0, 1, 5, 2, '#8a3a1a'); p.hline(1, 3, 0, '#a85028'); p.hline(1, 3, 3, '#6a2a10'); p.set(1, 1, '#c86a3a');
+    return p.canvas();
+  }
+  // the culvert at the north end of the ditch: a big concrete pipe mouth in the mud bank
+  function culvert() {
+    const W = 72, H = 44, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#5a4a38');
+    for (let i = 0; i < 60; i++) p.set(Math.floor(G.hash(i, 1, 121) * W), Math.floor(G.hash(i, 2, 121) * H), G.hash(i, 3, 121) < 0.5 ? '#4a3c2c' : '#6a5844');
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const d = ((x - 36) / 28) ** 2 + ((y - 26) / 22) ** 2;
+      if (d <= 1) p.set(x, y, d > 0.72 ? (y < 20 ? '#b8b4ac' : '#9a968e') : d > 0.62 ? '#7a766e' : '#14141a');
+    }
+    for (let x = 14; x < 58; x += 5) p.set(x, 6 + Math.round(((x - 36) / 28) ** 2 * 14), '#d8d4cc');
+    p.rect(0, 0, W, 3, '#3e7a34'); for (let x = 0; x < W; x += 3) p.set(x, 3, '#2e6a2c');
+    return p.canvas();
+  }
+  // the green road sign at the south end, like the one on the title screen
+  function ditchSign() {
+    const W = 44, H = 34, p = new Pix(W, H);
+    for (const x of [10, 33]) { p.rect(x, 12, 2, 22, '#5a3818'); p.vline(x, 12, 33, '#7a5028'); }
+    p.rect(0, 0, W, 15, '#1c1424'); p.rect(1, 1, W - 2, 13, '#2e8a48'); p.hline(2, W - 3, 2, '#e8f0e8');
+    const cv = p.canvas();
+    G.font.draw(cv.getContext('2d'), 'No.1 DITCH', 22 - Math.round(G.font.width('No.1 DITCH') / 2), 4, '#ffffff');
+    return cv;
+  }
+  function cattails() {
+    const p = new Pix(14, 26);
+    for (const [x, h] of [[3, 22], [7, 25], [11, 20]]) {
+      p.vline(x, 26 - h, 25, '#4a7a34'); p.rect(x - 1, 26 - h + 2, 3, 6, '#6a4220'); p.set(x, 26 - h, '#8aa858');
+    }
+    for (const [x, y] of [[1, 18], [5, 14], [9, 16], [12, 12]]) { p.set(x, y, '#5a9a44'); p.set(x, y + 1, '#5a9a44'); p.set(x + 1, y + 2, '#4a8a3a'); }
+    return finish(p);
+  }
+  // the golden egg (egg tennis), and the rotten one (don't swing at it)
+  function goldenEgg(rotten) {
+    const p = new Pix(12, 14), c = rotten ? ['#6a8a3a', '#8aaa4a', '#4a6a2a'] : ['#e8b830', '#f8e070', '#b88820'];
+    for (let y = 0; y < 14; y++) for (let x = 0; x < 12; x++) if (((x - 5.5) / 5.5) ** 2 + ((y - 7.5) / 6.6) ** 2 <= 1) p.set(x, y, x + y < 9 ? c[1] : x + y > 15 ? c[2] : c[0]);
+    p.set(3, 3, '#ffffff'); p.set(4, 3, '#ffffff'); p.set(3, 4, '#ffffff');
+    if (rotten) { p.set(7, 8, '#3a4a1a'); p.set(5, 10, '#3a4a1a'); p.set(8, 5, '#3a4a1a'); }
+    p.outline(rotten ? '#2a3a1a' : '#6a4a10');
+    return p.canvas();
+  }
+  // an egglet: a little Father Eggmas, waddling (two frames)
+  function egglet(frame) {
+    const p = new Pix(14, 18), cream = '#f2ead6', creamD = '#d4c8ac', red = '#7a1e2c';
+    for (let y = 0; y < 11; y++) for (let x = 0; x < 14; x++) if (((x - 6.5) / 5.5) ** 2 + ((y - 5.5) / 5.5) ** 2 <= 1) p.set(x, y, x + y > 13 ? creamD : cream);
+    p.set(4, 5, '#1e2230'); p.set(9, 5, '#1e2230'); p.set(6, 7, '#b8203a');
+    for (const [x, y] of [[3, 8], [5, 9], [7, 10], [9, 9], [10, 8], [6, 11], [8, 11]]) p.set(x, y, '#fbfbf8');
+    p.rect(3, 11, 8, 4, red); p.set(5, 12, '#c8984c'); p.set(8, 13, '#3e6a44');
+    const a = frame ? 1 : 0;
+    p.rect(3 + a, 15, 3, 2, '#1e2230'); p.rect(8 - a, 15, 3, 2, '#1e2230');
+    p.set(2, 12, cream); p.set(11, 12, cream);
+    p.outline();
+    return p.canvas();
+  }
+  function tossRock() {
+    const p = new Pix(12, 10);
+    for (let y = 0; y < 10; y++) for (let x = 0; x < 12; x++) if (((x - 5.5) / 5.8) ** 2 + ((y - 5) / 4.6) ** 2 <= 1) p.set(x, y, x + y < 7 ? '#a8a49c' : x + y > 13 ? '#5a5650' : '#7a766e');
+    p.set(4, 4, '#c8c4bc'); p.set(8, 6, '#4a4640');
+    p.outline();
+    return p.canvas();
+  }
+  function clayPot() {
+    const p = new Pix(12, 14);
+    p.rect(1, 6, 10, 3, '#c8683a'); p.rect(2, 9, 8, 5, '#b85a2e'); p.hline(1, 10, 6, '#e08858'); p.vline(9, 9, 13, '#8a3e1e');
+    p.rect(3, 4, 6, 2, '#4a3020');
+    for (const [x, y, c] of [[4, 1, '#e83878'], [7, 0, '#f8d040'], [6, 2, '#58a840'], [3, 3, '#58a840'], [8, 3, '#58a840']]) p.set(x, y, c);
+    p.outline();
+    return p.canvas();
+  }
+  function icePack() {
+    const p = new Pix(12, 9);
+    p.rect(0, 0, 12, 9, '#7ac8f0'); p.rect(1, 1, 10, 7, '#a8e0f8'); p.hline(2, 9, 2, '#e8f8ff'); p.rect(4, 3, 4, 3, '#f8f8f8'); p.set(5, 4, '#d83030'); p.set(6, 4, '#d83030');
+    p.outline();
+    return p.canvas();
+  }
+  function bandageRoll() {
+    const p = new Pix(10, 10);
+    for (let y = 0; y < 10; y++) for (let x = 0; x < 10; x++) { const d = (x - 4.5) ** 2 + (y - 4.5) ** 2; if (d <= 20) p.set(x, y, d < 4 ? '#c8c0b0' : (x + y) % 3 ? '#f8f4ec' : '#e8e0d0'); }
+    p.outline();
+    return p.canvas();
+  }
+  // a smoke ring (possessed Dad puffs these out of his pipe)
+  function smokeRing() {
+    const p = new Pix(12, 10);
+    for (let y = 0; y < 10; y++) for (let x = 0; x < 12; x++) { const d = ((x - 5.5) / 5.5) ** 2 + ((y - 4.5) / 4.5) ** 2; if (d <= 1 && d >= 0.35) p.set(x, y, d > 0.75 ? '#a8a8b4' : '#d8d8e0'); }
+    return p.canvas();
+  }
+  // an ornament shard
+  function shard(c) {
+    const p = new Pix(5, 5);
+    p.set(2, 0, c); p.hline(1, 3, 1, c); p.hline(0, 4, 2, c); p.hline(1, 3, 3, '#ffffff'); p.set(2, 4, c);
+    return p.canvas();
+  }
+
   // ================================================================ THE BAY: RoFo Pop and the toll plaza
   // RoFo Pop, blue raspberry: what Abe and Hannah grab on the Eastern Shore as a "gift"
   // every time they visit. It does not taste good. A 2-liter: white cap, blue soda, the
@@ -7799,6 +7943,11 @@
     S.mech = { right: { idle: [mechBody('idle', 1), mechBody('idle', 2)], raise: mechBody('raise'), smash: mechBody('smash') } };
     S.mech.left = { idle: S.mech.right.idle.map(mirror), raise: mirror(S.mech.right.raise), smash: mirror(S.mech.right.smash) };
     S.mechDome = { hypno: mechDome('hypno'), cry: mechDome('cry'), asleep: mechDome('asleep'), empty: mechDome('empty') }; S.pacifierShot = pacifierShot();
+    // the finale (the Number One Ditch)
+    S.eggThrone = eggThrone(); S.culvert = culvert(); S.ditchSign = ditchSign(); S.cattails = cattails(); S.bean = bean();
+    S.goldenEgg = [goldenEgg(false), goldenEgg(true)]; S.egglet = { right: [egglet(0), egglet(1)] }; S.egglet.left = S.egglet.right.map(mirror);
+    S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
+    S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
     S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();
     S.slothPlush = slothPlush(); S.slothIcon = slothIcon(); S.abeBassIcon = abeBassIcon(); S.bassHeld = bassHeld(); S.cableIcon = cableIcon(); S.romSnout = romSnout();
