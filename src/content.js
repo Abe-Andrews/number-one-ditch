@@ -8775,7 +8775,7 @@
   };
   S.finFreed = function* (b) {
     const f = flags(), w = G.play.world, p = P(), s = G.state, id = b.id, fam = finFam(w);
-    G.audio.stop();
+    // (the music keeps going straight through the gauntlet: no switching between fights)
     G.finClear(w);
     yield G.wait(20);
     // the possession comes off them
@@ -8784,7 +8784,6 @@
     const npc = w.add(new G.NPC({ sprite: id, name: FIN_NAME[id], x: b.x, y: b.y, dir: 'down', talk: S.finFamTalk(id) }));
     npc.freed = true; fam[id] = npc;
     yield G.wait(30);
-    G.audio.play('house');
     yield G.walkTo(p, npc.x, npc.y + 20, 1.4);
     p.dir = 'up';
     for (const [who, text] of FIN_FREED[id]) yield G.say(who, text);
