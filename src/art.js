@@ -2977,8 +2977,8 @@
   }
 
   // Wrought-iron candle chandelier hanging over the table.
-  function chandelier(brass) {
-    const p = new Pix(40, 30), iron = brass ? '#b08a38' : '#2a2a30';
+  function chandelier() {
+    const p = new Pix(40, 30), iron = '#2a2a30';
     p.vline(20, 0, 9, iron);
     p.rect(17, 9, 7, 4, iron); p.vline(20, 13, 20, iron);
     for (let t = 0; t <= 16; t++) { const x = 4 + t * 2, y = 18 + Math.round(Math.abs(t - 8) / 3); p.set(x, y, iron); p.set(x + 1, y, iron); }
@@ -5536,6 +5536,165 @@
     return finish(p);
   }
 
+  // ---- Abe and Hannah's dining room and living room (from the user's photos)
+  // The light oak table with four white Windsor spindle-back chairs: two behind it, one at each end.
+  function condoDiningSet() {
+    const W = 76, H = 50, p = new Pix(W, H), oak = '#d8b47e', oakD = '#b88c56', oakL = '#ecd2a0', leg = '#c49a62';
+    // a bow-back Windsor chair seen from the front: the arched back with its spindles, the seat, the legs
+    const front = (x, y) => {
+      for (let i = 0; i <= 10; i++) { const yy = y + Math.round(Math.abs(i - 5) ** 1.6 / 4); p.set(x + i, yy, WHITE); p.set(x + i, yy + 1, WHITE_D); }
+      for (let i = 2; i <= 8; i += 2) p.vline(x + i, y + 2, y + 11, WHITE);
+      p.vline(x, y + 3, y + 11, WHITE); p.vline(x + 10, y + 3, y + 11, WHITE);
+    };
+    // the same chair from the side (at the ends of the table), facing in
+    const side = (x, y, flip) => {
+      const fx = (i) => (flip ? x + 8 - i : x + i);
+      for (let j = 0; j < 12; j++) p.set(fx(1), y + j, WHITE);
+      for (let j = 0; j < 12; j += 3) p.set(fx(2), y + j + 1, WHITE_D);
+      p.set(fx(1), y - 1, WHITE); p.set(fx(2), y - 1, WHITE);
+      for (let i = 1; i <= 7; i++) { p.set(fx(i), y + 12, WHITE); p.set(fx(i), y + 13, WHITE_D); }
+      for (const i of [1, 7]) p.vline(fx(i), y + 14, y + 21, WHITE_D);
+    };
+    front(14, 4); front(50, 4);
+    // the oval top, its apron and the turned legs
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const e = ((x + 0.5 - 38) / 29) ** 2 + ((y + 0.5 - 24) / 10) ** 2;
+      if (e <= 1) p.set(x, y, e > 0.82 && y < 24 ? oakL : (y + Math.floor(x / 9)) % 5 === 0 ? oakD : oak);
+    }
+    for (let x = 12; x <= 64; x++) { const yy = 24 + Math.round(10 * Math.sqrt(Math.max(0, 1 - ((x + 0.5 - 38) / 29) ** 2))); p.vline(x, yy, yy + 2, '#a87c48'); }
+    for (const x of [16, 59]) { p.rect(x, 36, 3, 13, leg); p.set(x + 1, 40, oakL); p.set(x + 1, 44, oakD); }
+    for (const x of [24, 51]) p.rect(x, 34, 2, 9, oakD);
+    side(0, 22, false); side(67, 22, true);
+    return finish(p);
+  }
+  // The dark carved sideboard against the dining room wall, with bottles, candlesticks, a little plant and a lamp.
+  function condoSideboard() {
+    const W = 48, H = 34, p = new Pix(W, H), wood = '#4a2a1c', woodL = '#6a3e28', woodD = '#2e1a10';
+    p.rect(0, 14, 48, 3, woodL); p.hline(0, 47, 14, '#8a5638');
+    p.rect(1, 17, 46, 12, wood);
+    for (const x of [2, 17, 32]) { p.rect(x, 19, 14, 8, woodD); p.rect(x + 1, 20, 12, 6, wood); p.set(x + 7, 23, BRASS); }
+    p.hline(1, 46, 28, woodD);
+    for (const x of [2, 44]) { p.rect(x, 29, 2, 5, woodD); p.set(x, 31, woodL); }
+    p.rect(22, 29, 4, 2, woodD);
+    // on top: bottles (green, brown, clear), two candlesticks with pink tapers, a succulent, a little lamp
+    for (const [x, c, h] of [[4, '#3a7a3a', 9], [7, '#7a3a1c', 11], [10, '#c8d8e0', 8], [13, '#2a4a2a', 10]]) { p.rect(x, 14 - h, 2, h, c); p.set(x, 14 - h - 1, '#2a2a30'); }
+    for (const x of [30, 34]) { p.vline(x, 9, 13, BRASS); p.vline(x, 3, 8, '#e87a98'); p.set(x, 2, '#f8d040'); }
+    p.rect(21, 10, 5, 4, '#e8e4dc'); p.set(22, 8, '#4a8a44'); p.set(24, 8, '#4a8a44'); p.rect(21, 9, 5, 1, '#5a9a54');
+    p.rect(40, 6, 6, 4, '#f4ecd8'); p.vline(43, 10, 13, BRASS);
+    return finish(p);
+  }
+  // A big monstera in a pot, next to the sideboard.
+  function monstera() {
+    const W = 28, H = 42, p = new Pix(W, H), g = '#2e6a34', gL = '#4a8a44', gD = '#1e4a26';
+    const leaf = (cx, cy, r) => {
+      for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) {
+        if (x * x + y * y > r * r) continue;
+        // the splits in the leaf
+        if (r > 4 && Math.abs(x) > 1 && (Math.abs(y) % 3 === 0) && x * x + y * y > (r - 3) * (r - 3)) continue;
+        p.set(cx + x, cy + y, x + y < -2 ? gL : (x > r / 2 ? gD : g));
+      }
+    };
+    for (const [x, y] of [[13, 30], [10, 26], [16, 27]]) p.vline(x, y - 6, y + 4, gD);
+    leaf(7, 14, 6); leaf(20, 12, 6); leaf(13, 6, 5); leaf(6, 25, 5); leaf(22, 23, 5); leaf(14, 19, 4);
+    p.rect(8, 32, 12, 9, '#e8e2d6'); p.hline(7, 20, 32, '#f6f2ea'); p.hline(8, 19, 40, '#c8c0b2'); p.vline(19, 33, 40, '#c8c0b2');
+    return finish(p);
+  }
+  // The cream couch, seen from its side: it faces left, toward the fireplace. Arms at both
+  // ends, three seat cushions, the back down its right side, a striped pillow.
+  function condoSofa() {
+    const W = 32, H = 72, p = new Pix(W, H), c = '#e6dccb', cL = '#f4ecdc', cD = '#c8bca8', cDD = '#a89c88';
+    p.rect(20, 4, 11, 60, c); p.vline(20, 4, 63, cL); p.vline(30, 4, 63, cD);
+    for (const y of [10, 28, 46]) { p.rect(5, y, 15, 17, c); p.hline(5, 19, y, cL); p.hline(5, 19, y + 16, cD); p.vline(5, y, y + 16, cD); }
+    for (const y of [0, 62]) { p.rect(1, y, 30, 9, c); p.hline(1, 30, y, cL); p.hline(1, 30, y + 8, cD); p.vline(1, y, y + 8, cD); }
+    p.rect(1, 66, 30, 3, cD); p.hline(1, 30, 69, cDD);
+    for (const x of [3, 28]) { p.rect(x, 70, 2, 2, '#3a2a20'); }
+    // pillows: a cream one and a striped one up by the top arm
+    p.rect(13, 11, 8, 8, '#f4f0e8'); p.hline(13, 20, 11, '#ffffff');
+    p.rect(12, 20, 9, 8, '#e8dccc'); for (let y = 21; y < 28; y += 2) p.hline(12, 20, y, '#b8a890');
+    return finish(p);
+  }
+  // The dark cherry trestle coffee table, long side running up and down, a wooden bowl on it.
+  function trestleTable() {
+    const W = 30, H = 52, p = new Pix(W, H), top = '#5a2418', topL = '#7a3a26', topD = '#3e1810';
+    p.rect(1, 0, 28, 40, top); p.hline(1, 28, 0, topL); p.vline(1, 0, 39, topL);
+    for (let y = 6; y < 40; y += 9) p.hline(4, 26, y, '#4e1e14');
+    p.rect(1, 40, 28, 4, topD);
+    // the trestle at the near end: a carved board on a wide foot
+    p.rect(11, 44, 8, 5, topD); p.rect(13, 45, 4, 2, top); p.rect(6, 49, 18, 3, topD); p.hline(6, 23, 49, top);
+    // the wooden bowl
+    for (let y = -4; y <= 4; y++) for (let x = -5; x <= 5; x++) if ((x / 5.5) ** 2 + (y / 4.5) ** 2 <= 1) p.set(15 + x, 18 + y, y < -1 ? '#d88a50' : '#b06a3a');
+    p.hline(11, 19, 15, '#7a4422');
+    return finish(p);
+  }
+  // The big navy rug with pale vines, little birds and cream flowers, laid flat.
+  function birdRug() {
+    const W = 96, H = 112, p = new Pix(W, H), base = '#3c465a', band = '#56607a', vine = '#7e8aa2', bird = '#c8ccd4', flower = '#e8dcc0';
+    p.rect(0, 0, W, H, base);
+    p.rect(3, 3, W - 6, H - 6, band); p.rect(6, 6, W - 12, H - 12, base);
+    for (let x = 4; x < W - 4; x += 4) { p.set(x, 4, flower); p.set(x, H - 5, flower); }
+    for (let y = 4; y < H - 4; y += 4) { p.set(4, y, flower); p.set(W - 5, y, flower); }
+    // vines and leaves across the field
+    for (let i = 0; i < 46; i++) {
+      const x = 9 + Math.floor(G.hash(i, 3, 61) * (W - 20)), y = 9 + Math.floor(G.hash(i, 5, 61) * (H - 20));
+      p.set(x, y, vine); p.set(x + 1, y - 1, vine); p.set(x - 1, y - 1, vine); p.set(x, y + 1, '#68748c');
+      if (i % 3 === 0) p.set(x + 2, y + 2, flower);
+    }
+    // a few herons
+    for (const [x, y] of [[24, 30], [66, 52], [30, 80], [70, 92]]) {
+      p.vline(x, y - 5, y, bird); p.set(x + 1, y - 5, bird); p.set(x + 2, y - 5, bird); p.rect(x - 3, y, 4, 2, bird); p.vline(x - 2, y + 2, y + 5, bird); p.vline(x, y + 2, y + 5, bird);
+    }
+    return p.canvas();
+  }
+  // The little cream end table with a drawer, and a brass lamp with a crystal shade.
+  function condoEndTable() {
+    const W = 16, H = 34, p = new Pix(W, H), cream = '#f0e8d4', creamD = '#d4c8b0';
+    for (let y = 0; y < 8; y++) { const half = 2 + Math.round(y * 0.8); p.hline(8 - half, 7 + half, y, (y + (y >> 1)) % 3 ? '#e4ecf2' : '#ffffff'); }
+    p.set(6, 3, '#ffffff'); p.set(10, 5, '#c8d8e8');
+    p.vline(7, 8, 13, BRASS); p.vline(8, 8, 13, '#b08a38'); p.rect(5, 14, 6, 2, BRASS);
+    p.rect(0, 16, 16, 3, cream); p.hline(0, 15, 16, '#fbf6ea');
+    p.rect(1, 19, 14, 5, cream); p.hline(1, 14, 23, creamD); p.set(8, 21, '#5a3a24');
+    for (const x of [1, 14]) p.vline(x, 24, 33, creamD);
+    return finish(p);
+  }
+  // The white cabinet with glass doors, a pleated-shade lamp and a few books on top.
+  function glassCabinet() {
+    const W = 20, H = 36, p = new Pix(W, H);
+    p.rect(3, 0, 8, 6, '#f4f0e6'); for (let x = 4; x < 11; x += 2) p.vline(x, 1, 5, '#dcd6c8');
+    p.vline(7, 6, 10, BRASS); p.rect(5, 10, 5, 2, BRASS);
+    p.rect(12, 9, 7, 3, '#4a6a8a'); p.rect(12, 7, 6, 2, '#c8a868');
+    p.rect(0, 12, 20, 22, WHITE); p.hline(0, 19, 12, '#ffffff'); p.hline(0, 19, 33, WHITE_D);
+    for (const x of [2, 10]) { p.rect(x, 14, 8, 17, '#aebcc8'); p.hline(x, x + 7, 22, WHITE); p.set(x + 1, 15, '#e0ecf4'); p.rect(x + 2, 17, 3, 4, '#8a6a4a'); p.rect(x + 2, 25, 4, 4, '#c8a878'); }
+    p.vline(9, 18, 22, '#c8ccd2'); p.vline(11, 18, 22, '#c8ccd2');
+    p.rect(1, 34, 2, 2, WHITE_D); p.rect(17, 34, 2, 2, WHITE_D);
+    return finish(p);
+  }
+  // Romulus's plush bed, and his food and water bowls on a little wooden stand.
+  function dogBed() {
+    const W = 30, H = 18, p = new Pix(W, H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const e = ((x + 0.5 - 15) / 15) ** 2 + ((y + 0.5 - 9) / 9) ** 2;
+      if (e > 1) continue;
+      p.set(x, y, e > 0.5 ? (y < 9 ? '#d8ccba' : '#b8aa96') : (x + y) % 5 === 0 ? '#e4dccc' : '#f0eadf');
+    }
+    return finish(p);
+  }
+  function dogBowls() {
+    const W = 22, H = 11, p = new Pix(W, H);
+    p.rect(0, 4, 22, 5, '#a8784a'); p.hline(0, 21, 4, '#c8945e'); p.rect(1, 9, 2, 2, '#7a5430'); p.rect(19, 9, 2, 2, '#7a5430');
+    for (const [x, fill] of [[2, '#8a5a30'], [12, '#78b8e8']]) { p.rect(x, 1, 8, 4, '#c8ccd2'); p.hline(x, x + 7, 1, '#e8ecf0'); p.rect(x + 1, 2, 6, 2, fill); }
+    return finish(p);
+  }
+  // A small dark wood chest of drawers by the window, with a pothos on top.
+  function smallChest() {
+    const W = 16, H = 26, p = new Pix(W, H);
+    for (const [x, y] of [[4, 2], [9, 1], [11, 4], [3, 5], [7, 4]]) { p.rect(x, y, 3, 2, '#4a8a44'); p.set(x, y, '#6aaa5a'); }
+    p.rect(5, 6, 6, 4, '#c8724a'); p.hline(5, 10, 6, '#e08a5a');
+    p.rect(0, 10, 16, 2, '#6a3e28'); p.rect(1, 12, 14, 12, '#5a3220');
+    for (const y of [15, 19]) { p.hline(1, 14, y - 1, '#3e2214'); p.set(5, y + 1, BRASS); p.set(10, y + 1, BRASS); }
+    p.rect(1, 24, 2, 2, '#3e2214'); p.rect(13, 24, 2, 2, '#3e2214');
+    return finish(p);
+  }
+
   // The living room fireplace on the side wall, seen from above: the white
   // mantel, the marble surround, the firebox and the hearth.
   function condoFireplace() {
@@ -6194,7 +6353,10 @@
     S.condoCars = { jeep: rot90(suvTop('#c4c8cc'), false), black: suvTop('#2a2a30'), escape: rot90(suvTop('#26262c')), crv: rot90(suvTop('#6a98a8')) };
     S.boxwood = shrub(16, 13, 3); S.azalea = shrub(17, 14, 5, 16); S.bigShrub = shrub(36, 32, 7);
     S.traeger = traeger(); S.lawnChair = lawnChair(); S.acUnit = acUnit(); S.privacyFence = privacyFence(4); S.trashEnclosure = trashEnclosure();
-    S.condoFireplace = condoFireplace(); S.brassChandelier = chandelier(true); S.entryLantern = entryLantern();
+    S.condoFireplace = condoFireplace(); S.entryLantern = entryLantern();
+    S.condoDiningSet = condoDiningSet(); S.condoSideboard = condoSideboard(); S.monstera = monstera(); S.condoSofa = condoSofa(); S.trestleTable = trestleTable();
+    S.birdRug = birdRug(); S.condoEndTable = condoEndTable(); S.glassCabinet = glassCabinet(); S.dogBed = dogBed(); S.dogBowls = dogBowls(); S.smallChest = smallChest();
+    S.condoArmchair = armchair('#e6dccb');
     S.condoFridge = condoFridge(); S.glassRange = glassRange(); S.dishwasher = dishwasher();
     S.condoUppers = { two: condoUpperCabs(2), micro: condoUpperCabs(1, 0), three: condoUpperCabs(3) };
     S.washerFront = washerFront(); S.dryerBack = dryerBack(); S.wireShelf = wireShelf(1);

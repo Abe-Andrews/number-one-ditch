@@ -6593,7 +6593,7 @@
     f.romulusMet = true;
     yield G.wait(30);
     yield G.camFocus(r.x, r.y - 10, 30);
-    yield G.say(null, 'A black and white border collie is stretched out on the living room floor.');
+    yield G.say(null, 'A black and white border collie is curled up in a dog bed by the fireplace.');
     if (abe) yield G.say('Abe', 'Oh, that\'s Romulus. Nothing scares him. He\'s not scared of anybody.');
     r.state = 'alert'; r.dir = p.x > r.x ? 'right' : 'left';
     G.audio.sfx('blip');
@@ -6853,15 +6853,28 @@
     setup(w) {
       const F = furnish(w), sp = G.spr, f = flags();
       const spot = (x, y, wt, ht, talk) => w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [x * 16, y * 16, (x + wt) * 16, (y + ht) * 16], talk });
-      // ---- dining room (x 1-9, y 3-7): under the loft, with a brass chandelier and the slider out to the patio
-      // FURNITURE (photos pending): the dining table and chairs go under the chandelier, around x 3-7, y 4-6
-      // (keep x 1, y 4-5 clear in front of the slider).
-      w.props.push({ img: sp.brassChandelier, x: 5 * 16 - 12, y: 42, base: 7 * 16 });
+      // ---- dining room (x 1-9, y 3-7), from the user's photo: under the loft, a black iron chandelier over the
+      // light oak table and four white Windsor chairs, the dark carved sideboard and a big monstera against the
+      // back wall, Romulus's bowls by the kitchen, and the slider out to the patio (x 1, y 4-5 stays clear)
+      F.stand(sp.monstera, 3, 3, 1, look('A huge monstera plant. It is thriving. Somebody in this house has a green thumb.'));
+      F.stand(sp.condoSideboard, 4, 3, 3, look('A dark carved sideboard. Bottles, candlesticks, a little plant and a lamp on top.'));
+      F.stand(sp.condoDiningSet, 3, 5, 5, look('A light wood table and four white spindle-back chairs.'), { ht: 2 });
+      w.props.push({ img: sp.chandelier, x: 5 * 16 - 12, y: 54, base: 7 * 16 });
+      w.addProp({ img: sp.dogBowls, tx: 9, ty: 7, dx: -3, dy: -2, flat: true, hit: [9, 7, 1, 1], talk: look('Romulus\'s food and water bowls, up on a little wooden stand.') });
       spot(0, 4, 1, 2, look('The sliding glass door out to the patio.'));
-      // ---- living room (x 1-9, y 8-18): vaulted ceiling, the loft looks down on it from upstairs
-      // FURNITURE (photos pending): couch, coffee table, TV, chairs, lamps, rugs. Open floor x 3-9, y 8-18
-      // (the fireplace and its hearth take x 1-2, y 13-15 on the left wall). Wall art: none on top (it's open to the dining room).
+      // ---- living room (x 1-9, y 8-18), from the user's photos: vaulted ceiling, the loft looks down on it from
+      // upstairs. The navy bird rug, the cream couch facing the fireplace with the cherry trestle coffee table in
+      // front of it, the cream end table and its crystal lamp, a cream armchair, the white glass cabinet and
+      // Romulus's bed along the left wall, and a little chest with a plant by the big window.
       w.addProp({ img: sp.condoFireplace, tx: 1, ty: 13, h: 3, flat: true, solid: [1, 13, 1, 3], hit: [1, 13, 2, 3], talk: look('The fireplace: a white mantel and a marble surround, with a window on each side looking out at the golf course.') });
+      w.props.push({ img: sp.birdRug, x: 3 * 16, y: 11 * 16, flat: true, base: 0 });
+      F.stand(sp.glassCabinet, 1, 9, 1, look('A white cabinet with glass doors, and a lamp with a pleated shade on top.'));
+      w.addProp({ img: sp.dogBed, tx: 1, ty: 11, dy: 1, flat: true, solid: [1, 11, 2, 1], hit: [1, 11, 2, 1], talk: look('Romulus\'s bed. Plush, and absolutely covered in dog hair.') });
+      F.stand(sp.condoArmchair, 4, 10, 1, look('A cream armchair.'));
+      F.stand(sp.trestleTable, 5, 12, 2, look('A dark wood trestle coffee table, with a wooden bowl on it.'), { ht: 3 });
+      F.stand(sp.condoEndTable, 9, 11, 1, look('A little cream end table with a drawer, and a brass lamp with a crystal shade.'));
+      F.stand(sp.condoSofa, 8, 12, 2, look('The cream couch. Comfy. Prime real estate.'), { ht: 4 });
+      F.stand(sp.smallChest, 8, 18, 1, look('A small wooden chest of drawers, with a pothos on top.'));
       spot(0, 12, 1, 1, look('A window looking out toward the golf course.'));
       spot(0, 16, 1, 1, look('A window looking out toward the golf course.'));
       spot(3, 19, 5, 1, look('The big window nook, looking out at the front walk.'));
@@ -6881,8 +6894,8 @@
       w.addProp({ img: sp.sinkTop, tx: 15, ty: 3, flat: true, dy: -10, hit: [15, 3, 2, 1], talk: look('The kitchen sink.') });
       spot(12, 6, 5, 1, look('The breakfast bar.'));
       if (f.condoScare) w.abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'down', talk: S.abeCondo }));
-      // Romulus: on the living room floor the first time, and behind the breakfast bar (hiding from Nate) after that
-      w.romulus = w.add(f.romulusMet ? new G.Romulus(15 * 16 + 8, 5 * 16 + 12, 'hide') : new G.Romulus(5 * 16 + 8, 12 * 16 + 12, 'lie'));
+      // Romulus: curled up in his bed the first time, and behind the breakfast bar (hiding from Nate) after that
+      w.romulus = w.add(f.romulusMet ? new G.Romulus(15 * 16 + 8, 5 * 16 + 12, 'hide') : new G.Romulus(2 * 16, 11 * 16 + 12, 'lie'));
       // ---- laundry (x 18-20, y 3-5), at the far end of the kitchen
       F.stand(sp.washerFront, 19, 3, 1, look('The washer and dryer face each other across the laundry room. Like a standoff.'));
       F.hang(sp.wireShelf, 19, 2, 1, null, 16);
