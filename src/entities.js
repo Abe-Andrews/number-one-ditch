@@ -1531,6 +1531,34 @@
   }
   G.Romulus = Romulus;
 
+  // One of Anette's thirsty potted plants on the condo street. A good soak from the
+  // Portable Bidet (about half a second of spray) perks it right up, for good.
+  class ThirstyPlant extends Ent {
+    constructor(x, y, o) {
+      super(x, y);
+      Object.assign(this, o, { solid: true, hb: { w: 12, h: 6 }, water: 0 });
+      this.talk = () => G.SCRIPTS.plantLook(this);
+    }
+    get happy() { return !!G.state.flags['plant_' + this.id]; }
+    onSpray() {
+      if (this.happy) return;
+      const w = this.world;
+      if (++this.water % 5 === 0) w.burst(this.x, this.y - 12, ['#5aa8e8', '#a8d8ff'], 2, { speed: 0.6, up: 0.4, g: 0.1, life: 14, size: 1 });
+      if (this.water < 30) return;
+      G.state.flags['plant_' + this.id] = true;
+      G.audio.sfx('heart');
+      w.burst(this.x, this.y - 12, ['#78e070', '#f8f8a0', '#ffffff'], 12, { speed: 1.2, up: 1, g: 0.05, life: 22, size: 2 });
+      const n = G.plantsWatered();
+      w.pop(this.x, this.y - 30, n >= 5 ? 'All five! Go tell Anette.' : G.sayable(n) + ' of 5 watered!', '#78e070');
+    }
+    draw(ctx, cx, cy) {
+      const img = G.spr.plants[this.kind][this.happy ? 1 : 0];
+      drawShadow(ctx, this.x, this.y, cx, cy, false);
+      ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height + 2) - cy);
+    }
+  }
+  G.ThirstyPlant = ThirstyPlant;
+
   // A golfer on the course. During the Romulus fight they tee off at Nate (FORE!), with a
   // mark on the grass where each ball is coming down. A blast from the bidet makes them
   // stop for a bit. Once the fight is over they're just people playing golf.

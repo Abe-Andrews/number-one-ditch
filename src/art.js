@@ -4189,6 +4189,14 @@
       case 'shale': for (let i = 0; i < 3; i++) { p.rect(1 + i, 9 - i * 3, 12 - i * 2, 3, i % 2 ? '#a85040' : '#9a4a3a'); p.hline(1 + i, 12 - i, 9 - i * 3, '#c8705a'); } p.set(6, 7, '#5a2a20'); p.set(7, 7, '#5a2a20'); break;
       case 'basalt': blob('#2e2e34', '#46464e'); for (const [x, y] of [[4, 6], [8, 5], [6, 9], [10, 8]]) { p.set(x, y, '#1a1a20'); p.set(x + 1, y, '#5a5a64'); } break;
       case 'prehnite': blob('#2e2e34', '#46464e'); for (const [x, y] of [[4, 5], [5, 5], [6, 4], [5, 6], [8, 6], [9, 7], [8, 7]]) p.set(x, y, '#b8e898'); p.set(5, 4, '#e8fcd8'); p.set(9, 6, '#e8fcd8'); break;
+      case 'chesapecten':
+        // a fossil scallop: a ribbed fan of a shell, cream and tan, with its two little hinge "ears"
+        for (let y = 0; y < 12; y++) for (let x = 0; x < 14; x++) {
+          const dx = x - 6.5, dy = 10.5 - y, r = Math.hypot(dx, dy * 1.05), a = Math.atan2(dx, dy);
+          if (r <= 9.5 && Math.abs(a) <= 1.05) p.set(x, y, Math.round((a + 1.1) * 5) % 2 ? '#d8c8a0' : '#b8a478');
+        }
+        p.rect(3, 9, 8, 3, '#c8b488'); p.hline(3, 10, 11, '#9a8458'); p.set(6, 2, '#f0e4c8'); p.set(4, 4, '#e8dcb8');
+        break;
       case 'megalodon':
         // a big triangular fossil tooth: dark enamel, serrated edges, a brown root band
         for (let y = 0; y < 12; y++) for (let x = 0; x < 14; x++) {
@@ -5997,6 +6005,41 @@
     return finish(p);
   }
 
+  // ---- Anette's thirsty plants (her side quest on the condo street)
+  // A potted plant, droopy (dry, yellowed leaves hanging over the rim) or perked up and blooming.
+  function pottedPlant(kind, happy) {
+    const W = 18, H = 24, p = new Pix(W, H);
+    const pot = { hydrangea: ['#c06a40', '#d8845a', '#9a4e2c'], petunia: ['#e8e4dc', '#f8f6f0', '#c8c0b2'], fern: ['#5a7aa8', '#7a9ac8', '#3e5a88'],
+      geranium: ['#c06a40', '#d8845a', '#9a4e2c'], rose: ['#3a4a3a', '#5a6a5a', '#2a3428'] }[kind];
+    const bloom = { hydrangea: ['#7a9ae8', '#a8b8f0', '#5a72c8'], petunia: ['#a050c8', '#d090e8', '#7a3aa0'], fern: null,
+      geranium: ['#e04040', '#f87070', '#a82828'], rose: ['#e86890', '#f8a0b8', '#b84a6a'] }[kind];
+    // the pot
+    for (let y = 15; y < 24; y++) { const half = 6 - Math.floor((y - 15) / 3); p.hline(9 - half, 8 + half, y, pot[0]); p.set(8 + half, y, pot[2]); }
+    p.rect(2, 14, 14, 2, pot[1]); p.hline(2, 15, 15, pot[0]);
+    if (!happy) {
+      // dry: yellow-brown leaves flopped over the rim, a couple of dead blooms
+      for (const [x0, dir] of [[5, -1], [8, -1], [10, 1], [13, 1]]) for (let i = 0; i < 6; i++) {
+        const x = x0 + dir * Math.floor(i / 2), y = 9 + i;
+        p.set(x, y, i % 2 ? '#a08a48' : '#8a9a48'); p.set(x + dir, y, '#7a6a38');
+      }
+      p.rect(7, 8, 4, 6, '#7a8a40'); p.set(8, 7, '#8a7a5a'); p.set(10, 7, '#8a7a5a');
+      return finish(p);
+    }
+    // perked up: green leaves standing tall
+    if (kind === 'fern') {
+      for (const [dx, h] of [[-6, 9], [-3, 12], [0, 13], [3, 12], [6, 9]]) for (let i = 0; i < h; i++) {
+        const x = 9 + Math.round(dx * i / h), y = 14 - i;
+        p.set(x, y, '#3e8a3a'); if (i % 2) { p.set(x - 1, y, '#5aa848'); p.set(x + 1, y, '#5aa848'); }
+      }
+      return finish(p);
+    }
+    for (let y = 3; y < 15; y++) for (let x = 2; x < 16; x++) if (((x - 9) / 7) ** 2 + ((y - 9) / 6) ** 2 <= 1) p.set(x, y, (x + y) % 3 ? '#3e8a3a' : '#5aa848');
+    // and its flowers
+    const spots = kind === 'hydrangea' ? [[6, 5, 3], [12, 6, 3], [9, 9, 2]] : [[5, 5, 1], [9, 4, 1], [13, 6, 1], [7, 9, 1], [11, 10, 1], [4, 11, 1], [14, 11, 1]];
+    for (const [cx, cy, r] of spots) for (let y = -r; y <= r; y++) for (let x = -r; x <= r; x++) if (x * x + y * y <= r * r + 1) p.set(cx + x, cy + y, x + y < 0 ? bloom[1] : (x + y) % 2 ? bloom[2] : bloom[0]);
+    return finish(p);
+  }
+
   // The living room fireplace on the side wall, seen from above: the white
   // mantel, the marble surround, the firebox and the hearth.
   function condoFireplace() {
@@ -6602,7 +6645,7 @@
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
     S.vanWickle = vanWickle();
-    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl', 'megalodon']) S.rockIcons[k] = rockIcon(k);
+    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl', 'megalodon', 'chesapecten']) S.rockIcons[k] = rockIcon(k);
     S.oreVein = [oreVein(0), oreVein(1), oreVein(2)]; S.dumpPile = dumpPile(false); S.slagPile = dumpPile(true);
     S.furnaceRuin = furnaceRuin(); S.adit = adit(); S.bat = [batFrame(true), batFrame(false)];
     S.megaphone = megaphone(); S.cavePearls = cavePearls();
@@ -6668,6 +6711,7 @@
     S.ceilingFan = [0, 1, 2, 3].map(ceilingFan);
     S.loftTV = loftTV(); S.grayOttoman = grayOttoman(); S.loftSofaBack = loftSofaBack(); S.bookshelf = bookshelf(); S.floorLamp = floorLamp();
     S.yellowGuitar = yellowGuitar(); S.tealCurtain = tealCurtain();
+    S.plants = {}; for (const k of ['hydrangea', 'petunia', 'fern', 'geranium', 'rose']) S.plants[k] = [pottedPlant(k, false), pottedPlant(k, true)];
     S.closetShelves = closetShelves(); S.hangingClothes = hangingClothes(); S.closetJunk = closetJunk(); S.miniAmp = miniAmp();
     S.guitarAcoustic = guitarOnStand('acoustic'); S.guitarElectric = guitarOnStand('electric'); S.caseBlack = guitarCase('black'); S.caseTweed = guitarCase('tweed');
     S.condoFridge = condoFridge(); S.glassRange = glassRange(); S.dishwasher = dishwasher();

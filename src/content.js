@@ -140,6 +140,11 @@
     skin: '#f4d4c0', hair: '#e8e8f0', hairStyle: 'shoulder', glasses: '#8a6a9a', smile: '#ffffff', blush: true,
     shirt: '#e8a0c0', coat: '#f0c0d8', dress: '#8a7ab0', shoes: '#f0f0f0', torso: 5, legs: 3,
   };
+  // Anette, Abe and Hannah's neighbor: short white hair, a lavender cardigan over a cream blouse, a blue skirt.
+  G.CAST.anette = {
+    skin: '#f4d4c4', hair: '#f2f2f6', hairStyle: 'cropped', smile: '#ffffff', blush: true,
+    shirt: '#f4ecdc', coat: '#b8a0d8', dress: '#5a7aa8', shoes: '#f0f0f0', torso: 5, legs: 3,
+  };
   G.CAST.earl = {
     skin: '#e8b090', hair: '#5a3a20', hairStyle: 'cap', hat: '#3a6a3a', hatStyle: 'ball', patch: '#f0f0f0', beard: '#5a3a20',
     shirt: '#b83030', pattern: 'plaid', plaidL: '#d86060', plaidW: '#2a1a1a', sleeves: 'long', pants: '#3a4a6a', shoes: '#4a3428', boots: true,
@@ -432,6 +437,7 @@
     { id: 'pete', name: 'Pyro Pete', tag: '{y}Friend', met: () => fl().doronDeal, bio: 'Runs the pyro for Micro Mayhem. Thinks Nate\'s exploding present was beautiful.' },
     { id: 'prof', name: 'Prof. Schist', tag: '{y}Friend', met: () => fl().profTalk, bio: 'Geology professor. Finds coastal plain ditches fascinating. Flat. Wet. Ditchy.' },
     { id: 'devin', name: 'Devin', tag: '{y}Friend', met: () => fl().phDone, bio: 'Nate\'s lab partner. Was paid in shark teeth to ask about the pH of rainwater.' },
+    { id: 'anette', name: 'Anette', tag: '{y}Friend', met: () => fl().anetteMet, bio: 'Abe and Hannah\'s neighbor. Keeps potted plants all up and down the street. Her knees are done with watering cans.' },
   ];
 
   G.people = () => {
@@ -497,6 +503,7 @@
     if (f.mikeyBeaten) for (const [who, , where, hint] of homeLeads()) side.push({ name: where, status: hint, kind: 'rumor', where: 'Home', hint: leadHint[who] });
     if (f.andoverLocked) add('The Andover mines', s.items.andoverKey && 'Key in hand!', f.shopOpen ? 'Mom sells a key' : 'Need a key', 'Home - Andover', s.items.andoverKey ? 'Pick "The Andover mines" when you leave home.' : f.shopOpen ? 'Mom\'s flower stand sells the gate key. It isn\'t cheap.' : 'The mines are on private land. Mom knows everybody at church.');
     if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number, and Nate can\'t say it.');
+    if (f.plantQuest) add('Anette\'s thirsty plants', f.plantsDone, f.plantsDone ? 'Done' : G.sayable(G.plantsWatered()) + '/5 watered', 'Chesapeake - the condo', G.plantsWatered() >= 5 ? 'All five are watered. Go tell Anette.' : 'Water Anette\'s five potted plants around the street with the Portable Bidet.', [G.plantsWatered(), 5]);
     if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
     if (f.snackQuest) {
@@ -2738,6 +2745,7 @@
     { id: 'shale', area: 'bedminster', name: 'Passaic Red Shale', r: 0, crush: { teeth: 5 }, how: 'Red rock out on the little island in Brady Brook. If only the water would hold still.', fact: 'Red mud from the Newark Basin, Triassic and Jurassic. Dinosaurs left footprints in mud like this all over New Jersey.' },
     { id: 'basalt', area: 'bedminster', name: 'Watchung Basalt', r: 1, crush: { teeth: 15 }, how: 'The big black boulder by Brady Brook is way too heavy for Nate. Doron, though...', fact: 'Jurassic lava flows that built the Watchung Mountains just east of Bedminster.' },
     { id: 'megalodon', area: 'bay', name: 'Megalodon Tooth', r: 4, crush: null, how: 'A patch of gravel and shell on the island between the two tunnels. Too fine to pick through by hand.', fact: 'A fossil tooth from Otodus megalodon, a giant shark that lived millions of years ago. Fossil shark teeth turn up all over the Chesapeake Bay region.' },
+    { id: 'chesapecten', area: 'chesapeake', name: 'Chesapecten Fossil', r: 3, crush: null, how: 'Anette, Abe and Hannah\'s neighbor, has one. Her plants look awfully thirsty.', fact: 'Chesapecten jeffersonius: a fossil scallop millions of years old, named for the Chesapeake Bay and Thomas Jefferson. It\'s the state fossil of Virginia, and back in 1687 it became the first fossil from North America ever pictured in a science book.' },
     { id: 'prehnite', area: 'bedminster', name: 'Prehnite', r: 2, crush: { heart: 1 }, how: 'The gravel bar in Brady Brook. You\'d need a sifting screen.', fact: 'Pale green crystals that grow in the gas bubbles of New Jersey basalt. Mindat lists prehnite in Bedminster Township.' },
   ];
   G.rockById = (id) => G.ROCKS.find((r) => r.id === id);
@@ -2747,6 +2755,7 @@
     { id: 'easton', name: 'EASTON FAIR' },
     { id: 'bedminster', name: 'BEDMINSTER' },
     { id: 'bay', name: 'THE BAY' },
+    { id: 'chesapeake', name: 'CHESAPEAKE' },
   ];
   const rockState = () => { const s = G.state; s.rocks = s.rocks || {}; s.rocksFound = s.rocksFound || {}; return s; };
   G.rocksFound = () => G.ROCKS.filter((r) => rockState().rocksFound[r.id]).length;
@@ -6396,6 +6405,63 @@
     yield G.walkTo(p, p.x, p.y - 18, 1);
   };
 
+  // ---------------------------------------------------------------- Anette's thirsty plants
+  // Anette lives in the cream duplex at the corner. She keeps potted plants all up and down
+  // the street, and her knees are done with watering cans. Water all five with the Portable
+  // Bidet and she gives Nate the fossil scallop she found on the beach years ago.
+  const ANETTE_PLANTS = [
+    { id: 'hydrangea', kind: 'hydrangea', at: [27, 6], name: 'my hydrangea, right here by my door' },
+    { id: 'petunia', kind: 'petunia', at: [14, 12], name: 'the petunias I put out on Abe and Hannah\'s patio' },
+    { id: 'fern', kind: 'fern', at: [42, 6], name: 'the fern by the visitor parking' },
+    { id: 'geranium', kind: 'geranium', at: [16, 30], name: 'the geraniums next door' },
+    { id: 'rose', kind: 'rose', at: [31, 8], name: 'the little rosebush by the other half of Abe and Hannah\'s' },
+  ];
+  G.plantsWatered = () => ANETTE_PLANTS.filter((pl) => flags()['plant_' + pl.id]).length;
+  S.plantLook = function* (plant) {
+    const pl = ANETTE_PLANTS.find((q) => q.id === plant.id);
+    if (plant.happy) { yield G.say(null, 'A potted ' + pl.kind + '. It perked right up. You can practically hear it say thank you.'); return; }
+    yield G.say(null, 'A potted ' + pl.kind + '. Droopy, dry and crispy around the edges. It needs water.');
+    if (flags().anetteMet && !G.itemHas('bidet')) yield G.say('Nate', 'One of Anette\'s. I need something to carry water in.');
+  };
+  S.anette = function* () {
+    const f = flags(), n = G.plantsWatered();
+    if (f.plantsDone) {
+      f.anetteLine = ((f.anetteLine || 0) + 1) % 3;
+      yield G.say('Anette', ['Look at my hydrangea! I could cry.', 'You come by anytime, dear. Bring the... water thing.', 'Abe and Hannah are lucky to have you visiting.'][f.anetteLine]);
+      return;
+    }
+    if (!f.anetteMet) {
+      f.anetteMet = true;
+      yield G.say('Anette', 'Oh! Hello, dear. You must be visiting Abe and Hannah.');
+      yield G.say('Anette', 'I\'m Anette. I keep potted plants all up and down this street. Everybody lets me.');
+      yield G.say('Anette', 'But it\'s been so dry, and my knees are done with watering cans. My poor plants are wilting.');
+      yield G.say('Anette', 'There are five of them. Would you give them a drink for me? I\'ll make it worth your while.');
+      f.plantQuest = true;
+      if (G.itemHas('bidet')) {
+        yield G.say('Anette', '...Is that a portable bidet?');
+        yield G.say('Nate', '...It sprays water.');
+        yield G.say('Anette', 'Well. Water is water, dear.');
+      } else {
+        yield G.say('Anette', 'You\'ll need something to carry water in. Check Abe and Hannah\'s. Everybody has SOMETHING under the bathroom sink.');
+      }
+      yield G.say(null, 'Water Anette\'s five potted plants around the street.');
+      if (n < 5) return;
+    }
+    if (n < 5) {
+      const left = ANETTE_PLANTS.filter((pl) => !f['plant_' + pl.id]);
+      yield G.say('Anette', n ? 'That\'s ' + G.sayable(n) + ' of my five! Keep going, dear.' : 'My poor plants. Five of them, all up and down the street.');
+      yield G.say('Anette', 'Still thirsty: ' + left[0].name + (left.length > 1 ? ', and ' + (left.length - 1 === 1 ? 'one more' : G.sayable(left.length - 1) + ' more') : '') + '.');
+      return;
+    }
+    // all five: the reward
+    f.plantsDone = true;
+    yield G.say('Anette', 'All five! Look at them! They haven\'t looked this good all summer.');
+    yield G.say('Anette', 'Abe tells me you like rocks. Here, I want you to have this.');
+    yield G.say('Anette', 'I found it on the beach years ago, after a big storm. It\'s a fossil scallop. Millions of years old.');
+    yield* S.rockGive('chesapecten');
+    yield G.say('Anette', 'Thank you, dear. Water them again sometime. With... whatever that is.');
+  };
+
   // ---------------------------------------------------------------- outside
   G.MAPS.condo = {
     name: 'Abe & Hannah\'s Condo',
@@ -6504,6 +6570,9 @@
       }
       for (const x of [32, 34, 36]) if (clear(x, 30)) shrub(sp.boxwood, x, 30, boxwood);
       for (let y = 23; y <= 37; y += 2) if (!w.block[(y + 1) * w.w + 44] && clear(44, y, 1, 2)) w.addProp({ img: sp.arborvitae, tx: 44, ty: y, h: 2, dx: 2, solid: [44, y + 1, 1, 1], hit: [44, y + 1, 1, 1], talk: look('A tall, skinny evergreen. There\'s a whole row of them.') });
+      // ---- Anette, out front of the cream duplex at the corner, and her five thirsty potted plants
+      w.add(new G.NPC({ sprite: 'anette', name: 'Anette', x: 23 * 16 + 8, y: 7 * 16 + 12, dir: 'down', talk: S.anette }));
+      for (const pl of ANETTE_PLANTS) w.add(new G.ThirstyPlant(pl.at[0] * 16 + 8, pl.at[1] * 16 + 12, { id: pl.id, kind: pl.kind }));
       // ---- the school bus, every so often, down the main road (see tick)
       w.busT = 300;
       w.busProp = { img: null, x: 0, y: 0, base: -1, draw(ctx, cx, cy) { if (w.bus) ctx.drawImage(sp.schoolBus, R.lane - 15 - cx, Math.round(w.bus.y) - 78 - cy); } };
