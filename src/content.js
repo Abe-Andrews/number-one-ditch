@@ -221,7 +221,7 @@
     },
     bidet: {
       kind: 'gear', equip: true, name: 'Portable Bidet', short: 'Bidet', icon: () => G.spr.bidetIcon, has: () => !!st().items.bidet,
-      desc: 'From under the sink in Abe and Hannah\'s downstairs bathroom. Hold X to spray. It runs dry fast: face any water, sink or toilet and press X to fill it back up.',
+      desc: 'From under the sink in Abe and Hannah\'s downstairs bathroom. Hold X to spray. It runs dry fast: face any water, sink or toilet and hold X to fill it back up (it takes a while).',
     },
     bass: {
       kind: 'gear', equip: true, name: 'Half-Finished Bass', short: 'Bass', icon: () => G.spr.bassIcon, has: () => !!st().items.bass,
@@ -307,6 +307,8 @@
   G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bass', 'chicken', 'rod', 'sifter', 'bidet', null, null, null];
   // how much spray the Portable Bidet holds (frames of holding X), and how much is in it
   G.BIDET_MAX = 150;
+  // ...and how fast it fills back up while X is held at water, a sink or a toilet (about 5 seconds for a full tank)
+  G.BIDET_FILL = 0.5;
   G.bidetWater = () => { const v = st().items.bidetWater; return v == null ? G.BIDET_MAX : v; };
   // every toilet and sink in the game (by its sprite) fills the bidet back up
   G.waterFixture = (img) => !!img && [G.spr.toilet, G.spr.sinkTop, G.spr.demilune, G.spr.doubleVanity, G.spr.condoVanity].includes(img);
@@ -6582,7 +6584,7 @@
     yield G.say('Nate', '*sniff sniff*');
     yield G.say('Nate', '...Inconclusive.');
     yield G.say('Nate', 'It\'s coming with me anyway.');
-    yield G.say(null, 'Set it to X in ITEMS, then hold X to spray. Face any water, sink or toilet and press X to fill it back up.');
+    yield G.say(null, 'Set it to X in ITEMS, then hold X to spray. Face any water, sink or toilet and hold X to fill it back up.');
   };
 
   S.romulusMeet = function* () {
@@ -6676,7 +6678,7 @@
     yield G.say('Nate', 'Water.');
     yield G.say('Nate', 'Good thing I brought a portable bidet. ...I never thought I\'d say that.');
     s.xItem = 'bidet';
-    yield G.say(null, 'Hold X to spray Romulus with the {y}Portable Bidet{/}. When it runs dry, face the pond and press X to fill it back up.');
+    yield G.say(null, 'Hold X to spray Romulus with the {y}Portable Bidet{/}. When it runs dry, face the pond and hold X to fill it back up. It fills slowly!');
     r.pose = null;
     yield G.camFocus(null, null, 30);
     yield G.banner('ROMULUS', 'a very good boy (huge)', 150);
@@ -6694,7 +6696,7 @@
     }
   };
   S.bidetEmpty = function* () {
-    yield G.say(null, 'The bidet is empty. Face some water (like a pond), a sink or a toilet and press X to fill it back up.');
+    yield G.say(null, 'The bidet is empty. Face some water (like a pond), a sink or a toilet and hold X to fill it back up. It takes a while, so keep an eye out.');
   };
   S.bidetToilet = function* () {
     yield G.say('Nate', 'Filling a bidet from a toilet.');

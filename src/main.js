@@ -317,25 +317,43 @@
     },
 
     // The Portable Bidet: hold X to spray (a tank holds G.BIDET_MAX frames of it). Facing
-    // water, a sink or a toilet, X fills it back up instead. Anything with onSpray() gets
+    // water, a sink or a toilet, holding X slowly fills it back up instead (G.BIDET_FILL a
+    // frame; moving, getting hit or letting go stops it). Anything with onSpray() gets
     // called every frame the stream is on it.
-    bidetStart() {
-      const s = G.state, p = this.player, w = this.world, [dx, dy] = G.DIRS[p.dir];
+    bidetSource() {
+      const p = this.player, w = this.world, [dx, dy] = G.DIRS[p.dir];
       const fx = p.x + dx * 14, fy = p.y - 4 + dy * 14, d = G.TILE_DEFS[w.tileAt(Math.floor(fx / 16), Math.floor(fy / 16))];
       const tp = [p.x + dx * 12 - 3, p.y - 4 + dy * 12 - 3, p.x + dx * 12 + 3, p.y - 4 + dy * 12 + 3];
       const fixture = w.props.find((pr) => pr.hit && G.waterFixture(pr.img) && G.overlap(pr.hit, tp));
-      if (fixture || (d && ['water', 'bay', 'iceHole'].includes(d.k))) {
+      if (fixture) return { kind: fixture.img === G.spr.toilet ? 'toilet' : 'sink', x: fx, y: fy - 10 };
+      return d && ['water', 'bay', 'iceHole'].includes(d.k) ? { kind: 'water', x: fx, y: fy } : null;
+    },
+    bidetStart() {
+      const s = G.state, p = this.player, w = this.world, src = this.bidetSource();
+      if (src) {
         if (G.bidetWater() >= G.BIDET_MAX) { w.pop(p.x, p.y - 30, 'It\'s already full.', '#a8d8ff'); return; }
-        s.items.bidetWater = G.BIDET_MAX;
-        G.audio.sfx('gulp');
-        const toilet = fixture && fixture.img === G.spr.toilet;
-        w.pop(p.x, p.y - 30, toilet ? '*fills it from the toilet*' : fixture ? '*fills it at the sink*' : '*glug glug glug*', '#a8d8ff');
-        w.burst(fx, fy - (fixture ? 10 : 0), ['#5aa8e8', '#a8d8ff', '#ffffff'], 8, { speed: 1, up: 1, g: 0.1, life: 18, size: 2 });
-        if (toilet && !s.flags.bidetToilet) { s.flags.bidetToilet = true; G.script.run(G.SCRIPTS.bidetToilet()); }
+        this.refilling = { x: p.x, y: p.y, dir: p.dir };
+        w.pop(p.x, p.y - 30, src.kind === 'toilet' ? '*filling it from the toilet...*' : src.kind === 'sink' ? '*filling it at the sink...*' : '*filling...*', '#a8d8ff');
+        if (src.kind === 'toilet' && !s.flags.bidetToilet) { s.flags.bidetToilet = true; G.script.run(G.SCRIPTS.bidetToilet()); }
         return;
       }
       if (G.bidetWater() <= 0) { G.audio.sfx('bump'); this.bidetEmpty(); return; }
       this.spraying = true;
+    },
+    // filling it back up, a little at a time, for as long as X is held
+    refillTick() {
+      const r = this.refilling;
+      if (!r) return;
+      const s = G.state, p = this.player, w = this.world, src = this.bidetSource();
+      if (!G.input.down('b') || p.state !== 'walk' || s.xItem !== 'bidet' || !src || p.dir !== r.dir || Math.hypot(p.x - r.x, p.y - r.y) > 2) { this.refilling = null; return; }
+      if (G.script.busy) return;
+      s.items.bidetWater = Math.min(G.BIDET_MAX, G.bidetWater() + G.BIDET_FILL);
+      if (G.tick % 24 === 0) { G.audio.sfx('blip'); w.burst(src.x, src.y, ['#5aa8e8', '#a8d8ff', '#ffffff'], 2, { speed: 0.6, up: 0.8, g: 0.1, life: 14, size: 1 }); }
+      if (G.bidetWater() >= G.BIDET_MAX) {
+        this.refilling = null;
+        G.audio.sfx('gulp');
+        w.pop(p.x, p.y - 30, 'FULL!', '#a8d8ff');
+      }
     },
     // Where the stream is d pixels out: it leaves the nozzle (up by Nate's hand), arcs up a
     // little and comes down to the ground `len` pixels out the way he's facing.
@@ -475,6 +493,7 @@
       G.script.update();
       this.world.update();
       this.bidetTick();
+      this.refillTick();
 
       // remember Nate's footsteps for the party to follow
       const pl = this.player, t0 = this.trail[0];
