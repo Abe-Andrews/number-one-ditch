@@ -1506,8 +1506,15 @@
       this.t++;
       if (this.dir === 'left' || this.dir === 'right') this.face = this.dir === 'right' ? 1 : -1;
       if (this.walking || G.script.busy) return;
-      const p = G.play.player;
-      this.near = Math.hypot(p.x - this.x, p.y - this.y) < 60;
+      const p = G.play.player, dist = Math.hypot(p.x - this.x, p.y - this.y);
+      this.near = dist < 60;
+      // hide and seek: get close and he bolts (and he whimpers now and then when Nate's nearby)
+      if (this.chase) {
+        if (dist < 34) { G.script.run(G.SCRIPTS.romulusFound(this)); return; }
+        if (dist < 110 && this.t % 120 === 0) w.pop(this.x, this.y - 26, '*whimper*', '#c8c8d0');
+        this.dir = p.x > this.x ? 'right' : 'left';
+        return;
+      }
       if (this.state === 'hide') {
         // keeps one eye on Nate at all times
         this.dir = p.x > this.x ? 'right' : 'left';

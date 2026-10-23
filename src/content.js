@@ -483,9 +483,13 @@
     else if (!f.tollPaid && f.hoodedNotReady && !s.items.rod) goal = 'The hooded figure says you\'re not ready. Find the old man fishing on the rocks of the island.';
     else if (!f.tollPaid) goal = f.hoodedMet ? 'A hooded figure in the tunnel wants 500 shark teeth to let you through. (' + G.sayable(s.teeth) + '/500)' : 'Cross the Chesapeake Bay Bridge-Tunnel. Chesapeake is on the other side of the tunnel.';
     else if (!f.tylerBeaten) goal = 'The hooded figure is Tyler, hypnotized by Father Eggmas! Snap him out of it.';
-    else goal = 'Tyler says Father Eggmas is at the Number One Ditch. Chesapeake is through the tunnel! (More story soon!)';
+    else if (!f.condoArrived) goal = 'Tyler says Father Eggmas is at the Number One Ditch. Chesapeake is through the tunnel!';
+    else if (!f.romulusMet) goal = 'Abe and Hannah\'s condo! Their front door is around the side, past the garage.';
+    else if (G.romChase()) goal = (f.romHide || 0) < 4 ? 'Romulus ran off to hide. Find him somewhere in the house!' : 'Romulus got out the front door! Find him outside.';
+    else if (!f.romulusBeaten) goal = 'Romulus squeezed through the woods behind the patio onto the golf course. Go after him!';
+    else goal = 'Romulus is home safe (and still scared of Nate). (More story soon!)';
     // which chapter of the road trip Nate is on
-    const chapter = !f.doronDeal ? 'CH. 1 - LAFAYETTE' : !f.boulderGone ? 'CH. 2 - EASTON FAIR' : !f.mikeyBeaten ? 'CH. 3 - HOME' : 'CH. 4 - THE BAY';
+    const chapter = !f.doronDeal ? 'CH. 1 - LAFAYETTE' : !f.boulderGone ? 'CH. 2 - EASTON FAIR' : !f.mikeyBeaten ? 'CH. 3 - HOME' : !f.condoArrived ? 'CH. 4 - THE BAY' : 'CH. 5 - CHESAPEAKE';
     // side quests: { name, status, kind (active / rumor / done), prog [n, of], where, hint }
     const side = [];
     const add = (name, done, status, where, hint, prog) => side.push({ name, status: done ? (typeof done === 'string' ? done : 'Done!') : status, kind: done ? 'done' : 'active', where, hint, prog });
@@ -3063,7 +3067,7 @@
     { name: 'The Two-Liter (Chesapeake Channel Tunnel)', map: 'chesTunnel', at: [7, 26, 'up'], flags: { cbbtArrived: true, tollMet: true, chesSeen: true }, items: { rod: true } },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
     { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [55, 1, 'down'], flags: { tylerBeaten: true } },
-    { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { condoArrived: true, condoScare: true, romulusMet: true }, items: { bidet: true } },
+    { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { condoArrived: true, condoScare: true, romulusMet: true, romHide: 7, romToGolf: true }, items: { bidet: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -6310,6 +6314,8 @@
   // Abe, inside, after the scare.
   S.abeCondo = function* () {
     const f = flags();
+    if (G.romChase()) { yield G.say('Abe', ROM_SPOTS[f.romHide || 0].abe); return; }
+    if (f.romToGolf && !f.romulusBeaten) { yield G.say('Abe', 'Romulus went through the WOODS? Onto the course? ...Go get him!'); return; }
     f.abeLine = ((f.abeLine || 0) + 1) % 3;
     yield G.say('Abe', [
       'Hannah gets off work later. Make yourselves at home.',
@@ -6570,6 +6576,8 @@
       }
       for (const x of [32, 34, 36]) if (clear(x, 30)) shrub(sp.boxwood, x, 30, boxwood);
       for (let y = 23; y <= 37; y += 2) if (!w.block[(y + 1) * w.w + 44] && clear(44, y, 1, 2)) w.addProp({ img: sp.arborvitae, tx: 44, ty: y, h: 2, dx: 2, solid: [44, y + 1, 1, 1], hit: [44, y + 1, 1, 1], talk: look('A tall, skinny evergreen. There\'s a whole row of them.') });
+      // ---- Romulus, if he got out and he's hiding out here
+      S.romSpawn(w, 'condo');
       // ---- Anette, out front of the cream duplex at the corner, and her five thirsty potted plants
       w.add(new G.NPC({ sprite: 'anette', name: 'Anette', x: 23 * 16 + 8, y: 7 * 16 + 12, dir: 'down', talk: S.anette }));
       for (const pl of ANETTE_PLANTS) w.add(new G.ThirstyPlant(pl.at[0] * 16 + 8, pl.at[1] * 16 + 12, { id: pl.id, kind: pl.kind }));
@@ -6607,7 +6615,8 @@
         if (y + 1 < w.h - 1) w.addTree(11, y + 1, y % 6 === 4 ? null : 'pine');
       }
       w.blockTiles(9, 0, 4, w.h);
-      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [9 * 16, 0, 13 * 16, w.h * 16], talk: look('The woods are too thick to get through. The golf course is right there on the other side.') });
+      // (while Romulus is out on the golf course, there's a gap he squeezed through: S.condoWoods)
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [9 * 16, 0, 13 * 16, w.h * 16], talk: () => S.condoWoods() });
       // ---- the golf course (out of reach for now)
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [1 * 16, 5 * 16, 5 * 16, 8 * 16], talk: look('A sand bunker. Nate the geologist: mostly quartz. Nate the golfer: avoid.') });
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [1 * 16, 21 * 16, 4 * 16, 23 * 16], talk: look('Another sand bunker. There is a golf ball buried in it. Nate leaves it for its owner.') });
@@ -6646,6 +6655,11 @@
     if (s.items.bidet) { yield G.say(null, 'A long vanity under a big mirror and a light box. The cabinet under the sink has a bidet-shaped empty spot.'); return; }
     yield G.say(null, 'A long vanity under a big mirror and a light box.');
     yield G.say(null, 'Something is rattling around in the cabinet under the sink...');
+    yield* S.bidetFind();
+  };
+  // finding the Portable Bidet (at the sink, or when Romulus knocks the cabinet open)
+  S.bidetFind = function* () {
+    const s = G.state;
     G.audio.sfx('chest');
     s.items.bidet = true; s.items.bidetWater = G.BIDET_MAX;
     yield G.itemGet(G.spr.bidetIcon, 'You got the {y}Portable Bidet{/}!');
@@ -6688,7 +6702,94 @@
     }
     if (G.with('lily')) yield G.say('Lily', 'He likes me fine.');
     else if (G.with('doron')) yield G.say('Doron', 'Smart dog.');
+    // ...and the hide and seek begins
+    f.romHide = 0; r.chase = true;
+    yield G.say(null, 'Romulus is hiding from Nate. Find him!');
   };
+
+  // ---------------------------------------------------------------- hide and seek
+  // After he first sees Nate, Romulus runs and hides. Every time Nate finds him he yelps
+  // and bolts to the next spot: through the house (the kitchen, the downstairs bath, the
+  // upstairs closet, under Abe's desk), out the front door, around the street, and at last
+  // through a gap in the woods onto the golf course, where the boss fight is. flags.romHide
+  // is which spot he's at now; `run` is where he runs (in tiles) when he's found from there,
+  // `vanish` means he leaves the map (up or down the stairs).
+  const ROM_SPOTS = [
+    { map: 'condoDown', at: [15.5, 5.75], run: [[11.5, 5.5], [11.5, 8], [13.5, 9.6], [19.5, 9.6], [19.5, 15.6], [17.5, 15.6]], line: 'He ran down the back hall!', abe: 'He always hides behind the breakfast bar. Right next to me. Not very sneaky.' },
+    { map: 'condoDown', at: [17.5, 15.6], run: [[19.5, 15.6], [19.5, 9.6], [13.5, 9.6], [13.5, 12.2]], vanish: true, bidet: true, line: 'He ran up the stairs!', abe: 'Try the bathroom. He likes the bath mat. It\'s fluffy.' },
+    { map: 'condoUp', at: [22.5, 6.7], run: [[23.5, 6.7], [23.5, 10.6], [21.5, 12.7]], line: 'He ran out of the closet!', abe: 'Upstairs? Check the closet. Careful of the guitars.' },
+    { map: 'condoUp', at: [21.5, 12.75], run: [[16.5, 11.6], [14.5, 11.6], [13.5, 13]], vanish: true, door: true, line: 'He\'s headed downstairs!', abe: 'He likes it under my desk. Probably because it\'s the only clean spot in my office.' },
+    { map: 'condo', at: [17.4, 19.3], run: [[16.5, 20.6], [36, 20.6], [42.5, 15.7]], line: 'He ran across the street!', abe: 'He got OUTSIDE? Check the bushes out front. He loves a bush. Gets it from me.' },
+    { map: 'condo', at: [42.5, 15.7], run: [[38, 16], [31, 16.5], [31, 20.6], [13.5, 20.6], [13.5, 13.2]], line: 'He\'s headed around back!', abe: 'Did you check the visitor parking? He likes to lie under that tree.' },
+    { map: 'condo', at: [13.5, 13.2], golf: true, abe: 'Out back, maybe? He stares at the golf course through the trees all day.' },
+  ];
+  G.romChase = () => { const f = flags(); return !!f.romulusMet && !f.romulusBeaten && (f.romHide || 0) < ROM_SPOTS.length; };
+  // put Romulus in his hiding spot, if it's on this map
+  S.romSpawn = function (w, map) {
+    if (!G.romChase()) return;
+    const sp = ROM_SPOTS[flags().romHide || 0];
+    if (!sp || sp.map !== map) return;
+    w.romulus = w.add(new G.Romulus(sp.at[0] * 16, sp.at[1] * 16, 'hide'));
+    w.romulus.chase = true;
+  };
+  // he bolts along `pts` (pixels); once he's well off screen he's already where he's going
+  const runOff = (r, pts) => ({
+    start() { this.i = 0; r.walking = true; },
+    update() {
+      const p = P();
+      if (this.i >= pts.length) { r.walking = false; return true; }
+      const [tx, ty] = pts[this.i], dx = tx - r.x, dy = ty - r.y, d = Math.hypot(dx, dy);
+      if (d <= 3.6) { r.x = tx; r.y = ty; this.i++; } else { r.x += (dx / d) * 3.6; r.y += (dy / d) * 3.6; r.dir = G.dirToward(dx, dy); r.anim = (r.anim || 0) + 1; }
+      if (Math.hypot(r.x - p.x, r.y - p.y) > 150) { [r.x, r.y] = pts[pts.length - 1]; r.walking = false; return true; }
+      return false;
+    },
+  });
+  // Nate found him: a yelp, and he's off to the next spot
+  S.romulusFound = function* (r) {
+    const f = flags(), w = G.play.world, i = f.romHide || 0, spot = ROM_SPOTS[i];
+    if (!spot || !r.chase) return;
+    r.chase = false;
+    r.dir = P().x > r.x ? 'right' : 'left';
+    G.audio.sfx('yelp');
+    w.pop(r.x, r.y - 28, 'YELP!', '#f8f8f0');
+    yield G.emote(r, 'bang', 24);
+    if (spot.golf) { yield* S.romulusToGolf(r); return; }
+    f.romHide = i + 1;
+    G.audio.sfx('dash');
+    yield runOff(r, spot.run.map(([x, y]) => [x * 16, y * 16]));
+    if (spot.vanish) r.dead = true;
+    else { r.state = 'hide'; r.chase = true; }
+    if (spot.bidet && !G.itemHas('bidet')) {
+      yield G.say(null, 'On his way out, Romulus knocked the cabinet under the sink wide open...');
+      yield* S.bidetFind();
+    }
+    yield G.say('Nate', spot.line);
+    if (spot.door) { yield G.wait(30); G.audio.sfx('door'); yield G.say('Nate', '...Was that the front door?!'); }
+  };
+  // the last spot: he squeezes through the trees behind the patio, onto the golf course
+  S.romulusToGolf = function* (r) {
+    const f = flags(), w = G.play.world;
+    G.audio.sfx('dash');
+    yield runOff(r, [[11.5 * 16, 13.2 * 16]]);
+    w.burst(11 * 16, 13 * 16 - 8, ['#3a7a34', '#5a9a44', '#7a5a38'], 12, { speed: 1.4, up: 1, g: 0.1, life: 22, size: 2 });
+    r.dead = true;
+    yield G.say('Nate', 'He squeezed right through the trees!');
+    yield G.say('Nate', '...Onto the golf course. Romulus, WAIT!');
+    f.romToGolf = true; f.romHide = ROM_SPOTS.length;
+    yield G.say(null, 'Nate pushes through the gap in the trees after him.');
+    G.play.warp('golf', 34, 13, 'left');
+  };
+  // the gap in the woods behind the patio, for as long as Romulus is out on the course
+  S.condoWoods = function* () {
+    const f = flags();
+    if (f.romToGolf && !f.romulusBeaten) {
+      const c = yield G.ask('Nate', 'There\'s the gap Romulus squeezed through. Go after him?', ['Onto the golf course', 'Not yet']);
+      if (c === 0) G.play.warp('golf', 34, 13, 'left');
+      return;
+    }
+    yield G.say(null, 'The woods are too thick to get through. The golf course is right there on the other side.');
+  };
+
   S.romulusTalk = function* (r) {
     const f = flags(), w = G.play.world;
     f.romLine = ((f.romLine || 0) + 1) % 4;
@@ -6747,6 +6848,7 @@
     yield G.say('Nate', 'Water.');
     yield G.say('Nate', 'Good thing I brought a portable bidet. ...I never thought I\'d say that.');
     s.xItem = 'bidet';
+    G.play.autosave();
     yield G.say(null, 'Hold X to spray Romulus with the {y}Portable Bidet{/}. When it runs dry, face the pond and hold X to fill it back up. It fills slowly!');
     r.pose = null;
     yield G.camFocus(null, null, 30);
@@ -6967,8 +7069,11 @@
       F.onCounter(sp.utensilCrock, 12, 3, null);
       F.stand(sp.pantryHutch, 16, 5, 1, look('A white pantry hutch: gold-rimmed glasses, a brown teapot, cookbooks, jars and wicker baskets.'));
       if (f.condoScare) w.abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'down', talk: S.abeCondo }));
-      // Romulus: curled up in his bed the first time, and behind the breakfast bar (hiding from Nate) after that
-      w.romulus = w.add(f.romulusMet ? new G.Romulus(15 * 16 + 8, 5 * 16 + 12, 'hide') : new G.Romulus(2 * 16, 11 * 16 + 12, 'lie'));
+      // Romulus: curled up in his bed the first time; then hiding from Nate all over (ROM_SPOTS); back behind
+      // the breakfast bar for good once the golf course is behind him
+      if (!f.romulusMet) w.romulus = w.add(new G.Romulus(2 * 16, 11 * 16 + 12, 'lie'));
+      else if (f.romulusBeaten) w.romulus = w.add(new G.Romulus(15 * 16 + 8, 5 * 16 + 12, 'hide'));
+      else S.romSpawn(w, 'condoDown');
       // ---- laundry (x 18-20, y 3-5), at the far end of the kitchen
       F.stand(sp.washerFront, 19, 3, 1, look('The washer and dryer face each other across the laundry room. Like a standoff.'));
       F.hang(sp.wireShelf, 19, 2, 1, null, 16);
@@ -7093,6 +7198,8 @@
       F.stand(sp.guitarElectric, 22, 5, 1, look('A black electric guitar with a white pickguard. Another one of Abe\'s.'));
       F.stand(sp.miniAmp, 21, 7, 1, look('A little guitar amp. Nate leaves the volume knob alone.'));
       F.stand(sp.closetJunk, 24, 7, 2, look('Boxes, zippered storage bags, and an ugly Christmas sweater with a gingerbread man on it, dumped on top.'));
+      // ---- Romulus, if he's hiding up here
+      S.romSpawn(w, 'condoUp');
       // ---- way down
       w.addTrigger(13, 17, 2, 1, () => G.play.warp('condoDown', 13, 18, 'down'));
     },
