@@ -505,6 +505,8 @@
     }
 
     draw(ctx, cx, cy) {
+      // (offstage until a cutscene brings them in, like the family arriving at the Ditch)
+      if (this.hidden) return;
       const S = this.S;
       drawShadow(ctx, this.x, this.y, cx, cy, S.h > 24);
       let img = S[this.dir][walkFrame(this.anim, this.moving)];

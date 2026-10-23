@@ -336,9 +336,17 @@
       kind: 'key', name: 'Earplugs', icon: () => G.spr.earplugs, has: () => !!st().items.earplugs,
       desc: 'Cotton balls rolled in Lily\'s vanilla candle wax. A song can\'t get stuck in your head if you can\'t hear it.',
     },
+    // CHKD's item: Hannah packs it from the NICU's supply cabinet when she joins
+    firstAid: {
+      kind: 'gear', equip: true, name: 'Hannah\'s First-Aid Kit', short: 'First-Aid', icon: () => G.spr.firstAidIcon, has: () => !!fl().kitGot,
+      desc: () => 'Packed by Hannah: gauze, tape, ice packs and dinosaur bandages. Press X to patch Nate up (3 hearts). Holds ' + G.KIT_MAX + ' uses. Restock it at any supply closet at CHKD.',
+    },
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
-  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bass', 'chicken', 'rod', 'sifter', 'bidet', null, null, null];
+  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bass', 'chicken', 'rod', 'sifter', 'bidet', 'firstAid', null, null];
+  // Hannah's first-aid kit: how many uses it holds, and how much each one heals (half hearts)
+  G.KIT_MAX = 3;
+  G.KIT_HEAL = 6;
   // how much spray the Portable Bidet holds (frames of holding X), and how much is in it
   G.BIDET_MAX = 150;
   // ...and how fast it fills back up while X is held at water, a sink or a toilet (about 5 seconds for a full tank)
@@ -529,7 +537,8 @@
     else if (!f.chkdArrived) goal = 'Abe says you\'ll need a healer to take on Father Eggmas: Hannah, a nurse in the NICU at CHKD. Take Abe\'s Jeep (in the driveway).';
     else if (!s.items.badge && !f.mobileBeaten) goal = 'Everyone at CHKD is hypnotized! The NICU is a locked unit upstairs: find a staff badge to work the lobby elevator.';
     else if (!f.mobileBeaten) goal = 'Take the lobby elevator up to the NICU and find Hannah.';
-    else goal = 'Hannah joined the party! With a nurse along, you\'re ready for Father Eggmas. (More story soon!)';
+    else if (!f.roofSeen) goal = 'Hannah joined the party! She wants to show everybody something up on the roof. Take the elevator.';
+    else goal = 'Mom and Dad are driving down. When they get here, the whole family goes to the Number One Ditch. Together. (More story soon!)';
     // which chapter of the road trip Nate is on
     const chapter = !f.doronDeal ? 'CH. 1 - LAFAYETTE' : !f.boulderGone ? 'CH. 2 - EASTON FAIR' : !f.mikeyBeaten ? 'CH. 3 - HOME' : !f.condoArrived ? 'CH. 4 - THE BAY' : !f.healerTalk ? 'CH. 5 - CHESAPEAKE' : 'CH. 6 - CHKD';
     // side quests: { name, status, kind (active / rumor / done), prog [n, of], where, hint }
@@ -550,6 +559,8 @@
     if (f.andoverLocked) add('The Andover mines', s.items.andoverKey && 'Key in hand!', f.shopOpen ? 'Mom sells a key' : 'Need a key', 'Home - Andover', s.items.andoverKey ? 'Pick "The Andover mines" when you leave home.' : f.shopOpen ? 'Mom\'s flower stand sells the gate key. It isn\'t cheap.' : 'The mines are on private land. Mom knows everybody at church.');
     if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number, and Nate can\'t say it.');
     if (f.plantQuest) add('Anette\'s thirsty plants', f.plantsDone, f.plantsDone ? 'Done' : G.sayable(G.plantsWatered()) + '/5 watered', 'Chesapeake - the condo', G.plantsWatered() >= 5 ? 'All five are watered. Go tell Anette.' : 'Water Anette\'s five potted plants around the street with the Portable Bidet.', [G.plantsWatered(), 5]);
+    if (f.mobileBeaten && !f.rubyMet) side.push({ name: 'The rock doctor', status: 'Someone needs one', kind: 'rumor', where: 'CHKD - the ward', hint: 'The nurse on the ward says the girl behind the green door keeps asking for a "rock doctor."' });
+    if (f.rubyMet) add('Ruby, the rock kid', f.rubyHeart, !f.rubyQuiz ? G.sayable(f.rubyQ || 0) + '/3 named' : 'Trade her a rock', 'CHKD - the ward', !f.rubyQuiz ? 'Ruby has three rocks with no names. Tell her what they are, rock doctor.' : 'Ruby will trade one of her two fairy stones for a rock she doesn\'t have yet, from somewhere she\'s never been.', !f.rubyQuiz ? [f.rubyQ || 0, 3] : null);
     if (s.party.includes('abe')) add('Abe\'s reach', G.abeReachCount() >= 5 && 'All found!', G.sayable(G.abeReachCount()) + '/5 found', 'Chesapeake', 'Abe is 6\'5". With him along, check things that are way up high around Abe and Hannah\'s and at CHKD (press Z under them), and the tall hedge up by Anette\'s.', [G.abeReachCount(), 5]);
     if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
@@ -637,6 +648,17 @@
       tracks: [
         { wave: 'triangle', vol: 0.09, notes: 'A5:2 E5:2 C5:2 | B4:2 E5:2 A4:2 | C5:2 B4:2 A4:2 | G#4:6 | A4:2 C5:2 E5:2 | F5:2 E5:2 D5:2 | C5:2 B4:2 G#4:2 | A4:6' },
         { wave: 'triangle', vol: 0.11, notes: 'A2:6 | E2:6 | F2:6 | E2:6 | A2:6 | D3:6 | E2:6 | A2:6' },
+      ],
+    },
+    // the roof of CHKD at night, looking out at the glow over the Number One Ditch: the title
+    // theme, slow and quiet in a minor key, with a little high note falling now and then like
+    // snow (original)
+    roof: {
+      bpm: 66,
+      tracks: [
+        { wave: 'triangle', vol: 0.08, notes: 'E4:4 A4:4 C5:6 B4:2 | A4:4 F4:4 E4:8 | F4:4 A4:4 D5:6 C5:2 | B4:12 R:4 | E4:4 A4:4 C5:6 E5:2 | F5:4 E5:4 C5:8 | D5:4 C5:4 B4:4 G#4:4 | A4:12 R:4' },
+        { wave: 'triangle', vol: 0.12, notes: 'A2:16 | F2:16 | D2:16 | E2:16 | A2:16 | F2:16 | D2:8 E2:8 | A2:16' },
+        { wave: 'sine', vol: 0.03, notes: 'E6:2 R:14 | C6:2 R:14 | A5:2 R:14 | B5:2 R:14 | E6:2 R:14 | F6:2 R:14 | D6:2 R:6 B5:2 R:6 | A5:2 R:14' },
       ],
     },
     // the finale (all original): the family, possessed (the home theme, in a minor key and
@@ -2523,6 +2545,7 @@
       ['Ice JJ Fish', !!f.jjBeaten],
       ['The old fisherman', !!s.items.rod],
       ['Tyler', !!f.tylerBeaten],
+      ['Ruby, the rock kid', !!f.rubyHeart],
       ['Every rock', G.rocksFound() >= G.ROCKS.length],
       ['Every photo', G.photosFound() >= G.PHOTOS.length],
     ];
@@ -2838,6 +2861,7 @@
     { id: 'basalt', area: 'bedminster', name: 'Watchung Basalt', r: 1, crush: { teeth: 15 }, how: 'The big black boulder by Brady Brook is way too heavy for Nate. Doron, though...', fact: 'Jurassic lava flows that built the Watchung Mountains just east of Bedminster.' },
     { id: 'megalodon', area: 'bay', name: 'Megalodon Tooth', r: 4, crush: null, how: 'A patch of gravel and shell on the island between the two tunnels. Too fine to pick through by hand.', fact: 'A fossil tooth from Otodus megalodon, a giant shark that lived millions of years ago. Fossil shark teeth turn up all over the Chesapeake Bay region.' },
     { id: 'chesapecten', area: 'chesapeake', name: 'Chesapecten Fossil', r: 3, crush: null, how: 'Anette, Abe and Hannah\'s neighbor, has one. Her plants look awfully thirsty.', fact: 'Chesapecten jeffersonius: a fossil scallop millions of years old, named for the Chesapeake Bay and Thomas Jefferson. It\'s the state fossil of Virginia, and back in 1687 it became the first fossil from North America ever pictured in a science book.' },
+    { id: 'fairystone', area: 'chesapeake', name: 'Fairy Stone', r: 2, crush: null, how: 'Ruby, a girl on the CHKD ward, has two. She\'ll trade one for a rock from somewhere far away.', fact: 'Staurolite: brown crystals that grow twinned into little crosses. Virginia has a whole state park named for them, Fairy Stone State Park. The legend says they\'re fairy tears, turned to stone.' },
     { id: 'prehnite', area: 'bedminster', name: 'Prehnite', r: 2, crush: { heart: 1 }, how: 'The gravel bar in Brady Brook. You\'d need a sifting screen.', fact: 'Pale green crystals that grow in the gas bubbles of New Jersey basalt. Mindat lists prehnite in Bedminster Township.' },
   ];
   G.rockById = (id) => G.ROCKS.find((r) => r.id === id);
@@ -3090,7 +3114,9 @@
     if (c < 0) return;
     const rock = pick[c];
     if (!rock.crush) {
-      yield G.say('Nate', 'Crush a Continental Army cannonball?! Absolutely not. This goes on my shelf.');
+      yield G.say('Nate', rock.id === 'cannonball' ? 'Crush a Continental Army cannonball?! Absolutely not. This goes on my shelf.'
+        : rock.id === 'fairystone' ? 'Crush Ruby\'s fairy stone?! Absolutely not. She trusted me with this.'
+          : 'Crush my ' + rock.name.toLowerCase() + '?! Absolutely not. This goes on my shelf.');
       return;
     }
     s.rocks[rock.id]--;
@@ -3161,7 +3187,8 @@
     { name: 'Abe joined: his reach', map: 'condo', at: [16, 13, 'right'], flags: { romulusBeaten: true }, party: ['abe'], follower: 'abe' },
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'], flags: { healerTalk: true, chkdArrived: true } },
     { name: 'CHKD: MECHA-BABY (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
-    { name: 'FINALE: the Number One Ditch', map: 'ditchFinal', at: [7, 17, 'up'], flags: { mobileBeaten: true }, party: ['abe', 'hannah'], items: { pipe: true, hammer: true }, maxHp: 12 },
+    { name: 'CHKD: Hannah joined (to the roof)', map: 'chkdNicu', at: [7, 8, 'down'], flags: { mobileBeaten: true, kitGot: true }, party: ['hannah'], follower: 'hannah', items: { firstAid: 3 }, maxHp: 12 },
+    { name: 'FINALE: the Number One Ditch', map: 'ditchFinal', at: [7, 17, 'up'], flags: { mobileBeaten: true, roofSeen: true }, party: ['abe', 'hannah'], items: { pipe: true, hammer: true }, maxHp: 12 },
     { name: 'FINALE: Eggmas, the relay', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_intro: true, fin_freed: 6, fin_relay: 0, signal_crack: true } },
     { name: 'FINALE: Nate\'s turn', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_relay: 6 } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
@@ -3203,6 +3230,8 @@
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'] },
     { name: 'CHKD: the ward', map: 'chkdWard', at: [1, 7, 'right'] },
     { name: 'CHKD: the NICU', map: 'chkdNicu', at: [7, 9, 'up'] },
+    { name: 'CHKD: Ruby\'s room', map: 'chkdRoom', at: [5, 7, 'up'] },
+    { name: 'CHKD: the roof', map: 'chkdRoof', at: [2, 11, 'down'] },
     { name: 'El Toro Loco (inside)', map: 'toroLocoIn', at: [9, 11, 'up'] },
   ];
   // Admin: one of every rock.
@@ -8094,6 +8123,8 @@
   G.CAST.chkdReception = { skin: '#c88a60', hair: '#2a1a14', hairStyle: 'long', shirt: '#d8a8e8', pants: '#3a3a44', shoes: '#2a2a2a', torso: 5, legs: 3, smile: '#ffffff' };
   G.CAST.chkdGuard = { skin: '#8a5a3a', hair: '#1a1010', hairStyle: 'cap', hat: '#1c2c4c', hatStyle: 'ball', shirt: '#2a3a5a', pants: '#1c2434', shoes: '#1a1a1a', wide: true, torso: 7, legs: 3 };
   G.CAST.chkdNurse = { skin: '#f0c8a8', hair: '#6a4028', hairStyle: 'shoulder', shirt: '#7ac8b8', pants: '#7ac8b8', shoes: '#f0f0f0', torso: 5, legs: 3, smile: '#ffffff' };
+  // Ruby, the rock kid on the ward: seven, pink glasses, a hospital gown with little stars, a cast
+  G.CAST.rockKid = { skin: '#c88a60', eyes: '#1a1010', hair: '#2a1a14', hairStyle: 'shoulder', glasses: '#e04888', blush: true, smile: '#ffffff', shirt: '#9ad0f0', pants: '#9ad0f0', shoes: '#f0f0f0', torso: 4, legs: 2 };
   for (const id of ['chkdDad', 'chkdReception', 'chkdGuard', 'chkdNurse', 'hannah']) G.CAST[id + 'Hypno'] = Object.assign({}, G.CAST[id], { swirl: true, smile: null, blush: false });
 
   CRITTER_LINES.baby = [
@@ -8142,6 +8173,7 @@
   // ---------------------------------------------------------------- outside
   S.chkdArrive = function* () {
     const f = flags();
+    yield* S.kitCatchUp();
     if (f.chkdArrived) return;
     f.chkdArrived = true;
     yield G.wait(30);
@@ -8166,6 +8198,7 @@
   // ---------------------------------------------------------------- the lobby
   S.chkdLobbyEnter = function* () {
     const f = flags();
+    yield* S.kitCatchUp();
     if (f.chkdLobby || f.mobileBeaten) return;
     f.chkdLobby = true;
     yield G.wait(24);
@@ -8197,15 +8230,17 @@
       return;
     }
     if (!f.badgeUsed) { f.badgeUsed = true; yield G.say(null, 'Nate taps Hannah\'s badge on the reader. *beep* The light turns green.'); }
-    const c = yield G.ask('Nate', 'Take the elevator up to the NICU?', ['Up to the NICU', 'Stay']);
-    if (c !== 0) return;
-    G.audio.sfx('bell');
-    G.play.warp('chkdNicu', 7, 9, 'up');
+    const c = yield (f.mobileBeaten
+      ? G.ask('Nate', 'The elevator. Where to?', ['Up to the NICU', 'Up to the roof', 'Stay'])
+      : G.ask('Nate', 'Take the elevator up to the NICU?', ['Up to the NICU', 'Stay']));
+    if (c === 0) { G.audio.sfx('bell'); G.play.warp('chkdNicu', 7, 9, 'up'); }
+    else if (f.mobileBeaten && c === 1) { G.audio.sfx('bell'); G.play.warp('chkdRoof', 2, 11, 'down'); }
   };
 
   // ---------------------------------------------------------------- the ward
   S.chkdWardEnter = function* () {
     const f = flags();
+    yield* S.kitCatchUp();
     if (f.chkdWard || f.mobileBeaten) return;
     f.chkdWard = true;
     yield G.wait(20);
@@ -8213,7 +8248,14 @@
   };
   S.chkdNurse = function* () {
     const f = flags();
-    if (f.mobileBeaten) { yield G.say('Nurse', 'Did I chart ANYTHING today? ...I charted the word "lullaby" four hundred times.'); return; }
+    if (f.mobileBeaten) {
+      f.nurseLine = ((f.nurseLine || 0) + 1) % 2;
+      yield G.say('Nurse', [
+        'Did I chart ANYTHING today? ...I charted the word "lullaby" four hundred times.',
+        f.rubyHeart ? 'Ruby showed me her rock collection. Twice. She says her rock doctor fixed it.' : 'The little girl behind the green door keeps asking for a "rock doctor." I told her we only have the regular kind.',
+      ][f.nurseLine]);
+      return;
+    }
     yield G.say('Nurse', 'Hannah... dropped... her badge...');
     yield G.say('Nurse', 'A baby... took it... to the... playroom...');
   };
@@ -8234,6 +8276,7 @@
   // ---------------------------------------------------------------- the NICU: MECHA-BABY
   S.nicuEnter = function* () {
     const f = flags(), w = G.play.world, p = P(), m = w.mech, h = w.hannahNpc;
+    yield* S.kitCatchUp();
     if (f.mobileBeaten || !m) return;
     yield G.wait(30);
     yield G.camFocus(h.x, h.y - 10, 40);
@@ -8317,6 +8360,15 @@
     yield G.say('Abe', 'And we need a healer.');
     yield G.say('Hannah', 'He hypnotized my BABIES.');
     yield G.say('Hannah', '...Let me get my bag.');
+    // she packs a first-aid kit from the supply cabinet for Nate (CHKD's item)
+    yield G.walkTo(h, 6 * 16 + 8, 3 * 16 + 14, 1.4);
+    h.dir = 'up';
+    G.audio.sfx('door');
+    yield G.say(null, 'Hannah raids the supply cabinet: gauze, tape, ice packs, and a whole box of dinosaur bandages.');
+    yield G.walkTo(h, p.x + (p.x < 8 * 16 ? 18 : -18), p.y - 2, 1.4);
+    h.dir = p.x < h.x ? 'left' : 'right';
+    yield G.say('Hannah', 'Here. You\'re going to need this more than me.');
+    yield* S.kitGive();
     const fol = w.ents.find((e) => e instanceof G.Follower && e.id === 'abe');
     if (fol) fol.hold = false;
     if (!s.party.includes('hannah')) s.party.push('hannah');
@@ -8327,6 +8379,9 @@
     G.play.setFollower('hannah', true);
     yield G.say(null, 'With Hannah along, she patches Nate up when he\'s low on hearts. Talk to her for a checkup any time.');
     yield G.say('Hannah', 'My charge nurse is going to KILL me. ...She\'s hypnotized too, isn\'t she. She\'ll never know.');
+    yield G.say('Hannah', 'Okay. Before we go ANYWHERE: everybody up to the roof.');
+    if (s.party.includes('abe')) yield G.say('Abe', 'The roof?');
+    yield G.say('Hannah', 'Trust me. There\'s something you all need to see. The elevator\'s right out the door.');
     G.audio.play('house');
     G.play.autosave();
   };
@@ -8348,6 +8403,11 @@
   // talking to her: a checkup (all hearts back, when nothing's attacking)
   S.hannahCheckup = function* () {
     const f = flags(), s = G.state, w = G.play.world, p = P();
+    if (f.mobileBeaten && !f.kitGot) {
+      yield G.say('Hannah', 'Oh! Nate, wait. I packed you something.');
+      yield* S.kitGive();
+      return;
+    }
     const fighting = w.ents.some((e) => e.enemy && !e.dead && !e.hidden && e.state !== 'defeated' && Math.hypot(e.x - p.x, e.y - p.y) < 140);
     if (s.hp < s.maxHp && !fighting) {
       s.hp = s.maxHp;
@@ -8465,6 +8525,7 @@
       for (const y of [7, 10]) F.stand(sp.kidChairs, 7, y, 3, look('Little chairs in red, blue, yellow and green.'));
       F.stand(sp.bigTeddy, 2, 9, 1, look('A giant teddy bear in a red bow tie. He\'s seen a lot.'));
       F.stand(sp.giftShop, 18, 10, 3, () => S.abeReach('giftShop'));
+      F.hang(sp.supplyDoor, 17, 2, 1, () => S.supplyCloset(), 0);
       for (const [x, y] of [[1, 3], [22, 3], [22, 12]]) F.stand(sp.monstera, x, y, 1, look('A big potted plant.'));
       // babies (until MECHA-BABY goes down)
       if (!awake) for (const [x, y, k] of [[12, 8, 'blue'], [16, 9, 'pink'], [5, 11, 'tan']]) w.add(new G.HypnoBaby(x * 16 + 8, y * 16 + 12, k));
@@ -8493,7 +8554,9 @@
     setup(w) {
       const F = furnish(w), sp = G.spr, f = flags(), s = G.state, awake = !!f.mobileBeaten;
       // patient rooms along the hall (quiet: everybody inside is asleep)
-      [3, 7, 11, 15, 19, 23].forEach((x, i) => F.hang(sp.roomDoors[i % 4], x, 2, 1, look(['A patient room. A kid is fast asleep in there, snoring.', 'A patient room. A cartoon is playing to nobody.', 'A patient room. Somebody drew a dinosaur on the whiteboard. It has spiral eyes.'][i % 3]), 0));
+      // (Ruby's room is behind the green one)
+      [3, 7, 11, 15, 19, 23].forEach((x, i) => F.hang(sp.roomDoors[i % 4], x, 2, 1, x === 11 ? () => S.rubyDoor() : look(['A patient room. A kid is fast asleep in there, snoring.', 'A patient room. A cartoon is playing to nobody.', 'A patient room. Somebody drew a dinosaur on the whiteboard. It has spiral eyes.'][i % 3]), 0));
+      F.hang(sp.supplyDoor, 9, 2, 1, () => S.supplyCloset(), 0);
       // the nurses' station, with a nurse behind it
       F.stand(sp.nurseStation, 10, 6, 5, () => S.chkdNurse());
       w.add(new G.NPC({ sprite: awake ? 'chkdNurse' : 'chkdNurseHypno', name: 'Nurse', x: 12 * 16 + 8, y: 5 * 16 + 12, dir: 'down', talk: S.chkdNurse }));
@@ -8537,6 +8600,7 @@
     setup(w) {
       const F = furnish(w), sp = G.spr, f = flags();
       F.hang(sp.nicuDoors, 10, 2, 2, look('The doors to the rest of the NICU. Through the windows: more isolettes, and a lot of sleeping babies.'), 0);
+      F.hang(sp.supplyCabinet, 6, 2, 1, () => S.supplyCloset(true), 4);
       // isolettes along the back wall, monitors, glider rockers
       w.isolettes = [];
       const iso = (x, y, kind) => { F.stand(sp.isolettes[kind], x, y, 2, look('An isolette. A tiny baby is sleeping inside, swaddled up tight.')); w.isolettes.push({ x: (x + 1) * 16, y: y * 16 - 10 }); };
@@ -8557,10 +8621,545 @@
         w.blockTiles(11, 8, 2, 1);
         w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [11 * 16, 7 * 16, 13 * 16, 9 * 16], talk: look('The mech, parked in the corner. Somebody stuck a note on it: OUT OF ORDER. NO BABIES ALLOWED.') });
       }
-      w.addWarp(7, 10, 1, 1, 'chkdLobby', 3, 4, 'down');
+      w.addTrigger(7, 10, 1, 1, () => { if (flags().mobileBeaten) G.script.run(S.nicuElevator()); else G.play.warp('chkdLobby', 3, 4, 'down'); });
     },
     onEnter() { return S.nicuEnter(); },
   };
+  // ================================================================ CHKD, AFTER MECHA-BABY
+  // Getting ready for the Number One Ditch (the user's picks): Hannah's first-aid kit (CHKD's
+  // item, restocked at the supply closets), Ruby (a rock-collecting kid on the ward, an optional
+  // side quest), and the roof at night, where the family decides to go together.
+  // Flags: kitGot, roofSeen, rubyMet, rubyQ (0-3), rubyQuiz, rubyAsked, rubyTraded (the rock id),
+  // rubyHeart.
+
+  // ---------------------------------------------------------------- Hannah's first-aid kit
+  S.kitGive = function* () {
+    const f = flags(), s = G.state;
+    if (f.kitGot) return;
+    f.kitGot = true;
+    s.items.firstAid = G.KIT_MAX;
+    s.xItem = 'firstAid';
+    yield G.itemGet(G.spr.firstAidIcon, 'You got {y}Hannah\'s First-Aid Kit{/}! It\'s on X: press it to patch Nate up for 3 hearts.');
+    yield G.say('Hannah', 'Three patch-ups. When it runs out, restock it at a supply closet. There\'s one on every floor.');
+    yield G.say('Hannah', 'And if I\'m standing RIGHT next to you, just ask me. That\'s literally my job.');
+  };
+  // (for a save from before the kit existed: Hannah remembers it the next time she's around)
+  S.kitCatchUp = function* () {
+    const f = flags();
+    if (f.kitGot || !f.mobileBeaten || !G.state.party.includes('hannah')) return;
+    yield G.wait(20);
+    yield* S.callIn('hannah');
+    yield G.say('Hannah', 'Oh! Nate, wait. I packed you something.');
+    yield G.say(null, 'Hannah hands Nate a red zip bag: gauze, tape, ice packs and a whole box of dinosaur bandages.');
+    yield* S.kitGive();
+  };
+  S.supplyCloset = function* (cabinet) {
+    const f = flags(), s = G.state, what = cabinet ? 'supply cabinet' : 'supply closet';
+    if (!f.kitGot) { yield G.say(null, 'A ' + what + ': gauze, tape, saline, a hundred things in little packets. Nate doesn\'t know what any of it is for.'); return; }
+    if ((s.items.firstAid || 0) >= G.KIT_MAX) { yield G.say(null, 'The ' + what + '. Hannah\'s first-aid kit is already full.'); return; }
+    s.items.firstAid = G.KIT_MAX;
+    G.audio.sfx('heart');
+    f.restock = ((f.restock || 0) + 1) % 3;
+    yield G.say(null, 'Nate restocks the first-aid kit from the ' + what + '. Full again!');
+    if (G.with('hannah')) yield G.say('Hannah', ['Take the good tape. Not that one. The GOOD tape.', 'Grab some extra ice packs. You\'re going to need them.', 'Leave the dinosaur bandages. ...Okay, take the dinosaur bandages.'][f.restock]);
+  };
+
+  // ---------------------------------------------------------------- the elevators
+  S.nicuElevator = function* () {
+    const p = P();
+    const c = yield G.ask('Nate', 'The elevator. Where to?', ['Up to the roof', 'Down to the lobby', 'Stay']);
+    if (c === 0) { G.audio.sfx('bell'); G.play.warp('chkdRoof', 2, 11, 'down'); return; }
+    if (c === 1) { G.audio.sfx('bell'); G.play.warp('chkdLobby', 3, 4, 'down'); return; }
+    yield G.walkTo(p, p.x, p.y - 14, 1);
+  };
+  S.roofElevator = function* () {
+    const p = P();
+    const c = yield G.ask('Nate', 'The elevator. Where to?', ['Down to the NICU', 'Down to the lobby', 'Stay']);
+    if (c === 0) { G.audio.sfx('bell'); G.play.warp('chkdNicu', 7, 9, 'up'); return; }
+    if (c === 1) { G.audio.sfx('bell'); G.play.warp('chkdLobby', 3, 4, 'down'); return; }
+    yield G.walkTo(p, p.x, p.y + 14, 1);
+  };
+
+  // ---------------------------------------------------------------- Ruby, the rock kid
+  // Seven years old, a broken leg, an egg carton full of rocks. Nate is a geologist: a ROCK
+  // doctor. She has three rocks she can't name; then she trades one of her two fairy stones
+  // for a rock she doesn't have yet, and gives Nate her heart rock (a heart container).
+  const RUBY_QUIZ = [
+    {
+      q: 'This white one fizzes when I put vinegar on it. Like soda!', opts: ['Calcite', 'Quartz', 'Pyrite'], a: 0,
+      nate: 'Calcite. The vinegar eats away at it, and the fizz is carbon dioxide.', ruby: 'CALCITE. I\'m writing that down.',
+    },
+    {
+      q: 'This one is GOLD. My dad says it\'s not gold. He\'s wrong, right?', opts: ['It\'s gold', 'It\'s pyrite', 'It\'s brass'], a: 1,
+      nate: 'Sorry. It\'s pyrite: fool\'s gold. Real gold is soft, and it doesn\'t grow in perfect little cubes.', ruby: 'Fool\'s gold. ...I like it better anyway. It\'s a TRICKSTER.',
+    },
+    {
+      q: 'And this black one sticks to my fridge magnet. Is it magic?', opts: ['It\'s magic', 'It\'s obsidian', 'It\'s magnetite'], a: 2,
+      nate: 'It\'s magnetite. Iron ore. It has so much iron in it that magnets stick to it.', ruby: 'Magnetite. ...That\'s basically magic.',
+    },
+  ];
+  // she already has these (the quiz rocks), and the fairy stones
+  const RUBY_HAS = ['calcite', 'pyrite', 'magnetite', 'quartz', 'fairystone'];
+  const RUBY_WOW = {
+    andover: 'From an old iron MINE? In NEW JERSEY? Were there BATS?',
+    lafayette: 'From a COLLEGE? In PENNSYLVANIA? Rocks go to COLLEGE?',
+    easton: 'From a FAIR? Did it go on the rides?',
+    bedminster: 'From your HOUSE? In New Jersey? That\'s so far!',
+    bay: 'A SHARK TOOTH. A MEGALODON shark tooth. I\'m going to scream. ...I\'m screaming on the inside.',
+    chesapeake: 'The Virginia STATE FOSSIL?! I\'ve only ever seen it in my BOOK!',
+  };
+  S.rubyDoor = function* () {
+    const f = flags();
+    if (!f.mobileBeaten) { yield G.say(null, 'A patient room. Somebody drew a dinosaur on the whiteboard. It has spiral eyes.'); return; }
+    if (!f.rubyMet) yield G.say(null, 'A patient room. A little voice from inside: "Is that a ROCK HAMMER?"');
+    G.audio.sfx('door');
+    G.play.warp('chkdRoom', 5, 7, 'up');
+  };
+  S.ruby = function* () {
+    const f = flags();
+    if (f.rubyHeart) {
+      f.rubyLine = ((f.rubyLine || 0) + 1) % 4;
+      yield G.say('Ruby', [
+        'My carton is FULL. That has never happened before.',
+        'When my leg gets better, I\'m going to the Number One Ditch. My mom says it\'s just a ditch. My mom is wrong.',
+        'Rock doctor! Come back and visit. Bring rocks.',
+        'Did you know my fairy stones are fairy TEARS? That\'s why I don\'t cry. I have rocks for that.',
+      ][f.rubyLine]);
+      return;
+    }
+    if (!f.rubyMet) {
+      f.rubyMet = true;
+      yield G.say('Ruby', 'Is that a ROCK HAMMER? Are you a DOCTOR?');
+      yield G.say('Nate', 'I\'m a geologist.');
+      yield G.say('Ruby', 'A ROCK doctor?!');
+      yield G.say('Nate', '...Yes. I am a rock doctor.');
+      yield G.say('Ruby', 'I\'m Ruby. I broke my leg climbing up the jungle gym to get a rock off the very top.');
+      yield G.say('Ruby', 'I got the rock, though.');
+      yield G.say(null, 'Ruby holds up an egg carton. There\'s a rock in every cup but one.');
+      yield G.say('Ruby', 'This is my collection. But three of them don\'t have names. My rock book doesn\'t have PICTURES.');
+      yield G.say('Ruby', 'Can you tell me what they are, rock doctor?');
+    }
+    // three rocks with no names (a wrong answer ends the visit; she'll ask again next time)
+    if (!f.rubyQuiz) {
+      for (let i = f.rubyQ || 0; i < RUBY_QUIZ.length; i++) {
+        const q = RUBY_QUIZ[i];
+        const c = yield G.ask('Ruby', q.q, q.opts);
+        if (c !== q.a) {
+          f.rubyMiss = ((f.rubyMiss || 0) + 1) % 3;
+          yield G.say('Ruby', ['Hmm. My rock book says no.', 'Are you SURE you\'re a rock doctor?', 'That\'s what my DAD said.'][f.rubyMiss]);
+          yield G.say('Ruby', 'Think about it, rock doctor. I\'ll be right here. (Obviously.)');
+          return;
+        }
+        yield G.say('Nate', q.nate);
+        yield G.say('Ruby', q.ruby);
+        f.rubyQ = i + 1;
+      }
+      f.rubyQuiz = true;
+      yield G.say('Ruby', 'You really ARE a rock doctor.');
+    }
+    if (!f.rubyTraded) {
+      yield* S.rubyTrade();
+      if (!f.rubyTraded) return;
+    }
+    yield* S.rubyHeart();
+  };
+  S.rubyTrade = function* () {
+    const f = flags(), s = rockState();
+    if (!f.rubyAsked) {
+      f.rubyAsked = true;
+      yield G.say('Ruby', 'Okay. Rock doctor. I have a deal for you.');
+      yield G.say(null, 'Ruby holds up two little brown stones. Each one is shaped like a tiny cross.');
+      yield G.say('Ruby', 'Fairy stones! I have TWO. My grandma says they\'re lucky.');
+      yield G.say('Ruby', 'I\'ve never been anywhere but here and my house. Give me a rock from somewhere I\'ve never been, and you can have one.');
+      yield G.say('Nate', 'That\'s... everywhere.');
+      yield G.say('Ruby', 'EXACTLY. And not one I already have. It\'s for the empty cup.');
+    }
+    const owned = G.ROCKS.filter((r) => !RUBY_HAS.includes(r.id) && (s.rocks[r.id] || 0) > 0);
+    if (!owned.length) {
+      yield G.say('Nate', 'I don\'t have anything on me she doesn\'t already have. ...A geologist with no rocks.');
+      yield G.say('Ruby', 'That\'s okay. I\'m not going anywhere.');
+      yield G.say(null, 'Ruby knocks on her cast. (Any rock she doesn\'t have will do: from Lafayette, the fair, home, the mines, the Bay...)');
+      return;
+    }
+    const c0 = yield G.ask('Ruby', 'Trade me a rock for a fairy stone?', ['Pick a rock', 'Not yet']);
+    if (c0 !== 0) { yield G.say('Ruby', 'I\'ll be right here. Obviously.'); return; }
+    // pick one (by rarity first, when there are lots: like the jaw crusher)
+    let pick = owned;
+    if (owned.length > 7) {
+      const tiers = [...new Set(owned.map((r) => r.r))].sort();
+      const t = yield G.ask('Nate', 'Which rocks?', tiers.map((r) => RARITY[r].name).concat('Never mind'));
+      if (t >= tiers.length) return;
+      pick = owned.filter((r) => r.r === tiers[t]);
+    }
+    const i = yield* pickFrom('Nate', 'Give Ruby which one?', pick.map((r) => r.name + ' x' + G.sayable(s.rocks[r.id])));
+    if (i < 0) return;
+    const rock = pick[i];
+    // the precious ones, he has to think about
+    if (rock.r >= 3 && s.rocks[rock.id] === 1) {
+      yield G.say('Nate', rock.id === 'megalodon' ? '...It\'s my only megalodon tooth.' : rock.id === 'cannonball' ? '...It belongs in a museum.' : '...It\'s my only one.');
+      const c = yield G.ask('Nate', 'Give it to her anyway?', ['Give it to her', 'Keep it']);
+      if (c !== 0) return;
+      if (rock.id === 'cannonball') yield G.say('Nate', '...She\'d make a pretty good museum.');
+    }
+    s.rocks[rock.id]--;
+    f.rubyTraded = rock.id;
+    yield G.say(null, 'Nate gives Ruby his ' + rock.name + '.');
+    yield G.say('Ruby', RUBY_WOW[rock.area] || 'From somewhere I\'ve NEVER been!');
+    yield G.say(null, 'Ruby tucks it into the empty cup. For the first time ever, the carton is full.');
+    yield G.say('Ruby', 'A deal\'s a deal.');
+    yield* S.rockGive('fairystone');
+  };
+  S.rubyHeart = function* () {
+    const f = flags(), s = G.state;
+    if (f.rubyHeart) return;
+    yield G.say('Ruby', 'Rock doctor? Can I ask you something?');
+    yield G.say('Ruby', 'Everybody in the whole hospital was asleep standing up today. The nurses said a bad egg did it.');
+    yield G.say('Nate', '...Father Eggmas.');
+    yield G.say('Ruby', 'Are you going to go get him?');
+    yield G.say('Nate', 'Yeah. We are.');
+    yield G.say(null, 'Ruby digs around under her pillow and holds out a smooth, pinkish-gray stone shaped like a heart, with a white stripe all the way around it.');
+    yield G.say('Ruby', 'My heart rock. My grandma found it at the beach. If the stripe goes ALL the way around, it\'s a wishing rock.');
+    yield G.say('Ruby', 'I already used my wish. I wished my leg would get better. ...It\'s getting better.');
+    yield G.say('Ruby', 'You take it. For being brave.');
+    s.maxHp += 2; s.hp = s.maxHp;
+    f.rubyHeart = true;
+    G.audio.sfx('heart');
+    yield G.itemGet(G.spr.heartRock, 'You got Ruby\'s heart rock! It\'s a {r}Heart Container{/}! Max hearts +1.');
+    yield G.say('Nate', 'Thank you, Ruby.');
+    yield G.say('Ruby', 'Bring it back, okay? After.');
+    yield G.say(null, 'On his way out, Nate signs her cast: a little rock hammer, and GET WELL SOON. -THE ROCK DOCTOR.');
+  };
+
+  // ---------------------------------------------------------------- the roof
+  // Hannah takes everyone up to the helipad. Out past the city, toward Chesapeake, the sky is
+  // glowing purple over the Number One Ditch, and it's snowing over just that one spot. Mom and
+  // Dad see it on the news, and the family decides: they go together.
+  const ROOF_SPOT = { doron: 7.2, lily: 9.2, hannah: 13.4, abe: 15.4 };   // along the ledge (Nate at 11.3)
+  const ROOF_GLOW = { x: 13.6 * 16, y: 76 };                              // the glow, on the horizon
+  const ROOF_PAD = { x: 10.5 * 16, y: 12 * 16 };                          // the middle of the helipad
+  // someone steps out of the elevator after a moment, then walks a path
+  const stepOut = (n, delay, pts) => n && ({
+    start() { this.t = 0; this.i = 0; this.cmd = null; },
+    update() {
+      if (this.t++ < delay) return false;
+      n.hidden = false;
+      if (!this.cmd) {
+        if (this.i >= pts.length) return true;
+        this.cmd = G.walkTo(n, pts[this.i][0], pts[this.i][1], 1.5); this.cmd.start(); this.i++;
+      }
+      if (this.cmd.update()) this.cmd = null;
+      return false;
+    },
+  });
+  // a slow camera pan, from one point to another
+  const panTo = (x0, y0, x1, y1, n) => ({
+    start() { this.t = 0; },
+    update() { const k = Math.min(1, ++this.t / n), e = k * k * (3 - 2 * k); G.play.camFocus = { x: x0 + (x1 - x0) * e, y: y0 + (y1 - y0) * e }; return this.t >= n; },
+  });
+  S.roofEnter = function* () {
+    if (!flags().roofSeen) yield* S.roofScene();
+  };
+  S.roofScene = function* () {
+    const f = flags(), w = G.play.world, p = P(), fam = w.roofFam, here = (id) => !!fam[id];
+    G.audio.sfx('bell');
+    yield G.wait(30);
+    // everybody steps out of the elevator behind Nate, Hannah first
+    yield G.walkTo(p, 3 * 16 + 4, 12 * 16 + 6, 1.2);
+    const door = [2 * 16 + 8, 11 * 16 + 10];
+    yield G.together(
+      stepOut(fam.hannah, 0, [door, [5.4 * 16, 12 * 16]]),
+      stepOut(fam.abe, 26, [door, [4.4 * 16, 13.6 * 16]]),
+      stepOut(fam.lily, 50, [door, [6.2 * 16, 13.4 * 16]]),
+      stepOut(fam.doron, 74, [door, [7.2 * 16, 12.6 * 16]]),
+    );
+    p.dir = 'right';
+    yield G.wait(20);
+    if (here('hannah')) yield G.say('Hannah', 'This is where I come on my breaks. When it\'s been a long night.');
+    if (here('doron')) {
+      yield G.say('Doron', 'There\'s a HELIPAD up here?');
+      if (here('hannah')) yield G.say('Hannah', 'The helicopter brings us babies from all over. Tiny ones. They\'re so brave.');
+    }
+    if (here('lily')) yield G.say('Lily', 'It\'s so quiet up here.');
+    if (here('hannah')) yield G.say('Hannah', 'Come here. All of you. Look.');
+    // everyone goes over to the ledge
+    const y = 8 * 16 + 12;
+    yield G.together(G.walkTo(p, 11.3 * 16, y, 1.2), ...Object.keys(fam).map((id) => G.walkTo(fam[id], ROOF_SPOT[id] * 16, y, 1.2)));
+    p.dir = 'up';
+    for (const n of Object.values(fam)) n.dir = 'up';
+    yield G.wait(20);
+    // the view (the camera keeps the family along the bottom, above the text)
+    yield panTo(p.x, p.y - 12, p.x + 8, 110, 150);
+    yield G.wait(40);
+    yield G.say(null, 'The whole city is lit up below them. The river. The bridge. Downtown.');
+    yield G.say(null, 'And way out past all of it, toward Chesapeake...');
+    yield panTo(p.x + 8, 110, ROOF_GLOW.x - 12, 104, 80);
+    yield G.wait(40);
+    yield G.say(null, '...the sky is glowing purple.');
+    if (here('lily')) yield G.say('Lily', 'Nate. What IS that?');
+    if (here('abe')) yield G.say('Abe', 'That\'s south. That\'s right about where... the Number One Ditch is.');
+    if (here('doron')) yield G.say('Doron', 'Is it SNOWING over there?');
+    if (here('hannah')) yield G.say('Hannah', 'Only there. Look. Not one flake anywhere else.');
+    yield G.wait(70);
+    yield G.say(null, 'On the wind, very faint:');
+    G.audio.sfx('hohoho');
+    yield G.wait(50);
+    yield G.say(null, 'ho... ho... ho...');
+    if (here('lily')) yield G.say('Lily', 'I don\'t like it.');
+    yield G.say('Nate', 'He\'s waiting for us.');
+    yield G.wait(30);
+    if (here('hannah')) {
+      yield G.say('Hannah', 'When a baby\'s having a hard night, I come up here and look at all the lights.');
+      yield G.say('Hannah', 'And I think: every one of those lights is somebody\'s family.');
+      if (here('abe')) yield G.say('Abe', '...And he wants ours.');
+    }
+    yield G.wait(30);
+    // Mom and Dad saw it on the news
+    G.audio.sfx('buzz');
+    yield G.say(null, 'Nate\'s phone buzzes. And buzzes.');
+    yield G.say(null, '{c}~ FAMILY GROUP CHAT ~{/}');
+    yield G.text('Michelle', 'Are you kids seeing this?? It\'s on the NEWS.');
+    yield G.text('Michelle', 'A purple light over Chesapeake. And SNOW. In one spot. The weatherman is just staring at it.');
+    yield G.text('Dad', 'It\'s him.');
+    yield G.text('Dad', 'Your mother and I are getting in the car.');
+    yield G.text('Michelle', 'We are IN the car. Your father is driving. Pray for us.');
+    yield G.text('Dad', 'Nobody goes to that ditch alone. Not this time.');
+    yield G.text('Dad', 'We go together. All of us.');
+    yield G.camFocus(p.x + 8, 110, 30);
+    yield G.wait(20);
+    yield G.say('Nate', '...You heard Dad.');
+    for (const [id, line] of [['doron', 'Together.'], ['lily', 'Together.'], ['abe', 'Together.'], ['hannah', 'Together. ...And everybody gets a checkup first.']]) {
+      if (!here(id)) continue;
+      fam[id].dir = id === 'doron' || id === 'lily' ? 'right' : 'left';
+      yield G.say(G.PARTY_INFO[id].name, line);
+    }
+    yield G.text('Nate', 'together');
+    yield G.text('Michelle', 'Together. And wear a HELMET.');
+    G.audio.play('title');
+    yield G.camFocus(ROOF_GLOW.x - 12, 104, 50);
+    for (const n of Object.values(fam)) n.dir = 'up';
+    p.dir = 'up';
+    yield G.wait(40);
+    f.roofSeen = true;
+    yield G.banner('TOGETHER', 'the Number One Ditch is waiting', 200);
+    yield G.camFocus(null, null, 30);
+    G.play.autosave();
+  };
+  // up on the roof, after: everybody's at the ledge, still looking
+  S.roofTalk = (id) => function* () {
+    const f = flags();
+    if (id === 'hannah') { yield* S.hannahCheckup(); return; }
+    const k = 'roof_' + id;
+    f[k] = ((f[k] || 0) + 1) % 2;
+    yield G.say(G.PARTY_INFO[id].name, {
+      doron: ['I\'ve been in the Army. I\'ve seen weird weather. I have never seen weather THAT specific.', 'When Mom and Dad get here, we roll out. Leg day can wait. ...Leg day can WAIT.'],
+      lily: ['It\'s pretty. I hate that it\'s pretty.', 'Mom just texted me separately. Just a heart. ...She\'s scared too.'],
+      abe: ['You can see the whole river from up here. And our condo. ...And the Ditch.', 'Romulus is going to be SO mad we left him home for this.'],
+    }[id][f[k]]);
+  };
+
+  // the view off the edge of the roof (painted over the sky tiles): the night sky and a thin
+  // moon, the far shore with the purple glow over the Ditch (and a low cloud snowing on just
+  // that one spot), the river with the glow in it, the bridge, downtown, and the treetops and
+  // streetlights right below
+  function roofView(w) {
+    const SKY = ['#05051a', '#06061c', '#08081f', '#0a0a24', '#0d0c29', '#110f2e', '#161334', '#1b173a'];
+    // [x, width, height] (downtown is tall on the left; it's low out toward the glow)
+    const TOWERS = [[4, 14, 46], [20, 10, 34], [32, 18, 60], [52, 12, 44], [66, 20, 68], [88, 14, 52], [104, 10, 36], [116, 16, 56], [134, 12, 42], [148, 18, 48],
+      [170, 14, 26], [186, 10, 16], [198, 16, 12], [216, 12, 10], [230, 18, 14], [250, 14, 24], [266, 18, 40], [286, 12, 34], [300, 18, 50]];
+    return {
+      img: null, x: 0, y: 0, flat: true, base: -2,
+      draw(ctx, cx, cy) {
+        const t = G.tick, gx = ROOF_GLOW.x, gy = ROOF_GLOW.y, W = w.pw;
+        const R = (x, yy, ww, hh, c) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x) - cx, Math.round(yy) - cy, ww, hh); };
+        // the sky, the stars (a few twinkle), and a thin moon
+        for (let i = 0; i < SKY.length; i++) R(0, i * 9, W, 9, SKY[i]);
+        R(0, 72, W, 40, '#1b173a');
+        for (let i = 0; i < 70; i++) {
+          if ((t + i * 53) % 260 < 5) continue;
+          R(G.hash(i, 1, 301) * W, G.hash(i, 2, 301) * 62, 1, 1, G.hash(i, 3, 301) < 0.25 ? '#f8f8ff' : '#7a78a8');
+        }
+        for (let yy = -5; yy <= 5; yy++) for (let xx = -5; xx <= 5; xx++) if (xx * xx + yy * yy <= 25 && (xx - 3) ** 2 + (yy + 1) ** 2 > 22) R(44 + xx, 18 + yy, 1, 1, '#e8e4c8');
+        // the glow over the Ditch (it breathes)
+        const pulse = 0.82 + Math.sin(t * 0.025) * 0.18;
+        ctx.save();
+        const g = ctx.createRadialGradient(gx - cx, gy - cy, 1, gx - cx, gy - cy, 66);
+        g.addColorStop(0, 'rgba(248,200,255,' + Math.min(1, pulse).toFixed(3) + ')');
+        g.addColorStop(0.22, 'rgba(184,100,244,' + (0.6 * pulse).toFixed(3) + ')');
+        g.addColorStop(1, 'rgba(70,20,130,0)');
+        ctx.fillStyle = g; ctx.fillRect(gx - 66 - cx, gy - 66 - cy, 132, 72);
+        ctx.restore();
+        // a faint pillar of light up from the Ditch to a low cloud, lit purple from underneath,
+        // that snows on just that one spot
+        const CY = 38;
+        ctx.save();
+        ctx.globalAlpha = 0.1 + pulse * 0.06; ctx.fillStyle = '#c890ff'; ctx.fillRect(gx - 14 - cx, CY - cy, 28, gy - CY);
+        ctx.globalAlpha = 0.08; ctx.fillRect(gx - 24 - cx, CY + 4 - cy, 48, gy - CY - 4);
+        ctx.restore();
+        for (let yy = -5; yy <= 5; yy++) {
+          const half = Math.round(Math.sqrt(1 - (yy / 5.5) ** 2) * 30);
+          R(gx - half + Math.round(Math.sin(t * 0.01 + yy) * 1.5), CY + yy, half * 2, 1, yy >= 3 ? (pulse > 0.9 ? '#7a50b0' : '#6a449c') : yy >= 1 ? '#3e2c66' : '#241c3e');
+        }
+        for (let i = 0; i < 60; i++) {
+          const sp = 0.1 + G.hash(i, 5, 301) * 0.12, yy = CY + 5 + (G.hash(i, 6, 301) * 60 + t * sp) % (gy - CY - 5);
+          const x = gx + (G.hash(i, 4, 301) * 2 - 1) * 24 + Math.sin((t + i * 40) * 0.03) * 2;
+          ctx.globalAlpha = Math.min(1, (yy - CY - 5) / 6);
+          R(x, yy, i % 7 ? 1 : 2, i % 7 ? 1 : 2, i % 3 ? '#ece4ff' : '#ffffff');
+        }
+        ctx.globalAlpha = 1;
+        // the far shore (Chesapeake): flat and dark, a few lights
+        R(0, gy, W, 5, '#0e0c1e');
+        for (let i = 0; i < 26; i++) R(G.hash(i, 7, 301) * W, gy + 1 + Math.floor(G.hash(i, 8, 301) * 3), 1, 1, G.hash(i, 9, 301) < 0.5 ? '#c8a868' : '#a8a8c8');
+        // the river, with the glow in it, and the bridge across it
+        R(0, gy + 5, W, 13, '#10183a');
+        for (let k = 0; k < 6; k++) {
+          const ww = 18 - k * 2 + Math.round(Math.sin(t * 0.05 + k) * 2);
+          R(gx - ww / 2 + Math.sin(t * 0.04 + k * 2) * 2, gy + 6 + k * 2, ww, 1, k < 3 ? '#9a68d8' : '#5a3a98');
+        }
+        for (let i = 0; i < 18; i++) {
+          const x = G.hash(i, 10, 301) * W;
+          if (Math.abs(x - gx) < 16) continue;
+          R(x, gy + 8 + Math.floor(G.hash(i, 11, 301) * 8), 2 + (((t >> 4) + i) % 2), 1, '#5a5a48');
+        }
+        R(0, gy + 13, W, 1, '#2a2a44');
+        for (let x = 3; x < W; x += 9) R(x, gy + 12, 1, 1, '#f8e8b0');
+        // downtown
+        for (const [x, tw, th] of TOWERS) {
+          const top = 108 - th;
+          R(x, top, tw, th, '#141228'); R(x, top, 1, th, '#1e1a38');
+          for (let wy = top + 3; wy < 104; wy += 3) for (let wx = x + 2; wx < x + tw - 1; wx += 3) {
+            const h = G.hash(wx, wy, 303);
+            if (h < 0.34) R(wx, wy, 1, 1, h < 0.08 ? '#a8c0f0' : '#f0c870');
+          }
+          if (th > 44) R(x + (tw >> 1), top - 1, 1, 1, ((t >> 5) + x) % 2 ? '#f83838' : '#5a1818');
+        }
+        // the treetops and streetlights right below the hospital
+        R(0, 104, W, 8, '#070a10');
+        for (let i = 0; i < 44; i++) {
+          const x = i * 7.5 + G.hash(i, 12, 301) * 5, r = 2 + Math.floor(G.hash(i, 13, 301) * 3);
+          R(x - r, 104 - r + 1, r * 2, r, '#0a1014');
+        }
+        for (let x = 5; x < W; x += 21) { R(x, 107, 1, 1, '#f8b858'); R(x - 1, 108, 3, 1, '#3a2a18'); }
+      },
+    };
+  }
+
+  // Ruby's room (behind the green door on the ward): her bed by the window, her cast, her egg
+  // carton of rocks, get-well balloons, and a whiteboard with her dinosaur on it
+  G.MAPS.chkdRoom = {
+    name: 'CHKD: Ruby\'s Room',
+    get music() { return 'house'; },
+    tiles() {
+      const W = 12, H = 9;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 10, 2, CW); fill(1, 3, 10, 5, CF);
+      g[8][5] = 'x';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      F.hang(sp.kidWhiteboard, 1, 2, 2, look('Ruby\'s whiteboard: her name, and a green dinosaur. This morning it had spiral eyes. Somebody fixed them.'), 7);
+      F.hang(sp.roomWindow, 6, 2, 3, look('The window. It\'s dark out. Down there, the whole city is waking up from a very long nap.'), 8);
+      F.hang(sp.wallTV, 10, 2, 1, look('Cartoons. A dog and a cat are arguing about a sandwich.'), 14);
+      F.stand(sp.rockBooksStand, 3, 3, 1, look('A stack of rock books ("ROCKS!", "My First Rock Book", "ROCKS 2"), and a magnifying glass.'));
+      F.stand(sp.ivPole, 6, 3, 1, look('An IV pole. Ruby stuck a googly eye on it. Its name is Steve.'));
+      F.stand(sp.recliner, 9, 4, 1, look('A chair that folds out into a bed, for Ruby\'s mom. A blanket, a phone charger, a half-eaten granola bar.'));
+      F.stand(sp.getWellBalloons, 10, 4, 1, look('Get-well balloons. The heart one is losing a little air.'));
+      // the bed: the frame, then Ruby sitting up in it, then the blanket over her legs
+      w.blockTiles(4, 3, 2, 3);
+      w.props.push({
+        img: null, x: 4 * 16, y: 6 * 16 - 54, base: 6 * 16 - 1, hit: [4 * 16, 3 * 16, 6 * 16, 6 * 16], talk: () => S.ruby(),
+        draw(ctx, cx, cy) {
+          const x = this.x - cx, y = this.y - cy, kid = G.sprites.rockKid;
+          ctx.drawImage(G.spr.bedBack, x, y);
+          ctx.drawImage(kid.down[0], x + 8, y + 27 - kid.h);
+          ctx.drawImage(G.spr.bedFront, x, y);
+        },
+      });
+      w.addWarp(5, 8, 1, 1, 'chkdWard', 11, 3, 'down');
+    },
+  };
+
+  // The roof, at night: the helipad, the little penthouse over the elevator, an air handler, a
+  // windsock, and the ledge all the way around. Off the top edge: the view (above).
+  const RD = 'ä', RS = 'ö', RL = 'ë';
+  G.MAPS.chkdRoof = {
+    name: 'CHKD: the Roof',
+    // (the whole family's up here in person)
+    noFollower: true,
+    music: 'roof',
+    tiles() {
+      const W = 20, H = 17;
+      const g = Array.from({ length: H }, () => Array(W).fill(RL));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(0, 0, W, 7, RS);
+      fill(1, 8, W - 2, 8, RD);
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr, f = flags();
+      w.props.push(roofView(w));
+      // the camera leans up near the ledge, to take in the view
+      w.camLean = (p) => G.clamp(70 - (p.y - 8 * 16) * 0.7, 0, 64);
+      w.props.push({ img: sp.helipad, x: ROOF_PAD.x - 44, y: ROOF_PAD.y - 44, flat: true, base: 0 });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [ROOF_PAD.x - 20, ROOF_PAD.y - 20, ROOF_PAD.x + 20, ROOF_PAD.y + 20], talk: look('The helipad. The helicopter brings babies here from all over. Tonight it\'s just the family, and the wind.') });
+      // the penthouse over the elevator (the door works the elevator)
+      w.addProp({ img: sp.roofAccess, tx: 1, ty: 8, h: 3 });
+      w.blockTiles(1, 9, 3, 2);
+      w.block[10 * w.w + 2] = 0;
+      w.addTrigger(2, 10, 1, 1, () => G.script.run(S.roofElevator()));
+      // the air handler (its fan going), the windsock, vents
+      w.props.push({
+        img: sp.hvacUnit[0], x: 15 * 16, y: 15 * 16 - 30, base: 15 * 16 - 1, hit: [15 * 16, 14 * 16, 18 * 16, 15 * 16], talk: look('A big air handler. It hums. It\'s the only sound up here besides the wind.'),
+        draw(ctx, cx, cy) { ctx.drawImage(G.spr.hvacUnit[(G.tick >> 2) % 3], this.x - cx, this.y - cy); },
+      });
+      w.blockTiles(15, 14, 3, 1);
+      w.props.push({
+        img: sp.windsock[0], x: 18 * 16 + 1, y: 9 * 16 - 36, base: 9 * 16 - 1, hit: [18 * 16, 8 * 16, 19 * 16, 9 * 16], talk: look('The windsock. The wind is blowing from the south. From the Ditch.'),
+        draw(ctx, cx, cy) { ctx.drawImage(G.spr.windsock[(G.tick >> 4) % 2], this.x - cx, this.y - cy); },
+      });
+      w.blockTiles(18, 8, 1, 1);
+      for (const [x, y] of [[5, 15], [16, 11]]) w.addProp({ img: sp.roofVent, tx: x, ty: y, dx: 3, solid: [x, y, 1, 1] });
+      // the ledge: looking out
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [16, 7 * 16, w.pw - 16, 8 * 16], talk: function* () {
+        yield G.say(null, flags().roofSeen ? 'The purple glow over the Number One Ditch. The snow is still falling, right there and nowhere else.' : 'The city, lit up for miles.');
+      } });
+      // the family, out at the ledge (or still in the elevator, before the scene)
+      const fam = w.roofFam = {}, seen = !!f.roofSeen;
+      for (const id of ['doron', 'lily', 'hannah', 'abe']) {
+        if (!G.state.party.includes(id)) continue;
+        const npc = w.add(new G.NPC({ sprite: id, name: G.PARTY_INFO[id].name, x: seen ? ROOF_SPOT[id] * 16 : 2 * 16 + 8, y: seen ? 8 * 16 + 12 : 10 * 16 + 12, dir: seen ? 'up' : 'down', talk: S.roofTalk(id) }));
+        if (!seen) npc.hidden = true;
+        fam[id] = npc;
+      }
+      // the night, and the lights: the helipad's ring (green), red beacons on the corners of the
+      // ledge, the lamp over the elevator door
+      w.props.push({
+        img: null, x: 0, y: 0, base: 99990,
+        draw(ctx, cx, cy) {
+          const t = G.tick, top = Math.max(0, 7 * 16 - cy);
+          ctx.save();
+          ctx.globalAlpha = 0.34; ctx.fillStyle = '#0a0620'; ctx.fillRect(0, top, G.W, G.H - top);
+          const glow = (x, yy, r, c, a) => { ctx.globalAlpha = a; ctx.fillStyle = c; ctx.beginPath(); ctx.arc(x - cx, yy - cy, r, 0, Math.PI * 2); ctx.fill(); };
+          for (let i = 0; i < 16; i++) {
+            const a = (i / 16) * Math.PI * 2, x = Math.round(ROOF_PAD.x + Math.cos(a) * 42), yy = Math.round(ROOF_PAD.y + Math.sin(a) * 42), on = (i + (t >> 4)) % 8 !== 0;
+            glow(x, yy, 3, '#58f878', on ? 0.22 : 0.06);
+            ctx.globalAlpha = 1; ctx.fillStyle = on ? '#b8ffc8' : '#2a5a38'; ctx.fillRect(x - cx, yy - cy, 1, 1);
+          }
+          const blink = t % 100 < 50;
+          for (const [x, yy] of [[8, 117], [w.pw - 8, 117], [8, w.ph - 11], [w.pw - 8, w.ph - 11]]) {
+            if (blink) glow(x, yy, 5, '#f83838', 0.28);
+            ctx.globalAlpha = 1; ctx.fillStyle = blink ? '#ff6a6a' : '#5a1c1c'; ctx.fillRect(x - 1 - cx, yy - 1 - cy, 2, 2);
+          }
+          glow(40, 148, 12, '#f8e8a0', 0.14);
+          glow(40, 148, 5, '#f8e8a0', 0.2);
+          ctx.restore();
+        },
+      });
+    },
+    onEnter() { return S.roofEnter(); },
+  };
+
   // ================================================================ THE FINALE: the Number One Ditch
   // (The user's design; not connected to the story yet: get here with the admin checkpoints.)
   // Father Eggmas sits on a throne of egg cartons at the culvert end of the ditch. He

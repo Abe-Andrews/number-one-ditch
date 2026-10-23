@@ -1488,6 +1488,20 @@
       for (let x = 0; x < 16; x += 3) p.vline(x + (v % 3), 2 + Math.floor(r() * 6), 15, '#4e4030');
       if (mask & 1) { p.rect(0, 0, 16, 4, '#3e7a34'); for (let x = 0; x < 16; x += 2) p.set(x, 4, '#2e6a2c'); p.set(r() * 16, 1, '#5a9a44'); }
     },
+    // ---- CHKD's roof (at night): dark membrane with gravel ballast, the concrete ledge around the
+    // edge, and the sky (the view out past the city gets painted over it)
+    roofDeck(p, r, v) {
+      p.rect(0, 0, 16, 16, '#3c404c');
+      for (let i = 0; i < 16; i++) p.set(r() * 16, r() * 16, ['#4a4e5a', '#34374a', '#565a66', '#2e3240'][Math.floor(r() * 4)]);
+      if (v % 4 === 0) p.hline(0, 15, 15, '#34384a');
+    },
+    roofSky(p) { p.rect(0, 0, 16, 16, '#0c0a20'); },
+    roofLedge(p, r, v) {
+      p.rect(0, 0, 16, 16, '#5e626c');
+      p.rect(0, 0, 16, 5, '#8a8e98'); p.hline(0, 15, 0, '#a8acb4'); p.hline(0, 15, 5, '#44484f');
+      for (let i = 0; i < 5; i++) p.set(r() * 16, 6 + r() * 9, '#52565f');
+      if (v % 2 === 0) p.vline(15, 6, 15, '#4c5058');
+    },
     // ---- CHKD: butter-yellow walls with a band of bright squares, speckled floors with colored
     // inlays, foam mats in the playroom; the NICU is calm and blue, with a border of stars
     faceChkd(p, r, v, mask) {
@@ -4299,6 +4313,13 @@
           const d = (x - ox) ** 2 + (y - oy) ** 2;
           if (d <= r * r) p.set(x, y, d <= 1.2 && x <= ox && y <= oy ? '#ffffff' : x < ox && y < oy ? '#fbf8ee' : '#e0d8c6');
         }
+        break;
+      case 'fairystone':
+        // staurolite, twinned into a little cross: two dark brown crystals crossing at right angles
+        p.rect(5, 0, 4, 12, '#6a3a2a'); p.rect(1, 4, 12, 4, '#6a3a2a');
+        p.vline(5, 0, 11, '#8a5a44'); p.hline(1, 12, 4, '#8a5a44');
+        p.vline(8, 0, 11, '#4a2418'); p.hline(1, 12, 7, '#4a2418');
+        p.set(6, 1, '#b08068'); p.set(2, 5, '#b08068'); p.set(10, 5, '#a07058'); p.set(6, 9, '#a07058');
         break;
       case 'cannonball': for (let y = 1; y < 12; y++) for (let x = 1; x < 13; x++) if ((x - 6.5) ** 2 + (y - 6.5) ** 2 <= 27) p.set(x, y, '#2a2a2e'); p.set(4, 4, '#8a8a94'); p.set(5, 3, '#6a6a74'); p.set(8, 9, '#4a3a2a'); break;
     }
@@ -7340,6 +7361,205 @@
     return p.canvas();
   }
 
+  // ---- after MECHA-BABY: Hannah's first-aid kit and the supply closets that restock it, Ruby's
+  // room on the ward (the rock kid), and the roof at night (the helipad)
+  // Hannah's first-aid kit: a red zip bag with a white cross and a handle
+  function firstAidIcon() {
+    const p = new Pix(16, 14);
+    p.rect(1, 4, 14, 10, '#c82838'); p.hline(1, 14, 4, '#e85868'); p.hline(1, 14, 13, '#8a1824'); p.vline(14, 5, 13, '#a01c2c');
+    p.hline(5, 10, 1, '#3a3a44'); p.vline(5, 1, 3, '#3a3a44'); p.vline(10, 1, 3, '#3a3a44');
+    p.hline(2, 13, 6, '#f0c830');
+    p.rect(7, 7, 2, 6, '#ffffff'); p.rect(5, 9, 6, 2, '#ffffff');
+    p.outline();
+    return p.canvas();
+  }
+  // a supply closet door (the ward and the lobby): gray, with a red cross on the sign
+  function supplyDoor() {
+    const p = new Pix(16, 28);
+    p.rect(0, 0, 16, 28, '#f4f0e8'); p.rect(2, 2, 12, 26, '#b8c0cc'); p.vline(13, 2, 27, '#9aa2ae'); p.hline(2, 13, 2, '#d8dee6');
+    p.rect(4, 5, 8, 8, '#f8f8f4'); p.rect(7, 6, 2, 6, '#d83030'); p.rect(5, 8, 6, 2, '#d83030');
+    p.set(11, 17, '#6a6a72'); p.set(11, 18, '#6a6a72');
+    p.hline(4, 11, 22, '#9aa2ae'); p.hline(4, 11, 24, '#9aa2ae');
+    return finish(p);
+  }
+  // the NICU's supply cabinet, on the wall: glass doors, shelves of gauze and little bottles
+  function supplyCabinet() {
+    const p = new Pix(16, 24);
+    p.rect(0, 0, 16, 24, '#e8ecf0'); p.hline(0, 15, 0, '#ffffff'); p.hline(0, 15, 23, '#a8b0bc');
+    p.rect(1, 2, 14, 14, '#b8d8e8'); p.vline(8, 2, 15, '#e8ecf0');
+    for (const y of [6, 11]) p.hline(1, 14, y, '#d8e4ec');
+    p.rect(2, 3, 2, 3, '#f8f8f8'); p.rect(5, 4, 2, 2, '#f0a8b8'); p.rect(9, 3, 3, 3, '#f8f8f8'); p.vline(13, 4, 5, '#68a8e8');
+    p.rect(2, 8, 3, 3, '#f8e070'); p.rect(10, 8, 4, 3, '#a8e0a8'); p.vline(6, 9, 10, '#f8f8f8');
+    p.rect(2, 13, 5, 2, '#f8f8f8'); p.rect(10, 12, 2, 3, '#e86868');
+    p.rect(5, 17, 6, 5, '#f8f8f4'); p.rect(7, 17, 2, 5, '#d83030'); p.rect(5, 18, 6, 2, '#d83030');
+    return finish(p);
+  }
+  // Ruby's window: night outside, the city lit up, the blinds halfway down
+  function roomWindow() {
+    const W = 44, H = 22, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#f4f0e8');
+    p.rect(2, 2, W - 4, H - 4, '#141a34');
+    for (const [x, h] of [[3, 6], [8, 9], [13, 5], [17, 9], [23, 7], [28, 8], [33, 5], [37, 9]]) {
+      p.rect(x, H - 2 - h, 4, h, '#283052');
+      for (let y = H - 1 - h; y < H - 3; y += 2) if (G.hash(x, y, 33) < 0.55) p.set(x + 1 + (y % 4 ? 1 : 0), y, '#f8d878');
+    }
+    for (let y = 2; y < 9; y++) p.hline(2, W - 3, y, y % 2 ? '#e8e4d8' : '#c8c4b8');
+    p.set(26, 4, '#f8f8ff');
+    p.vline(W >> 1, 9, H - 3, '#f4f0e8');
+    p.hline(1, W - 2, H - 2, '#d8d4c8');
+    return finish(p);
+  }
+  // Ruby's whiteboard: her name and a dinosaur (it had spiral eyes this morning)
+  function kidWhiteboard() {
+    const W = 32, H = 20, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#b8bcc4'); p.rect(1, 1, W - 2, H - 2, '#fbfbf8');
+    const dino = '#3a9a4a';
+    for (let x = 19; x <= 26; x++) for (let y = 10; y <= 13; y++) if (!((x === 19 || x === 26) && y === 10)) p.set(x, y, dino);
+    for (const [x, y] of [[18, 10], [17, 9], [17, 8], [16, 7], [15, 7], [16, 6], [15, 6], [14, 7], [27, 12], [28, 13], [29, 14], [20, 14], [20, 15], [24, 14], [24, 15]]) p.set(x, y, dino);
+    p.set(15, 6, '#1a1a1a');
+    for (const [x, y] of [[21, 9], [23, 9], [25, 10]]) p.set(x, y, '#f08a28');
+    p.hline(2, W - 3, H - 2, '#c8c8d0'); p.rect(4, H - 3, 3, 1, '#d83030'); p.rect(8, H - 3, 3, 1, '#2a6ad8');
+    const cv = finish(p);
+    G.font.draw(cv.getContext('2d'), 'RUBY', 3, 3, '#d83878');
+    return cv;
+  }
+  // the TV on the wall, a cartoon on
+  function wallTV() {
+    const p = new Pix(22, 15);
+    p.rect(0, 0, 22, 14, '#1a1a20'); p.rect(1, 1, 20, 11, '#58b8f0'); p.rect(1, 9, 20, 3, '#5ac85a');
+    p.rect(5, 4, 4, 5, '#f8e070'); p.set(6, 5, '#1a1a1a'); p.set(8, 5, '#1a1a1a'); p.rect(13, 6, 5, 3, '#f88aa8'); p.set(16, 5, '#f88aa8');
+    p.rect(17, 2, 3, 3, '#ffffff');
+    p.hline(10, 11, 14, '#3a3a44');
+    return finish(p);
+  }
+  // the hospital bed, in two layers so Ruby sits up in it: the frame and pillow behind her, and
+  // the blanket over her legs (her cast propped up on top, her egg carton of rocks in her lap)
+  function bedBack() {
+    const W = 32, H = 54, p = new Pix(W, H);
+    p.rect(2, 0, 28, 8, '#9aa8b8'); p.hline(2, 29, 0, '#c8d0dc'); p.rect(5, 2, 22, 4, '#b8c4d4');
+    p.rect(1, 8, 30, 40, '#e8ecf0'); p.vline(1, 8, 47, '#a8b0bc'); p.vline(30, 8, 47, '#a8b0bc');
+    p.rect(6, 8, 20, 9, '#ffffff'); p.hline(6, 25, 16, '#d8dce4');
+    p.rect(0, 20, 2, 16, '#8a96a8'); p.rect(30, 20, 2, 16, '#8a96a8');
+    p.rect(2, 47, 28, 4, '#9aa8b8'); p.hline(2, 29, 47, '#b8c4d4');
+    for (const x of [3, 27]) p.rect(x, 51, 2, 3, '#2a2a30');
+    return finish(p);
+  }
+  function bedFront() {
+    const W = 32, H = 54, p = new Pix(W, H);
+    p.rect(1, 26, 30, 21, '#5a8ad8'); p.hline(1, 30, 26, '#f8f8f8'); p.hline(1, 30, 27, '#8ab0f0');
+    for (const [x, y] of [[5, 41], [12, 44], [27, 31], [8, 37], [28, 42]]) { p.set(x, y, '#f8e070'); p.set(x + 1, y, '#f8e070'); }
+    // the cast, on a pillow, signed in marker
+    p.rect(16, 36, 12, 6, '#ffffff'); p.hline(16, 27, 41, '#d8dce4');
+    p.rect(19, 29, 6, 17, '#f4f4f0'); p.vline(24, 29, 45, '#d8d8d0'); p.hline(19, 24, 29, '#ffffff');
+    for (const [x, y, c] of [[20, 32, '#d83030'], [21, 32, '#d83030'], [22, 35, '#2a6ad8'], [20, 39, '#3a9a4a'], [21, 40, '#3a9a4a'], [23, 42, '#a838c8']]) p.set(x, y, c);
+    p.rect(19, 46, 6, 2, '#c88a60');
+    // the egg carton of rocks
+    p.rect(3, 29, 13, 7, '#d8ccb0'); p.hline(3, 15, 29, '#ece2c8'); p.hline(3, 15, 35, '#b8ac90');
+    const rocks = ['#8a7a6a', '#c84848', '#e8e4d8', '#5a5a64', '#d8b848', '#68a868'];
+    for (let i = 0; i < 6; i++) for (let j = 0; j < 2; j++) { if (i === 5 && j === 1) continue; const c = rocks[(i + j * 3) % 6]; p.set(4 + i * 2, 31 + j * 2, c); p.set(5 + i * 2, 31 + j * 2, shade(c, -0.25)); }
+    return finish(p);
+  }
+  function recliner() {
+    const p = new Pix(20, 22);
+    p.rect(2, 0, 16, 12, '#4a8a8a'); p.hline(3, 16, 1, '#6aaaa8');
+    p.rect(0, 8, 20, 10, '#3a7a7a'); p.rect(3, 10, 14, 6, '#5a9a98'); p.hline(3, 16, 10, '#7ababa');
+    p.rect(1, 18, 2, 4, '#3a3a40'); p.rect(17, 18, 2, 4, '#3a3a40');
+    return finish(p);
+  }
+  // get-well balloons tied to the chair: pink, blue, and a red heart
+  function getWellBalloons() {
+    const p = new Pix(22, 36);
+    const ball = (cx, cy, c) => { for (let y = -5; y <= 5; y++) for (let x = -4; x <= 4; x++) if ((x / 4.4) ** 2 + (y / 5.4) ** 2 <= 1) p.set(cx + x, cy + y, c); p.set(cx - 2, cy - 3, '#ffffff'); p.set(cx, cy + 6, c); };
+    for (const [x0, y0] of [[5, 12], [11, 9], [17, 13]]) for (let y = y0 + 6; y < 36; y++) p.set(Math.round(x0 + (11 - x0) * (y - y0 - 6) / (35 - y0 - 6)), y, '#d0d0d8');
+    ball(5, 12, '#f86888'); ball(17, 13, '#68b8f8');
+    const heart = ['.XX.XX.', 'XXXXXXX', 'XXXXXXX', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
+    heart.forEach((row, y) => { for (let x = 0; x < row.length; x++) if (row[x] === 'X') p.set(8 + x, 2 + y, '#e83848'); });
+    p.set(9, 3, '#ffffff');
+    return finish(p);
+  }
+  // Ruby's nightstand: a stack of rock books and a magnifying glass
+  function rockBooksStand() {
+    const p = new Pix(16, 24);
+    p.rect(1, 10, 14, 14, '#c8b898'); p.hline(1, 14, 10, '#e0d4b8'); p.hline(2, 13, 16, '#a89878'); p.set(8, 13, '#6a5a40'); p.set(8, 19, '#6a5a40');
+    p.rect(2, 7, 11, 3, '#2a6ad8'); p.hline(2, 12, 8, '#f8f8f8');
+    p.rect(3, 4, 10, 3, '#e8b830'); p.hline(3, 12, 5, '#a87820');
+    p.rect(2, 2, 9, 2, '#3a9a4a');
+    p.set(12, 3, '#8a6a40'); p.set(13, 2, '#8a6a40'); p.rect(13, 0, 3, 2, '#a8d8f0');
+    return finish(p);
+  }
+  // Ruby's heart rock: a heart-shaped beach pebble with a white quartz band all the way around
+  // (a wishing rock)
+  function heartRock() {
+    const rows = [
+      '..XXX...XXX..',
+      '.XXXXX.XXXXX.',
+      'XXXXXXXXXXXXX',
+      'XXXXXXXXXXXXX',
+      'XXXXXXXXXXXXX',
+      '.XXXXXXXXXXX.',
+      '..XXXXXXXXX..',
+      '...XXXXXXX...',
+      '....XXXXX....',
+      '.....XXX.....',
+      '......X......',
+    ];
+    const p = new Pix(15, 13);
+    rows.forEach((row, y) => { for (let x = 0; x < row.length; x++) if (row[x] === 'X') p.set(x + 1, y + 1, x + y < 5 ? '#d8c0c4' : x + y > 15 ? '#8a7076' : G.hash(x, y, 71) < 0.18 ? '#b8a0a4' : '#a88a90'); });
+    for (let x = 0; x < 15; x++) if (p.get(x, 6)) p.set(x, 6, '#f4ece8');
+    p.set(3, 2, '#f0e4e8'); p.set(4, 2, '#f0e4e8');
+    p.outline();
+    return p.canvas();
+  }
+  // ---- the roof
+  // the helipad: a white ring, a white square, the red cross and the H
+  function helipad() {
+    const R = 44, W = R * 2, p = new Pix(W, W);
+    for (let y = 0; y < W; y++) for (let x = 0; x < W; x++) {
+      const d = Math.hypot(x - R + 0.5, y - R + 0.5);
+      if (d <= R) p.set(x, y, d > R - 3 ? '#d8d8d0' : d > R - 5 ? '#43474f' : G.hash(x, y, 81) < 0.08 ? '#585c66' : '#4e525c');
+    }
+    p.rect(R - 22, R - 22, 44, 44, '#d8d8d0');
+    p.rect(R - 6, R - 20, 12, 40, '#b82828'); p.rect(R - 20, R - 6, 40, 12, '#b82828');
+    p.rect(R - 5, R - 5, 2, 10, '#f0f0e8'); p.rect(R + 3, R - 5, 2, 10, '#f0f0e8'); p.rect(R - 3, R - 1, 6, 2, '#f0f0e8');
+    return p.canvas();
+  }
+  // the little brick penthouse over the elevator, with a steel door and a light over it
+  function roofAccess() {
+    const W = 48, H = 46, p = new Pix(W, H);
+    p.rect(0, 0, W, 14, '#3e424e'); p.hline(0, W - 1, 0, '#5a5e6a'); p.rect(5, 3, 12, 7, '#30343e'); p.hline(5, 16, 3, '#4a4e5a');
+    for (let y = 14; y < H; y++) for (let x = 0; x < W; x++) p.set(x, y, (y - 14) % 4 === 3 || (x + ((y - 14) >> 2) * 4) % 8 === 0 ? '#4a3a36' : '#6a4e46');
+    p.hline(0, W - 1, 14, '#8a8a90');
+    p.rect(17, 22, 14, 24, '#4a525e'); p.rect(18, 23, 12, 23, '#5e6674'); p.rect(21, 26, 6, 5, '#e8d898'); p.vline(28, 34, 36, '#c8c8d0');
+    p.rect(21, 17, 6, 3, '#f8f0c0'); p.hline(21, 26, 20, '#8a8a90');
+    return finish(p);
+  }
+  // a rooftop air handler: louvers on the side and a big fan on top (two frames)
+  function hvacUnit(frame) {
+    const W = 40, H = 30, p = new Pix(W, H);
+    p.rect(0, 0, W, 16, '#6e7480'); p.hline(0, W - 1, 0, '#8a909c');
+    p.rect(0, 16, W, 14, '#5e6470'); for (let x = 3; x < W - 3; x += 3) p.vline(x, 18, 27, '#4c525e');
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const d = (x - 7.5) ** 2 + (y - 7.5) ** 2; if (d <= 49) p.set(4 + x, y + 1, d > 36 ? '#454b55' : '#22262e'); }
+    const a = frame * Math.PI / 3;
+    for (let k = 0; k < 3; k++) { const t = a + k * Math.PI * 2 / 3; for (let r = 1; r < 6; r++) p.set(Math.round(11.5 + Math.cos(t) * r), Math.round(8.5 + Math.sin(t) * r), '#7a808c'); }
+    for (let y = 3; y < 15; y += 3) p.hline(24, 37, y, '#5e6470');
+    return finish(p);
+  }
+  // the windsock, flapping (two frames)
+  function windsock(frame) {
+    const p = new Pix(24, 36);
+    p.vline(3, 2, 35, '#a8a8b0'); p.vline(4, 2, 35, '#7a7a84'); p.rect(1, 34, 6, 2, '#5a5a64');
+    for (let x = 5; x < 22; x++) {
+      const t = (x - 5) / 16, half = Math.round(3 - t * 1.6), y0 = 6 + Math.round(t * (frame ? 2 : 4) + Math.sin(x * 0.7 + frame * 2.2) * 0.8);
+      for (let y = y0 - half; y <= y0 + half; y++) p.set(x, y, Math.floor((x - 5) / 4) % 2 ? '#e8e8e0' : '#e87028');
+    }
+    return finish(p);
+  }
+  function roofVent() {
+    const p = new Pix(10, 14);
+    p.rect(3, 4, 4, 10, '#7a7e88'); p.vline(3, 4, 13, '#9a9ea8'); p.rect(1, 1, 8, 4, '#7a7e88'); p.hline(1, 8, 1, '#a8acb4'); p.rect(2, 3, 6, 2, '#22262e');
+    return finish(p);
+  }
+
   // ---- the hypnotized babies (Father Eggmas got to the whole hospital). Crawling, in a little
   // knit hospital cap, a onesie and a diaper, with spiral eyes; crying (a sound ring); and a
   // baby in a rolling bassinet. Bonking one snaps it out of it: it giggles and dozes off.
@@ -7863,7 +8083,7 @@
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
     S.vanWickle = vanWickle();
-    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl', 'megalodon', 'chesapecten']) S.rockIcons[k] = rockIcon(k);
+    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone']) S.rockIcons[k] = rockIcon(k);
     S.oreVein = [oreVein(0), oreVein(1), oreVein(2)]; S.dumpPile = dumpPile(false); S.slagPile = dumpPile(true);
     S.furnaceRuin = furnaceRuin(); S.adit = adit(); S.bat = [batFrame(true), batFrame(false)];
     S.megaphone = megaphone(); S.cavePearls = cavePearls();
@@ -7938,6 +8158,9 @@
     S.blockStack = blockStack(); S.giftShop = giftShop(); S.nurseStation = nurseStation(); S.roomDoors = ['#8ab8e8', '#f4a8c8', '#a8d8a0', '#f8d890'].map(roomDoor);
     S.ivPole = ivPole(); S.wheelchair = wheelchair(); S.crashCart = crashCart(); S.rockingHorse = rockingHorse(); S.ballPit = ballPit(); S.toyKitchen = toyKitchen(); S.blockTower = blockTower();
     S.isolettes = { blue: isolette('#8ab8e8'), pink: isolette('#f4a8c8'), mint: isolette('#a8e0c8') }; S.vitalsMonitor = vitalsMonitor(); S.glider = glider(); S.nicuDoors = nicuDoors(); S.badgeIcon = badgeIcon();
+    S.firstAidIcon = firstAidIcon(); S.supplyDoor = supplyDoor(); S.supplyCabinet = supplyCabinet(); S.heartRock = heartRock();
+    S.roomWindow = roomWindow(); S.kidWhiteboard = kidWhiteboard(); S.wallTV = wallTV(); S.bedBack = bedBack(); S.bedFront = bedFront(); S.recliner = recliner(); S.getWellBalloons = getWellBalloons(); S.rockBooksStand = rockBooksStand();
+    S.helipad = helipad(); S.roofAccess = roofAccess(); S.hvacUnit = [0, 1, 2].map(hvacUnit); S.windsock = [0, 1].map(windsock); S.roofVent = roofVent();
     S.babies = { blue: hypnoBaby(), pink: hypnoBaby({ cap: '#f4a8c8' }), tan: hypnoBaby({ cap: '#a8e0c8', skin: '#c88a60' }), brown: hypnoBaby({ cap: '#f8d890', skin: '#8a5a3a' }), badge: hypnoBaby({ badge: true }) };
     S.bassinetBaby = bassinetBaby(); S.hypnoSpiral = [0, 1].map(hypnoSpiral); S.tinyStars = [tinyStar('#f8e070'), tinyStar('#f8c8e8'), tinyStar('#a8d8f8')];
     S.mech = { right: { idle: [mechBody('idle', 1), mechBody('idle', 2)], raise: mechBody('raise'), smash: mechBody('smash') } };

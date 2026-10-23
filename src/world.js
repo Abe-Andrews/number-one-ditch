@@ -115,6 +115,10 @@
     // the Number One Ditch (the finale)
     '\u00e7': { k: 'ditchBed' },
     '\u00ea': { k: 'bankFace', solid: true, edge: true },
+    // CHKD's roof
+    '\u00e4': { k: 'roofDeck' },
+    '\u00f6': { k: 'roofSky', solid: true },
+    '\u00eb': { k: 'roofLedge', solid: true },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 

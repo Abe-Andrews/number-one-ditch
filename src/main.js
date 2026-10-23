@@ -274,6 +274,17 @@
           s.flags.ateDoosh = true;
           G.script.run((function* () { yield G.say('Nate', 'Mmm. Doosh De Luche. Delicioso.'); })());
         }
+      } else if (s.xItem === 'firstAid') {
+        // Hannah's first-aid kit: a few hearts back per use; restock it at a supply closet
+        const p = this.player, w = this.world;
+        if (!(s.items.firstAid > 0)) { G.audio.sfx('bump'); w.pop(p.x, p.y - 30, 'EMPTY! Restock at a supply closet.', '#f8f8f0'); return; }
+        if (s.hp >= s.maxHp) { G.audio.sfx('bump'); w.pop(p.x, p.y - 30, 'Your hearts are full.', '#f8f8f0'); return; }
+        if (this.healQ > 0) return;
+        s.items.firstAid--;
+        this.healQ += G.KIT_HEAL;
+        G.audio.sfx('heart');
+        w.pop(p.x, p.y - 30, 'Patched up!', '#f86868');
+        w.burst(p.x, p.y - 14, ['#f86868', '#ffffff', '#f8a8c8'], 10, { speed: 1, up: 0.8, life: 22, size: 2 });
       } else if (s.xItem === 'pipe') {
         G.pipe.start();
       } else if (s.xItem === 'bass') {
