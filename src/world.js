@@ -103,6 +103,9 @@
     '<': { k: 'mulch' },
     "'": { k: 'fairwayL', group: 'fairway' },
     '`': { k: 'fairwayD', group: 'fairway' },
+    // El Toro Loco
+    '\u00f1': { k: 'faceToro', solid: true, edge: true },
+    '\u00f3': { k: 'toroFloor' },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 

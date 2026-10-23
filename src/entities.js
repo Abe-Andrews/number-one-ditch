@@ -1500,8 +1500,11 @@
     constructor(x, y, state) {
       super(x, y);
       Object.assign(this, { state: state || 'hide', face: 1, dir: 'right', solid: true, hb: { w: 20, h: 6 }, anim: 0, t: 0, near: false });
-      this.talk = () => G.SCRIPTS.romulusTalk(this);
+      this.talk = () => (this.chase ? G.SCRIPTS.romulusFound(this) : G.SCRIPTS.romulusTalk(this));
     }
+    // outside, in the hide and seek, he's out of sight in a bush or under a car (this.hidden):
+    // checking that spot (Z) or spraying it finds him
+    box() { return this.hidden ? this.hidden.box : super.box(); }
     update(w) {
       this.t++;
       if (this.dir === 'left' || this.dir === 'right') this.face = this.dir === 'right' ? 1 : -1;
@@ -1509,6 +1512,17 @@
       const p = G.play.player, dist = Math.hypot(p.x - this.x, p.y - this.y);
       this.near = dist < 60;
       // hide and seek: get close and he bolts (and he whimpers now and then when Nate's nearby)
+      if (this.chase && this.hidden) {
+        // he whimpers now and then: up close, right from his hiding spot; further off, Nate just
+        // hears it (and bushes rustle when he's close)
+        const [hx, hy] = this.hidden.c, d = Math.hypot(p.x - hx, p.y - hy);
+        if (this.t % 150 === 0) {
+          if (d < 64) w.pop(hx, hy - 20, '*whimper*', '#c8c8d0');
+          else if (d < 140) w.pop(p.x, p.y - 36, '*a faint whimper*', '#8a8a98');
+        }
+        if (this.hidden.leafy && d < 64 && this.t % 150 === 75) w.burst(hx, hy - 8, ['#3a7a34', '#5a9a44'], 3, { speed: 0.6, up: 0.6, g: 0.08, life: 16, size: 1 });
+        return;
+      }
       if (this.chase) {
         if (dist < 34) { G.script.run(G.SCRIPTS.romulusFound(this)); return; }
         if (dist < 110 && this.t % 120 === 0) w.pop(this.x, this.y - 26, '*whimper*', '#c8c8d0');
@@ -1523,12 +1537,14 @@
     }
     // the bidet: he HATES it
     onSpray() {
+      if (this.chase) { if (!G.script.busy) G.script.run(G.SCRIPTS.romulusFound(this)); return; }
       if ((this.whineT = (this.whineT || 0) - 1) > 0) return;
       this.whineT = 60;
       G.audio.sfx('whine');
       this.world.pop(this.x, this.y - 26, '*WHINE*', '#a8d8ff');
     }
     draw(ctx, cx, cy) {
+      if (this.hidden) return;
       const S = G.spr.romulus[this.face > 0 ? 'right' : 'left'];
       const img = this.walking ? S[RUN[(this.anim >> 2) % 4]] : S[{ lie: 'lie', happy: 'happy', alert: 'stand' }[this.state] || 'scared'];
       const j = this.state === 'hide' && this.near && !this.walking ? (G.tick >> 1) & 1 : 0;

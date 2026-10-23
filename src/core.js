@@ -192,6 +192,18 @@ G.audio = (function () {
     whine: (t) => { tone(820, t, 0.22, 'triangle', 0.07, sfxBus, 1180); tone(1180, t + 0.22, 0.16, 'triangle', 0.05, sfxBus, 760); },
     spray: (t) => noise(t, 0.16, 0.1, sfxBus, 5200),
     honk: (t) => { [0, 0.28].forEach((d) => { tone(370, t + d, 0.2, 'square', 0.07); tone(466, t + d, 0.2, 'square', 0.06); }); },
+    // Romulus's sloth: a squeaky toy
+    squeak: (t) => { [0, 0.16].forEach((d) => tone(1700, t + d, 0.1, 'square', 0.05, sfxBus, 2600)); },
+    // a crowd clapping
+    clap: (t) => { for (let i = 0; i < 14; i++) noise(t + i * 0.07 + Math.random() * 0.03, 0.05, 0.22, sfxBus, 1800 + Math.random() * 1200); },
+    // the open mic at El Toro Loco: a little walking bass line (an original one)
+    bassRiff: (t) => {
+      [40, 40, 47, 45, 43, 45, 47, 52, 50, 47, 45, 47, 40].forEach((n, i) => {
+        const d = i * 0.17 + (i > 7 ? 0.08 : 0);
+        tone(N(n), t + d, 0.16, 'sawtooth', 0.12, sfxBus);
+        tone(N(n + 12), t + d, 0.06, 'triangle', 0.05, sfxBus);
+      });
+    },
   };
 
   function sfx(name) {

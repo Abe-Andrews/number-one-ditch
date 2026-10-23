@@ -443,6 +443,15 @@
       for (let x = 4; x <= 11; x += 2) p.set(x, y0 + 1, L);
       p.set(5, y0, L); p.set(8, y0, L);
       p.set(6, y0 + 3, D); p.set(9, y0 + 3, D);
+    } else if (s === 'mop') {
+      // a mop-top: a full fringe straight across, down to the eyebrows, and the sides down over
+      // the ears to the jaw (the Paul McCartney Lady)
+      top(4);
+      p.hline(4, 11, y0 + 4, H);
+      for (const x of [5, 8, 10]) p.set(x, y0 + 4, D);
+      for (let y = y0 + 3; y <= y0 + 8; y++) { p.set(2, y, D); p.set(3, y, H); p.set(12, y, H); p.set(13, y, D); }
+      p.set(3, y0 + 9, D); p.set(12, y0 + 9, D);
+      p.hline(5, 9, y0 + 1, L); p.set(6, y0, L); p.set(10, y0 + 2, L);
     } else if (s === 'cap') {
       // hair poking out under a cap
       for (let y = y0 + 3; y <= y0 + 6; y++) { p.set(3, y, H); p.set(12, y, H); }
@@ -473,6 +482,11 @@
     for (let i = 0; i < rows; i++) p.hline(HEAD[i][0], HEAD[i][1], y0 + i, i >= rows - 2 ? D : H);
     p.hline(6, 9, y0 + 1, L);
     p.set(3, y0 + 5, c.skin); p.set(12, y0 + 5, c.skin);
+    if (s === 'mop') {
+      // the mop-top covers the ears and comes down over the back of the neck
+      for (let y = y0 + 3; y <= y0 + 8; y++) { p.set(2, y, D); p.hline(3, 12, y, y > y0 + 7 ? D : H); p.set(13, y, D); }
+      p.hline(4, 11, y0 + 9, D);
+    }
     if (s === 'long' || s === 'wavy' || s === 'shoulder') {
       p.hline(5, 10, y0 + 9, H);
       const end = s === 'shoulder' ? ty + 1 : ty + 5;
@@ -635,6 +649,12 @@
       p.hline(3, 10, y0 + 3, H); p.set(10, y0 + 3, D);
       for (let y = y0 + 4; y <= y0 + 6; y++) p.hline(3, 5, y, y > y0 + 5 ? D : H);
       for (let x = 4; x <= 10; x += 2) p.set(x, y0 + 1, c.hairL);
+    } else if (s === 'mop') {
+      top(4);
+      p.hline(3, 11, y0 + 4, H); p.set(9, y0 + 4, D); p.set(11, y0 + 4, D);
+      for (let y = y0 + 5; y <= y0 + 8; y++) p.hline(3, 7, y, y > y0 + 7 ? D : H);
+      p.set(2, y0 + 5, D); p.set(2, y0 + 6, D); p.set(2, y0 + 7, D);
+      p.hline(5, 8, y0 + 1, c.hairL);
     } else if (s === 'cap') {
       for (let y = y0 + 3; y <= y0 + 6; y++) p.hline(3, 5, y, H);
       p.set(2, y0 + 5, D); p.set(6, y0 + 3, H);
@@ -1453,6 +1473,21 @@
           if (r() < 0.3) { p.set(x - 1, y - 1, skins[0]); p.set(x - 1, y, p.get(x, y + 2)); }
         }
       }
+    },
+    // ---- El Toro Loco: orange walls under dark ceiling beams, a band of talavera tile along the
+    // bottom, and terracotta saltillo tile floors
+    faceToro(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#d8703c');
+      for (let i = 0; i < 5; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#cc6634' : '#e27a46');
+      if (mask & 1) { p.rect(0, 0, 16, 3, '#2a3c44'); p.hline(0, 15, 3, '#1a262c'); }
+      if (mask & 4) {
+        p.rect(0, 11, 16, 5, '#f4ecd8'); p.hline(0, 15, 11, '#c8b898'); p.hline(0, 15, 15, '#8a7a5a');
+        for (let x = 0; x < 16; x += 4) { p.rect(x + 1, 12, 2, 2, '#2a5aa8'); p.set(x + 3, 14, '#e8b830'); p.set(x, 13, '#2a5aa8'); }
+      }
+    },
+    toroFloor(p, r, v) {
+      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) p.set(x, y, (x % 8 === 7 || y % 8 === 7) ? '#8a4a30' : G.hash(Math.floor(x / 8) + v * 2, Math.floor(y / 8), 41) < 0.3 ? '#b8603e' : '#c46c48');
+      for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#d07a54');
     },
     // ---- Abe and Hannah's condo (Chesapeake)
     // light gray walls with white trim, light LVP downstairs, carpet upstairs
@@ -5704,27 +5739,7 @@
   }
 
   // ---- the rest of Abe and Hannah's (from the user's photos)
-  // Kitchen: the white pantry hutch (glasses and a brown teapot up top, cookbooks, bowls,
-  // jars and wicker baskets, a two-door cabinet below), a runner rug, a crock of wooden spoons.
-  function pantryHutch() {
-    const W = 20, H = 46, p = new Pix(W, H);
-    p.rect(0, 0, 20, 46, WHITE); p.hline(0, 19, 0, '#ffffff'); p.vline(19, 0, 45, WHITE_D);
-    for (const [y0, y1] of [[2, 11], [13, 20], [22, 28]]) p.rect(2, y0, 16, y1 - y0, '#e8e4dc');
-    // top shelf: gold-rim glasses, the brown teapot, bowls
-    for (const x of [3, 6]) { p.vline(x + 1, 6, 10, '#d8e4ec'); p.hline(x, x + 2, 5, '#d8b050'); p.hline(x, x + 2, 10, '#d8e4ec'); }
-    p.rect(9, 6, 5, 5, '#6a3420'); p.set(10, 7, '#9a5a38'); p.set(14, 8, '#6a3420'); p.set(11, 5, '#6a3420');
-    p.rect(15, 7, 3, 4, '#2a4a7a'); p.hline(15, 17, 9, '#e8f0f4');
-    // middle: cookbooks, jars, a wicker basket, wooden bowls
-    for (const [x, c] of [[3, '#f4f0e6'], [4, '#3a5a3a'], [5, '#f4f0e6'], [6, '#8aaa7a']]) p.vline(x, 14, 19, c);
-    p.rect(8, 15, 3, 5, '#d8d0c0'); p.hline(8, 10, 15, '#8a6a4a');
-    p.rect(12, 16, 6, 4, '#c8a068'); p.hline(12, 17, 16, '#a88048'); p.set(14, 18, '#a88048');
-    p.rect(3, 23, 4, 5, '#e8e4dc'); p.rect(3, 24, 4, 4, '#f4f0e6'); p.rect(8, 23, 4, 5, '#e0d8c8');
-    p.rect(13, 24, 5, 4, '#c8a068'); p.hline(13, 17, 24, '#a88048');
-    // the cabinet below
-    p.hline(0, 19, 29, WHITE_D); p.rect(2, 31, 7, 13, '#f0eee8'); p.rect(11, 31, 7, 13, '#f0eee8');
-    p.vline(10, 31, 43, WHITE_D); p.set(8, 37, '#2a2a30'); p.set(12, 37, '#2a2a30');
-    return finish(p);
-  }
+  // Kitchen: a runner rug and a crock of wooden spoons.
   function kitchenRunner() {
     const W = 66, H = 22, p = new Pix(W, H);
     p.rect(0, 0, W, H, '#e8e2d2');
@@ -6531,6 +6546,342 @@
     return finish(p);
   }
 
+  // ================================================================ EL TORO LOCO (from the user's photos)
+  // Down the main road from Abe and Hannah's. Outside: a low brick building with a dark green
+  // band along the roofline, a cream "Restaurante Mexicano" sign on it, a green awning over the
+  // door, a green fabric awning over the window on the right, and the tall white sign out by the
+  // road with the charging bull. Inside: red vinyl booths, dark wood tables with black chairs,
+  // little Mexican flags strung everywhere, frosted glass lamps, a desert mural, a soccer ball,
+  // beer signs, a metal sun, and a pillar hung with garlic.
+  function toroFront() {
+    const W = 256, H = 80, p = new Pix(W, H);
+    // the flat roof, seen from above (tar and gravel), with an AC unit and a vent
+    for (let y = 0; y < 22; y++) for (let x = 0; x < W; x++) p.set(x, y, G.hash(x, y, 31) < 0.12 ? '#5a524a' : G.hash(x, y, 32) < 0.08 ? '#3a342e' : '#4a433c');
+    p.hline(0, W - 1, 0, '#6a625a'); p.hline(0, W - 1, 1, '#5e564e');
+    p.rect(180, 4, 22, 13, '#8a8e94'); p.rect(181, 5, 20, 11, '#b8bcc2'); for (let x = 183; x < 200; x += 3) p.vline(x, 6, 14, '#8a8e94');
+    p.rect(40, 8, 8, 6, '#7a7e84'); p.hline(40, 47, 8, '#9a9ea4');
+    // the dark green band along the roofline
+    p.rect(0, 22, W, 12, '#1e5a36'); p.hline(0, W - 1, 22, '#3a8a5a'); p.hline(0, W - 1, 23, '#2a7046'); p.hline(0, W - 1, 33, '#0e3420');
+    for (let x = 8; x < W; x += 16) p.vline(x, 24, 32, '#185030');
+    // brick walls
+    for (let y = 34; y < H; y++) {
+      const row = Math.floor((y - 34) / 4), off = row % 2 ? 4 : 0;
+      for (let x = 0; x < W; x++) p.set(x, y, (y - 34) % 4 === 3 || (x + off) % 8 === 0 ? '#a8786a' : G.hash(Math.floor((x + off) / 8), row, 33) < 0.3 ? '#7a3226' : '#8e3c2c');
+    }
+    // dark tinted windows with a glare and a sill
+    const win = (x0, y0, w, h) => {
+      p.rect(x0 - 1, y0 - 1, w + 2, h + 2, '#1a1a1e');
+      p.rect(x0, y0, w, h, '#22323a');
+      for (let i = 0; i < h; i++) { if (3 + i < w) p.set(x0 + 3 + i, y0 + i, '#4a6470'); if (7 + i < w) p.set(x0 + 7 + i, y0 + i, '#3a5460'); }
+      p.hline(x0 - 1, x0 + w, y0 + h + 1, '#c8b8a8');
+    };
+    for (const x0 of [12, 40, 132, 160]) win(x0, 48, 20, 22);
+    // the front door: glass double doors under a little green awning
+    p.rect(78, 44, 36, 36, '#6a2a20');
+    p.rect(80, 52, 32, 28, '#1a1a1e'); p.rect(82, 54, 13, 26, '#2a3a42'); p.rect(97, 54, 13, 26, '#2a3a42');
+    p.set(93, 67, '#c8c8d0'); p.set(99, 67, '#c8c8d0');
+    for (let i = 0; i < 10; i++) { p.set(84 + i, 56 + i * 2, '#4a6470'); p.set(99 + i, 56 + i * 2, '#4a6470'); }
+    for (let y = 42; y < 51; y++) for (let x = 74; x < 118; x++) p.set(x, y, (x - 74) % 6 < 3 ? '#2a7a46' : '#22663a');
+    p.hline(74, 117, 42, '#3a9a5a'); for (let x = 74; x < 118; x += 3) p.set(x, 51, '#1a5030');
+    // the green fabric awning over the window on the right
+    for (let y = 37; y < 47; y++) { const k = Math.round((y - 37) * 0.4); for (let x = 154 - k; x < 186 + k; x++) p.set(x, y, (x - 148) % 8 < 4 ? '#2e8a4e' : '#267a42'); }
+    p.hline(150, 189, 46, '#1a5030'); p.hline(154, 185, 37, '#4aa86a');
+    // the cantina's side door, at the far right
+    p.rect(216, 50, 18, 30, '#1a1a1e'); p.rect(218, 52, 14, 28, '#3a2a22'); p.set(229, 67, '#c8c8d0');
+    for (let y = 43; y < 49; y++) for (let x = 212; x < 238; x++) p.set(x, y, (x - 212) % 6 < 3 ? '#2a7a46' : '#22663a');
+    // the cream sign on the green band: RESTAURANTE MEXICANO, in red
+    const t = 'RESTAURANTE MEXICANO', tw = G.font.width(t), sx = 96 - Math.round(tw / 2) - 4;
+    p.rect(sx, 24, tw + 8, 9, '#f2ead6'); p.hline(sx, sx + tw + 7, 24, '#ffffff'); p.hline(sx, sx + tw + 7, 32, '#c8bca0');
+    p.outline();
+    const cv = p.canvas();
+    G.font.draw(cv.getContext('2d'), t, sx + 4, 25, '#c02828');
+    return cv;
+  }
+
+  // the tall white sign out by the road: EL TORO LOCO in red over the charging bull,
+  // "Restaurante Mexicano" in green, "and CANTINA" in red, on a teal base (the street number
+  // on the base is left off)
+  function toroSign() {
+    const W = 78, H = 100, PH = 72, p = new Pix(W, H);
+    p.rect(21, PH, 36, H - PH, '#2a8a8a'); p.vline(21, PH, H - 1, '#4ab0b0'); p.vline(56, PH, H - 1, '#1a6060'); p.hline(21, 56, PH, '#5ac0c0');
+    p.hline(25, 52, PH + 8, '#1e7272');
+    p.rect(0, 0, W, PH, '#5a6a70'); p.rect(2, 2, W - 4, PH - 4, '#f8f8f4'); p.hline(2, W - 3, 2, '#ffffff');
+    // the bull, charging down and to the right, with a yellow rope around his neck and a dust cloud
+    const bx = 20, by = 16;
+    for (const [cx, cy, r] of [[bx + 3, by + 23, 4], [bx + 11, by + 24, 4], [bx + 22, by + 24, 3], [bx + 31, by + 23, 4]]) {
+      for (let y = -r; y <= r; y++) for (let x = -r - 1; x <= r + 1; x++) if ((x / (r + 1)) ** 2 + (y / r) ** 2 <= 1) p.set(cx + x, cy + y, y < 0 ? '#ffffff' : '#d8d8dc');
+    }
+    for (let y = 0; y < 16; y++) for (let x = 0; x < 26; x++) {
+      const e = ((x - 12) / 13) ** 2 + ((y - 8) / 8) ** 2;
+      if (e <= 1) p.set(bx + x, by + y, y < 4 && x > 8 ? '#a0602e' : e > 0.75 ? '#5a3214' : '#7a4420');
+    }
+    for (const lx of [3, 7, 16, 20]) { p.rect(bx + lx, by + 14, 2, 7, '#5a3214'); p.hline(bx + lx, bx + lx + 1, by + 21, '#2a1608'); }
+    p.rect(bx + 23, by + 8, 9, 8, '#6a3a18'); p.rect(bx + 26, by + 14, 7, 5, '#5a3214');
+    p.set(bx + 31, by + 17, '#2a1608'); p.set(bx + 28, by + 11, '#ffffff'); p.set(bx + 29, by + 11, '#1a1a1a');
+    p.hline(bx + 30, bx + 34, by + 8, '#f4f0e0'); p.set(bx + 35, by + 7, '#f4f0e0'); p.set(bx + 36, by + 6, '#d8d0b8');
+    p.hline(bx + 21, bx + 24, by + 7, '#f4f0e0'); p.set(bx + 20, by + 6, '#d8d0b8');
+    for (let y = 1; y < 14; y++) p.set(bx + 21 + (y % 2), by + y, y % 2 ? '#f0d040' : '#c8a020');
+    p.vline(bx + 1, by - 3, by + 4, '#5a3214'); p.hline(bx, bx + 2, by - 4, '#2a1608');
+    p.outline();
+    const cv = p.canvas(), x = cv.getContext('2d');
+    const line = (s, y, c, sh) => G.font.draw(x, s, Math.round((W - G.font.width(s)) / 2), y, c, { shadow: sh });
+    line('EL TORO LOCO', 5, '#d82828', '#7a1010');
+    line('Restaurante', 41, '#2e8a2e', '#a8d850');
+    line('Mexicano', 51, '#2e8a2e', '#a8d850');
+    line('and CANTINA', 61, '#d82828');
+    return cv;
+  }
+
+  // ---- inside
+  // a booth, seen from the front: the tall red vinyl back against the wall (and the seat)...
+  function boothBack() {
+    const W = 32, H = 24, p = new Pix(W, H);
+    p.rect(0, 0, W, 4, '#4a2a18'); p.hline(0, W - 1, 0, '#6a4228');
+    p.rect(1, 4, W - 2, 14, '#b81e24'); p.hline(1, W - 2, 4, '#e04048');
+    for (let x = 4; x < W - 2; x += 6) p.vline(x, 5, 17, '#8a1418');
+    p.rect(1, 18, W - 2, 6, '#d02a30'); p.hline(1, W - 2, 18, '#f05058'); p.hline(1, W - 2, 23, '#8a1418');
+    p.vline(0, 4, 23, '#4a2a18'); p.vline(W - 1, 4, 23, '#4a2a18');
+    return finish(p);
+  }
+  // ...and the table in front of it (a caddy of salt, pepper and hot sauce, chips and salsa),
+  // with the other bench's back toward us
+  function boothFront(chips = true) {
+    const W = 32, H = 26, p = new Pix(W, H);
+    p.rect(1, 0, 30, 10, '#5a3a24'); p.hline(1, 30, 0, '#7a5434'); for (let x = 3; x < 30; x += 7) p.hline(x, x + 3, 5, '#4a2e1c');
+    p.rect(1, 10, 30, 2, '#3a2416');
+    p.rect(3, 2, 2, 4, '#f0f0f0'); p.rect(5, 2, 2, 4, '#4a4a4a'); p.rect(7, 1, 2, 5, '#c82020'); p.set(7, 1, '#f0d040');
+    if (chips) {
+      p.rect(18, 2, 9, 6, '#c84828'); p.hline(18, 26, 2, '#e06a48');
+      for (const [cx, cy] of [[19, 3], [21, 2], [23, 3], [25, 2], [20, 5], [24, 5]]) { p.set(cx, cy, '#f0c860'); p.set(cx + 1, cy, '#e0b048'); }
+      p.rect(12, 4, 4, 3, '#f0f0f0'); p.hline(13, 14, 4, '#b82818'); p.set(13, 5, '#d83828');
+    }
+    p.rect(14, 12, 4, 4, '#2a1a10');
+    p.rect(0, 15, W, 11, '#b81e24'); p.hline(0, W - 1, 15, '#4a2a18'); p.hline(0, W - 1, 16, '#e04048');
+    for (let x = 3; x < W - 1; x += 6) p.vline(x, 17, 24, '#8a1418');
+    p.hline(0, W - 1, 25, '#6a1014');
+    return finish(p);
+  }
+  // a dark wood table with two black metal chairs
+  function toroTable() {
+    const W = 32, H = 26, p = new Pix(W, H);
+    for (const x of [0, 26]) {
+      p.vline(x + 1, 2, 24, '#1a1a1e'); p.vline(x + 4, 2, 24, '#1a1a1e'); p.hline(x + 1, x + 4, 2, '#3a3a44');
+      for (const y of [5, 8, 11]) p.hline(x + 2, x + 3, y, '#2a2a30');
+      p.rect(x, 14, 6, 3, '#3a3a44'); p.hline(x, x + 5, 14, '#5a5a64');
+    }
+    p.rect(6, 6, 20, 10, '#5a3a24'); p.hline(6, 25, 6, '#7a5434'); p.rect(6, 16, 20, 2, '#3a2416');
+    p.vline(8, 18, 25, '#3a2416'); p.vline(23, 18, 25, '#3a2416');
+    p.rect(9, 8, 2, 3, '#f0f0f0'); p.rect(11, 8, 2, 3, '#4a4a4a'); p.rect(13, 7, 2, 4, '#c82020'); p.set(13, 7, '#f0d040');
+    p.rect(18, 9, 5, 3, '#f0f0f0'); p.hline(18, 22, 9, '#ffffff');
+    return finish(p);
+  }
+  // the desert mural: a big blue sky, a sun, purple mountains, sand and agave
+  function toroMural() {
+    const W = 64, H = 24, p = new Pix(W, H);
+    for (let y = 0; y < H; y++) p.hline(0, W - 1, y, y < 4 ? '#3a7ac8' : y < 8 ? '#5a94d8' : '#8ab8e8');
+    for (let y = -3; y <= 3; y++) for (let x = -3; x <= 3; x++) if (x * x + y * y <= 10) p.set(48 + x, 5 + y, '#f8d850');
+    for (let x = 0; x < W; x++) {
+      const m1 = 11 + Math.round(3 * Math.sin(x * 0.18) + 2 * Math.sin(x * 0.07 + 1)), m2 = 14 + Math.round(2 * Math.sin(x * 0.27 + 2));
+      for (let y = m1; y < H; y++) p.set(x, y, '#8a6ab0');
+      for (let y = m2; y < H; y++) p.set(x, y, '#6a4a90');
+      for (let y = 17; y < H; y++) p.set(x, y, (x + y) % 7 ? '#d8a860' : '#c89050');
+    }
+    for (const [ax, ay] of [[8, 21], [22, 22], [38, 20], [55, 22]]) {
+      for (const [dx, h] of [[-3, 2], [-2, 4], [-1, 5], [0, 6], [1, 5], [2, 4], [3, 2]]) p.vline(ax + dx, ay - h, ay, Math.abs(dx) % 2 ? '#3a7a4a' : '#5a9a5a');
+    }
+    p.outline('#5a3a24');
+    return p.canvas();
+  }
+  // a string of little Mexican flags (green, white and red), sagging between its ends
+  function bunting(W, sag = 3) {
+    const p = new Pix(W, 9 + sag);
+    const yAt = (x) => Math.round(sag * Math.sin(Math.PI * x / (W - 1)));
+    for (let x = 0; x < W; x++) p.set(x, yAt(x), '#3a3a3a');
+    for (let x0 = 2; x0 + 6 < W; x0 += 9) {
+      const y = 1 + yAt(x0 + 3);
+      for (let i = 0; i < 6; i++) p.vline(x0 + i, y, y + 5, i < 2 ? '#1e8a3e' : i < 4 ? '#f6f6f0' : '#d82830');
+      p.set(x0 + 2, y + 2, '#a8783a'); p.set(x0 + 3, y + 2, '#5a8a3a');
+    }
+    return p.canvas();
+  }
+  // a frosted glass lamp on a brass chain, glowing
+  function toroLamp() {
+    const p = new Pix(14, 34), T = 12;
+    for (let y = 0; y < 8 + T; y++) p.set(6 + (y % 2), y, y % 2 ? '#8a6a30' : '#c8a050');
+    p.hline(4, 9, 9 + T, '#c8a050');
+    p.rect(2, 10 + T, 10, 7, '#f6eed8'); p.hline(2, 11, 10 + T, '#fffaf0'); p.vline(11, 11 + T, 16 + T, '#d8ccb0');
+    for (let x = 2; x < 12; x += 2) p.set(x, 17 + T, '#f6eed8');
+    p.rect(5, 18 + T, 4, 2, '#fff4a8');
+    return finish(p);
+  }
+  // a peach pillar, hung with a strand of garlic
+  function garlicPillar() {
+    const p = new Pix(16, 46);
+    p.rect(1, 0, 14, 46, '#f0a878'); p.vline(1, 0, 45, '#f8c098'); p.rect(12, 0, 3, 46, '#d08858');
+    p.vline(7, 2, 34, '#8a7a5a');
+    for (let i = 0; i < 9; i++) {
+      const x = 5 + (i % 2) * 3, y = 4 + i * 3.4;
+      p.rect(x, Math.round(y), 3, 3, '#f8f4ea'); p.set(x + 2, Math.round(y) + 2, '#d8d0c0'); p.set(x + 1, Math.round(y) - 1, '#c8b8a8');
+    }
+    return finish(p);
+  }
+  // beer signs (no brands): a blue surfboard, and a green one with a gold crown
+  function beerSurf() {
+    const p = new Pix(12, 30);
+    p.vline(5, 0, 3, '#3a3a3a');
+    for (let y = 4; y < 30; y++) { const h = Math.round(5 * Math.sin(Math.PI * (y - 3) / 27)); p.hline(6 - h, 5 + h, y, '#2a6ac8'); }
+    p.vline(5, 6, 27, '#f8f8f0'); p.vline(6, 6, 27, '#f0c830');
+    return finish(p);
+  }
+  function beerGreen() {
+    const p = new Pix(22, 14);
+    p.rect(0, 0, 22, 14, '#1e8a3e'); p.rect(1, 1, 20, 12, '#2aa04a'); p.hline(1, 20, 1, '#5ac070');
+    for (const x of [8, 11, 14]) { p.vline(x, 4, 7, '#f0c830'); p.set(x, 3, '#f8e070'); }
+    p.hline(7, 15, 8, '#f0c830'); p.hline(5, 17, 10, '#f8f8f0');
+    return finish(p);
+  }
+  function soccerBall() {
+    const p = new Pix(12, 12);
+    for (let y = 0; y < 12; y++) for (let x = 0; x < 12; x++) if ((x - 5.5) ** 2 + (y - 5.5) ** 2 <= 30) p.set(x, y, '#f8f8f4');
+    p.rect(4, 4, 4, 3, '#1a1a1e'); p.hline(5, 6, 7, '#1a1a1e');
+    for (const [x, y] of [[1, 5], [1, 6], [10, 5], [10, 6], [3, 10], [4, 10], [7, 10], [8, 10], [5, 0], [6, 0]]) p.set(x, y, '#1a1a1e');
+    for (const [x, y] of [[3, 3], [8, 3], [3, 7], [8, 7], [5, 8], [6, 8]]) p.set(x, y, '#a8a8b0');
+    return finish(p);
+  }
+  // a metal sun with a face
+  function sunFace() {
+    const p = new Pix(20, 20);
+    for (let a = 0; a < 12; a++) { const t = a * Math.PI / 6; for (let r = 6; r < 10; r++) p.set(Math.round(9.5 + Math.cos(t) * r), Math.round(9.5 + Math.sin(t) * r), a % 2 ? '#c88a20' : '#e8a830'); }
+    for (let y = 0; y < 20; y++) for (let x = 0; x < 20; x++) if ((x - 9.5) ** 2 + (y - 9.5) ** 2 <= 30) p.set(x, y, (x + y) % 9 ? '#f0b838' : '#d89a28');
+    p.set(7, 8, '#5a3a10'); p.set(12, 8, '#5a3a10'); p.hline(8, 11, 12, '#8a5a18'); p.set(7, 11, '#8a5a18'); p.set(12, 11, '#8a5a18');
+    return finish(p);
+  }
+  // the swinging kitchen door, with a round window
+  function kitchenDoor() {
+    const p = new Pix(16, 28);
+    p.rect(0, 0, 16, 28, '#5a3a24'); p.rect(1, 1, 14, 27, '#8a5a34'); p.vline(8, 1, 27, '#6a4228');
+    for (let y = 5; y <= 9; y++) for (let x = 2; x <= 13; x++) if ((x - 7.5) ** 2 / 20 + (y - 7) ** 2 / 5 <= 1) p.set(x, y, '#c8d8e0');
+    p.hline(2, 14, 20, '#c8c8d0');
+    return finish(p);
+  }
+  // the cantina bar: a dark wood front with slats, and the shelf of bottles on the wall behind it
+  function toroBar() {
+    const W = 64, H = 22, p = new Pix(W, H);
+    p.rect(0, 0, W, 5, '#7a5434'); p.hline(0, W - 1, 0, '#9a7450'); p.hline(0, W - 1, 4, '#4a2e1c');
+    for (const [x, c] of [[6, '#c8e0e8'], [9, '#c8e0e8'], [30, '#f0c860'], [44, '#c8e0e8'], [55, '#a83020']]) { p.vline(x, 0, 2, c); p.set(x, 0, '#ffffff'); }
+    p.rect(0, 5, W, 17, '#4a2e1c');
+    for (let x = 2; x < W; x += 5) p.vline(x, 7, 20, '#3a2214');
+    p.hline(0, W - 1, 20, '#2a1a10');
+    return finish(p);
+  }
+  function toroBottles() {
+    const W = 64, H = 22, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#4a2e1c');
+    for (const y of [9, 20]) { p.rect(0, y, W, 2, '#7a5434'); p.hline(0, W - 1, y, '#9a7450'); }
+    const cols = ['#c88a20', '#2a7a3a', '#e8e0d0', '#a83020', '#d8a830', '#4a6a2a', '#f0f0e8', '#8a4a1a'];
+    for (let i = 0; i < 18; i++) for (const shelf of [9, 20]) {
+      const x = 2 + i * 3.5 + (shelf === 20 ? 1.5 : 0), c = cols[(i * 3 + shelf) % cols.length], h = 5 + ((i + shelf) % 3);
+      if (x > W - 3) continue;
+      p.rect(Math.round(x), shelf - h, 2, h, c); p.set(Math.round(x), shelf - h - 1, '#2a2a2a'); p.set(Math.round(x), shelf - h + 1, shade(c, 0.4));
+    }
+    return finish(p);
+  }
+  function barStool() {
+    const p = new Pix(10, 14);
+    p.rect(1, 0, 8, 4, '#c82828'); p.hline(1, 8, 0, '#e85050');
+    p.vline(4, 4, 13, '#2a2a30'); p.vline(5, 4, 13, '#4a4a54'); p.hline(2, 7, 9, '#3a3a44'); p.hline(2, 7, 13, '#2a2a30');
+    return finish(p);
+  }
+  // the little open mic stage in the cantina: a low riser, a mic stand, an amp and a stool
+  function toroStage() {
+    const W = 48, H = 36, p = new Pix(W, H);
+    p.rect(0, 16, W, 14, '#6a4a30'); p.hline(0, W - 1, 16, '#8a6a48');
+    for (let x = 0; x < W; x += 8) p.vline(x, 17, 29, '#5a3a24');
+    p.rect(0, 30, W, 6, '#2a2a30'); p.hline(0, W - 1, 30, '#4a4a54');
+    p.vline(14, 2, 24, '#2a2a30'); p.rect(13, 0, 3, 3, '#4a4a54'); p.set(14, 0, '#8a8a94'); p.hline(11, 17, 24, '#2a2a30');
+    p.rect(30, 12, 12, 11, '#1e1e24'); p.rect(31, 14, 10, 7, '#3a3a40'); for (let y = 15; y < 21; y += 2) p.hline(31, 40, y, '#2a2a30'); p.hline(30, 41, 12, '#4a4a54'); p.set(39, 13, '#e8c040');
+    p.rect(21, 14, 6, 2, '#2a2a30'); p.vline(22, 16, 23, '#2a2a30'); p.vline(25, 16, 23, '#2a2a30');
+    return finish(p);
+  }
+  // the chalkboard A-frame out front of the stage
+  function openMicSign() {
+    const p = new Pix(30, 28);
+    p.rect(1, 0, 28, 22, '#6a4a30'); p.rect(3, 2, 24, 18, '#2a3430');
+    p.vline(3, 22, 27, '#5a3a24'); p.vline(26, 22, 27, '#5a3a24');
+    p.outline();
+    const cv = p.canvas(), x = cv.getContext('2d');
+    for (const [s, y] of [['OPEN', 3], ['MIC!', 11]]) G.font.draw(x, s, 15 - Math.round(G.font.width(s) / 2), y, '#f4f0e8');
+    return cv;
+  }
+  // Romulus's favorite toy (from the user's photo): a big shaggy tan sloth with an orange face,
+  // a pale muzzle with a dark nose, little black eyes, and long white claws
+  function slothPlush() {
+    const W = 16, H = 20, p = new Pix(W, H), F = '#d8b078', FL = '#ecd0a0', FD = '#a8804a';
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const head = ((x - 7.5) / 6) ** 2 + ((y - 5) / 5) ** 2 <= 1, body = ((x - 7.5) / 6.5) ** 2 + ((y - 13) / 6.5) ** 2 <= 1;
+      if (head || body) p.set(x, y, G.hash(x, y, 51) < 0.25 ? FL : G.hash(x, y, 52) < 0.2 ? FD : F);
+    }
+    for (const x of [1, 3, 12, 14]) p.set(x, 0 + (x % 3), F);
+    for (let y = 2; y <= 8; y++) for (let x = 3; x <= 12; x++) if (((x - 7.5) / 4.6) ** 2 + ((y - 5) / 3.6) ** 2 <= 1) p.set(x, y, '#c8843a');
+    for (let y = 5; y <= 10; y++) for (let x = 4; x <= 11; x++) if (((x - 7.5) / 3.3) ** 2 + ((y - 7.5) / 2.5) ** 2 <= 1) p.set(x, y, '#ecd6b4');
+    p.hline(6, 9, 5, '#3a2a20'); p.hline(7, 8, 6, '#5a4030'); p.hline(5, 10, 9, '#4a3020');
+    p.set(5, 4, '#141010'); p.set(10, 4, '#141010');
+    for (const [x, y] of [[1, 12], [2, 13], [1, 14], [14, 12], [13, 13], [14, 14], [4, 19], [6, 19], [9, 19], [11, 19]]) p.set(x, y, '#f4f0e8');
+    p.outline('#6a4a2a');
+    return p.canvas();
+  }
+  function slothIcon() {
+    const c = G.canvas(16, 16), s = slothPlush();
+    c.getContext('2d').drawImage(s, 0, 0, 16, 20, 1, -1, 14, 17);
+    return c;
+  }
+  // Abe's bass (sunburst, from the black case in his closet), as an icon, and held across the
+  // Paul McCartney Lady (she's left-handed: the neck points the other way)
+  function abeBassIcon() {
+    const p = new Pix(16, 16);
+    for (let i = 0; i < 9; i++) { p.set(6 + i, 9 - i, '#8a5a30'); p.set(7 + i, 9 - i, '#6a4020'); }
+    p.rect(13, 0, 3, 3, '#2a1a10');
+    for (let y = 8; y < 16; y++) for (let x = 0; x < 9; x++) {
+      const e = ((x - 4) / 4.4) ** 2 + ((y - 12) / 3.8) ** 2;
+      if (e <= 1) p.set(x, y, e > 0.6 ? '#3a1a0a' : e > 0.3 ? '#a85a20' : '#e8a040');
+    }
+    p.hline(2, 6, 12, '#f0f0f0'); p.set(5, 10, '#1a1a1a');
+    p.outline();
+    return p.canvas();
+  }
+  function bassHeld() {
+    const p = new Pix(20, 8);
+    p.hline(0, 11, 3, '#8a5a30'); p.hline(0, 11, 4, '#6a4020'); p.rect(0, 2, 2, 4, '#2a1a10');
+    for (let y = 0; y < 8; y++) for (let x = 10; x < 20; x++) {
+      const e = ((x - 15) / 4.8) ** 2 + ((y - 4) / 3.8) ** 2;
+      if (e <= 1) p.set(x, y, e > 0.6 ? '#3a1a0a' : e > 0.3 ? '#a85a20' : '#e8a040');
+    }
+    p.vline(14, 2, 6, '#f0f0f0');
+    p.outline();
+    return p.canvas();
+  }
+  function cableIcon() {
+    const p = new Pix(16, 16);
+    cableCoil(p, 7.5, 9, 6.5);
+    p.outline();
+    return p.canvas();
+  }
+  // a huge black and white snout, poking out through the trees (Romulus, golf cart sized)
+  function romSnout() {
+    const W = 40, H = 26, p = new Pix(W, H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const top = y < 12 - Math.round(x * 0.12), inside = ((x - 18) / 22) ** 2 + ((y - 13) / 12.5) ** 2 <= 1;
+      if (!inside) continue;
+      p.set(x, y, top ? (G.hash(x, y, 61) < 0.2 ? '#3a3a44' : '#1c1c22') : '#f4f4f0');
+    }
+    for (let y = 6; y <= 12; y++) for (let x = 33; x <= 39; x++) if (((x - 36) / 3.5) ** 2 + ((y - 9) / 3.5) ** 2 <= 1) p.set(x, y, '#141418');
+    p.set(35, 7, '#6a6a74');
+    p.hline(16, 34, 17, '#5a3a3a'); p.set(15, 16, '#5a3a3a');
+    for (const x of [20, 26, 32]) p.set(x, 18, '#ffffff');
+    p.outline();
+    return p.canvas();
+  }
+
   // ================================================================ THE BAY: RoFo Pop and the toll plaza
   // RoFo Pop, blue raspberry: what Abe and Hannah grab on the Eastern Shore as a "gift"
   // every time they visit. It does not taste good. A 2-liter: white cap, blue soda, the
@@ -6849,7 +7200,14 @@
     S.condoDiningSet = condoDiningSet(); S.condoSideboard = condoSideboard(); S.monstera = monstera(); S.condoSofa = condoSofa(); S.trestleTable = trestleTable();
     S.birdRug = birdRug(); S.condoEndTable = condoEndTable(); S.glassCabinet = glassCabinet(); S.dogBed = dogBed(); S.dogBowls = dogBowls(); S.smallChest = smallChest();
     S.condoArmchair = armchair('#e6dccb');
-    S.pantryHutch = pantryHutch(); S.kitchenRunner = kitchenRunner(); S.utensilCrock = utensilCrock(); S.bathMat = bathMat(); S.tankBasket = tankBasket();
+    S.kitchenRunner = kitchenRunner(); S.utensilCrock = utensilCrock(); S.bathMat = bathMat(); S.tankBasket = tankBasket();
+    // El Toro Loco
+    S.toroFront = toroFront(); S.toroSign = toroSign(); S.toroCars = { white: suvTop('#eceef0'), gray: suvTop('#4a4c54'), red: suvTop('#a83030'), blue: rot90(rot90(suvTop('#3a5a98'))) };
+    S.boothBack = boothBack(); S.boothFront = boothFront(); S.boothFrontBare = boothFront(false); S.toroTable = toroTable();
+    S.toroMural = toroMural(); S.buntingWall = bunting(288, 2); S.buntingRoom = bunting(288, 5); S.toroLamp = toroLamp(); S.garlicPillar = garlicPillar();
+    S.beerSurf = beerSurf(); S.beerGreen = beerGreen(); S.soccerBall = soccerBall(); S.sunFace = sunFace(); S.kitchenDoor = kitchenDoor();
+    S.toroBar = toroBar(); S.toroBottles = toroBottles(); S.barStool = barStool(); S.toroStage = toroStage(); S.openMicSign = openMicSign();
+    S.slothPlush = slothPlush(); S.slothIcon = slothIcon(); S.abeBassIcon = abeBassIcon(); S.bassHeld = bassHeld(); S.cableIcon = cableIcon(); S.romSnout = romSnout();
     S.condoBed = condoBed(); S.nightstandAmber = nightstandAmber(); S.nightstandDark = nightstandDark(); S.creamDresser = creamDresser();
     S.ceilingFan = [0, 1, 2, 3].map(ceilingFan);
     S.loftTV = loftTV(); S.grayOttoman = grayOttoman(); S.loftSofaBack = loftSofaBack(); S.bookshelf = bookshelf(); S.floorLamp = floorLamp();

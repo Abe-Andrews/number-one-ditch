@@ -145,6 +145,18 @@
     skin: '#f4d4c4', hair: '#f2f2f6', hairStyle: 'cropped', smile: '#ffffff', blush: true,
     shirt: '#f4ecdc', coat: '#b8a0d8', dress: '#5a7aa8', shoes: '#f0f0f0', torso: 5, legs: 3,
   };
+  // The Paul McCartney Lady, at El Toro Loco (the user saw her there once). She looks EXACTLY
+  // like him: a chestnut mop-top with a full fringe, a navy jacket over a white top, dark jeans
+  // and Chelsea boots. She plays bass. Left-handed, of course.
+  G.CAST.paulLady = {
+    skin: '#f2c8a8', eyes: '#4a3420', hair: '#6a3e24', hairStyle: 'mop', smile: '#ffffff',
+    coat: '#2a2e48', shirt: '#f2f0ea', pants: '#2e3a58', shoes: '#2a2420', boots: true, torso: 6, legs: 3,
+  };
+  // El Toro Loco's server, and some regulars
+  G.CAST.toroServer = { skin: '#c88a60', hair: '#1a1010', hairStyle: 'short', shirt: '#1c1c20', pants: '#1c1c20', shoes: '#2a2a2a', torso: 6, legs: 3 };
+  G.CAST.toroDiner1 = { skin: '#f0c8a8', hair: '#c8a46c', hairStyle: 'shoulder', shirt: '#4a8ac8', pants: '#3a3a44', shoes: '#f0f0f0', torso: 5, legs: 3, smile: '#ffffff' };
+  G.CAST.toroDiner2 = { skin: '#8a5a3a', hair: '#1a1010', hairStyle: 'buzz', beard: '#1a1010', shirt: '#d87830', pants: '#384058', shoes: '#4a3428', torso: 7, legs: 3 };
+  G.CAST.toroDiner3 = { skin: '#e8b890', hair: '#9a9aa0', hairStyle: 'receding', glasses: '#2a2a30', shirt: '#6a8a5a', pants: '#5a4a38', shoes: '#4a3428', torso: 7, legs: 3 };
   G.CAST.earl = {
     skin: '#e8b090', hair: '#5a3a20', hairStyle: 'cap', hat: '#3a6a3a', hatStyle: 'ball', patch: '#f0f0f0', beard: '#5a3a20',
     shirt: '#b83030', pattern: 'plaid', plaidL: '#d86060', plaidW: '#2a1a1a', sleeves: 'long', pants: '#3a4a6a', shoes: '#4a3428', boots: true,
@@ -303,6 +315,19 @@
       kind: 'gear', equip: true, name: 'Tyler\'s Sifter', short: 'Sifter', icon: () => G.spr.sifter, has: () => !!st().items.sifter || !!fl().tylerBeaten,
       desc: 'Tyler\'s sifting screen, for shark teeth at the Number One Ditch. He\'s done sifting forever. Press X to shake the gravel in front of you through it and find the small stuff.',
     },
+    // the sloth quest (Romulus is on the golf course)
+    abeBass: {
+      kind: 'key', name: 'Abe\'s Bass', icon: () => G.spr.abeBassIcon, has: () => !!st().items.abeBass && !fl().bassGiven,
+      desc: 'A sunburst bass, from the black case in Abe\'s closet. He has so many guitars, he won\'t even notice. (He will notice.)',
+    },
+    yellowCable: {
+      kind: 'key', name: 'Yellow Guitar Cable', short: 'Cable', icon: () => G.spr.cableIcon, has: () => !!st().items.yellowCable && !fl().bassGiven,
+      desc: 'One of Abe\'s thousands of yellow guitar cables, from the storage room. They\'re "inventory." He won\'t miss one.',
+    },
+    sloth: {
+      kind: 'key', name: 'Romulus\'s Sloth', short: 'Sloth', icon: () => G.spr.slothIcon, has: () => !!st().items.sloth && !fl().romGap,
+      desc: 'A big, shaggy, fluffy sloth with long white claws. Romulus\'s favorite thing in the whole world. It squeaks. Squeak it at the gap in the woods behind Abe and Hannah\'s patio.',
+    },
     earplugs: {
       kind: 'key', name: 'Earplugs', icon: () => G.spr.earplugs, has: () => !!st().items.earplugs,
       desc: 'Cotton balls rolled in Lily\'s vanilla candle wax. A song can\'t get stuck in your head if you can\'t hear it.',
@@ -332,7 +357,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma'];
+  G.KEY_SLOTS = ['phone', 'hat', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -438,6 +463,10 @@
     { id: 'prof', name: 'Prof. Schist', tag: '{y}Friend', met: () => fl().profTalk, bio: 'Geology professor. Finds coastal plain ditches fascinating. Flat. Wet. Ditchy.' },
     { id: 'devin', name: 'Devin', tag: '{y}Friend', met: () => fl().phDone, bio: 'Nate\'s lab partner. Was paid in shark teeth to ask about the pH of rainwater.' },
     { id: 'anette', name: 'Anette', tag: '{y}Friend', met: () => fl().anetteMet, bio: 'Abe and Hannah\'s neighbor. Keeps potted plants all up and down the street. Her knees are done with watering cans.' },
+    {
+      id: 'paulLady', name: 'Paul McCartney Lady', tag: '{y}Friend', met: () => fl().ladyMet,
+      bio: () => 'A regular at El Toro Loco. Looks EXACTLY like Paul McCartney, and has heard it every day of her life. Plays bass, left-handed.' + (fl().bassGiven ? ' Traded Romulus\'s sloth for Abe\'s bass, and kept the bass.' : ''),
+    },
   ];
 
   G.people = () => {
@@ -485,8 +514,12 @@
     else if (!f.tylerBeaten) goal = 'The hooded figure is Tyler, hypnotized by Father Eggmas! Snap him out of it.';
     else if (!f.condoArrived) goal = 'Tyler says Father Eggmas is at the Number One Ditch. Chesapeake is through the tunnel!';
     else if (!f.romulusMet) goal = 'Abe and Hannah\'s condo! Their front door is around the side, past the garage.';
-    else if (G.romChase()) goal = (f.romHide || 0) < 4 ? 'Romulus ran off to hide. Find him somewhere in the house!' : 'Romulus got out the front door! Find him outside.';
-    else if (!f.romulusBeaten) goal = 'Romulus squeezed through the woods behind the patio onto the golf course. Go after him!';
+    else if (G.romChase()) goal = (f.romHide || 0) < G.ROM_INSIDE ? 'Romulus ran off to hide. Find him somewhere in the house!' : 'Romulus got out the front door, and he\'s hiding somewhere outside. Check bushes, cars, anywhere a dog could squeeze in (press Z on them), or flush him out with the bidet.';
+    else if (!f.romulusBeaten && !f.slothQuest) goal = 'Romulus squeezed through the woods behind the patio onto the golf course, and the gap is too small for Nate. Ask Abe what to do.';
+    else if (!f.romulusBeaten && f.slothQuest === 1) goal = 'Romulus will come back for his sloth. Abe left it at El Toro Loco, down the main road (off the bottom of the street).';
+    else if (!f.romulusBeaten && f.slothQuest === 2) goal = 'The lady at El Toro Loco who looks exactly like Paul McCartney will trade the sloth for a bass and a cable. Try Abe\'s closet and the storage room. (' + G.sayable((s.items.abeBass ? 1 : 0) + (s.items.yellowCable ? 1 : 0)) + '/2)';
+    else if (!f.romulusBeaten && f.slothQuest === 3) goal = 'Squeak Romulus\'s sloth at the gap in the woods behind Abe and Hannah\'s patio.';
+    else if (!f.romulusBeaten) goal = 'Romulus is out on the golf course, and he\'s HUGE. Go get him!';
     else goal = 'Romulus is home safe (and still scared of Nate). (More story soon!)';
     // which chapter of the road trip Nate is on
     const chapter = !f.doronDeal ? 'CH. 1 - LAFAYETTE' : !f.boulderGone ? 'CH. 2 - EASTON FAIR' : !f.mikeyBeaten ? 'CH. 3 - HOME' : !f.condoArrived ? 'CH. 4 - THE BAY' : 'CH. 5 - CHESAPEAKE';
@@ -3067,7 +3100,9 @@
     { name: 'The Two-Liter (Chesapeake Channel Tunnel)', map: 'chesTunnel', at: [7, 26, 'up'], flags: { cbbtArrived: true, tollMet: true, chesSeen: true }, items: { rod: true } },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
     { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [55, 1, 'down'], flags: { tylerBeaten: true } },
-    { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { condoArrived: true, condoScare: true, romulusMet: true, romHide: 7, romToGolf: true }, items: { bidet: true } },
+    { name: 'Romulus: hide and seek outside', map: 'condo', at: [24, 20, 'down'], flags: { condoArrived: true, condoScare: true, romulusMet: true, romHide: 4 }, items: { bidet: true } },
+    { name: 'El Toro Loco: Romulus\'s sloth', map: 'toroLoco', at: [11, 8, 'up'], flags: { romHide: 8, romToGolf: true, slothQuest: 1 } },
+    { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { slothQuest: 4, ladyMet: true, bassGiven: true, romGap: true }, items: { abeBass: true, yellowCable: true, sloth: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -3101,6 +3136,8 @@
     { name: 'Abe & Hannah\'s: upstairs', map: 'condoUp', at: [13, 11, 'down'] },
     { name: 'Abe & Hannah\'s: storage', map: 'condoStorage', at: [10, 5, 'left'] },
     { name: 'The golf course (Romulus)', map: 'golf', at: [20, 26, 'up'] },
+    { name: 'El Toro Loco (outside)', map: 'toroLoco', at: [11, 8, 'up'] },
+    { name: 'El Toro Loco (inside)', map: 'toroLocoIn', at: [9, 11, 'up'] },
   ];
   // Admin: one of every rock.
   G.adminAllRocks = () => {
@@ -6314,14 +6351,81 @@
   // Abe, inside, after the scare.
   S.abeCondo = function* () {
     const f = flags();
-    if (G.romChase()) { yield G.say('Abe', ROM_SPOTS[f.romHide || 0].abe); return; }
-    if (f.romToGolf && !f.romulusBeaten) { yield G.say('Abe', 'Romulus went through the WOODS? Onto the course? ...Go get him!'); return; }
+    if (G.romChase()) {
+      const i = f.romHide || 0;
+      if (i < ROM_SPOTS.length) yield G.say('Abe', ROM_SPOTS[i].abe);
+      else yield G.say('Abe', 'He got OUTSIDE? I can hear him whimpering. Somewhere ' + (ROM_OUT[f.romSpot] || ROM_OUT[0]).area + ', I think. That\'s all I\'ve got.');
+      return;
+    }
+    if (f.romToGolf && !f.romulusBeaten) { yield* S.abeSloth(); return; }
+    if (f.bassGiven && f.romulusBeaten && !f.abeBassAsk) {
+      f.abeBassAsk = true;
+      yield G.say('Abe', 'Hey, have you seen my bass? The one in the black case?');
+      yield G.say('Nate', '...It\'s at El Toro Loco. With a woman who looks exactly like Paul McCartney.');
+      yield G.say('Abe', '......');
+      yield G.say('Abe', 'Okay. Honestly? That\'s where it belongs.');
+      return;
+    }
     f.abeLine = ((f.abeLine || 0) + 1) % 3;
     yield G.say('Abe', [
       'Hannah gets off work later. Make yourselves at home.',
       'The yellow cables in the storage room are inventory. Do NOT touch the inventory.',
       'I\'m working from home today. Technically. My office is upstairs.',
     ][f.abeLine]);
+  };
+
+  // Romulus is out on the golf course: the only thing that'll bring him back is his sloth, and
+  // Abe left it at El Toro Loco
+  S.abeSloth = function* () {
+    const f = flags();
+    if (!f.slothQuest) {
+      yield G.say('Abe', 'He went through the WOODS? Onto the course?');
+      yield G.say('Nate', 'And the gap is way too small for me.');
+      yield G.say('Abe', 'He won\'t come back on his own. Not for me, not for treats. Not for anybody.');
+      yield G.say('Abe', '...Except his SLOTH.');
+      yield G.say('Nate', 'His what?');
+      yield G.say('Abe', 'His sloth. Big, fluffy, long white claws. It squeaks. It\'s his favorite thing in the whole world. He\'d come running from anywhere for that squeak.');
+      yield G.say('Nate', 'Great! Where is it?');
+      yield G.say('Abe', '......');
+      yield G.say('Abe', 'I took it to El Toro Loco last night.');
+      yield G.say('Nate', 'Why did you bring a dog toy to a Mexican restaurant?');
+      yield G.say('Abe', 'It was in my jacket pocket. Why are YOU asking so many questions?');
+      yield G.say('Abe', 'It must have fallen out in the booth. El Toro Loco is down the main road, off the bottom of the street.');
+      f.slothQuest = 1;
+      return;
+    }
+    yield G.say('Abe', {
+      1: 'El Toro Loco is down the main road, off the bottom of the street. Get that sloth!',
+      2: 'How\'s it going at El Toro Loco? ...Why are you looking at my closet like that?',
+      3: 'You got his SLOTH! Squeak it at the woods out back. He can\'t resist that squeak.',
+    }[f.slothQuest] || 'Romulus is out on the course? And he\'s HUGE? ...Go get him!');
+  };
+
+  // the black case in Abe's closet: a bass (once the Paul McCartney Lady needs one)
+  S.closetCase = function* () {
+    const f = flags(), s = G.state;
+    if (f.bassGiven) { yield G.say(null, 'The black guitar case. Empty. Its bass is at El Toro Loco, being played upside down.'); return; }
+    if (s.items.abeBass) { yield G.say(null, 'The black guitar case. Empty. Nate has the bass.'); return; }
+    if (f.slothQuest !== 2) { yield G.say(null, 'A black guitar case. Probably a guitar in it. Probably.'); return; }
+    yield G.say(null, 'Nate opens the black case...');
+    G.audio.sfx('chest');
+    s.items.abeBass = true;
+    yield G.itemGet(G.spr.abeBassIcon, 'You got {y}Abe\'s Bass{/}!');
+    yield G.say('Nate', 'A sunburst bass! Abe has a BASS too?');
+    yield G.say('Nate', 'He has so many guitars, he won\'t even notice.');
+  };
+  // the yellow guitar cables in the storage room (Abe's "inventory")
+  S.storageCable = function* (text) {
+    const f = flags(), s = G.state;
+    if (f.slothQuest !== 2 || s.items.yellowCable || f.bassGiven) { yield G.say(null, text); return; }
+    yield G.say('Nate', 'Abe said not to touch the inventory.');
+    yield G.say('Nate', '...He has thousands. He won\'t miss one.');
+    yield G.say(null, 'Nate pulls out a yellow cable. It\'s tangled up with one, two, three, four, five...');
+    yield G.say('Nate', '...a LOT of other cables.');
+    yield G.say(null, 'It takes a while, but Nate gets it untangled.');
+    G.audio.sfx('chest');
+    s.items.yellowCable = true;
+    yield G.itemGet(G.spr.cableIcon, 'You got a {y}Yellow Guitar Cable{/}!');
   };
 
   S.condoTraeger = look('Abe\'s Traeger pellet grill. It smells like hickory smoke.');
@@ -6407,6 +6511,12 @@
   // Off the bottom of the map: the street (and the main road) just keep going.
   S.condoNeighborhood = function* () {
     const p = P();
+    if (p.x > 50 * 16 && flags().slothQuest) {
+      const c = yield G.ask('Nate', 'Walk down the main road to El Toro Loco?', ['El Toro Loco', 'Stay']);
+      if (c === 0) { G.play.warp('toroLoco', 2, 1, 'down'); return; }
+      yield G.walkTo(p, p.x, p.y - 18, 1);
+      return;
+    }
     yield G.say('Nate', 'That way is just more of the neighborhood. Abe and Hannah\'s is back this way.');
     yield G.walkTo(p, p.x, p.y - 18, 1);
   };
@@ -6607,9 +6717,9 @@
       for (const x of [14, 16]) w.addProp({ img: sp.lawnChair, tx: x, ty: 14, dx: 1, solid: [x, 14, 1, 1], hit: [x, 14, 1, 1], talk: look('A white plastic lawn chair, pointed at the golf course. Front-row seats.') });
       for (const y of [7, 15]) w.addProp({ img: sp.acUnit, tx: 17, ty: y, dx: -1, solid: [17, y, 1, 1], hit: [17, y, 1, 1], talk: look('An air conditioner, humming away. Virginia summers do not mess around.') });
 
-      // ---- the strip of woods between the yard and the golf course (x 9-12): too thick to get through.
-      // TODO (the item that gets Nate through, coming later): open a gap here, e.g. straight out from
-      // the patio at y 12-13, and let him onto the course.
+      // ---- the strip of woods between the yard and the golf course (x 9-12): too thick to get through,
+      // except where Romulus squeezes through (straight out from the patio at y 13) and, after the
+      // sloth, drags Nate through (S.condoWoods).
       for (let y = 0; y < w.h - 1; y += 2) {
         w.addTree(9, y, y % 6 === 2 ? 'pine' : null);
         if (y + 1 < w.h - 1) w.addTree(11, y + 1, y % 6 === 4 ? null : 'pine');
@@ -6708,29 +6818,70 @@
   };
 
   // ---------------------------------------------------------------- hide and seek
-  // After he first sees Nate, Romulus runs and hides. Every time Nate finds him he yelps
-  // and bolts to the next spot: through the house (the kitchen, the downstairs bath, the
-  // upstairs closet, under Abe's desk), out the front door, around the street, and at last
-  // through a gap in the woods onto the golf course, where the boss fight is. flags.romHide
-  // is which spot he's at now; `run` is where he runs (in tiles) when he's found from there,
-  // `vanish` means he leaves the map (up or down the stairs).
+  // After he first sees Nate, Romulus runs and hides. Every time Nate finds him he yelps and
+  // bolts to the next spot. In the house (ROM_SPOTS: the kitchen, the downstairs bath, the
+  // upstairs closet, under Abe's desk) he's easy to spot. Then he's out the front door, and
+  // outside he's much harder to find (ROM_OUT): he hides completely, somewhere different each
+  // time, four times over. At last he goes around back and squeezes through the woods onto the
+  // golf course. flags.romHide counts how many times he's been found; flags.romSpot is which
+  // outside spot he's in. `run` is where he runs (in tiles) when he's found from there, `vanish`
+  // means he leaves the map (up or down the stairs).
   const ROM_SPOTS = [
     { map: 'condoDown', at: [15.5, 5.75], run: [[11.5, 5.5], [11.5, 8], [13.5, 9.6], [19.5, 9.6], [19.5, 15.6], [17.5, 15.6]], line: 'He ran down the back hall!', abe: 'He always hides behind the breakfast bar. Right next to me. Not very sneaky.' },
     { map: 'condoDown', at: [17.5, 15.6], run: [[19.5, 15.6], [19.5, 9.6], [13.5, 9.6], [13.5, 12.2]], vanish: true, bidet: true, line: 'He ran up the stairs!', abe: 'Try the bathroom. He likes the bath mat. It\'s fluffy.' },
     { map: 'condoUp', at: [22.5, 6.7], run: [[23.5, 6.7], [23.5, 10.6], [21.5, 12.7]], line: 'He ran out of the closet!', abe: 'Upstairs? Check the closet. Careful of the guitars.' },
     { map: 'condoUp', at: [21.5, 12.75], run: [[16.5, 11.6], [14.5, 11.6], [13.5, 13]], vanish: true, door: true, line: 'He\'s headed downstairs!', abe: 'He likes it under my desk. Probably because it\'s the only clean spot in my office.' },
-    { map: 'condo', at: [17.4, 19.3], run: [[16.5, 20.6], [36, 20.6], [42.5, 15.7]], line: 'He ran across the street!', abe: 'He got OUTSIDE? Check the bushes out front. He loves a bush. Gets it from me.' },
-    { map: 'condo', at: [42.5, 15.7], run: [[38, 16], [31, 16.5], [31, 20.6], [13.5, 20.6], [13.5, 13.2]], line: 'He\'s headed around back!', abe: 'Did you check the visitor parking? He likes to lie under that tree.' },
-    { map: 'condo', at: [13.5, 13.2], golf: true, abe: 'Out back, maybe? He stares at the golf course through the trees all day.' },
   ];
-  G.romChase = () => { const f = flags(); return !!f.romulusMet && !f.romulusBeaten && (f.romHide || 0) < ROM_SPOTS.length; };
+  // Outside: `box` is what he's hiding in or under (tiles: x, y, w, h), `at` is where he pops out,
+  // `flee` is the way he runs from there (he's off somewhere new once he's off the screen), and
+  // `area` is all Abe can tell Nate from inside ("I can hear him whimpering somewhere...").
+  const ROM_OUT = [
+    { id: 'bigBush', box: [17, 18, 2, 2], at: [16.5, 20.4], flee: [[16.5, 20.7], [35, 20.7], [38.5, 25]], leafy: true, area: 'out front, by the corner of the house' },
+    { id: 'azaleas', box: [25, 18, 5, 1], at: [27, 19.7], flee: [[31, 19.7], [36, 20.7], [38.5, 26]], leafy: true, area: 'out front' },
+    { id: 'jeep', box: [32, 14, 3, 2], at: [33.5, 16.8], flee: [[36.5, 17], [39.5, 17.5], [39.5, 32]], area: 'by the driveway' },
+    { id: 'trash', box: [30, 13, 2, 1], at: [32.5, 13.6], flee: [[35.5, 13.6], [39.5, 13.6], [39.5, 3.5], [52, 2.6]], area: 'by the driveway' },
+    { id: 'patioAC', box: [17, 15, 1, 1], at: [16.5, 15.8], flee: [[14.5, 16.5], [13.5, 20.6], [24, 20.8], [36, 20.8]], area: 'out back' },
+    { id: 'neighborAC', box: [17, 7, 1, 1], at: [16.5, 7.8], flee: [[15.5, 8.6], [13.5, 8.6], [13.5, 20.6], [24, 20.8]], area: 'out back, on the neighbors\' side' },
+    { id: 'creamBoxwood', box: [19, 6, 1, 1], at: [18.4, 6.9], flee: [[17.5, 6.6], [13.5, 6.6], [13.5, 20.6], [24, 20.8]], leafy: true, area: 'up by Anette\'s' },
+    { id: 'visitorA', box: [41, 10, 3, 2], at: [40.2, 11.4], flee: [[39.5, 11], [39.5, 3.5], [52, 2.6]], area: 'over by the visitor parking' },
+    { id: 'visitorB', box: [41, 17, 3, 2], at: [40.2, 18.4], flee: [[39.5, 19], [39.5, 24], [36, 31]], area: 'over by the visitor parking' },
+    { id: 'island', box: [41, 13, 3, 2], at: [42.5, 15.8], flee: [[40, 15.8], [39.5, 8], [39.5, 3.5], [52, 2.6]], leafy: true, area: 'over by the visitor parking' },
+    { id: 'evergreen', box: [44, 30, 1, 1], at: [45.5, 30.7], flee: [[47, 30.6], [55.5, 30.6], [55.5, 39]], leafy: true, area: 'across the street, down the row of skinny trees' },
+    { id: 'tanBoxwoods', box: [17, 30, 2, 1], at: [16.4, 30.8], flee: [[16.2, 33], [19, 36], [24, 39]], leafy: true, area: 'down by the neighbors with the two garage doors' },
+    { id: 'blackSUV', box: [25, 31, 2, 2], at: [23.6, 32.5], flee: [[23.5, 35], [29, 35.5], [33, 33]], area: 'down by the neighbors with the two garage doors' },
+  ];
+  const ROM_OUT_ROUNDS = 4, ROM_TOTAL = ROM_SPOTS.length + ROM_OUT_ROUNDS;
+  G.ROM_INSIDE = ROM_SPOTS.length;
+  G.romChase = () => { const f = flags(); return !!f.romulusMet && !f.romToGolf && !f.romulusBeaten && (f.romHide || 0) < ROM_TOTAL; };
+  // somewhere new to hide outside: not where he just was, not close by, and not on the screen
+  const romPick = (prev) => {
+    const last = ROM_OUT[prev], c = G.play.cam, onScreen = (sp) => sp.at[0] * 16 > c.x - 24 && sp.at[0] * 16 < c.x + G.W + 24 && sp.at[1] * 16 > c.y - 24 && sp.at[1] * 16 < c.y + G.H + 24;
+    let ok = ROM_OUT.map((sp, i) => i).filter((i) => i !== prev && !onScreen(ROM_OUT[i]) && (!last || Math.hypot(ROM_OUT[i].at[0] - last.at[0], ROM_OUT[i].at[1] - last.at[1]) >= 10));
+    if (!ok.length) ok = ROM_OUT.map((sp, i) => i).filter((i) => i !== prev);
+    return ok[Math.floor(Math.random() * ok.length)];
+  };
+  // tuck him away, out of sight, in an outside spot
+  const romTuck = (r, i) => {
+    const sp = ROM_OUT[i], [bx, by, bw, bh] = sp.box;
+    r.x = sp.at[0] * 16; r.y = sp.at[1] * 16;
+    r.hidden = { box: [bx * 16, by * 16, (bx + bw) * 16, (by + bh) * 16], c: [(bx + bw / 2) * 16, (by + bh) * 16 - 6], leafy: sp.leafy };
+    r.solid = false; r.state = 'hide'; r.chase = true; r.walking = false;
+  };
   // put Romulus in his hiding spot, if it's on this map
   S.romSpawn = function (w, map) {
     if (!G.romChase()) return;
-    const sp = ROM_SPOTS[flags().romHide || 0];
-    if (!sp || sp.map !== map) return;
-    w.romulus = w.add(new G.Romulus(sp.at[0] * 16, sp.at[1] * 16, 'hide'));
-    w.romulus.chase = true;
+    const f = flags(), i = f.romHide || 0;
+    if (i < ROM_SPOTS.length) {
+      const sp = ROM_SPOTS[i];
+      if (sp.map !== map) return;
+      w.romulus = w.add(new G.Romulus(sp.at[0] * 16, sp.at[1] * 16, 'hide'));
+      w.romulus.chase = true;
+      return;
+    }
+    if (map !== 'condo') return;
+    if (!ROM_OUT[f.romSpot]) f.romSpot = Math.floor(Math.random() * ROM_OUT.length);
+    w.romulus = w.add(new G.Romulus(0, 0, 'hide'));
+    romTuck(w.romulus, f.romSpot);
   };
   // he bolts along `pts` (pixels); once he's well off screen he's already where he's going
   const runOff = (r, pts) => ({
@@ -6744,16 +6895,30 @@
       return false;
     },
   });
+  // outside: he bolts along `pts` and keeps going until he's off the screen
+  const runAway = (r, pts) => ({
+    start() { this.i = 0; this.n = 0; this.v = [0, 1]; r.walking = true; },
+    update() {
+      const c = G.play.cam;
+      if (++this.n > 240 || r.x < c.x - 20 || r.x > c.x + G.W + 20 || r.y < c.y - 8 || r.y > c.y + G.H + 30) { r.walking = false; return true; }
+      const [tx, ty] = this.i < pts.length ? pts[this.i] : [r.x + this.v[0] * 40, r.y + this.v[1] * 40];
+      const dx = tx - r.x, dy = ty - r.y, d = Math.hypot(dx, dy);
+      if (d <= 3.6) { r.x = tx; r.y = ty; this.i++; return false; }
+      this.v = [dx / d, dy / d];
+      r.x += this.v[0] * 3.6; r.y += this.v[1] * 3.6; r.dir = G.dirToward(dx, dy); r.anim = (r.anim || 0) + 1;
+      return false;
+    },
+  });
   // Nate found him: a yelp, and he's off to the next spot
   S.romulusFound = function* (r) {
     const f = flags(), w = G.play.world, i = f.romHide || 0, spot = ROM_SPOTS[i];
-    if (!spot || !r.chase) return;
+    if (!r.chase) return;
+    if (!spot) { yield* S.romulusFoundOut(r); return; }
     r.chase = false;
     r.dir = P().x > r.x ? 'right' : 'left';
     G.audio.sfx('yelp');
     w.pop(r.x, r.y - 28, 'YELP!', '#f8f8f0');
     yield G.emote(r, 'bang', 24);
-    if (spot.golf) { yield* S.romulusToGolf(r); return; }
     f.romHide = i + 1;
     G.audio.sfx('dash');
     yield runOff(r, spot.run.map(([x, y]) => [x * 16, y * 16]));
@@ -6764,30 +6929,109 @@
       yield* S.bidetFind();
     }
     yield G.say('Nate', spot.line);
-    if (spot.door) { yield G.wait(30); G.audio.sfx('door'); yield G.say('Nate', '...Was that the front door?!'); }
+    if (spot.door) {
+      // ...and he's out the front door, hiding somewhere outside
+      f.romSpot = Math.floor(Math.random() * ROM_OUT.length);
+      yield G.wait(30);
+      G.audio.sfx('door');
+      yield G.say('Nate', '...Was that the front door?!');
+    }
   };
-  // the last spot: he squeezes through the trees behind the patio, onto the golf course
+  // found outside: he pops out of his spot, yelps and bolts. After the fourth time, he goes
+  // around back and through the woods.
+  S.romulusFoundOut = function* (r) {
+    const f = flags(), w = G.play.world, spot = ROM_OUT[f.romSpot] || ROM_OUT[0], p = P();
+    r.chase = false; r.hidden = null; r.solid = true;
+    r.x = spot.at[0] * 16; r.y = spot.at[1] * 16;
+    r.dir = p.x > r.x ? 'right' : 'left';
+    if (spot.leafy) w.burst(r.x, r.y - 10, ['#3a7a34', '#5a9a44', '#7aba5a'], 10, { speed: 1.2, up: 1, g: 0.1, life: 20, size: 2 });
+    G.audio.sfx('yelp');
+    w.pop(r.x, r.y - 28, 'YELP!', '#f8f8f0');
+    yield G.emote(r, 'bang', 24);
+    f.romHide = (f.romHide || 0) + 1;
+    G.audio.sfx('dash');
+    yield runAway(r, spot.flee.map(([x, y]) => [x * 16, y * 16]));
+    if (f.romHide >= ROM_TOTAL) { yield* S.romulusToGolf(r); return; }
+    f.romSpot = romPick(ROM_OUT.indexOf(spot));
+    romTuck(r, f.romSpot);
+    const left = ROM_TOTAL - f.romHide;
+    yield G.say('Nate', [
+      'Gone again! He could be anywhere out here.',
+      'He is SO fast. Where did he go THIS time?',
+      'Come ON, Romulus! I just want to say hi!',
+    ][left % 3]);
+  };
+  // the last time: he runs around back and squeezes through the trees behind the patio, onto
+  // the golf course. The gap is way too small for Nate.
   S.romulusToGolf = function* (r) {
     const f = flags(), w = G.play.world;
+    r.x = 15.5 * 16; r.y = 13.4 * 16; r.chase = false; r.hidden = null;
+    yield G.camFocus(13 * 16, 13 * 16, 40);
     G.audio.sfx('dash');
-    yield runOff(r, [[11.5 * 16, 13.2 * 16]]);
-    w.burst(11 * 16, 13 * 16 - 8, ['#3a7a34', '#5a9a44', '#7a5a38'], 12, { speed: 1.4, up: 1, g: 0.1, life: 22, size: 2 });
+    yield G.walkTo(r, 13.5 * 16, 13.3 * 16, 3.4);
+    yield G.walkTo(r, 11.5 * 16, 13.2 * 16, 3.4);
+    w.burst(11 * 16, 13 * 16 - 8, ['#3a7a34', '#5a9a44', '#7a5a38'], 14, { speed: 1.4, up: 1, g: 0.1, life: 22, size: 2 });
     r.dead = true;
-    yield G.say('Nate', 'He squeezed right through the trees!');
-    yield G.say('Nate', '...Onto the golf course. Romulus, WAIT!');
-    f.romToGolf = true; f.romHide = ROM_SPOTS.length;
-    yield G.say(null, 'Nate pushes through the gap in the trees after him.');
-    G.play.warp('golf', 34, 13, 'left');
+    w.romulus = null;
+    yield G.wait(30);
+    f.romToGolf = true; f.romHide = ROM_TOTAL;
+    yield G.camFocus(null, null, 30);
+    yield G.say('Nate', 'Was that Romulus? Out back?');
+    yield G.say('Nate', 'He squeezed through the trees behind the patio! Onto the golf course!');
+    yield G.say('Nate', 'There\'s no way I fit through that gap. Abe will know what to do.');
   };
-  // the gap in the woods behind the patio, for as long as Romulus is out on the course
+  // the gap in the woods behind the patio
   S.condoWoods = function* () {
     const f = flags();
-    if (f.romToGolf && !f.romulusBeaten) {
-      const c = yield G.ask('Nate', 'There\'s the gap Romulus squeezed through. Go after him?', ['Onto the golf course', 'Not yet']);
+    if (!f.romToGolf || f.romulusBeaten) { yield G.say(null, 'The woods are too thick to get through. The golf course is right there on the other side.'); return; }
+    if (f.romGap) {
+      const c = yield G.ask('Nate', 'There\'s the hole Romulus dragged me through. Back onto the golf course?', ['Onto the golf course', 'Not yet']);
       if (c === 0) G.play.warp('golf', 34, 13, 'left');
       return;
     }
-    yield G.say(null, 'The woods are too thick to get through. The golf course is right there on the other side.');
+    if (G.itemHas('sloth')) { yield* S.slothTug(); return; }
+    yield G.say(null, 'The gap Romulus squeezed through. It\'s about the size of a border collie.');
+    yield G.say('Nate', 'I am not the size of a border collie.');
+    if (!f.slothQuest) yield G.say('Nate', 'Abe will know how to get him back.');
+  };
+  // Squeak the sloth at the gap: Romulus comes crashing back through the trees (HUGE), chomps the
+  // sloth, and Nate does not let go. He gets dragged right through the woods onto the course.
+  S.slothTug = function* () {
+    const f = flags(), w = G.play.world, p = P(), s = G.state;
+    p.dir = 'left';
+    yield G.say('Nate', 'Okay. Here goes.');
+    for (const t of ['*squeak squeak*', '*squeak*']) {
+      G.audio.sfx('squeak'); w.pop(p.x, p.y - 34, t, '#f8e0b0');
+      yield G.wait(45);
+    }
+    yield G.wait(30);
+    G.play.shake(12, 1);
+    w.burst(11 * 16 + 8, p.y - 16, ['#3a7a34', '#5a9a44', '#7a5a38'], 10, { speed: 1, up: 1, g: 0.1, life: 20, size: 2 });
+    yield G.say(null, 'Something is crashing through the trees on the other side. Something BIG.');
+    G.audio.sfx('woof'); G.play.shake(20, 2);
+    const snout = { img: G.spr.romSnout, x: p.x - 48, y: p.y - 24, base: p.y + 40 };
+    w.props.push(snout);
+    w.burst(p.x - 30, p.y - 14, ['#3a7a34', '#5a9a44', '#7a5a38'], 16, { speed: 1.6, up: 1, g: 0.1, life: 24, size: 2 });
+    w.pop(p.x - 30, p.y - 36, 'CHOMP!', '#f8f8f0');
+    yield G.say(null, 'A huge black and white snout shoots out of the trees and CHOMPS the sloth.');
+    yield G.say('Nate', 'ROMULUS?! Why is your nose so BIG?');
+    yield G.say('Nate', 'I am NOT letting go of this sloth.');
+    // tug of war
+    for (let k = 0; k < 4; k++) {
+      G.audio.sfx('bump'); G.play.shake(8, 1);
+      p.x -= 3; snout.x -= 2;
+      yield G.wait(12);
+      p.x += 2; snout.x += 2;
+      yield G.wait(10);
+    }
+    yield G.say(null, 'Romulus pulls. Nate pulls back. Romulus pulls HARDER.');
+    G.audio.sfx('dash'); G.play.shake(24, 3);
+    w.burst(p.x - 20, p.y - 12, ['#3a7a34', '#5a9a44', '#7a5a38', '#f8f8f0'], 24, { speed: 2, up: 1.2, g: 0.1, life: 26, size: 2 });
+    yield G.walkTo(p, p.x - 34, p.y, 4);
+    s.items.sloth = false;
+    f.romGap = true; f.slothQuest = 4;
+    yield G.say(null, 'Nate goes right through the trees.');
+    G.play.warp('golf', 34, 13, 'left');
   };
 
   S.romulusTalk = function* (r) {
@@ -6815,9 +7059,8 @@
   };
 
   // ---------------------------------------------------------------- the golf course: Romulus, huge
-  // (Not connected to anything yet. The user is deciding how Nate gets out here; for now it's
-  // an admin checkpoint and an admin place. The strip of woods between the condo's yard and the
-  // course is where the way through will go: see the TODO in G.MAPS.condo.)
+  // (Nate gets out here by squeaking Romulus's sloth at the gap in the woods behind the patio:
+  // Romulus chomps it from the other side and drags Nate right through. See S.slothTug.)
   // Romulus hates water (he really does), so the way to beat him is the Portable Bidet from
   // under the downstairs bathroom sink. Golfers tee off at Nate the whole time.
   S.romulusFight = function* () {
@@ -6831,6 +7074,7 @@
     w.pop(r.x, r.y - 100, 'WOOF.', '#f8f8f0');
     yield G.wait(40);
     yield G.say('Nate', 'Why are you the size of a GOLF CART?!');
+    if (f.romGap) yield G.say(null, 'Romulus drops the sloth on the green. Gently. Then he looks down at Nate.');
     if (!G.itemHas('bidet')) {
       // (no way to deal with him yet)
       yield G.say('Nate', 'Nope. Not without a plan. Romulus hates water... if only I had something that sprays.');
@@ -6896,6 +7140,12 @@
     const abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: 37 * 16, y: r.y, dir: 'left' }));
     yield G.walkTo(abe, Math.min(34 * 16, r.x + 60), r.y, 1.6);
     yield G.say('Abe', 'ROMULUS! There you are. You can\'t just take off onto the course, buddy.');
+    if (f.romGap) {
+      yield G.say('Abe', 'Hey, you got his sloth back!');
+      yield G.say('Nate', 'Long story. It involves Paul McCartney.');
+      yield G.say('Abe', '...What?');
+      yield G.say('Nate', 'A lady who looks EXACTLY like him.');
+    }
     r.pose = null;
     yield G.walkTo(r, abe.x + 14, abe.y + 4, 3);
     r.pose = 'scared'; r.face = -1;
@@ -7054,8 +7304,8 @@
       w.props.push({ img: sp.entryLantern, x: 11 * 16 + 3, y: 14 * 16, base: 18 * 16 });
       // ---- galley kitchen (x 10-16, y 3-6): stainless fridge, light gray cabinets, white counters,
       // glass-top range with the microwave over it, the sink and dishwasher, and the breakfast bar. From the
-      // user's photo: a white pantry hutch at the end of the galley (16,5; x 16, y 4 stays clear for the
-      // laundry door), a runner rug, and a crock of wooden spoons on the counter.
+      // user's photo: a runner rug and a crock of wooden spoons on the counter. (The white pantry hutch at the
+      // end of the galley is gone: the user asked for it out, it hid Romulus behind the breakfast bar.)
       F.stand(sp.condoFridge, 10, 3, 1, look('A stainless fridge. Nate checks it, just in case. Nobody\'s inside. Good.'));
       F.hang(sp.condoUppers.two, 11, 2, 2, null, 10);
       F.hang(sp.condoUppers.micro, 13, 2, 1, null, 10);
@@ -7067,7 +7317,6 @@
       spot(12, 6, 5, 1, look('The breakfast bar.'));
       w.props.push({ img: sp.kitchenRunner, x: 11 * 16 - 1, y: 4 * 16 + 5, flat: true, base: 0 });
       F.onCounter(sp.utensilCrock, 12, 3, null);
-      F.stand(sp.pantryHutch, 16, 5, 1, look('A white pantry hutch: gold-rimmed glasses, a brown teapot, cookbooks, jars and wicker baskets.'));
       if (f.condoScare) w.abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'down', talk: S.abeCondo }));
       // Romulus: curled up in his bed the first time; then hiding from Nate all over (ROM_SPOTS); back behind
       // the breakfast bar for good once the golf course is behind him
@@ -7192,7 +7441,7 @@
       F.stand(sp.closetShelves, 21, 3, 2, look('Shelves crammed with stuff: a LEGO Technic box, a shoe box, a coil of yellow guitar cable, and a framed jersey number 5, signed by everybody.'));
       w.props.push({ img: sp.hangingClothes, x: 23 * 16, y: 35, base: 3 * 16 + 15, hit: [23 * 16, 3 * 16, 26 * 16, 4 * 16], talk: look('Jackets, a plaid shirt, and a garment bag on the rod.') });
       w.blockTiles(23, 3, 3, 1);
-      F.stand(sp.caseBlack, 24, 4, 1, look('A black guitar case. Probably a guitar in it. Probably.'));
+      F.stand(sp.caseBlack, 24, 4, 1, () => S.closetCase());
       F.stand(sp.caseTweed, 25, 4, 1, look('A tweed guitar case. "Vintage," Abe would say.'));
       F.stand(sp.guitarAcoustic, 21, 5, 1, look('A sunburst acoustic guitar on a stand. One of Abe\'s. There are a LOT of Abe\'s guitars.'));
       F.stand(sp.guitarElectric, 22, 5, 1, look('A black electric guitar with a white pickguard. Another one of Abe\'s.'));
@@ -7320,10 +7569,10 @@
       const F = furnish(w), sp = G.spr;
       // FURNITURE (photos pending): anything else that lives in storage (open floor around x 3-9, y 4-5).
       const cables = [
-        look('Yellow guitar cables. A TON of them. Abe bought them to sell on eBay.'),
-        look('More yellow guitar cables. They might be multiplying.'),
-        look('Yellow guitar cables, all the way down. The eBay empire is still in the warehouse phase.'),
-      ];
+        'Yellow guitar cables. A TON of them. Abe bought them to sell on eBay.',
+        'More yellow guitar cables. They might be multiplying.',
+        'Yellow guitar cables, all the way down. The eBay empire is still in the warehouse phase.',
+      ].map((t) => () => S.storageCable(t));
       F.stand(sp.cableTotes, 1, 3, 1, cables[0]);
       F.stand(sp.storageBoxes, 2, 3, 2, look('Boxes. Taped, half taped, and not taped at all.'));
       F.stand(sp.cableBox, 4, 3, 2, cables[1]);
@@ -7343,5 +7592,231 @@
         yield G.say('Nate', 'Whoa. That is a LOT of yellow guitar cables.');
       })();
     },
+  };
+  // ================================================================ EL TORO LOCO
+  // Down the main road from Abe and Hannah's (from the user's photos). Abe left Romulus's sloth
+  // in a booth here, and a woman who looks EXACTLY like Paul McCartney found it. She'll trade it
+  // for a bass and a cable: she's on at open mic night in the cantina, and her bass is busted.
+  // slothQuest: 1 Abe told Nate, 2 she asked for the bass and cable, 3 traded (Nate has the
+  // sloth), 4 Romulus dragged Nate through the woods with it.
+  S.paulLady = function* () {
+    const f = flags(), s = G.state, w = G.play.world, p = P(), L = 'Paul McCartney Lady';
+    if ((f.slothQuest || 0) < 2) {
+      yield G.say(null, 'A woman is sitting in a booth with a basket of chips. Next to her, sitting up very straight, is a big fluffy sloth.');
+      yield G.say('Nate', 'That\'s Romulus\'s sloth!');
+      yield G.say('Nate', '...Also. Whoa.');
+      yield G.say('Nate', 'Has anybody ever told you that you look EXACTLY like Paul McCartney?');
+      yield G.say(L, 'Every single day of my life, honey.');
+      f.ladyMet = true;
+      yield G.say(L, 'Found this fella in the booth when I sat down. He\'s been keeping me company.');
+      yield G.say('Nate', 'He\'s Romulus\'s. Abe and Hannah\'s dog. Romulus ran off onto the golf course, and this sloth is the only thing that\'ll bring him back.');
+      yield G.say(L, 'Oh, I\'d give him right back. Only I\'ve got a problem.');
+      yield G.say(L, 'It\'s open mic night in the cantina, and I\'m on tonight. And my bass is busted. The neck snapped clean off.');
+      yield G.say(L, 'Find me a bass, and a cable to plug it in with, and the sloth\'s all yours. Deal?');
+      if (G.itemHas('bass')) {
+        yield G.say('Nate', 'I have a bass!');
+        yield G.say(null, 'Nate holds up his half-finished bass.');
+        yield G.say(L, '...It\'s got no strings, honey.');
+        yield G.say('Nate', 'It\'s half finished.');
+        yield G.say(L, 'So it\'s half a bass.');
+      }
+      yield G.say('Nate', 'Abe has a whole closet full of guitars. There\'s got to be a bass in there. And about a thousand yellow cables in his storage room.');
+      f.slothQuest = 2;
+      return;
+    }
+    if (f.slothQuest === 2) {
+      const bass = !!s.items.abeBass, cable = !!s.items.yellowCable;
+      if (!bass || !cable) {
+        yield G.say(L, 'A bass and a cable, honey. Then he\'s all yours.');
+        yield G.say('Nate', !bass && !cable ? 'Abe\'s closet is upstairs, and the yellow cables are in the storage room by the driveway.' : !bass ? 'I still need a bass. Abe\'s closet is upstairs.' : 'I still need a cable. Abe\'s storage room, by the driveway, is full of them.');
+        return;
+      }
+      yield* S.ladyTrade();
+      return;
+    }
+    f.ladyLine = ((f.ladyLine || 0) + 1) % 3;
+    yield G.say(L, f.romulusBeaten
+      ? ['Did you get your dog back? Good. Tell Abe his bass is in good hands. Left ones.', 'Every single day. "Has anybody ever told you..." Yes, honey. They have.', 'Come back for open mic next week. Bring the dog.'][f.ladyLine]
+      : ['Go get your dog, honey.', 'This bass plays beautiful. Upside down.', 'Every single day. "Has anybody ever told you..." Yes, honey. They have.'][f.ladyLine]);
+  };
+  // the trade: she flips Abe's bass over (she's left-handed), plays her open mic number, and
+  // hands over the sloth
+  S.ladyTrade = function* () {
+    const f = flags(), s = G.state, w = G.play.world, lady = w.lady, L = 'Paul McCartney Lady';
+    yield G.say('Nate', 'One bass, from Abe\'s closet. And one yellow guitar cable, from Abe\'s "inventory."');
+    yield G.say(L, 'Oh, she\'s a beauty.');
+    yield G.say(null, 'She flips the bass upside down.');
+    yield G.say('Nate', 'Um. You\'re holding it upside down.');
+    yield G.say(L, 'I\'m left-handed, honey. I just play it upside down.');
+    yield G.say('Nate', '...Of course you do.');
+    f.bassGiven = true;
+    // up onto the stage for her number
+    w.slothProp.hide = true;
+    yield G.walkTo(lady, 16 * 16 + 8, 5 * 16 + 10, 1.2);
+    yield G.walkTo(lady, 17 * 16 + 8, 4 * 16 + 2, 1.2);
+    lady.dir = 'down';
+    w.heldBass.show = true;
+    yield G.wait(20);
+    G.audio.sfx('bassRiff');
+    for (const t of ['*bwum*', '*bwum bwum*', '*bwuuum*']) { w.pop(lady.x, lady.y - 30, t, '#f8c878'); yield G.wait(28); }
+    yield G.wait(20);
+    G.audio.sfx('clap');
+    for (const d of w.diners) w.pop(d.x, d.y - 30, '*clap clap*', '#f8f8f0');
+    yield G.wait(40);
+    yield G.say(L, 'Thank you! Thank you very much.');
+    yield G.say(L, 'And a deal\'s a deal, honey. Catch!');
+    G.audio.sfx('squeak');
+    s.items.sloth = true; f.slothQuest = 3;
+    yield G.itemGet(G.spr.slothIcon, 'You got {y}Romulus\'s Sloth{/}!');
+    yield G.say(null, 'Nate gives it a squeeze.');
+    G.audio.sfx('squeak');
+    yield G.say('Nate', '*squeak*');
+    yield G.say(L, 'I\'ll hang on to the bass for tonight, if that\'s alright.');
+    yield G.say('Nate', 'Abe\'s going to notice.');
+    yield G.say(L, 'You said he has a whole closet full.');
+    yield G.say('Nate', '...That\'s fair.');
+    yield G.say('Nate', 'Back to the woods behind Abe and Hannah\'s patio. Time to squeak this thing.');
+    G.play.autosave();
+  };
+  S.toroServer = function* () {
+    const f = flags();
+    f.serverLine = ((f.serverLine || 0) + 1) % 3;
+    yield G.say('Server', ['Welcome to El Toro Loco! Sit anywhere you like.', 'Chips and salsa are on the house. The salsa is HOT, though. Fair warning.', 'Open mic starts soon, over in the cantina.'][f.serverLine]);
+  };
+  const DINER_LINES = [
+    ['The queso here. THE QUESO.', 'We come every Tuesday. And most Wednesdays.'],
+    ['Is that lady over there... no. Never mind. She just looks like him.', 'I asked her for an autograph once. She signed it "Not Paul."'],
+    ['I\'m here for the open mic. My buddy\'s doing a spoken-word piece about his truck.', 'Don\'t tell the server, but I\'m on my third basket of chips.'],
+  ];
+  S.toroDiner = (i) => function* () {
+    const f = flags(), k = 'dinerLine' + i;
+    f[k] = ((f[k] || 0) + 1) % 2;
+    yield G.say('Diner', DINER_LINES[i][f[k]]);
+  };
+  S.toroLeave = function* () {
+    const p = P();
+    const c = yield G.ask('Nate', 'Head back up the main road to Abe and Hannah\'s?', ['Back to the condo', 'Stay']);
+    if (c === 0) G.play.warp('condo', 55, 37, 'up');
+    else yield G.walkTo(p, p.x, p.y + 16, 1);
+  };
+
+  // Outside: the main road along the left, the parking lot, the building, and the big sign out on
+  // the grass by the lot entrance.
+  G.MAPS.toroLoco = {
+    name: 'El Toro Loco',
+    music: 'home',
+    tiles() {
+      const W = 30, H = 17;
+      const g = Array.from({ length: H }, () => Array(W).fill('.'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(0, 0, 4, H, 'a');          // the main road, back up to Abe and Hannah's street
+      fill(5, 7, 19, 1, 'C');         // the sidewalk along the front
+      fill(4, 8, 20, 9, 'a');         // the parking lot
+      for (const [x, y] of [[6, 0], [10, 0], [14, 0], [18, 0], [22, 0], [26, 1], [27, 5]]) g[y][x] = 'T';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr;
+      // the double yellow line down the main road, and the parking stalls
+      w.props.push({
+        img: null, x: 0, y: 0, flat: true, base: 0,
+        draw(ctx, cx, cy) {
+          ctx.fillStyle = '#e8c838';
+          for (let y = 0; y < w.ph; y += 1) { ctx.fillRect(31 - cx, y - cy, 1, 1); ctx.fillRect(33 - cx, y - cy, 1, 1); }
+          ctx.fillStyle = '#e8e8e0';
+          for (let x = 5; x <= 23; x += 2) ctx.fillRect(x * 16 - cx, 8 * 16 + 2 - cy, 1, 34);
+          ctx.fillRect(5 * 16 - cx, 10 * 16 + 4 - cy, 18 * 16, 1);
+          for (let x = 5; x <= 23; x += 2) ctx.fillRect(x * 16 - cx, 14 * 16 + 4 - cy, 1, 44);
+          ctx.fillRect(5 * 16 - cx, 14 * 16 + 4 - cy, 18 * 16, 1);
+        },
+      });
+      // the building (the door is under the little green awning)
+      w.addProp({ img: sp.toroFront, tx: 6, ty: 2, h: 5 });
+      w.blockTiles(6, 2, 16, 5);
+      for (const x of [11, 12]) w.block[6 * w.w + x] = 0;
+      w.addWarp(11, 6, 2, 1, 'toroLocoIn', 9, 11, 'up');
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [6 * 16, 5 * 16, 11 * 16, 7 * 16], talk: look('Dark tinted windows. Inside: red booths, and a LOT of little flags.') });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [13 * 16, 5 * 16, 22 * 16, 7 * 16], talk: look('El Toro Loco. Restaurante Mexicano. It smells like fajitas out here.') });
+      // the big sign, out on the grass by the road
+      w.addProp({ img: sp.toroSign, tx: 25, ty: 9, h: 6, dx: -23, solid: [25, 14, 2, 1], hit: [25, 14, 2, 1], talk: look('The big sign: EL TORO LOCO. Restaurante Mexicano, and CANTINA. The bull looks like he means it.') });
+      // cars, nosed in toward the building
+      const car = (img, tx, text) => w.addProp({ img, tx, ty: 8, h: 3, dx: 3, dy: -2, solid: [tx, 8, 2, 2], hit: [tx, 8, 2, 2], talk: look(text) });
+      car(sp.toroCars.gray, 7, 'A dark gray SUV.');
+      car(sp.toroCars.white, 9, 'A little white car. Somebody\'s in there right now, eating chips.');
+      car(sp.toroCars.red, 19, 'A red SUV. There\'s a bumper sticker: "I BRAKE FOR QUESO."');
+      w.addProp({ img: sp.toroCars.blue, tx: 13, ty: 14, h: 3, dx: 3, dy: -2, solid: [13, 15, 2, 2], hit: [13, 15, 2, 2], talk: look('A blue SUV, backed in. Somebody wanted a quick getaway. With leftovers.') });
+      // up the road: back to the condo; down the road: more of Chesapeake
+      w.addTrigger(0, 0, 4, 1, () => G.script.run(S.toroLeave()));
+      w.addTrigger(0, 16, 4, 1, () => G.script.run(S.condoNeighborhood()));
+    },
+  };
+
+  // Inside: red booths along both walls, tables with black chairs in the middle, the cantina bar,
+  // and the little stage for open mic night.
+  const TF = 'ó', TW = 'ñ';
+  G.MAPS.toroLocoIn = {
+    name: 'El Toro Loco',
+    music: 'house',
+    tiles() {
+      const W = 20, H = 13;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 18, 2, TW);           // orange walls under dark beams
+      fill(1, 3, 18, 9, TF);           // saltillo tile
+      fill(1, 12, 8, 1, 'G'); fill(10, 12, 9, 1, 'G'); g[12][9] = 'x'; // the front windows and the door
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr, f = flags();
+      // the top wall: little flags all along it, the desert mural, a soccer ball, the metal sun,
+      // the bar's bottle shelf, beer signs and the kitchen door
+      F.hang(sp.toroMural, 2, 2, 4, look('A mural: a desert, purple mountains, a big blue sky, and a whole lot of agave.'), 5);
+      F.hang(sp.soccerBall, 1, 2, 1, look('A soccer ball, hanging on the wall. Nobody is allowed to kick it.'), 14);
+      F.hang(sp.beerGreen, 6, 2, 1, null, 12);
+      F.hang(sp.sunFace, 7, 2, 1, look('A metal sun with a face. He looks happy to be here.'), 10);
+      F.hang(sp.toroBottles, 9, 2, 4, look('Bottles and bottles of tequila. The cantina is open.'), 4);
+      F.hang(sp.kitchenDoor, 13, 2, 1, look('The kitchen. It smells AMAZING in there.'), 0);
+      F.hang(sp.beerSurf, 14, 2, 1, null, 12);
+      w.props.push({ img: sp.buntingWall, x: 16, y: 16 + 3, base: 0, flat: true });
+      // the cantina bar, and three red stools
+      F.stand(sp.toroBar, 9, 3, 4, look('The cantina bar. Dark wood, and a lot of limes.'));
+      for (const x of [9, 10, 12]) w.addProp({ img: sp.barStool, tx: x, ty: 4, dx: 3, solid: [x, 4, 1, 1] });
+      // the open mic stage, in the corner
+      const stageLook = look('The little stage in the cantina: a mic, an amp and a stool. Open mic night!');
+      w.addProp({ img: sp.toroStage, tx: 16, ty: 3, h: 2, flat: true, solid: [16, 3, 3, 2], hit: [16, 3, 3, 2], talk: () => ((flags().slothQuest || 0) >= 3 ? S.paulLady() : stageLook()) });
+      F.stand(sp.openMicSign, 15, 4, 1, look('A chalkboard: OPEN MIC! Underneath, smaller: "Sign up at the bar. No more spoken word about trucks."'));
+      // a peach pillar hung with garlic
+      F.stand(sp.garlicPillar, 8, 7, 1, look('A pillar hung with a strand of garlic. For flavor, or for vampires. Possibly both.'));
+      // booths along both walls (the back bench, then the table and the front bench)
+      const booth = (bx, by, chips, talk) => {
+        w.addProp({ img: sp.boothBack, tx: bx, ty: by, base: by * 16 + 2, solid: [bx, by, 2, 1] });
+        return w.addProp({ img: chips ? sp.boothFront : sp.boothFrontBare, tx: bx, ty: by + 1, solid: [bx, by + 1, 2, 1], hit: [bx, by + 1, 2, 1], talk: talk || look('A red booth. Chips, salsa, and a caddy of hot sauce.') });
+      };
+      w.diners = [];
+      const diner = (sprite, x, y, i) => { const d = w.add(new G.NPC({ sprite, name: 'Diner', x: x * 16 + 8, y: y * 16 + 14, dir: 'down', talk: S.toroDiner(i) })); w.diners.push(d); return d; };
+      booth(1, 3, true, S.toroDiner(0)); diner('toroDiner1', 1, 3, 0);
+      booth(1, 6, false);
+      booth(1, 9, true, S.toroDiner(2)); diner('toroDiner2', 1, 9, 2);
+      booth(17, 9, true, S.toroDiner(1)); diner('toroDiner3', 18, 9, 1);
+      // the Paul McCartney Lady's booth (by the stage), with the sloth sitting next to her, until
+      // the trade; then she's up on the stage with Abe's bass
+      const traded = (f.slothQuest || 0) >= 3;
+      const ladyBooth = look('Her booth. She left a few chips. Nate respects that.');
+      booth(17, 6, true, () => ((flags().slothQuest || 0) >= 3 ? ladyBooth() : S.paulLady()));
+      w.lady = w.add(new G.NPC({ sprite: 'paulLady', name: 'Paul McCartney Lady', x: 17 * 16 + 8, y: traded ? 4 * 16 + 2 : 6 * 16 + 14, dir: 'down', talk: S.paulLady }));
+      w.slothProp = { img: sp.slothPlush, x: 18 * 16, y: 6 * 16 - 2, base: 6 * 16 + 14, hide: traded, draw(ctx, cx, cy) { if (!this.hide) ctx.drawImage(this.img, this.x - cx, this.y - cy); } };
+      w.props.push(w.slothProp);
+      w.heldBass = { img: sp.bassHeld, x: 0, y: 0, base: 0, show: traded, draw(ctx, cx, cy) { if (this.show) ctx.drawImage(this.img, Math.round(w.lady.x - 10) - cx, Math.round(w.lady.y - 12) - cy); } };
+      w.props.push(w.heldBass);
+      // tables with black chairs in the middle
+      for (const [x, y] of [[4, 6], [4, 9], [12, 6], [12, 9]]) F.stand(sp.toroTable, x, y, 2, look('A dark wood table with black chairs. The hot sauce is the good kind.'));
+      // the server
+      w.add(new G.NPC({ sprite: 'toroServer', name: 'Server', x: 11 * 16 + 8, y: 5 * 16 + 14, dir: 'down', talk: S.toroServer }));
+      // overhead: frosted glass lamps on brass chains, and more strings of flags across the room
+      for (const [x, y] of [[5, 5], [13, 5], [5, 8], [13, 8]]) w.props.push({ img: sp.toroLamp, x: x * 16 - 7, y: y * 16 - 22, base: 9999 });
+      for (const y of [5, 8]) w.props.push({ img: sp.buntingRoom, x: 16, y: y * 16 + 2, base: 9999 });
+      w.addWarp(9, 12, 1, 1, 'toroLoco', 11, 7, 'down');
+    },
+    tick(w) { if (w.heldBass) w.heldBass.base = w.lady.y + 1; },
   };
 })();
