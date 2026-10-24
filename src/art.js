@@ -8261,9 +8261,252 @@
     return cv;
   }
 
+  // ================================================================ DAD'S PIPES AND TOBACCO TINS (the pipe bench)
+  // The pipes Dad made, from his photos and his pipe journal, drawn from a little geometry: a bowl
+  // (its shape, the rim, how wide and tall), a shank, a stem (a curve, straight or bent) and maybe
+  // a silver band where they meet. The design space is 64x34; pipeArt draws it at any scale (the
+  // pipe book, the stain bench, a menu icon), and `parts` says what each pixel is (for the stain).
+  const PIPE_GEO = {
+    // the one Dad gave Nate (the pipe icon, bigger)
+    dad: { bowl: { shape: 'cyl', cx: 50, top: 10, w: 15, h: 16, rb: 5 }, shank: [44, 20, 33, 20, 7, 6.5], stem: [[33, 20], [20, 20], [7, 17.5]], st: [5.5, 4], grain: 'straight', wood: '#9a5530' },
+    // P12: a block with "many many flaws," made small, sandblasted for practice, dyed black
+    black: { bowl: { shape: 'cyl', cx: 50, top: 8, wTop: 15, wBot: 14, h: 18, rb: 5 }, shank: [44, 20, 23, 20.5, 7.5, 6.5], stem: [[23, 20.5], [14, 20.5], [5, 21]], st: [5.5, 3.5], blastShank: true, grain: 'blast', wood: '#2e2a2e' },
+    // P3 / P13: his first sandblast, a Dublin, in Cordovan leather dye (the shank left smooth)
+    cordovan: { bowl: { shape: 'cyl', cx: 49, top: 6, wTop: 18, wBot: 13, h: 21, rb: 6 }, shank: [43, 21, 29, 19.5, 7.5, 6.5], stem: [[29, 19.5], [16, 18.5], [4, 13]], st: [5.5, 3.5], grain: 'blast', wood: '#3e1e1c', shankWood: '#6a2820' },
+    // P14: a squashed tomato with a silver band
+    silver: { bowl: { shape: 'squash', cx: 50, top: 11, w: 19, h: 14 }, shank: [42, 19.5, 36, 19.5, 7, 7], band: 2.5, stem: [[36, 19.5], [22, 19.5], [8, 19.5]], st: [6, 4.5], grain: 'birdseye', wood: '#a8442a' },
+    // P15: the long-stem prince (a practice tomato that "turned out GREAT")
+    prince: { bowl: { shape: 'squash', cx: 53, top: 10, w: 19, h: 15 }, shank: [45, 19, 40, 19, 6.5, 6], stem: [[40, 19], [21, 19], [3, 19]], st: [5, 3], grain: 'straight', wood: '#b04c2c' },
+    // P16 / P8: a king-sized bent billiard in British tan
+    tan: { bowl: { shape: 'ball', cx: 48, top: 9, w: 19, h: 18 }, shank: [41, 21, 31, 16, 8, 6.5], stem: [[31, 16], [17, 10], [4, 9.5]], st: [6, 3.5], grain: 'straight', wood: '#c06428' },
+    // P17: a copy of a Castello (long shank, short stem, like his Caminetto)
+    castello: { bowl: { shape: 'cyl', cx: 52, top: 8, w: 15, h: 18, rb: 6 }, shank: [46, 20, 22, 20, 7.5, 7], stem: [[22, 20], [16, 20], [10, 20]], st: [6, 4.5], grain: 'straight', wood: '#c4703a' },
+    // 18P: the Strawberry Briar (no stain, just Danish oil, sanded to 1500)
+    strawberry: { bowl: { shape: 'cyl', cx: 49, top: 7, wTop: 17, wBot: 15, h: 19, rb: 7.5 }, shank: [42, 20.5, 33, 17, 8, 6.5], stem: [[33, 17], [18, 12], [5, 6.5]], st: [6, 3.5], grain: 'strawberry', wood: '#d8945a' },
+    // P4 / P7: Abe's "Minecraft pipe": eight panels, bevels on the bottom (not the top), a square shank
+    minecraft: { bowl: { shape: 'oct', cx: 50, top: 9, w: 16, h: 17, rb: 4 }, shank: [44, 20, 26, 20, 7, 7], square: true, stem: [[26, 20], [17, 20], [8, 20]], st: [5, 3], grain: 'panels', wood: '#7a4426' },
+  };
+  // the bowl's half-width at height Y (or -1 outside it)
+  function bowlHW(b, Y) {
+    const k = (Y - b.top) / b.h;
+    if (k < 0 || k > 1) return -1;
+    if (b.shape === 'ball' || b.shape === 'squash') {
+      // a sphere (or a squashed one) with the top sliced off for the rim
+      const cy = b.top + b.h * (b.shape === 'ball' ? 0.4 : 0.3), ry = b.top + b.h - cy, d = (Y - cy) / (Y < cy ? ry * 1.25 : ry);
+      return (b.w / 2) * Math.sqrt(Math.max(0, 1 - d * d));
+    }
+    const wt = b.wTop || b.w, wb = b.wBot || b.w, hw = (wt + (wb - wt) * k) / 2, rb = Math.min(b.rb || 4, hw), dy = Y - (b.top + b.h - rb);
+    if (dy <= 0) return hw;
+    return b.shape === 'oct' ? hw - dy : hw - rb + Math.sqrt(Math.max(0, rb * rb - dy * dy));
+  }
+  // where a point sits on a thick line: { d: across (-1 top .. 1 bottom), t: along } or null
+  function onThick(X, Y, ax, ay, bx, by, th0, th1) {
+    const dx = bx - ax, dy = by - ay, len2 = dx * dx + dy * dy, t = Math.max(0, Math.min(1, ((X - ax) * dx + (Y - ay) * dy) / len2));
+    const len = Math.sqrt(len2), nx = -dy / len, ny = dx / len, across = (X - ax) * nx + (Y - ay) * ny;
+    const along = ((X - ax) * dx + (Y - ay) * dy) / len2;
+    if (along < -0.02 || along > 1.02) return null;
+    const half = (th0 + (th1 - th0) * t) / 2;
+    return Math.abs(across) <= half ? { d: (-across / half) * (dx < 0 ? 1 : -1), t } : null;
+  }
+  const pipeCache = {};
+  function pipeArt(id, scale = 1, opts = {}) {
+    const key = [id, scale, opts.wood, opts.shankWood, opts.parts].join('|');
+    if (pipeCache[key]) return pipeCache[key];
+    const g = PIPE_GEO[id], b = g.bowl, W = Math.ceil(64 * scale), H = Math.ceil(34 * scale), p = new Pix(W, H), parts = new Uint8Array(W * H);
+    const wood = opts.wood || g.wood, shankWood = opts.shankWood || (opts.wood ? opts.wood : g.shankWood || g.wood);
+    const thin = (th) => Math.max(th, 1.6 / scale), fine = scale >= 0.6;
+    // the stem's curve, as short straight pieces
+    const [s0, s1, s2] = g.stem, pts = [];
+    for (let i = 0; i <= 16; i++) { const t = i / 16, u = 1 - t; pts.push([u * u * s0[0] + 2 * u * t * s1[0] + t * t * s2[0], u * u * s0[1] + 2 * u * t * s1[1] + t * t * s2[1]]); }
+    let stemLen = 0;
+    for (let i = 1; i < pts.length; i++) stemLen += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    const hwTop = bowlHW(b, b.top + 0.01), capRy = Math.max(1.4, hwTop * 0.24);
+    const [x0, y0, x1, y1, th0, th1] = g.shank;
+    for (let py = 0; py < H; py++) for (let px = 0; px < W; px++) {
+      const X = (px + 0.5) / scale, Y = (py + 0.5) / scale;
+      let c = null, part = 0;
+      // the bowl, with its rim seen from a little above (and the dark chamber inside)
+      const hw = bowlHW(b, Y), inCap = Y < b.top && ((X - b.cx) / hwTop) ** 2 + ((Y - b.top) / capRy) ** 2 <= 1;
+      if ((hw >= 0 && Math.abs(X - b.cx) <= hw) || inCap) {
+        if (((X - b.cx) / (hwTop * 0.68)) ** 2 + ((Y - b.top) / (capRy * 0.62)) ** 2 <= 1) { c = '#1c120e'; part = 5; } else {
+          const u = inCap ? 0 : (X - b.cx) / Math.max(0.5, hw), k = (Y - b.top) / b.h;
+          let s = inCap ? 0.14 : -0.3 * u + (u > -0.62 && u < -0.38 ? 0.1 : 0) - (k > 0.8 ? (k - 0.8) * 0.6 : 0);
+          let col = wood;
+          if (g.grain === 'panels' && !inCap) {
+            // eight flat panels: three of them face us
+            s = u < -0.36 ? 0.12 : u > 0.36 ? -0.16 : 0;
+            if (Math.abs(Math.abs(u) - 0.36) < 0.5 / (hw * scale) + 0.04) s = -0.24;
+          }
+          if (fine) {
+            if (g.grain === 'blast') s += (G.hash(px, py, 3) - 0.5) * 0.3 + (Math.sin((Y + Math.sin(X * 0.7) * 1.5) * 2.2) > 0.55 ? 0.1 : 0);
+            else if (g.grain === 'straight' && (px + Math.round(Math.sin(py * 0.3) * 1.5)) % 3 === 0) s -= 0.07;
+            else if ((g.grain === 'birdseye' || g.grain === 'panels') && G.hash(px, py, 5) < 0.05) s -= 0.2;
+            else if (g.grain === 'strawberry') {
+              if (G.hash(px, py, 6) < 0.07) col = shade('#a8403a', (G.hash(px, py, 8) - 0.5) * 0.2);
+              else if ((px + Math.round(Math.sin(py * 0.3) * 1.5)) % 4 === 0) s -= 0.05;
+            }
+          }
+          c = shade(col, s); part = 1;
+        }
+      } else {
+        // the shank (sandblasted too on the black one), then the band and the stem
+        const sh = onThick(X, Y, x0, y0, x1, y1, th0, th1);
+        if (sh) {
+          let s = g.square ? (sh.d < -0.3 ? 0.12 : sh.d > 0.35 ? -0.18 : 0) : -0.22 * sh.d;
+          if (fine && g.blastShank) s += (G.hash(px, py, 3) - 0.5) * 0.3;
+          else if (fine && py % 3 === 0 && g.grain !== 'blast') s -= 0.05;
+          c = shade(shankWood, s); part = 2;
+        } else {
+          let acc = 0;
+          for (let i = 1; i < pts.length && !c; i++) {
+            const a = pts[i - 1], q = pts[i], seg = Math.hypot(q[0] - a[0], q[1] - a[1]);
+            const t0 = acc / stemLen, t1 = (acc + seg) / stemLen;
+            acc += seg;
+            const th = (t) => thin(g.st[0] + (g.st[1] - g.st[0]) * t) * (t > 0.93 ? 1.25 : 1);
+            const hit = onThick(X, Y, a[0], a[1], q[0], q[1], th(t0), th(t1));
+            if (!hit) continue;
+            const along = (t0 + (t1 - t0) * hit.t) * stemLen;
+            if (g.band && along < g.band) { c = hit.d < -0.3 ? '#ffffff' : hit.d > 0.4 ? '#8a8e98' : '#d8dce4'; part = 3; }
+            else { c = hit.d < -0.35 ? '#4a4a56' : hit.d > 0.5 ? '#101014' : '#1c1c22'; part = 4; }
+          }
+        }
+      }
+      if (c) { p.set(px, py, c); parts[py * W + px] = part; }
+    }
+    p.outline();
+    const cv = p.canvas();
+    cv.parts = parts;
+    return (pipeCache[key] = cv);
+  }
+  // how wide the bowl is at k (0 at the rim, 1 at the heel), as a share of its widest
+  function pipeProfile(id, k) {
+    const b = PIPE_GEO[id].bowl;
+    let max = 0;
+    for (let i = 0; i <= 40; i++) max = Math.max(max, bowlHW(b, b.top + (b.h * i) / 40));
+    return Math.max(0, bowlHW(b, b.top + Math.min(0.999, Math.max(0.001, k)) * b.h)) / max;
+  }
+
+  // ---- the tobacco tins from Dad's pipe journal (from photos of the real tins; nobody seems to
+  // have photographed a tin of Craven's Claw, so that label is a guess)
+  function ell(p, cx, cy, rx, ry, c, lower) {
+    for (let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++) for (let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++) {
+      if (lower && y + 0.5 < cy) continue;
+      if (((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 <= 1) p.set(x, y, c);
+    }
+  }
+  // a line of tiny "writing" (too small to read, the way a label looks from across the room)
+  function squig(p, x0, x1, y, c) { for (let x = x0; x <= x1; x++) if ((x - x0) % 5 !== 4) p.set(x, y - ((x * 7) % 3 === 0 ? 1 : 0), c); }
+  // a round tin seen from a little above: its side, then the lid (rim and face). label() draws on
+  // the face, which is centered at (16, 9.5) and about 25x14.
+  function roundTin(side, rim, face, label) {
+    const p = new Pix(32, 25);
+    ell(p, 16, 14.5, 14.5, 8.5, shade(side, -0.25), true);
+    p.rect(2, 9, 28, 6, side);
+    p.rect(4, 11, 2, 7, shade(side, 0.25));
+    ell(p, 16, 9.5, 14.5, 8.5, rim);
+    ell(p, 16, 9.5, 12.8, 7.3, face);
+    const inFace = (x, y) => ((x + 0.5 - 16) / 12.8) ** 2 + ((y + 0.5 - 9.5) / 7.3) ** 2 <= 1;
+    label(p, inFace);
+    return finish(p);
+  }
+  function tinArt(id) {
+    const gold = '#e0b848', ink = '#18141a';
+    switch (id) {
+      case 'orlik': return roundTin('#b01c24', gold, '#d42830', (p, inFace) => {
+        // gold bands across the lid, the black oval with "Orlik" in white, the little old man on top
+        for (let x = 3; x < 29; x++) for (const y of [6, 13]) if (inFace(x, y)) p.set(x, y, '#e8c050');
+        ell(p, 16, 9.5, 6.5, 2.8, ink); ell(p, 16, 9.5, 5.5, 2, '#2a2228');
+        squig(p, 12, 20, 10, '#f8f8f0');
+        p.rect(15, 2, 2, 3, '#f4ece0'); p.set(15, 2, '#e8b8a0'); p.set(16, 5, '#f4ece0');
+        squig(p, 11, 21, 15, '#f8d040');
+      });
+      case 'capstan': {
+        // square, gold-edged, sky blue, with a navy banner and the little tower on top
+        const p = new Pix(32, 25);
+        p.rect(3, 17, 26, 5, '#b89038'); p.rect(4, 18, 2, 4, '#e0c060');
+        p.rect(2, 2, 28, 16, gold); p.rect(3, 1, 26, 18, gold);
+        p.rect(4, 3, 24, 13, '#a8d8e8'); p.hline(4, 27, 3, '#c8ecf4');
+        p.rect(6, 8, 20, 4, '#1a2a5a'); squig(p, 9, 22, 10, '#f8f8f0');
+        p.rect(15, 4, 2, 4, '#1a2a5a'); p.set(15, 3, '#1a2a5a'); p.set(16, 3, '#1a2a5a'); p.hline(14, 17, 7, '#1a2a5a');
+        squig(p, 11, 20, 14, '#3a4a7a');
+        return finish(p);
+      }
+      case 'oldGowrie': {
+        // a tall yellow can (100g) with a silver lid: the R monogram, the name, an etched scene
+        const p = new Pix(32, 25);
+        ell(p, 15.5, 22, 8.5, 2.5, '#b08810', true);
+        p.rect(7, 4, 17, 19, '#f0c020');
+        p.rect(8, 4, 2, 19, '#f8e070'); p.rect(21, 4, 3, 19, '#c89a10');
+        ell(p, 15.5, 4, 8.5, 2.6, '#9aa0a8'); ell(p, 15.5, 3.6, 7.5, 1.9, '#d0d4dc');
+        ell(p, 15.5, 8.5, 2.2, 2.2, '#6a4a14'); ell(p, 15.5, 8.5, 1.3, 1.3, '#f0c020'); p.set(15, 8, '#6a4a14');
+        squig(p, 10, 21, 12, '#5a3a10'); squig(p, 11, 20, 14, '#5a3a10');
+        for (let x = 9; x < 22; x++) { p.set(x, 18 + Math.round(Math.sin(x * 0.9)), '#7a5a20'); if (x % 3 === 0) p.set(x, 20, '#7a5a20'); }
+        return finish(p);
+      }
+      case 'margate': return roundTin('#b89038', gold, '#f2e8cc', (p) => {
+        // cream lid, a ring of small green writing, "Margate" in big red script
+        for (let a = 0; a < 40; a++) if (a % 2) { const t = (a / 40) * Math.PI * 2; p.set(16 + Math.cos(t) * 10.8, 9.5 + Math.sin(t) * 5.8, '#3a7a3a'); }
+        squig(p, 10, 22, 9, '#a01c28'); squig(p, 10, 22, 10, '#a01c28');
+        squig(p, 12, 20, 12, '#b83038');
+      });
+      case 'scottishCake': return roundTin('#c85a1c', gold, '#ec7a2c', (p, inFace) => {
+        // orange lid, black hills (and a hunter with his dog), a cream label on top
+        for (let x = 3; x < 29; x++) for (let y = 10; y < 17; y++) if (inFace(x, y) && y > 11 + Math.sin(x * 0.55) * 1.4) p.set(x, y, '#1a1210');
+        p.vline(21, 8, 11, '#1a1210'); p.set(20, 9, '#1a1210'); p.set(22, 9, '#1a1210'); p.hline(23, 24, 11, '#1a1210'); p.set(24, 10, '#1a1210');
+        ell(p, 16, 5.5, 6.5, 2.4, '#f4ecd4'); squig(p, 12, 20, 5, '#b02020'); p.hline(13, 19, 7, '#3a3030');
+      });
+      case 'royalJersey': return roundTin('#3e1a66', gold, '#5a2a8c', (p) => {
+        // purple lid, a gold mace across it, "Royal Jersey" in gold
+        for (let i = 0; i <= 14; i++) p.set(9 + i, 14 - Math.round(i * 0.62), '#e8c050');
+        p.rect(23, 4, 2, 2, '#f8e070'); p.set(22, 6, '#e8c050');
+        squig(p, 6, 12, 6, '#e8c050'); squig(p, 17, 25, 12, '#e8c050');
+      });
+      case 'lane1q': return roundTin('#9aa0aa', '#c8ccd4', '#2848a8', (p) => {
+        // blue lid, a ring of gold lettering, the red-and-white crest in the middle
+        for (let a = 0; a < 44; a++) if (a % 3) { const t = (a / 44) * Math.PI * 2; p.set(16 + Math.cos(t) * 10.6, 9.5 + Math.sin(t) * 5.6, '#e8c050'); }
+        p.rect(14, 6, 5, 5, '#c82838'); p.hline(15, 17, 11, '#c82838'); p.set(16, 12, '#c82838');
+        p.set(14, 9, '#f8f8f0'); p.set(15, 8, '#f8f8f0'); p.set(16, 7, '#f8f8f0'); p.set(17, 8, '#f8f8f0'); p.set(18, 9, '#f8f8f0');
+        p.hline(14, 18, 4, '#e8c050'); p.set(14, 3, '#e8c050'); p.set(16, 3, '#e8c050'); p.set(18, 3, '#e8c050');
+      });
+      case 'borkum': {
+        // a pouch: red on top (white lettering, a black sailing ship), white below ("Cherry Cavendish")
+        const p = new Pix(32, 25);
+        for (let x = 8; x <= 23; x++) p.set(x, 1 + (x % 2), '#c8c8d0');
+        p.rect(8, 3, 16, 12, '#b81c26'); p.vline(23, 3, 14, '#8a141c');
+        squig(p, 10, 21, 5, '#f8f8f0'); squig(p, 11, 20, 7, '#f8f8f0');
+        p.hline(11, 20, 13, ink); p.hline(12, 19, 14, ink); p.vline(14, 9, 12, ink); p.vline(17, 10, 12, ink); p.hline(13, 15, 10, ink); p.hline(16, 18, 11, ink);
+        p.hline(8, 23, 15, '#e8c050');
+        p.rect(8, 16, 16, 8, '#f4f0ea'); p.vline(23, 16, 23, '#c8c4bc');
+        squig(p, 10, 21, 19, '#b81c26'); squig(p, 12, 19, 21, '#d84050');
+        return finish(p);
+      }
+      case 'maidenLane': {
+        // bulk, from the shop in Manhattan: a Mason jar of it, with their crossed-pipes label
+        const p = new Pix(32, 25);
+        p.rect(8, 7, 16, 17, '#c8d8e0'); p.rect(7, 9, 18, 13, '#c8d8e0');
+        for (let y = 10; y < 23; y++) for (let x = 8; x < 24; x++) p.set(x, y, ['#8a5a2a', '#6a4020', '#a87038'][Math.floor(G.hash(x, y, 4) * 3)]);
+        p.vline(9, 9, 21, '#e8f0f4');
+        p.rect(9, 2, 14, 5, '#b8bcc4'); p.hline(9, 22, 2, '#d8dce4'); p.hline(9, 22, 4, '#9aa0a8');
+        ell(p, 16, 15.5, 4.8, 4.8, gold); ell(p, 16, 15.5, 3.8, 3.8, '#f0d070');
+        for (let i = 0; i < 6; i++) { p.set(13 + i, 13 + i, ink); p.set(18 - i, 13 + i, ink); }
+        p.rect(12, 12, 2, 2, ink); p.rect(18, 12, 2, 2, ink);
+        return finish(p);
+      }
+      case 'cravensClaw': return roundTin('#1c3a2a', gold, '#24503a', (p) => {
+        // dark green lid, a cream medallion with a black claw, the name in gold
+        ell(p, 16, 8.5, 5.5, 3.8, '#f0e6c8');
+        for (const dx of [-2, 0, 2]) { p.vline(16 + dx, 6, 9, ink); p.set(16 + dx + (dx < 0 ? -1 : dx > 0 ? 1 : 0), 5, ink); }
+        p.hline(14, 18, 10, ink);
+        squig(p, 9, 23, 14, '#e8c050');
+      });
+    }
+    return null;
+  }
+  G.TIN_IDS = ['lane1q', 'borkum', 'maidenLane', 'royalJersey', 'scottishCake', 'capstan', 'oldGowrie', 'cravensClaw', 'orlik', 'margate'];
+
   // ================================================================ EXPORTS
   G.art = {
-    OUT, shade, Pix, fromRows, mirror, flash, person, P, scale2, buildingExtra,
+    OUT, shade, Pix, fromRows, mirror, flash, person, P, scale2, buildingExtra, pipeArt, pipeProfile, PIPE_GEO,
     tile, tree, building,
   };
 
@@ -8488,6 +8731,7 @@
     S.eggThrone = eggThrone(); S.culvert = culvert(); S.ditchSign = ditchSign(); S.cattails = cattails(); S.bean = bean();
     S.goldenEgg = [goldenEgg(false), goldenEgg(true)]; S.egglet = { right: [egglet(0), egglet(1)] }; S.egglet.left = S.egglet.right.map(mirror);
     S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
+    S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
     S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();

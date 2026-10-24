@@ -106,6 +106,7 @@
 
     loadMap(id, x, y, dir, skipEnter) {
       this.camFocus = null;
+      this.overlay = null;
       this.earworm = 0;
       G.pipe.active = false;
       this.world = new G.World(id);
@@ -594,6 +595,8 @@
       if (boss) G.hud.bossBar(ctx, boss);
       if (!this.menu) G.toasts.draw(ctx, !!boss);
       G.areaBanner.draw(ctx);
+      // a full-screen minigame (Dad's pipe bench) stays up between its steps, under the dialogue
+      if (this.overlay) this.overlay.draw(ctx);
       G.script.draw(ctx);
       if (this.menu) this.menu.draw(ctx);
     },

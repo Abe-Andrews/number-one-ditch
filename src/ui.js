@@ -231,7 +231,11 @@
   const COLLECTIONS = [
     { id: 'rocks', name: 'Rocks', icon: 'rocks', count: () => [G.rocksFound(), G.ROCKS.length], blurb: 'Every specimen Nate has dug up, smashed out or sifted, area by area.' },
     { id: 'photos', name: 'Photos', icon: 'photo', count: () => [G.photosFound(), G.PHOTOS.length], blurb: 'Old family photos, hidden all over. Some of them Mom would rather nobody saw.' },
+    { id: 'pipes', name: 'Dad\'s Pipes', icon: 'pipe', count: () => [G.pipesMadeCount(), G.PIPES.length], blurb: 'Pipes you turned on Dad\'s lathe and finished with him in the workshop. Pick one and Dad\'s Pipe looks just like it.' },
+    { id: 'tins', name: 'Tobacco', icon: 'tin', count: () => [G.tinsMadeCount(), G.TOBACCOS.length], blurb: 'The tobaccos from Dad\'s pipe journal, blended with him in the workshop. Pack one in Dad\'s Pipe and the smoke comes out its color.' },
   ];
+  // the pipes page also has the one Dad gave Nate, first
+  const benchList = (coll) => (coll === 'pipes' ? [{ id: 'dad', dad: true, name: 'Dad\'s Pipe', kind: 'The one Dad gave you. Hand-carved in his workshop.' }].concat(G.PIPES) : G.TOBACCOS);
   const SEL = { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' };
   const TXT = (ctx, str, x, y, col) => F().draw(ctx, str, x, y, col || '#f8f8f0', { shadow: SH });
   const C = { gold: '#f8d850', cyan: '#78e8e8', green: '#78e070', red: '#f86858', dim: '#9890a8', faint: '#5a4e70', soft: '#c8c0d8', pink: '#ff98d0' };
@@ -262,6 +266,8 @@
     party: ['.kk...kk.', 'khhk.kssk', 'kssk.kssk', '.kk...kk.', 'knnk.kuuk', 'nnnnkuuuu', 'nnnnkuuuu', 'nnnnkuuuu', '.........'],
     collect: ['....k....', '...kyk...', 'kkkkykkkk', 'kyyyyyyyk', '.kyyyyyk.', '..kyyyk..', '.kyykyyk.', '.kyk.kyk.', '.kk...kk.'],
     photo: ['kkkkkkkkk', 'kwwwwwwwk', 'kwllllwwk', 'kwlsslllk', 'kwlsslllk', 'kwlnnnllk', 'kwnnnnnwk', 'kwwwwwwwk', 'kkkkkkkkk'],
+    pipe: ['.........', '....kkkkk', '....kbbbk', '....kbbbk', 'kkkkkbbbk', 'GGGGkbbbk', 'kkkkkbbbk', '.....kkk.', '.........'],
+    tin: ['.........', '..kkkkk..', '.kyyyyyk.', 'kyrrrrryk', 'kyrwwwryk', 'kyrrrrryk', 'kkyyyyykk', 'kokkkkkok', '.kkkkkkk.'],
   };
   const iconCache = {};
   function icon(name) {
@@ -577,6 +583,23 @@
           const ph = G.PHOTOS[this.sel];
           if (ph && G.photoHas(ph.id)) { this.photoView = ph; G.audio.sfx('select'); } else G.audio.sfx('bump');
         }
+      } else if (this.tab === COLL_TAB && (this.coll === 'pipes' || this.coll === 'tins')) {
+        // DAD'S PIPES / TOBACCO: Z puts one to use (Z on the tobacco that's in empties the pipe)
+        const list = benchList(this.coll), n = list.length, col = this.sel % 3, row = Math.floor(this.sel / 3);
+        if (inp.hit('left') && col > 0) this.move(-1, n);
+        if (inp.hit('right') && col < 2) this.move(1, n);
+        if (inp.hit('down') && this.sel + 3 < n) this.move(3, n);
+        if (inp.hit('up')) { if (row > 0) this.move(-3, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
+        if (inp.hit('a')) {
+          inp.eat('a');
+          const it = list[this.sel], s = G.state;
+          if (this.coll === 'pipes') {
+            if (!it.dad && !G.pipeHas(it.id)) G.audio.sfx('bump');
+            else { s.pipeSkin = it.dad ? null : it.id; G.audio.sfx('select'); this.flash(it.dad ? 'Back to Dad\'s own pipe.' : 'Dad\'s Pipe is the ' + it.name + ' now.'); }
+          } else if (!G.tinHas(it.id)) G.audio.sfx('bump');
+          else if (s.tobacco === it.id) { s.tobacco = null; G.audio.sfx('cancel'); this.flash('Emptied the pipe.'); }
+          else { s.tobacco = it.id; G.audio.sfx('select'); this.flash('Packed it with ' + it.name + '.'); }
+        }
       } else if (this.tab === COLL_TAB) {
         // ROCKS: one page per area (Z flips pages), five to a row
         if (inp.hit('a')) { inp.eat('a'); this.rockArea = ((this.rockArea || 0) + 1) % G.ROCK_AREAS.length; this.sel = 0; G.audio.sfx('menu'); }
@@ -675,7 +698,7 @@
       const admin = G.state.admin, act = {
         [QUEST_TAB]: QMODES[(this.qmode + 1) % QMODES.length] === 'ACTIVE' ? 'quests' : QMODES[(this.qmode + 1) % QMODES.length] === '100%' ? '100% list' : 'rules',
         [MAP_TAB]: null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
-        [COLL_TAB]: this.photoView ? 'put away' : !this.coll ? 'open' : this.coll === 'rocks' ? 'next area' : 'look',
+        [COLL_TAB]: this.photoView ? 'put away' : !this.coll ? 'open' : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
         [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here',
       }[this.tab];
       const pairs = act ? [['Z', act]] : [['↑↓←→', 'look around']];
@@ -1031,6 +1054,7 @@
     drawCollect(ctx) {
       if (this.coll === 'rocks') this.drawRocks(ctx);
       else if (this.coll === 'photos') this.drawPhotos(ctx);
+      else if (this.coll === 'pipes' || this.coll === 'tins') this.drawBench(ctx);
       else this.drawCollectList(ctx);
       if (this.photoView) ctx.drawImage(G.photoPage(this.photoView), 0, 0);
     }
@@ -1048,6 +1072,44 @@
       const c = COLLECTIONS[this.sel];
       card(ctx, 120, 21, 115, 121, c.name, C.cyan);
       F().wrap(c.blurb, 104).slice(0, 8).forEach((l, i) => TXT(ctx, l, 125, 40 + i * 9, C.soft));
+    }
+
+    // ---- DAD'S PIPES and TOBACCO (made with Dad at his pipe bench): Z puts one to use
+    drawBench(ctx) {
+      const pipes = this.coll === 'pipes', list = benchList(this.coll), s = G.state, cur = pipes ? s.pipeSkin || 'dad' : s.tobacco;
+      const has = (it) => it.dad || (pipes ? G.pipeHas(it.id) : G.tinHas(it.id));
+      const art = (it, big) => (pipes ? G.pipeLook(it.id, big ? 1 : 0.5) : big ? G.art.scale2(G.spr.tins[it.id]) : G.spr.tins[it.id]);
+      const n = pipes ? G.pipesMadeCount() : G.tinsMadeCount(), all = pipes ? G.PIPES.length : G.TOBACCOS.length, ch = pipes ? 33 : 26;
+      card(ctx, 5, 21, 112, 121, pipes ? 'DAD\'S PIPES' : 'TOBACCO', C.gold, G.sayable(n) + '/' + G.sayable(all));
+      list.forEach((it, i) => {
+        const x = 9 + (i % 3) * 35, y = 37 + Math.floor(i / 3) * ch, sel = i === this.sel && !this.onTabs, img = art(it);
+        slot(ctx, x, y, 34, ch - 1, it.id === cur && has(it) ? C.green : undefined);
+        ctx.drawImage(has(it) ? img : silhouette(img), x + Math.round((34 - img.width) / 2), y + Math.round((ch - 1 - img.height) / 2));
+        if (sel) brackets(ctx, x - 1, y - 1, 36, ch + 1);
+      });
+      const it = list[this.sel];
+      card(ctx, 120, 21, 115, 121);
+      if (!it) return;
+      const big = art(it, true), top = pipes ? 30 : 25, ty = top + big.height + 4;
+      ctx.drawImage(has(it) ? big : silhouette(big), 177 - Math.round(big.width / 2), top);
+      if (!has(it)) {
+        TXT(ctx, '???', 125, ty, C.cyan);
+        F().wrap('Make it with Dad in his workshop.', 104).forEach((l, k) => TXT(ctx, l, 125, ty + 11 + k * 9, C.dim));
+        TXT(ctx, 'Hard: ' + '★'.repeat(it.d), 125, 128, C.dim);
+        return;
+      }
+      TXT(ctx, fit(it.name, 106), 125, ty, C.cyan);
+      F().wrap(it.kind, 104).slice(0, 2).forEach((l, k) => TXT(ctx, l, 125, ty + 10 + k * 9, C.soft));
+      if (!it.dad) {
+        const got = (pipes ? s.pipesMade : s.tinsMade)[it.id].stars;
+        TXT(ctx, '{y}' + '★'.repeat(got) + '{d}' + '★'.repeat(3 - got), 125, 118, C.gold);
+      }
+      if (!pipes) {
+        // a puff of its smoke
+        ctx.fillStyle = it.smoke;
+        for (let a = 0; a < Math.PI * 2; a += 0.4) ctx.fillRect(Math.round(222 + Math.cos(a) * 5), Math.round(121 + Math.sin(a) * 3.5), 1, 1);
+      }
+      TXT(ctx, it.id === cur ? (pipes ? '{g}Using this one' : '{g}In the pipe') : 'Z: ' + (pipes ? 'use it' : 'pack it'), 125, 128, C.dim);
     }
 
     // ---- PHOTOS: thumbnails on the left, the one you're on at the right

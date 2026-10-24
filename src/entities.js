@@ -450,7 +450,7 @@
       }
       if (this.pipeOut && this.dir !== 'up') {
         const pos = { right: [11, 7], left: [-3, 7], down: [8, 8] }[this.dir];
-        ctx.drawImage(this.dir === 'left' ? G.spr.pipeSmallL : G.spr.pipeSmall, sx + pos[0], sy + pos[1]);
+        ctx.drawImage(G.pipeSmall(this.dir === 'left'), sx + pos[0], sy + pos[1]);
       }
     }
 

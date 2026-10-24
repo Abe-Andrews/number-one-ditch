@@ -355,7 +355,7 @@
       this.t++;
       if (this.t % 14 === 0) {
         const [bx, by] = this.bowl();
-        G.play.world.fx.push({ x: bx, y: by, vx: (Math.random() - 0.5) * 0.2, vy: -0.35, life: 34, color: '#c8c8d0', size: 2, grow: true });
+        G.play.world.fx.push({ x: bx, y: by, vx: (Math.random() - 0.5) * 0.2, vy: -0.35, life: 34, color: G.smokeColor() || '#c8c8d0', size: 2, grow: true });
       }
       if (this.matched) {
         if (--this.matchT > 0) return;
@@ -376,7 +376,8 @@
       if (this.seq.length > 8) this.seq.shift();
       G.audio.puff(d);
       const [bx, by] = this.bowl(), [dx, dy] = G.DIRS[d];
-      G.play.world.fx.push({ x: bx, y: by - 2, vx: dx * 0.7, vy: dy * 0.7 - 0.15, ring: true, life: 50, max: 50, color: '#eeeef4' });
+      // (the smoke comes out the color of whatever tobacco is packed: COLLECTABLES > Tobacco)
+      G.play.world.fx.push({ x: bx, y: by - 2, vx: dx * 0.7, vy: dy * 0.7 - 0.15, ring: true, life: 50, max: 50, color: G.smokeColor() || '#eeeef4' });
       for (const sig of G.SIGNALS) {
         if (!sig.known()) continue;
         const n = sig.seq.length;
