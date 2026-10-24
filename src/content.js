@@ -369,6 +369,8 @@
     { id: 'peace', name: 'Peace Be With You', seq: ['up', 'down', 'up'], known: () => !!fl().signal_peace, effect: () => G.SCRIPTS.signalPeace() },
     { id: 'icy', name: 'I Pray to Jesus', seq: ['left', 'right', 'up'], known: () => !!fl().signal_icy, effect: () => G.SCRIPTS.signalIcy() },
     { id: 'jlc', name: 'Jamie Lee Curtis', seq: ['right', 'left', 'right'], known: () => !!fl().signal_jlc, effect: () => G.SCRIPTS.signalJlc() },
+    // Dad's signature move, from his hip hop class at the grocery store on College Hill
+    { id: 'cart', name: 'The Shopping Cart', seq: ['left', 'right', 'left'], known: () => !!fl().signal_cart, effect: () => G.SCRIPTS.signalCart() },
     // "Nice Crack" (down, down, left): Abe teaches it in the finale, once he's free ("Nice
     // crack, Abe!" was Lily, in cooking class). It cracks Father Eggmas's shell when he's down.
     // (Keep any new song's arrows from containing another song's arrows, or one will fire
@@ -566,6 +568,8 @@
     if (f.andoverLocked) add('The Andover mines', s.items.andoverKey && 'Key in hand!', f.shopOpen ? 'Mom sells a key' : 'Need a key', 'Home - Andover', s.items.andoverKey ? 'Pick "The Andover mines" when you leave home.' : f.shopOpen ? 'Mom\'s flower stand sells the gate key. It isn\'t cheap.' : 'The mines are on private land. Mom knows everybody at church.');
     if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number, and Nate can\'t say it.');
     if (f.plantQuest) add('Anette\'s thirsty plants', f.plantsDone, f.plantsDone ? 'Done' : G.sayable(G.plantsWatered()) + '/5 watered', 'Chesapeake - the condo', G.plantsWatered() >= 5 ? 'All five are watered. Go tell Anette.' : 'Water Anette\'s five potted plants around the street with the Portable Bidet.', [G.plantsWatered(), 5]);
+    if (f.hipHopClaim && !f.hipHopMet) side.push({ name: 'Dad\'s hip hop class', status: 'Nobody believes him', kind: 'rumor', where: 'College Hill', hint: 'Dad swears he teaches hip hop at the grocery store on College Hill. Tuesdays, after close.' });
+    if (f.hipHopMet) add('Dad\'s hip hop class', f.hipHopDone, G.sayable(f.hipHopRound || 0) + '/3 rounds', 'College Hill', 'It\'s REAL. Talk to Dad at the grocery store and copy his moves with the arrows.', [f.hipHopRound || 0, 3]);
     if (f.mobileBeaten && !f.rubyMet) side.push({ name: 'The rock doctor', status: 'Someone needs one', kind: 'rumor', where: 'CHKD - the ward', hint: 'The nurse on the ward says the girl behind the green door keeps asking for a "rock doctor."' });
     if (f.rubyMet) add('Ruby, the rock kid', f.rubyHeart, !f.rubyQuiz ? G.sayable(f.rubyQ || 0) + '/3 named' : 'Trade her a rock', 'CHKD - the ward', !f.rubyQuiz ? 'Ruby has three rocks with no names. Tell her what they are, rock doctor.' : 'Ruby will trade one of her two fairy stones for a rock she doesn\'t have yet, from somewhere she\'s never been.', !f.rubyQuiz ? [f.rubyQ || 0, 3] : null);
     if (s.party.includes('abe')) add('Abe\'s reach', G.abeReachCount() >= G.ABE_REACH_TOTAL && 'All found!', G.sayable(G.abeReachCount()) + '/' + G.sayable(G.ABE_REACH_TOTAL) + ' found', 'Anywhere', 'Abe is 6\'5". With him along, check things that are way up high (press Z under them): around Abe and Hannah\'s, at CHKD, the tall hedge up by Anette\'s... and maybe places you\'ve already been.', [G.abeReachCount(), G.ABE_REACH_TOTAL]);
@@ -655,6 +659,16 @@
       tracks: [
         { wave: 'triangle', vol: 0.09, notes: 'A5:2 E5:2 C5:2 | B4:2 E5:2 A4:2 | C5:2 B4:2 A4:2 | G#4:6 | A4:2 C5:2 E5:2 | F5:2 E5:2 D5:2 | C5:2 B4:2 G#4:2 | A4:6' },
         { wave: 'triangle', vol: 0.11, notes: 'A2:6 | E2:6 | F2:6 | E2:6 | A2:6 | D3:6 | E2:6 | A2:6' },
+      ],
+    },
+    // Dad's hip hop class, after close at the grocery store: a boom-bap beat, a walking bass and
+    // a few synth stabs (original)
+    hiphop: {
+      bpm: 92,
+      tracks: [
+        { wave: 'noise', vol: 0.09, notes: 'k:4 h:2 k:2 s:4 h:2 h:2 | k:2 h:2 k:2 k:2 s:4 h:2 k:2 | k:4 h:2 k:2 s:4 h:2 h:2 | k:2 h:2 k:2 k:2 s:2 s:2 s:2 h:2' },
+        { wave: 'sawtooth', vol: 0.07, notes: 'C2:3 R:1 C2:2 R:2 D#2:2 F2:2 G2:4 | A#1:3 R:1 A#1:2 R:2 C2:2 D#2:2 C2:4 | C2:3 R:1 C2:2 R:2 D#2:2 F2:2 G2:4 | G2:2 F2:2 D#2:2 C2:2 A#1:4 C2:4' },
+        { wave: 'square', vol: 0.04, notes: 'R:4 G4:1 R:1 G4:1 R:5 D#4:2 R:2 | R:4 F4:1 R:1 F4:1 R:5 D#4:2 R:2 | R:4 G4:1 R:1 G4:1 R:5 A#4:2 R:2 | C5:2 R:2 A#4:2 R:2 G4:4 R:4' },
       ],
     },
     // the roof of CHKD at night, looking out at the glow over the Number One Ditch: the title
@@ -1591,6 +1605,20 @@
     if (!n) w.pop(p.x, p.y - 24, '(nobody to calm down)', '#c8c8d0');
   };
 
+  // The Shopping Cart (Dad's signature move, taught at his hip hop class): anything nearby has to
+  // stop and dance for 4 seconds (bosses don't). Anybody else nearby dances too. So does Nate.
+  S.signalCart = function () {
+    const p = P(), w = G.play.world;
+    w.fx.push({ x: p.x, y: p.y - 6, vx: 0, vy: 0, circle: true, r: PEACE_RADIUS + 10, max: 24, life: 24, color: '#f878d8' });
+    w.pop(p.x, p.y - 34, '~ THE SHOPPING CART ~', '#f878d8');
+    for (const e of w.ents) {
+      if (e.dead || e.dancing || e.boss || Math.hypot(e.x - p.x, e.y - p.y) > PEACE_RADIUS + 16) continue;
+      if (e.enemy) { e.calm = Math.max(e.calm || 0, 240); w.add(new G.DanceNotes(e, 240)); }
+      else if (e instanceof G.NPC || e instanceof G.Follower) w.add(new G.DanceNotes(e, 120));
+    }
+    w.add(new G.DanceNotes(p, 60));
+  };
+
   // I Pray to Jesus (Ice JJ Fish's song, taught by him): an ice beam straight out
   // the way Nate is facing. It stops at walls but carries over water. Anything it
   // touches freezes solid for 5 seconds (and can still be bonked); aimed at the
@@ -1653,9 +1681,24 @@
   };
 
   S.dadArena = function* () {
+    const f = flags();
     if (!G.state.items.pipe) {
       yield G.say('Dad', 'Nate! Before you go, I made you something in my workshop.');
       yield* S.pipeGift();
+      return;
+    }
+    // (the user's dad's real joke: nobody ever believes him)
+    if (!f.hipHopClaim) {
+      f.hipHopClaim = true;
+      yield G.say('Dad', 'Since we\'re being honest with each other tonight...');
+      yield G.say('Dad', 'I also teach hip hop. At the grocery store on College Hill. After they close.');
+      yield G.say('Nate', 'No you don\'t.');
+      yield G.say('Dad', 'Tuesdays.');
+      yield G.say('Nate', 'Dad. I JUST found out you\'re a luchador. I am not falling for a second one tonight.');
+      if (G.with('doron')) yield G.say('Doron', 'He\'s been saying that for twenty years.');
+      yield G.say('Dad', 'Ask anybody.');
+      yield G.say('Nate', 'Who?');
+      yield G.say('Dad', '...The grocery store.');
       return;
     }
     yield G.say('Dad', 'The nachos here are excellent. Very EEENGLISH.');
@@ -2553,6 +2596,7 @@
       ['The old fisherman', !!s.items.rod],
       ['Tyler', !!f.tylerBeaten],
       ['Ruby, the rock kid', !!f.rubyHeart],
+      ['Dad\'s hip hop class', !!f.hipHopDone],
       ['Every rock', G.rocksFound() >= G.ROCKS.length],
       ['Every photo', G.photosFound() >= G.PHOTOS.length],
     ];
@@ -3242,6 +3286,7 @@
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'] },
     { name: 'CHKD: the ward', map: 'chkdWard', at: [1, 7, 'right'] },
     { name: 'CHKD: the NICU', map: 'chkdNicu', at: [7, 9, 'up'] },
+    { name: 'The grocery store (after close)', map: 'grocery', at: [7, 9, 'up'] },
     { name: 'CHKD: Ruby\'s room', map: 'chkdRoom', at: [5, 7, 'up'] },
     { name: 'CHKD: the roof', map: 'chkdRoof', at: [2, 11, 'down'] },
     { name: 'El Toro Loco (inside)', map: 'toroLocoIn', at: [9, 11, 'up'] },
@@ -3269,11 +3314,12 @@
   S.dadWorkshop = function* () {
     const f = flags(), s = G.state;
     if (f.jjBeaten) {
-      f.dadLine = ((f.dadLine || 0) + 1) % 3;
+      f.dadLine = ((f.dadLine || 0) + 1) % 4;
       yield G.say('Dad', [
         'He\'s playing the nine o\'clock! The church ladies are going to faint.',
         'Candy corn and blue Doritos. Don\'t tell your mother. She knows.',
         'Do you speak EEENGLISH? ...Just checking.',
+        f.hipHopDone ? 'Same time next Tuesday? Your siblings still think you photoshopped me.' : 'Tuesdays I teach hip hop at the grocery store on College Hill. After close. Nobody believes me.',
       ][f.dadLine]);
       return;
     }
@@ -8121,7 +8167,7 @@
       shop(sp.groceryStore, 3); shop(sp.tomsPizza, 13); shop(sp.forLeaseShop, 23);
       w.block[5 * w.w + 16] = 0;
       w.addWarp(16, 5, 1, 1, 'toms', 6, 8, 'up');
-      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [6 * 16, 5 * 16, 7 * 16, 6 * 16], talk: look('The grocery store. The doors are locked. A sign on the glass says BACK SOON.') });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [6 * 16, 5 * 16, 7 * 16, 6 * 16], talk: () => S.groceryDoor() });
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [26 * 16, 5 * 16, 27 * 16, 6 * 16], talk: look('An empty shop. FOR LEASE. Somebody should open a rock shop.') });
       for (const x of [10, 20]) w.addTree(x, 3);
       // lampposts along the sidewalk
@@ -8132,6 +8178,271 @@
       w.addTrigger(31, 8, 1, 2, () => G.play.warp('campus', 1, 12, 'right'));
       w.blockTiles(31, 6, 1, 2); w.blockTiles(31, 10, 1, 1);
     },
+    // after the main event, there's a beat thumping out of the grocery store (Dad's class)
+    tick(w) {
+      if (!flags().dadBeaten || G.script.busy || G.tick % 39) return;
+      const p = G.play.player, k = (G.tick / 39) % 4;
+      if (Math.abs(p.x - 6.5 * 16) < 140) w.pop(6 * 16 + 8 + (k % 2 ? 9 : -9), 4 * 16 + 10, ['*boom*', '*tss*', '*boom boom*', '*tss*'][k], '#f878d8');
+    },
+  };
+
+  // ---------------------------------------------------------------- Dad's hip hop class
+  // A real Dad joke (the user's): he swears he teaches hip hop dance at the local grocery store
+  // after they close, and none of the kids believe him. Here it's true. A flyer on the College
+  // Hill grocery store's door (HIP HOP 101, instructor: Christian) is there from the start; Dad
+  // tells Nate about it after the main event (S.dadArena: "Tuesdays"), and from then on the door
+  // is propped open with a beat coming out. Inside, after close: Dad's class (two church ladies,
+  // the stock boy, a guy who came in for milk). Follow Dad's moves with the arrows for three
+  // rounds and he teaches Nate his signature move, The Shopping Cart, on the pipe (anything that
+  // hears it has to dance). Nate texts the family a photo. Nobody believes him.
+  // Flags: flyerSeen, hipHopClaim, hipHopMet, hipHopRound (0-3), hipHopDone, signal_cart.
+  G.CAST.dadHipHop = Object.assign({}, G.CAST.dad, { hairStyle: 'cap', hat: '#d83030', hatStyle: 'ball', coat: '#3a6ad8', shirt: '#f8f8f0', pants: '#2a2c38', shoes: '#f8f8f8' });
+  G.CAST.churchLady1 = { skin: '#f4cdb0', hair: '#c8c8d0', hairStyle: 'short', glasses: '#8a6a9a', blush: true, smile: '#ffffff', coat: '#c87898', shirt: '#f4f0e8', pants: '#5a5a7a', shoes: '#f0f0f0', torso: 5, legs: 3 };
+  G.CAST.churchLady2 = { skin: '#8a5a3a', eyes: '#140c0a', hair: '#e8e8ec', hairStyle: 'shoulder', smile: '#ffffff', coat: '#4a9a8a', shirt: '#f8d878', pants: '#3a3a4a', shoes: '#f0f0f0', torso: 5, legs: 3 };
+  G.CAST.stockBoy = { skin: '#f2c8a0', hair: '#c8a46c', hairStyle: 'short', blush: true, shirt: '#2e8a48', logo: '#f4f0e8', pants: '#c8b088', shoes: '#2a2a2a', torso: 5, legs: 3 };
+  G.CAST.milkGuy = { skin: '#e8b890', hair: '#3a2a20', hairStyle: 'receding', beard: '#3a2a20', shirt: '#8a6a4a', pants: '#3a4a6a', shoes: '#4a3428', torso: 6, legs: 4 };
+  const HIP_MOVES = { up: 'THE ROBOT', down: 'THE SPRINKLER', left: 'THE RUNNING MAN', right: 'THE MOONWALK' };
+  const HIP_ROUNDS = [['up', 'left', 'right'], ['down', 'down', 'left', 'up'], ['right', 'up', 'down', 'left', 'right']];
+  const HIP_SPOT = [7.5 * 16, 6.9 * 16];      // Nate's spot on the floor (high enough that text goes at the bottom)
+  // a dance move: face that way and hop (the grocery's tick animates the hop)
+  const hipMove = (e, d) => { e.dir = d; e.danceT = 20; };
+  // Nate's turn: copy the sequence with the arrows (about 4 seconds per move); `ok` says how it went
+  const followDad = (seq, w) => ({
+    start() { this.i = 0; this.t = 0; this.ok = null; },
+    update() {
+      const inp = G.input, p = P();
+      if (++this.t > 240) { this.ok = false; this.slow = true; G.audio.sfx('bump'); return true; }
+      for (const d of ['up', 'down', 'left', 'right']) {
+        if (!inp.hit(d)) continue;
+        hipMove(p, d);
+        for (const e of w.dancers) hipMove(e, d);
+        w.pop(p.x, p.y - 34, G.arrows([d]), '#f8f8f0');
+        if (d !== seq[this.i]) { this.ok = false; G.audio.sfx('bump'); return true; }
+        this.i++; this.t = 0;
+        G.audio.sfx('blip');
+        if (this.i >= seq.length) { this.ok = true; return true; }
+      }
+      return false;
+    },
+    // a little panel up top: YOUR TURN, a dot per move, and a timer bar
+    draw(ctx) {
+      const n = seq.length, w0 = 18 + n * 10, x0 = Math.round((G.W - w0) / 2), y0 = 6;
+      ctx.fillStyle = '#1c1424'; ctx.fillRect(x0, y0, w0, 22); ctx.fillStyle = '#f878d8'; ctx.fillRect(x0 + 1, y0 + 1, w0 - 2, 1);
+      G.font.draw(ctx, 'YOUR TURN', x0 + Math.round((w0 - G.font.width('YOUR TURN')) / 2), y0 + 3, '#f8e070');
+      for (let i = 0; i < n; i++) { ctx.fillStyle = i < this.i ? '#78e070' : '#5a5064'; ctx.fillRect(x0 + 9 + i * 10, y0 + 13, 6, 4); }
+      ctx.fillStyle = '#f878d8'; ctx.fillRect(x0 + 2, y0 + 19, Math.round((w0 - 4) * (1 - this.t / 240)), 1);
+    },
+  });
+  // Dad shows the moves: each one called out over his head
+  function* dadShows(w, seq) {
+    const dad = w.hipDad;
+    for (const d of seq) {
+      hipMove(dad, d);
+      w.pop(dad.x, dad.y - 40, G.arrows([d]) + ' ' + HIP_MOVES[d], '#f8e070');
+      G.audio.sfx('blip');
+      yield G.wait(34);
+    }
+    dad.dir = 'down';
+  }
+  S.groceryDoor = function* () {
+    const f = flags();
+    if (!f.dadBeaten) {
+      yield G.say(null, 'The grocery store. The doors are locked. A sign on the glass says BACK SOON.');
+      yield G.say(null, 'Taped up next to it, a yellow flyer: HIP HOP 101. TUESDAYS, AFTER CLOSE. INSTRUCTOR: CHRISTIAN. No experience necessary.');
+      if (!f.flyerSeen) {
+        f.flyerSeen = true;
+        yield G.say('Nate', 'Dad\'s name is Christian.');
+        yield G.say('Nate', '...There are a LOT of Christians.');
+      }
+      return;
+    }
+    // after hours: the door's propped open, and there's a beat coming out
+    if (!f.hipHopMet) yield G.say(null, 'The sign on the door says CLOSED. The door is propped open with a jug of milk. There\'s a beat coming from inside.');
+    G.audio.sfx('door');
+    G.play.warp('grocery', 7, 9, 'up');
+  };
+  S.groceryEnter = function* () {
+    const f = flags(), w = G.play.world, dad = w.hipDad;
+    if (f.hipHopMet) return;
+    yield G.wait(24);
+    yield G.say(null, 'Half the lights are off. There\'s a boombox in the produce section. And a voice, counting:');
+    yield G.say('Dad', 'FIVE, SIX, SEVEN, EIGHT!');
+    for (const d of ['left', 'right', 'left']) { for (const e of [dad, ...w.dancers]) hipMove(e, d); yield G.wait(22); }
+    dad.dir = 'down';
+    for (const e of w.dancers) e.dir = 'up';
+    yield G.wait(20);
+    yield G.say('Nate', '...');
+    yield G.say('Nate', 'DAD?!');
+    yield* S.hipHopDad();
+  };
+  S.hipHopDad = function* () {
+    const f = flags(), s = G.state, w = G.play.world, p = P(), dad = w.hipDad;
+    if (!f.hipHopMet) {
+      f.hipHopMet = true;
+      yield G.say('Dad', f.hipHopClaim ? 'Nate! I TOLD you.' : 'Nate! Did your mother send you? She doesn\'t believe me either.');
+      yield G.say('Nate', 'You actually teach hip hop. At the grocery store.');
+      yield G.say('Dad', 'Every Tuesday, after close. The manager owes me a favor. I married him.');
+      yield G.say('Nate', 'You WHAT?');
+      yield G.say('Dad', 'To his wife, Nate. I officiated. I\'m a pastor.');
+      yield G.say('Dad', 'Grab a spot. Class is in session.');
+    } else if (f.hipHopDone) {
+      f.hipLine = ((f.hipLine || 0) + 1) % 3;
+      yield G.say('Dad', ['Same time next Tuesday. Bring your siblings. They won\'t come.', 'The Shopping Cart is a lifestyle, Nate. Not just a move.', 'Peace be with you. And POP. And LOCK.'][f.hipLine]);
+      const c = yield G.ask('Dad', 'One more time, from the top?', ['From the top', 'I\'m good']);
+      if (c !== 0) return;
+    }
+    if (!f.hipHopDone && f.hipHopRound) yield G.say('Dad', 'Back for more! We were on round ' + G.sayable(f.hipHopRound + 1) + '.');
+    else if (!f.hipHopDone) {
+      const c = yield G.ask('Dad', 'Ready to learn the routine?', ['Let\'s dance', 'Just watching']);
+      if (c !== 0) { yield G.say('Dad', 'Watching is the first step. The second step is the Running Man.'); return; }
+    }
+    // Nate takes his spot on the floor, between the stock boy and the guy with the milk
+    yield G.walkTo(p, HIP_SPOT[0], HIP_SPOT[1], 1.2);
+    p.dir = 'up';
+    if (!f.hipHopRound) yield G.say('Dad', 'I do it, you do it. Use the arrows. Feel it in your hips.');
+    const start = f.hipHopDone ? 0 : f.hipHopRound || 0;
+    for (let r = start; r < HIP_ROUNDS.length; r++) {
+      yield G.say('Dad', ['Round one. Nice and easy.', 'Round two! Pick it up!', 'Final round. This is where the church ladies usually cry.'][r]);
+      yield* dadShows(w, HIP_ROUNDS[r]);
+      const turn = followDad(HIP_ROUNDS[r], w);
+      yield turn;
+      p.dir = 'up';
+      if (!turn.ok) {
+        f.hipMiss = ((f.hipMiss || 0) + 1) % 3;
+        yield G.say('Dad', turn.slow ? 'Too slow! The music doesn\'t wait, Nate.' : ['Close! Watch my hips.', 'That was a different dance. Again!', 'You\'re thinking about it. Stop thinking. FEEL it.'][f.hipMiss]);
+        const again = yield G.ask('Dad', 'Again?', ['Again', 'Take a break']);
+        if (again !== 0) { yield G.say('Dad', 'Hydrate. Then come back.'); return; }
+        r--;
+        continue;
+      }
+      for (const e of w.dancers) w.pop(e.x, e.y - 30, ['WHOO!', 'YEAH!', 'GO NATE!', '*claps*'][w.dancers.indexOf(e)], '#f8f8f0');
+      G.audio.sfx('clap');
+      if (!f.hipHopDone) f.hipHopRound = r + 1;
+      if (r < HIP_ROUNDS.length - 1) yield G.say('Dad', ['Okay! OKAY!', 'Look at those hips! Your mother would be horrified.'][r]);
+    }
+    // the big finish: everybody, all at once
+    for (const d of ['left', 'right', 'up', 'down', 'left']) { for (const e of [dad, p, ...w.dancers]) hipMove(e, d); yield G.wait(20); }
+    p.dir = 'up'; dad.dir = 'down';
+    if (f.hipHopDone) { yield G.say('Dad', 'Still got it.'); return; }
+    yield* S.shoppingCart();
+  };
+  // the reward: Dad's signature move, on the pipe, and the family group chat
+  S.shoppingCart = function* () {
+    const f = flags(), s = G.state;
+    yield G.say('Dad', 'That\'s my boy.');
+    yield G.say('Dad', 'Now. My signature move. I have never taught it to anyone.');
+    yield G.say('Dad', 'The Shopping Cart. Push it out, pull it back, push it out again.');
+    if (!s.items.pipe) yield* S.pipeGift();
+    yield G.say('Dad', 'And it works on the pipe. Left, right, left. Anybody who hears it has to dance. They can\'t help it.');
+    f.signal_cart = true;
+    f.hipHopDone = true;
+    G.audio.sfx('fanfare');
+    yield G.itemGet(G.spr.pipe, 'You learned a new pipe song: {p}The Shopping Cart{/}  ' + G.arrows(['left', 'right', 'left']));
+    yield G.say(null, 'Puff it on Dad\'s pipe, and anything nearby stops to dance for a few seconds.');
+    yield G.say('Nate', 'Nobody is going to believe this.');
+    yield G.say(null, 'Nate takes a picture. It comes out blurry. Dad was mid-Sprinkler.');
+    G.audio.sfx('buzz');
+    yield G.say(null, '{c}~ FAMILY GROUP CHAT ~{/}');
+    yield G.text('Nate', 'dad actually teaches hip hop at the grocery store');
+    yield G.text('Nate', '[1 photo]');
+    yield G.text('Lily', 'no he doesnt');
+    yield G.text('Nate', 'there is a PHOTO');
+    yield G.text('Abe', 'thats so clearly photoshopped');
+    yield G.text('Doron', 'Thats a different guy with a beard');
+    yield G.text('Lily', 'dad goes to bed at 8:30');
+    yield G.text('Michelle', 'Your father does NOT teach hip hop.');
+    yield G.text('Dad', 'Tuesdays.');
+    yield G.say('Nate', '...They\'re never going to believe me.');
+    yield G.say('Dad', 'Welcome to my life, son.');
+  };
+  // the class
+  const hipLines = {
+    churchLady1: ['Pastor Christian says the Robot is a form of worship.', 'I\'ve been coming for two years. I can almost do the Sprinkler.'],
+    churchLady2: ['Don\'t tell the Bible study. They\'d all want to come. There isn\'t room.', 'Your father has the hips of a much younger pastor.'],
+    stockBoy: ['I\'m supposed to be mopping. He said mopping IS dancing.', 'Honestly? This is the best part of my job.'],
+    milkGuy: ['I just came in for milk.', 'That was three weeks ago.'],
+  };
+  const hipTalk = (id, name) => function* () {
+    const f = flags(), k = 'hip_' + id;
+    f[k] = ((f[k] || 0) + 1) % 2;
+    yield G.say(name, hipLines[id][f[k]]);
+  };
+
+  // The grocery store on College Hill, after close: the produce section (where the class is), the
+  // dairy cooler, aisle endcaps, the checkout, and the lights half off except over the dance floor
+  const GW = 'à', GF = 'è';
+  G.MAPS.grocery = {
+    name: 'The Grocery Store (After Close)',
+    music: 'hiphop',
+    // (Nate's on his own in here: none of the kids ever see the class, which is the whole joke)
+    noFollower: true,
+    tiles() {
+      const W = 16, H = 11;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 14, 2, GW); fill(1, 3, 14, 7, GF);
+      g[10][7] = 'x';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      F.hang(sp.produceSign, 1, 2, 4, look('PRODUCE.'), 8);
+      F.stand(sp.produceStand, 1, 3, 4, look('Apples, oranges, bananas, lettuce, grapes, tomatoes. Somebody arranged the oranges into a smiley face.'), { ht: 2 });
+      F.stand(sp.dairyCooler, 11, 3, 4, look('The dairy cooler. Milk is on sale. The guy with the milk is very aware.'));
+      F.stand(sp.aisleShelf, 1, 6, 1, look('Cereal. A LOT of cereal. Nate goes through a box a day.'), { ht: 3 });
+      F.stand(sp.aisleShelf, 14, 5, 1, look('Soup cans, stacked in a pyramid. Nobody dances near the pyramid.'), { ht: 3 });
+      F.stand(sp.checkout, 10, 9, 3, look('The checkout. The register is asleep. A sign taped to it: CLOSED. HIP HOP IN PROGRESS.'));
+      F.stand(sp.mopBucket, 4, 9, 1, look('The stock boy\'s mop bucket. The mop is dry. Very dry.'));
+      w.props.push({
+        img: sp.boombox[0], x: 9 * 16 + 4, y: 4 * 16 + 4, base: 5 * 16 - 1, hit: [9 * 16, 4 * 16, 10 * 16, 5 * 16], talk: look('Dad\'s boombox. It has a cassette in it. The cassette is labeled "HIP HOP 101 (CLEAN)".'),
+        draw(ctx, cx, cy) { ctx.drawImage(G.spr.boombox[(G.tick % 39) < 8 ? 1 : 0], this.x - cx, this.y - cy); },
+      });
+      w.blockTiles(9, 4, 1, 1);
+      // Dad, at the front of the class, and the class
+      const npc = (sprite, name, x, y, talk, o = {}) => w.add(new G.NPC(Object.assign({ sprite, name, x, y, dir: 'up', talk }, o)));
+      w.hipDad = npc('dadHipHop', 'Dad', 7.5 * 16, 4 * 16 + 6, () => S.hipHopDad(), { dir: 'down' });
+      w.hipDad.dancer = true;
+      w.dancers = [
+        npc('churchLady1', 'Church Lady', 5.6 * 16, 5.6 * 16, hipTalk('churchLady1', 'Church Lady')),
+        npc('churchLady2', 'Church Lady', 9.4 * 16, 5.6 * 16, hipTalk('churchLady2', 'Church Lady')),
+        npc('stockBoy', 'Stock Boy', 5.7 * 16, 6.9 * 16, hipTalk('stockBoy', 'Stock Boy')),
+        npc('milkGuy', 'Guy With Milk', 9.3 * 16, 6.9 * 16, hipTalk('milkGuy', 'Guy With Milk'), { held: sp.milk, heldAt: [7, 6] }),
+      ];
+      for (const e of w.dancers) e.dancer = true;
+      w.addWarp(7, 10, 1, 1, 'collegeHill', 6, 6, 'down');
+      // the lights: half off, except a pool over the dance floor, and party lights from the boombox
+      const shade = G.canvas(G.W, G.H);
+      w.props.push({
+        img: null, x: 0, y: 0, base: 99990,
+        draw(ctx, cx, cy) {
+          const g = shade.getContext('2d'), sx = 7.5 * 16 - cx, sy = 5.8 * 16 - cy;
+          g.globalCompositeOperation = 'source-over'; g.clearRect(0, 0, G.W, G.H);
+          g.fillStyle = 'rgba(14,10,34,0.55)'; g.fillRect(0, 0, G.W, G.H);
+          g.globalCompositeOperation = 'destination-out';
+          const rg = g.createRadialGradient(sx, sy, 12, sx, sy, 78);
+          rg.addColorStop(0, 'rgba(0,0,0,1)'); rg.addColorStop(1, 'rgba(0,0,0,0)');
+          g.fillStyle = rg; g.fillRect(0, 0, G.W, G.H);
+          ctx.drawImage(shade, 0, 0);
+          ctx.save(); ctx.globalAlpha = 0.16;
+          for (let i = 0; i < 4; i++) {
+            const a = G.tick * 0.025 + i * Math.PI / 2;
+            ctx.fillStyle = ['#f83878', '#38c8f8', '#f8e038', '#78f838'][i];
+            ctx.beginPath(); ctx.ellipse(sx + Math.cos(a) * 44, sy + Math.sin(a) * 24, 12, 7, 0, 0, Math.PI * 2); ctx.fill();
+          }
+          ctx.restore();
+        },
+      });
+    },
+    // the hops (a move lasts 20 frames), and everybody bobbing on the beat
+    tick(w) {
+      const p = G.play.player;
+      for (const e of [...w.ents.filter((q) => q instanceof G.NPC), p]) {
+        if (e.dancing) continue;
+        if (e.danceT > 0) { e.danceT--; e.z = Math.round(Math.sin((1 - e.danceT / 20) * Math.PI) * 5); if (!e.danceT) e.z = 0; }
+        else if (e.dancer) e.z = G.tick % 39 < 6 ? 1 : 0;
+      }
+    },
+    onEnter() { return S.groceryEnter(); },
   };
 
   G.MAPS.toms = {

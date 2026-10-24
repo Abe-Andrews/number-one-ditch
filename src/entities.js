@@ -1209,7 +1209,7 @@
       drawShadow(ctx, this.x, this.y, cx, cy, this.bigShadow);
       if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
       ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height + 1 - lift) - cy);
-      if (this.calm > 0) drawHalo(ctx, this.x - cx, this.y - img.height - 4 - lift - cy);
+      if (this.calm > 0 && !this.dancing) drawHalo(ctx, this.x - cx, this.y - img.height - 4 - lift - cy);
     }
   }
   G.Critter = Critter;
@@ -4385,6 +4385,32 @@
   }
   G.SprayTarget = SprayTarget;
 
+  // Somebody who has to dance (the Shopping Cart, on Dad's pipe): little music notes float up off
+  // them while they bop side to side. Enemies hold still (they're calm) and wiggle in place.
+  class DanceNotes extends Ent {
+    constructor(e, t) { super(e.x, e.y); this.e = e; this.t = t; this.max = t; e.dancing = true; }
+    get base() { return 99000; }
+    update() {
+      const e = this.e, person = e instanceof G.NPC || e === G.play.player;
+      if (e.dead || --this.t <= 0) { e.dancing = false; if (person) e.z = 0; this.dead = true; return; }
+      if (person) {
+        if (this.t % 16 === 0) e.dir = e.dir === 'left' ? 'right' : 'left';
+        e.z = this.t % 16 < 4 ? 2 : 0;
+      } else if (this.t % 8 === 0) e.x += this.t % 16 === 0 ? 1 : -1;
+    }
+    draw(ctx, cx, cy) {
+      const e = this.e, top = e.hurtBox ? e.hurtBox()[1] : e.y - 26;
+      for (let k = 0; k < 2; k++) {
+        const ph = (this.max - this.t + k * 20) % 40, x = Math.round(e.x - 5 + k * 8 + Math.sin(ph * 0.2) * 2) - cx, y = Math.round(top - 4 - ph * 0.4) - cy;
+        ctx.globalAlpha = Math.max(0, 1 - ph / 40);
+        ctx.fillStyle = k ? '#f878d8' : '#78d8f8';
+        ctx.fillRect(x + 2, y, 1, 5); ctx.fillRect(x, y + 4, 3, 2); ctx.fillRect(x + 2, y, 3, 1);
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+  G.DanceNotes = DanceNotes;
+
   // ============================================================== SEAGULL (the bridge-tunnel)
   // Sits on top of a light pole, out of reach. When Nate wanders close it
   // screeches, dives at the spot where he's standing, overshoots, and flaps
@@ -4507,7 +4533,7 @@
       const x = Math.round(this.x - 8) - cx, y = Math.round(this.y - this.z - 12) - cy;
       if (flip) { ctx.save(); ctx.translate(x + 16, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); ctx.restore(); }
       else ctx.drawImage(img, x, y);
-      if (this.calm > 0) drawHalo(ctx, this.x - cx, this.y - this.z - 16 - cy);
+      if (this.calm > 0 && !this.dancing) drawHalo(ctx, this.x - cx, this.y - this.z - 16 - cy);
     }
   }
   G.Seagull = Seagull;
@@ -4847,7 +4873,7 @@
       let img = G.spr.six[Math.floor(this.t / 10) % 2];
       if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
       ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - 16 - z) - cy);
-      if (this.calm > 0) drawHalo(ctx, this.x - cx, this.y - 19 - cy);
+      if (this.calm > 0 && !this.dancing) drawHalo(ctx, this.x - cx, this.y - 19 - cy);
     }
   }
   G.Six = Six;
@@ -4984,7 +5010,7 @@
       const jx = this.state === 'windup' ? ((this.t >> 1) & 1 ? 1 : -1) : 0;
       const sx = Math.round(this.x - 8 + jx) - cx, sy = Math.round(this.y - S.h + 2) - cy;
       ctx.drawImage(img, sx, sy);
-      if (this.calm > 0) drawHalo(ctx, this.x - cx, sy - 3);
+      if (this.calm > 0 && !this.dancing) drawHalo(ctx, this.x - cx, sy - 3);
       if (this.state === 'dizzy') {
         for (let i = 0; i < 3; i++) {
           const a = G.tick * 0.12 + (i * Math.PI * 2) / 3;

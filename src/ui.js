@@ -971,12 +971,13 @@
       ctx.fillStyle = '#3e3460'; ctx.fillRect(116, 64, 115, 1);
       if (id !== 'pipe') { F().wrap(G.itemDesc(id), 112).slice(0, 7).forEach((l, i) => TXT(ctx, l, 118, 68 + i * 10)); return; }
       // Dad's pipe: its songbook (the pipe itself doesn't show them, so learn them here)
-      F().wrap(G.itemDesc(id), 112).slice(0, 2).forEach((l, i) => TXT(ctx, l, 118, 68 + i * 10));
+      F().wrap(G.itemDesc(id), 112).slice(0, 2).forEach((l, i) => TXT(ctx, l, 118, 67 + i * 9));
       const known = G.SIGNALS.filter((sg) => sg.known()).length, tally = G.sayable(known) + '/' + G.sayable(G.SIGNALS.length);
-      TXT(ctx, 'SONGS', 118, 91, C.gold);
-      TXT(ctx, tally, 231 - F().width(tally), 91, C.dim);
+      TXT(ctx, 'SONGS', 118, 86, C.gold);
+      TXT(ctx, tally, 231 - F().width(tally), 86, C.dim);
+      // (five songs fit at 9px apart)
       G.SIGNALS.forEach((sg, i) => {
-        const y = 102 + i * 10;
+        const y = 95 + i * 9;
         if (!sg.known()) { TXT(ctx, '???', 118, y, C.faint); return; }
         const a = G.arrows(sg.seq);
         TXT(ctx, fit(sg.name, 108 - F().width(a)), 118, y, C.cyan);

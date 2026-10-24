@@ -1488,6 +1488,18 @@
       for (let x = 0; x < 16; x += 3) p.vline(x + (v % 3), 2 + Math.floor(r() * 6), 15, '#4e4030');
       if (mask & 1) { p.rect(0, 0, 16, 4, '#3e7a34'); for (let x = 0; x < 16; x += 2) p.set(x, 4, '#2e6a2c'); p.set(r() * 16, 1, '#5a9a44'); }
     },
+    // ---- the grocery store on College Hill: pale mint walls with a green base band, and
+    // checkered linoleum
+    groceryWall(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#d8ecd8');
+      for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#cce2cc');
+      if (mask & 1) { p.rect(0, 0, 16, 3, '#f4f4ee'); p.hline(0, 15, 3, '#b8ccb8'); }
+      if (mask & 4) { p.rect(0, 11, 16, 5, '#2e7a3e'); p.hline(0, 15, 11, '#4a9a5a'); p.hline(0, 15, 15, '#1e5a2c'); }
+    },
+    groceryFloor(p, r) {
+      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) p.set(x, y, ((x >> 3) + (y >> 3)) % 2 ? '#c8c6c0' : '#e8e6de');
+      for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#d8d6ce');
+    },
     // ---- CHKD's roof (at night): dark membrane with gravel ballast, the concrete ledge around the
     // edge, and the sky (the view out past the city gets painted over it)
     roofDeck(p, r, v) {
@@ -6643,8 +6655,88 @@
           p.hline(cx + 1, cx + 5, 51, cols[0]);
         }
       },
-      door: (p) => { p.rect(43, 45, 10, 5, '#f6f0e0'); p.hline(44, 51, 47, '#2e7a3e'); },
+      // the BACK SOON sign on the door, and a yellow flyer taped up next to it (HIP HOP 101)
+      door: (p) => {
+        p.rect(43, 45, 10, 5, '#f6f0e0'); p.hline(44, 51, 47, '#2e7a3e');
+        p.rect(55, 43, 6, 8, '#f8e070'); p.hline(56, 59, 45, '#d83030'); p.hline(56, 58, 47, '#3a3a40'); p.hline(56, 59, 49, '#3a3a40');
+      },
     });
+  }
+  // ---- the grocery store on College Hill, after close (Dad's hip hop class): the produce stand,
+  // the dairy cooler, aisle endcaps, the checkout, Dad's boombox, the stock boy's mop bucket, and
+  // the PRODUCE sign
+  function produceStand() {
+    const W = 64, H = 32, p = new Pix(W, H);
+    p.rect(0, 4, W, 28, '#8a5a34'); p.hline(0, W - 1, 4, '#a87448'); p.hline(0, W - 1, 31, '#5a3a20');
+    const bins = [['#d83030', '#f05858'], ['#f0a020', '#f8c040'], ['#e8d040', '#f8ec80'], ['#4a9a3a', '#6aba5a'], ['#7a3a8a', '#a05ab0'], ['#c84828', '#e86a48']];
+    bins.forEach(([c, l], i) => {
+      const x0 = 2 + (i % 3) * 21, y0 = i < 3 ? 5 : 16;
+      p.rect(x0, y0, 18, 10, '#5a3a20');
+      for (let k = 0; k < 14; k++) { const x = x0 + 2 + (k % 7) * 2, y = y0 + 2 + Math.floor(k / 7) * 4; p.rect(x, y, 2, 3, c); p.set(x, y, l); }
+    });
+    for (let i = 0; i < 3; i++) { p.rect(6 + i * 21, 27, 9, 4, '#f8f8f0'); p.hline(7 + i * 21, 13 + i * 21, 29, '#d83030'); }
+    return finish(p);
+  }
+  function dairyCooler() {
+    const W = 64, H = 46, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#c8ccd4'); p.hline(0, W - 1, 0, '#e8eaf0'); p.rect(0, 0, W, 8, '#2a6ad8'); p.hline(0, W - 1, 7, '#1a4aa8');
+    const goods = [['#f8f8f8', '#2a6ad8'], ['#f4ead0', '#e8dcb8'], ['#f8a8c8', '#ffffff'], ['#f8c040', '#38a048']];
+    for (let i = 0; i < 4; i++) {
+      const x0 = 2 + i * 15;
+      p.rect(x0, 9, 14, 35, '#a8d8f0'); p.vline(x0 + 12, 10, 42, '#e8f8ff'); p.vline(x0, 9, 43, '#8a8e96');
+      for (const y of [15, 23, 31, 39]) {
+        p.hline(x0 + 1, x0 + 12, y + 1, '#8a8e96');
+        for (let k = 0; k < 3; k++) p.rect(x0 + 2 + k * 4, y - 4, 3, 5, goods[i][k % 2]);
+      }
+      p.vline(x0 + 10, 25, 28, '#3a3a40');
+    }
+    const cv = finish(p);
+    G.font.draw(cv.getContext('2d'), 'DAIRY', 32 - Math.round(G.font.width('DAIRY') / 2), 1, '#ffffff');
+    return cv;
+  }
+  // an aisle endcap, stacked with cereal boxes and cans
+  function aisleShelf() {
+    const W = 16, H = 46, p = new Pix(W, H);
+    p.rect(0, 0, 16, 46, '#8a9098'); p.rect(1, 1, 14, 44, '#b8bcc4');
+    const cols = ['#d83030', '#f0c830', '#3a6ad8', '#38a048', '#f08a28'];
+    for (let y = 3, r = 0; y < 42; y += 9, r++) {
+      p.hline(1, 14, y + 7, '#6a7078');
+      for (let x = 2, k = 0; x < 14; x += 3, k++) { const c = cols[(k + r * 2) % 5]; p.rect(x, y, 2, 7, c); p.set(x, y, '#ffffff'); }
+    }
+    return finish(p);
+  }
+  function checkout() {
+    const W = 48, H = 28, p = new Pix(W, H);
+    p.rect(0, 10, W, 18, '#3a3e48'); p.hline(0, W - 1, 10, '#5a5e68'); p.hline(0, W - 1, 27, '#22262e');
+    p.rect(0, 8, 30, 4, '#1a1a20'); for (let x = 1; x < 30; x += 3) p.set(x, 9, '#4a4a54');
+    p.rect(32, 0, 12, 11, '#2a2a30'); p.rect(33, 1, 10, 5, '#2a4a3a'); p.hline(34, 41, 3, '#58d878');
+    p.rect(2, 15, 26, 2, '#d83030');
+    for (let x = 4; x < 26; x += 5) { p.rect(x, 19, 3, 5, ['#f0c830', '#d83030', '#8a3a1a', '#38a048', '#f8f8f8'][(x / 5) % 5 | 0]); }
+    return finish(p);
+  }
+  // Dad's boombox: the speakers thump (two frames)
+  function boombox(frame) {
+    const p = new Pix(18, 12);
+    p.rect(0, 3, 18, 9, '#3a3a44'); p.hline(0, 17, 3, '#5a5a64'); p.rect(4, 0, 10, 2, '#6a6a74'); p.vline(4, 0, 3, '#6a6a74'); p.vline(13, 0, 3, '#6a6a74');
+    const r = frame ? 3.2 : 2.4;
+    for (const cx of [4, 13]) for (let y = -3; y <= 3; y++) for (let x = -3; x <= 3; x++) if (x * x + y * y <= r * r) p.set(cx + x, 7 + y, x * x + y * y <= 1.5 ? '#8a8a94' : '#1a1a20');
+    p.rect(8, 5, 2, 2, '#f8d040'); p.set(8, 9, '#58d878');
+    return finish(p);
+  }
+  function mopBucket() {
+    const p = new Pix(14, 22);
+    p.rect(1, 12, 11, 9, '#f0c830'); p.hline(1, 11, 12, '#f8e070'); p.rect(2, 13, 9, 2, '#8ab8d8');
+    p.vline(9, 0, 13, '#c8a070'); p.rect(7, 13, 6, 4, '#e8e4d8');
+    p.set(2, 21, '#2a2a30'); p.set(10, 21, '#2a2a30');
+    return finish(p);
+  }
+  function produceSign() {
+    const W = 60, H = 12, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#2e7a3e'); p.hline(0, W - 1, 0, '#4a9a5a'); p.hline(0, W - 1, H - 1, '#1e5a2c');
+    for (const [x, c] of [[3, '#d83030'], [53, '#f0a020']]) { p.rect(x, 3, 4, 5, c); p.set(x + 1, 2, '#3a9a3a'); }
+    const cv = finish(p);
+    G.font.draw(cv.getContext('2d'), 'PRODUCE', 30 - Math.round(G.font.width('PRODUCE') / 2), 2, '#ffffff');
+    return cv;
   }
   // an empty shop, waiting for a tenant
   function forLeaseShop() {
@@ -8273,7 +8365,7 @@
     for (const pose of ['stand', 'walk1', 'walk2', 'raise', 'slam', 'pour']) S.twoLiter[pose] = twoLiterBrute(pose);
     S.fizzDrop = fizzDrop(); S.tollPlaza = tollPlaza();
     // Tom's Pizza
-    S.tomsPizza = tomsPizza(); S.groceryStore = groceryStore(); S.forLeaseShop = forLeaseShop(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
+    S.tomsPizza = tomsPizza(); S.groceryStore = groceryStore(); S.produceStand = produceStand(); S.dairyCooler = dairyCooler(); S.aisleShelf = aisleShelf(); S.checkout = checkout(); S.boombox = [0, 1].map(boombox); S.mopBucket = mopBucket(); S.produceSign = produceSign(); S.forLeaseShop = forLeaseShop(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
     S.pizzaBoxes = pizzaBoxes(); S.checkTable = checkTable(); S.dadTomPicture = dadTomPicture();
     // Abe and Hannah's condo
     S.condo = condoBuilding(); S.brickStep = brickStep();
