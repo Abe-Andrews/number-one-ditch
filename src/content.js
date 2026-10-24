@@ -1898,8 +1898,20 @@
   S.homePicnic = function* () {
     yield G.say(null, 'The picnic table. Every summer cookout ends up right here.');
   };
+  // (a real family joke: years ago, Abe signed Lily up for a taxidermy catalog, and it still comes)
   S.homeMailbox = function* () {
-    yield G.say(null, 'The mailbox. Inside: a catalog, a bill, and a postcard from Nani that just says "SHINE!"');
+    yield G.say(null, 'The mailbox. Inside: a bill, a postcard from Nani that just says "SHINE!", and a taxidermy catalog addressed to Lily. Again.');
+    if (G.with('lily')) yield G.say('Lily', 'ABE.');
+    else yield G.say('Nate', 'Abe signed her up for that as a joke. Years ago. It never stopped coming.');
+  };
+  S.lilyCatalogs = function* () {
+    yield G.say(null, 'Lily\'s trash can. It\'s full of taxidermy catalogs, every single one still in its plastic.');
+    yield G.say(null, 'The one on top: STUFFED, THE TAXIDERMY CATALOG. This month: "Squirrels in Tiny Hats."');
+    if (G.with('lily')) {
+      yield G.say('Lily', 'One every month. I have never opened a single one.');
+      yield G.say('Nate', 'Who signed you up?');
+      yield G.say('Lily', 'Who do you THINK.');
+    }
   };
   S.homeStreetSign = function* () {
     yield G.say(null, 'RATTLESNAKE BRIDGE RD.');
@@ -4775,6 +4787,7 @@
       F.stand(sp.bedLily, 4, 16, 2, look('Lily\'s bed: a navy quilt, leopard print pillows, and a flowered quilt folded at the foot.'), { ht: 3 });
       F.stand(sp.nightCream, 6, 16, 1, () => S.clueLily());
       F.stand(sp.dresser, 7, 16, 2, () => S.lilyDresser());
+      F.stand(sp.catalogBin, 10, 16, 1, () => S.lilyCatalogs());
       // ---- guest room
       F.hang(sp.paintSea, 18, 15, 2, look('A painting of a sailboat out on the bay.'), 8);
       F.hang(sp.wallWindow.shade, 23, 15, 1, null, 3);
