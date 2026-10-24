@@ -568,7 +568,6 @@
     if (f.andoverLocked) add('The Andover mines', s.items.andoverKey && 'Key in hand!', f.shopOpen ? 'Mom sells a key' : 'Need a key', 'Home - Andover', s.items.andoverKey ? 'Pick "The Andover mines" when you leave home.' : f.shopOpen ? 'Mom\'s flower stand sells the gate key. It isn\'t cheap.' : 'The mines are on private land. Mom knows everybody at church.');
     if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number, and Nate can\'t say it.');
     if (f.plantQuest) add('Anette\'s thirsty plants', f.plantsDone, f.plantsDone ? 'Done' : G.sayable(G.plantsWatered()) + '/5 watered', 'Chesapeake - the condo', G.plantsWatered() >= 5 ? 'All five are watered. Go tell Anette.' : 'Water Anette\'s five potted plants around the street with the Portable Bidet.', [G.plantsWatered(), 5]);
-    if (f.hipHopClaim && !f.hipHopMet) side.push({ name: 'Dad\'s hip hop class', status: 'Nobody believes him', kind: 'rumor', where: 'College Hill', hint: 'Dad swears he teaches hip hop at the grocery store on College Hill. Tuesdays, after close.' });
     if (f.hipHopMet) add('Dad\'s hip hop class', f.hipHopDone, G.sayable(f.hipHopRound || 0) + '/3 rounds', 'College Hill', 'It\'s REAL. Talk to Dad at the grocery store and copy his moves with the arrows.', [f.hipHopRound || 0, 3]);
     if (f.mobileBeaten && !f.rubyMet) side.push({ name: 'The rock doctor', status: 'Someone needs one', kind: 'rumor', where: 'CHKD - the ward', hint: 'The nurse on the ward says the girl behind the green door keeps asking for a "rock doctor."' });
     if (f.rubyMet) add('Ruby, the rock kid', f.rubyHeart, !f.rubyQuiz ? G.sayable(f.rubyQ || 0) + '/3 named' : 'Trade her a rock', 'CHKD - the ward', !f.rubyQuiz ? 'Ruby has three rocks with no names. Tell her what they are, rock doctor.' : 'Ruby will trade one of her two fairy stones for a rock she doesn\'t have yet, from somewhere she\'s never been.', !f.rubyQuiz ? [f.rubyQ || 0, 3] : null);
@@ -1687,22 +1686,14 @@
       yield* S.pipeGift();
       return;
     }
-    // (the user's dad's real joke: nobody ever believes him)
-    if (!f.hipHopClaim) {
-      f.hipHopClaim = true;
-      yield G.say('Dad', 'Since we\'re being honest with each other tonight...');
-      yield G.say('Dad', 'I also teach hip hop. At the grocery store on College Hill. After they close.');
-      yield G.say('Nate', 'No you don\'t.');
-      yield G.say('Dad', 'Tuesdays.');
-      yield G.say('Nate', 'Dad. I JUST found out you\'re a luchador. I am not falling for a second one tonight.');
-      if (G.with('doron')) yield G.say('Doron', 'He\'s been saying that for twenty years.');
-      yield G.say('Dad', 'Ask anybody.');
-      yield G.say('Nate', 'Who?');
-      yield G.say('Dad', '...The grocery store.');
-      return;
-    }
     yield G.say('Dad', 'The nachos here are excellent. Very EEENGLISH.');
     yield G.say('Dad', 'If your mother asks, I was at a book club.');
+    // (a clue for the grocery store on College Hill, which is a surprise)
+    if (G.with('doron') && !f.runningMan) {
+      f.runningMan = true;
+      yield G.say('Doron', 'Dad\'s gotten weirdly good at the Running Man lately. At weddings. Out of nowhere.');
+      yield G.say('Dad', '...The nachos, Doron.');
+    }
   };
 
   // Doron suplexes the glacial erratic.
@@ -1864,8 +1855,16 @@
     yield G.say('Nate', 'Science requires sacrifices. Mostly the pool.');
   };
   S.homeTruck = function* () {
+    const f = flags();
     if (needKey()) { yield* S.keyHuntTruck(); return; }
     yield G.say(null, 'Dad\'s old teal Ford pickup. It runs. Mostly.');
+    // (a clue for the grocery store on College Hill)
+    if (!f.bananaSeen) {
+      f.bananaSeen = true;
+      yield G.say(null, 'The cupholder is stuffed with grocery receipts. Every single one says: 1 BANANA.');
+      yield G.say(null, 'All from the same grocery store on College Hill, in Easton. All on Tuesdays, around 10:45 at night.');
+      yield G.say('Nate', 'That\'s an hour away. Who drives an hour to buy ONE banana? At NIGHT?');
+    } else yield G.say(null, 'The cupholder is still stuffed with one-banana receipts.');
   };
   S.homeCoop = function* () {
     yield G.say(null, 'The chicken coop. Somebody has been laying eggs in there.');
@@ -2352,6 +2351,7 @@
     'I can still hear that song sometimes. Faintly. Through the vents. I\'m going to need a vacation.',
     'People keep asking why I yelled "Jamie Lee Curtis." I don\'t KNOW why. She just lives in my head.',
     'Who do you think does the altar flowers every Sunday? Not "the pastor\'s wife." ME.',
+    'Your father\'s "Tuesday thing" always runs late. Last week he came home smelling like cantaloupe.',
   ];
   S.michelleShop = function* () {
     const f = flags(), s = G.state;
@@ -2423,6 +2423,7 @@
     menu.push(['Just chatting', function* () {
       f.momChat = ((f.momChat || 0) + 1) % MOM_CHAT.length;
       yield G.say('Michelle', MOM_CHAT[f.momChat]);
+      if (/Tuesday/.test(MOM_CHAT[f.momChat])) f.tuesdayHeard = true;
     }]);
     menu.push(['Never mind', null]);
     const c = yield G.ask('Michelle', 'What can I get you? Prices are in shark teeth.', menu.map((x) => x[0]));
@@ -3319,7 +3320,7 @@
         'He\'s playing the nine o\'clock! The church ladies are going to faint.',
         'Candy corn and blue Doritos. Don\'t tell your mother. She knows.',
         'Do you speak EEENGLISH? ...Just checking.',
-        f.hipHopDone ? 'Same time next Tuesday? Your siblings still think you photoshopped me.' : 'Tuesdays I teach hip hop at the grocery store on College Hill. After close. Nobody believes me.',
+        f.hipHopDone ? 'Same time next Tuesday? Your siblings still think you photoshopped me.' : 'Tuesday nights I have a... thing. A church thing. Don\'t wait up.',
       ][f.dadLine]);
       return;
     }
@@ -4840,6 +4841,11 @@
       F.stand(sp.dustCollector, 13, 10, 2, look('The dust collector. It is losing the war.'));
       F.stand(sp.shopVac, 7, 10, 1, look('An orange shop vac, also losing the war.'));
       F.stand(sp.buckets, 20, 11, 1, look('Five-gallon buckets. Every garage has somewhere between four and four hundred.'));
+      // (clues for the grocery store on College Hill)
+      w.addProp({ img: sp.highTops, tx: 13, ty: 4, dx: -2, dy: -2, hit: [13, 4, 1, 1], talk: function* () {
+        yield G.say(null, 'A pair of brand-new white high-tops. There\'s a cassette tucked in one of them, labeled TUESDAY.');
+        yield G.say('Nate', flags().hipHopDone ? 'His dancing shoes. Of course.' : 'Dad wears loafers. Dad has ALWAYS worn loafers.');
+      } });
       // Dad, hanging out at his workbench (once Mom's books are back and things calm down)
       const f = flags();
       if (f.homeArrived) w.dad = w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'left', talk: S.dadWorkshop }));
@@ -4855,6 +4861,22 @@
         yield G.wait(20);
         yield G.say('Nate', 'Dad\'s workshop. It smells like sawdust and pipe tobacco. It always has.');
       })();
+    },
+    // when he thinks nobody's looking, Dad practices (a few moves, a hop on each); when Nate walks
+    // up, he freezes. "...Stretching." (After the surprise at the grocery store he doesn't hide it.)
+    tick(w) {
+      const dad = w.dad;
+      if (!dad || G.script.busy) return;
+      const p = G.play.player, near = Math.hypot(p.x - dad.x, p.y - dad.y) < 60;
+      if (!near) {
+        const k = Math.floor(G.tick / 26);
+        if (G.tick % 26 === 0 && k % 8 < 4) { dad.dir = ['left', 'right', 'up', 'down'][k % 4]; dad.hop = 12; dad.busted = true; }
+      } else if (dad.busted) {
+        dad.busted = false;
+        dad.dir = G.dirToward(p.x - dad.x, p.y - dad.y);
+        w.pop(dad.x, dad.y - 34, flags().hipHopDone ? 'POP AND LOCK!' : '...Stretching.', flags().hipHopDone ? '#f8e070' : '#f8f8f0');
+      }
+      if (dad.hop > 0) { dad.hop--; dad.z = Math.round(Math.sin((1 - dad.hop / 12) * Math.PI) * 3); } else dad.z = 0;
     },
   };
 
@@ -8201,14 +8223,16 @@
 
   // ---------------------------------------------------------------- Dad's hip hop class
   // A real Dad joke (the user's): he swears he teaches hip hop dance at the local grocery store
-  // after they close, and none of the kids believe him. Here it's true. A flyer on the College
-  // Hill grocery store's door (HIP HOP 101, instructor: Christian) is there from the start; Dad
-  // tells Nate about it after the main event (S.dadArena: "Tuesdays"), and from then on the door
-  // is propped open with a beat coming out. Inside, after close: Dad's class (two church ladies,
+  // after they close, and none of the kids believe him. Here it's true, and it's a SURPRISE: nobody
+  // says it before Nate walks in. Just clues that make sense afterward: one-banana receipts in
+  // Dad's truck (from this store, Tuesdays, 10:45 at night), brand-new high-tops in his workshop,
+  // Dad caught mid-move ("...Stretching."), Mom's "Tuesday thing", Doron on Dad's Running Man, a
+  // boombox in the produce section through the store's window. After the main event, the door is
+  // propped open with a beat coming out. Inside, after close: Dad's class (two church ladies,
   // the stock boy, a guy who came in for milk). Follow Dad's moves with the arrows for three
   // rounds and he teaches Nate his signature move, The Shopping Cart, on the pipe (anything that
   // hears it has to dance). Nate texts the family a photo. Nobody believes him.
-  // Flags: flyerSeen, hipHopClaim, hipHopMet, hipHopRound (0-3), hipHopDone, signal_cart.
+  // Flags: bananaSeen, tuesdayHeard, runningMan (clues), hipHopMet, hipHopRound (0-3), hipHopDone, signal_cart.
   G.CAST.dadHipHop = Object.assign({}, G.CAST.dad, { hairStyle: 'cap', hat: '#d83030', hatStyle: 'ball', coat: '#3a6ad8', shirt: '#f8f8f0', pants: '#2a2c38', shoes: '#f8f8f8' });
   G.CAST.churchLady1 = { skin: '#f4cdb0', hair: '#c8c8d0', hairStyle: 'short', glasses: '#8a6a9a', blush: true, smile: '#ffffff', coat: '#c87898', shirt: '#f4f0e8', pants: '#5a5a7a', shoes: '#f0f0f0', torso: 5, legs: 3 };
   G.CAST.churchLady2 = { skin: '#8a5a3a', eyes: '#140c0a', hair: '#e8e8ec', hairStyle: 'shoulder', smile: '#ffffff', coat: '#4a9a8a', shirt: '#f8d878', pants: '#3a3a4a', shoes: '#f0f0f0', torso: 5, legs: 3 };
@@ -8261,12 +8285,7 @@
     const f = flags();
     if (!f.dadBeaten) {
       yield G.say(null, 'The grocery store. The doors are locked. A sign on the glass says BACK SOON.');
-      yield G.say(null, 'Taped up next to it, a yellow flyer: HIP HOP 101. TUESDAYS, AFTER CLOSE. INSTRUCTOR: CHRISTIAN. No experience necessary.');
-      if (!f.flyerSeen) {
-        f.flyerSeen = true;
-        yield G.say('Nate', 'Dad\'s name is Christian.');
-        yield G.say('Nate', '...There are a LOT of Christians.');
-      }
+      yield G.say(null, 'Way in the back, past the registers, there\'s a boombox sitting in the produce section. Huh.');
       return;
     }
     // after hours: the door's propped open, and there's a beat coming out
@@ -8292,8 +8311,9 @@
     const f = flags(), s = G.state, w = G.play.world, p = P(), dad = w.hipDad;
     if (!f.hipHopMet) {
       f.hipHopMet = true;
-      yield G.say('Dad', f.hipHopClaim ? 'Nate! I TOLD you.' : 'Nate! Did your mother send you? She doesn\'t believe me either.');
-      yield G.say('Nate', 'You actually teach hip hop. At the grocery store.');
+      yield G.say('Dad', 'Nate?! ...You weren\'t supposed to find out like this.');
+      yield G.say('Nate', f.bananaSeen ? 'Wait. Is THIS what all the bananas were?' : f.tuesdayHeard ? 'Wait. Is THIS your "Tuesday thing"?' : 'Dad. You teach HIP HOP?');
+      if (f.bananaSeen) yield G.say('Dad', 'You can\'t just walk into a grocery store and not buy anything, Nate. I like bananas.');
       yield G.say('Dad', 'Every Tuesday, after close. The manager owes me a favor. I married him.');
       yield G.say('Nate', 'You WHAT?');
       yield G.say('Dad', 'To his wife, Nate. I officiated. I\'m a pastor.');
@@ -8363,9 +8383,9 @@
     yield G.text('Abe', 'thats so clearly photoshopped');
     yield G.text('Doron', 'Thats a different guy with a beard');
     yield G.text('Lily', 'dad goes to bed at 8:30');
-    yield G.text('Michelle', 'Your father does NOT teach hip hop.');
-    yield G.text('Dad', 'Tuesdays.');
-    yield G.say('Nate', '...They\'re never going to believe me.');
+    yield G.text('Michelle', '...THAT\'S where he goes on Tuesdays?');
+    yield G.text('Dad', 'I have been telling you kids this for YEARS.');
+    yield G.say('Nate', '...He has, actually. Nobody ever believed him.');
     yield G.say('Dad', 'Welcome to my life, son.');
   };
   // the class
