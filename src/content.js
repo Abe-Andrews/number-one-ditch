@@ -238,7 +238,11 @@
     },
     bidet: {
       kind: 'gear', equip: true, name: 'Portable Bidet', short: 'Bidet', icon: () => G.spr.bidetIcon, has: () => !!st().items.bidet,
-      desc: 'From under the sink in Abe and Hannah\'s downstairs bathroom. Hold X to spray. It runs dry fast: face any water, sink or toilet and hold X to fill it back up (it takes a while).',
+      desc: () => {
+        const f = fl(), ups = [f.bidetBig && 'a lab carboy tank (twice the water)', f.bidetNozzle && 'a turbo nozzle (way more reach)'].filter(Boolean);
+        return 'From under the sink in Abe and Hannah\'s downstairs bathroom. Hold X to spray. When it runs dry, face any water, sink or toilet and hold X to refill.'
+          + (ups.length ? ' Upgraded: ' + ups.join(' and ') + '.' : '');
+      },
     },
     bass: {
       kind: 'gear', equip: true, name: 'Half-Finished Bass', short: 'Bass', icon: () => G.spr.bassIcon, has: () => !!st().items.bass,
@@ -348,12 +352,15 @@
   G.KIT_MAX = 3;
   G.KIT_HEAL = 6;
   // how much spray the Portable Bidet holds (frames of holding X), and how much is in it
-  G.BIDET_MAX = 150;
+  // (Dr. Moles's lab carboy, from the Science Center, doubles it)
+  Object.defineProperty(G, 'BIDET_MAX', { get: () => (fl().bidetBig ? 300 : 150), configurable: true });
   // ...and how fast it fills back up while X is held at water, a sink or a toilet (about 5 seconds for a full tank)
-  G.BIDET_FILL = 0.5;
+  Object.defineProperty(G, 'BIDET_FILL', { get: () => (fl().bidetBig ? 1 : 0.5), configurable: true });
+  // how far the stream reaches (the turbo nozzle from the water-gun race at the fair adds a lot)
+  G.bidetReach = () => (fl().bidetNozzle ? 112 : 72);
   G.bidetWater = () => { const v = st().items.bidetWater; return v == null ? G.BIDET_MAX : v; };
   // every toilet and sink in the game (by its sprite) fills the bidet back up
-  G.waterFixture = (img) => !!img && [G.spr.toilet, G.spr.sinkTop, G.spr.demilune, G.spr.doubleVanity, G.spr.condoVanity].includes(img);
+  G.waterFixture = (img) => !!img && [G.spr.toilet, G.spr.sinkTop, G.spr.demilune, G.spr.doubleVanity, G.spr.condoVanity, G.spr.safetyStation].includes(img);
 
   // ================================================================ SMOKE SIGNALS (Dad's pipe)
   // Like ocarina songs: learn a sequence, puff it with the pipe, something
@@ -561,7 +568,7 @@
     if (f.plantQuest) add('Anette\'s thirsty plants', f.plantsDone, f.plantsDone ? 'Done' : G.sayable(G.plantsWatered()) + '/5 watered', 'Chesapeake - the condo', G.plantsWatered() >= 5 ? 'All five are watered. Go tell Anette.' : 'Water Anette\'s five potted plants around the street with the Portable Bidet.', [G.plantsWatered(), 5]);
     if (f.mobileBeaten && !f.rubyMet) side.push({ name: 'The rock doctor', status: 'Someone needs one', kind: 'rumor', where: 'CHKD - the ward', hint: 'The nurse on the ward says the girl behind the green door keeps asking for a "rock doctor."' });
     if (f.rubyMet) add('Ruby, the rock kid', f.rubyHeart, !f.rubyQuiz ? G.sayable(f.rubyQ || 0) + '/3 named' : 'Trade her a rock', 'CHKD - the ward', !f.rubyQuiz ? 'Ruby has three rocks with no names. Tell her what they are, rock doctor.' : 'Ruby will trade one of her two fairy stones for a rock she doesn\'t have yet, from somewhere she\'s never been.', !f.rubyQuiz ? [f.rubyQ || 0, 3] : null);
-    if (s.party.includes('abe')) add('Abe\'s reach', G.abeReachCount() >= 5 && 'All found!', G.sayable(G.abeReachCount()) + '/5 found', 'Chesapeake', 'Abe is 6\'5". With him along, check things that are way up high around Abe and Hannah\'s and at CHKD (press Z under them), and the tall hedge up by Anette\'s.', [G.abeReachCount(), 5]);
+    if (s.party.includes('abe')) add('Abe\'s reach', G.abeReachCount() >= G.ABE_REACH_TOTAL && 'All found!', G.sayable(G.abeReachCount()) + '/' + G.sayable(G.ABE_REACH_TOTAL) + ' found', 'Anywhere', 'Abe is 6\'5". With him along, check things that are way up high (press Z under them): around Abe and Hannah\'s, at CHKD, the tall hedge up by Anette\'s... and maybe places you\'ve already been.', [G.abeReachCount(), G.ABE_REACH_TOTAL]);
     if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
     if (f.snackQuest) {
@@ -2941,6 +2948,11 @@
       how: 'Hanging on the wall of a pizza place.',
       caption: 'Dad and Tom at the original Tom\'s Pizza in Union, NJ. The whole family calls in orders just to hear Tom pick up the phone: "TOM\'S PIZZA!"',
     },
+    {
+      id: 'atticSelfie', name: 'Backyard Selfie', place: 'Home', file: 'assets/photos/attic-selfie.png',
+      how: 'In a shoebox in the attic. You\'d need somebody really tall to get up there.',
+      caption: 'A selfie in the backyard, taken mid-spin. The trees are a blur. One face says "I am cool." The other says "I did not agree to this picture."',
+    },
   ];
   for (const ph of G.PHOTOS) { ph.img = new Image(); ph.img.src = ph.file; }
   const photoState = () => (G.state.photos = G.state.photos || {});
@@ -4416,6 +4428,8 @@
       }
       w.add(new G.NPC({ sprite: 'moles', name: 'Dr. Moles', x: 7 * 16 + 8, y: 3 * 16 + 14, dir: 'down', talk: S.chemFinal }));
       w.add(new G.NPC({ sprite: 'priya', name: 'Priya', x: 13 * 16 + 8, y: 7 * 16 + 14, dir: 'left', talk: S.priya }));
+      // the emergency shower and eyewash (Dr. Moles upgrades the bidet here; it refills it too)
+      w.addProp({ img: G.spr.safetyStation, tx: 12, ty: 2, solid: [12, 2, 1, 1], hit: [12, 2, 1, 1], talk: S.safetyShower });
       w.addWarp(7, 10, 1, 1, 'campus', 33, 7, 'down');
     },
   };
@@ -4700,6 +4714,7 @@
       // ---- hallway
       F.hang(sp.familyPhotos, 3, 10, 2, look('Family photos all the way down the hall. School pictures, beach trips, one very bad haircut.'), 5);
       F.hang(sp.familyPhotos, 19, 10, 2, look('More family photos. Somebody is always blinking.'), 5);
+      F.hang(sp.homeAtticHatch, 11, 10, 2, () => S.abeReach('attic'), 17);
       F.hang(sp.paintSmall, 28, 10, 1, look('A little painting of a flower pot.'), 8);
       // ---- Lily's room
       F.hang(sp.wallWindow.shade, 2, 15, 1, null, 3);
@@ -6157,8 +6172,9 @@
       // tall grass in the east field
       fill(28, 25, 8, 3, '"');
       fill(31, 15, 5, 3, '"');
-      fill(3, 4, 4, 3, '"');
-      [[11, 9], [12, 9], [28, 9], [29, 9], [3, 10], [4, 10], [36, 18], [36, 20]].forEach(([x, y]) => set(x, y, 'b'));
+      [[12, 9], [28, 9], [29, 9], [36, 18], [36, 20]].forEach(([x, y]) => set(x, y, 'b'));
+      // the Hook-a-Duck trough on the midway (real water, under the booth)
+      fill(3, 6, 4, 4, '~');
       // tree border (gaps on the west edge for the road back to campus, and at
       // the bottom for the trail down to the little cave)
       for (let x = 0; x < W; x += 2) { set(x, 0, 'T'); if (x !== 20) set(x, 30, 'T'); }
@@ -6190,7 +6206,7 @@
       w.addProp({ img: G.spr.standCorn, tx: 28, ty: 19, h: 3, solid: [28, 20, 4, 2], hit: [28, 20, 4, 2], talk: S.cornDogs });
       w.addProp({ img: G.spr.standLemon, tx: 33, ty: 19, h: 3, solid: [33, 20, 4, 2], hit: [33, 20, 4, 2], talk: S.lemonade });
       for (const x of [30, 31, 32]) w.addProp({ img: G.spr.potty, tx: x, ty: 9, h: 2, solid: [x, 9, 1, 2], hit: [x, 9, 1, 2], talk: S.potty });
-      for (const [x, y] of [[23, 16], [24, 16], [23, 17], [35, 10], [36, 10], [6, 9]]) w.addProp({ img: G.spr.hay, tx: x, ty: y, solid: [x, y, 1, 1] });
+      for (const [x, y] of [[23, 16], [24, 16], [23, 17], [35, 10], [36, 10]]) w.addProp({ img: G.spr.hay, tx: x, ty: y, solid: [x, y, 1, 1] });
       for (const [x, y] of [[19, 15], [19, 21], [18, 11]]) w.addProp({ img: G.spr.trash, tx: x, ty: y, dx: 2, solid: [x, y, 1, 1] });
       // Ferris wheel in the corner and strings of lights over the paths
       w.props.push(new G.FerrisWheel(33 * 16, 8 * 16 + 14));
@@ -6233,22 +6249,292 @@
       w.add(new G.Sign(18, 14, 'PARKING. Do not leave valuables in your car. Or near the wrestlers.'));
 
       const styles = ['red', 'blue', 'gold', 'green'];
-      [[6, 21], [12, 21], [14, 26], [27, 24], [32, 26], [30, 13], [9, 6]].forEach(([x, y], i) =>
+      [[6, 21], [12, 21], [14, 26], [27, 24], [32, 26], [30, 13], [35, 14]].forEach(([x, y], i) =>
         w.add(new G.Wrestler(x * 16 + 8, y * 16 + 14, styles[i % styles.length])));
 
       w.addWarp(0, 12, 1, 2, 'campus', 38, 12, 'left');
       // a pile of old quarry rubble (serpentine) tucked in the corner, and the balloon game
       if (G.state.items.hammer) w.add(new G.QuarryRubble(3 * 16, 28 * 16 + 12));
       w.balloonBooth = w.addProp({ img: flags().balloonWon ? G.spr.balloonBoothEmpty : G.spr.balloonBooth, tx: 27, ty: 14, h: 2, solid: [27, 14, 3, 2], hit: [27, 14, 3, 2], talk: S.balloonGame });
+      // the midway: the high striker, Hook-a-Duck and the water-gun race
+      midway(w);
     },
-    // the protesters chant every so often
+    // the protesters chant every so often (and a water-gun race runs, if there's one going)
     tick(w) {
+      G.raceTick(w);
       if (G.script.busy || !w.protesters || G.tick % 150) return;
       const live = w.protesters.filter((q) => !q.dead);
       if (!live.length) return;
       const p = live[Math.floor(Math.random() * live.length)];
       w.pop(p.x, p.y - 52, CHANTS[Math.floor(Math.random() * CHANTS.length)], '#f8f8f0');
     },
+  };
+
+  // ---------------------------------------------------------------- the midway (late-game fun)
+  // Three booths in the field west of the Expo Hall, each one rigged so it takes something from
+  // later in the trip: the high striker (nobody rings that bell... but Abe can just reach up and
+  // flick it), Hook-a-Duck (the golden duck is way in the back, out of reach of the duck poles,
+  // but not a surf rod), and the water-gun race (the booth's squirt guns are pathetic; the
+  // Portable Bidet is not). Flags: strikerHint, reach_bell, duckSeen, duckRodHint, goldenDuck,
+  // raceBidet, raceTip, raceWon, bidetNozzle.
+  G.CAST.raceKid1 = { skin: '#f2c8a0', hair: '#c8a46c', hairStyle: 'short', blush: true, shirt: '#d83030', pants: '#3a4a8a', shorts: true, shoes: '#f0f0f0', torso: 4, legs: 2 };
+  G.CAST.raceKid2 = { skin: '#8a5a3a', eyes: '#140c0a', hair: '#1a1010', hairStyle: 'buzz', smile: '#ffffff', shirt: '#f0c830', pants: '#2a2c38', shorts: true, shoes: '#2a2a2a', torso: 4, legs: 2 };
+  const DUCK_PATH = [3 * 16 + 9, 70 + 51, 3 * 16 + 55, 70 + 81];   // the loop around the trough
+  const RACE_X = [7 * 16 + 13, 7 * 16 + 40, 7 * 16 + 67], RACE_Y = 10 * 16 + 12;
+  const RACE_NEED = 70;                                             // frames of stream in the clown's mouth
+  const RACE_KID = [1 / 330, 1 / 300];                              // the kids' balloons, per frame
+  function midway(w) {
+    const sp = G.spr, f = flags();
+    // the high striker
+    w.striker = { puck: 0, ding: 0 };
+    w.props.push({
+      img: sp.highStriker, x: 16, y: 10 * 16 - 64, base: 10 * 16 - 1, hit: [16, 9 * 16, 48, 10 * 16], talk: () => S.highStriker(),
+      draw(ctx, cx, cy) {
+        const x = this.x - cx, y = this.y - cy, py = y + 50 - Math.round(w.striker.puck * 42);
+        ctx.drawImage(this.img, x, y);
+        ctx.fillStyle = '#2a2a30'; ctx.fillRect(x + 9, py, 8, 3); ctx.fillStyle = '#f8e070'; ctx.fillRect(x + 10, py, 6, 1);
+        if (w.striker.ding > 0) {
+          w.striker.ding--;
+          ctx.fillStyle = (w.striker.ding >> 2) & 1 ? '#fff8c0' : '#f8e070';
+          for (const [dx, dy] of [[-9, -2], [-8, 3], [9, -2], [8, 3], [0, -5], [-5, -5], [5, -5]]) ctx.fillRect(x + 13 + dx, y + 3 + dy, 1, 1);
+        }
+      },
+    });
+    w.blockTiles(1, 9, 2, 1);
+    // Hook-a-Duck (its trough is real water: a lure flies over it, and the bidet fills up at it)
+    w.props.push({ img: sp.duckBooth, x: 3 * 16, y: 10 * 16 - 90, flat: true, base: 0 });
+    w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [3 * 16, 5 * 16, 7 * 16, 10 * 16], talk: () => S.duckBooth() });
+    w.blockTiles(3, 5, 4, 1);
+    for (let i = 0; i < 7; i++) w.add(new G.FairDuck(DUCK_PATH[0], DUCK_PATH[1], { path: DUCK_PATH, s: i / 7 }));
+    if (!f.goldenDuck) w.add(new G.FairDuck(3 * 16 + 32, 70 + 35, { golden: true }));
+    // the water-gun race: the booth, the balloons over the clowns, the clown in Nate's lane (a
+    // spray target), and two kids at the other two guns
+    w.props.push({ img: sp.raceBooth, x: 7 * 16, y: 10 * 16 - 64, flat: true, base: 0 });
+    w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [7 * 16, 6 * 16, 12 * 16, 10 * 16], talk: () => S.raceBooth() });
+    w.blockTiles(7, 6, 5, 4);
+    w.props.push({
+      img: null, x: 0, y: 0, base: 9 * 16,
+      draw(ctx, cx, cy) {
+        const r = w.race, cols = ['#e83030', '#38c858', '#f0c830'];
+        const fill = r ? [r.kids[0], Math.min(1, r.nate / RACE_NEED), r.kids[1]] : [0, 0, 0];
+        for (let i = 0; i < 3; i++) {
+          if (r && r.popped === i) continue;
+          const rad = 2 + Math.round(fill[i] * 7), bx = RACE_X[i] - cx, by = 6 * 16 + 11 - rad - cy;
+          ctx.fillStyle = cols[i]; ctx.beginPath(); ctx.arc(bx + 0.5, by + 0.5, rad, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(bx - (rad >> 1), by - (rad >> 1), 1, 1);
+        }
+      },
+    });
+    w.add(new G.SprayTarget([RACE_X[1] - 9, 7 * 16 + 4, RACE_X[1] + 9, 9 * 16], () => { const r = w.race; if (r && r.on) r.nate++; }));
+    w.raceKids = [0, 2].map((lane, k) => w.add(new G.NPC({ sprite: 'raceKid' + (k + 1), name: 'Kid', x: RACE_X[lane], y: RACE_Y, dir: 'up', talk: S.raceKid(k) })));
+  }
+
+  // ---- the high striker
+  // the puck flies up to k (0-1, 1 = the bell) and drops back down
+  const strikerPuck = (w, k) => ({
+    start() { this.t = 0; },
+    update() {
+      const up = 22, down = 30;
+      this.t++;
+      w.striker.puck = this.t <= up ? k * Math.sin((this.t / up) * Math.PI / 2) : k * Math.max(0, 1 - ((this.t - up) / down) ** 2);
+      return this.t >= up + down;
+    },
+  });
+  S.highStriker = function* () {
+    const f = flags(), s = G.state, w = G.play.world, abe = s.party.includes('abe');
+    if (f.reach_bell) { yield G.say(null, 'The high striker. The carny put up a new sign: NO REACHING.'); return; }
+    yield G.say('Carny', 'TEST YOUR STRENGTH! Ring the bell, win the TOP PRIZE!');
+    const c = yield G.ask('Carny', 'Five teeth a swing. Step right up!', abe ? ['Swing (5 teeth)', 'Get Abe', 'No thanks'] : ['Swing (5 teeth)', 'No thanks']);
+    if (abe && c === 1) {
+      // (Nate steps aside, and the camera looks up at the bell)
+      yield G.walkTo(P(), 1.4 * 16, 11 * 16 + 10, 1.2);
+      P().dir = 'up';
+      yield G.camFocus(3 * 16, 8.8 * 16, 24);
+      yield* S.abeReach('bell');
+      yield G.camFocus(null, null, 20);
+      return;
+    }
+    if (c !== 0) return;
+    if (s.teeth < 5) { yield G.say('Carny', 'Come back with five teeth, pal.'); return; }
+    G.play.addTeeth(-5);
+    const doron = G.with('doron');
+    if (doron) yield G.say('Doron', 'Step aside. Let a professional work.');
+    yield G.say(null, (doron ? 'Doron' : 'Nate') + ' grabs the mallet and swings with everything he\'s got.');
+    G.audio.sfx('hit'); G.play.shake(doron ? 10 : 4, doron ? 3 : 1);
+    yield strikerPuck(w, doron ? 0.93 : 0.3);
+    if (doron) {
+      yield G.say('Carny', 'Ooh! SO close!');
+      yield G.say('Doron', 'That bell is bolted down. That bell is BOLTED DOWN.');
+      yield G.say('Carny', 'It is not bolted down.');
+    } else yield G.say('Carny', 'Ooh. Noodle arms.');
+    if (!f.strikerHint) {
+      f.strikerHint = true;
+      yield G.say('Nate', abe ? 'Nobody\'s swinging hard enough to ring that. ...But Abe is tall enough to just REACH it.' : 'Nobody\'s ringing that bell. Not without being, like, nine feet tall.');
+    }
+  };
+
+  // ---- Hook-a-Duck
+  S.duckBooth = function* () {
+    const f = flags(), s = G.state;
+    if (f.goldenDuck) { yield G.say('Carny', 'Hook-a-duck! Every duck\'s a winner! ...There is no golden duck. There was never a golden duck.'); return; }
+    yield G.say('Carny', 'Hook-a-duck! Every duck\'s a winner! Hook the GOLDEN duck and win the GRAND PRIZE!');
+    yield G.say(null, 'The golden duck bobs in a little tub way in the back of the booth. The duck poles are about two feet long.');
+    if (!f.duckSeen) { f.duckSeen = true; yield G.say('Nate', 'Nobody can reach that with these little poles.'); yield G.say('Carny', 'Can\'t imagine why, pal.'); }
+    const c = yield G.ask('Carny', 'One duck, five teeth!', ['Play (5 teeth)', 'No thanks']);
+    if (c === 0) {
+      if (s.teeth < 5) { yield G.say('Carny', 'Come back with five teeth, pal.'); return; }
+      G.play.addTeeth(-5);
+      f.duckPrize = ((f.duckPrize || 0) + 1) % 5;
+      yield G.say(null, 'Nate hooks a rubber duck with the little pole.');
+      yield G.say('Carny', 'A winner! Your prize: ' + ['a plastic spider ring.', 'a sticker of a different duck.', 'one bouncy ball. Do not bounce it near me.', 'a very small comb.', 'a whistle. Please don\'t.'][f.duckPrize]);
+      yield G.say(null, 'Nate puts it in his pocket. It is never seen again.');
+    }
+    if (s.items.rod && !f.duckRodHint) {
+      f.duckRodHint = true;
+      yield G.say('Nate', '...Wait. I have a SURF ROD.');
+      yield G.say(null, '(Put the Surf Rod on X, stand right in front of the golden duck, and cast.)');
+    }
+  };
+  // the golden duck, reeled in on a surf rod (the bottom has the sacred number on it)
+  S.goldenDuck = function* (duck) {
+    const f = flags();
+    if (f.goldenDuck) return;
+    f.goldenDuck = true;
+    duck.dead = true;
+    yield G.itemGet(G.spr.goldenDuck.right, 'You hooked the {y}Golden Duck{/}!');
+    yield G.say('Carny', 'HEY! That\'s not a duck pole!');
+    yield G.say('Nate', 'You never said it had to be a duck pole.');
+    yield G.say('Carny', '...I never said it had to be a duck pole.');
+    yield G.say('Carny', 'Fine. Every duck\'s got a number on the bottom. Read it out loud, and the grand prize is yours.');
+    yield G.say(null, 'Nate turns the golden duck over. Painted on the bottom, in gold: the sacred number.');
+    yield G.say('Nate', 'It\'s... five. Plus one.');
+    yield G.say('Carny', 'Just say the number, pal.');
+    yield G.say('Nate', 'It\'s the one between five and seven.');
+    yield G.say('Carny', '...Close enough.');
+    yield G.say(null, 'The grand prize: a stuffed banana as big as Doron. There is no way it fits in the car.');
+    yield G.say('Carny', 'Tell you what. I\'ll buy it back. A hundred and fifty teeth.');
+    G.play.addTeeth(150);
+    G.audio.sfx('tooth');
+    yield G.say(null, 'Nate sells the banana back for {y}150 shark teeth{/}.');
+  };
+
+  // ---- the water-gun race
+  S.raceKid = (k) => function* () {
+    const won = flags().raceWon;
+    yield G.say('Kid', [
+      won ? 'You used a BIDET. I\'m telling.' : 'I\'ve won this like nine times. My mom is very proud.',
+      won ? 'Can I try the bidet? ...Can I at least HOLD the bidet?' : 'The trick is you have to really believe in the clown.',
+    ][k]);
+  };
+  // during a race (from the fair's tick): the kids' balloons fill on their own; Nate's fills
+  // only while his stream is in the clown's mouth
+  G.raceTick = (w) => {
+    const r = w.race;
+    if (!r || !r.on || G.script.busy) return;
+    r.t++;
+    // (the wrestlers wandering the fair hold still and watch: no body slams mid-race)
+    for (const e of w.ents) if (e instanceof G.Wrestler && !e.dead) e.calm = 2;
+    r.kids = r.kids.map((k, i) => Math.min(1, k + RACE_KID[i]));
+    if (r.nate >= RACE_NEED) { r.on = false; G.script.run(S.raceEnd(true)); return; }
+    if (r.kids.some((k) => k >= 1)) { r.on = false; G.script.run(S.raceEnd(false)); }
+  };
+  S.raceBooth = function* () {
+    const f = flags(), s = G.state, w = G.play.world, p = P();
+    if (w.race) return;
+    yield G.say('Carny', f.raceWon ? 'Oh no. Not you again.' : 'WATER RACE! Squirt the clown in the mouth to fill your balloon. Pop it first and WIN!');
+    const c = yield G.ask('Carny', 'Five teeth a race. You in?', ['Race (5 teeth)', 'No thanks']);
+    if (c !== 0) return;
+    if (s.teeth < 5) { yield G.say('Carny', 'Come back with five teeth, pal.'); return; }
+    const bidet = !!s.items.bidet;
+    if (bidet && s.xItem !== 'bidet') { yield G.say('Nate', 'Wait. I have a better idea.'); yield G.say(null, '(Put the Portable Bidet on X first.)'); return; }
+    if (bidet && G.bidetWater() < RACE_NEED + 10) { yield G.say('Nate', 'Wait. My bidet\'s almost empty.'); yield G.say(null, '(Fill it up first. The Hook-a-Duck trough next door is full of water.)'); return; }
+    G.play.addTeeth(-5);
+    yield G.walkTo(p, RACE_X[1], RACE_Y, 1.4);
+    p.dir = 'up';
+    if (bidet && !f.raceBidet) {
+      f.raceBidet = true;
+      yield G.say('Nate', 'Mind if I use my own?');
+      yield G.say(null, 'Nate holds up the Portable Bidet.');
+      yield G.say('Carny', 'Is that... a BIDET?');
+      yield G.say('Nate', 'The rules don\'t say I can\'t.');
+      yield G.say('Carny', '...The rules don\'t say you can\'t.');
+    }
+    w.race = { on: false, t: 0, nate: 0, kids: [0, 0], popped: -1 };
+    for (const t of ['READY...', 'SET...']) { G.audio.sfx('blip'); w.pop(RACE_X[1], 84, t, '#f8f8f0'); yield G.wait(36); }
+    G.audio.sfx('bell');
+    w.pop(RACE_X[1], 84, 'GO!', '#f8e070');
+    if (bidet) {
+      // (the race runs in G.raceTick: hold X with the stream in the clown's mouth)
+      w.race.on = true;
+      if (!f.raceTip) { f.raceTip = true; w.pop(p.x, p.y - 34, 'Hold X! Keep it in the clown\'s mouth!', '#a8d8ff'); }
+      return;
+    }
+    // with the booth's squirt gun, Nate doesn't stand a chance
+    yield {
+      update() {
+        const r = w.race;
+        r.kids[0] = Math.min(1, r.kids[0] + 1 / 220); r.kids[1] = Math.min(1, r.kids[1] + 1 / 200);
+        r.nate = Math.min(RACE_NEED * 0.3, r.nate + 0.1);
+        if (G.tick % 10 === 0) w.burst(RACE_X[1], 9 * 16 - 2, ['#a8d8ff', '#ffffff'], 1, { speed: 0.3, up: 0.2, g: 0.1, life: 10, size: 1 });
+        return r.kids[1] >= 1;
+      },
+    };
+    yield* S.raceEnd(false, true);
+  };
+  S.raceEnd = function* (win, gun) {
+    const f = flags(), s = G.state, w = G.play.world, r = w.race;
+    const lane = win ? 1 : r.kids[0] >= r.kids[1] ? 0 : 2;
+    r.on = false; r.popped = lane;
+    G.audio.sfx('pop');
+    w.burst(RACE_X[lane], 6 * 16 + 4, [['#e83030', '#38c858', '#f0c830'][lane], '#ffffff'], 12, { speed: 1.6, life: 18, size: 2 });
+    w.pop(RACE_X[lane], 6 * 16 - 8, 'POP!', '#f8f8f0');
+    yield G.wait(30);
+    if (!win) {
+      yield G.say('Carny', 'And the winner is... NOT YOU! Better luck next time, pal.');
+      if (gun) {
+        yield G.say('Nate', 'This squirt gun has the water pressure of a drinking fountain.');
+        if (!f.raceGunHint) { f.raceGunHint = true; yield G.say('Nate', 'I need something with WAY more pressure.'); }
+      } else yield G.say('Nate', 'I have to keep it IN the clown\'s mouth.');
+    } else {
+      yield G.say('Kid', 'He used a BIDET.');
+      yield G.say('Carny', '...Winner winner.');
+      if (!f.raceWon) {
+        f.raceWon = true; f.bidetNozzle = true;
+        yield G.say('Carny', 'Grand prize: a turbo nozzle. Fits any squirt gun. ...Or whatever that is.');
+        G.audio.sfx('chest');
+        yield G.itemGet(G.spr.nozzleIcon, 'Your Portable Bidet got a {y}Turbo Nozzle{/}! It sprays way farther now.');
+        yield G.say('Nate', 'It fits PERFECTLY.');
+        yield G.say('Carny', 'Please never come back.');
+      } else {
+        G.play.addTeeth(10);
+        yield G.say(null, 'The carny slides over {y}10 shark teeth{/} without making eye contact.');
+      }
+    }
+    w.race = null;
+  };
+
+  // ---- the Science Center: Dr. Moles upgrades the bidet's tank (a spare lab carboy)
+  S.safetyShower = function* () {
+    const f = flags(), s = G.state;
+    if (!s.items.bidet) {
+      yield G.say(null, 'The emergency shower and eyewash station. A big green sign: PULL ONLY IN AN EMERGENCY.');
+      yield G.say('Dr. Moles', 'Do NOT touch that unless something is on fire. Or in your eyes. Or both.');
+      return;
+    }
+    if (f.bidetBig) { yield G.say(null, 'The emergency shower and eyewash station. There\'s one less spare jug on the shelf under it.'); return; }
+    yield G.say(null, 'The emergency shower and eyewash station. The eyewash runs off a big jug of water on a shelf underneath.');
+    yield G.say('Nate', 'That\'s a LOT of water...');
+    yield G.say(null, 'Nate holds the Portable Bidet up next to the jug.');
+    yield G.say('Dr. Moles', 'Nate. Is that a BIDET?');
+    yield G.say('Dr. Moles', 'In MY lab?');
+    yield G.say('Nate', 'It\'s a long story. It only holds about a cup of water.');
+    yield G.say('Dr. Moles', '...That tank is pathetic. Give it here.');
+    yield G.say(null, 'Dr. Moles unscrews the little tank and hooks the bidet up to a spare jug from under the eyewash. Lab tape. A LOT of lab tape.');
+    f.bidetBig = true;
+    s.items.bidetWater = G.BIDET_MAX;
+    G.audio.sfx('chest');
+    yield G.itemGet(G.spr.carboyIcon, 'Your Portable Bidet got a {y}Lab Carboy Tank{/}! It holds twice the water now, and fills up twice as fast.');
+    yield G.say('Dr. Moles', 'Now get that thing out of my lab. And return my carboy. Eventually. Never.');
   };
 
   // The little cave under the fairgrounds (past the protest): a limestone hollow
@@ -6519,8 +6805,38 @@
       lines: [['Abe', 'A stuffed shark. With a pouch of REAL shark teeth on it.'], ['Nate', 'A Number One Ditch souvenir! ...I\'ll leave a note at the register.']],
       *reward() { yield* S.bossStash(25, 'The pouch has {y}25 shark teeth{/} in it.'); },
     },
+    // back at the fair: the high striker (S.highStriker calls this once Abe's in the party)
+    bell: {
+      map: 'fair', at: [2.7, 10.6],
+      look: 'The high striker. TEST YOUR STRENGTH!',
+      high: 'The bell, way up at the top of the high striker. Way too high.',
+      after: 'The high striker. The carny put up a new sign: NO REACHING.',
+      reach: 'Abe reaches up and flicks the bell with one finger.', sfx: 'bell',
+      onReach() { const w = G.play.world; if (w.striker) { w.striker.ding = 60; w.pop(2 * 16, 10 * 16 - 70, 'DING!', '#f8e070'); } },
+      lines: [['Carny', '...'], ['Carny', 'That doesn\'t count.'], ['Abe', 'It rang.'], ['Carny', '...It rang.']],
+      *reward() {
+        const s = G.state;
+        yield G.say('Carny', 'Fine. FINE. Top prize.');
+        s.maxHp += 2; s.hp = s.maxHp;
+        G.audio.sfx('heart');
+        yield G.itemGet(G.spr.heartBig, 'The top prize: a heart-shaped pillow that says I RANG THE BELL. It\'s a {r}Heart Container{/}! Max hearts +1.');
+        yield G.say('Abe', 'You keep it. I\'ve got plenty of heart.');
+      },
+    },
+    // back home: the attic hatch in the upstairs hallway
+    attic: {
+      map: 'homeUp', at: [13.4, 11.6],
+      look: 'The attic hatch, up in the hallway ceiling. The pull cord snapped off years ago, and nobody can find the ladder.',
+      high: 'The attic hatch, up in the hallway ceiling. Way too high.',
+      after: 'The attic hatch. Abe tied a new pull cord on it, up where only Abe can reach it.',
+      reach: 'Abe reaches up, pops the hatch open, and feels around in the attic. He doesn\'t even need the ladder.',
+      lines: [['Abe', 'Got something. A shoebox. Mom wrote on the lid: OLD PHOTOS (DO NOT LET DAD LABEL).'], ['Nate', 'Why can\'t Dad label?'], ['Abe', 'He labeled the Christmas decorations "MISC. JOY."']],
+      *reward() { yield* S.photoGive('atticSelfie'); },
+    },
   };
   G.abeReachCount = () => Object.keys(ABE_REACH).filter((id) => flags()['reach_' + id]).length + (flags().gardenOpen ? 1 : 0);
+  // (every spot, and the hedge)
+  G.ABE_REACH_TOTAL = Object.keys(ABE_REACH).length + 1;
   const abeFollower = () => G.play.world.ents.find((e) => e instanceof G.Follower && e.id === 'abe' && !e.dead);
   S.abeReach = function* (id) {
     const f = flags(), s = G.state, spot = ABE_REACH[id];
@@ -6538,7 +6854,9 @@
       yield G.walkTo(abe, spot.at[0] * 16, spot.at[1] * 16, 1.6);
       abe.dir = 'up'; abe.pose = 'hold'; abe.moving = false;
     }
-    yield G.say(null, 'Abe reaches up and grabs it. He doesn\'t even go up on his tiptoes.');
+    if (spot.sfx) G.audio.sfx(spot.sfx);
+    if (spot.onReach) spot.onReach();
+    yield G.say(null, spot.reach || 'Abe reaches up and grabs it. He doesn\'t even go up on his tiptoes.');
     if (abe) abe.pose = null;
     f['reach_' + id] = true;
     for (const [who, line] of spot.lines) yield G.say(who, line);
@@ -7682,8 +8000,8 @@
       // Wall art: the top wall, x 1-14, y 1-2.
       spot(0, 4, 1, 3, look('The big loft window, looking out over the golf course.'));
       for (const y of [4 * 16 + 4, 7 * 16 + 4]) w.props.push({ img: sp.tealCurtain, x: 16, y: y - 44, base: y });
-      F.stand(sp.bookshelf, 1, 3, 1, () => S.abeReach('bookshelf'));
-      F.stand(sp.floorLamp, 2, 3, 1, look('A brass floor lamp with a pleated shade.'));
+      F.stand(sp.condoBookshelf, 1, 3, 1, () => S.abeReach('bookshelf'));
+      F.stand(sp.condoFloorLamp, 2, 3, 1, look('A brass floor lamp with a pleated shade.'));
       F.stand(sp.yellowGuitar, 3, 3, 1, look('A yellow electric guitar. Abe\'s, obviously. Nate knows better than to touch it.'));
       F.stand(sp.loftTV, 5, 3, 3, look('A big TV on a cherry console. It\'s showing the ocean. Very relaxing.'));
       F.stand(sp.grayOttoman, 5, 5, 3, look('A big gray ottoman. Somebody left a game of cards on it.'));
@@ -8607,7 +8925,7 @@
       iso(1, 3, 'blue'); iso(4, 3, 'pink'); iso(12, 3, 'mint'); iso(13, 6, 'pink'); iso(1, 6, 'mint');
       F.stand(sp.vitalsMonitor, 3, 3, 1, look('A monitor. A steady little heartbeat. Beep. Beep. Beep.'));
       F.stand(sp.vitalsMonitor, 14, 3, 1, look('A monitor. Beep. Beep. Beep.'));
-      for (const [x, y] of [[1, 9], [14, 9]]) F.stand(sp.glider, x, y, 1, look('A glider rocker, for feeding time.'));
+      for (const [x, y] of [[1, 9], [14, 9]]) F.stand(sp.nicuGlider, x, y, 1, look('A glider rocker, for feeding time.'));
       // Hannah's empty isolette, in the middle
       F.stand(sp.isolettes.blue, 7, 3, 2, look('An isolette. It\'s empty. Hannah was rocking it anyway.'));
       if (!f.mobileBeaten) {

@@ -4470,6 +4470,109 @@
     for (const x of [8, 12, 38]) { p.vline(x, 34, 38, '#3a3a40'); p.set(x, 33, '#e83030'); }
     return finish(p);
   }
+  // ---- the midway at the fair, and other things for late-game exploring: the high striker,
+  // Hook-a-Duck (and its rubber ducks), the water-gun race, the Science Center's emergency
+  // shower and eyewash, the bidet's upgrades, and the attic hatch at home
+  // the high striker: a red and white pole with colored bands up the side, the bell on top, the
+  // strike pad on a wooden base, and the mallet leaning on it (the puck is drawn sliding on top)
+  function highStriker() {
+    const W = 32, H = 64, p = new Pix(W, H);
+    p.rect(2, 53, 28, 11, '#8a5a34'); p.hline(2, 29, 53, '#b07848'); p.hline(2, 29, 63, '#5a3a20');
+    p.rect(17, 49, 10, 5, '#3a3a40'); p.rect(18, 48, 8, 2, '#d83030');
+    p.rect(10, 7, 6, 46, '#f8f8f0'); p.vline(10, 7, 52, '#e0e0d8'); p.vline(15, 7, 52, '#c8c8c0');
+    for (let y = 11; y < 52; y += 5) p.hline(11, 14, y, '#d83030');
+    ['#a858c8', '#3878d8', '#38a048', '#f0c830', '#f08a28', '#d83030'].forEach((c, i) => p.rect(5, 9 + i * 7, 4, 6, c));
+    for (let y = 0; y < 7; y++) for (let x = 0; x < 12; x++) if (((x - 5.5) / 5.5) ** 2 + ((y - 6) / 6) ** 2 <= 1) p.set(7 + x, y, x < 4 ? '#f8e070' : '#d8a830');
+    p.set(9, 2, '#ffffff');
+    p.vline(26, 32, 52, '#a87848'); p.vline(27, 32, 52, '#8a5a34'); p.rect(23, 28, 8, 5, '#6a6a74'); p.hline(23, 30, 28, '#8a8a94');
+    return finish(p);
+  }
+  // Hook-a-Duck: a striped awning, the back wall with the sign, the little tub up on a stand in
+  // the back for the golden duck (way out of reach), and the long blue trough the ducks float
+  // around (the ducks are drawn on top)
+  function duckBooth() {
+    const W = 64, H = 90, p = new Pix(W, H);
+    p.rect(0, 0, W, 10, '#f0c830'); for (let x = 0; x < W; x += 8) p.rect(x, 0, 4, 10, '#3878d8');
+    for (let x = 0; x < W; x += 4) p.set(x + 1, 10, x % 8 ? '#3878d8' : '#f0c830');
+    p.rect(0, 11, 2, 36, '#8a5a34'); p.rect(W - 2, 11, 2, 36, '#8a5a34');
+    p.rect(2, 11, W - 4, 17, '#f4f0e8'); p.hline(2, W - 3, 27, '#c8c4b8');
+    p.rect(2, 28, W - 4, 16, '#2e8a48'); for (let x = 4; x < W - 4; x += 5) p.vline(x, 29, 43, '#3a9a54');
+    p.rect(22, 30, 20, 7, '#3878d8'); p.rect(24, 31, 16, 4, '#68b8f8'); p.rect(30, 37, 4, 7, '#8a5a34');
+    p.rect(1, 44, W - 2, 46, '#2a5ab8'); p.rect(4, 47, W - 8, 40, '#58a8f0');
+    p.rect(14, 56, W - 28, 20, '#2a5ab8'); p.rect(15, 57, W - 30, 18, '#f0c830'); p.rect(17, 59, W - 34, 14, '#f8e070');
+    for (let x = 6; x < W - 6; x += 7) { p.set(x, 50, '#a8d8ff'); p.set(x + 3, 82, '#a8d8ff'); }
+    const cv = finish(p);
+    G.font.draw(cv.getContext('2d'), 'HOOK-A-DUCK', 32 - Math.round(G.font.width('HOOK-A-DUCK') / 2), 15, '#d83030');
+    return cv;
+  }
+  // a rubber duck floating (facing right; mirrored for left), and the golden one
+  function rubberDuck(gold) {
+    const p = new Pix(10, 8), b = gold ? '#f8d030' : '#f8e050', d = gold ? '#c89810' : '#d8b030';
+    p.rect(1, 4, 8, 3, b); p.hline(2, 7, 7, d); p.rect(5, 1, 4, 4, b); p.set(7, 2, '#1a1a1a'); p.rect(9, 3, 1, 2, '#f08a28');
+    p.set(2, 4, '#ffffff'); p.set(6, 1, '#ffffff');
+    if (gold) { p.set(3, 5, '#ffffff'); p.set(8, 5, '#fff8c0'); }
+    return finish(p);
+  }
+  // the water-gun race: a red and white awning, three clown faces on the back wall with their
+  // mouths open (the targets; the balloons over their heads are drawn on top, filling up), and
+  // the counter with three water guns bolted to it
+  function raceBooth() {
+    const W = 80, H = 64, p = new Pix(W, H);
+    p.rect(0, 0, W, 9, '#e83030'); for (let x = 0; x < W; x += 8) p.rect(x, 0, 4, 9, '#f8f8f0');
+    for (let x = 0; x < W; x += 4) p.set(x + 1, 9, x % 8 ? '#f8f8f0' : '#e83030');
+    p.rect(0, 10, 2, 54, '#8a5a34'); p.rect(W - 2, 10, 2, 54, '#8a5a34');
+    p.rect(2, 10, W - 4, 38, '#3a6ad8'); for (let y = 12; y < 48; y += 4) p.hline(2, W - 3, y, '#4a7ae8');
+    for (const cx of [13, 40, 67]) {
+      p.vline(cx, 11, 26, '#e8e8e8');
+      for (let y = -7; y <= 7; y++) for (let x = -7; x <= 7; x++) if (x * x + y * y <= 49) p.set(cx + x, 34 + y, '#f8f4ec');
+      p.rect(cx - 9, 27, 3, 5, '#f08a28'); p.rect(cx + 7, 27, 3, 5, '#f08a28');
+      p.set(cx - 3, 31, '#1a1a1a'); p.set(cx + 3, 31, '#1a1a1a'); p.rect(cx - 1, 33, 3, 2, '#e83030');
+      for (let y = -2; y <= 2; y++) for (let x = -3; x <= 3; x++) if (x * x / 9 + y * y / 4 <= 1) p.set(cx + x, 38 + y, '#2a1a1a');
+    }
+    p.rect(1, 48, W - 2, 16, '#c8a070'); p.hline(1, W - 2, 48, '#e0c090'); p.hline(1, W - 2, 63, '#8a6a48');
+    for (const cx of [13, 40, 67]) { p.rect(cx - 3, 44, 7, 5, '#38a048'); p.rect(cx - 1, 39, 3, 5, '#2a8838'); p.set(cx, 38, '#a8d8ff'); }
+    return finish(p);
+  }
+  // the Science Center's emergency shower and eyewash: a pipe down from the ceiling to a big
+  // green pull handle and shower head, the eyewash bowl, and its water jug on a shelf
+  function safetyStation() {
+    const W = 16, H = 42, p = new Pix(W, H);
+    // the green EMERGENCY sign up on the wall, the pipe down to the shower head and pull handle
+    p.rect(1, 0, 14, 8, '#2e9a48'); p.hline(1, 14, 0, '#4aba64'); p.hline(1, 14, 7, '#1e7a38');
+    p.rect(6, 1, 4, 6, '#f8f8f0'); p.rect(7, 2, 2, 4, '#2e9a48'); p.rect(5, 3, 6, 2, '#f8f8f0'); p.rect(6, 3, 4, 2, '#2e9a48');
+    p.vline(7, 8, 17, '#a8a8b0'); p.vline(8, 8, 17, '#7a7a84');
+    p.hline(2, 13, 18, '#c8c8d0'); p.rect(3, 19, 10, 2, '#8a8a94');
+    p.rect(12, 12, 2, 5, '#2e9a48'); p.rect(11, 11, 4, 2, '#3aaa58');
+    // the eyewash bowl, its pipe, and the jug on the shelf underneath
+    p.rect(2, 24, 12, 4, '#e8e8ec'); p.rect(3, 25, 10, 2, '#a8d8f0'); p.vline(8, 28, 33, '#a8a8b0');
+    p.rect(1, 33, 14, 2, '#8a8a94'); p.rect(4, 35, 8, 7, '#c8e8f8'); p.hline(4, 11, 35, '#ffffff'); p.rect(6, 34, 4, 1, '#2a6ad8');
+    return finish(p);
+  }
+  // the bidet's upgrades: the lab carboy tank, and the turbo nozzle from the water race
+  function carboyIcon() {
+    const p = new Pix(14, 16);
+    p.rect(1, 4, 12, 12, '#d8eef8'); p.rect(2, 8, 10, 7, '#7ac0f0'); p.hline(2, 11, 8, '#a8d8ff');
+    p.rect(5, 1, 4, 3, '#2a6ad8'); p.hline(1, 12, 4, '#f4fbff'); p.vline(1, 4, 15, '#f4fbff');
+    p.rect(3, 10, 5, 3, '#f8f8f0'); p.hline(4, 6, 11, '#3a3a40');
+    p.outline();
+    return p.canvas();
+  }
+  function nozzleIcon() {
+    const p = new Pix(16, 12);
+    p.rect(0, 3, 9, 6, '#f08a28'); p.hline(0, 8, 3, '#f8b058'); p.rect(9, 4, 4, 4, '#3878d8'); p.rect(13, 5, 3, 2, '#2a2a30');
+    p.rect(2, 9, 3, 3, '#f08a28'); p.set(14, 3, '#a8d8ff'); p.set(15, 2, '#a8d8ff'); p.set(15, 9, '#a8d8ff');
+    p.outline();
+    return p.canvas();
+  }
+  // the attic hatch, up where the hallway wall meets the ceiling (the pull cord snapped off years ago)
+  function homeAtticHatch() {
+    const p = new Pix(28, 16);
+    p.rect(0, 0, 28, 10, '#8a7e6a'); p.rect(2, 1, 24, 7, '#d8ccb4'); p.hline(2, 25, 8, '#5a5040'); p.hline(2, 25, 1, '#ece2cc');
+    p.rect(12, 4, 4, 2, '#8a7e6a');
+    p.vline(14, 10, 13, '#b8925a'); p.rect(13, 13, 3, 2, '#a8824a');
+    return finish(p);
+  }
+
   function funnelCake() {
     const p = new Pix(16, 12);
     for (let y = 4; y < 12; y++) for (let x = 0; x < 16; x++) if ((x - 7.5) ** 2 / 60 + (y - 8) ** 2 / 14 <= 1) p.set(x, y, '#f4f4f0');
@@ -5957,7 +6060,7 @@
     p.rect(0, 19, 80, 4, cD); p.rect(2, 23, 3, 3, '#3a2a20'); p.rect(75, 23, 3, 3, '#3a2a20');
     return finish(p);
   }
-  function bookshelf() {
+  function condoBookshelf() {
     const W = 20, H = 54, p = new Pix(W, H), wd = '#4a2c1c', wdL = '#6a4028';
     // the vase of flowers on top
     p.rect(8, 6, 4, 6, '#5a6ab8'); for (const [x, y, c] of [[7, 2, '#e8a0c8'], [10, 1, '#f8a040'], [12, 3, '#f8f0e8'], [9, 4, '#c84868'], [11, 5, '#4a8a44']]) p.rect(x, y, 2, 2, c);
@@ -5972,7 +6075,7 @@
     p.rect(12, 47, 3, 5, '#f8f0e0'); p.hline(12, 14, 48, '#d83838'); p.rect(12, 45, 3, 2, '#f8d878');
     return finish(p);
   }
-  function floorLamp() {
+  function condoFloorLamp() {
     const W = 16, H = 48, p = new Pix(W, H);
     for (let y = 0; y < 13; y++) { const half = 4 + Math.round(y * 0.3); for (let x = 8 - half; x <= 7 + half; x++) p.set(x, y, (x + y) % 3 === 0 ? '#f0e4c0' : '#fbf2d8'); }
     p.vline(7, 13, 45, '#d8a848'); p.vline(8, 13, 45, '#b08430'); p.rect(4, 45, 8, 3, '#b08430');
@@ -7334,7 +7437,7 @@
     p.vline(6, 11, 31, '#b8b8c0'); p.hline(2, 11, 32, '#6a6a72');
     return finish(p);
   }
-  function glider() {
+  function nicuGlider() {
     const p = new Pix(18, 22);
     p.rect(3, 0, 12, 12, '#7a5434'); p.rect(4, 1, 10, 10, '#c8b8e0');
     p.rect(1, 11, 16, 5, '#9a7450'); p.rect(2, 11, 14, 3, '#c8b8e0');
@@ -8157,7 +8260,10 @@
     S.receptionDesk = receptionDesk(); S.elevatorDoors = elevatorDoors(); S.elevatorButtons = elevatorButtons(); S.fishTank = fishTank(); S.bigTeddy = bigTeddy(); S.kidChairs = kidChairs();
     S.blockStack = blockStack(); S.giftShop = giftShop(); S.nurseStation = nurseStation(); S.roomDoors = ['#8ab8e8', '#f4a8c8', '#a8d8a0', '#f8d890'].map(roomDoor);
     S.ivPole = ivPole(); S.wheelchair = wheelchair(); S.crashCart = crashCart(); S.rockingHorse = rockingHorse(); S.ballPit = ballPit(); S.toyKitchen = toyKitchen(); S.blockTower = blockTower();
-    S.isolettes = { blue: isolette('#8ab8e8'), pink: isolette('#f4a8c8'), mint: isolette('#a8e0c8') }; S.vitalsMonitor = vitalsMonitor(); S.glider = glider(); S.nicuDoors = nicuDoors(); S.badgeIcon = badgeIcon();
+    S.isolettes = { blue: isolette('#8ab8e8'), pink: isolette('#f4a8c8'), mint: isolette('#a8e0c8') }; S.vitalsMonitor = vitalsMonitor(); S.nicuGlider = nicuGlider(); S.nicuDoors = nicuDoors(); S.badgeIcon = badgeIcon();
+    S.highStriker = highStriker(); S.duckBooth = duckBooth(); S.raceBooth = raceBooth(); S.safetyStation = safetyStation(); S.homeAtticHatch = homeAtticHatch();
+    S.rubberDuck = { right: rubberDuck(false) }; S.rubberDuck.left = mirror(S.rubberDuck.right); S.goldenDuck = { right: rubberDuck(true) }; S.goldenDuck.left = mirror(S.goldenDuck.right);
+    S.carboyIcon = carboyIcon(); S.nozzleIcon = nozzleIcon();
     S.firstAidIcon = firstAidIcon(); S.supplyDoor = supplyDoor(); S.supplyCabinet = supplyCabinet(); S.heartRock = heartRock();
     S.roomWindow = roomWindow(); S.kidWhiteboard = kidWhiteboard(); S.wallTV = wallTV(); S.bedBack = bedBack(); S.bedFront = bedFront(); S.recliner = recliner(); S.getWellBalloons = getWellBalloons(); S.rockBooksStand = rockBooksStand();
     S.helipad = helipad(); S.roofAccess = roofAccess(); S.hvacUnit = [0, 1, 2].map(hvacUnit); S.windsock = [0, 1].map(windsock); S.roofVent = roofVent();
@@ -8176,7 +8282,7 @@
     S.slothPlush = slothPlush(); S.slothIcon = slothIcon(); S.abeBassIcon = abeBassIcon(); S.bassHeld = bassHeld(); S.cableIcon = cableIcon(); S.romSnout = romSnout();
     S.condoBed = condoBed(); S.nightstandAmber = nightstandAmber(); S.nightstandDark = nightstandDark(); S.creamDresser = creamDresser();
     S.ceilingFan = [0, 1, 2, 3].map(ceilingFan);
-    S.loftTV = loftTV(); S.grayOttoman = grayOttoman(); S.loftSofaBack = loftSofaBack(); S.bookshelf = bookshelf(); S.floorLamp = floorLamp();
+    S.loftTV = loftTV(); S.grayOttoman = grayOttoman(); S.loftSofaBack = loftSofaBack(); S.condoBookshelf = condoBookshelf(); S.condoFloorLamp = condoFloorLamp();
     S.yellowGuitar = yellowGuitar(); S.tealCurtain = tealCurtain();
     S.plants = {}; for (const k of ['hydrangea', 'petunia', 'fern', 'geranium', 'rose']) S.plants[k] = [pottedPlant(k, false), pottedPlant(k, true)];
     S.guestBed = guestBed(); S.officeDesk = officeDesk(); S.officeChair = officeChair(); S.blackFloorLamp = blackFloorLamp(); S.woodChest = woodChest();

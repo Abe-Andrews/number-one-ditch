@@ -385,10 +385,11 @@
       if (!G.input.down('b') || G.script.busy || p.state !== 'walk' || s.xItem !== 'bidet') { this.spraying = false; return; }
       s.items.bidetWater = G.bidetWater() - 1;
       if (G.tick % 10 === 0) G.audio.sfx('spray');
-      // it reaches 72px, or less if it lands against something solid (it carries over water)
+      // it reaches 72px (more with the turbo nozzle), or less if it lands against something
+      // solid (it carries over water)
       const [dx, dy] = G.DIRS[p.dir], [nx] = this.bidetNozzle(p);
       let len = 8;
-      while (len < 72) {
+      while (len < G.bidetReach()) {
         const d = G.TILE_DEFS[w.tileAt(Math.floor((nx + dx * len) / 16), Math.floor((p.y - 2 + dy * len) / 16))];
         if (d && d.solid && !['water', 'bay'].includes(d.k)) break;
         len += 4;

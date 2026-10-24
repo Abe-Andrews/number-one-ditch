@@ -4287,7 +4287,7 @@
         this.x += this.vx; this.y += this.vy; this.dist += 4.5;
         for (const e of w.ents) {
           if (e.dead || e === p || e === this || !e.hurtBox) continue;
-          if (e.enemy && G.overlap(this.hookBox(), e.hurtBox())) { this.hook(w, e); return; }
+          if ((e.enemy || e.hookable) && G.overlap(this.hookBox(), e.hurtBox())) { this.hook(w, e); return; }
         }
         for (const e of w.ents) {
           if (!e.dead && e instanceof G.Pickup && G.overlap(this.hookBox(), e.box())) { this.carry = e; this.state = 'back'; G.audio.sfx('blip'); return; }
@@ -4339,6 +4339,51 @@
     }
   }
   G.Lure = Lure;
+
+  // ============================================================== HOOK-A-DUCK (the fair)
+  // Rubber ducks floating around the trough at the Hook-a-Duck booth (`path` is the rectangle
+  // [x0, y0, x1, y1] they go around, `s` how far around it, 0-1), and the golden duck, bobbing in
+  // its little tub way in the back, out of reach of the duck poles. Only the golden one can be
+  // hooked: a surf rod reaches it, and reels it in.
+  class FairDuck extends Ent {
+    constructor(x, y, o = {}) {
+      super(x, y);
+      Object.assign(this, o);
+      this.hb = { w: 8, h: 4 };
+      this.face = 1;
+      if (this.golden) { this.hookable = true; this.reelable = true; }
+    }
+    hurtBox() { return [this.x - 7, this.y - 11, this.x + 7, this.y + 1]; }
+    update() {
+      if (this.carried || this.golden || G.script.busy) return;
+      this.s = (this.s + 0.0014) % 1;
+      const [x0, y0, x1, y1] = this.path, w = x1 - x0, h = y1 - y0;
+      let d = this.s * 2 * (w + h);
+      if (d < w) { this.x = x0 + d; this.y = y0; this.face = 1; }
+      else if ((d -= w) < h) { this.x = x1; this.y = y0 + d; }
+      else if ((d -= h) < w) { this.x = x1 - d; this.y = y1; this.face = -1; }
+      else { this.x = x0; this.y = y1 - (d - w); }
+    }
+    onReeled() { G.script.run(G.SCRIPTS.goldenDuck(this)); }
+    draw(ctx, cx, cy) {
+      const set = this.golden ? G.spr.goldenDuck : G.spr.rubberDuck, img = this.face < 0 ? set.left : set.right;
+      const bob = this.carried ? 0 : Math.round(Math.sin(G.tick / 14 + (this.s || 0) * 40));
+      if (this.golden && !this.carried && (G.tick >> 3) % 6 === 0) { ctx.fillStyle = '#fff8c0'; ctx.fillRect(Math.round(this.x + 3) - cx, Math.round(this.y - 11) - cy, 1, 1); }
+      ctx.drawImage(img, Math.round(this.x - 5) - cx, Math.round(this.y - 8 + bob) - cy);
+    }
+  }
+  G.FairDuck = FairDuck;
+
+  // Something the Portable Bidet's stream can hit, but otherwise invisible: onWet is called
+  // every frame it's wet (the clowns' mouths at the water-gun race).
+  class SprayTarget extends Ent {
+    constructor(box, onWet) { super((box[0] + box[2]) / 2, box[3]); this.wetBox = box; this.onWet = onWet; }
+    hurtBox() { return this.wetBox; }
+    onSpray(p) { this.onWet(p); }
+    update() {}
+    draw() {}
+  }
+  G.SprayTarget = SprayTarget;
 
   // ============================================================== SEAGULL (the bridge-tunnel)
   // Sits on top of a light pole, out of reach. When Nate wanders close it

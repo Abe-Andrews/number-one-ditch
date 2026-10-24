@@ -201,6 +201,8 @@ G.audio = (function () {
     giggle: (t) => { [0, 0.07, 0.14, 0.21].forEach((d, i) => tone(1200 + i * 90 - (i % 2) * 200, t + d, 0.05, 'square', 0.04)); },
     // Romulus's sloth: a squeaky toy
     squeak: (t) => { [0, 0.16].forEach((d) => tone(1700, t + d, 0.1, 'square', 0.05, sfxBus, 2600)); },
+    // a balloon popping (the water-gun race)
+    pop: (t) => { noise(t, 0.07, 0.4, sfxBus, 2600); tone(700, t, 0.06, 'square', 0.05, sfxBus, 180); },
     // a crowd clapping
     clap: (t) => { for (let i = 0; i < 14; i++) noise(t + i * 0.07 + Math.random() * 0.03, 0.05, 0.22, sfxBus, 1800 + Math.random() * 1200); },
     // the open mic at El Toro Loco: a little walking bass line (an original one)
