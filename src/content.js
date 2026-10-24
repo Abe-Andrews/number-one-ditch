@@ -4813,6 +4813,16 @@
   };
 
   // Dad's workshop: the inside of the garage, from the family's photos.
+  // what Dad's up to in his workshop (a different one each time Nate walks in): where he stands,
+  // which way he faces while he works, and what he says when Nate comes over (the dance practice is
+  // a clue for the grocery store on College Hill: "...Stretching.")
+  const DAD_SHOP = {
+    lathe: { at: [11.5, 6.8], dir: 'down', hi: 'Mind the shavings!' },
+    bench: { at: [9.5, 4.9], dir: 'up', hi: 'Feel that. Smooth as a church pew.' },
+    pipe: { at: [6.5, 4.9], dir: 'down', hi: '*puff* Ah. Nate.' },
+    sweep: { at: [10, 8.9], dir: 'right', hi: 'The war on sawdust continues.' },
+    dance: { at: [12.5, 5.9], dir: 'left', hi: null },
+  };
   G.MAPS.garage = {
     name: 'Dad\'s Workshop',
     music: 'house',
@@ -4859,9 +4869,24 @@
         yield G.say(null, 'A pair of brand-new white high-tops. There\'s a cassette tucked in one of them, labeled TUESDAY.');
         yield G.say('Nate', flags().hipHopDone ? 'His dancing shoes. Of course.' : 'Dad wears loafers. Dad has ALWAYS worn loafers.');
       } });
-      // Dad, hanging out at his workbench (once Mom's books are back and things calm down)
+      // Dad, in the middle of something different every time Nate walks in (DAD_SHOP)
       const f = flags();
-      if (f.homeArrived) w.dad = w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 12 * 16 + 8, y: 5 * 16 + 14, dir: 'left', talk: S.dadWorkshop }));
+      if (f.homeArrived) {
+        const acts = Object.keys(DAD_SHOP);
+        let pick = acts[Math.floor(Math.random() * acts.length)];
+        if (pick === f.dadAct) pick = acts[(acts.indexOf(pick) + 1) % acts.length];
+        f.dadAct = w.dadAct = pick;
+        const act = DAD_SHOP[pick];
+        w.dad = w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: act.at[0] * 16, y: act.at[1] * 16, dir: act.dir, talk: S.dadWorkshop }));
+        w.dad.home = { x: w.dad.x, y: w.dad.y };
+        if (pick === 'sweep') { w.dad.held = sp.broom; w.dad.heldAt = [7, -6]; w.dad.vx = 0.4; }
+        // his pipe smoke (a pipe break)
+        w.dadSmoke = [];
+        w.props.push({
+          img: null, x: 0, y: 0, base: 99000,
+          draw(ctx, cx, cy) { for (const r of w.dadSmoke) { ctx.globalAlpha = Math.max(0, 1 - r.t / 90); ctx.drawImage(G.spr.smokeRing, Math.round(r.x - 6) - cx, Math.round(r.y - r.t * 0.35) - cy); } ctx.globalAlpha = 1; },
+        });
+      }
       // muddy paw prints leading out the open bay (whoever took the Doritos)
       if (f.snackQuest && !s.items.doritos && !f.snacksDone) w.addProp({ img: sp.pawPrints, tx: 9, ty: 10, dy: 2, flat: true, hit: [9, 10, 3, 1], talk: look('Muddy paw prints in the sawdust. BIG ones. A torn corner of a blue chip bag.', 'They lead out the open bay, toward the brook.') });
       // out through the open middle bay
@@ -4875,21 +4900,53 @@
         yield G.say('Nate', 'Dad\'s workshop. It smells like sawdust and pipe tobacco. It always has.');
       })();
     },
-    // when he thinks nobody's looking, Dad practices (a few moves, a hop on each); when Nate walks
-    // up, he freezes. "...Stretching." (After the surprise at the grocery store he doesn't hide it.)
+    // Dad gets on with whatever he's doing (DAD_SHOP). When Nate comes over, he stops, turns
+    // around and says hi; when Nate wanders off, he gets back to it.
     tick(w) {
       const dad = w.dad;
+      for (const r of w.dadSmoke || []) r.t++;
+      if (w.dadSmoke) w.dadSmoke = w.dadSmoke.filter((r) => r.t < 90);
       if (!dad || G.script.busy) return;
-      const p = G.play.player, near = Math.hypot(p.x - dad.x, p.y - dad.y) < 60;
-      if (!near) {
-        const k = Math.floor(G.tick / 26);
-        if (G.tick % 26 === 0 && k % 8 < 4) { dad.dir = ['left', 'right', 'up', 'down'][k % 4]; dad.hop = 12; dad.busted = true; }
-      } else if (dad.busted) {
-        dad.busted = false;
-        dad.dir = G.dirToward(p.x - dad.x, p.y - dad.y);
-        w.pop(dad.x, dad.y - 34, flags().hipHopDone ? 'POP AND LOCK!' : '...Stretching.', flags().hipHopDone ? '#f8e070' : '#f8f8f0');
+      const p = G.play.player, d = Math.hypot(p.x - dad.x, p.y - dad.y), act = w.dadAct, t = G.tick;
+      if (d < 56 || (dad.paused && d < 76)) {
+        if (!dad.paused) {
+          dad.paused = true; dad.moving = false; dad.z = 0;
+          dad.dir = G.dirToward(p.x - dad.x, p.y - dad.y);
+          const hi = act === 'dance' ? (flags().hipHopDone ? 'POP AND LOCK!' : '...Stretching.') : DAD_SHOP[act].hi;
+          w.pop(dad.x, dad.y - 34, hi, act === 'dance' && flags().hipHopDone ? '#f8e070' : '#f8f8f0');
+        }
+        return;
       }
-      if (dad.hop > 0) { dad.hop--; dad.z = Math.round(Math.sin((1 - dad.hop / 12) * Math.PI) * 3); } else dad.z = 0;
+      if (dad.paused) { dad.paused = false; dad.dir = DAD_SHOP[act].dir; }
+      const wood = ['#d8b070', '#e8c890', '#b88a50'];
+      if (act === 'lathe') {
+        // turning a pipe bowl: shavings fly off the lathe, and he leans in now and then
+        dad.dir = 'down';
+        dad.z = (t >> 5) % 3 === 0 ? 1 : 0;
+        if (t % 5 === 0) w.burst(11.5 * 16 + (Math.random() * 10 - 5), 7 * 16 + 2, wood, 1, { speed: 1.2, up: 1, g: 0.1, life: 18, size: 1 });
+      } else if (act === 'bench') {
+        // sanding something at the workbench: back and forth, sawdust puffing up
+        dad.dir = 'up';
+        dad.x = dad.home.x + Math.round(Math.sin(t * 0.22) * 3);
+        if (t % 9 === 0) w.burst(dad.x, 3 * 16 + 12, ['#e8d8b0', '#d8c098'], 2, { speed: 0.5, up: 0.6, g: 0.02, life: 26, size: 1 });
+      } else if (act === 'pipe') {
+        // a pipe break: smoke rings drifting up, and a look around the shop now and then
+        if (t % 80 === 0) w.dadSmoke.push({ x: dad.x + (dad.dir === 'left' ? -6 : 6), y: dad.y - 26, t: 0 });
+        if (t % 160 === 0) dad.dir = ['down', 'left', 'down', 'right'][(t / 160) % 4];
+      } else if (act === 'sweep') {
+        // sweeping sawdust from one end of the shop to the other
+        const x0 = 5.5 * 16, x1 = 15 * 16;
+        dad.x += dad.vx;
+        if (dad.x < x0 || dad.x > x1) { dad.vx = -dad.vx; dad.x = G.clamp(dad.x, x0, x1); }
+        dad.dir = dad.vx > 0 ? 'right' : 'left';
+        dad.moving = true; dad.anim = (dad.anim || 0) + 1;
+        if (t % 14 === 0) w.burst(dad.x + (dad.vx > 0 ? 10 : -10), dad.y, ['#e8d8b0', '#c8b088'], 2, { speed: 0.6, up: 0.4, g: 0.04, life: 20, size: 1 });
+      } else {
+        // when he thinks nobody's looking: practicing (a few moves, a hop on each)
+        const k = Math.floor(t / 26);
+        if (t % 26 === 0 && k % 8 < 4) { dad.dir = ['left', 'right', 'up', 'down'][k % 4]; dad.hop = 12; }
+        if (dad.hop > 0) { dad.hop--; dad.z = Math.round(Math.sin((1 - dad.hop / 12) * Math.PI) * 3); } else dad.z = 0;
+      }
     },
   };
 
