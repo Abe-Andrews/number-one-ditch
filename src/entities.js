@@ -49,6 +49,32 @@
   }
 
   // Little golden halo over enemies calmed by "Peace Be With You".
+  // A booby-trapped package stuns most bosses for a moment. Some just freeze in place (stunT
+  // frames, with stars going round over their heads); the ones with a dizzy state of their own
+  // use that (`own`). Afterward they can't be stunned again for 3 seconds, so a pile of packages
+  // can't keep a boss down forever.
+  G.canStun = (e) => G.tick >= (e.stunReady || 0);
+  G.stun = (e, n, own) => {
+    if (!G.canStun(e)) return false;
+    e.stunReady = G.tick + n + 180;
+    const top = e.hurtBox ? e.hurtBox()[1] : e.y - 40;
+    e.world.pop(e.x, top - 10, 'STUNNED!', '#f8e070');
+    if (!own) { e.stunT = n; e.world.add(new StunStars(e)); }
+    return true;
+  };
+  class StunStars extends Ent {
+    constructor(e) { super(e.x, e.y); this.e = e; }
+    get base() { return 99000; }
+    update() { if (this.e.dead || !(this.e.stunT > 0) || this.e.state === 'defeated') this.dead = true; }
+    draw(ctx, cx, cy) {
+      const e = this.e, top = (e.hurtBox ? e.hurtBox()[1] : e.y - 40) - 6;
+      for (let i = 0; i < 3; i++) {
+        const a = G.tick * 0.15 + (i * Math.PI * 2) / 3, st = G.spr.tinyStars[i];
+        ctx.drawImage(st, Math.round(e.x + Math.cos(a) * 12 - st.width / 2) - cx, Math.round(top + Math.sin(a) * 3 - st.height / 2) - cy);
+      }
+    }
+  }
+
   function drawHalo(ctx, x, y) {
     x = Math.round(x); y = Math.round(y);
     ctx.fillStyle = '#5a4810';
@@ -1367,7 +1393,7 @@
       if (Math.random() < 0.3) this.world.pop(this.x, this.y - 84, ['*fzzt*', 'GLUG!', 'FIZZ!', '*sploosh*'][Math.floor(Math.random() * 4)], '#78c0ff');
       if (this.hp <= 0) { this.state = 'defeated'; this.ring = null; G.script.run(G.SCRIPTS.popDefeated(this)); }
     }
-    bomb(sx, sy) { this.hit(3, sx, sy); }
+    bomb(sx, sy) { const hp = this.hp; this.hit(3, sx, sy); if (this.hp > 0 && this.hp < hp) G.stun(this, 75); }
     // pops its cap and flings out more little ones
     spawn(force) {
       const hot = this.phase === 2;
@@ -1379,6 +1405,7 @@
       this.t++;
       const p = G.play.player, b = this.bounds, hot = this.phase === 2;
       if (this.hurtT > 0) this.hurtT--;
+      if (this.stunT > 0) { this.stunT--; return; }
       if (this.refillCool > 0) this.refillCool--;
       if (this.phase === 1 && this.hp <= this.maxHp / 2) { this.phase = 2; w.pop(this.x, this.y - 84, 'HALF EMPTY!', '#f86858'); }
       for (const pr of this.pours) {
@@ -2188,7 +2215,11 @@
       if (this.hp <= 0) { this.state = 'defeated'; G.script.run(G.SCRIPTS.mechDefeated(this)); return; }
       if ((this.dmgHere = (this.dmgHere || 0) + (before - this.hp)) >= 4) { this.recover(); this.world.pop(this.x, this.y - 74, 'It shakes it off!', '#f8e070'); }
     }
-    bomb(sx, sy) { if (this.open) this.hit(2, sx, sy); }
+    bomb(sx, sy) {
+      if (this.open) { this.hit(2, sx, sy); return; }
+      if (this.hidden || this.state === 'idle' || this.state === 'defeated' || !G.stun(this, 80, true)) return;
+      this.state = 'dizzy'; this.st = 80; this.dmgHere = 0;
+    }
     draw(ctx, cx, cy) {
       if (this.hidden) return;
       const set = G.spr.mech[this.face > 0 ? 'right' : 'left'];
@@ -3557,6 +3588,7 @@
         w.move(this, this.kb.x, 0); w.move(this, 0, this.kb.y);
         this.kb.x *= 0.8; this.kb.y *= 0.8;
       }
+      if (this.stunT > 0) { this.stunT--; return; }
       if (G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
       if (this.state === 'dance') {
         // a lopsided little waltz around the middle of the room
@@ -3611,7 +3643,7 @@
         G.script.run(G.SCRIPTS.globDefeated(this));
       }
     }
-    bomb(sx, sy) { this.hit(3, sx, sy); }
+    bomb(sx, sy) { const hp = this.hp; this.hit(3, sx, sy); if (this.hp > 0 && this.hp < hp) G.stun(this, 75); }
     draw(ctx, cx, cy) {
       if (this.hidden) return;
       const frames = G.spr.globglog;
@@ -3816,7 +3848,10 @@
         G.script.run(G.SCRIPTS.jjDefeated(this));
       }
     }
-    bomb(sx, sy) { this.hit(3, sx, sy); }
+    bomb(sx, sy) {
+      this.hit(3, sx, sy);
+      if (this.hp > 0 && !['defeated', 'crack', 'dizzy'].includes(this.state) && G.stun(this, 70, true)) { this.state = 'dizzy'; this.t = 70; }
+    }
     draw(ctx, cx, cy) {
       const S = this.S;
       drawShadow(ctx, this.x, this.y, cx, cy);
@@ -4099,6 +4134,7 @@
         G.script.run(G.SCRIPTS.fcPhase(this, ph));
         return;
       }
+      if (this.stunT > 0) { this.stunT--; return; }
       if (this.alpha > 0.6 && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(2, this.x, this.y);
       const fast = [0, 1, 1.3, 1.6][this.phase], b = this.bounds;
       switch (this.state) {
@@ -4222,7 +4258,7 @@
         G.script.run(G.SCRIPTS.fcDefeated(this));
       }
     }
-    bomb(sx, sy) { this.hit(3, sx, sy); }
+    bomb(sx, sy) { const hp = this.hp; this.hit(3, sx, sy); if (this.hp > 0 && this.hp < hp) G.stun(this, 75); }
     draw(ctx, cx, cy) {
       if (this.hidden || this.alpha <= 0) return;
       const up = ['spiral', 'hohoho', 'gifts', 'swipe', 'sleighAim', 'sleigh'].includes(this.state) || (this.state === 'tele' && this.st < this.teleT - 14);
@@ -4770,7 +4806,10 @@
       this.world.burst(this.x, this.y - 16, ['#5a5c3a', '#3a2a20', '#f8f8f8'], 5, { speed: 1.3, up: 0.6, g: 0.06, life: 24, size: 2 });
       if (this.hp <= 0) { this.state = 'defeated'; G.script.run(G.SCRIPTS.tylerDefeated(this)); }
     }
-    bomb(sx, sy) { this.hit(3, sx, sy); }
+    bomb(sx, sy) {
+      if (this.open || ['yank', 'dizzy', 'defeated'].includes(this.state) || !G.stun(this, 70, true)) { this.hit(3, sx, sy); return; }
+      Object.assign(this, { state: 'dizzy', st: 70, moving: false });
+    }
     draw(ctx, cx, cy) {
       const S = this.S;
       drawShadow(ctx, this.x, this.y, cx, cy);
