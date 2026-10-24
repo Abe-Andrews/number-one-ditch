@@ -8502,6 +8502,16 @@
     }
     return null;
   }
+  // Dad's pipe book (his real journal: a blue textured notebook, a little gold emblem, a black ribbon)
+  function pipeBookIcon() {
+    const p = new Pix(14, 16);
+    p.rect(2, 0, 11, 15, '#2a4a8a');
+    for (let y = 1; y < 15; y++) for (let x = 3; x < 13; x++) if ((x + y) % 3 === 0) p.set(x, y, '#3a5aa8');
+    p.vline(2, 0, 14, '#1a2a5a'); p.hline(3, 12, 0, '#4a6ab8');
+    p.rect(7, 6, 2, 2, '#e0b848'); p.set(7, 6, '#f8e070');
+    p.vline(10, 14, 15, '#1a1a1a'); p.set(11, 15, '#1a1a1a');
+    return finish(p);
+  }
   G.TIN_IDS = ['lane1q', 'borkum', 'maidenLane', 'royalJersey', 'scottishCake', 'capstan', 'oldGowrie', 'cravensClaw', 'orlik', 'margate'];
 
   // ================================================================ EXPORTS
@@ -8732,6 +8742,7 @@
     S.goldenEgg = [goldenEgg(false), goldenEgg(true)]; S.egglet = { right: [egglet(0), egglet(1)] }; S.egglet.left = S.egglet.right.map(mirror);
     S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
+    S.pipeBook = pipeBookIcon();
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
     S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();

@@ -266,6 +266,11 @@
       kind: 'key', name: 'Diploma in EEENGLISH', icon: () => G.spr.diploma, has: () => !!fl().engPerfect,
       desc: 'Certifies that Nate speaks EEENGLISH. Three Es. Signed by Professor Pembrook and, in crayon, El EEENGLISH.',
     },
+    pipeBook: {
+      kind: 'key', name: 'Dad\'s Pipe Book', short: 'Pipe Book', icon: () => G.spr.pipeBook, has: () => !!st().items.pipeBook,
+      desc: 'Dad\'s journal: every pipe he\'s made and every tobacco he\'s smoked, with notes on all of it. He gave it to you. Press Z to read it.',
+      use: () => G.SCRIPTS.readPipeBook(),
+    },
     mikeyNote: {
       kind: 'key', name: 'Mikey\'s Note', icon: () => G.spr.noteIcon, has: () => !!st().items.mikeyNote,
       desc: 'Folded into a very small square. Mikey gave it to Lily on his way out. Lily can\'t look at it. Press Z to read it.',
@@ -381,7 +386,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -4988,56 +4993,56 @@
   // coats: how many coats it wants.
   G.PIPES = [
     {
-      id: 'black', name: 'Black Sandblast', kind: 'A billiard, sandblasted, dyed black', d: 1, stain: 'black', coats: 1,
+      id: 'black', num: 'P12', name: 'Black Sandblast', kind: 'A billiard, sandblasted, dyed black', d: 1, stain: 'black', coats: 1,
       intro: 'Start with an easy one. A billiard: straight sides, round bottom.',
       stainHint: 'This one had flaws all over, so it got sandblasted. Then black dye. Black hides everything.',
       facts: ['This block had flaws everywhere. A deep crack in the bowl. So I made it small.', 'Ugly briar? Sandblast it. The soft wood blows away, and the grain stands up.', 'Finish the mouthpiece first. THEN sandblast. Trust me.', 'Then it gets dyed black. Black finish: beautiful.'],
       made: 'Black. Cracked. Beautiful. That one\'s a keeper.',
     },
     {
-      id: 'silver', name: 'Silver Band', kind: 'A squashed tomato, with a silver band', d: 2, stain: 'oil', coats: 1,
+      id: 'silver', num: 'P14', name: 'Silver Band', kind: 'A squashed tomato, with a silver band', d: 2, stain: 'oil', coats: 1,
       intro: 'A squashed tomato. That\'s really what they call this shape.',
       stainHint: 'No stain on this one. The briar is already a rich, deep red. Just oil.',
       facts: ['Squashed tomato. I am not making that up. Ask any pipe maker.', 'I wanted to try a silver band. It goes right where the stem meets the shank.', 'Make the top a little concave on the lathe. Then the drill finds the true center all by itself.', 'No stain on this one. The briar is already a rich, deep red.'],
       made: 'Look at that red. God made that color. I just got out of the way.',
     },
     {
-      id: 'castello', name: 'Castello Copy', kind: 'Long shank, short stem, light brown', d: 2, stain: 'light', coats: 1,
+      id: 'castello', num: 'P17', name: 'Castello Copy', kind: 'Long shank, short stem, light brown', d: 2, stain: 'light', coats: 1,
       intro: 'I copied this one from a Castello I saw in a pipe shop in Florence.',
       stainHint: 'Light brown stain. One coat, nice and even.',
       facts: ['Long shank, short stem. Like the Caminetto I bought in Sicily.', 'A smaller bowl is a shorter smoke. And it fits so nice in your hand.', 'Twelve percent. That\'s how much water should be in briar before you start working it.', 'I bought a moisture meter just to check. The briar kept losing weight for weeks.'],
       made: 'Not bad for a copy. Castello would be proud. Or confused.',
     },
     {
-      id: 'minecraft', name: 'Minecraft Pipe', kind: 'Abe\'s: eight panels, square shank', d: 3, stain: null, coats: 1,
+      id: 'minecraft', num: 'P7', name: 'Minecraft Pipe', kind: 'Abe\'s: eight panels, square shank', d: 3, stain: null, coats: 1,
       intro: 'Your brother asked me for a "Minecraft pipe." So. Here we go.',
       stainHint: 'I asked Abe which finish he wanted. He never answered. You pick.',
       facts: ['Eight sides. Bevels on the bottom. NOT on the top. He was very clear.', 'Medium size. He said "medium." I asked him twice.', 'I modeled it after a 1957 Dunhill. Don\'t tell Abe. He thinks it\'s from Minecraft.', 'Turn it round first. Then the eight panels get sanded flat on the wheel. Then by hand.', 'The grain is a mix: some bird\'s-eye, some cross-cut straight.', 'The drill is four millimeters. The air hole has to meet the very bottom of the chamber.'],
       made: 'A Minecraft pipe. ...I still don\'t know what Minecraft is.',
     },
     {
-      id: 'cordovan', name: 'Cordovan Dublin', kind: 'A Dublin, sandblasted, Cordovan dye', d: 3, stain: 'cordovan', coats: 1,
+      id: 'cordovan', num: 'P13', name: 'Cordovan Dublin', kind: 'A Dublin, sandblasted, Cordovan dye', d: 3, stain: 'cordovan', coats: 1,
       intro: 'My very first sandblast. A Dublin: it gets wider toward the top.',
       stainHint: 'The dye is Cordovan. It\'s leather dye, really. On this one, darker is better.',
       facts: ['A Dublin is shaped like a cone. Narrow at the heel, wide at the rim.', 'The dye is Cordovan. Leather dye. On this one, darker is better.', 'Dark brown looks classy. It gives a pipe an old look.', 'I broke one on the lathe once. The tool caught the wood and SNAP. Disappointing.'],
       made: 'Classy. Old-looking. Like your father.',
     },
     {
-      id: 'prince', name: 'Long-Stem Prince', kind: 'A prince: low bowl, long stem', d: 3, stain: 'light', coats: 2,
+      id: 'prince', num: 'P15', name: 'Long-Stem Prince', kind: 'A prince: low bowl, long stem', d: 3, stain: 'light', coats: 2,
       intro: 'A prince: a low, round bowl and a long, long stem.',
       stainHint: 'Light brown. And TWO coats on this one.',
       facts: ['This started as a little squashed tomato, just for practice. It turned out GREAT. So it got a long stem.', 'A long stem keeps the smoke cool. It has farther to travel.', 'Light brown, two coats. The second coat makes it glow.', 'Light passes on the lathe. You can always take more off. You can\'t put it back.'],
       made: 'Very royal. You may now address me as Your Highness.',
     },
     {
-      id: 'tan', name: 'British Tan Bent', kind: 'A king-sized bent billiard', d: 4, stain: 'tan', coats: 1,
+      id: 'tan', num: 'P16', name: 'British Tan Bent', kind: 'A king-sized bent billiard', d: 4, stain: 'tan', coats: 1,
       intro: 'A king-sized bent billiard. A big round bowl.',
       stainHint: 'The dye on this one is named after a country. And a kind of brown.',
       facts: ['I was trying for a more dramatic bend on this one.', 'Take care to get the right angle for the stem. Measure! Then measure again.', 'You bend a mouthpiece with heat. Slowly. VERY slowly.', 'Do NOT push too far, or you\'ll break the shank.'],
       made: 'Now THAT is a bend.',
     },
     {
-      id: 'strawberry', name: 'Strawberry Briar', kind: 'A bent Dublin. No stain, just Danish oil', d: 5, stain: 'oil', coats: 2,
+      id: 'strawberry', num: '18P', name: 'Strawberry Briar', kind: 'A bent Dublin. No stain, just Danish oil', d: 5, stain: 'oil', coats: 2,
       intro: 'Strawberry briar. Look at all those little red spots.',
       stainHint: 'No stain. Just Danish oil, two coats. With no stain, every mistake shows. Every single one.',
       facts: ['It\'s called strawberry briar. All those little red spots.', 'No stain. Just Danish oil, two coats. Wipe it on, let it soak in.', 'Sanded all the way to fifteen hundred grit.', 'The mouthpiece is Japanese vulcanite. WAY better than German.', 'I numbered it 18P by mistake. I put the number before the P.', 'Polished it with a brand-new buffer. So much better.'],
@@ -5688,6 +5693,7 @@
       G.audio.sfx('secret');
       yield G.say(null, 'The {y}' + pipe.name + '{/} is in {y}COLLECTABLES{/} now. Pick it there and Dad\'s Pipe looks just like it.');
     }
+    yield* pipeBookGift();
   }
   // ...and blending a tobacco
   function* makeTobacco(tob) {
@@ -5718,6 +5724,111 @@
       G.audio.sfx('secret');
       yield G.say(null, 'The {y}' + tob.name + '{/} tin is in {y}COLLECTABLES{/} now. Pack it in Dad\'s Pipe there, and the smoke comes out a different color.');
     }
+    yield* pipeBookGift();
+  }
+  // Every pipe and every tobacco in Dad's book: he gives Nate the book.
+  function* pipeBookGift() {
+    const s = G.state;
+    if (s.items.pipeBook || G.pipesMadeCount() < G.PIPES.length || G.tinsMadeCount() < G.TOBACCOS.length) return;
+    G.play.overlay = null;
+    const w = G.play.world;
+    if (w.dad) { w.dad.dir = G.dirToward(P().x - w.dad.x, P().y - w.dad.y); P().dir = G.dirToward(w.dad.x - P().x, w.dad.y - P().y); }
+    yield G.wait(20);
+    yield G.say('Dad', 'Nate. That\'s all of them. Every pipe in my book. Every tobacco.');
+    yield G.say('Nate', 'So I\'m a pipe maker now?');
+    yield G.say('Dad', 'It means you listened. To ALL of it. Every single fact.');
+    yield G.say('Nate', 'There were a lot of facts.');
+    yield G.say('Dad', 'There were. Here. I want you to have this.');
+    s.items.pipeBook = true;
+    yield G.itemGet(G.spr.pipeBook, 'You got {y}Dad\'s Pipe Book{/}! Every pipe he\'s made, every tobacco he\'s smoked, and a LOT of notes.');
+    yield G.say('Dad', 'I\'ll start a new one. I was almost out of pages anyway.');
+    yield G.say(null, 'Read it any time: it\'s in {y}KEYS{/}.');
+  }
+  // ---- reading it: the cover, a page for every pipe (in the order Dad numbered them), then
+  // the tobaccos. ←→ turns the pages.
+  function bookPage(draw) {
+    const c = G.canvas(G.W, G.H), x = c.getContext('2d');
+    x.fillStyle = '#f2ecdc'; x.fillRect(0, 0, G.W, G.H);
+    x.fillStyle = '#dcdcea'; for (let y = 17; y < G.H - 12; y += 9) x.fillRect(0, y, G.W, 1);
+    draw(x);
+    return c;
+  }
+  const PENCIL = '#4a4a52';
+  // Dad's notes, a line at a time from y down the page (and onto more pages if they run over)
+  function notesPages(pages, name, notes, y, head) {
+    const rows = [];
+    for (const l of notes) rows.push(...FT().wrap('- ' + l, 224));
+    let i = 0;
+    pages.push(bookPage((x) => { head(x); for (; i < rows.length && y <= G.H - 20; y += 9) FT().draw(x, rows[i++], 10, y, PENCIL); }));
+    while (i < rows.length) {
+      pages.push(bookPage((x) => {
+        FT().draw(x, name + ' (cont.)', 10, 3, '#2a2a32');
+        for (let yy = 18; i < rows.length && yy <= G.H - 20; yy += 9) FT().draw(x, rows[i++], 10, yy, PENCIL);
+      }));
+    }
+  }
+  function pipeBookPages() {
+    const pages = [];
+    // the cover
+    const cover = G.canvas(G.W, G.H), x = cover.getContext('2d');
+    x.fillStyle = '#16100c'; x.fillRect(0, 0, G.W, G.H);
+    x.fillStyle = '#2a4a8a'; x.fillRect(60, 8, 120, 140);
+    x.fillStyle = '#3a5aa8'; for (let yy = 9; yy < 147; yy++) for (let xx = 61 + (yy % 3); xx < 179; xx += 3) x.fillRect(xx, yy, 1, 1);
+    x.fillStyle = '#1a2a5a'; x.fillRect(60, 8, 4, 140);
+    x.fillStyle = '#e0b848'; x.fillRect(116, 66, 8, 8); x.fillStyle = '#f8e070'; x.fillRect(116, 66, 3, 3);
+    x.fillStyle = '#1a1a1a'; x.fillRect(150, 146, 3, 12);
+    const t = 'DAD\'S PIPE BOOK';
+    FT().draw(x, t, 120 - Math.round(FT().width(t) / 2), 92, '#e0b848', { shadow: '#1a2a5a' });
+    pages.push(cover);
+    // the pipes, in the order he numbered them
+    const made = G.state.pipesMade || {}, n = (p) => parseInt(p.num.replace(/\D/g, ''), 10);
+    for (const pipe of G.PIPES.slice().sort((a, b) => n(a) - n(b))) {
+      notesPages(pages, pipe.name, pipe.facts, 45, (x) => {
+        FT().draw(x, pipe.name, 10, 3, '#2a2a32');
+        x.drawImage(G.pipeLook(pipe.id, 0.75), 6, 15);
+        FT().wrap(pipe.kind, 170).slice(0, 2).forEach((l, k) => FT().draw(x, l, 60, 18 + k * 9, PENCIL));
+        const st = made[pipe.id] ? made[pipe.id].stars : 0;
+        FT().draw(x, 'Nate\'s: {y}' + '★'.repeat(st) + '{d}' + '★'.repeat(3 - st), 60, 34, PENCIL);
+        x.strokeStyle = PENCIL; x.lineWidth = 1;
+        const w = FT().width(pipe.num) + 6;
+        x.strokeRect(G.W - 8 - w + 0.5, 1.5, w, 11); FT().draw(x, pipe.num, G.W - 5 - w, 3, PENCIL);
+      });
+    }
+    // the tobaccos ("smoking experience")
+    const tins = G.state.tinsMade || {};
+    for (const tob of G.TOBACCOS) {
+      notesPages(pages, tob.name, [tob.clue].concat(tob.facts, ['Smoking experience: ' + tob.taste]), 45, (x) => {
+        FT().draw(x, tob.name, 10, 3, '#2a2a32');
+        x.drawImage(G.spr.tins[tob.id], 10, 16);
+        FT().wrap(tob.kind, 180).slice(0, 2).forEach((l, k) => FT().draw(x, l, 50, 18 + k * 10, PENCIL));
+        const st = tins[tob.id] ? tins[tob.id].stars : 0;
+        FT().draw(x, 'Nate\'s: {y}' + '★'.repeat(st) + '{d}' + '★'.repeat(3 - st), 50, 34, PENCIL);
+      });
+    }
+    return pages;
+  }
+  function pipeBookView(pages) {
+    return {
+      start() { this.i = 0; this.t = 0; G.audio.sfx('menu'); },
+      update() {
+        const inp = G.input;
+        this.t++;
+        if (inp.hit('right') && this.i < pages.length - 1) { this.i++; G.audio.sfx('menu'); }
+        if (inp.hit('left') && this.i > 0) { this.i--; G.audio.sfx('menu'); }
+        if (this.t > 14 && (inp.hit('a') || inp.hit('b'))) { inp.eat('a'); inp.eat('b'); G.audio.sfx('cancel'); return true; }
+        return false;
+      },
+      draw(ctx) {
+        ctx.drawImage(pages[this.i], 0, 0);
+        const hint = (this.i > 0 ? '← ' : '') + G.sayable(this.i + 1) + '/' + G.sayable(pages.length) + (this.i < pages.length - 1 ? ' →' : '') + '   Z: close';
+        FT().draw(ctx, hint, G.W - FT().width(hint) - 4, G.H - 9, this.i ? PENCIL : '#f8f8f0', this.i ? {} : { shadow: '#000' });
+      },
+    };
+  }
+  S.readPipeBook = function* () {
+    yield pipeBookView(pipeBookPages());
+    const f = flags();
+    if (!f.pipeBookRead) { f.pipeBookRead = true; yield G.say('Nate', 'Every pipe. Every tobacco. Every fact. He really did tell me everything.'); }
   }
   // Dad's pipe bench: what are we making? (from Dad's talk in the workshop, once he has his snacks)
   S.pipeBench = function* (kind) {
