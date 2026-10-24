@@ -3323,14 +3323,22 @@
     const s = G.state; s.rocks = s.rocks || {}; s.rocksFound = s.rocksFound || {};
     for (const r of G.ROCKS) { s.rocks[r.id] = (s.rocks[r.id] || 0) + 1; s.rocksFound[r.id] = (s.rocksFound[r.id] || 0) + 1; }
   };
-  // Admin: hand over every item and song.
+  // Admin: hand over everything Nate gets to keep: all the gear (with the bidet's upgrades and a
+  // full first-aid kit), every song, the key items he holds on to, and every collectable (photos,
+  // Dad's pipes and tins, his pipe book). Not the one-time quest items (the candy corn, the sloth,
+  // Mom's books...): having those early would jump their quests.
   G.adminAllItems = () => {
     const s = G.state, f = s.flags;
-    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, andoverKey: true, mikeyNote: true });
-    s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40;
-    f.signal_peace = true; f.signal_icy = true; f.signal_jlc = true; f.doronDeal = true; f.hadDoosh = true; f.capHeart = true;
+    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true });
+    s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40; s.items.firstAid = G.KIT_MAX;
+    f.kitGot = true; f.bidetBig = true; f.bidetNozzle = true; s.items.bidetWater = G.BIDET_MAX;
+    for (const sg of G.SIGNALS) f['signal_' + sg.id] = true;
+    // the graded chem final and the EEENGLISH diploma
+    f.chemPassed = true; f.engPassed = true; f.engPerfect = true;
+    f.doronDeal = true; f.hadDoosh = true; f.capHeart = true;
     s.photos = {}; for (const ph of G.PHOTOS) s.photos[ph.id] = 1;
-    s.items.sifter = true;
+    s.pipesMade = {}; for (const p of G.PIPES) s.pipesMade[p.id] = { stars: 3, stain: p.stain || 'oil' };
+    s.tinsMade = {}; for (const t of G.TOBACCOS) s.tinsMade[t.id] = { stars: 3 };
   };
 
   // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)

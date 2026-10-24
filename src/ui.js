@@ -1224,7 +1224,7 @@
         case 1: this.admList = 'place'; this.sel = 0; this.scroll = 0; break;
         case 2: s.hp = s.maxHp; this.flash('Hearts refilled.'); break;
         case 3: G.play.addTeeth(100); this.flash('+100 shark teeth.'); break;
-        case 4: G.adminAllItems(); this.flash('Every item and song unlocked.'); break;
+        case 4: G.adminAllItems(); this.flash('Every item, song and collectable.'); break;
         case 5: G.adminAllRocks(); this.flash('One of every rock added.'); break;
         case 6: s.god = !s.god; this.flash(s.god ? 'Invincible.' : 'Mortal again.'); break;
         case 7: G.play.menu = null; G.title.enter(); return true;
