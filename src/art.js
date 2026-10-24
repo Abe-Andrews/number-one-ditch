@@ -7043,20 +7043,65 @@
     p.outline();
     return p.canvas();
   }
-  // a huge black and white snout, poking out through the trees (Romulus, golf cart sized)
-  function romSnout() {
-    const W = 40, H = 26, p = new Pix(W, H);
+  // Romulus's head, golf cart sized, shoved out through the trees with his sloth clamped in his
+  // jaws (facing right, toward Nate): black fur with a ragged back edge (the leaves cover it),
+  // a folded-over ear tip, the thin white blaze, an amber eye, a white muzzle, the big shiny
+  // nose, and the sloth between his teeth. Frame 1 is mid-tug: a snarl in the muzzle, and the
+  // sloth stretched a little farther.
+  function romSnout(tug) {
+    const W = 52, H = 36, p = new Pix(W, H);
+    const BLK = '#1c1c24', BLK_L = '#383848', BLK_D = '#101016', WHT = '#f6f4ef', WHT_D = '#dcd8d0', WHT_S = '#c4c0b8';
+    const inE = (x, y, cx, cy, rx, ry) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1;
+    const furry = (x, y, cx, cy, rx, ry) => ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1 + (G.hash(x >> 1, y >> 1, 91) - 0.5) * 0.35;
     for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const top = y < 12 - Math.round(x * 0.12), inside = ((x - 18) / 22) ** 2 + ((y - 13) / 12.5) ** 2 <= 1;
-      if (!inside) continue;
-      p.set(x, y, top ? (G.hash(x, y, 61) < 0.2 ? '#3a3a44' : '#1c1c22') : '#f4f4f0');
+      // the skull and the jowl under it (black, ragged at the back)
+      if (furry(x, y, 15, 15, 15, 12) || furry(x, y, 18, 24, 11, 6)) p.set(x, y, y < 8 && G.hash(x, y, 92) < 0.5 ? BLK_L : G.hash(x, y, 93) < 0.12 ? BLK_D : BLK);
     }
-    for (let y = 6; y <= 12; y++) for (let x = 33; x <= 39; x++) if (((x - 36) / 3.5) ** 2 + ((y - 9) / 3.5) ** 2 <= 1) p.set(x, y, '#141418');
-    p.set(35, 7, '#6a6a74');
-    p.hline(16, 34, 17, '#5a3a3a'); p.set(15, 16, '#5a3a3a');
-    for (const x of [20, 26, 32]) p.set(x, 18, '#ffffff');
+    // the ear, up, with the tip folded over
+    for (let y = 0; y < 8; y++) for (let x = 6; x < 20; x++) if (y >= Math.abs(x - 12) * 0.9 - 1 && y < 8) p.set(x, y + 1, y < 3 ? BLK_L : BLK);
+    for (const [x, y] of [[13, 0], [14, 1], [15, 1], [15, 2]]) p.set(x, y, BLK_L);
+    // the upper muzzle (white, sloping down to the nose), shaded underneath
+    for (let y = 8; y < 26; y++) for (let x = 18; x < W; x++) {
+      const top = 12 + (x - 18) * 0.12, bot = 23 - (x - 18) * 0.06;
+      if (y >= top && y <= bot && inE(x, y, 32, 17.5, 15, 8)) p.set(x, y, y > bot - 2 ? WHT_S : y > bot - 4 ? WHT_D : WHT);
+    }
+    // the blaze: a thin white stripe from the muzzle up between his eyes
+    for (let k = 0; k <= 10; k++) { const x = Math.round(23 - k * 0.8), y = Math.round(12 - k); p.set(x, y, WHT); if (k < 5) p.set(x + 1, y, WHT); }
+    // the eye: amber-brown, a dark pupil, a catchlight, and a little brow of light fur
+    for (let y = 7; y <= 11; y++) for (let x = 25; x <= 30; x++) if (inE(x, y, 27.5, 9, 2.4, 2)) p.set(x, y, '#9a5a20');
+    p.rect(27, 8, 2, 2, '#1a0c06'); p.set(27, 8, '#ffffff'); p.hline(25, 30, 6, BLK_L);
+    // the snarl, mid-tug
+    if (tug) for (const [x, y] of [[30, 13], [31, 14], [34, 13], [35, 14], [38, 14]]) p.set(x, y, WHT_S);
+    // the mouth, open around the sloth: the dark inside, the lower jaw, a few teeth
+    for (let y = 22; y < 30; y++) for (let x = 20; x < 46; x++) if (inE(x, y, 32, 25, 13, 3.2)) p.set(x, y, '#4a141c');
+    for (let y = 26; y < 34; y++) for (let x = 18; x < 44; x++) if (inE(x, y, 30, 29.5, 13, 3.4)) p.set(x, y, y > 31 ? WHT_S : y > 29 ? WHT_D : WHT);
+    for (const x of [24, 29, 36, 41]) { p.set(x, 23, '#ffffff'); p.set(x, 24, '#e8e4dc'); }
+    for (const x of [26, 33]) p.set(x, 27, '#ffffff');
+    // the sloth, clamped in his teeth and hanging out toward Nate (shaggy tan, an orange face, white claws)
+    const sx = tug ? 2 : 0;
+    for (let y = 21; y < 33; y++) for (let x = 34; x < W; x++) {
+      if (inE(x, y, 43 + sx, 27, 7 + sx * 0.5, 4.6)) p.set(x, y, G.hash(x, y, 51) < 0.25 ? '#ecd0a0' : G.hash(x, y, 52) < 0.2 ? '#a8804a' : '#d8b078');
+    }
+    for (let y = 23; y < 28; y++) for (let x = 38; x < 44; x++) if (inE(x, y, 40.5 + sx, 25.5, 2.6, 2)) p.set(x, y, '#c8843a');
+    p.set(40 + sx, 25, '#141010'); p.set(42 + sx, 25, '#141010');
+    for (const [x, y] of [[50, 26], [51, 27], [50, 28], [49, 30], [50, 31]]) p.set(x + sx > W - 1 ? W - 1 : x + sx, y, '#f4f0e8');
+    // the upper lip over the sloth, and the big shiny nose
+    for (let x = 22; x < 46; x++) p.set(x, Math.round(22.6 - (x - 22) * 0.04), WHT_D);
+    for (let y = 11; y < 21; y++) for (let x = 41; x < W; x++) if (inE(x, y, 46, 15.5, 4.6, 3.6)) p.set(x, y, '#0e0e12');
+    p.hline(44, 46, 13, '#6a6a78'); p.set(43, 14, '#4a4a56'); p.set(48, 17, '#000000'); p.set(47, 17, '#000000');
     p.outline();
     return p.canvas();
+  }
+  // the clump of leaves (and a pine bough) his head shoves through: it covers the back of his head
+  function romSnoutLeaves() {
+    const W = 26, H = 46, p = new Pix(W, H), cols = ['#2e6a2c', '#3a7a34', '#5a9a44', '#7aba5a'];
+    for (let i = 0; i < 26; i++) {
+      const cx = 4 + G.hash(i, 1, 94) * 16, cy = 3 + G.hash(i, 2, 94) * 40, r = 3 + G.hash(i, 3, 94) * 3;
+      for (let y = -6; y <= 6; y++) for (let x = -6; x <= 6; x++) if (x * x + y * y <= r * r) p.set(cx + x, cy + y, x + y < -2 ? cols[3] : x + y < 2 ? cols[2] : G.hash(i, 4, 94) < 0.5 ? cols[1] : cols[0]);
+    }
+    for (let y = 8; y < 40; y += 3) p.set(18 + Math.round(Math.sin(y) * 2), y, '#1e4a22');
+    for (let x = 0; x < 12; x++) p.set(x, 30 + Math.round(x * 0.3), '#6a4a2a');
+    return finish(p);
   }
 
   // ================================================================ ABE'S REACH (he's 6'5")
@@ -8279,7 +8324,7 @@
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
     S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();
-    S.slothPlush = slothPlush(); S.slothIcon = slothIcon(); S.abeBassIcon = abeBassIcon(); S.bassHeld = bassHeld(); S.cableIcon = cableIcon(); S.romSnout = romSnout();
+    S.slothPlush = slothPlush(); S.slothIcon = slothIcon(); S.abeBassIcon = abeBassIcon(); S.bassHeld = bassHeld(); S.cableIcon = cableIcon(); S.romSnout = [romSnout(false), romSnout(true)]; S.romSnoutLeaves = romSnoutLeaves();
     S.condoBed = condoBed(); S.nightstandAmber = nightstandAmber(); S.nightstandDark = nightstandDark(); S.creamDresser = creamDresser();
     S.ceilingFan = [0, 1, 2, 3].map(ceilingFan);
     S.loftTV = loftTV(); S.grayOttoman = grayOttoman(); S.loftSofaBack = loftSofaBack(); S.condoBookshelf = condoBookshelf(); S.condoFloorLamp = condoFloorLamp();

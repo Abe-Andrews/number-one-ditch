@@ -7585,7 +7585,21 @@
     w.burst(11 * 16 + 8, p.y - 16, ['#3a7a34', '#5a9a44', '#7a5a38'], 10, { speed: 1, up: 1, g: 0.1, life: 20, size: 2 });
     yield G.say(null, 'Something is crashing through the trees on the other side. Something BIG.');
     G.audio.sfx('woof'); G.play.shake(20, 2);
-    const snout = { img: G.spr.romSnout, x: p.x - 48, y: p.y - 24, base: p.y + 40 };
+    // his head shoves out through the leaves (it slides out from behind them; `edge` is where
+    // the trees end, and nothing of him shows left of it)
+    const snout = {
+      // (drawn over every tree in the strip of woods; the leaf clump hides where he comes through)
+      img: null, x: p.x - 54, y: p.y - 40, base: p.y + 200, edge: p.x - 50, frame: 0, t0: G.tick, rustleTo: G.tick + 12,
+      draw(ctx, cx, cy) {
+        const out = Math.min(1, (G.tick - this.t0) / 8), img = G.spr.romSnout[this.frame], x = Math.round(this.x - (1 - out) * 26), y = Math.round(this.y);
+        ctx.save();
+        ctx.beginPath(); ctx.rect(this.edge - cx, y - 6 - cy, 90, img.height + 12); ctx.clip();
+        ctx.drawImage(img, x - cx, y - cy);
+        ctx.restore();
+        const shake = G.tick < this.rustleTo ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
+        ctx.drawImage(G.spr.romSnoutLeaves, this.edge - 18 + shake - cx, y - 6 - cy);
+      },
+    };
     w.props.push(snout);
     w.burst(p.x - 30, p.y - 14, ['#3a7a34', '#5a9a44', '#7a5a38'], 16, { speed: 1.6, up: 1, g: 0.1, life: 24, size: 2 });
     w.pop(p.x - 30, p.y - 36, 'CHOMP!', '#f8f8f0');
@@ -7595,15 +7609,17 @@
     // tug of war
     for (let k = 0; k < 4; k++) {
       G.audio.sfx('bump'); G.play.shake(8, 1);
-      p.x -= 3; snout.x -= 2;
+      p.x -= 3; snout.x -= 2; snout.frame = 1; snout.rustleTo = G.tick + 8;
       yield G.wait(12);
-      p.x += 2; snout.x += 2;
+      p.x += 2; snout.x += 2; snout.frame = 0;
       yield G.wait(10);
     }
     yield G.say(null, 'Romulus pulls. Nate pulls back. Romulus pulls HARDER.');
     G.audio.sfx('dash'); G.play.shake(24, 3);
     w.burst(p.x - 20, p.y - 12, ['#3a7a34', '#5a9a44', '#7a5a38', '#f8f8f0'], 24, { speed: 2, up: 1.2, g: 0.1, life: 26, size: 2 });
-    yield G.walkTo(p, p.x - 34, p.y, 4);
+    // he yanks his head back through the trees, and Nate goes with it
+    snout.frame = 1; snout.rustleTo = G.tick + 20;
+    yield G.together(G.walkTo(p, p.x - 34, p.y, 4), { start() { this.t = 0; }, update() { snout.x -= 4; return ++this.t >= 10; } });
     s.items.sloth = false;
     f.romGap = true; f.slothQuest = 4;
     yield G.say(null, 'Nate goes right through the trees.');
