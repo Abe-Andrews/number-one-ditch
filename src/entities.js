@@ -3505,6 +3505,181 @@
   }
   G.Bird = Bird;
 
+  // ============================================================== THE CONDO (Chesapeake)
+  // One of Abe's yellow guitar cables (his eBay "inventory"), come alive: it slithers after Nate
+  // in a wave, rears back, and lunges. A lunge that lands bites AND tangles him up (half speed
+  // for a second). Its body follows its plug, with a plug on the tail end too. The surf rod can
+  // reel one in (it's a cable: Nate just winds it up).
+  class YellowCable extends Critter {
+    constructor(x, y) {
+      super(x, y, 2);
+      this.intro = 'cable';
+      this.touch = false;
+      this.dropChance = 0.5;
+      this.reelable = true;
+      this.bits = ['#f0c830', '#d8d8e0', '#2a2a30'];
+      this.hb = { w: 8, h: 5 };
+      this.state = 'coil';
+      this.dir = [1, 0];
+      this.trail = [];
+      for (let i = 0; i < 30; i++) this.trail.push({ x: x - i, y: y + Math.round(Math.sin(i * 0.4) * 2) });
+    }
+    hurtBox() { return [this.x - 7, this.y - 10, this.x + 7, this.y + 2]; }
+    update(w) {
+      if (!this.carried) super.update(w);
+      // the body follows the plug, a point per pixel it moves (even while it's being reeled in)
+      let last = this.trail[0], d = Math.hypot(this.x - last.x, this.y - last.y);
+      while (d > 1) { const k = 1 / d; last = { x: last.x + (this.x - last.x) * k, y: last.y + (this.y - last.y) * k }; this.trail.unshift(last); d -= 1; }
+      if (this.trail.length > 30) this.trail.length = 30;
+    }
+    think(w, p, dx, dy, dist) {
+      if (this.state === 'coil') {
+        // a lazy wiggle where it lies, until Nate comes close
+        this.vx = Math.cos(this.t * 0.05) * 0.25; this.vy = Math.sin(this.t * 0.11) * 0.18; this.step(w);
+        if (dist < 110) this.state = 'slither';
+      } else if (this.state === 'slither') {
+        const wav = Math.sin(this.t * 0.2) * 0.6, sp = 0.75;
+        this.vx = (dx / dist) * sp - (dy / dist) * wav; this.vy = (dy / dist) * sp + (dx / dist) * wav;
+        this.dir = [dx / dist, dy / dist];
+        this.step(w);
+        if (dist < 38) { this.state = 'rear'; this.st = 22; this.aim = [dx / dist, dy / dist]; G.audio.sfx('buzz'); w.pop(this.x, this.y - 18, '*bzzzt*', '#f0c830'); }
+        if (dist > 170) this.state = 'coil';
+      } else if (this.state === 'rear') {
+        this.vx = this.vy = 0;
+        if (--this.st <= 0) { this.state = 'lunge'; this.st = 11; G.audio.sfx('swing'); }
+      } else if (this.state === 'lunge') {
+        const h1 = w.move(this, this.aim[0] * 3.3, 0), h2 = w.move(this, 0, this.aim[1] * 3.3);
+        if (G.overlap(this.hurtBox(), p.hurtBox()) && !(p.inv > 0)) {
+          p.hurt(this.dmg || 1, this.x, this.y);
+          p.sticky = 60;
+          w.pop(p.x, p.y - 30, 'TANGLED!', '#f0c830');
+          this.state = 'rest'; this.st = 50;
+        } else if (h1.hitX || h2.hitY || --this.st <= 0) { this.state = 'rest'; this.st = 40; }
+      } else if (--this.st <= 0) this.state = 'slither';
+    }
+    // reeled in on the surf rod: Nate winds it right up
+    onReeled() {
+      this.carried = false;
+      this.world.pop(this.x, this.y - 22, 'Wound up!', '#f0c830');
+      this.die();
+    }
+    draw(ctx, cx, cy) {
+      const T = this.trail, lift = this.state === 'rear' ? 5 : 0, flash = this.hurtT && (this.hurtT >> 1) & 1;
+      const Y = '#f0c830', YD = '#b88a18';
+      // the cable, back to front (the end nearest the plug rises when it rears back)
+      for (let i = T.length - 1; i >= 0; i -= 2) {
+        const pt = T[i], up = Math.round(lift * Math.max(0, 1 - i / 14)), x = Math.round(pt.x) - cx, y = Math.round(pt.y - 3 - up) - cy;
+        ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(x - 1, Math.round(pt.y) - cy, 3, 1);
+        ctx.fillStyle = flash ? '#ffffff' : YD; ctx.fillRect(x - 1, y + 1, 3, 2);
+        ctx.fillStyle = flash ? '#ffffff' : Y; ctx.fillRect(x - 1, y, 3, 2);
+      }
+      // the plug on the tail end
+      const tl = T[T.length - 1];
+      ctx.fillStyle = '#2a2a30'; ctx.fillRect(Math.round(tl.x) - 2 - cx, Math.round(tl.y) - 5 - cy, 4, 4);
+      // the head: a 1/4" plug, pointing the way it's going (silver tip, black ring, yellow sleeve)
+      const [ux, uy] = this.state === 'rear' || this.state === 'lunge' ? this.aim : this.dir, hx = Math.round(this.x) - cx, hy = Math.round(this.y - 4 - lift) - cy;
+      ctx.fillStyle = flash ? '#ffffff' : '#2a2a30'; ctx.fillRect(hx - 2, hy - 2, 5, 5);
+      ctx.fillStyle = flash ? '#ffffff' : '#e8b820'; ctx.fillRect(hx - 1, hy - 1, 3, 3);
+      for (let k = 2; k <= 6; k++) { ctx.fillStyle = k === 4 ? '#1a1a1e' : k === 6 ? '#f8f8ff' : '#c8c8d4'; ctx.fillRect(Math.round(hx + ux * k), Math.round(hy + uy * k), 2, 2); }
+      if (this.calm > 0 && !this.dancing) drawHalo(ctx, this.x - cx, this.y - 18 - cy);
+    }
+  }
+  G.YellowCable = YellowCable;
+
+  // A Canada goose, off the golf course. Grazes near home until Nate gets close, then: HONK, a hiss
+  // with its wings up and its neck out, and a charge. Not scared of anything... except a blast
+  // from the Portable Bidet, or Jamie Lee Curtis on the pipe. Beaten, it doesn't go poof: it flies off.
+  class Goose extends Critter {
+    constructor(x, y) {
+      super(x, y, 3);
+      this.intro = 'goose';
+      this.touch = false;
+      this.home = { x, y };
+      this.state = 'graze';
+      this.st = 60;
+      this.face = Math.random() < 0.5 ? 'left' : 'right';
+      this.bits = ['#7a6a58', '#f6f6f2', '#1a1a1e'];
+      this.hb = { w: 12, h: 6 };
+    }
+    // (up to the top of its head: that long neck)
+    hurtBox() { return [this.x - 9, this.y - 25, this.x + 9, this.y]; }
+    update(w) {
+      if (this.flying) {
+        if (G.script.busy) return;
+        this.t++;
+        this.x += this.vx; this.y += this.vy; this.z = (this.z || 0) + 0.9;
+        if (--this.st <= 0) this.dead = true;
+        return;
+      }
+      super.update(w);
+    }
+    think(w, p, dx, dy, dist) {
+      const hx = this.x - this.home.x, hy = this.y - this.home.y, hd = Math.hypot(hx, hy) || 1;
+      if (this.state === 'graze') {
+        // wanders and pecks at the grass, never far from home
+        if (--this.st <= 0) { this.peck = !this.peck; this.st = this.peck ? 50 + Math.random() * 60 : 40 + Math.random() * 60; }
+        if (this.peck) { this.vx = this.vy = 0; }
+        else if (hd > 40) { this.vx = (-hx / hd) * 0.35; this.vy = (-hy / hd) * 0.35; this.step(w); }
+        else this.wander(w, 0.3);
+        if (dist < 76) {
+          this.state = 'alert'; this.st = 26; this.peck = false;
+          this.face = dx < 0 ? 'left' : 'right';
+          G.audio.sfx('honk'); w.pop(this.x, this.y - 30, 'HONK!', '#f8f8f0');
+        }
+      } else if (this.state === 'alert') {
+        this.vx = this.vy = 0; this.face = dx < 0 ? 'left' : 'right';
+        if (--this.st <= 0) { this.state = 'hiss'; this.st = 26; w.pop(this.x, this.y - 30, 'HSSSSS!', '#f8f8f0'); }
+      } else if (this.state === 'hiss') {
+        this.face = dx < 0 ? 'left' : 'right';
+        if (--this.st <= 0) { this.state = 'charge'; this.st = 38; this.vx = (dx / dist) * 2.2; this.vy = (dy / dist) * 2.2; G.audio.sfx('dash'); }
+      } else if (this.state === 'charge') {
+        const h1 = w.move(this, this.vx, 0), h2 = w.move(this, 0, this.vy);
+        if (this.t % 8 === 0) G.audio.sfx('honk');
+        if (G.overlap(this.hurtBox(), p.hurtBox()) && !(p.inv > 0)) { p.hurt(1, this.x, this.y); this.state = 'strut'; this.st = 80; }
+        else if (h1.hitX || h2.hitY || --this.st <= 0) { this.state = 'strut'; this.st = 70; }
+      } else if (this.state === 'strut') {
+        // struts back home like it won (whether it did or not)
+        if (hd > 6) { this.vx = (-hx / hd) * 0.6; this.vy = (-hy / hd) * 0.6; this.step(w); } else this.vx = this.vy = 0;
+        if (--this.st <= 0) { this.state = 'graze'; this.st = 30; }
+      }
+      if (this.vx && this.state !== 'hiss' && this.state !== 'alert') this.face = this.vx < 0 ? 'left' : 'right';
+    }
+    hit(dmg, sx, sy) {
+      super.hit(dmg, sx, sy);
+      // a goose does not forgive
+      if (this.hp > 0 && (this.state === 'graze' || this.state === 'strut')) { this.state = 'alert'; this.st = 14; }
+    }
+    // a blast from the bidet: HONK HONK, and it runs for it
+    onSpray() {
+      if (this.flying) return;
+      if (!(this.scared > 0)) { G.audio.sfx('honk'); this.world.pop(this.x, this.y - 30, 'HONK HONK!', '#a8d8ff'); }
+      this.scared = 150; this.state = 'strut'; this.st = 60;
+    }
+    die() {
+      // flies off (honking), and drops a few shark teeth it was sitting on
+      this.markGone();
+      this.flying = true; this.enemy = false; this.touch = false; this.st = 80;
+      const p = G.play.player, dx = this.x - p.x, m = Math.abs(dx) || 1;
+      this.vx = (dx / m) * 1.4; this.vy = -0.5;
+      this.face = this.vx < 0 ? 'left' : 'right';
+      this.world.pop(this.x, this.y - 30, 'HONK.', '#f8f8f0');
+      G.audio.sfx('honk');
+      for (let i = 0; i < 2; i++) this.world.add(new Pickup(this.x + (i ? 8 : -8), this.y + 4, 'tooth5'));
+    }
+    draw(ctx, cx, cy) {
+      const set = G.spr.goose[this.face];
+      let pose;
+      if (this.flying) pose = (this.t >> 3) & 1 ? 'fly1' : 'fly2';
+      else if (this.state === 'hiss' || this.state === 'charge') pose = this.state === 'charge' && (this.t >> 2) & 1 ? 'fly1' : 'hiss';
+      else if (this.peck && this.state === 'graze') pose = 'graze';
+      else pose = (this.vx || this.vy) && (this.t >> 3) & 1 ? 'walk2' : 'walk1';
+      if (this.flying) ctx.globalAlpha = Math.min(1, this.st / 30);
+      this.drawSprite(ctx, cx, cy, set[pose], Math.round(this.z || 0));
+      ctx.globalAlpha = 1;
+    }
+  }
+  G.Goose = Goose;
+
   // A plain sprite on the ground (used in cutscenes).
   class Thing extends Ent {
     constructor(x, y, img) { super(x, y); this.img = img; }

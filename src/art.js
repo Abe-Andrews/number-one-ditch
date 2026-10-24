@@ -6738,6 +6738,48 @@
     G.font.draw(cv.getContext('2d'), 'PRODUCE', 30 - Math.round(G.font.width('PRODUCE') / 2), 2, '#ffffff');
     return cv;
   }
+  // ---- a Canada goose (off the golf course, at the condo): black head and neck with the white
+  // chinstrap, a brown back, a pale chest, a white rump under the black tail, black legs. Poses:
+  // walk (2 frames), graze (head down in the grass), hiss (wings up, neck out, beak open), and fly
+  // (2 frames). Facing right; mirrored for left. Feet on the bottom row.
+  function goose(pose) {
+    const W = 26, H = 24, p = new Pix(W, H), BLK = '#1a1a1e', BRN = '#7a6a58', BRN_D = '#5a4c3e', BRN_L = '#94826c', CH = '#cbbfaa', BEL = '#e6e2d8', WHT = '#f6f6f2';
+    const flying = pose === 'fly1' || pose === 'fly2', gy = flying ? 16 : 17;
+    // the body, the folded wing, the chest and belly
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const d = ((x - 10) / 7.5) ** 2 + ((y - gy + 4) / 4.2) ** 2;
+      if (d > 1) continue;
+      p.set(x, y, y > gy - 2 ? BEL : x > 13 && y > gy - 6 ? CH : y < gy - 6 ? BRN_L : BRN);
+    }
+    for (let x = 5; x <= 13; x++) p.set(x, gy - 4 + (x > 10 ? 1 : 0), BRN_D);
+    for (let x = 6; x <= 12; x += 3) p.set(x, gy - 6, BRN_D);
+    // the tail (black) and the white rump under it
+    p.rect(1, gy - 7, 3, 3, BLK); p.set(0, gy - 6, BLK); p.rect(3, gy - 4, 2, 2, WHT);
+    // the legs (or tucked up, flying)
+    if (!flying) {
+      const a = pose === 'walk2' ? 1 : 0, b = pose === 'walk2' ? -1 : 0;
+      p.vline(8 + a, gy, gy + 5, BLK); p.vline(12 + b, gy, gy + 5, BLK);
+      p.hline(7 + a, 9 + a, gy + 6, BLK); p.hline(11 + b, 13 + b, gy + 6, BLK);
+    }
+    // the neck and head
+    let nx, ny, hx, hy, open = false;
+    if (pose === 'graze') { nx = [15, 17, 18, 19]; ny = [gy - 5, gy - 2, gy + 1, gy + 3]; hx = 19; hy = gy + 3; }
+    else if (pose === 'hiss') { nx = [16, 18, 20, 21]; ny = [gy - 6, gy - 7, gy - 8, gy - 8]; hx = 22; hy = gy - 9; open = true; }
+    else if (flying) { nx = [16, 18, 20]; ny = [gy - 6, gy - 7, gy - 8]; hx = 21; hy = gy - 9; }
+    else { nx = [15, 16, 16, 16]; ny = [gy - 6, gy - 9, gy - 12, gy - 15]; hx = 17; hy = gy - 17; }
+    for (let i = 0; i < nx.length; i++) { p.rect(nx[i], ny[i], 2, 3, BLK); }
+    p.rect(hx - 1, hy, 4, 3, BLK);
+    p.hline(hx - 1, hx + 1, hy + 2, WHT); p.set(hx, hy + 1, WHT);           // the chinstrap
+    if (open) { p.set(hx + 3, hy, BLK); p.set(hx + 3, hy + 2, BLK); p.set(hx + 3, hy + 1, '#d86878'); }
+    else p.rect(hx + 3, hy + 1, 1, 1, BLK);
+    // wings: up and spread when it hisses, beating when it flies
+    if (pose === 'hiss' || pose === 'fly1') {
+      for (let k = 0; k < 9; k++) { p.vline(5 + k, gy - 11 - Math.round(Math.sin(k / 8 * Math.PI) * 4) + (k > 6 ? 2 : 0), gy - 6, k % 3 ? BRN : BRN_D); p.set(5 + k, gy - 12 - Math.round(Math.sin(k / 8 * Math.PI) * 4) + (k > 6 ? 2 : 0), BRN_L); }
+    } else if (pose === 'fly2') {
+      for (let k = 0; k < 9; k++) p.vline(5 + k, gy - 2, gy + 2 + Math.round(Math.sin(k / 8 * Math.PI) * 3), k % 3 ? BRN : BRN_D);
+    }
+    return finish(p);
+  }
   // an empty shop, waiting for a tenant
   function forLeaseShop() {
     return storefront({
@@ -8365,7 +8407,7 @@
     for (const pose of ['stand', 'walk1', 'walk2', 'raise', 'slam', 'pour']) S.twoLiter[pose] = twoLiterBrute(pose);
     S.fizzDrop = fizzDrop(); S.tollPlaza = tollPlaza();
     // Tom's Pizza
-    S.tomsPizza = tomsPizza(); S.groceryStore = groceryStore(); S.produceStand = produceStand(); S.dairyCooler = dairyCooler(); S.aisleShelf = aisleShelf(); S.checkout = checkout(); S.boombox = [0, 1].map(boombox); S.mopBucket = mopBucket(); S.produceSign = produceSign(); S.forLeaseShop = forLeaseShop(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
+    S.tomsPizza = tomsPizza(); S.groceryStore = groceryStore(); S.goose = { right: {} }; for (const k of ['walk1', 'walk2', 'graze', 'hiss', 'fly1', 'fly2']) S.goose.right[k] = goose(k); S.goose.left = {}; for (const k in S.goose.right) S.goose.left[k] = mirror(S.goose.right[k]); S.produceStand = produceStand(); S.dairyCooler = dairyCooler(); S.aisleShelf = aisleShelf(); S.checkout = checkout(); S.boombox = [0, 1].map(boombox); S.mopBucket = mopBucket(); S.produceSign = produceSign(); S.forLeaseShop = forLeaseShop(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
     S.pizzaBoxes = pizzaBoxes(); S.checkTable = checkTable(); S.dadTomPicture = dadTomPicture();
     // Abe and Hannah's condo
     S.condo = condoBuilding(); S.brickStep = brickStep();

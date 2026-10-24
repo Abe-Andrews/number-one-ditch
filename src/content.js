@@ -3949,6 +3949,8 @@
     flower: [['Nate', 'Snapdragons. Living up to the name.']],
     gourd: [['Nate', 'Birdhouse gourds. Hopping. Something is definitely living in there.']],
     bear: [['Nate', 'A BEAR! Bedminster really does have bears!']],
+    cable: [['Nate', 'Is that one of Abe\'s yellow guitar cables? It\'s... SLITHERING.'], ['Nate', 'Father Eggmas got to the inventory.']],
+    goose: [['Nate', 'Canada geese. Off the golf course.'], ['Nate', 'Rule number one in Virginia: you do NOT make eye contact with a goose.'], ['Nate', '...I made eye contact with a goose.']],
   };
   S.critterIntro = function (kind) {
     const f = flags();
@@ -3956,6 +3958,9 @@
     f['met_' + kind] = true;
     const lines = CRITTER_LINES[kind].slice();
     if (kind === 'bear' && G.with('doron')) lines.push(['Doron', 'I could take him.'], ['Nate', 'Do NOT suplex the bear.']);
+    if (kind === 'cable' && G.with('abe')) lines.push(['Abe', 'Don\'t hurt the inventory!'], ['Nate', 'The inventory is trying to STRANGLE me, Abe.'], ['Abe', '...Okay. Hurt the inventory a little.']);
+    if (kind === 'goose' && G.with('abe')) lines.push(['Abe', 'They chased Romulus into the pond once. He still won\'t go near water.']);
+    if (kind === 'goose' && G.with('hannah')) lines.push(['Hannah', 'One took my sandwich right out of my hand. I still think about it.']);
     G.script.run((function* () { for (const [who, text] of lines) yield G.say(who, text); })());
   };
 
@@ -7351,6 +7356,14 @@
       // ---- the golf course (out of reach for now)
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [1 * 16, 5 * 16, 5 * 16, 8 * 16], talk: look('A sand bunker. Nate the geologist: mostly quartz. Nate the golfer: avoid.') });
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [1 * 16, 21 * 16, 4 * 16, 23 * 16], talk: look('Another sand bunker. There is a golf ball buried in it. Nate leaves it for its owner.') });
+      // ---- Father Eggmas got to Chesapeake too (once Nate's arrived): Abe's yellow guitar cables
+      // slithering out of the storage garage, and Canada geese off the golf course, on the front
+      // lawn and the far lawn (they're back every visit)
+      if (f.condoArrived) {
+        const ok = (tx, ty) => !R.onRoad(tx * 16 + 8, ty * 16 + 8) && !w.blocked([tx * 16 + 3, ty * 16 + 6, tx * 16 + 13, ty * 16 + 14]);
+        for (const [x, y] of [[34, 16], [36, 15]]) if (ok(x, y)) w.add(new G.YellowCable(x * 16 + 8, y * 16 + 12));
+        for (const [x, y] of [[31, 23], [34, 25], [57, 13], [58, 19]]) if (ok(x, y)) w.add(new G.Goose(x * 16 + 8, y * 16 + 12));
+      }
     },
     onEnter() {
       return (function* () {
@@ -8509,6 +8522,14 @@
       F.stand(sp.cableHeaps[1], 4, 7, 2, cables[2]);
       F.stand(sp.cableHeaps[2], 7, 6, 2, cables[0]);
       w.addWarp(11, 4, 1, 3, 'condo', 30, 15, 'right');
+      // a few of the cables got loose in here (once they're wound up, they stay that way)
+      if (flags().condoArrived) {
+        // (over on the far side, away from the garage door, so they don't knock Nate right back out of it)
+        for (const [x, y] of [[2, 5], [4, 4], [5, 6]]) {
+          const id = 'gone_' + w.id + '_' + x + '_' + y;
+          if (!flags()[id]) w.add(new G.YellowCable(x * 16 + 8, y * 16 + 12)).goneFlag = id;
+        }
+      }
     },
     onEnter() {
       return (function* () {
