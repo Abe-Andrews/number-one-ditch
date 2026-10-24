@@ -70,6 +70,7 @@
     Dad: '#f8d850', 'Father Eggmas': '#f86858', Tyler: '#78e8e8', Mikey: '#ff98d0',
     Nani: '#ffb8e0', 'El EEENGLISH': '#f86858', 'Pyro Pete': '#ffa848', 'Badlands Chugs': '#ff9a28', 'Little Nate': '#a8f098',
     Michelle: '#e8a0d8', Globglogabgalab: '#f8a8c8', 'Ice JJ Fish': '#a8e0ff', 'Father Christmas': '#ff6a5a', 'Hooded Figure': '#b8a8e8', 'Old Fisherman': '#a8d0e0', Organizer: '#c898ff', Carny: '#f8d040', 'Professor Pembrook': '#9ab8f8',
+    Romulus: '#e0b878',
   };
 
   const BOX = { x: 6, w: 228, h: 44, lineH: 11, lines: 3 };

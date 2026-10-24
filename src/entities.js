@@ -351,11 +351,23 @@
       }
     }
 
+    // Romulus, when Nate plays as him in the finale: the dog, facing the way he last went sideways
+    drawDog(ctx, cx, cy) {
+      if (this.dir === 'left' || this.dir === 'right') this.face = this.dir === 'right' ? 1 : -1;
+      drawShadow(ctx, this.x, this.y, cx, cy, true);
+      if (this.inv > 0 && this.state !== 'hurt' && (this.inv >> 2) & 1) return;
+      const set = G.spr.romulus[this.face < 0 ? 'left' : 'right'];
+      const pose = G.tick < (this.barkUntil || 0) ? 'bark' : this.moving ? RUN[Math.floor(this.anim / 5) % 4] : 'stand';
+      const img = set[pose] || set.stand;
+      ctx.drawImage(this.state === 'hurt' && (this.t >> 1) & 1 ? G.art.flash(img) : img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - 22 - (this.z || 0)) - cy);
+    }
+
     draw(ctx, cx, cy) {
       if (this.hidden) return;
       const S = this.spr;
       // (fainting comes before the after-hit blink, which would otherwise freeze him invisible)
       if (this.state === 'dead') { this.drawFaint(ctx, cx, cy); return; }
+      if (G.state.playAs === 'romulus') { this.drawDog(ctx, cx, cy); return; }
       drawShadow(ctx, this.x, this.y, cx, cy);
       if (this.inv > 0 && this.state !== 'hurt' && (this.inv >> 2) & 1) return;
       let img;
@@ -1778,9 +1790,12 @@
       }
       if (this.wet >= this.need) { this.yelp(); return; }
       if (this.state === 'dash' || this.state === 'zoomies') return;
-      if (this.state !== 'soaked') { this.state = 'soaked'; if (!G.state.flags.romSoakHint) G.script.run(G.SCRIPTS.romulusHint('soak')); }
+      if (this.state !== 'soaked') { this.state = 'soaked'; this.hint('soak'); }
       this.soakT = 16;
     }
+    // (the golf course fight's hints and ending; the possessed one in the finale has its own)
+    hint(what) { if (what === 'soak' && G.state.flags.romSoakHint) return; G.script.run(G.SCRIPTS.romulusHint(what)); }
+    beaten() { G.script.run(G.SCRIPTS.romulusBeaten(this)); }
     yelp() {
       Object.assign(this, { state: 'yelp', st: 44 });
       G.audio.sfx('yelp');
@@ -1864,7 +1879,7 @@
           if (this.st % 30 === 10 && this.st > 0) {
             G.audio.sfx('woof'); G.play.shake(6, 2);
             w.pop(this.x + this.face * 10 * s, this.y - 22 * s, 'WOOF!', '#f8f8f0');
-            w.add(new BarkRing(this.x + this.face * 8 * s, this.y - 2, 88 + h * 14));
+            w.add(new BarkRing(this.x + this.face * 8 * s, this.y - 2, 88 + h * 14, this.barkColor));
           }
           if (--this.st <= 0) this.toRoam(100 - h * 15);
           break;
@@ -1887,12 +1902,12 @@
             this.stage--; this.wet = 0; this.hp = this.stage;
             G.audio.sfx('poof');
             w.burst(this.x, this.y - 10 * this.s, ['#ffffff', '#e8e8f0', '#c8c8d8'], 18, { speed: 2, life: 26, size: 3 });
-            if (this.stage <= 0) { Object.assign(this, { state: 'defeated', z: 0 }); G.script.run(G.SCRIPTS.romulusBeaten(this)); return; }
+            if (this.stage <= 0) { Object.assign(this, { state: 'defeated', z: 0 }); this.beaten(); return; }
           }
           if (--this.st <= 0) {
             this.z = 0;
             Object.assign(this, { state: 'flee', st: 70 });
-            if (this.stage === 2) G.script.run(G.SCRIPTS.romulusHint('shrink'));
+            if (this.stage === 2) this.hint('shrink');
           }
           break;
         }
@@ -1917,10 +1932,54 @@
       const img = set[dir][pose] || set[dir].stand;
       if (this.stage <= 0) drawShadow(ctx, this.x, this.y, cx, cy, true);
       else { ctx.fillStyle = 'rgba(20,40,20,0.28)'; ctx.beginPath(); ctx.ellipse(Math.round(this.x) - cx, Math.round(this.y) - cy, 10 * s, 2.2 * s, 0, 0, Math.PI * 2); ctx.fill(); }
-      ctx.drawImage(img, Math.round(this.x - img.width / 2 + jx) - cx, Math.round(this.y - 22.1 * s - this.z) - cy);
+      const X = Math.round(this.x - img.width / 2 + jx) - cx, Y = Math.round(this.y - 22.1 * s - this.z) - cy;
+      ctx.drawImage(img, X, Y);
+      // (possessed, in the finale: glowing purple)
+      if (this.tint && st !== 'defeated') { ctx.save(); ctx.globalAlpha = 0.4; ctx.drawImage(tinted(img, this.tint), X, Y); ctx.restore(); }
     }
   }
   G.GiantRomulus = GiantRomulus;
+
+  // ROMULUS, possessed (the finale, at the Number One Ditch): the golf course fight again, in the
+  // ditch, glowing purple, pony-sized. Nate still won't hit a dog, and he still HATES water: soak
+  // him with the bidet (the trickle down the middle of the ditch fills it back up), and when he's
+  // shrunk back to his own size, the possession comes off him (S.finFreed).
+  class PossessedRomulus extends GiantRomulus {
+    constructor(x, y, b) {
+      super(x, y, { x0: b.x0 + 10, y0: b.y0, x1: b.x1 - 10, y1: b.y1, pond: { x: -9999, y: -9999, rx: 1, ry: 1 } });
+      Object.assign(this, { id: 'romulus', stage: 1, hp: 1, maxHp: 1, noBar: true, barkColor: '#c898ff', tint: '#a85ae8' });
+    }
+    // (one size, so it takes a good long soak: more than one tank, without the lab carboy)
+    get need() { return 200; }
+    start() { this.noBar = false; this.toRoam(60); }
+    hint() {}
+    beaten() { G.script.run(G.SCRIPTS.finFreed(this)); }
+    update(w) {
+      super.update(w);
+      // the possession, coming off him as purple wisps
+      if (!G.script.busy && this.state !== 'defeated' && this.state !== 'pose' && this.t % 14 === 0) w.burst(this.x + (Math.random() * 20 - 10), this.y - 18 * this.s, ['#a85ae8', '#6a2a9a', '#d8a8f8'], 1, { speed: 0.3, up: 0.7, g: -0.02, life: 28, size: 2 });
+    }
+  }
+  G.PossessedRomulus = PossessedRomulus;
+
+  // Romulus as one of the family at the Ditch (walks in with them, gets possessed in the lineup,
+  // sits on the bank once he's free): the dog instead of a person, facing the way he last went
+  // sideways. `possessed`: glowing purple.
+  class DogNPC extends NPC {
+    constructor(o) { super(o); this.face = 1; this.hb = { w: 18, h: 8 }; }
+    get S() { return { h: 24 }; }
+    draw(ctx, cx, cy) {
+      if (this.hidden) return;
+      if (this.dir === 'left' || this.dir === 'right') this.face = this.dir === 'right' ? 1 : -1;
+      const set = G.spr.romulus[this.face > 0 ? 'right' : 'left'];
+      const pose = this.moving ? RUN[Math.floor((this.anim || 0) / 5) % 4] : this.pose || (this.possessed ? 'stalk' : 'happy');
+      const img = set[pose] || set.stand, X = Math.round(this.x - img.width / 2) - cx, Y = Math.round(this.y - 22 - (this.z || 0)) - cy;
+      drawShadow(ctx, this.x, this.y, cx, cy, true);
+      ctx.drawImage(img, X, Y);
+      if (this.possessed) { ctx.save(); ctx.globalAlpha = 0.4; ctx.drawImage(tinted(img, '#a85ae8'), X, Y); ctx.restore(); }
+    }
+  }
+  G.DogNPC = DogNPC;
 
   // ============================================================== CHKD: the hypnotized babies
   // Father Eggmas hypnotized the whole children's hospital, babies and all. They crawl after
@@ -2829,10 +2888,11 @@
     michelle: { weapon: 'egg', need: 12, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'rain'], tip: 'Z: Henrietta fires an egg.' },
     abe: { weapon: 'reach', need: 6, h: 50, every: 80, attacks: ['lights', 'lob', 'spirals', 'lights'], tip: 'He\'s floating too high for anybody else. Z: Abe reaches up and bonks him!' },
     hannah: { weapon: 'ice', need: 9, h: 22, every: 72, attacks: ['spirals', 'rain', 'lights', 'egglets'], tip: 'Z: throw an ice pack.' },
+    romulus: { weapon: 'bark', need: 6, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'egglets'], tip: 'Z: BARK! Woof right at Father Eggmas. (Egglets too.)' },
     nate: { weapon: 'crack', need: 3, h: 22, every: 70, attacks: ['golden', 'lob', 'spirals', 'golden', 'lights', 'egglets'], tip: 'Bat the golden egg back with your hammer until it knocks him down. Then puff NICE CRACK (X: down, down, left)!' },
   };
   G.FIN_TURNS = TURNS;
-  G.FIN_RELAY = ['doron', 'dad', 'lily', 'michelle', 'abe', 'hannah', 'nate'];
+  G.FIN_RELAY = ['doron', 'dad', 'lily', 'michelle', 'abe', 'romulus', 'hannah', 'nate'];
   const RELAY_TOTAL = G.FIN_RELAY.reduce((n, id) => n + TURNS[id].need, 0);
 
   class EggmasBoss extends Ent {
@@ -3134,7 +3194,13 @@
     }
     draw(ctx, cx, cy) {
       if (this.kind === 'letter') G.font.drawBig(ctx, this.ch || 'E', Math.round(this.x - 4) - cx, Math.round(this.y - 18) - cy, 1, '#f8d850', '#5a1020');
-      else ctx.drawImage(G.spr.icePack, Math.round(this.x - 6) - cx, Math.round(this.y - 14) - cy);
+      else if (this.kind === 'bark') {
+        // a woof, rolling out in rings
+        const age = 90 - this.life;
+        ctx.save(); ctx.strokeStyle = '#f8f8f0'; ctx.lineWidth = 2;
+        for (const k of [0, 6]) { const r = 3 + ((age + k) % 12) * 0.6; ctx.globalAlpha = 0.9 - ((age + k) % 12) / 16; ctx.beginPath(); ctx.ellipse(Math.round(this.x) - cx, Math.round(this.y - 10) - cy, r, r * 0.8, 0, 0, Math.PI * 2); ctx.stroke(); }
+        ctx.restore();
+      } else ctx.drawImage(G.spr.icePack, Math.round(this.x - 6) - cx, Math.round(this.y - 14) - cy);
     }
   }
   G.RelayShot = RelayShot;
@@ -3146,7 +3212,7 @@
   G.LiftRock = LiftRock;
 
   // what Z does for each of the family on their turn (Lily's is her "No.", built in)
-  G.RELAY_LABEL = { doron: 'ROCK', dad: 'ENG', lily: 'NO.', michelle: 'EGG', abe: 'BONK', hannah: 'ICE' };
+  G.RELAY_LABEL = { doron: 'ROCK', dad: 'ENG', lily: 'NO.', michelle: 'EGG', abe: 'BONK', romulus: 'WOOF', hannah: 'ICE' };
   const eggmasIn = (w) => w.ents.find((e) => e instanceof EggmasBoss && !e.dead);
   G.RELAY_MOVE = {
     // Doron: pick up a rock (Z), throw it at Father Eggmas (Z)
@@ -3190,6 +3256,14 @@
       if (p.relayCd > 0 || p.state !== 'walk') return;
       p.relayCd = 22; p.state = 'reach'; p.t = 0; p.pose = 'hold'; p.hitSet.clear();
       G.audio.sfx('swing');
+    },
+    // Romulus: WOOF. A bark rolls out at Father Eggmas (and knocks egglets over on the way)
+    romulus(p, w) {
+      if (p.relayCd > 0) return;
+      p.relayCd = 24; p.barkUntil = G.tick + 16;
+      const boss = eggmasIn(w), a = boss ? Math.atan2(boss.y - p.y, boss.x - p.x) : Math.atan2(G.DIRS[p.dir][1], G.DIRS[p.dir][0]);
+      const sh = w.add(new RelayShot(p.x, p.y - 4, Math.cos(a) * 2.4, Math.sin(a) * 2.4, 'bark')); sh.life = 90;
+      G.audio.sfx('woof'); w.pop(p.x, p.y - 30, 'WOOF!', '#f8f8f0');
     },
     // Hannah: an ice pack
     hannah(p, w) {

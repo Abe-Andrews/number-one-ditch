@@ -340,6 +340,8 @@
       const tp = [p.x + dx * 12 - 3, p.y - 4 + dy * 12 - 3, p.x + dx * 12 + 3, p.y - 4 + dy * 12 + 3];
       const fixture = w.props.find((pr) => pr.hit && G.waterFixture(pr.img) && G.overlap(pr.hit, tp));
       if (fixture) return { kind: fixture.img === G.spr.toilet ? 'toilet' : 'sink', x: fx, y: fy - 10 };
+      // (a map can have water of its own that isn't a tile, like the trickle down the Number One Ditch)
+      if (w.def.water && w.def.water(fx, fy)) return { kind: 'water', x: fx, y: fy };
       return d && ['water', 'bay', 'iceHole'].includes(d.k) ? { kind: 'water', x: fx, y: fy } : null;
     },
     bidetStart() {
@@ -947,6 +949,9 @@
   G.art.init();
   G.sprites = {};
   for (const id in G.CAST) G.sprites[id] = G.art.person(G.CAST[id]);
+  // Romulus, for when Nate plays as him (the finale): his dog frames, shaped like a person's set
+  // (the player draws him as a dog; this is for anything else that asks, like fainting)
+  { const R = G.spr.romulus, fr = (d) => [R[d].stand, R[d].run1, R[d].run3]; G.sprites.romulus = { right: fr('right'), left: fr('left'), down: fr('right'), up: fr('left'), h: 25, hold: R.right.happy }; }
   // Nate only wears his flat cap once Groundskeeper Gus gives it back.
   G.nateSprites = () => (G.state && G.state.playAs ? G.sprites[G.state.playAs]
     : G.state && G.state.items.cap ? G.sprites.nate : G.sprites.nate_nocap);

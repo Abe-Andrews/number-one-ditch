@@ -3258,8 +3258,10 @@
     { name: 'CHKD: MECHA-BABY (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
     { name: 'CHKD: Hannah joined (to the roof)', map: 'chkdNicu', at: [7, 8, 'down'], flags: { mobileBeaten: true, kitGot: true }, party: ['hannah'], follower: 'hannah', items: { firstAid: 3 }, maxHp: 12 },
     { name: 'FINALE: the Number One Ditch', map: 'ditchFinal', at: [7, 17, 'up'], flags: { mobileBeaten: true, roofSeen: true }, party: ['abe', 'hannah'], items: { pipe: true, hammer: true }, maxHp: 12 },
-    { name: 'FINALE: Eggmas, the relay', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_intro: true, fin_freed: 6, fin_relay: 0, signal_crack: true } },
-    { name: 'FINALE: Nate\'s turn', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_relay: 6 } },
+    { name: 'FINALE: Romulus (possessed)', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_intro: true, fin_freed: 5, signal_crack: true } },
+    { name: 'FINALE: Eggmas, the relay', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_freed: 7, fin_relay: 0 } },
+    { name: 'FINALE: Romulus\'s turn', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_relay: 5 } },
+    { name: 'FINALE: Nate\'s turn', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_relay: 7 } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -9926,17 +9928,25 @@
   // throws rocks, Dad shouts EEENGLISH, Lily says "No.", Mom fires Henrietta's eggs, Abe
   // reaches up and bonks him (and Lily: "Nice crack, Abe!"), Hannah throws ice packs), and
   // Nate goes last: egg tennis, then Nice Crack.
-  // Flags: fin_intro, fin_freed (0-6), fin_relay (whose turn, 0-6), fin_done, signal_crack.
-  const FIN_ORDER = ['doron', 'dad', 'lily', 'michelle', 'abe', 'hannah'];
-  const FIN_NAME = { nate: 'Nate', doron: 'Doron', dad: 'Dad', lily: 'Lily', michelle: 'Michelle', abe: 'Abe', hannah: 'Hannah' };
-  const FIN_TITLE = { nate: 'NATE', doron: 'DORON', dad: 'DAD', lily: 'LILY', michelle: 'MOM', abe: 'ABE', hannah: 'HANNAH' };
+  // Flags: fin_intro, fin_freed (0-7), fin_relay (whose turn, 0-7), fin_done, signal_crack.
+  // (Romulus came with Abe and Hannah: he's fought between them, and takes a turn in the relay)
+  const FIN_ORDER = ['doron', 'dad', 'lily', 'michelle', 'abe', 'romulus', 'hannah'];
+  const FIN_NAME = { nate: 'Nate', doron: 'Doron', dad: 'Dad', lily: 'Lily', michelle: 'Michelle', abe: 'Abe', romulus: 'Romulus', hannah: 'Hannah' };
+  const FIN_TITLE = { nate: 'NATE', doron: 'DORON', dad: 'DAD', lily: 'LILY', michelle: 'MOM', abe: 'ABE', romulus: 'ROMULUS', hannah: 'HANNAH' };
   // where everybody sits on the banks once they're free (tiles); the lineup by the throne
-  const FIN_SEAT = { doron: [0, 6], dad: [0, 9], lily: [0, 12], nate: [0, 15], michelle: [14, 6], abe: [14, 9], hannah: [14, 12] };
-  const FIN_LINE = { doron: [3, 7], dad: [4.2, 7.8], lily: [5.4, 8.4], michelle: [9.6, 8.4], abe: [10.8, 7.8], hannah: [12, 7] };
+  const FIN_SEAT = { doron: [0, 6], dad: [0, 9], lily: [0, 12], nate: [0, 15], michelle: [14, 6], abe: [14, 9], hannah: [14, 12], romulus: [14, 15] };
+  const FIN_LINE = { doron: [3, 7], dad: [4.2, 7.8], lily: [5.4, 8.4], michelle: [9.6, 8.4], abe: [10.8, 7.8], hannah: [12, 7], romulus: [7.5, 9.2] };
   // (the bottom of the ditch stays clear of the boss's health bar)
   const FIN_BOUNDS = { x0: 2 * 16 + 12, y0: 7 * 16, x1: 13 * 16 - 12, y1: 16 * 16 };
   const MID = 7.5 * 16;
-  for (const id of FIN_ORDER) G.CAST[id + 'Possessed'] = Object.assign({}, G.CAST[id], { swirl: true, smile: null, blush: false });
+  for (const id of FIN_ORDER) if (G.CAST[id]) G.CAST[id + 'Possessed'] = Object.assign({}, G.CAST[id], { swirl: true, smile: null, blush: false });
+  // a family member at the Ditch (Romulus is a dog: G.DogNPC); possessed: spiral eyes / glowing purple
+  const finNew = (w, id, o = {}) => {
+    const base = Object.assign({ name: FIN_NAME[id], dir: 'down' }, o);
+    if (id === 'romulus') return w.add(new G.DogNPC(base));
+    return w.add(new G.NPC(Object.assign(base, { sprite: o.possessed ? id + 'Possessed' : id })));
+  };
+  const possess = (npc, id) => { if (npc instanceof G.DogNPC) npc.possessed = true; else npc.sprite = id + 'Possessed'; };
 
   const finFam = (w) => (w.finFam = w.finFam || {});
   const finSeatXY = (id) => [FIN_SEAT[id][0] * 16 + 8, FIN_SEAT[id][1] * 16 + 12];
@@ -9962,7 +9972,7 @@
     const f = flags();
     if (f.fin_done) return;
     if (!f.fin_intro) { yield* S.finIntro(); return; }
-    if ((f.fin_freed || 0) < 6) { yield* S.finNextFight(true); return; }
+    if ((f.fin_freed || 0) < FIN_ORDER.length) { yield* S.finNextFight(true); return; }
     yield* S.finTurnStart(G.FIN_RELAY[f.fin_relay || 0], true);
   };
   S.finIntro = function* () {
@@ -9981,6 +9991,8 @@
     yield G.say('Lily', '...Why is it covered in Christmas lights?');
     yield G.say('Michelle', 'Is that TINSEL? On the CATTAILS?');
     yield G.say('Hannah', 'It\'s snowing. In Chesapeake. That\'s not... that doesn\'t happen.');
+    yield G.say(null, 'Romulus presses up against Hannah\'s legs. His hackles are up.');
+    yield G.say('Abe', 'He wasn\'t going to stay home for this. Were you, buddy?');
     G.audio.sfx('hohoho');
     yield G.camFocus(boss.x, boss.y - 30, 70);
     yield G.say(null, 'HO. HO. HO.');
@@ -10005,14 +10017,15 @@
       dad: 'Son... run...',
       michelle: 'Nate! Wear a hel...',
       abe: 'Nate, quick ques...',
+      romulus: '*whimper*',
       hannah: 'Nate, GO! Get out of h...',
     };
-    for (const id of ['doron', 'dad', 'michelle', 'abe', 'hannah']) {
+    for (const id of ['doron', 'dad', 'michelle', 'abe', 'romulus', 'hannah']) {
       const npc = fam[id];
       yield G.say(FIN_NAME[id], goodbye[id]);
       G.audio.sfx('possess'); G.play.shake(6, 2);
       w.burst(npc.x, npc.y - 20, ['#a85ae8', '#6a2a9a', '#f8f0ff'], 12, { speed: 1.4, up: 1, life: 24, size: 2 });
-      npc.sprite = id + 'Possessed';
+      possess(npc, id);
       yield G.wait(20);
     }
     yield G.say('Lily', 'Nate...');
@@ -10044,6 +10057,7 @@
     michelle: [['Father Eggmas', 'Michelle. You put me in a box every January. Now put HIM in one.'], ['Michelle', 'Wear... a... helmet...']],
     abe: [['Father Eggmas', 'Abe. Ask him a question. You know the one.'], ['Abe', 'Quick... question...']],
     hannah: [['Father Eggmas', 'Nurse. He looks hurt. Go... HELP him.'], ['Hannah', 'This won\'t... hurt... a bit...']],
+    romulus: [['Father Eggmas', 'Good boy. Now... SIC HIM.'], ['Nate', 'Romulus! Buddy! It\'s me!'], [null, 'Romulus\'s eyes glow purple. He growls. And he GROWS.'], ['Nate', 'I would NEVER hit a dog.'], ['Nate', '...But you HATE baths.']],
   };
   S.finNextFight = function* (resumed) {
     const f = flags(), w = G.play.world, p = P(), id = FIN_ORDER[f.fin_freed || 0], npc = finFam(w)[id];
@@ -10054,9 +10068,15 @@
     // they come down into the ditch...
     yield G.walkTo(npc, MID, 10 * 16, 2);
     npc.dead = true;
-    const b = w.add(new G.Possessed(id, npc.x, npc.y, FIN_BOUNDS));
+    const b = w.add(id === 'romulus' ? new G.PossessedRomulus(npc.x, npc.y, FIN_BOUNDS) : new G.Possessed(id, npc.x, npc.y, FIN_BOUNDS));
     w.finBoss = b;
-    yield G.banner(G.POSSESSED[id].name, 'possessed by Father Eggmas', 120);
+    if (id === 'romulus') {
+      // the Portable Bidet, ready to go (and the trickle down the middle of the ditch fills it back up)
+      const s = G.state;
+      s.items.bidet = true; s.xItem = 'bidet'; s.items.bidetWater = G.BIDET_MAX;
+      yield G.say(null, 'Spray him with the Portable Bidet (X)! The trickle of water down the middle of the ditch fills it back up.');
+    }
+    yield G.banner(b.name, 'possessed by Father Eggmas', 120);
     b.start();
   };
   // Dad, past half: the luchador mask goes back on
@@ -10123,6 +10143,13 @@
       ['Abe', 'Listen. Remember cooking class? I cracked an egg. One hand. Perfect. You know what Lily said.'],
       ['Abe', 'There\'s a song for it. Down, down, left. Puff it on Dad\'s pipe when that egg is down, and CRACK him.'],
     ],
+    romulus: [
+      [null, 'Romulus shrinks back down to his own size. He shakes off the last of the water. And the purple.'],
+      [null, 'He looks at Nate. Nate looks at him.'], ['Nate', '...Hey, buddy.'],
+      [null, 'For the first time ever, Romulus doesn\'t run away from Nate.'],
+      [null, 'He licks Nate\'s whole face.'], ['Nate', 'He LIKES me!'],
+      ['Abe', 'He always liked you. He was just scared of you.'], ['Nate', 'Why was he scared of me?!'], ['Abe', 'Nobody knows, Nate. Nobody knows.'],
+    ],
     hannah: [
       ['Hannah', '...Nate? Oh my gosh. Look at you. You\'re a MESS.'], ['Hannah', 'Did I do this? ...I did some of this.'],
       ['Hannah', 'Hold still. HOLD STILL.'],
@@ -10136,7 +10163,7 @@
     // the possession comes off them
     for (let i = 0; i < 3; i++) { G.audio.sfx('poof'); w.burst(b.x, b.y - 30, ['#a85ae8', '#6a2a9a', '#f8f0ff'], 14, { speed: 1.8, up: 1.2, life: 26, size: 2 }); yield G.wait(14); }
     b.dead = true; w.finBoss = null;
-    const npc = w.add(new G.NPC({ sprite: id, name: FIN_NAME[id], x: b.x, y: b.y, dir: 'down', talk: S.finFamTalk(id) }));
+    const npc = finNew(w, id, { x: b.x, y: b.y, talk: S.finFamTalk(id) });
     npc.freed = true; fam[id] = npc;
     yield G.wait(30);
     yield G.walkTo(p, npc.x, npc.y + 20, 1.4);
@@ -10167,7 +10194,7 @@
     npc.dir = sx < MID ? 'right' : 'left'; npc.homeDir = npc.dir;
     f.fin_freed = (f.fin_freed || 0) + 1;
     G.play.autosave();
-    if (f.fin_freed < 6) yield* S.finNextFight(false);
+    if (f.fin_freed < FIN_ORDER.length) yield* S.finNextFight(false);
     else yield* S.finRelayStart();
   };
 
@@ -10195,6 +10222,7 @@
     lily: [['Father Eggmas', 'Remember me, little one? HO HO HO.'], ['Lily', '...I remember.'], ['Lily', 'I\'ve been scared of you my whole life.'], ['Lily', 'I\'m still scared.'], ['Lily', 'I\'m doing it anyway.']],
     michelle: [['Michelle', 'You took my family, you took my ditch, and you broke my GOOD pots.'], ['Michelle', 'Henrietta. Get him.'], [null, '*BAWK*']],
     abe: [['Father Eggmas', 'HO HO HO! Can\'t reach me up HERE!'], ['Abe', 'Buddy. I\'m six foot five.']],
+    romulus: [['Romulus', '*WOOF!*'], ['Father Eggmas', 'Bad dog. BAD DOG!'], ['Hannah', 'Don\'t you TALK to him like that!']],
     hannah: [['Hannah', 'I\'m a NICU nurse. I am not scared of a cranky little egg.'], ['Father Eggmas', 'I am NOT little!']],
     nate: [['Nate', 'My turn.'], ['Doron', 'GO, NATE!'], ['Lily', 'Crack him!'], ['Father Eggmas', 'Come on, then, rock boy. HO HO HO!']],
   };
@@ -10219,7 +10247,7 @@
       const incoming = fam[id], ox = G.clamp(p.x, FIN_BOUNDS.x0 + 16, FIN_BOUNDS.x1 - 16), oy = G.clamp(p.y, FIN_BOUNDS.y0, FIN_BOUNDS.y1);
       if (incoming) yield G.walkTo(incoming, ox + 14, oy, 2.4);
       if (fam[cur]) { fam[cur].dead = true; }
-      const out = w.add(new G.NPC({ sprite: cur, name: FIN_NAME[cur], x: ox, y: oy, dir: 'down', talk: S.finFamTalk(cur) }));
+      const out = finNew(w, cur, { x: ox, y: oy, talk: S.finFamTalk(cur) });
       out.freed = true; fam[cur] = out;
       if (incoming) { incoming.dead = true; fam[id] = null; }
       G.audio.sfx('select');
@@ -10246,6 +10274,7 @@
     dad: [['Dad', 'Peace be with YOU.'], ['Dad', 'Lily. Your turn, sweetheart.'], ['Lily', '...Okay.']],
     lily: [['Lily', 'I\'m not scared of you anymore.'], ['Lily', '...Okay, a LITTLE. But not as much.'], ['Lily', 'Mom!']],
     michelle: [['Michelle', 'That\'s for my pots.'], ['Michelle', 'Abe, honey, he\'s floating away!']],
+    romulus: [['Hannah', 'GOOD BOY! Who\'s a good boy?!'], ['Abe', 'He is. He is the good boy.'], ['Hannah', 'My turn.']],
     hannah: [['Hannah', 'Nurse\'s orders.'], ['Hannah', 'Nate. Finish it.']],
   };
   S.finTagOut = function* (boss) {
@@ -10264,7 +10293,7 @@
       yield G.say('Lily', 'NICE CRACK, ABE!');
       yield G.say('Abe', '...Thank you. I have been waiting YEARS for somebody to say that again.');
       yield G.say('Father Eggmas', 'MY SHELL! You CRACKED my SHELL!');
-      yield G.say('Abe', 'Hannah! Tag in!');
+      yield G.say('Abe', 'Romulus! Go get him, buddy!');
       G.audio.play('relay');
     } else {
       if (id === 'hannah') { boss.cracks = 2; G.audio.sfx('crack'); G.play.shake(10, 2); }
@@ -10318,10 +10347,10 @@
     s.playAs = null;
     // everyone comes down off the banks
     G.audio.play('title');
-    const spots = { doron: [-30, 10], dad: [-20, 22], lily: [-8, -18], michelle: [14, 22], abe: [28, 8], hannah: [20, -14] };
+    const spots = { doron: [-30, 10], dad: [-20, 22], lily: [-8, -18], michelle: [14, 22], abe: [28, 8], hannah: [20, -14], romulus: [-28, -10] };
     boss.x = G.clamp(boss.x, FIN_BOUNDS.x0 + 30, FIN_BOUNDS.x1 - 30); boss.y = G.clamp(boss.y, FIN_BOUNDS.y0 + 20, FIN_BOUNDS.y1 - 26); w.finDoll.x = boss.x; w.finDoll.y = boss.y;
     for (const id of FIN_ORDER) {
-      if (!fam[id] || fam[id].dead) fam[id] = w.add(new G.NPC({ sprite: id, name: FIN_NAME[id], x: finSeatXY(id)[0], y: finSeatXY(id)[1], dir: 'down', talk: S.finFamTalk(id) }));
+      if (!fam[id] || fam[id].dead) fam[id] = finNew(w, id, { x: finSeatXY(id)[0], y: finSeatXY(id)[1], talk: S.finFamTalk(id) });
       fam[id].freed = true;
     }
     yield G.walkTo(p, boss.x, boss.y + 26, 1.4);
@@ -10342,6 +10371,9 @@
     yield G.say('Abe', '...Really?');
     yield G.say('Lily', 'In the box. In the attic. FAR back in the attic.');
     yield G.say('Hannah', 'Is everybody okay? Nate, let me see your hands.');
+    if (fam.romulus) { yield G.walkTo(fam.romulus, p.x + 12, p.y + 4, 1.6); fam.romulus.dir = 'left'; }
+    yield G.say(null, 'Romulus flops down right on Nate\'s feet.');
+    yield G.say('Abe', 'Huh. He\'s never done THAT before.');
     yield G.say('Doron', 'So. Now what?');
     yield G.say('Nate', 'Now?');
     yield G.say('Nate', '...Now we hunt for shark teeth. At the Number ONE Ditch.');
@@ -10364,6 +10396,7 @@
     michelle: ['Be careful, honey!', 'We\'re getting you a helmet for Christmas. I\'m serious.'],
     abe: ['Nice crack. Still thinking about it.', 'How many sides on a... no. Not today. You earned a day off.'],
     hannah: ['Let me know if anything hurts.', 'I\'m going to need to check EVERYBODY when we get home.'],
+    romulus: ['*wag wag wag*', '*rolls over for a belly rub*'],
   };
   S.finFamTalk = (id) => function* () {
     const f = flags(), k = 'finTalk_' + id;
@@ -10380,6 +10413,8 @@
   G.MAPS.ditchFinal = {
     name: 'The Number One Ditch',
     noFollower: true,
+    // the trickle of water down the middle of the ditch (drawn in setup): the bidet fills up at it
+    water(x, y) { return y > 4 * 16 && y < 18 * 16 && Math.abs(x - (MID + Math.sin(y * 0.05) * 10 + Math.sin(y * 0.13) * 4)) < 10; },
     get music() { const f = flags(); return f.fin_done ? 'title' : f.fin_intro ? 'possessed' : 'home'; },
     tiles() {
       const W = 15, H = 21;
@@ -10420,7 +10455,7 @@
       if (!f.fin_done) {
         w.eggmas = w.add(new G.EggmasBoss(MID, 66, FIN_BOUNDS));
         w.eggmas.throneX = MID; w.eggmas.throneY = 98;
-        if ((f.fin_freed || 0) >= 6) { w.eggmas.state = 'risen'; w.eggmas.throneLeft = true; w.eggmas.h = 22; w.eggmas.targetH = 22; w.eggmas.x = MID; w.eggmas.y = 170; }
+        if ((f.fin_freed || 0) >= FIN_ORDER.length) { w.eggmas.state = 'risen'; w.eggmas.throneLeft = true; w.eggmas.h = 22; w.eggmas.targetH = 22; w.eggmas.x = MID; w.eggmas.y = 170; }
       }
       // the throne itself, once he's left it
       w.props.push({ img: sp.eggThrone, x: MID - 44, y: 98 - 92, base: 98, draw(ctx, cx, cy) { if (!w.eggmas || w.eggmas.throneLeft || f.fin_done) ctx.drawImage(this.img, this.x - cx, this.y - cy); } });
@@ -10435,19 +10470,19 @@
         } });
       }
       // the family: possessed in a line by the throne (or, once freed, on the banks)
-      const freed = f.fin_freed || 0, relayAt = f.fin_relay || 0, inRelay = freed >= 6 && !f.fin_done;
+      const freed = f.fin_freed || 0, relayAt = f.fin_relay || 0, inRelay = freed >= FIN_ORDER.length && !f.fin_done;
       for (const [i, id] of FIN_ORDER.entries()) {
         let npc;
         if (!f.fin_intro) {
-          npc = w.add(new G.NPC({ sprite: id, name: FIN_NAME[id], x: (5.5 + (i % 3) * 1.5) * 16 + (i > 2 ? 8 : 0), y: (19.4 + (i > 2 ? 1 : 0)) * 16, dir: 'up' }));
+          npc = finNew(w, id, { x: i < 3 ? (5.5 + i * 1.5) * 16 : 6 * 16 + (i - 3) * 22, y: (19.4 + (i > 2 ? 1 : 0)) * 16, dir: 'up' });
           npc.hidden = true;
         } else if (i >= freed && !f.fin_done) {
-          npc = w.add(new G.NPC({ sprite: id + 'Possessed', name: FIN_NAME[id], x: FIN_LINE[id][0] * 16, y: FIN_LINE[id][1] * 16, dir: 'down' }));
+          npc = finNew(w, id, { x: FIN_LINE[id][0] * 16, y: FIN_LINE[id][1] * 16, possessed: true });
         } else if (inRelay && G.state.playAs === id) {
           npc = null; // (that's who Nate is playing right now)
         } else {
           const [sx, sy] = finSeatXY(id);
-          npc = w.add(new G.NPC({ sprite: id, name: FIN_NAME[id], x: sx, y: sy, dir: sx < MID ? 'right' : 'left', talk: S.finFamTalk(id) }));
+          npc = finNew(w, id, { x: sx, y: sy, dir: sx < MID ? 'right' : 'left', talk: S.finFamTalk(id) });
           npc.freed = true;
         }
         fam[id] = npc;
@@ -10500,7 +10535,7 @@
       // the family cheers from the banks during the relay
       const boss = w.eggmas;
       if (boss && boss.state === 'fight' && !G.script.busy && G.tick % 170 === 0) {
-        const cheers = { doron: 'GO GO GO!', dad: 'Amen!', lily: 'Get him!', michelle: 'Be CAREFUL!', abe: 'NICE!', hannah: 'Breathe!', nate: 'You got this!' };
+        const cheers = { doron: 'GO GO GO!', dad: 'Amen!', lily: 'Get him!', michelle: 'Be CAREFUL!', abe: 'NICE!', hannah: 'Breathe!', romulus: 'WOOF!', nate: 'You got this!' };
         const fans = Object.entries(finFam(w)).filter(([k, n]) => n && !n.dead && n.freed);
         if (fans.length) { const [k, n] = fans[Math.floor(Math.random() * fans.length)]; w.pop(n.x, n.y - 28, cheers[k] || 'GO!', '#f8f8f0'); }
       }
