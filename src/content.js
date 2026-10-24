@@ -4980,13 +4980,13 @@
   // ================================================================ DAD'S PIPE BENCH
   // Once Dad has his snacks, he'll teach Nate to make pipes and blend tobacco in the workshop.
   // Nate picks one out of Dad's book (the ones he hasn't made yet are ??? pencil silhouettes).
-  // A pipe: turn the bowl on the LATHE, then STAIN it. Tobacco: BLEND it from Dad's jars (he says
+  // A pipe: turn the bowl on the LATHE, SAND it, then STAIN it. Tobacco: BLEND it from Dad's jars (he says
   // how many scoops are right), then PACK a bowl and light it. They're collectables: a pipe
   // changes how Dad's Pipe looks, and a tobacco changes the color of its smoke (picked in
   // COLLECTABLES). The whole time, Dad never stops talking about pipes, straight out of his real
   // pipe journal. (The pipes and tins themselves are drawn in art.js.)
   // State: s.pipesMade / s.tinsMade ({ id: { stars } }, and Abe's pipe keeps the stain Nate
-  // picked), s.pipeSkin, s.tobacco. Flags: pipeBench, latheTaught, stainTaught, blendTaught, packTaught.
+  // picked), s.pipeSkin, s.tobacco. Flag: pipeBench. Each step starts with a HOW TO card.
   const FT = () => G.font;
   const RAW_BRIAR = '#e2bc8a';
   const STAINS = {
@@ -5011,7 +5011,7 @@
       id: 'silver', num: 'P14', name: 'Silver Band', kind: 'A squashed tomato, with a silver band', d: 2, stain: 'oil', coats: 1,
       intro: 'A squashed tomato. That\'s really what they call this shape.',
       stainHint: 'No stain on this one. The briar is already a rich, deep red. Just oil.',
-      facts: ['Squashed tomato. I am not making that up. Ask any pipe maker.', 'I wanted to try a silver band. It goes right where the stem meets the shank.', 'Make the top a little concave on the lathe. Then the drill finds the true center all by itself.', 'No stain on this one. The briar is already a rich, deep red.'],
+      facts: ['Squashed tomato. I am not making that up. Ask any pipe maker.', 'I wanted to try a silver band. It goes right where the stem meets the shank.', 'Make the top a little concave on the lathe. Then the drill finds the center by itself.', 'No stain on this one. The briar is already a rich, deep red.'],
       made: 'Look at that red. God made that color. I just got out of the way.',
     },
     {
@@ -5039,7 +5039,7 @@
       id: 'prince', num: 'P15', name: 'Long-Stem Prince', kind: 'A prince: low bowl, long stem', d: 3, stain: 'light', coats: 2,
       intro: 'A prince: a low, round bowl and a long, long stem.',
       stainHint: 'Light brown. And TWO coats on this one.',
-      facts: ['This started as a little squashed tomato, just for practice. It turned out GREAT. So it got a long stem.', 'A long stem keeps the smoke cool. It has farther to travel.', 'Light brown, two coats. The second coat makes it glow.', 'Light passes on the lathe. You can always take more off. You can\'t put it back.'],
+      facts: ['This was a little tomato, just for practice. It turned out GREAT. So: a long stem.', 'A long stem keeps the smoke cool. It has farther to travel.', 'Light brown, two coats. The second coat makes it glow.', 'Light passes on the lathe. You can always take more off. You can\'t put it back.'],
       made: 'Very royal. You may now address me as Your Highness.',
     },
     {
@@ -5060,16 +5060,16 @@
   // whatever else is on his mind (from his pipe journal, mostly)
   const PIPE_TALK = [
     'Briar is the burl of the tree heath. It grows on rocky hillsides around the Mediterranean.',
-    'An ebauchon block comes from the heart of the burl. A plateau block still has the bark on top.',
+    'An ebauchon block is from the heart of the burl. A plateau block still has bark on top.',
     'Sand up to eight hundred. Tripoli buff. White polish. Then Danish oil.',
     'I had a block of briar explode while I was drilling it. Just exploded.',
-    'Sometimes you cut a block open and it\'s full of pits and cracks. Can\'t use it. Breaks your heart.',
+    'Sometimes you cut a block open and it\'s all pits and cracks. Breaks your heart.',
     'If there are holes going into the chamber, you throw it out. No pipe is worth a leak.',
     'Every pipe I make gets a number. They\'re all in my little notebook.',
     'Ten blocks of briar. Two hundred and ten dollars. FREE shipping.',
     'My first pipe was a wedding present. A Peterson\'s Dublin. Pipe of the Year, 2003.',
     'I bought a pipe from a man on the street, right in front of the Vatican.',
-    'The day before we flew home from Italy, I took a long walk in Florence. I smoked my pipe and I prayed.',
+    'Our last day in Italy, I took a long walk in Florence. I smoked my pipe and I prayed.',
     'A good pipe is like a good sermon. It takes patience.',
     'Virginia smoke is acidic. Burley smoke is alkaline. I think about pH often.',
     'Rusticated pipes are wonderful for clenching. They don\'t slip in your teeth.',
@@ -5105,7 +5105,7 @@
     },
     {
       id: 'maidenLane', name: 'Maiden Lane', kind: 'Barclay-Rex, New York. An English', d: 2, mix: ['va', 'va', 'per', 'lat'], smoke: '#c8a888',
-      clue: 'An English, from a pipe shop in Manhattan. Mostly Virginia, then some Perique and some Latakia.',
+      clue: 'An English, from a shop in Manhattan. Mostly Virginia, some Perique, some Latakia.',
       facts: ['I bought my rusticated Savinelli in Manhattan. This was the first thing I smoked in it.', 'Barclay-Rex has been selling pipes in New York since 1910.', 'They sell it loose, by the scoop. That\'s why it\'s in a jar.', 'People say it tastes a little like dark chocolate.'],
       taste: 'A little smoky. A little like dark chocolate.',
     },
@@ -5123,7 +5123,7 @@
     },
     {
       id: 'royalJersey', name: 'Royal Jersey', kind: 'Germain\'s, Isle of Jersey. A Latakia mixture', d: 3, mix: ['va', 'va', 'ori', 'lat'], smoke: '#c8a0f0',
-      clue: 'Virginia at the heart of it. Then those little sun-dried leaves from Greece and Turkey. And a campfire.',
+      clue: 'Virginia at the heart. Little sun-dried leaves from Greece and Turkey. And a campfire.',
       facts: ['The second thing I ever smoked in my Savinelli.', 'Germain\'s has been making tobacco on the island of Jersey since 1820.', 'Jersey is a tiny island between England and France. It has its own cows. Famous cows.', 'The tin is purple, with a gold mace on it. Very royal.'],
       taste: 'Rich. A little spicy. Fit for a king.',
     },
@@ -5245,6 +5245,31 @@
   // ENTER quits partway through (the step's result is 'quit')
   const quitHit = () => { if (!G.input.hit('start')) return false; G.input.eat('start'); G.audio.sfx('cancel'); return true; };
 
+  // ---- how to do the next step: a card over the workshop wall (Z: got it)
+  function howToCmd(title, lines) {
+    return {
+      start() { this.t = 0; G.play.overlay = this; G.audio.sfx('menu'); },
+      update() { if (++this.t > 12 && (G.input.hit('a') || G.input.hit('b'))) { G.input.eat('a'); G.input.eat('b'); G.audio.sfx('select'); return true; } return false; },
+      draw(ctx) {
+        benchBack(ctx, 'HOW TO: ' + title);
+        G.box(ctx, 10, 20, 220, 132);
+        let y = 28;
+        for (const l of lines) {
+          FT().wrap(l, 196).forEach((row, k) => { FT().draw(ctx, (k ? '  ' : '- ') + row, 18, y, '#f8f8f0', { shadow: '#0c0814' }); y += 10; });
+          y += 4;
+        }
+        if ((this.t >> 4) % 2) FT().draw(ctx, 'Z: got it', 222 - FT().width('Z: got it'), 140, '#f8d850', { shadow: '#0c0814' });
+      },
+    };
+  }
+  const HOW_TO = {
+    lathe: ['The briar spins. The gouge rides along it all by itself, back and forth.', 'Hold ↓ to cut in. Hold ↑ to back off.', 'Cut the wood down to the white line, a little deeper each pass.', 'Dig in too much at once and it CATCHES. Going past the line is a gouge (it turns red).'],
+    sand: ['Sand off the tool marks, one grit at a time: rough paper first, then finer.', '↑↓ moves the sandpaper to a spot on the pipe.', 'Tap ← → ← → back and forth to sand that spot until its scratches are gone.', 'Then move on. Too much in one spot sands it flat.'],
+    stain: ['Pick the right jar with ↑↓ and Z. (Dad tells you which.)', 'Move the dauber with the arrows. HOLD Z to rub the stain on.', 'Cover every bit of the wood before it dries. The EVEN bar shows how much is done.', 'Missed spots blink. Two-coat pipes: go over everything twice.'],
+    blend: ['Pick a jar with the arrows. Z adds a scoop. X puts the last one back.', 'A blend is four scoops. Dad tells you what goes in it.', 'With four in, he sniffs it and tells you how many are right.'],
+    pack: ['The needle goes up and down. Press Z when it\'s inside the green box.', 'Three pinches: gently, then a little firmer, then firm.'],
+  };
+
   // ---- the book: pick what to make. Ones Nate hasn't made are pencil sketches, named ???.
   function bookCmd(kind) {
     const pipes = kind === 'pipe', list = pipes ? G.PIPES : G.TOBACCOS, cols = pipes ? 4 : 5, cw = pipes ? 57 : 45, ch = 50;
@@ -5297,16 +5322,16 @@
   // CATCHES (a chunk torn out). Too deep anywhere is a gouge; too shallow is rough. Result: 0-100.
   function latheCmd(pipe, talk) {
     const d = pipe.d, X0 = 40, N = 160, AX = 74, RMAX = 30;
-    const passes = d <= 2 ? 4 : 3, speed = 0.75 + d * 0.13, tol = 4.6 - d * 0.5, bite = 13 - d * 1.2;
+    const passes = d <= 2 ? 4 : 3, speed = 0.6 + d * 0.12, tol = 5 - d * 0.5, bite = 14 - d * 1.2;
     const target = [], wood = new Float32Array(N).fill(RMAX);
     for (let i = 0; i < N; i++) target.push(Math.max(8, 4 + G.art.pipeProfile(pipe.id, 0.03 + (i / (N - 1)) * 0.92) * 22));
     const chips = [];
     return {
-      start() { Object.assign(this, { x: 0, dir: 1, pass: 1, tool: RMAX + 4, t: 0, catches: 0, shakeT: 0, endT: 0, msg: null, msgT: 0, target, wood, bite }); G.play.overlay = this; },
+      start() { Object.assign(this, { x: 0, dir: 1, pass: 1, tool: RMAX + 4, t: 0, catches: 0, shakeT: 0, endT: 0, msg: null, msgT: 0, lockT: 0, deepT: 0, target, wood, bite }); G.play.overlay = this; },
       score() {
         let pen = 0;
         for (let i = 0; i < N; i++) { const e = wood[i] - target[i]; if (e < -tol) pen += (-e - tol) * 2.5 + 1; else if (e > tol) pen += e - tol; }
-        return Math.max(0, Math.min(100, Math.round(100 - (pen / N) * 10 - this.catches * 6)));
+        return Math.max(0, Math.min(100, Math.round(100 - (pen / N) * 10 - this.catches * 4)));
       },
       pop(text) { this.msg = text; this.msgT = 50; },
       update() {
@@ -5318,8 +5343,11 @@
         for (let i = chips.length - 1; i >= 0; i--) if (chips[i].life <= 0) chips.splice(i, 1);
         if (this.endT > 0) { if (--this.endT === 0) { this.result = this.score(); return true; } return false; }
         if (quitHit()) { this.result = 'quit'; return true; }
+        // (after a catch, the gouge stays backed off for a moment)
+        if (this.lockT > 0) { this.lockT--; this.tool = Math.min(RMAX + 6, this.tool + 0.3); }
         if (inp.down('up')) this.tool = Math.min(RMAX + 6, this.tool + 0.7);
-        if (inp.down('down')) this.tool = Math.max(5, this.tool - 0.7);
+        if (inp.down('down') && !this.lockT) this.tool = Math.max(5, this.tool - 0.7);
+        if (this.deepT > 0) this.deepT--;
         const was = this.x;
         this.x = Math.max(0, Math.min(N - 1, this.x + this.dir * speed));
         let cutting = false;
@@ -5328,12 +5356,13 @@
           if (wood[c] - this.tool > bite) {
             // a catch: the gouge digs in and tears a chunk out, and bounces back up
             for (let k = c - 3; k <= c + 3; k++) if (k >= 0 && k < N) wood[k] = Math.min(wood[k], this.tool - 2 + Math.abs(k - c) * 0.6);
-            this.catches++; this.shakeT = 14; this.tool = Math.min(RMAX + 6, this.tool + bite);
+            this.catches++; this.shakeT = 14; this.lockT = 30; this.tool = Math.min(RMAX + 6, this.tool + bite);
             G.audio.sfx('crack'); this.pop('CATCH!');
             talk.say(['Whoa! Light passes! You can always take more off. You can\'t put it back.', 'Easy! That\'s how I broke one. It caught and SNAP.', 'Gently! Let the lathe do the work.'][this.catches % 3]);
             break;
           }
           wood[c] = this.tool; cutting = true;
+          if (this.tool < target[c] - tol && !this.deepT) { this.deepT = 90; this.pop('TOO DEEP!'); talk.say('Back off a little! Stay on the white line.'); }
         }
         if (cutting && this.t % 2 === 0) chips.push({ x: X0 + this.x, y: AX - this.tool, vx: (Math.random() - 0.5) * 2.4, vy: -1 - Math.random() * 1.5, life: 26, c: ['#e8c890', '#d8b070', '#f4dcb0'][this.t % 3] });
         if (cutting && this.t % 9 === 0) G.audio.sfx('blip');
@@ -5366,9 +5395,14 @@
             const a = k * 1.047 + this.t * 0.3 + Math.sin(i * 0.12 + k) * 0.12;
             if (Math.sin(a) > 0) ctx.fillRect(x, Math.round(AX - r * Math.cos(a)), 1, 1);
           }
-          // gouged too deep: red. Dad's pencil line where there's still wood to come off
-          if (r < target[i] - tol) { ctx.fillStyle = '#e83838'; ctx.fillRect(x, Math.round(AX - r), 1, 1); ctx.fillRect(x, Math.round(AX + r) - 1, 1, 1); }
-          if (i % 3 === 0 && r > target[i] + 0.5) { ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x, Math.round(AX - target[i]), 1, 1); ctx.fillRect(x, Math.round(AX + target[i]), 1, 1); }
+          // the wood that still has to come off (lighter), Dad's white line, and gouges (red)
+          if (r > target[i] + tol) {
+            ctx.fillStyle = 'rgba(255,240,200,0.28)';
+            ctx.fillRect(x, Math.round(AX - r), 1, Math.round(r - target[i])); ctx.fillRect(x, Math.round(AX + target[i]), 1, Math.round(r - target[i]));
+          }
+          if (r < target[i] - tol) { ctx.fillStyle = '#e83838'; ctx.fillRect(x, Math.round(AX - r), 1, 2); ctx.fillRect(x, Math.round(AX + r) - 2, 1, 2); }
+          ctx.fillStyle = r >= target[i] - tol && r <= target[i] + tol ? '#78e070' : '#f8f8f0';
+          ctx.fillRect(x, Math.round(AX - target[i]), 1, 1); ctx.fillRect(x, Math.round(AX + target[i]), 1, 1);
         }
         // the tool rest and the gouge, its tip at the cut
         const tx = Math.round(X0 + this.x), ty = Math.round(AX - this.tool);
@@ -5377,35 +5411,129 @@
         ctx.fillStyle = '#e8ecf0'; ctx.fillRect(tx, ty - 2, 1, 2);
         for (const c of chips) { ctx.fillStyle = c.c; ctx.fillRect(Math.round(c.x), Math.round(c.y), 2, 1); }
         ctx.restore();
-        if (this.msgT > 0) { const w = FT().width(this.msg); FT().draw(ctx, this.msg, 120 - Math.round(w / 2), 16, this.msg === 'CATCH!' ? '#f86858' : '#f8d850', { shadow: '#000' }); }
-        FT().draw(ctx, '↑↓ moves the gouge', 120, 120, '#9890a8', { shadow: '#000' });
+        if (this.msgT > 0) { const w = FT().width(this.msg); FT().draw(ctx, this.msg, 120 - Math.round(w / 2), 16, this.msg === 'CATCH!' || this.msg === 'TOO DEEP!' ? '#f86858' : '#f8d850', { shadow: '#000' }); }
+        FT().draw(ctx, '↓ cut in   ↑ back off', 104, 120, '#c8c0d8', { shadow: '#000' });
         talk.draw(ctx);
       },
     };
   }
 
-  // ---- THE STAIN: pick the jar off the shelf, then rub it on. Hold Z to stain under the dauber;
-  // every bit of the wood wants its coats (no bare spots, no puddles) before it dries.
-  // Result: { score, stain } (or 'quit').
-  function stainCmd(pipe, talk) {
-    const d = pipe.d, PX = 100, PY = 36, CS = 4, R = 11 - d, TIME = (1800 - d * 150) * pipe.coats, OVER = 0.85 - d * 0.09, RATE = 0.4 / R;
+  // the pipe as bare briar at twice size, split into 4x4 cells (which ones are wood: bowl and shank)
+  const CS = 4, PIPE_X = 100, PIPE_Y = 36;
+  function woodCells(pipe) {
     const raw = G.art.pipeArt(pipe.id, 2, { wood: RAW_BRIAR, shankWood: RAW_BRIAR }), parts = raw.parts, W = raw.width, H = raw.height;
-    const cols = Math.ceil(W / CS), rows = Math.ceil(H / CS), coat = new Float32Array(cols * rows), woodCell = new Uint8Array(cols * rows);
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const p = parts[y * W + x]; if (p === 1 || p === 2) woodCell[Math.floor(y / CS) * cols + Math.floor(x / CS)] = 1; }
-    let woodCount = 0;
-    for (const w of woodCell) woodCount += w;
-    const g = G.art.PIPE_GEO[pipe.id], b = g.bowl;
+    const cols = Math.ceil(W / CS), rows = Math.ceil(H / CS), wood = new Uint8Array(cols * rows);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const p = parts[y * W + x]; if (p === 1 || p === 2) wood[Math.floor(y / CS) * cols + Math.floor(x / CS)] = 1; }
+    let count = 0;
+    for (const w of wood) count += w;
+    return { raw, W, H, cols, rows, wood, count };
+  }
+
+  // ---- SANDING: off come the tool marks, one grit at a time (220, 400, 800; the Strawberry Briar
+  // goes on to 1500). The pipe is in bands: ↑↓ puts the sandpaper on one, tapping ← → ← → sands
+  // it. A band is done when its scratches are gone; keep sanding a done one and it goes flat.
+  // Result: 0-100 (or 'quit').
+  function sandCmd(pipe, talk) {
+    const c = woodCells(pipe), grits = pipe.id === 'strawberry' ? [220, 400, 800, 1500] : [220, 400, 800], NEED = [6, 4, 3, 3], BANDS = 5;
+    let r0 = c.rows, r1 = 0;
+    for (let i = 0; i < c.wood.length; i++) if (c.wood[i]) { const r = Math.floor(i / c.cols); r0 = Math.min(r0, r); r1 = Math.max(r1, r); }
+    const bandOf = (row) => Math.min(BANDS - 1, Math.floor(((row - r0) / (r1 - r0 + 1)) * BANDS));
+    const bandY = (b) => (r0 + ((b + 0.5) * (r1 - r0 + 1)) / BANDS) * CS;
+    const dust = [];
+    return {
+      start() { Object.assign(this, { g: 0, band: 2, need: Array(BANDS).fill(NEED[0]), over: Array(BANDS).fill(0), last: null, flats: 0, t: 0, endT: 0, rubT: 0, msg: null, msgT: 0 }); talk.nowT = 0; G.play.overlay = this; },
+      pop(text) { this.msg = text; this.msgT = 50; },
+      update() {
+        const inp = G.input;
+        this.t++; talk.update();
+        if (this.msgT > 0) this.msgT--;
+        if (this.rubT > 0) this.rubT--;
+        for (const p of dust) { p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.life--; }
+        for (let i = dust.length - 1; i >= 0; i--) if (dust[i].life <= 0) dust.splice(i, 1);
+        if (this.endT > 0) { if (--this.endT === 0) { this.result = Math.max(40, 100 - this.flats * 8); return true; } return false; }
+        if (quitHit()) { this.result = 'quit'; return true; }
+        if (inp.hit('up') && this.band > 0) { this.band--; G.audio.sfx('menu'); }
+        if (inp.hit('down') && this.band < BANDS - 1) { this.band++; G.audio.sfx('menu'); }
+        // a stroke: the other way from the last one
+        const dir = inp.hit('left') ? 'left' : inp.hit('right') ? 'right' : null;
+        if (dir && dir !== this.last) {
+          this.last = dir; this.rubT = 6;
+          const b = this.band;
+          if (this.t % 2 === 0) G.audio.sfx('blip');
+          for (let k = 0; k < 3; k++) dust.push({ x: PIPE_X + 40 + Math.random() * 80, y: PIPE_Y + bandY(b), vx: (Math.random() - 0.5) * 1.4, vy: -0.6 - Math.random(), life: 22 });
+          if (this.need[b] > 0) {
+            if (--this.need[b] === 0) G.audio.sfx('select');
+          } else if (++this.over[b] >= 4) {
+            this.over[b] = 0; this.flats++; G.audio.sfx('no'); this.pop('FLAT SPOT!');
+            talk.say('Easy! That spot\'s done. Move on to another one.');
+          }
+          // every band smooth: on to the next grit (or done)
+          if (this.need.every((n) => n === 0)) {
+            if (++this.g < grits.length) {
+              this.need = Array(BANDS).fill(NEED[this.g]); this.over = Array(BANDS).fill(0);
+              this.pop(grits[this.g] + ' GRIT'); talk.say('Good. Now ' + grits[this.g] + '. Finer paper, same thing.');
+            } else { this.endT = 40; this.pop('SMOOTH!'); talk.say('Feel that. Smooth as a church pew.'); }
+          }
+        }
+        return false;
+      },
+      draw(ctx) {
+        benchBack(ctx, 'SANDING', pipe.name);
+        // the grits, coarse to fine
+        G.box(ctx, 4, 16, 78, 112);
+        FT().draw(ctx, 'Sandpaper', 10, 20, '#c8c0d8');
+        grits.forEach((gr, i) => {
+          const y = 34 + i * 16, done = i < this.g, on = i === this.g && !this.endT;
+          ctx.fillStyle = ['#c8a070', '#d8b888', '#e8d0a8', '#f4e8d0'][i]; ctx.fillRect(12, y, 12, 10);
+          for (let k = 0; k < 10; k++) if (G.hash(k, i, 5) < 0.5) { ctx.fillStyle = '#8a6a48'; ctx.fillRect(13 + (k % 5) * 2, y + 2 + Math.floor(k / 5) * 4, 1, 1); }
+          FT().draw(ctx, G.sayable(gr) + ' grit' + (done || this.endT ? '  ✓' : ''), 28, y + 2, on ? '#f8d850' : done || this.endT ? '#78e070' : '#f8f8f0');
+        });
+        // the pipe, with the scratches still left on each band (fewer as it gets smooth)
+        ctx.drawImage(c.raw, PIPE_X, PIPE_Y);
+        const max = NEED[this.g] || 1;
+        for (let i = 0; i < c.wood.length; i++) {
+          if (!c.wood[i]) continue;
+          const row = Math.floor(i / c.cols), col = i % c.cols, b = bandOf(row), n = this.endT ? 0 : this.need[b];
+          if (n > 0 && G.hash(col, row, 7 + this.g) < 0.25 + 0.6 * (n / max)) {
+            ctx.fillStyle = this.g === 0 ? '#8a6040' : this.g === 1 ? '#a07850' : '#b89068';
+            const x = PIPE_X + col * CS, y = PIPE_Y + row * CS;
+            ctx.fillRect(x, y + 3, 1, 1); ctx.fillRect(x + 1, y + 2, 1, 1); ctx.fillRect(x + 2, y + 1, 1, 1); ctx.fillRect(x + 3, y, 1, 1);
+          }
+        }
+        // the band the sandpaper is on (and its sanding block, rubbing)
+        if (!this.endT) {
+          const y0 = PIPE_Y + Math.round((r0 + (this.band * (r1 - r0 + 1)) / BANDS) * CS), y1 = PIPE_Y + Math.round((r0 + ((this.band + 1) * (r1 - r0 + 1)) / BANDS) * CS);
+          corners(ctx, PIPE_X - 2, y0 - 1, c.W + 4, y1 - y0 + 2, this.need[this.band] ? '#f8d850' : '#78e070');
+          const bx = 84 + (this.rubT ? (this.last === 'left' ? -2 : 2) : 0), by = PIPE_Y + Math.round(bandY(this.band)) - 5;
+          ctx.fillStyle = '#5a3a20'; ctx.fillRect(bx, by, 16, 6); ctx.fillStyle = ['#c8a070', '#d8b888', '#e8d0a8', '#f4e8d0'][this.g]; ctx.fillRect(bx, by + 6, 16, 3);
+        }
+        for (const p of dust) { ctx.fillStyle = '#f0dcb8'; ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); }
+        if (this.msgT > 0) { const w = FT().width(this.msg); FT().draw(ctx, this.msg, 160 - Math.round(w / 2), 16, this.msg === 'FLAT SPOT!' ? '#f86858' : '#f8d850', { shadow: '#000' }); }
+        FT().draw(ctx, '↑↓ a spot   ← → sand it', 100, 120, '#c8c0d8', { shadow: '#000' });
+        talk.draw(ctx);
+      },
+    };
+  }
+
+  // ---- THE STAIN: pick the jar off the shelf, then rub it on: hold Z and everything under the
+  // dauber takes the stain (going over it again doesn't hurt; a two-coat pipe needs going over
+  // twice). The EVEN bar fills as the wood gets covered, and missed spots blink. It stops on its
+  // own once it's all covered (or when it dries). Result: { score, stain } (or 'quit').
+  function stainCmd(pipe, talk) {
+    const d = pipe.d, c = woodCells(pipe), R = 11 - d, TIME = (2400 - d * 200) * pipe.coats, RATE = 0.62 / R, DONE = pipe.coats * 0.85;
+    const coat = new Float32Array(c.cols * c.rows), g = G.art.PIPE_GEO[pipe.id], b = g.bowl;
     return {
       start() {
-        Object.assign(this, { step: 'pick', sel: 0, t: 0, left: TIME, wrong: 0, endT: 0, bx: b.cx * 2, by: (b.top + b.h * 0.5) * 2, fin: null, dark: null, coat, woodCell, cols, R });
-        G.play.overlay = this;
+        Object.assign(this, { step: 'pick', sel: 0, t: 0, left: TIME, wrong: 0, endT: 0, bx: b.cx * 2, by: (b.top + b.h * 0.5) * 2, fin: null, painted: false, coat, woodCell: c.wood, cols: c.cols, R });
+        talk.nowT = 0; G.play.overlay = this;
       },
-      good(i) { return coat[i] >= pipe.coats - 0.4 && coat[i] <= pipe.coats + OVER; },
-      score() {
+      good(i) { return coat[i] >= DONE; },
+      even() {
         let ok = 0;
-        for (let i = 0; i < coat.length; i++) if (woodCell[i] && this.good(i)) ok++;
-        return Math.max(0, Math.round((100 * ok) / woodCount) - this.wrong * 5);
+        for (let i = 0; i < coat.length; i++) if (c.wood[i] && this.good(i)) ok++;
+        return ok / c.count;
       },
+      score() { return Math.max(0, Math.round(this.even() * 100) - this.wrong * 5); },
       update() {
         const inp = G.input;
         this.t++; talk.update();
@@ -5423,10 +5551,9 @@
               return false;
             }
             this.stain = st; this.step = 'paint'; G.audio.sfx('gulp');
-            const c = pipeColors(pipe, st);
-            this.fin = G.art.pipeArt(pipe.id, 2, c);
-            this.dark = G.art.pipeArt(pipe.id, 2, { wood: G.art.shade(c.wood, -0.45), shankWood: G.art.shade(c.shankWood, -0.45) });
-            talk.say(st === 'oil' ? 'Wipe the oil on. Let it soak in. Hold Z.' : 'Hold Z to rub it on. Get every bit. Don\'t let it puddle.');
+            const col = pipeColors(pipe, st);
+            this.fin = G.art.pipeArt(pipe.id, 2, col);
+            talk.say(pipe.coats > 1 ? 'Two coats on this one: go over all of it twice. Hold Z.' : st === 'oil' ? 'Wipe the oil on. Hold Z and go over every bit.' : 'Hold Z and go over every bit of the wood.');
           }
           return false;
         }
@@ -5436,15 +5563,18 @@
         if (inp.down('right')) this.bx += sp;
         if (inp.down('up')) this.by -= sp;
         if (inp.down('down')) this.by += sp;
-        this.bx = Math.max(0, Math.min(W - 1, this.bx)); this.by = Math.max(0, Math.min(H - 1, this.by));
+        this.bx = Math.max(0, Math.min(c.W - 1, this.bx)); this.by = Math.max(0, Math.min(c.H - 1, this.by));
         if (inp.down('a')) {
+          this.painted = true;
           for (let cy = Math.floor((this.by - R) / CS); cy <= Math.floor((this.by + R) / CS); cy++) for (let cx = Math.floor((this.bx - R) / CS); cx <= Math.floor((this.bx + R) / CS); cx++) {
-            if (cx < 0 || cy < 0 || cx >= cols || cy >= rows) continue;
-            const dd = Math.hypot(cx * CS + CS / 2 - this.bx, cy * CS + CS / 2 - this.by);
-            if (dd <= R && woodCell[cy * cols + cx]) coat[cy * cols + cx] += RATE * (1 - (dd / R) * 0.5);
+            if (cx < 0 || cy < 0 || cx >= c.cols || cy >= c.rows) continue;
+            const i = cy * c.cols + cx;
+            if (Math.hypot(cx * CS + CS / 2 - this.bx, cy * CS + CS / 2 - this.by) <= R && c.wood[i]) coat[i] = Math.min(pipe.coats, coat[i] + RATE);
           }
           if (this.t % 12 === 0) G.audio.sfx('spray');
         }
+        // covered all over: done
+        if (this.painted && this.t % 10 === 0 && this.even() >= 0.95) { this.endT = 40; G.audio.sfx('secret'); talk.say('That\'s it! Stop right there. Perfect.'); return false; }
         if (--this.left <= 0 || inp.hit('b')) { inp.eat('b'); this.endT = 40; G.audio.sfx('select'); }
         return false;
       },
@@ -5452,34 +5582,41 @@
         benchBack(ctx, 'THE STAIN', pipe.name);
         // the shelf of jars
         G.box(ctx, 4, 16, 88, 112);
-        FT().draw(ctx, this.step === 'pick' ? 'Which jar?' : 'Coats: ' + G.sayable(pipe.coats), 10, 20, '#c8c0d8');
+        FT().draw(ctx, this.step === 'pick' ? 'Which jar?' : pipe.coats > 1 ? 'TWO coats' : 'One coat', 10, 20, '#c8c0d8');
         STAIN_ORDER.forEach((id, i) => {
-          const y = 32 + i * 19, s = STAINS[id], col = s.color || '#e8c070', on = i === this.sel;
+          const y = 32 + i * 19, st = STAINS[id], col = st.color || '#e8c070', on = i === this.sel;
           ctx.fillStyle = '#e8ecf0'; ctx.fillRect(12, y, 9, 14); ctx.fillStyle = '#2a2a30'; ctx.fillRect(13, y - 2, 7, 3);
-          ctx.fillStyle = col; ctx.fillRect(13, y + 4, 7, 9); if (!s.color) { ctx.fillStyle = '#f8e8a8'; ctx.fillRect(13, y + 4, 2, 9); }
-          FT().draw(ctx, s.name, 25, y + 3, on ? '#f8d850' : this.step === 'paint' && id === this.stain ? '#78e070' : '#f8f8f0');
+          ctx.fillStyle = col; ctx.fillRect(13, y + 4, 7, 9); if (!st.color) { ctx.fillStyle = '#f8e8a8'; ctx.fillRect(13, y + 4, 2, 9); }
+          FT().draw(ctx, st.name, 25, y + 3, on ? '#f8d850' : this.step === 'paint' && id === this.stain ? '#78e070' : '#f8f8f0');
           if (on && this.step === 'pick') FT().draw(ctx, '→', 1, y + 3, '#f8d850');
         });
-        // the pipe: bare briar, with the stain going on cell by cell (too much puddles dark)
-        ctx.drawImage(raw, PX, PY);
-        if (this.fin) for (let cy = 0; cy < rows; cy++) for (let cx = 0; cx < cols; cx++) {
-          const i = cy * cols + cx, v = coat[i];
-          if (!woodCell[i] || v <= 0) continue;
-          ctx.globalAlpha = Math.min(1, v / pipe.coats);
-          ctx.drawImage(this.fin, cx * CS, cy * CS, CS, CS, PX + cx * CS, PY + cy * CS, CS, CS);
-          if (v > pipe.coats + OVER) { ctx.globalAlpha = Math.min(1, (v - pipe.coats - OVER) * 1.5 + 0.3); ctx.drawImage(this.dark, cx * CS, cy * CS, CS, CS, PX + cx * CS, PY + cy * CS, CS, CS); }
+        // the pipe: bare briar, with the stain going on cell by cell
+        ctx.drawImage(c.raw, PIPE_X, PIPE_Y);
+        const blink = this.painted && (this.t >> 4) % 2 === 0;
+        if (this.fin) for (let cy = 0; cy < c.rows; cy++) for (let cx = 0; cx < c.cols; cx++) {
+          const i = cy * c.cols + cx, v = coat[i], x = PIPE_X + cx * CS, y = PIPE_Y + cy * CS;
+          if (!c.wood[i]) continue;
+          if (v > 0) {
+            ctx.globalAlpha = Math.min(1, v / DONE);
+            ctx.drawImage(this.fin, cx * CS, cy * CS, CS, CS, x, y, CS, CS);
+            ctx.globalAlpha = 1;
+          }
+          // a missed spot (or one that needs more)
+          if (blink && v < DONE) { ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(x + 1, y + 1, 2, 2); }
         }
-        ctx.globalAlpha = 1;
         if (this.step === 'paint') {
-          // the dauber, and how long until it dries
-          const bx = PX + Math.round(this.bx), by = PY + Math.round(this.by);
+          // the dauber, the EVEN bar, and how long until it dries
+          const bx = PIPE_X + Math.round(this.bx), by = PIPE_Y + Math.round(this.by), ev = this.even();
           ctx.strokeStyle = G.input.down('a') ? '#f8d850' : '#f8f8f0'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.arc(bx + 0.5, by + 0.5, R, 0, Math.PI * 2); ctx.stroke();
           ctx.fillStyle = '#f4f0e8'; ctx.fillRect(bx - 1, by - 1, 3, 3);
+          FT().draw(ctx, 'EVEN', 100, 106, '#f8f8f0', { shadow: '#000' });
+          ctx.fillStyle = '#0c0814'; ctx.fillRect(126, 106, 102, 7); ctx.fillStyle = ev >= 0.95 ? '#78e070' : '#68c8ff'; ctx.fillRect(127, 107, Math.round(100 * Math.min(1, ev / 0.95)), 5);
           const frac = this.left / TIME;
-          ctx.fillStyle = '#0c0814'; ctx.fillRect(100, 112, 128, 6); ctx.fillStyle = frac > 0.3 ? '#78e070' : '#f86858'; ctx.fillRect(101, 113, Math.round(126 * frac), 4);
-          FT().draw(ctx, 'Drying...  X: done', 100, 120, '#9890a8', { shadow: '#000' });
-        }
+          FT().draw(ctx, 'DRY', 100, 116, '#9890a8', { shadow: '#000' });
+          ctx.fillStyle = '#0c0814'; ctx.fillRect(126, 117, 102, 4); ctx.fillStyle = frac > 0.3 ? '#9890a8' : '#f86858'; ctx.fillRect(127, 118, Math.round(100 * frac), 2);
+          FT().draw(ctx, 'Hold Z: stain   X: done', 100, 124, '#c8c0d8', { shadow: '#000' });
+        } else FT().draw(ctx, '↑↓ pick a jar   Z: use it', 100, 124, '#c8c0d8', { shadow: '#000' });
         talk.draw(ctx);
       },
     };
@@ -5513,6 +5650,7 @@
     const want = {};
     for (const k of tob.mix) want[k] = (want[k] || 0) + 1;
     const rightOf = (scoops) => { const n = {}; let ok = 0; for (const k of scoops) n[k] = (n[k] || 0) + 1; for (const k in n) ok += Math.min(n[k], want[k] || 0); return ok; };
+    talk.lines.unshift(tob.clue);
     return {
       start() { Object.assign(this, { sel: 0, scoops: [], tries: 0, checkT: 0, doneT: 0, t: 0 }); G.play.overlay = this; },
       update() {
@@ -5667,33 +5805,40 @@
   }
 
   // ---- making a pipe, start to finish
+  // a step that went badly: try it again, or keep going anyway (Nate always gets his pipe)
+  function* retry(score, what) {
+    if (score >= 50) return false;
+    return (yield G.ask('Dad', 'Want to try the ' + what + ' again?', ['Try again', 'Keep going'])) === 0;
+  }
   function* makePipe(pipe) {
-    const f = flags(), talk = dadTalk(pipe.facts), again = G.pipeHas(pipe.id);
+    const talk = dadTalk(pipe.facts), again = G.pipeHas(pipe.id);
     yield G.say('Dad', again ? 'The ' + pipe.name + ' again? Sure. Practice makes perfect.' : 'Ah. The ' + pipe.name + '.');
     yield G.say('Dad', pipe.intro);
-    if (!f.latheTaught) {
-      f.latheTaught = true;
-      yield G.say('Dad', 'The lathe spins the briar. You hold the gouge: up and down moves it in and out.');
-      yield G.say('Dad', 'It rides along the bowl, back and forth. Cut down to my pencil line, a little more each pass.');
-      yield G.say('Dad', 'Light passes. Push in too much at once and it CATCHES. You can always take more off. You can\'t put it back.');
-    }
-    const lathe = yield latheCmd(pipe, talk);
-    if (lathe === 'quit') { yield G.say('Dad', 'We\'ll finish it another time.'); return; }
-    yield G.say('Dad', lathe >= 90 ? 'Look at that. Clean as a whistle.' : lathe >= 72 ? 'Nice. A little sanding and it\'s perfect.' : lathe >= 50 ? 'Ehh. Sandpaper covers a multitude of sins.' : 'Hmm. That one\'s going in the scrap bin.');
-    if (lathe < 50) { yield G.say('Dad', 'That\'s okay. I\'ve broken plenty. We\'ll try again another time.'); return; }
-    yield G.say(null, 'Dad drills the chamber and the air hole, then hands it back, sanded smooth.');
-    if (!f.stainTaught) {
-      f.stainTaught = true;
-      yield G.say('Dad', 'Now the finish. First, pick the right jar.');
-      yield G.say('Dad', 'Then rub it on with the dauber. Hold Z. Every bit of the wood, nice and even, before it dries. No puddles.');
-    }
+    // 1. the lathe
+    let lathe;
+    do {
+      yield howToCmd('THE LATHE', HOW_TO.lathe);
+      lathe = yield latheCmd(pipe, talk);
+      if (lathe === 'quit') { yield G.say('Dad', 'We\'ll finish it another time.'); return; }
+      yield G.say('Dad', lathe >= 90 ? 'Look at that. Clean as a whistle.' : lathe >= 72 ? 'Nice. A little sanding and it\'s perfect.' : lathe >= 50 ? 'Ehh. Sandpaper covers a multitude of sins.' : 'Hmm. That one\'s pretty rough. Gouges, or too much left on.');
+    } while (yield* retry(lathe, 'lathe'));
+    // 2. sanding (after Dad drills it)
+    yield G.say(null, 'Dad drills the chamber and the air hole, then hands it back. Now it needs sanding.');
+    yield howToCmd('SANDING', HOW_TO.sand);
+    const sand = yield sandCmd(pipe, talk);
+    if (sand === 'quit') { yield G.say('Dad', 'We\'ll finish it another time.'); return; }
+    yield G.say('Dad', sand >= 90 ? 'Smooth as glass. You can see your face in it.' : sand >= 72 ? 'Nice and smooth.' : 'A couple of flat spots. Nobody will notice. I\'ll notice.');
+    // 3. the stain
     yield G.say('Dad', pipe.stainHint);
-    const st = yield stainCmd(pipe, talk);
-    if (st === 'quit') { yield G.say('Dad', 'We\'ll finish it another time.'); return; }
-    yield G.say('Dad', st.score >= 90 ? 'Even as glass. Beautiful.' : st.score >= 72 ? 'Good coverage. Nice.' : st.score >= 50 ? 'A little blotchy. It\'ll age in.' : 'Oof. Blotchy. We\'ll sand it back and try again another time.');
-    if (st.score < 50) return;
-    yield G.say(null, 'Sand up to eight hundred. Tripoli buff. White polish. And then...');
-    const stars = starsFor((lathe + st.score) / 2), made = pipesMade(), prev = made[pipe.id];
+    let st;
+    do {
+      yield howToCmd('THE STAIN', HOW_TO.stain);
+      st = yield stainCmd(pipe, talk);
+      if (st === 'quit') { yield G.say('Dad', 'We\'ll finish it another time.'); return; }
+      yield G.say('Dad', st.score >= 90 ? 'Even as glass. Beautiful.' : st.score >= 72 ? 'Good coverage. Nice.' : st.score >= 50 ? 'A little blotchy. It\'ll age in.' : 'Oof. Bare spots all over. We can sand it back.');
+    } while (yield* retry(st.score, 'stain'));
+    yield G.say(null, 'Tripoli buff. White polish. And then...');
+    const stars = starsFor((lathe + sand + st.score) / 3), made = pipesMade(), prev = made[pipe.id];
     made[pipe.id] = { stars: Math.max(stars, prev ? prev.stars : 0), stain: st.stain };
     yield revealCmd(G.pipeLook(pipe.id, 1), pipe.name, stars);
     yield G.say('Dad', pipe.made);
@@ -5705,22 +5850,15 @@
   }
   // ...and blending a tobacco
   function* makeTobacco(tob) {
-    const f = flags(), talk = dadTalk(tob.facts), again = G.tinHas(tob.id);
+    const talk = dadTalk(tob.facts), again = G.tinHas(tob.id);
     yield G.say('Dad', again ? tob.name + ' again? Good choice.' : 'Ah. ' + tob.name + '.');
-    if (!f.blendTaught) {
-      f.blendTaught = true;
-      yield G.say('Dad', 'Every tobacco is a recipe. Four scoops out of my jars. I\'ll tell you what goes in it. Mostly.');
-      yield G.say('Dad', 'Z: a scoop. X: put the last one back. When there are four, I\'ll have a sniff and tell you how many you got right.');
-    }
+    yield howToCmd('THE BLEND', HOW_TO.blend);
     yield G.say('Dad', tob.clue);
     const tries = yield blendCmd(tob, talk);
     if (tries === 'quit') { yield G.say('Dad', 'Another time, then.'); return; }
     yield G.say('Dad', tries === 1 ? 'First try! You\'ve got the nose.' : tries <= 3 ? 'There it is.' : 'Got there in the end.');
-    if (!f.packTaught) {
-      f.packTaught = true;
-      yield G.say('Dad', 'Now pack a bowl. Three pinches. Gently, then a little firmer, then firm.');
-      yield G.say('Dad', 'Press Z when the needle is in the box.');
-    }
+    yield G.say('Dad', 'Now pack a bowl.');
+    yield howToCmd('PACK A BOWL', HOW_TO.pack);
     const pack = yield packCmd(tob, talk);
     if (pack === 'quit') { yield G.say('Dad', 'Another time, then.'); return; }
     yield G.say('Dad', tob.taste);
