@@ -585,6 +585,7 @@
       const n = (s.items.candyCorn ? 1 : 0) + (s.items.doritos ? 1 : 0);
       add('Dad\'s snacks', f.snacksDone, n === 2 ? 'Bring them to Dad' : G.sayable(n) + '/2 snacks', 'Home', n === 2 ? 'Dad is in his workshop.' : 'Candy corn: Mom hides it somewhere. Doritos: follow the muddy tracks.', [n, 2]);
     }
+    if (G.homeDone() && !f.pipeBench) side.push({ name: 'Dad\'s workshop', status: 'Dad has something to show you', kind: 'rumor', where: 'Home', hint: 'Things are finally quiet at home. Dad wants you in his workshop.' });
     if (f.pipeBench) {
       const np = G.pipesMadeCount(), nt = G.tinsMadeCount(), all = G.PIPES.length + G.TOBACCOS.length;
       add('Dad\'s pipe bench', np + nt >= all && 'All made!', G.sayable(np) + '/' + G.sayable(G.PIPES.length) + ' pipes, ' + G.sayable(nt) + '/' + G.sayable(G.TOBACCOS.length) + ' tins', 'Home - the workshop', 'Talk to Dad in his workshop. Turn pipes on his lathe and blend tobacco from his jars.', [np + nt, all]);
@@ -1954,6 +1955,9 @@
     return leads;
   };
   G.homeLeads = homeLeads;
+  // Everything at home done (Mom's books back, Dad's snacks, Ice JJ Fish booked for church): that's
+  // when Dad opens his pipe bench.
+  G.homeDone = () => { const f = flags(); return !!(f.shopOpen && f.snacksDone && f.jjBeaten); };
   S.homeEast = function* () {
     const f = flags(), p = P(), leads = homeLeads();
     if (!f.leaveNudge && leads.length) {
@@ -3256,9 +3260,9 @@
     { name: 'Basement: Globglogabgalab', map: 'homeDown', at: [22, 8, 'up'], flags: { clue_den: true, clue_nightstand: true, clue_mudroom: true, cluesDone: true, momReport: true }, items: { basementKey: true, earplugs: true, bait: true } },
     { name: 'Return Mom\'s books (shop)', map: 'home', at: [34, 20, 'left'], flags: { globMet: true, globBeaten: true, baitPlaced: true, basementOpened: true }, items: { books: true, bait: false } },
     { name: 'Dad\'s snacks (workshop)', map: 'garage', at: [10, 10, 'up'], flags: { shopOpen: true }, items: { books: false }, teeth: 120 },
-    { name: 'Dad\'s pipe bench (workshop)', map: 'garage', at: [10, 10, 'up'], flags: { snackQuest: true, snacksDone: true, jjGig: true } },
     { name: 'Ice JJ Fish (north)', map: 'north', at: [10, 13, 'up'], flags: { snackQuest: true, snacksDone: true, momDenied: true, jjGig: true } },
     { name: 'Everything done (free roam)', map: 'home', at: [42, 38, 'down'], flags: { jjMet: true, jjBeaten: true, signal_icy: true, signal_jlc: true, momHeart: true, phDone: true, chemMet: true, chemPassed: true, chemPerfect: true, engMet: true, engPassed: true, engPerfect: true, ticketQuest: true, ticketsGiven: true, ticketsDone: true, protestReward: true }, items: { chicken: true, eggs: 40, bass: true, doosh: 3, package: 10, tickets: 0, andoverKey: true }, maxHp: 10, teeth: 300 },
+    { name: 'Dad\'s pipe bench (workshop)', map: 'garage', at: [10, 10, 'up'] },
     { name: 'Bay Bridge-Tunnel: the toll plaza', map: 'cbbtToll', at: [17, 13, 'left'], teeth: 520 },
     { name: 'The Two-Liter (Chesapeake Channel Tunnel)', map: 'chesTunnel', at: [7, 26, 'up'], flags: { cbbtArrived: true, tollMet: true, chesSeen: true }, items: { rod: true } },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
@@ -3349,10 +3353,14 @@
   // man singing a hymn on the pond for Sunday service.
   S.dadWorkshop = function* () {
     const f = flags(), s = G.state;
-    // (once he has his snacks back: his pipe bench)
-    if (f.snacksDone) {
+    // (once everything at home is done: his pipe bench. Before that, a hint that something's coming.)
+    if (G.homeDone()) {
+      if (!f.pipeBench) yield G.say('Dad', 'Mom has her books back. I have my snacks. The nine o\'clock has a singer. It\'s finally quiet around here.');
       const c = yield G.ask('Dad', f.pipeBench ? 'Want to make something?' : 'Nate. Want to learn how to make a pipe? Or blend some tobacco?', ['Make a pipe', 'Blend tobacco', 'Just talk']);
       if (c === 0 || c === 1) { yield* S.pipeBench(c === 0 ? 'pipe' : 'tin'); return; }
+    } else if (f.snacksDone && !f.pipeTease) {
+      f.pipeTease = true;
+      yield G.say('Dad', 'Nate. Once things settle down around here, come see me. I\'ve got something to teach you in this workshop.');
     }
     if (f.jjBeaten) {
       f.dadLine = ((f.dadLine || 0) + 1) % 4;
@@ -4979,7 +4987,8 @@
   };
 
   // ================================================================ DAD'S PIPE BENCH
-  // Once Dad has his snacks, he'll teach Nate to make pipes and blend tobacco in the workshop.
+  // Once everything at home is done (G.homeDone: Mom's books, Dad's snacks, Ice JJ Fish booked), Dad
+  // will teach Nate to make pipes and blend tobacco in the workshop.
   // Nate picks one out of Dad's book (the ones he hasn't made yet are ??? pencil silhouettes).
   // A pipe: cut it on the BANDSAW, turn it on the LATHE, SAND it (or sandblast it), bend the stem
   // (the bent ones), then STAIN it; every pipe is made a little differently (WORK). Tobacco: BLEND
