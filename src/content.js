@@ -312,7 +312,7 @@
     },
     books: {
       kind: 'key', name: 'Mom\'s Books', icon: () => G.spr.flyingBook[1], has: () => !!st().items.books && !fl().shopOpen,
-      desc: 'Gardening books, devotionals and mystery novels, rescued from the Globglogabgalab. Slightly chewed.',
+      desc: 'Gardening books, devotionals and a big stack of seed catalogs (dog-eared, everything circled), rescued from the Globglogabgalab. Slightly chewed.',
     },
     basementKey: {
       kind: 'key', name: 'Dad\'s Keyring', icon: () => G.spr.keyring, has: () => !!st().items.basementKey && !fl().globBeaten,
@@ -2161,7 +2161,7 @@
   // The missing books: Mom asks Nate to look into it.
   function* momBooksStart(later) {
     yield G.say('Michelle', later ? 'Nate! Now that things have calmed down around here. Something strange is going on. My books keep disappearing.' : 'Also, something strange is going on. My books keep disappearing.');
-    yield G.say('Michelle', 'First my gardening books. Then my devotionals. Then a whole stack of mystery novels. Gone!');
+    yield G.say('Michelle', 'First my gardening books. Then my devotionals. Then my seed catalogs. ALL of them. I was halfway through the tomatoes!');
     yield G.say('Michelle', 'And at night I hear... singing. Coming up through the floor vents. From the BASEMENT.');
     yield G.say('Nate', 'Singing?');
     yield G.say('Michelle', 'A slithery, horrible little song. It gets stuck in my head for DAYS. I cannot STAND it.');
@@ -2248,9 +2248,10 @@
       yield G.say('Nate', 'I should tell Mom.');
     }
   };
-  S.clueNightstand = clueSpot('nightstand', 'A nightstand with a red lamp and a stack of library books.', function* () {
-    yield G.say(null, 'Mom\'s nightstand. A mystery novel with the whole last chapter bitten off.');
-    yield G.say('Nate', 'Whoever did this ate the ending first. That\'s just evil.');
+  S.clueNightstand = clueSpot('nightstand', 'A nightstand with a red lamp and a tall stack of seed catalogs.', function* () {
+    yield G.say(null, 'Mom\'s nightstand. A seed catalog, dog-eared, every tomato circled twice. The whole back half is bitten off.');
+    yield G.say('Nate', 'She reads these in bed. Cover to cover. Every night. Like they\'re novels.');
+    yield G.say('Nate', 'Whoever did this ate the zinnias. That was her favorite part.');
   });
   S.clueMudroom = clueSpot('mudroom', 'Boots, sneakers, and one flip-flop with no partner.', function* () {
     yield G.say(null, 'Under the boot bench: a stack of church bulletins, nibbled into lace.');
@@ -2321,7 +2322,7 @@
     yield G.say('Michelle', 'THAT was the singing?! I KNEW it. I can\'t stand that song. I can\'t stand HIM.');
     yield G.say('Nate', 'He said he\'d sing quietly from now on.');
     yield G.say('Michelle', 'He\'d better.');
-    yield G.say('Michelle', 'Gardening books... devotionals... the mysteries... wait.');
+    yield G.say('Michelle', 'Gardening books... devotionals... my seed catalogs... wait.');
     yield G.say('Michelle', 'Where\'s "Being a Wonderful Pastor\'s Wife"?');
     yield G.say('Nate', 'That was the bait. He ate it. I could go back down and see if there\'s anything left?');
     yield G.say('Michelle', 'Keep it.');
@@ -2532,7 +2533,7 @@
       yield G.say('Nate', 'Those are my mom\'s books. She can\'t STAND you.');
       yield G.say('Globglogabgalab', 'Pity. Her books are simply delicious.');
       yield G.say('Globglogabgalab', 'She bangs on the ceiling every time I sing. No appreciation for the arts.');
-      yield G.say('Globglogabgalab', 'The devotionals are so nourishing. And the mystery novels! I eat the last chapter first. I never know who did it.');
+      yield G.say('Globglogabgalab', 'The devotionals are so nourishing. And the seed catalogs! What a page-turner. Will she order the heirloom tomatoes? I couldn\'t wait. I ate the ending.');
       yield G.say('Nate', 'Well, I\'m taking them back.');
       yield G.say('Globglogabgalab', 'Then you\'ll have to catch me first, little bookmark.');
       yield G.camFocus(null, null, 30);
