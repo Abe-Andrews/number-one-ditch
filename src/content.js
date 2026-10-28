@@ -5246,6 +5246,9 @@
   }
   // ENTER quits partway through (the step's result is 'quit')
   const quitHit = () => { if (!G.input.hit('start')) return false; G.input.eat('start'); G.audio.sfx('cancel'); return true; };
+  // holding Z (to stain, blast or heat) only counts once Z has been let go since the step started:
+  // the press that picked the jar or closed the HOW TO card is still down for a moment
+  const zHeld = (cmd) => { if (!G.input.down('a')) cmd.zReady = true; return !!cmd.zReady && G.input.down('a'); };
 
   // ---- how to do the next step: a card over the workshop wall (Z: got it)
   function howToCmd(title, lines) {
@@ -5858,7 +5861,7 @@
     }
     const grit = [];
     return {
-      start() { Object.assign(this, { t: 0, left: B.time, bx: c.W / 2, by: c.H * 0.6, torn: 0, endT: 0, ruined: null, msg: null, msgT: 0, tape, hp, blasted, cells: c, R }); talk.nowT = 0; G.play.overlay = this; },
+      start() { Object.assign(this, { t: 0, left: B.time, bx: c.W / 2, by: c.H * 0.6, torn: 0, endT: 0, ruined: null, msg: null, msgT: 0, zReady: false, tape, hp, blasted, cells: c, R }); talk.nowT = 0; G.play.overlay = this; },
       pop(m) { this.msg = m; this.msgT = 50; },
       cover() { let k = 0; for (let i = 0; i < c.wood.length; i++) if (c.wood[i] && !tape[i] && blasted[i] >= 1) k++; return k / bare; },
       update() {
@@ -5875,7 +5878,7 @@
         if (inp.down('up')) this.by -= sp;
         if (inp.down('down')) this.by += sp;
         this.bx = Math.max(0, Math.min(c.W - 1, this.bx)); this.by = Math.max(0, Math.min(c.H - 1, this.by));
-        if (inp.down('a')) {
+        if (zHeld(this)) {
           if (this.t % 2 === 0) for (let k = 0; k < 3; k++) { const a = Math.random() * Math.PI * 2; grit.push({ x: PIPE_X + this.bx, y: PIPE_Y + this.by, vx: Math.cos(a) * 1.4, vy: Math.sin(a) * 1.4, life: 10 }); }
           if (this.t % 10 === 0) G.audio.sfx('spray');
           for (let cy = Math.floor((this.by - R) / CS); cy <= Math.floor((this.by + R) / CS); cy++) for (let cx = Math.floor((this.bx - R) / CS); cx <= Math.floor((this.bx + R) / CS); cx++) {
@@ -5923,7 +5926,7 @@
         }
         // the nozzle, and the grit flying
         const nx = PIPE_X + Math.round(this.bx), ny = PIPE_Y + Math.round(this.by);
-        ctx.strokeStyle = G.input.down('a') ? '#f8d850' : '#f8f8f0'; ctx.lineWidth = 1;
+        ctx.strokeStyle = this.zReady && G.input.down('a') ? '#f8d850' : '#f8f8f0'; ctx.lineWidth = 1;
         ctx.beginPath(); ctx.arc(nx + 0.5, ny + 0.5, R, 0, Math.PI * 2); ctx.stroke();
         ctx.fillStyle = '#9aa0a8'; ctx.fillRect(nx - 1, ny - 12, 3, 10);
         for (const p of grit) { ctx.fillStyle = '#e8dcc0'; ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); }
@@ -5943,7 +5946,7 @@
   function bendCmd(pipe, talk) {
     const B = WORK[pipe.id].bend, SOFT = 55, HOT = 88;
     return {
-      start() { Object.assign(this, { t: 0, temp: 0, angle: 0, bubbles: 0, hotT: 0, stiffT: 0, endT: 0, ruined: null, msg: null, msgT: 0, B, SOFT, HOT }); talk.nowT = 0; G.play.overlay = this; },
+      start() { Object.assign(this, { t: 0, temp: 0, angle: 0, bubbles: 0, hotT: 0, stiffT: 0, endT: 0, ruined: null, msg: null, msgT: 0, zReady: false, B, SOFT, HOT }); talk.nowT = 0; G.play.overlay = this; },
       pop(m) { this.msg = m; this.msgT = 50; },
       score() { return Math.max(0, Math.round(100 - Math.abs(this.angle - B.target) * (35 / B.tol) - this.bubbles * 8)); },
       update() {
@@ -5953,7 +5956,7 @@
         if (this.stiffT > 0) this.stiffT--;
         if (this.endT > 0) { if (--this.endT === 0) { this.result = { score: this.score(), ruined: this.ruined }; return true; } return false; }
         if (quitHit()) { this.result = 'quit'; return true; }
-        this.temp = inp.down('a') ? Math.min(100, this.temp + B.heat) : Math.max(0, this.temp - 0.45);
+        this.temp = zHeld(this) ? Math.min(100, this.temp + B.heat) : Math.max(0, this.temp - 0.45);
         if (this.temp > HOT) {
           if (++this.hotT % 14 === 0) {
             this.bubbles++; G.audio.sfx('pop');
@@ -5995,7 +5998,7 @@
         ctx.fillStyle = '#f8f0e0'; for (let k = 0; k < this.bubbles; k++) ctx.fillRect(px + 34 + k * 4, py - 2 + (k % 2) * 3, 2, 2);
         // the heat gun, blowing on the bend
         ctx.fillStyle = '#5a5a64'; ctx.fillRect(px + 30, 112, 20, 12); ctx.fillRect(px + 36, 100, 8, 12);
-        if (G.input.down('a') && !this.endT) { ctx.fillStyle = (this.t >> 1) % 2 ? '#f8a838' : '#f86838'; ctx.fillRect(px + 37, 96 - (this.t % 3), 6, 4); }
+        if (this.zReady && G.input.down('a') && !this.endT) { ctx.fillStyle = (this.t >> 1) % 2 ? '#f8a838' : '#f86838'; ctx.fillRect(px + 37, 96 - (this.t % 3), 6, 4); }
         // the temperature, with the soft range and too hot
         const bx = 206, by = 30, bh = 80;
         ctx.fillStyle = '#0c0814'; ctx.fillRect(bx, by, 12, bh);
@@ -6048,7 +6051,7 @@
               talk.say(['Hmm. Not that one. Not on this pipe.', 'No, no. Think about what I told you.', 'Try again. I believe in you.'][(this.wrong - 1) % 3]);
               return false;
             }
-            this.stain = st; this.step = 'paint'; G.audio.sfx('gulp');
+            this.stain = st; this.step = 'paint'; this.zReady = false; G.audio.sfx('gulp');
             const col = pipeColors(pipe, st);
             this.fin = G.art.pipeArt(pipe.id, 2, col);
             this.dark = G.art.pipeArt(pipe.id, 2, { wood: G.art.shade(col.wood, -0.5), shankWood: G.art.shade(col.shankWood, -0.5) });
@@ -6063,7 +6066,7 @@
         if (inp.down('up')) this.by -= sp;
         if (inp.down('down')) this.by += sp;
         this.bx = Math.max(0, Math.min(c.W - 1, this.bx)); this.by = Math.max(0, Math.min(c.H - 1, this.by));
-        if (inp.down('a')) {
+        if (zHeld(this)) {
           this.painted = true;
           let puddled = false;
           for (let cy = Math.floor((this.by - R) / CS); cy <= Math.floor((this.by + R) / CS); cy++) for (let cx = Math.floor((this.bx - R) / CS); cx <= Math.floor((this.bx + R) / CS); cx++) {
@@ -6113,7 +6116,7 @@
         if (this.step === 'paint') {
           // the dauber, the EVEN bar, and how long until it dries
           const bx = PIPE_X + Math.round(this.bx), by = PIPE_Y + Math.round(this.by), ev = this.even();
-          ctx.strokeStyle = G.input.down('a') ? '#f8d850' : '#f8f8f0'; ctx.lineWidth = 1;
+          ctx.strokeStyle = this.zReady && G.input.down('a') ? '#f8d850' : '#f8f8f0'; ctx.lineWidth = 1;
           ctx.beginPath(); ctx.arc(bx + 0.5, by + 0.5, R, 0, Math.PI * 2); ctx.stroke();
           ctx.fillStyle = '#f4f0e8'; ctx.fillRect(bx - 1, by - 1, 3, 3);
           FT().draw(ctx, 'EVEN', 100, 106, '#f8f8f0', { shadow: '#000' });
