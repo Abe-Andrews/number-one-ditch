@@ -4980,8 +4980,9 @@
   // ================================================================ DAD'S PIPE BENCH
   // Once Dad has his snacks, he'll teach Nate to make pipes and blend tobacco in the workshop.
   // Nate picks one out of Dad's book (the ones he hasn't made yet are ??? pencil silhouettes).
-  // A pipe: turn the bowl on the LATHE, SAND it, then STAIN it. Tobacco: BLEND it from Dad's jars (he says
-  // how many scoops are right), then PACK a bowl and light it. They're collectables: a pipe
+  // A pipe: cut it on the BANDSAW, turn it on the LATHE, SAND it (or sandblast it), bend the stem
+  // (the bent ones), then STAIN it; every pipe is made a little differently (WORK). Tobacco: BLEND
+  // it from Dad's jars (he says how many scoops are right), then PACK a bowl and light it. They're collectables: a pipe
   // changes how Dad's Pipe looks, and a tobacco changes the color of its smoke (picked in
   // COLLECTABLES). The whole time, Dad never stops talking about pipes, straight out of his real
   // pipe journal. (The pipes and tins themselves are drawn in art.js.)
@@ -5263,9 +5264,13 @@
     };
   }
   const HOW_TO = {
-    lathe: ['The briar spins. The gouge rides along it all by itself, back and forth.', 'Hold ↓ to cut in. Hold ↑ to back off.', 'Cut the wood down to the white line, a little deeper each pass.', 'Dig in too much at once and it CATCHES. Going past the line is a gouge (it turns red).'],
-    sand: ['Sand off the tool marks, one grit at a time: rough paper first, then finer.', '↑↓ moves the sandpaper to a spot on the pipe.', 'Tap ← → ← → back and forth to sand that spot until its scratches are gone.', 'Then move on. Too much in one spot sands it flat.'],
-    stain: ['Pick the right jar with ↑↓ and Z. (Dad tells you which.)', 'Move the dauber with the arrows. HOLD Z to rub the stain on.', 'Cover every bit of the wood before it dries. The EVEN bar shows how much is done.', 'Missed spots blink. Two-coat pipes: go over everything twice.'],
+    saw: ['Dad drew the pipe on the block. The block feeds into the blade by itself.', 'Hold ↑↓ to slide the block and keep the blade right ON the pencil line.', 'The pipe is ABOVE the line: cut into it and the block is ruined. Below the line just leaves extra wood.', 'Two cuts: the bottom, then the block turns for the back of the bowl. Knots make it jump.'],
+    lathe: ['The briar spins and the gouge rides along it by itself. Hold ↓ to cut in, ↑ to back off.', 'Cut down to the white line, a little each pass. It turns green where it\'s right; red is too deep.', 'Watch the BITE bar: in the red, it CATCHES. Too many catches and it SNAPS.'],
+    sand: ['Sand off the tool marks, one grit at a time: rough paper first, then finer.', '↑↓ moves the sandpaper to a spot on the pipe. Tap ← → ← → to sand it until its scratches are gone.', 'Then move on! Keep sanding a smooth spot and it goes flat. Too many flat spots and it\'s ruined.'],
+    panels: ['Eight panels, sanded flat on the wheel. One grit at a time.', '← → picks a panel. Tap ↑ ↓ ↑ ↓ to sand it until its scratches are gone.', 'Then move on! Keep going on a smooth panel and its edges go round. Too many and it\'s ruined.'],
+    blast: ['Sandblasting: the soft wood blows away and the grain stands up.', 'Move the nozzle with the arrows. HOLD Z to blast every bit of bare briar.', 'The rim and the end of the shank are taped. Stay off the tape! Blast through it and the briar under it is ruined.'],
+    bend: ['The stem gets bent with heat. HOLD Z under the heat gun until the bar is in SOFT.', 'Hold ↓ to bend it (↑ straightens it) until it matches Dad\'s template. It only bends while it\'s soft.', 'Too hot and it bubbles. When it matches, press X to set it in cold water.'],
+    stain: ['Pick the right jar with ↑↓ and Z. (Dad tells you which.)', 'Move the dauber with the arrows. HOLD Z to rub the stain on. Cover every bit before it dries.', 'Missed spots blink. Two-coat pipes: go over everything twice. On the harder pipes, too much puddles: keep moving.'],
     blend: ['Pick a jar with the arrows. Z adds a scoop. X puts the last one back.', 'A blend is four scoops. Dad tells you what goes in it.', 'With four in, he sniffs it and tells you how many are right.'],
     pack: ['The needle goes up and down. Press Z when it\'s inside the green box.', 'Three pinches: gently, then a little firmer, then firm.'],
   };
@@ -5317,23 +5322,259 @@
     };
   }
 
-  // ---- THE LATHE: the briar spins, Nate moves the gouge (up and down) while it rides along the
-  // bowl, pass after pass, cutting down to Dad's pencil line. Push in too far at once and it
-  // CATCHES (a chunk torn out). Too deep anywhere is a gouge; too shallow is rough. Result: 0-100.
+  // ---- How each pipe gets made, and how hard each part is. Every pipe has its own:
+  //   saw:    two bandsaw cuts: Dad's pencil lines on the block, as [along, down] points (the pipe is
+  //           ABOVE the line). feed: how fast the block moves; tol: how far off the line is fine;
+  //           ruin: how far into the pipe ruins the block; knots: where the block jolts
+  //   lathe:  the layout, left (the shank end) to right (the rim): sections n columns long, turned
+  //           to radius r (or tapering [from, to], or a ball [end, middle, end]), plus anything
+  //           special: fragile (a catch there snaps it), tight (the silver band's seat), noCut (the
+  //           square shank, the plateau: leave them alone), crack (cut deep there and it opens up),
+  //           flaws (pits, just for looks), odd (a lumpy block), from (a shank starts this far above
+  //           its line: the bandsaw already trimmed it). Then how fast it rides, how many
+  //           passes, the tolerance, the safe bite, and how many catches before it snaps
+  //   finish: 'sand' (in bands), 'panels' (eight panels on the wheel) or 'blast' (sandblasting)
+  //   bend:   the bent ones: the angle on Dad's template, how close is close enough, how fast it heats
+  //   stain:  how long until it dries, (the harder ones) how much extra before it puddles, and its
+  //           own pass mark (a blotchy stain just gets sanded back and done again)
+  //   pass:   the lowest score a step can get before the pipe's ruined
+  const WORK = {
+    black: {
+      pass: 30,
+      saw: { feed: 0.5, tol: 6, ruin: 16, knots: [], cuts: [[[0, 40], [150, 40], [190, 45], [220, 56]], [[0, 30], [160, 31]]] },
+      lathe: { speed: 0.55, passes: 4, tol: 5.2, bite: 20, catches: 6, flaws: true, layout: [{ n: 50, r: 8, from: 12 }, { n: 20, r: [10, 19] }, { n: 90, r: 19 }] },
+      finish: 'blast', blast: { size: 11, tape: 50, tears: 8, time: 1600 },
+      stain: { time: 2400, puddle: null, pass: 30 },
+    },
+    silver: {
+      pass: 40,
+      saw: { feed: 0.6, tol: 5.2, ruin: 14, knots: [110], cuts: [[[0, 38], [90, 38], [130, 46], [170, 54], [210, 56]], [[0, 48], [40, 34], [90, 28], [140, 34], [175, 48]]] },
+      lathe: { speed: 0.65, passes: 4, tol: 4.6, bite: 17, catches: 5, layout: [{ n: 34, r: 8, from: 11 }, { n: 12, r: 6, tight: true, from: 10 }, { n: 114, ball: [13, 24, 17] }] },
+      finish: 'sand', sand: { grits: [220, 400, 800], over: 5, flats: 5 },
+      stain: { time: 2200, puddle: null, pass: 40 },
+    },
+    castello: {
+      pass: 40,
+      saw: { feed: 0.65, tol: 5, ruin: 13, knots: [140], cuts: [[[0, 40], [200, 40], [228, 47], [250, 55]], [[0, 30], [130, 34]]] },
+      lathe: { speed: 0.65, passes: 4, tol: 4.5, bite: 17, catches: 5, layout: [{ n: 86, r: 7, fragile: true, from: 11 }, { n: 10, r: [9, 16] }, { n: 64, r: 16 }] },
+      finish: 'sand', sand: { grits: [220, 400, 800], over: 4, flats: 4 },
+      stain: { time: 2200, puddle: null, pass: 40 },
+    },
+    minecraft: {
+      pass: 50,
+      saw: { feed: 0.7, tol: 4.6, ruin: 11, knots: [], facets: true, cuts: [[[0, 40], [130, 40], [150, 40], [165, 51], [215, 51]], [[0, 30], [100, 30], [118, 43], [150, 43]]] },
+      lathe: { speed: 0.75, passes: 3, tol: 4, bite: 15, catches: 4, noCutOk: 2, layout: [{ n: 40, r: 15, noCut: 'square' }, { n: 18, r: [12, 19] }, { n: 102, r: 19 }] },
+      finish: 'panels', sand: { grits: [220, 400, 800], over: 3, flats: 3 },
+      stain: { time: 2000, puddle: 1.4, pass: 45 },
+    },
+    cordovan: {
+      pass: 50,
+      saw: { feed: 0.75, tol: 4.5, ruin: 10.5, knots: [70, 160], cuts: [[[0, 36], [100, 38], [150, 46], [200, 54]], [[0, 22], [160, 50]]] },
+      lathe: { speed: 0.8, passes: 3, tol: 4, bite: 15, catches: 4, layout: [{ n: 44, r: 8, from: 11 }, { n: 116, r: [12, 24], crack: [56, 74] }] },
+      finish: 'blast', blast: { size: 8, tape: 34, tears: 4, time: 1400 },
+      stain: { time: 2000, puddle: 1.5, pass: 45 },
+    },
+    prince: {
+      pass: 50,
+      saw: { feed: 0.75, tol: 4.2, ruin: 10, knots: [100], cuts: [[[0, 42], [200, 42], [232, 49], [262, 54]], [[0, 46], [40, 34], [80, 32], [125, 42]]] },
+      lathe: { speed: 0.8, passes: 3, tol: 3.8, bite: 14, catches: 4, layout: [{ n: 90, r: 6.5, fragile: true, from: 11 }, { n: 70, ball: [14, 23, 19] }] },
+      finish: 'sand', sand: { grits: [220, 400, 800], over: 3, flats: 3 },
+      stain: { time: 2000, puddle: 1.2, pass: 45 },
+    },
+    tan: {
+      pass: 58,
+      saw: { feed: 0.85, tol: 3.8, ruin: 8.5, knots: [60, 140], cuts: [[[0, 22], [70, 30], [130, 42], [180, 54], [230, 58]], [[0, 52], [30, 36], [80, 27], [130, 29], [170, 42], [200, 56]]] },
+      lathe: { speed: 0.95, passes: 3, tol: 3.4, bite: 12, catches: 3, layout: [{ n: 36, r: 9, fragile: true, from: 11 }, { n: 10, r: [10, 12] }, { n: 114, ball: [12, 27, 19] }] },
+      finish: 'sand', sand: { grits: [220, 400, 800], over: 3, flats: 3 },
+      bend: { target: 36, tol: 5, heat: 0.9, bubbles: 4 },
+      stain: { time: 1800, puddle: 1.0, pass: 50 },
+    },
+    strawberry: {
+      pass: 65,
+      saw: { feed: 0.95, tol: 3.3, ruin: 7.5, knots: [40, 110, 170], cuts: [[[0, 24], [60, 30], [120, 40], [170, 50], [210, 55]], [[0, 26], [20, 21], [36, 29], [52, 22], [70, 27], [160, 48]]] },
+      lathe: { speed: 1.0, passes: 3, tol: 3, bite: 11, catches: 2, odd: true, noCutOk: 1, layout: [{ n: 40, r: 8, fragile: true, from: 11 }, { n: 100, r: [14, 21] }, { n: 20, r: 26, noCut: 'plateau' }] },
+      finish: 'sand', sand: { grits: [220, 400, 800, 1500], over: 2, flats: 2 },
+      bend: { target: 28, tol: 3.5, heat: 1.15, bubbles: 3 },
+      stain: { time: 1600, puddle: 0.9, pass: 55 },
+    },
+  };
+  G.PIPE_WORK = WORK;
+  // what this pipe's lathe has that the others don't (on its HOW TO card)
+  const LATHE_TIP = {
+    black: 'This block is full of pits. Don\'t worry about them: it\'s getting sandblasted.',
+    silver: 'The gold marks are the seat for the silver band. Turn it EXACTLY to the line there.',
+    castello: 'The long shank is thin. If it catches there, it snaps.',
+    minecraft: 'Leave the shank square: don\'t cut the striped part! Back off before you get there.',
+    cordovan: 'There\'s a crack in the bowl. Cut past the line there and it opens right up.',
+    prince: 'A long, thin shank. One catch there and it snaps.',
+    tan: 'A big round bowl. The shank snaps if it catches. Do NOT push too far.',
+    strawberry: 'An odd, lumpy little block. Don\'t touch the plateau (the rough top) and mind the shank.',
+  };
+  // what Dad says when a pipe's ruined
+  const RUIN = {
+    saw: 'You cut right into the pipe. That block\'s done.',
+    rough: 'That\'s too far off the line. It won\'t be the right shape.',
+    snap: 'SNAP. It caught and broke clean off. I did the exact same thing. Disappointing.',
+    crack: 'The crack opened up. Holes going into the chamber: discard.',
+    square: 'The shank was supposed to stay square. Abe was very clear.',
+    plateau: 'You turned the plateau off. That rough top WAS the pipe.',
+    gouged: 'Too much off. You can always take more off. You can\'t put it back.',
+    lopsided: 'Lopsided. Too many flat spots.',
+    tape: 'You blew through the tape. The rim\'s ruined.',
+  };
+
+  // ---- THE BANDSAW: Dad drew the pipe on the block. It feeds into the blade by itself, and ↑↓
+  // slides the block to keep the blade on his pencil line. Above the line is the pipe (cut far
+  // enough into it and the block's ruined); below is waste (staying low just leaves extra wood).
+  // Two cuts: the bottom, then the block turned around for the back of the bowl. Knots jolt the
+  // block. Result: { score, ruined } (or 'quit').
+  const BLADE_X = 66, BLADE_Y = 70, BLOCK_H = 80;
+  function sawCmd(pipe, talk) {
+    const w = WORK[pipe.id].saw;
+    // the pencil line at any point along a cut (smooth curves; the Minecraft pipe's are straight facets)
+    const lineAt = (pts, u) => {
+      if (u <= pts[0][0]) return pts[0][1];
+      for (let k = 1; k < pts.length; k++) {
+        const [u0, y0] = pts[k - 1], [u1, y1] = pts[k];
+        if (u <= u1) { const t = (u - u0) / (u1 - u0); return y0 + (y1 - y0) * (w.facets ? t : (1 - Math.cos(t * Math.PI)) / 2); }
+      }
+      return pts[pts.length - 1][1];
+    };
+    // the block for a cut, drawn once: the pipe's side a little lighter, the waste darker, the line
+    const blockArt = (pts) => {
+      const len = pts[pts.length - 1][0], W = len + 40, c = G.canvas(W, BLOCK_H), x = c.getContext('2d');
+      for (let u = 0; u < W; u++) {
+        const ly = Math.round(lineAt(pts, u - 20));
+        for (let y = 0; y < BLOCK_H; y++) {
+          const g = G.hash(u >> 1, y, 4) < 0.08 ? -0.12 : Math.sin(y * 0.5 + u * 0.03) > 0.85 ? -0.06 : 0;
+          x.fillStyle = G.art.shade(y < ly ? '#d8a670' : '#b07a48', g); x.fillRect(u, y, 1, 1);
+        }
+        if (u % 3 !== 2) { x.fillStyle = '#2a2a30'; x.fillRect(u, ly, 1, 1); }
+      }
+      x.fillStyle = '#5a3a20'; x.fillRect(0, 0, W, 1); x.fillRect(0, BLOCK_H - 1, W, 1);
+      for (let u = 6; u < len; u += 80) {
+        FT().draw(x, 'PIPE', 20 + u, Math.max(2, Math.round(lineAt(pts, u)) - 12), '#7a4a28');
+        FT().draw(x, 'waste', 20 + u, Math.min(BLOCK_H - 10, Math.round(lineAt(pts, u)) + 5), '#5a3a20');
+      }
+      return c;
+    };
+    const arts = w.cuts.map(blockArt);
+    return {
+      start() { Object.assign(this, { cut: 0, t: 0, pen: 0, frames: 0, endT: 0, ruined: null, msg: null, msgT: 0, w, lineAt }); this.begin(); talk.nowT = 0; G.play.overlay = this; },
+      begin() {
+        const pts = w.cuts[this.cut];
+        Object.assign(this, { pts, len: pts[pts.length - 1][0], p: -36, kerf: [], shoveT: 0, knots: w.knots.filter((u) => u < pts[pts.length - 1][0]) });
+        this.o = BLADE_Y - lineAt(pts, 0) + 12;
+      },
+      pop(m) { this.msg = m; this.msgT = 50; },
+      score() { return Math.max(0, Math.min(100, Math.round(100 - (this.pen / Math.max(1, this.frames)) * 9))); },
+      update() {
+        const inp = G.input;
+        this.t++; talk.update();
+        if (this.msgT > 0) this.msgT--;
+        if (this.endT > 0) { if (--this.endT === 0) { const sc = this.score(); this.result = { score: sc, ruined: this.ruined || (sc < WORK[pipe.id].pass ? 'rough' : null) }; return true; } return false; }
+        if (quitHit()) { this.result = 'quit'; return true; }
+        if (inp.down('up')) this.o -= 0.85;
+        if (inp.down('down')) this.o += 0.85;
+        this.o = Math.max(-20, Math.min(100, this.o));
+        this.p += w.feed;
+        // a knot in the briar: the blade grabs it and shoves the block for a moment (fight it!)
+        if (this.knots.length && this.p >= this.knots[0]) { this.knots.shift(); this.shove = (G.hash(this.cut, Math.round(this.p), 3) < 0.5 ? -1 : 1) * 0.45; this.shoveT = 16; G.audio.sfx('bump'); G.play.shake(6, 2); this.pop('KNOT!'); }
+        if (this.shoveT > 0) { this.shoveT--; this.o += this.shove; }
+        if (this.p >= 0 && this.p <= this.len) {
+          const cutY = BLADE_Y - this.o, e = cutY - lineAt(this.pts, this.p);
+          this.kerf.push(this.p, cutY);
+          this.frames++;
+          if (this.t % 6 === 0) G.audio.sfx('blip');
+          if (e < -w.ruin) {
+            this.ruined = 'saw'; this.endT = 60; G.audio.sfx('crack'); G.play.shake(10, 3); this.pop('INTO THE PIPE!');
+            talk.say('Stop! Stop. You cut right into the pipe.');
+            return false;
+          }
+          if (e < -w.tol) { this.pen += (-e - w.tol) * 2.2; if (!this.warnT) { this.warnT = 70; this.pop('TOO HIGH!'); talk.say('Careful! Above the line is the pipe. Stay ON the line.'); } }
+          else if (e > w.tol) { this.pen += (e - w.tol) * 0.5; if (!this.warnT) { this.warnT = 90; this.pop('Low: extra wood'); } }
+        }
+        if (this.warnT) this.warnT--;
+        if (this.p > this.len + 14) {
+          if (++this.cut < w.cuts.length) { this.begin(); this.pop('TURN THE BLOCK'); G.audio.sfx('menu'); talk.say('Good. Now turn it around and cut the back of the bowl.'); }
+          else { this.endT = 40; G.audio.sfx('select'); this.pop('CUT!'); }
+        }
+        return false;
+      },
+      draw(ctx) {
+        benchBack(ctx, 'THE BANDSAW', 'CUT ' + G.sayable(Math.min(this.cut + 1, w.cuts.length)) + '/' + G.sayable(w.cuts.length));
+        // the table
+        ctx.fillStyle = '#4a5058'; ctx.fillRect(0, 14, G.W, 118); ctx.fillStyle = '#5a626c'; ctx.fillRect(0, 14, G.W, 2);
+        ctx.fillStyle = '#3e444c'; for (let y = 30; y < 132; y += 24) ctx.fillRect(0, y, G.W, 1);
+        // the block, sliding past the blade (and the cut it's left behind)
+        const bx = Math.round(BLADE_X - this.p - 20), by = Math.round(this.o);
+        ctx.drawImage(arts[Math.min(this.cut, arts.length - 1)], bx, by);
+        ctx.fillStyle = '#1a1210';
+        for (let k = 0; k < this.kerf.length; k += 2) ctx.fillRect(Math.round(BLADE_X - this.p + this.kerf[k]), Math.round(this.o + this.kerf[k + 1]) - 1, 1, 2);
+        // the blade (its teeth running down), its guard, and where it cuts
+        ctx.fillStyle = '#c8ccd4'; ctx.fillRect(BLADE_X - 1, 14, 3, 118);
+        ctx.fillStyle = '#7a7e88'; for (let y = 14 + (this.t * 3) % 6; y < 132; y += 6) ctx.fillRect(BLADE_X - 1, y, 1, 2);
+        ctx.fillStyle = '#c83838'; ctx.fillRect(BLADE_X - 8, 14, 17, 22); ctx.fillStyle = '#e85050'; ctx.fillRect(BLADE_X - 8, 14, 17, 2);
+        const e = this.p >= 0 && this.p <= this.len ? BLADE_Y - this.o - lineAt(this.pts, this.p) : 0;
+        ctx.fillStyle = e < -w.tol ? '#f86858' : e > w.tol ? '#f8d850' : '#78e070';
+        ctx.fillRect(BLADE_X - 6, BLADE_Y, 3, 1); ctx.fillRect(BLADE_X + 4, BLADE_Y, 3, 1);
+        if (this.msgT > 0) { const tw = FT().width(this.msg); FT().draw(ctx, this.msg, 150 - Math.round(tw / 2), 40, this.msg === 'INTO THE PIPE!' || this.msg === 'TOO HIGH!' ? '#f86858' : '#f8d850', { shadow: '#000' }); }
+        FT().draw(ctx, '↑↓ keep the blade on the line', 100, 120, '#c8c0d8', { shadow: '#000' });
+        talk.draw(ctx);
+      },
+    };
+  }
+
+  // ---- THE LATHE: the briar spins, Nate moves the gouge (↓ in, ↑ out) while it rides along,
+  // pass after pass, cutting down to Dad's white line. Every pipe has its own layout (WORK.lathe).
+  // Push in too far at once and it CATCHES; enough catches (or one on a fragile shank) and it
+  // snaps. Too deep is a gouge; too shallow is rough (and gets another pass, twice at most).
+  // Result: { score, ruined } (or 'quit').
+  function latheLayout(L) {
+    const target = [], zone = [];
+    for (const s of L.layout) for (let k = 0; k < s.n; k++) {
+      const t = s.n > 1 ? k / (s.n - 1) : 0, b = s.ball;
+      target.push(b ? (t < 0.5 ? b[0] + (b[1] - b[0]) * Math.sin(t * Math.PI) : b[2] + (b[1] - b[2]) * Math.sin(t * Math.PI)) : Array.isArray(s.r) ? s.r[0] + (s.r[1] - s.r[0]) * t : s.r);
+      zone.push({ fragile: !!s.fragile, tight: !!s.tight, noCut: s.noCut || null, crack: !!(s.crack && k >= s.crack[0] && k <= s.crack[1]), from: s.from });
+    }
+    return { target, zone };
+  }
   function latheCmd(pipe, talk) {
-    const d = pipe.d, X0 = 40, N = 160, AX = 74, RMAX = 30;
-    const passes = d <= 2 ? 4 : 3, speed = 0.6 + d * 0.12, tol = 5 - d * 0.5, bite = 14 - d * 1.2;
-    const target = [], wood = new Float32Array(N).fill(RMAX);
-    for (let i = 0; i < N; i++) target.push(Math.max(8, 4 + G.art.pipeProfile(pipe.id, 0.03 + (i / (N - 1)) * 0.92) * 22));
+    const L = WORK[pipe.id].lathe, X0 = 40, N = 160, AX = 74, RMAX = 30;
+    const { target, zone } = latheLayout(L), tolAt = (i) => (zone[i].tight ? Math.min(L.tol, 1.6) : L.tol);
+    const wood = new Float32Array(N);
+    // (a shank's mostly trimmed already on the bandsaw: it starts closer to its line than the bowl)
+    for (let i = 0; i < N; i++) {
+      const top = zone[i].from ? target[i] + zone[i].from : RMAX;
+      wood[i] = zone[i].noCut ? target[i] : L.odd ? top - 7 * Math.abs(Math.sin(i * 0.06 + 1)) * (top / RMAX) - 3 * G.hash(i, 3, 9) : top;
+    }
+    // what's special about this layout, labelled over it
+    const labels = [];
+    let at = 0;
+    for (const s of L.layout) {
+      const lab = s.noCut === 'square' ? 'KEEP SQUARE' : s.noCut === 'plateau' ? 'PLATEAU' : s.fragile ? 'THIN!' : s.tight ? 'BAND' : s.crack ? 'CRACK' : null;
+      if (lab) labels.push([X0 + at + (s.crack ? (s.crack[0] + s.crack[1]) / 2 : s.n / 2), lab, s.noCut ? '#78e8e8' : s.tight ? '#f8d850' : '#f86858']);
+      at += s.n;
+    }
     const chips = [];
     return {
-      start() { Object.assign(this, { x: 0, dir: 1, pass: 1, tool: RMAX + 4, t: 0, catches: 0, shakeT: 0, endT: 0, msg: null, msgT: 0, lockT: 0, deepT: 0, target, wood, bite }); G.play.overlay = this; },
-      score() {
-        let pen = 0;
-        for (let i = 0; i < N; i++) { const e = wood[i] - target[i]; if (e < -tol) pen += (-e - tol) * 2.5 + 1; else if (e > tol) pen += e - tol; }
-        return Math.max(0, Math.min(100, Math.round(100 - (pen / N) * 10 - this.catches * 4)));
+      start() {
+        Object.assign(this, { x: 0, dir: 1, pass: 1, passes: L.passes, extra: 0, tool: RMAX + 4, t: 0, catches: 0, nocuts: 0, shakeT: 0, endT: 0, msg: null, msgT: 0, lockT: 0, deepT: 0, ruined: null, target, wood, zone, bite: L.bite, tolAt });
+        talk.nowT = 0; G.play.overlay = this;
       },
+      score() {
+        let pen = 0, n = 0;
+        for (let i = 0; i < N; i++) {
+          if (zone[i].noCut) continue;
+          const e = wood[i] - target[i], tol = tolAt(i), wgt = zone[i].tight ? 2 : 1;
+          n += wgt;
+          if (e < -tol) pen += ((-e - tol) * 2.5 + 1) * wgt; else if (e > tol) pen += (e - tol) * wgt;
+        }
+        return Math.max(0, Math.min(100, Math.round(100 - (pen / n) * 10 - this.catches * 4 - this.nocuts * 15)));
+      },
+      rough() { let k = 0, n = 0; for (let i = 0; i < N; i++) if (!zone[i].noCut) { n++; if (wood[i] > target[i] + tolAt(i)) k++; } return k / n; },
       pop(text) { this.msg = text; this.msgT = 50; },
+      ruin(why, line, msg) { this.ruined = why; this.endT = 70; this.shakeT = 20; G.audio.sfx('crack'); G.play.shake(12, 3); this.pop(msg); talk.say(line); },
       update() {
         const inp = G.input;
         this.t++; talk.update();
@@ -5341,40 +5582,56 @@
         if (this.msgT > 0) this.msgT--;
         for (const c of chips) { c.x += c.vx; c.y += c.vy; c.vy += 0.12; c.life--; }
         for (let i = chips.length - 1; i >= 0; i--) if (chips[i].life <= 0) chips.splice(i, 1);
-        if (this.endT > 0) { if (--this.endT === 0) { this.result = this.score(); return true; } return false; }
+        if (this.endT > 0) {
+          if (--this.endT === 0) { const sc = this.score(); this.result = { score: sc, ruined: this.ruined || (sc < WORK[pipe.id].pass ? 'gouged' : null) }; return true; }
+          return false;
+        }
         if (quitHit()) { this.result = 'quit'; return true; }
         // (after a catch, the gouge stays backed off for a moment)
         if (this.lockT > 0) { this.lockT--; this.tool = Math.min(RMAX + 6, this.tool + 0.3); }
         if (inp.down('up')) this.tool = Math.min(RMAX + 6, this.tool + 0.7);
-        if (inp.down('down') && !this.lockT) this.tool = Math.max(5, this.tool - 0.7);
+        if (inp.down('down') && !this.lockT) this.tool = Math.max(4, this.tool - 0.7);
         if (this.deepT > 0) this.deepT--;
         const was = this.x;
-        this.x = Math.max(0, Math.min(N - 1, this.x + this.dir * speed));
+        this.x = Math.max(0, Math.min(N - 1, this.x + this.dir * L.speed));
         let cutting = false;
         for (let c = Math.floor(Math.min(was, this.x)); c <= Math.floor(Math.max(was, this.x)); c++) {
-          if (c < 0 || c >= N || this.tool >= wood[c]) continue;
-          if (wood[c] - this.tool > bite) {
+          if (c < 0 || c >= N || this.tool >= wood[c] - 0.05) continue;
+          const z = zone[c];
+          // the part that's supposed to stay as it is: hands off (a graze doesn't count)
+          if (z.noCut && this.tool >= wood[c] - 1) continue;
+          if (z.noCut) {
+            this.nocuts++; this.lockT = 30; this.tool = Math.max(this.tool, wood[c] + 4);
+            if (this.nocuts > (L.noCutOk || 0)) { this.ruin(z.noCut, RUIN[z.noCut], 'RUINED!'); return false; }
+            G.audio.sfx('no'); this.pop('DON\'T CUT THERE!'); talk.say(z.noCut === 'plateau' ? 'NOT the plateau! Leave the top rough!' : 'Not the shank! It stays square! Back off before you get there.');
+            break;
+          }
+          if (wood[c] - this.tool > L.bite) {
             // a catch: the gouge digs in and tears a chunk out, and bounces back up
-            for (let k = c - 3; k <= c + 3; k++) if (k >= 0 && k < N) wood[k] = Math.min(wood[k], this.tool - 2 + Math.abs(k - c) * 0.6);
-            this.catches++; this.shakeT = 14; this.lockT = 30; this.tool = Math.min(RMAX + 6, this.tool + bite);
-            G.audio.sfx('crack'); this.pop('CATCH!');
-            talk.say(['Whoa! Light passes! You can always take more off. You can\'t put it back.', 'Easy! That\'s how I broke one. It caught and SNAP.', 'Gently! Let the lathe do the work.'][this.catches % 3]);
+            for (let k = c - 3; k <= c + 3; k++) if (k >= 0 && k < N && !zone[k].noCut) wood[k] = Math.min(wood[k], this.tool - 2 + Math.abs(k - c) * 0.6);
+            // (a catch on a thin shank counts double)
+            this.catches += z.fragile ? 2 : 1; this.shakeT = 14; this.lockT = 30; this.tool = Math.min(RMAX + 6, this.tool + L.bite);
+            if (this.catches >= L.catches) { this.ruin('snap', z.fragile ? 'The thin shank caught. And SNAP.' : 'It caught one too many times. And SNAP.', 'SNAP!'); return false; }
+            G.audio.sfx('crack'); this.pop((z.fragile ? 'THIN SHANK CAUGHT! ' : 'CATCH! ') + '(' + G.sayable(L.catches - this.catches) + ' more: SNAP)');
+            talk.say(z.fragile ? 'The shank is thin! That one counts double. Go easy there.' : ['Whoa! Light passes! You can always take more off. You can\'t put it back.', 'Easy! That\'s how I broke one. It caught and SNAP.', 'Gently! Let the lathe do the work.'][this.catches % 3]);
             break;
           }
           wood[c] = this.tool; cutting = true;
-          if (this.tool < target[c] - tol && !this.deepT) { this.deepT = 90; this.pop('TOO DEEP!'); talk.say('Back off a little! Stay on the white line.'); }
+          if (z.crack && wood[c] < target[c] - L.tol * 0.6) { this.ruin('crack', 'The crack! It opened right up.', 'CRACK!'); return false; }
+          if (this.tool < target[c] - tolAt(c) && !this.deepT) { this.deepT = 90; this.pop('TOO DEEP!'); talk.say(z.tight ? 'The band seat has to be exact! Right on the line.' : 'Back off a little! Stay on the white line.'); }
         }
         if (cutting && this.t % 2 === 0) chips.push({ x: X0 + this.x, y: AX - this.tool, vx: (Math.random() - 0.5) * 2.4, vy: -1 - Math.random() * 1.5, life: 26, c: ['#e8c890', '#d8b070', '#f4dcb0'][this.t % 3] });
         if (cutting && this.t % 9 === 0) G.audio.sfx('blip');
-        // end of a pass: turn around (or that's the last one)
+        // end of a pass: turn around (or, if it's still rough after the last one, one more)
         if ((this.dir > 0 && this.x >= N - 1) || (this.dir < 0 && this.x <= 0)) {
-          if (this.pass < passes) { this.pass++; this.dir = -this.dir; this.pop('PASS ' + G.sayable(this.pass) + '/' + G.sayable(passes)); G.audio.sfx('menu'); }
+          if (this.pass < this.passes) { this.pass++; this.dir = -this.dir; this.pop('PASS ' + G.sayable(this.pass) + '/' + G.sayable(this.passes)); G.audio.sfx('menu'); }
+          else if (this.extra < 2 && this.rough() > 0.12) { this.extra++; this.passes++; this.pass++; this.dir = -this.dir; this.pop('ONE MORE PASS'); talk.say('Still rough. Take one more pass.'); G.audio.sfx('menu'); }
           else { this.endT = 50; G.audio.sfx('select'); this.pop('DONE!'); }
         }
         return false;
       },
       draw(ctx) {
-        benchBack(ctx, 'THE LATHE', 'PASS ' + G.sayable(this.pass) + '/' + G.sayable(passes));
+        benchBack(ctx, 'THE LATHE', 'PASS ' + G.sayable(this.pass) + '/' + G.sayable(this.passes));
         const jx = this.shakeT > 0 ? Math.round((Math.random() * 2 - 1) * 2) : 0;
         ctx.save(); ctx.translate(jx, 0);
         // the bed and its legs, the headstock (with the spur drive) and the tailstock
@@ -5386,33 +5643,59 @@
         ctx.fillStyle = '#9aa0a8'; ctx.fillRect(200, AX - 4, 8, 8); ctx.fillRect(198, AX - 2, 2, 4);
         // the briar, spinning: lighter on top, grain lines rolling around it
         for (let i = 0; i < N; i++) {
-          const r = wood[i], x = X0 + i;
-          ctx.fillStyle = '#c89a62'; ctx.fillRect(x, Math.round(AX - r), 1, Math.round(r * 2));
-          ctx.fillStyle = '#ddb47c'; ctx.fillRect(x, Math.round(AX - r), 1, Math.round(r * 0.7));
+          const r = wood[i], x = X0 + i, z = zone[i], top = Math.round(AX - r), h = Math.round(r * 2);
+          if (z.noCut === 'square') {
+            // the square shank: flat sides, striped so it's clear what to leave alone
+            ctx.fillStyle = '#b8824c'; ctx.fillRect(x, top, 1, h);
+            ctx.fillStyle = '#78e8e8'; if ((i + this.t) % 6 < 2) { ctx.fillRect(x, top, 1, 1); ctx.fillRect(x, top + h - 1, 1, 1); }
+            ctx.fillStyle = '#9a6a3c'; if (i % 6 === 0) ctx.fillRect(x, top + 2, 1, h - 4);
+            continue;
+          }
+          if (z.noCut === 'plateau') {
+            // the plateau: rough bark, left the way it grew
+            ctx.fillStyle = '#5a3a22'; ctx.fillRect(x, top, 1, h);
+            ctx.fillStyle = '#3a2412'; for (let k = 0; k < h; k += 2) if (G.hash(i, k + (this.t >> 2), 5) < 0.4) ctx.fillRect(x, top + k, 1, 1);
+            ctx.fillStyle = '#78e8e8'; if ((i + this.t) % 6 < 2) { ctx.fillRect(x, top - 1, 1, 1); ctx.fillRect(x, top + h, 1, 1); }
+            continue;
+          }
+          ctx.fillStyle = '#c89a62'; ctx.fillRect(x, top, 1, h);
+          ctx.fillStyle = '#ddb47c'; ctx.fillRect(x, top, 1, Math.round(r * 0.7));
           ctx.fillStyle = '#a87a48'; ctx.fillRect(x, Math.round(AX + r * 0.45), 1, Math.round(r * 0.55));
           ctx.fillStyle = '#9a6a3c';
           for (let k = 0; k < 6; k++) {
             const a = k * 1.047 + this.t * 0.3 + Math.sin(i * 0.12 + k) * 0.12;
             if (Math.sin(a) > 0) ctx.fillRect(x, Math.round(AX - r * Math.cos(a)), 1, 1);
           }
-          // the wood that still has to come off (lighter), Dad's white line, and gouges (red)
+          // pits in a flawed block, and the crack (rolling around with it)
+          if (L.flaws && G.hash(i >> 1, (this.t >> 2) % 9, 6) < 0.06) { ctx.fillStyle = '#4a2a14'; ctx.fillRect(x, AX - Math.round(r * 0.3), 1, 2); }
+          if (z.crack) { ctx.fillStyle = '#2a1408'; ctx.fillRect(x, AX + ((i + (this.t >> 1)) % 4 < 2 ? -2 : 1), 1, 2); }
+          // the wood still to come off (lighter), Dad's white line (green where it's right), and gouges (red)
+          const tol = tolAt(i);
           if (r > target[i] + tol) {
             ctx.fillStyle = 'rgba(255,240,200,0.28)';
-            ctx.fillRect(x, Math.round(AX - r), 1, Math.round(r - target[i])); ctx.fillRect(x, Math.round(AX + target[i]), 1, Math.round(r - target[i]));
+            ctx.fillRect(x, top, 1, Math.round(r - target[i])); ctx.fillRect(x, Math.round(AX + target[i]), 1, Math.round(r - target[i]));
           }
-          if (r < target[i] - tol) { ctx.fillStyle = '#e83838'; ctx.fillRect(x, Math.round(AX - r), 1, 2); ctx.fillRect(x, Math.round(AX + r) - 2, 1, 2); }
-          ctx.fillStyle = r >= target[i] - tol && r <= target[i] + tol ? '#78e070' : '#f8f8f0';
+          if (r < target[i] - tol) { ctx.fillStyle = '#e83838'; ctx.fillRect(x, top, 1, 2); ctx.fillRect(x, top + h - 2, 1, 2); }
+          ctx.fillStyle = z.tight ? '#f8d850' : r >= target[i] - tol && r <= target[i] + tol ? '#78e070' : z.fragile ? '#f8a878' : '#f8f8f0';
           ctx.fillRect(x, Math.round(AX - target[i]), 1, 1); ctx.fillRect(x, Math.round(AX + target[i]), 1, 1);
         }
-        // the tool rest and the gouge, its tip at the cut
+        // the gouge, its tip at the cut (the tip shows how hard it's biting: green, yellow, then red,
+        // about to catch)
         const tx = Math.round(X0 + this.x), ty = Math.round(AX - this.tool);
+        const bite = (wood[Math.max(0, Math.min(N - 1, Math.round(this.x + this.dir * 2)))] - this.tool) / L.bite, bc = bite > 0.8 ? '#f86858' : bite > 0.55 ? '#f8d850' : '#78e070';
         ctx.fillStyle = '#7a4a28'; ctx.fillRect(tx - 2, ty - 22, 5, 10);
         ctx.fillStyle = '#c8ccd4'; ctx.fillRect(tx - 1, ty - 12, 3, 10); ctx.fillStyle = '#f8f8f8'; ctx.fillRect(tx - 1, ty - 12, 1, 10);
-        ctx.fillStyle = '#e8ecf0'; ctx.fillRect(tx, ty - 2, 1, 2);
+        ctx.fillStyle = bite > 0 ? bc : '#e8ecf0'; ctx.fillRect(tx - 1, ty - 3, 3, 3);
         for (const c of chips) { ctx.fillStyle = c.c; ctx.fillRect(Math.round(c.x), Math.round(c.y), 2, 1); }
         ctx.restore();
-        if (this.msgT > 0) { const w = FT().width(this.msg); FT().draw(ctx, this.msg, 120 - Math.round(w / 2), 16, this.msg === 'CATCH!' || this.msg === 'TOO DEEP!' ? '#f86858' : '#f8d850', { shadow: '#000' }); }
+        for (const [lx, lab, col] of labels) FT().draw(ctx, lab, Math.round(lx - FT().width(lab) / 2), 27, col, { shadow: '#000' });
+        if (this.msgT > 0) { const w = FT().width(this.msg); FT().draw(ctx, this.msg, 120 - Math.round(w / 2), 15, /CATCH|DEEP|SNAP|CRACK|RUIN|DON/.test(this.msg) ? '#f86858' : '#f8d850', { shadow: '#000' }); }
+        FT().draw(ctx, 'Bite', 120, 112, '#c8c0d8', { shadow: '#000' });
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(142, 113, 50, 5);
+        if (bite > 0) { ctx.fillStyle = bc; ctx.fillRect(143, 114, Math.round(48 * Math.min(1, bite)), 3); }
+        ctx.fillStyle = '#f86858'; ctx.fillRect(143 + 48, 113, 1, 5);
         FT().draw(ctx, '↓ cut in   ↑ back off', 104, 120, '#c8c0d8', { shadow: '#000' });
+        FT().draw(ctx, 'Catches: ' + '{r}' + '■'.repeat(this.catches) + '{d}' + '■'.repeat(Math.max(0, L.catches - this.catches)), 6, 120, '#c8c0d8', { shadow: '#000' });
         talk.draw(ctx);
       },
     };
@@ -5422,26 +5705,33 @@
   const CS = 4, PIPE_X = 100, PIPE_Y = 36;
   function woodCells(pipe) {
     const raw = G.art.pipeArt(pipe.id, 2, { wood: RAW_BRIAR, shankWood: RAW_BRIAR }), parts = raw.parts, W = raw.width, H = raw.height;
-    const cols = Math.ceil(W / CS), rows = Math.ceil(H / CS), wood = new Uint8Array(cols * rows);
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const p = parts[y * W + x]; if (p === 1 || p === 2) wood[Math.floor(y / CS) * cols + Math.floor(x / CS)] = 1; }
+    const cols = Math.ceil(W / CS), rows = Math.ceil(H / CS), wood = new Uint8Array(cols * rows), bowl = new Uint8Array(cols * rows), shank = new Uint8Array(cols * rows);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const p = parts[y * W + x], i = Math.floor(y / CS) * cols + Math.floor(x / CS);
+      if (p === 1) { wood[i] = 1; bowl[i] = 1; } else if (p === 2) { wood[i] = 1; shank[i] = 1; }
+    }
     let count = 0;
     for (const w of wood) count += w;
-    return { raw, W, H, cols, rows, wood, count };
+    return { raw, W, H, cols, rows, wood, bowl, shank, count };
   }
 
-  // ---- SANDING: off come the tool marks, one grit at a time (220, 400, 800; the Strawberry Briar
-  // goes on to 1500). The pipe is in bands: ↑↓ puts the sandpaper on one, tapping ← → ← → sands
-  // it. A band is done when its scratches are gone; keep sanding a done one and it goes flat.
-  // Result: 0-100 (or 'quit').
+  // ---- SANDING: off come the tool marks, one grit at a time. Most pipes are sanded in five bands
+  // (↑↓ picks one, tapping ← → ← → sands it); the Minecraft pipe's eight panels are sanded flat
+  // on the wheel (← → picks one, ↑ ↓ ↑ ↓ sands it). A band or panel is done when its scratches
+  // are gone. Keep going on a done one and it goes flat; too many flat spots and it's lopsided.
+  // Result: { score, ruined } (or 'quit').
   function sandCmd(pipe, talk) {
-    const c = woodCells(pipe), grits = pipe.id === 'strawberry' ? [220, 400, 800, 1500] : [220, 400, 800], NEED = [6, 4, 3, 3], BANDS = 5;
-    let r0 = c.rows, r1 = 0;
-    for (let i = 0; i < c.wood.length; i++) if (c.wood[i]) { const r = Math.floor(i / c.cols); r0 = Math.min(r0, r); r1 = Math.max(r1, r); }
-    const bandOf = (row) => Math.min(BANDS - 1, Math.floor(((row - r0) / (r1 - r0 + 1)) * BANDS));
-    const bandY = (b) => (r0 + ((b + 0.5) * (r1 - r0 + 1)) / BANDS) * CS;
+    const S = WORK[pipe.id].sand, panels = WORK[pipe.id].finish === 'panels', c = woodCells(pipe), grits = S.grits, NEED = [6, 4, 3, 3], UNITS = panels ? 8 : 5;
+    // which band (top to bottom) or panel (across the bowl) each cell belongs to
+    const inPlay = (i) => c.wood[i] && (!panels || c.bowl[i]), along = (i) => (panels ? i % c.cols : Math.floor(i / c.cols));
+    let a0 = 1e9, a1 = -1e9;
+    for (let i = 0; i < c.wood.length; i++) if (inPlay(i)) { a0 = Math.min(a0, along(i)); a1 = Math.max(a1, along(i)); }
+    const unitOf = (i) => (inPlay(i) ? Math.min(UNITS - 1, Math.floor(((along(i) - a0) / (a1 - a0 + 1)) * UNITS)) : -1);
+    const span = (u) => [a0 + (u * (a1 - a0 + 1)) / UNITS, a0 + ((u + 1) * (a1 - a0 + 1)) / UNITS];
     const dust = [];
+    const pick = panels ? ['left', 'right'] : ['up', 'down'], rub = panels ? ['up', 'down'] : ['left', 'right'];
     return {
-      start() { Object.assign(this, { g: 0, band: 2, need: Array(BANDS).fill(NEED[0]), over: Array(BANDS).fill(0), last: null, flats: 0, t: 0, endT: 0, rubT: 0, msg: null, msgT: 0 }); talk.nowT = 0; G.play.overlay = this; },
+      start() { Object.assign(this, { g: 0, unit: Math.floor(UNITS / 2), need: Array(UNITS).fill(NEED[0]), over: Array(UNITS).fill(0), last: null, flats: 0, t: 0, endT: 0, rubT: 0, msg: null, msgT: 0, ruined: null, UNITS }); talk.nowT = 0; G.play.overlay = this; },
       pop(text) { this.msg = text; this.msgT = 50; },
       update() {
         const inp = G.input;
@@ -5450,27 +5740,32 @@
         if (this.rubT > 0) this.rubT--;
         for (const p of dust) { p.x += p.vx; p.y += p.vy; p.vy += 0.05; p.life--; }
         for (let i = dust.length - 1; i >= 0; i--) if (dust[i].life <= 0) dust.splice(i, 1);
-        if (this.endT > 0) { if (--this.endT === 0) { this.result = Math.max(40, 100 - this.flats * 8); return true; } return false; }
+        if (this.endT > 0) { if (--this.endT === 0) { this.result = { score: Math.max(0, 100 - this.flats * 15), ruined: this.ruined }; return true; } return false; }
         if (quitHit()) { this.result = 'quit'; return true; }
-        if (inp.hit('up') && this.band > 0) { this.band--; G.audio.sfx('menu'); }
-        if (inp.hit('down') && this.band < BANDS - 1) { this.band++; G.audio.sfx('menu'); }
+        if (inp.hit(pick[0]) && this.unit > 0) { this.unit--; G.audio.sfx('menu'); }
+        if (inp.hit(pick[1]) && this.unit < UNITS - 1) { this.unit++; G.audio.sfx('menu'); }
         // a stroke: the other way from the last one
-        const dir = inp.hit('left') ? 'left' : inp.hit('right') ? 'right' : null;
+        const dir = inp.hit(rub[0]) ? rub[0] : inp.hit(rub[1]) ? rub[1] : null;
         if (dir && dir !== this.last) {
           this.last = dir; this.rubT = 6;
-          const b = this.band;
+          const u = this.unit, [s0, s1] = span(u);
           if (this.t % 2 === 0) G.audio.sfx('blip');
-          for (let k = 0; k < 3; k++) dust.push({ x: PIPE_X + 40 + Math.random() * 80, y: PIPE_Y + bandY(b), vx: (Math.random() - 0.5) * 1.4, vy: -0.6 - Math.random(), life: 22 });
-          if (this.need[b] > 0) {
-            if (--this.need[b] === 0) G.audio.sfx('select');
-          } else if (++this.over[b] >= 4) {
-            this.over[b] = 0; this.flats++; G.audio.sfx('no'); this.pop('FLAT SPOT!');
-            talk.say('Easy! That spot\'s done. Move on to another one.');
+          for (let k = 0; k < 3; k++) {
+            const m = (s0 + s1) / 2 * CS;
+            dust.push(panels ? { x: 100 + u * 16 + 7 + Math.random() * 8 - 4, y: 42, vx: (Math.random() - 0.5) * 1.6, vy: -0.4 - Math.random(), life: 22 } : { x: PIPE_X + 40 + Math.random() * 80, y: PIPE_Y + m, vx: (Math.random() - 0.5) * 1.4, vy: -0.6 - Math.random(), life: 22 });
           }
-          // every band smooth: on to the next grit (or done)
+          if (this.need[u] > 0) {
+            if (--this.need[u] === 0) G.audio.sfx('select');
+          } else if (++this.over[u] >= S.over) {
+            this.over[u] = 0; this.flats++;
+            if (this.flats >= S.flats) { this.ruined = 'lopsided'; this.endT = 60; G.audio.sfx('crack'); this.pop('LOPSIDED!'); talk.say('Oh no. That\'s gone lopsided.'); return false; }
+            G.audio.sfx('no'); this.pop((panels ? 'ROUNDED A PANEL!' : 'FLAT SPOT!') + ' (' + G.sayable(S.flats - this.flats) + ' more: ruined)');
+            talk.say(panels ? 'Easy! That panel\'s done. Keep the edges crisp.' : 'Easy! That spot\'s done. Move on to another one.');
+          }
+          // all smooth: on to the next grit (or done)
           if (this.need.every((n) => n === 0)) {
             if (++this.g < grits.length) {
-              this.need = Array(BANDS).fill(NEED[this.g]); this.over = Array(BANDS).fill(0);
+              this.need = Array(UNITS).fill(NEED[this.g]); this.over = Array(UNITS).fill(0);
               this.pop(grits[this.g] + ' GRIT'); talk.say('Good. Now ' + grits[this.g] + '. Finer paper, same thing.');
             } else { this.endT = 40; this.pop('SMOOTH!'); talk.say('Feel that. Smooth as a church pew.'); }
           }
@@ -5478,65 +5773,267 @@
         return false;
       },
       draw(ctx) {
-        benchBack(ctx, 'SANDING', pipe.name);
+        benchBack(ctx, panels ? 'THE PANELS' : 'SANDING', pipe.name);
         // the grits, coarse to fine
         G.box(ctx, 4, 16, 78, 112);
-        FT().draw(ctx, 'Sandpaper', 10, 20, '#c8c0d8');
+        FT().draw(ctx, panels ? 'The wheel' : 'Sandpaper', 10, 20, '#c8c0d8');
         grits.forEach((gr, i) => {
           const y = 34 + i * 16, done = i < this.g, on = i === this.g && !this.endT;
           ctx.fillStyle = ['#c8a070', '#d8b888', '#e8d0a8', '#f4e8d0'][i]; ctx.fillRect(12, y, 12, 10);
           for (let k = 0; k < 10; k++) if (G.hash(k, i, 5) < 0.5) { ctx.fillStyle = '#8a6a48'; ctx.fillRect(13 + (k % 5) * 2, y + 2 + Math.floor(k / 5) * 4, 1, 1); }
           FT().draw(ctx, G.sayable(gr) + ' grit' + (done || this.endT ? '  ✓' : ''), 28, y + 2, on ? '#f8d850' : done || this.endT ? '#78e070' : '#f8f8f0');
         });
-        // the pipe, with the scratches still left on each band (fewer as it gets smooth)
-        ctx.drawImage(c.raw, PIPE_X, PIPE_Y);
+        FT().draw(ctx, 'Flat: ' + '{r}' + '■'.repeat(this.flats) + '{d}' + '■'.repeat(Math.max(0, S.flats - this.flats)), 10, 112, '#c8c0d8');
         const max = NEED[this.g] || 1;
-        for (let i = 0; i < c.wood.length; i++) {
-          if (!c.wood[i]) continue;
-          const row = Math.floor(i / c.cols), col = i % c.cols, b = bandOf(row), n = this.endT ? 0 : this.need[b];
+        if (panels) {
+          // the eight panels, unrolled side by side (the octagon up top shows which one's on the wheel)
+          for (let u = 0; u < UNITS; u++) {
+            const x = 100 + u * 16, y = 46, n = this.endT ? 0 : this.need[u], on = u === this.unit && !this.endT;
+            ctx.fillStyle = G.art.shade(RAW_BRIAR, u % 2 ? -0.06 : 0.04); ctx.fillRect(x, y, 14, 54);
+            ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(x, y, 1, 54); ctx.fillStyle = 'rgba(90,50,20,0.4)'; ctx.fillRect(x + 13, y, 1, 54);
+            ctx.fillStyle = this.g === 0 ? '#8a6040' : this.g === 1 ? '#a07850' : '#b89068';
+            for (let k = 0; k < 14 * (n / max); k++) { const sx = x + 1 + Math.floor(G.hash(k, u, 3 + this.g) * 10), sy = y + 2 + Math.floor(G.hash(u, k, 5 + this.g) * 48); ctx.fillRect(sx, sy + 2, 1, 1); ctx.fillRect(sx + 1, sy + 1, 1, 1); ctx.fillRect(sx + 2, sy, 1, 1); }
+            if (on) corners(ctx, x - 1, y - 2, 16, 58, n ? '#f8d850' : '#78e070');
+            const lab = G.sayable(u + 1);
+            FT().draw(ctx, lab, x + 7 - Math.round(FT().width(lab) / 2), y + 57, on ? '#f8d850' : '#9890a8', { shadow: '#000' });
+          }
+          // the octagon, with the panel on the wheel lit up
+          const ox = 116, oy = 28;
+          for (let u = 0; u < UNITS; u++) {
+            const a0 = (u / UNITS) * Math.PI * 2 - Math.PI / 2, a1 = ((u + 1) / UNITS) * Math.PI * 2 - Math.PI / 2;
+            ctx.strokeStyle = u === this.unit ? '#f8d850' : this.need[u] ? '#9a6a3c' : '#78e070'; ctx.lineWidth = u === this.unit ? 2 : 1;
+            ctx.beginPath(); ctx.moveTo(ox + Math.cos(a0) * 11, oy + Math.sin(a0) * 11); ctx.lineTo(ox + Math.cos(a1) * 11, oy + Math.sin(a1) * 11); ctx.stroke();
+          }
+          ctx.lineWidth = 1;
+          // the wheel
+          const wx = 100 + this.unit * 16 + 7, wy = 36 + (this.rubT ? (this.last === 'up' ? -2 : 2) : 0);
+          ctx.fillStyle = '#5a5a64'; ctx.beginPath(); ctx.arc(wx, wy, 7, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = ['#c8a070', '#d8b888', '#e8d0a8', '#f4e8d0'][this.g]; ctx.beginPath(); ctx.arc(wx, wy, 5, 0, Math.PI * 2); ctx.fill();
+          for (const p of dust) { ctx.fillStyle = '#f0dcb8'; ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); }
+        }
+        // the pipe, with the scratches still left on each band (fewer as it gets smooth)
+        if (!panels) ctx.drawImage(c.raw, PIPE_X, PIPE_Y);
+        if (!panels) for (let i = 0; i < c.wood.length; i++) {
+          const u = unitOf(i);
+          if (u < 0) continue;
+          const row = Math.floor(i / c.cols), col = i % c.cols, n = this.endT ? 0 : this.need[u];
           if (n > 0 && G.hash(col, row, 7 + this.g) < 0.25 + 0.6 * (n / max)) {
             ctx.fillStyle = this.g === 0 ? '#8a6040' : this.g === 1 ? '#a07850' : '#b89068';
             const x = PIPE_X + col * CS, y = PIPE_Y + row * CS;
             ctx.fillRect(x, y + 3, 1, 1); ctx.fillRect(x + 1, y + 2, 1, 1); ctx.fillRect(x + 2, y + 1, 1, 1); ctx.fillRect(x + 3, y, 1, 1);
           }
         }
-        // the band the sandpaper is on (and its sanding block, rubbing)
-        if (!this.endT) {
-          const y0 = PIPE_Y + Math.round((r0 + (this.band * (r1 - r0 + 1)) / BANDS) * CS), y1 = PIPE_Y + Math.round((r0 + ((this.band + 1) * (r1 - r0 + 1)) / BANDS) * CS);
-          corners(ctx, PIPE_X - 2, y0 - 1, c.W + 4, y1 - y0 + 2, this.need[this.band] ? '#f8d850' : '#78e070');
-          const bx = 84 + (this.rubT ? (this.last === 'left' ? -2 : 2) : 0), by = PIPE_Y + Math.round(bandY(this.band)) - 5;
+        // the band the sandpaper's on (and the sanding block, rubbing)
+        if (!this.endT && !panels) {
+          const [s0, s1] = span(this.unit), col = this.need[this.unit] ? '#f8d850' : '#78e070';
+          const y0 = PIPE_Y + Math.round(s0 * CS), y1 = PIPE_Y + Math.round(s1 * CS);
+          corners(ctx, PIPE_X - 2, y0 - 1, c.W + 4, y1 - y0 + 2, col);
+          const bx = 84 + (this.rubT ? (this.last === 'left' ? -2 : 2) : 0), by = Math.round((y0 + y1) / 2) - 5;
           ctx.fillStyle = '#5a3a20'; ctx.fillRect(bx, by, 16, 6); ctx.fillStyle = ['#c8a070', '#d8b888', '#e8d0a8', '#f4e8d0'][this.g]; ctx.fillRect(bx, by + 6, 16, 3);
         }
-        for (const p of dust) { ctx.fillStyle = '#f0dcb8'; ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); }
-        if (this.msgT > 0) { const w = FT().width(this.msg); FT().draw(ctx, this.msg, 160 - Math.round(w / 2), 16, this.msg === 'FLAT SPOT!' ? '#f86858' : '#f8d850', { shadow: '#000' }); }
-        FT().draw(ctx, '↑↓ a spot   ← → sand it', 100, 120, '#c8c0d8', { shadow: '#000' });
+        if (!panels) for (const p of dust) { ctx.fillStyle = '#f0dcb8'; ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); }
+        if (this.msgT > 0) { const w = FT().width(this.msg); FT().draw(ctx, this.msg, Math.min(234 - w, Math.max(86, 160 - Math.round(w / 2))), 15, /FLAT|ROUND|LOP/.test(this.msg) ? '#f86858' : '#f8d850', { shadow: '#000' }); }
+        FT().draw(ctx, panels ? '← → a panel   ↑ ↓ sand it' : '↑↓ a spot   ← → sand it', 100, 120, '#c8c0d8', { shadow: '#000' });
+        talk.draw(ctx);
+      },
+    };
+  }
+
+  // ---- SANDBLASTING (the two sandblasted pipes, instead of sanding): the rim and the end of the
+  // shank are taped off. Hold Z to blast and move the nozzle with the arrows: the soft wood blows
+  // away and the grain stands up. Every bit of bare briar wants blasting; stay off the tape (too
+  // long on a piece and it blows through, and the briar under it is ruined). It stops on its own
+  // once every bit is blasted, right up to the tape (or when the grit runs out). Result: { score, ruined } (or 'quit').
+  function blastCmd(pipe, talk) {
+    const B = WORK[pipe.id].blast, c = woodCells(pipe), R = B.size;
+    // the tape: the rim (the bowl's top two rows) and a ring around the end of the shank
+    let rim = 1e9, end = 1e9;
+    for (let i = 0; i < c.wood.length; i++) { if (c.bowl[i]) rim = Math.min(rim, Math.floor(i / c.cols)); if (c.shank[i]) end = Math.min(end, i % c.cols); }
+    const tape = new Uint8Array(c.wood.length), hp = new Float32Array(c.wood.length), blasted = new Float32Array(c.wood.length);
+    let bare = 0;
+    for (let i = 0; i < c.wood.length; i++) {
+      if (!c.wood[i]) continue;
+      if ((c.bowl[i] && Math.floor(i / c.cols) <= rim + 1) || (c.shank[i] && i % c.cols <= end + 2)) { tape[i] = 1; hp[i] = B.tape; } else bare++;
+    }
+    const grit = [];
+    return {
+      start() { Object.assign(this, { t: 0, left: B.time, bx: c.W / 2, by: c.H * 0.6, torn: 0, endT: 0, ruined: null, msg: null, msgT: 0, tape, hp, blasted, cells: c, R }); talk.nowT = 0; G.play.overlay = this; },
+      pop(m) { this.msg = m; this.msgT = 50; },
+      cover() { let k = 0; for (let i = 0; i < c.wood.length; i++) if (c.wood[i] && !tape[i] && blasted[i] >= 1) k++; return k / bare; },
+      update() {
+        const inp = G.input;
+        this.t++; talk.update();
+        if (this.msgT > 0) this.msgT--;
+        for (const p of grit) { p.x += p.vx; p.y += p.vy; p.life--; }
+        for (let i = grit.length - 1; i >= 0; i--) if (grit[i].life <= 0) grit.splice(i, 1);
+        if (this.endT > 0) { if (--this.endT === 0) { this.result = { score: Math.max(0, Math.round(this.cover() * 100) - this.torn * 8), ruined: this.ruined }; return true; } return false; }
+        if (quitHit()) { this.result = 'quit'; return true; }
+        const sp = 1.7;
+        if (inp.down('left')) this.bx -= sp;
+        if (inp.down('right')) this.bx += sp;
+        if (inp.down('up')) this.by -= sp;
+        if (inp.down('down')) this.by += sp;
+        this.bx = Math.max(0, Math.min(c.W - 1, this.bx)); this.by = Math.max(0, Math.min(c.H - 1, this.by));
+        if (inp.down('a')) {
+          if (this.t % 2 === 0) for (let k = 0; k < 3; k++) { const a = Math.random() * Math.PI * 2; grit.push({ x: PIPE_X + this.bx, y: PIPE_Y + this.by, vx: Math.cos(a) * 1.4, vy: Math.sin(a) * 1.4, life: 10 }); }
+          if (this.t % 10 === 0) G.audio.sfx('spray');
+          for (let cy = Math.floor((this.by - R) / CS); cy <= Math.floor((this.by + R) / CS); cy++) for (let cx = Math.floor((this.bx - R) / CS); cx <= Math.floor((this.bx + R) / CS); cx++) {
+            if (cx < 0 || cy < 0 || cx >= c.cols || cy >= c.rows) continue;
+            const i = cy * c.cols + cx;
+            if (!c.wood[i] || Math.hypot(cx * CS + CS / 2 - this.bx, cy * CS + CS / 2 - this.by) > R) continue;
+            if (tape[i] && hp[i] > 0) {
+              if (--hp[i] <= 0) {
+                this.torn++; G.audio.sfx('pop');
+                if (this.torn >= B.tears) { this.ruined = 'tape'; this.endT = 60; G.audio.sfx('crack'); this.pop('BLEW THROUGH!'); talk.say('Stop! You blew right through the tape.'); return false; }
+                this.pop('THROUGH THE TAPE! (' + G.sayable(B.tears - this.torn) + ' more: ruined)'); talk.say('Off the tape! That\'s the rim under there!');
+              }
+            } else if (!tape[i]) blasted[i] = Math.min(1, blasted[i] + 0.07);
+          }
+        }
+        if (this.t % 10 === 0 && this.cover() >= 1) { this.endT = 40; G.audio.sfx('secret'); talk.say('Look at that grain stand up. Beautiful.'); return false; }
+        if (--this.left <= 0 || inp.hit('b')) { inp.eat('b'); this.endT = 40; G.audio.sfx('select'); }
+        return false;
+      },
+      draw(ctx) {
+        benchBack(ctx, 'SANDBLASTING', pipe.name);
+        G.box(ctx, 4, 16, 88, 112);
+        FT().draw(ctx, 'The blaster', 10, 20, '#c8c0d8');
+        ctx.fillStyle = '#5a626c'; ctx.fillRect(16, 34, 30, 50); ctx.fillStyle = '#7a828c'; ctx.fillRect(16, 34, 30, 3);
+        ctx.fillStyle = '#2a2a30'; ctx.fillRect(22, 44, 18, 30); ctx.fillStyle = '#c8b898'; ctx.fillRect(23, 45 + Math.round(28 * (1 - this.left / B.time)), 16, Math.round(28 * (this.left / B.time)));
+        FT().draw(ctx, 'Grit left', 10, 88, '#9890a8');
+        FT().draw(ctx, 'Tape torn:', 10, 100, '#c8c0d8');
+        FT().draw(ctx, '{r}' + '■'.repeat(this.torn) + '{d}' + '■'.repeat(Math.max(0, B.tears - this.torn)), 10, 110, '#c8c0d8');
+        // the pipe: smooth where it's still bare, the grain standing up where it's blasted, the tape
+        ctx.drawImage(c.raw, PIPE_X, PIPE_Y);
+        for (let i = 0; i < c.wood.length; i++) {
+          if (!c.wood[i]) continue;
+          const x = PIPE_X + (i % c.cols) * CS, y = PIPE_Y + Math.floor(i / c.cols) * CS;
+          if (tape[i]) {
+            ctx.fillStyle = hp[i] > 0 ? '#e8dca0' : '#7a2018'; ctx.fillRect(x, y, CS, CS);
+            if (hp[i] > 0) { ctx.fillStyle = hp[i] < B.tape * 0.4 ? '#f8a858' : '#d0c488'; ctx.fillRect(x, y + 1, CS, 1); }
+            continue;
+          }
+          if (blasted[i] > 0) {
+            ctx.globalAlpha = blasted[i];
+            for (let k = 0; k < 16; k++) { ctx.fillStyle = (k + (i >> 2)) % 5 < 2 ? '#8a5a34' : '#c89060'; ctx.fillRect(x + (k % 4), y + (k >> 2), 1, 1); }
+            ctx.globalAlpha = 1;
+          }
+          if (blasted[i] < 1 && (this.t >> 4) % 2 === 0 && this.t > 60) { ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(x + 1, y + 1, 2, 2); }
+        }
+        // the nozzle, and the grit flying
+        const nx = PIPE_X + Math.round(this.bx), ny = PIPE_Y + Math.round(this.by);
+        ctx.strokeStyle = G.input.down('a') ? '#f8d850' : '#f8f8f0'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(nx + 0.5, ny + 0.5, R, 0, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = '#9aa0a8'; ctx.fillRect(nx - 1, ny - 12, 3, 10);
+        for (const p of grit) { ctx.fillStyle = '#e8dcc0'; ctx.fillRect(Math.round(p.x), Math.round(p.y), 1, 1); }
+        FT().draw(ctx, 'BLASTED', 100, 106, '#f8f8f0', { shadow: '#000' });
+        const cv = this.cover();
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(148, 106, 80, 7); ctx.fillStyle = cv >= 1 ? '#78e070' : '#68c8ff'; ctx.fillRect(149, 107, Math.round(78 * Math.min(1, cv)), 5);
+        if (this.msgT > 0) { const w = FT().width(this.msg); FT().draw(ctx, this.msg, Math.min(234 - w, Math.max(96, 160 - Math.round(w / 2))), 15, '#f86858', { shadow: '#000' }); }
+        FT().draw(ctx, 'Hold Z: blast   X: done', 100, 120, '#c8c0d8', { shadow: '#000' });
+        talk.draw(ctx);
+      },
+    };
+  }
+
+  // ---- BENDING THE STEM (the bent pipes): hold Z under the heat gun until the vulcanite goes soft,
+  // then ↓ bends it (↑ straightens it) to Dad's paper template, and X sets it in cold water. It only
+  // bends while it's soft, and it cools off fast. Too hot and it bubbles. Result: { score, ruined }.
+  function bendCmd(pipe, talk) {
+    const B = WORK[pipe.id].bend, SOFT = 55, HOT = 88;
+    return {
+      start() { Object.assign(this, { t: 0, temp: 0, angle: 0, bubbles: 0, hotT: 0, stiffT: 0, endT: 0, ruined: null, msg: null, msgT: 0, B, SOFT, HOT }); talk.nowT = 0; G.play.overlay = this; },
+      pop(m) { this.msg = m; this.msgT = 50; },
+      score() { return Math.max(0, Math.round(100 - Math.abs(this.angle - B.target) * (35 / B.tol) - this.bubbles * 8)); },
+      update() {
+        const inp = G.input;
+        this.t++; talk.update();
+        if (this.msgT > 0) this.msgT--;
+        if (this.stiffT > 0) this.stiffT--;
+        if (this.endT > 0) { if (--this.endT === 0) { this.result = { score: this.score(), ruined: this.ruined }; return true; } return false; }
+        if (quitHit()) { this.result = 'quit'; return true; }
+        this.temp = inp.down('a') ? Math.min(100, this.temp + B.heat) : Math.max(0, this.temp - 0.45);
+        if (this.temp > HOT) {
+          if (++this.hotT % 14 === 0) {
+            this.bubbles++; G.audio.sfx('pop');
+            if (this.bubbles >= B.bubbles) { this.ruined = 'bubbles'; this.endT = 60; G.audio.sfx('crack'); this.pop('BUBBLED!'); talk.say('Too hot! It bubbled.'); return false; }
+            this.pop('BUBBLING! (' + G.sayable(B.bubbles - this.bubbles) + ' more: ruined)'); talk.say('Too hot! Let it cool a second!');
+          }
+        } else this.hotT = 0;
+        const soft = this.temp >= SOFT, push = inp.down('down') ? 1 : inp.down('up') ? -1 : 0;
+        if (push) {
+          if (soft) { this.angle = Math.max(0, Math.min(60, this.angle + push * (this.temp >= 70 ? 0.45 : 0.25))); if (this.t % 8 === 0) G.audio.sfx('blip'); }
+          else if (!this.stiffT) { this.stiffT = 80; G.audio.sfx('bump'); this.pop('TOO STIFF: HEAT IT UP'); }
+        }
+        if (inp.hit('b') && this.angle > 2) {
+          inp.eat('b'); this.endT = 40; G.audio.sfx('gulp'); this.pop('*hssss*');
+          const err = Math.abs(this.angle - B.target);
+          talk.say(err <= B.tol * 0.4 ? 'Right on the template. Perfect.' : err <= B.tol ? 'Close. That\'ll sit nicely.' : this.angle < B.target ? 'Not bent enough.' : 'That\'s bent too far.');
+        }
+        return false;
+      },
+      draw(ctx) {
+        benchBack(ctx, 'BENDING THE STEM', pipe.name);
+        // Dad's paper template, with the bend drawn on it
+        const px = 44, py = 92, len = 120;
+        ctx.fillStyle = '#f2ecdc'; ctx.fillRect(px - 8, 30, 150, 80);
+        ctx.fillStyle = '#dcdcea'; for (let y = 38; y < 110; y += 8) ctx.fillRect(px - 8, y, 150, 1);
+        const tipAt = (deg) => { const a = (deg * Math.PI) / 180; return [px + 40 + Math.cos(a) * (len - 40), py - Math.sin(a) * (len - 40)]; };
+        const [tx, ty] = tipAt(B.target);
+        ctx.fillStyle = '#4a4a52';
+        for (let k = 0; k <= 40; k += 2) { ctx.fillRect(px + k, py, 1, 1); }
+        for (let k = 0; k <= 30; k++) { const s = k / 30; if (k % 2 === 0) ctx.fillRect(Math.round(px + 40 + (tx - px - 40) * s), Math.round(py + (ty - py) * s), 1, 1); }
+        FT().draw(ctx, 'template', px + 90, 34, '#8a8478');
+        // the stem: straight, then bent at the heat
+        const [sx, sy] = tipAt(this.angle), hue = this.temp >= SOFT ? '#3a2a2a' : '#1c1c22';
+        ctx.strokeStyle = hue; ctx.lineWidth = 5; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(px, py); ctx.lineTo(px + 40, py); ctx.lineTo(sx, sy); ctx.stroke();
+        ctx.lineWidth = 1; ctx.lineCap = 'butt';
+        ctx.fillStyle = '#c89a62'; ctx.fillRect(px - 14, py - 5, 14, 10);
+        // bubbles in it
+        ctx.fillStyle = '#f8f0e0'; for (let k = 0; k < this.bubbles; k++) ctx.fillRect(px + 34 + k * 4, py - 2 + (k % 2) * 3, 2, 2);
+        // the heat gun, blowing on the bend
+        ctx.fillStyle = '#5a5a64'; ctx.fillRect(px + 30, 112, 20, 12); ctx.fillRect(px + 36, 100, 8, 12);
+        if (G.input.down('a') && !this.endT) { ctx.fillStyle = (this.t >> 1) % 2 ? '#f8a838' : '#f86838'; ctx.fillRect(px + 37, 96 - (this.t % 3), 6, 4); }
+        // the temperature, with the soft range and too hot
+        const bx = 206, by = 30, bh = 80;
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(bx, by, 12, bh);
+        ctx.fillStyle = '#2a4a2a'; ctx.fillRect(bx + 1, by + bh - Math.round((HOT / 100) * bh), 10, Math.round(((HOT - SOFT) / 100) * bh));
+        ctx.fillStyle = '#5a2020'; ctx.fillRect(bx + 1, by + 1, 10, Math.round(((100 - HOT) / 100) * bh));
+        const fill = Math.round((this.temp / 100) * (bh - 2));
+        ctx.fillStyle = this.temp > HOT ? '#f86858' : this.temp >= SOFT ? '#78e070' : '#68c8ff'; ctx.fillRect(bx + 3, by + bh - 1 - fill, 6, fill);
+        FT().draw(ctx, 'SOFT', bx - 24, by + bh - Math.round((HOT / 100) * bh) + 8, '#78e070', { shadow: '#000' });
+        FT().draw(ctx, 'HOT', bx - 18, by + 2, '#f86858', { shadow: '#000' });
+        FT().draw(ctx, G.sayable(Math.round(this.angle)) + '°', 8, 112, '#f8f8f0', { shadow: '#000' });
+        if (this.msgT > 0) { const w = FT().width(this.msg); FT().draw(ctx, this.msg, 120 - Math.round(w / 2), 15, /BUBBL|STIFF/.test(this.msg) ? '#f86858' : '#f8d850', { shadow: '#000' }); }
+        FT().draw(ctx, 'Z heat  ↓↑ bend  X set', 96, 120, '#c8c0d8', { shadow: '#000' });
         talk.draw(ctx);
       },
     };
   }
 
   // ---- THE STAIN: pick the jar off the shelf, then rub it on: hold Z and everything under the
-  // dauber takes the stain (going over it again doesn't hurt; a two-coat pipe needs going over
-  // twice). The EVEN bar fills as the wood gets covered, and missed spots blink. It stops on its
-  // own once it's all covered (or when it dries). Result: { score, stain } (or 'quit').
+  // dauber takes the stain (a two-coat pipe needs going over twice). The EVEN bar fills as the wood
+  // gets covered, and missed spots blink. On the harder pipes, going back over a spot too many
+  // times puddles it (dark). It stops on its own once it's all covered (or when it dries).
+  // Result: { score, stain } (or 'quit').
   function stainCmd(pipe, talk) {
-    const d = pipe.d, c = woodCells(pipe), R = 11 - d, TIME = (2400 - d * 200) * pipe.coats, RATE = 0.62 / R, DONE = pipe.coats * 0.85;
+    const W = WORK[pipe.id].stain, c = woodCells(pipe), R = 11 - pipe.d, TIME = W.time * pipe.coats, RATE = 0.95 / R, DONE = pipe.coats * 0.85;
+    const CAP = W.puddle == null ? pipe.coats : pipe.coats + W.puddle + 1.5, PUDDLE = W.puddle == null ? Infinity : pipe.coats + W.puddle;
     const coat = new Float32Array(c.cols * c.rows), g = G.art.PIPE_GEO[pipe.id], b = g.bowl;
     return {
       start() {
-        Object.assign(this, { step: 'pick', sel: 0, t: 0, left: TIME, wrong: 0, endT: 0, bx: b.cx * 2, by: (b.top + b.h * 0.5) * 2, fin: null, painted: false, coat, woodCell: c.wood, cols: c.cols, R });
+        Object.assign(this, { step: 'pick', sel: 0, t: 0, left: TIME, wrong: 0, endT: 0, bx: b.cx * 2, by: (b.top + b.h * 0.5) * 2, fin: null, dark: null, painted: false, warnT: 0, coat, woodCell: c.wood, cols: c.cols, R, DONE, PUDDLE });
         talk.nowT = 0; G.play.overlay = this;
       },
-      good(i) { return coat[i] >= DONE; },
-      even() {
-        let ok = 0;
-        for (let i = 0; i < coat.length; i++) if (c.wood[i] && this.good(i)) ok++;
-        return ok / c.count;
-      },
+      covered() { let k = 0; for (let i = 0; i < coat.length; i++) if (c.wood[i] && coat[i] >= DONE) k++; return k / c.count; },
+      good(i) { return coat[i] >= DONE && coat[i] <= PUDDLE; },
+      even() { let ok = 0; for (let i = 0; i < coat.length; i++) if (c.wood[i] && this.good(i)) ok++; return ok / c.count; },
       score() { return Math.max(0, Math.round(this.even() * 100) - this.wrong * 5); },
       update() {
         const inp = G.input;
         this.t++; talk.update();
+        if (this.warnT > 0) this.warnT--;
         if (this.endT > 0) { if (--this.endT === 0) { this.result = { score: this.score(), stain: this.stain }; return true; } return false; }
         if (quitHit()) { this.result = 'quit'; return true; }
         if (this.step === 'pick') {
@@ -5553,7 +6050,8 @@
             this.stain = st; this.step = 'paint'; G.audio.sfx('gulp');
             const col = pipeColors(pipe, st);
             this.fin = G.art.pipeArt(pipe.id, 2, col);
-            talk.say(pipe.coats > 1 ? 'Two coats on this one: go over all of it twice. Hold Z.' : st === 'oil' ? 'Wipe the oil on. Hold Z and go over every bit.' : 'Hold Z and go over every bit of the wood.');
+            this.dark = G.art.pipeArt(pipe.id, 2, { wood: G.art.shade(col.wood, -0.5), shankWood: G.art.shade(col.shankWood, -0.5) });
+            talk.say((pipe.coats > 1 ? 'Two coats: go over all of it twice. ' : 'Go over every bit once. ') + (W.puddle == null ? 'Hold Z.' : 'And keep moving, or it puddles.'));
           }
           return false;
         }
@@ -5566,15 +6064,20 @@
         this.bx = Math.max(0, Math.min(c.W - 1, this.bx)); this.by = Math.max(0, Math.min(c.H - 1, this.by));
         if (inp.down('a')) {
           this.painted = true;
+          let puddled = false;
           for (let cy = Math.floor((this.by - R) / CS); cy <= Math.floor((this.by + R) / CS); cy++) for (let cx = Math.floor((this.bx - R) / CS); cx <= Math.floor((this.bx + R) / CS); cx++) {
             if (cx < 0 || cy < 0 || cx >= c.cols || cy >= c.rows) continue;
             const i = cy * c.cols + cx;
-            if (Math.hypot(cx * CS + CS / 2 - this.bx, cy * CS + CS / 2 - this.by) <= R && c.wood[i]) coat[i] = Math.min(pipe.coats, coat[i] + RATE);
+            if (Math.hypot(cx * CS + CS / 2 - this.bx, cy * CS + CS / 2 - this.by) > R || !c.wood[i]) continue;
+            const was = coat[i];
+            coat[i] = Math.min(CAP, coat[i] + RATE);
+            if (was <= PUDDLE && coat[i] > PUDDLE) puddled = true;
           }
+          if (puddled && !this.warnT) { this.warnT = 90; G.audio.sfx('no'); talk.say('Too much! Keep moving, it puddles.'); }
           if (this.t % 12 === 0) G.audio.sfx('spray');
         }
         // covered all over: done
-        if (this.painted && this.t % 10 === 0 && this.even() >= 0.95) { this.endT = 40; G.audio.sfx('secret'); talk.say('That\'s it! Stop right there. Perfect.'); return false; }
+        if (this.painted && this.t % 10 === 0 && this.covered() >= 0.95) { this.endT = 40; G.audio.sfx('secret'); talk.say(this.even() >= 0.9 ? 'That\'s it! Stop right there. Perfect.' : 'Covered. Some of it puddled, though.'); return false; }
         if (--this.left <= 0 || inp.hit('b')) { inp.eat('b'); this.endT = 40; G.audio.sfx('select'); }
         return false;
       },
@@ -5590,7 +6093,7 @@
           FT().draw(ctx, st.name, 25, y + 3, on ? '#f8d850' : this.step === 'paint' && id === this.stain ? '#78e070' : '#f8f8f0');
           if (on && this.step === 'pick') FT().draw(ctx, '→', 1, y + 3, '#f8d850');
         });
-        // the pipe: bare briar, with the stain going on cell by cell
+        // the pipe: bare briar, with the stain going on cell by cell (puddles go dark)
         ctx.drawImage(c.raw, PIPE_X, PIPE_Y);
         const blink = this.painted && (this.t >> 4) % 2 === 0;
         if (this.fin) for (let cy = 0; cy < c.rows; cy++) for (let cx = 0; cx < c.cols; cx++) {
@@ -5599,9 +6102,11 @@
           if (v > 0) {
             ctx.globalAlpha = Math.min(1, v / DONE);
             ctx.drawImage(this.fin, cx * CS, cy * CS, CS, CS, x, y, CS, CS);
+            // (getting heavy: it darkens a little as a warning, then puddles)
+            if (v > PUDDLE) { ctx.globalAlpha = Math.min(1, 0.6 + (v - PUDDLE)); ctx.drawImage(this.dark, cx * CS, cy * CS, CS, CS, x, y, CS, CS); }
+            else if (PUDDLE < Infinity && v > pipe.coats) { ctx.globalAlpha = 0.35 * ((v - pipe.coats) / (PUDDLE - pipe.coats)); ctx.drawImage(this.dark, cx * CS, cy * CS, CS, CS, x, y, CS, CS); }
             ctx.globalAlpha = 1;
           }
-          // a missed spot (or one that needs more)
           if (blink && v < DONE) { ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(x + 1, y + 1, 2, 2); }
         }
         if (this.step === 'paint') {
@@ -5804,49 +6309,78 @@
     };
   }
 
-  // ---- making a pipe, start to finish
-  // a step that went badly: try it again, or keep going anyway (Nate always gets his pipe)
-  function* retry(score, what) {
-    if (score >= 50) return false;
-    return (yield G.ask('Dad', 'Want to try the ' + what + ' again?', ['Try again', 'Keep going'])) === 0;
+  // ---- making a pipe, start to finish: the bandsaw, the lathe, then sanding (or the panels, or
+  // sandblasting), bending the stem on the bent ones, and the stain. A step that ruins the pipe
+  // (cutting into it, a snap, a crack, lopsided, through the tape) means a new block and starting
+  // over; a bad bend gets a new stem, and a blotchy stain gets sanded back and done again.
+  function* startOver(why) {
+    yield G.say('Dad', RUIN[why] || 'That one\'s going in the scrap bin.');
+    return (yield G.ask('Dad', 'Start over with a new block?', ['Start over', 'Not now'])) === 0;
   }
   function* makePipe(pipe) {
-    const talk = dadTalk(pipe.facts), again = G.pipeHas(pipe.id);
+    const W = WORK[pipe.id], talk = dadTalk(pipe.facts), again = G.pipeHas(pipe.id);
+    const later = function* () { yield G.say('Dad', 'We\'ll finish it another time.'); };
     yield G.say('Dad', again ? 'The ' + pipe.name + ' again? Sure. Practice makes perfect.' : 'Ah. The ' + pipe.name + '.');
     yield G.say('Dad', pipe.intro);
-    // 1. the lathe
-    let lathe;
-    do {
-      yield howToCmd('THE LATHE', HOW_TO.lathe);
-      lathe = yield latheCmd(pipe, talk);
-      if (lathe === 'quit') { yield G.say('Dad', 'We\'ll finish it another time.'); return; }
-      yield G.say('Dad', lathe >= 90 ? 'Look at that. Clean as a whistle.' : lathe >= 72 ? 'Nice. A little sanding and it\'s perfect.' : lathe >= 50 ? 'Ehh. Sandpaper covers a multitude of sins.' : 'Hmm. That one\'s pretty rough. Gouges, or too much left on.');
-    } while (yield* retry(lathe, 'lathe'));
-    // 2. sanding (after Dad drills it)
-    yield G.say(null, 'Dad drills the chamber and the air hole, then hands it back. Now it needs sanding.');
-    yield howToCmd('SANDING', HOW_TO.sand);
-    const sand = yield sandCmd(pipe, talk);
-    if (sand === 'quit') { yield G.say('Dad', 'We\'ll finish it another time.'); return; }
-    yield G.say('Dad', sand >= 90 ? 'Smooth as glass. You can see your face in it.' : sand >= 72 ? 'Nice and smooth.' : 'A couple of flat spots. Nobody will notice. I\'ll notice.');
-    // 3. the stain
-    yield G.say('Dad', pipe.stainHint);
-    let st;
-    do {
-      yield howToCmd('THE STAIN', HOW_TO.stain);
-      st = yield stainCmd(pipe, talk);
-      if (st === 'quit') { yield G.say('Dad', 'We\'ll finish it another time.'); return; }
-      yield G.say('Dad', st.score >= 90 ? 'Even as glass. Beautiful.' : st.score >= 72 ? 'Good coverage. Nice.' : st.score >= 50 ? 'A little blotchy. It\'ll age in.' : 'Oof. Bare spots all over. We can sand it back.');
-    } while (yield* retry(st.score, 'stain'));
-    yield G.say(null, 'Tripoli buff. White polish. And then...');
-    const stars = starsFor((lathe + sand + st.score) / 3), made = pipesMade(), prev = made[pipe.id];
-    made[pipe.id] = { stars: Math.max(stars, prev ? prev.stars : 0), stain: st.stain };
-    yield revealCmd(G.pipeLook(pipe.id, 1), pipe.name, stars);
-    yield G.say('Dad', pipe.made);
-    if (!prev) {
-      G.audio.sfx('secret');
-      yield G.say(null, 'The {y}' + pipe.name + '{/} is in {y}COLLECTABLES{/} now. Pick it there and Dad\'s Pipe looks just like it.');
+    for (let tries = 0; ; tries++) {
+      if (tries) yield G.say(null, 'Dad sets a new block of briar on the bench and draws the pipe on it.');
+      // 1. the bandsaw
+      yield howToCmd('THE BANDSAW', HOW_TO.saw);
+      const saw = yield sawCmd(pipe, talk);
+      if (saw === 'quit') { yield* later(); return; }
+      if (saw.ruined) { if (yield* startOver(saw.ruined)) continue; return; }
+      yield G.say('Dad', saw.score >= 85 ? 'Right on the line. Beautiful.' : saw.score >= 65 ? 'Close enough. The lathe will clean it up.' : 'A little wobbly. We\'ll see.');
+      // 2. the lathe
+      yield howToCmd('THE LATHE', HOW_TO.lathe.concat([LATHE_TIP[pipe.id]]));
+      const lathe = yield latheCmd(pipe, talk);
+      if (lathe === 'quit') { yield* later(); return; }
+      if (lathe.ruined) { if (yield* startOver(lathe.ruined)) continue; return; }
+      yield G.say('Dad', lathe.score >= 90 ? 'Look at that. Clean as a whistle.' : lathe.score >= 72 ? 'Nice. A little sanding and it\'s perfect.' : 'Ehh. Sandpaper covers a multitude of sins.');
+      yield G.say(null, 'Dad drills the chamber and the air hole.');
+      // 3. sanding, the panels, or sandblasting
+      const blast = W.finish === 'blast';
+      yield howToCmd(blast ? 'SANDBLASTING' : W.finish === 'panels' ? 'THE PANELS' : 'SANDING', HOW_TO[blast ? 'blast' : W.finish === 'panels' ? 'panels' : 'sand']);
+      const fin = yield (blast ? blastCmd(pipe, talk) : sandCmd(pipe, talk));
+      if (fin === 'quit') { yield* later(); return; }
+      if (fin.ruined) { if (yield* startOver(fin.ruined)) continue; return; }
+      yield G.say('Dad', blast ? (fin.score >= 85 ? 'Look at that grain stand up.' : 'A few smooth spots left. It\'ll do.') : fin.score >= 90 ? 'Smooth as glass. You can see your face in it.' : 'A couple of flat spots. Nobody will notice. I\'ll notice.');
+      // 4. the bent ones: bend the stem
+      let bend = null;
+      if (W.bend) {
+        for (;;) {
+          yield howToCmd('BENDING THE STEM', HOW_TO.bend);
+          bend = yield bendCmd(pipe, talk);
+          if (bend === 'quit') { yield* later(); return; }
+          if (!bend.ruined && bend.score >= W.pass) break;
+          yield G.say('Dad', bend.ruined ? 'It bubbled. Vulcanite does that if you rush it.' : 'That\'s not the bend. It won\'t sit right.');
+          if ((yield G.ask('Dad', 'I\'ve got another stem. Try the bend again?', ['Try again', 'Not now'])) !== 0) { yield* later(); return; }
+        }
+      }
+      // 5. the stain
+      yield G.say('Dad', pipe.stainHint);
+      let st;
+      for (;;) {
+        yield howToCmd('THE STAIN', HOW_TO.stain);
+        st = yield stainCmd(pipe, talk);
+        if (st === 'quit') { yield* later(); return; }
+        if (st.score >= W.stain.pass) break;
+        yield G.say('Dad', 'Blotchy. That won\'t do.');
+        if ((yield G.ask('Dad', 'Sand it back and stain it again?', ['Try again', 'Not now'])) !== 0) { yield* later(); return; }
+      }
+      yield G.say('Dad', st.score >= 90 ? 'Even as glass. Beautiful.' : st.score >= 72 ? 'Good coverage. Nice.' : 'A little blotchy. It\'ll age in.');
+      yield G.say(null, 'Tripoli buff. White polish. And then...');
+      const scores = [saw.score, lathe.score, fin.score, st.score].concat(bend ? [bend.score] : []);
+      const stars = starsFor(scores.reduce((a, b) => a + b, 0) / scores.length), made = pipesMade(), prev = made[pipe.id];
+      made[pipe.id] = { stars: Math.max(stars, prev ? prev.stars : 0), stain: st.stain };
+      yield revealCmd(G.pipeLook(pipe.id, 1), pipe.name, stars);
+      yield G.say('Dad', pipe.made);
+      if (!prev) {
+        G.audio.sfx('secret');
+        yield G.say(null, 'The {y}' + pipe.name + '{/} is in {y}COLLECTABLES{/} now. Pick it there and Dad\'s Pipe looks just like it.');
+      }
+      yield* pipeBookGift();
+      return;
     }
-    yield* pipeBookGift();
   }
   // ...and blending a tobacco
   function* makeTobacco(tob) {
