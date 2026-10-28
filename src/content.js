@@ -585,6 +585,11 @@
       const n = (s.items.candyCorn ? 1 : 0) + (s.items.doritos ? 1 : 0);
       add('Dad\'s snacks', f.snacksDone, n === 2 ? 'Bring them to Dad' : G.sayable(n) + '/2 snacks', 'Home', n === 2 ? 'Dad is in his workshop.' : 'Candy corn: Mom hides it somewhere. Doritos: follow the muddy tracks.', [n, 2]);
     }
+    if (G.condoDone && G.condoDone()) {
+      const nj = G.JAM_SONGS.filter((sg) => (s.jams || {})[sg.id]).length;
+      if (!f.jamMet) side.push({ name: 'Abe\'s office', status: 'Abe wants to jam', kind: 'rumor', where: 'Chesapeake - the condo', hint: 'Things are quiet at the condo. Abe\'s little amp is upstairs, in his office.' });
+      else add('Jamming with Abe', nj >= G.JAM_SONGS.length && 'All played!', G.sayable(nj) + '/' + G.sayable(G.JAM_SONGS.length) + ' songs', 'Chesapeake - Abe\'s office', 'Plug in at the little amp in Abe\'s office, upstairs, and play along with Abe.', [nj, G.JAM_SONGS.length]);
+    }
     if (G.homeDone() && !f.pipeBench) side.push({ name: 'Dad\'s workshop', status: 'Dad has something to show you', kind: 'rumor', where: 'Home', hint: 'Things are finally quiet at home. Dad wants you in his workshop.' });
     if (f.pipeBench) {
       const np = G.pipesMadeCount(), nt = G.tinsMadeCount(), all = G.PIPES.length + G.TOBACCOS.length;
@@ -3271,6 +3276,7 @@
     { name: 'El Toro Loco: Romulus\'s sloth', map: 'toroLoco', at: [11, 8, 'up'], flags: { romHide: 8, romToGolf: true, slothQuest: 1 } },
     { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { slothQuest: 4, ladyMet: true, bassGiven: true, romGap: true }, items: { abeBass: true, yellowCable: true, sloth: true } },
     { name: 'Abe joined: his reach', map: 'condo', at: [16, 13, 'right'], flags: { romulusBeaten: true }, party: ['abe'], follower: 'abe' },
+    { name: 'Jamming with Abe (condo office)', map: 'condoUp', at: [23, 17, 'right'], flags: { plantQuest: true, plantsDone: true, gardenOpen: true } },
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'], flags: { healerTalk: true, chkdArrived: true } },
     { name: 'CHKD: MECHA-BABY (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
     { name: 'CHKD: Hannah joined (to the roof)', map: 'chkdNicu', at: [7, 8, 'down'], flags: { mobileBeaten: true, kitGot: true }, party: ['hannah'], follower: 'hannah', items: { firstAid: 3 }, maxHp: 12 },
@@ -3330,8 +3336,8 @@
   };
   // Admin: hand over everything Nate gets to keep: all the gear (with the bidet's upgrades and a
   // full first-aid kit), every song, the key items he holds on to, and every collectable (photos,
-  // Dad's pipes and tins, his pipe book). Not the one-time quest items (the candy corn, the sloth,
-  // Mom's books...): having those early would jump their quests.
+  // Dad's pipes and tins, his pipe book, the instruments). Not the one-time quest items (the candy
+  // corn, the sloth, Mom's books...): having those early would jump their quests.
   G.adminAllItems = () => {
     const s = G.state, f = s.flags;
     Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true });
@@ -3344,6 +3350,7 @@
     s.photos = {}; for (const ph of G.PHOTOS) s.photos[ph.id] = 1;
     s.pipesMade = {}; for (const p of G.PIPES) s.pipesMade[p.id] = { stars: 3, stain: p.stain || 'oil' };
     s.tinsMade = {}; for (const t of G.TOBACCOS) s.tinsMade[t.id] = { stars: 3 };
+    s.instruments = {}; for (const it of G.INSTRUMENTS) s.instruments[it.id] = true;
   };
 
   // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)
@@ -5235,8 +5242,9 @@
   }
   // Dad, talking the whole time Nate works: this one's facts first, then whatever's on his mind.
   // say(): something he has to say RIGHT NOW (a catch on the lathe, the wrong jar).
-  function dadTalk(facts) {
-    const more = PIPE_TALK.slice().sort(() => Math.random() - 0.5);
+  // (who: whose face is on the strip; extra: what else they ramble about once the facts run out)
+  function dadTalk(facts, who = 'dad', extra = PIPE_TALK) {
+    const more = extra.slice().sort(() => Math.random() - 0.5);
     return {
       lines: facts.concat(more), i: 0, t: 0, now: null, nowT: 0,
       say(line) { this.now = line; this.nowT = 210; },
@@ -5246,7 +5254,7 @@
       },
       draw(ctx) {
         G.box(ctx, 2, 133, 236, 25);
-        const face = G.sprites.dad && G.sprites.dad.down[0];
+        const face = G.sprites[who] && G.sprites[who].down[0];
         if (face) ctx.drawImage(face, 0, 0, face.width, 14, 6, 138, face.width, 14);
         const line = this.nowT > 0 ? this.now : this.lines[this.i];
         FT().wrap(line, 204).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 27, 136 + k * 10, this.nowT > 0 ? '#f8d850' : '#f8f8f0', { shadow: '#0c0814' }));
@@ -5286,6 +5294,7 @@
     stain: ['Pick the right jar with ↑↓ and Z. (Dad tells you which.)', 'Move the dauber with the arrows. HOLD Z to rub the stain on. Cover every bit before it dries.', 'Missed spots blink. Two-coat pipes: go over everything twice. On the harder pipes, too much puddles: keep moving.'],
     blend: ['Pick a jar with the arrows. Z adds a scoop. X puts the last one back.', 'A blend is four scoops. Dad tells you what goes in it.', 'With four in, he sniffs it and tells you how many are right.'],
     pack: ['The needle goes up and down. Press Z when it\'s inside the green box.', 'Three pinches: gently, then a little firmer, then firm.'],
+    jam: ['Notes slide down the strings. Hit each one with its arrow (← ↓ ↑ →) right as it crosses the pickup at the bottom.', 'Two notes at once? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
   };
 
   // ---- the book: pick what to make. Ones Nate hasn't made are pencil sketches, named ???.
@@ -6510,6 +6519,324 @@
       else yield* makeTobacco(it);
     } else yield G.say('Dad', 'Another time, then.');
     G.play.overlay = null;
+  };
+
+  // ================================================================ JAMMING WITH ABE (instruments)
+  // Once everything at the condo is done (G.condoDone: Romulus home, Anette's plants watered and her
+  // garden gate open), Abe will jam with Nate at the little amp in his office, upstairs. A rhythm
+  // game: notes slide down the Jazzmaster's fretboard on four strings (← ↓ ↑ →), and Nate hits them
+  // on the beat while Abe plays bass and the drums keep time. Three songs, each one faster (finish
+  // one to unlock the next); get through all three and Abe lends Nate his Jazzmaster. Instruments
+  // are collectables (COLLECTABLES > Instruments), for recording music later. More instruments
+  // will come the same way.
+  // State: s.jams ({ song id: best stars }), s.instruments ({ id: true }). Flags: jamTease, jamMet.
+  G.condoDone = () => { const f = flags(); return !!(f.romulusBeaten && f.plantsDone && f.gardenOpen); };
+  G.INSTRUMENTS = [
+    {
+      id: 'jazzmaster', name: 'Abe\'s Jazzmaster', kind: 'Electric guitar', art: () => G.spr.jazzmaster,
+      about: ['1959 body. 1962 neck. 1959 electronics.', 'Restored by Dave Petillo.', 'Before Abe, it belonged to Al Alcorn: the man who invented Pong.'],
+    },
+  ];
+  const instState = () => (G.state.instruments = G.state.instruments || {});
+  G.instrumentHas = (id) => !!instState()[id];
+  G.instrumentsCount = () => G.INSTRUMENTS.filter((it) => G.instrumentHas(it.id)).length;
+  // the Jazzmaster, small enough to hold over Nate's head
+  let jazzSmallC = null;
+  const jazzSmall = () => {
+    if (jazzSmallC) return jazzSmallC;
+    const src = G.spr.jazzmaster, c = G.canvas(Math.ceil(src.width / 2), Math.ceil(src.height / 2));
+    c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+    return (jazzSmallC = c);
+  };
+  // what Abe talks about while they play
+  const JAZZ_TALK = [
+    'This is my Jazzmaster. 1959 body. 1962 neck. 1959 electronics.',
+    'Dave Petillo restored it. The man is a legend.',
+    'Before me, it belonged to Al Alcorn. He invented PONG, Nate. Pong.',
+    'Fender made the Jazzmaster for jazz players. Then the surf bands got it.',
+    'The waist is crooked on purpose. An offset body. It sits better on your leg.',
+    'The tremolo floats. Don\'t yank it. Just think about it and it wobbles.',
+    'Lock in with the bass. Listen to me. I\'m the bass.',
+  ];
+  // The songs (all original). A riff is notes (or chords, joined with +) and how many beats each
+  // gets, "r" a rest, eight beats a riff; bass: the root of each of its two bars. form: the riffs
+  // in order. perfect/good: the timing windows (frames), drain: how much a miss costs the groove,
+  // lead: how many frames a note takes to slide down. style: the drums and bass.
+  const JAM_SONGS = [
+    {
+      id: 'shoolby', name: 'Shoolby Blues', bpm: 88, d: 1, style: 'rock', perfect: 4, good: 9, drain: 0.05, lead: 96,
+      blurb: 'A slow one, to warm up. E minor. Just follow me.',
+      riffs: {
+        A: { notes: 'E3/1 G3/1 A3/1 G3/1 E3/1 r/1 E3/1 G3/1', bass: [40, 40] },
+        B: { notes: 'A3/1 B3/1 D4/1 B3/1 A3/1 r/1 G3/1 E3/1', bass: [45, 40] },
+        E: { notes: 'E3/1 G3/1 A3/1 B3/1 E4/2 r/2', bass: [40, 40] },
+      },
+      form: 'AABAABAE',
+    },
+    {
+      id: 'surf', name: 'Number One Ditch Surf', bpm: 132, d: 2, style: 'surf', perfect: 3, good: 7, drain: 0.07, lead: 84,
+      blurb: 'What the Jazzmaster was really made for. Fast picking.',
+      riffs: {
+        A: { notes: 'A3/.5 A3/.5 C4/.5 A3/.5 D4/.5 A3/.5 E4/.5 D4/.5 C4/.5 C4/.5 A3/.5 G3/.5 A3/1 r/1', bass: [45, 45] },
+        B: { notes: 'E4/.5 E4/.5 G4/.5 E4/.5 A4/.5 G4/.5 E4/.5 D4/.5 C4/.5 D4/.5 E4/.5 C4/.5 A3/1 r/1', bass: [48, 43] },
+        C: { notes: 'E3/.5 E3/.5 E3/.5 E3/.5 E3/.5 E3/.5 G3/.5 A3/.5 C4/1 A3/1 E4/2', bass: [40, 40] },
+        E: { notes: 'A3/.5 C4/.5 E4/.5 G4/.5 A4/2 r/4', bass: [45, 45] },
+      },
+      form: 'AABCABABCE',
+    },
+    {
+      id: 'zoomies', name: 'Romulus Zoomies', bpm: 156, d: 3, style: 'drive', perfect: 3, good: 6, drain: 0.09, lead: 76,
+      blurb: 'Fast. Chords (two strings at once). Like Romulus at two in the morning.',
+      riffs: {
+        A: { notes: 'E3/.5 E3/.5 G3/.5 E3/.5 A3/.5 E3/.5 B3/.5 A3/.5 G3/.5 E3/.5 D4/.5 B3/.5 A3/.5 G3/.5 E3/.5 r/.5', bass: [40, 40] },
+        B: { notes: 'B3/.25 D4/.25 E4/.25 D4/.25 B3/.5 A3/.5 G3/.25 A3/.25 B3/.25 A3/.25 G3/.5 E3/.5 E4/.5 D4/.5 B3/.5 A3/.5 G3/1 E3/1', bass: [43, 45] },
+        C: { notes: 'E3+B3/1 E3+B3/1 G3+D4/1 A3+E4/1 E3+B3/.5 E3+B3/.5 G3+D4/.5 A3+E4/.5 B3+E4/1 r/1', bass: [40, 43] },
+        E: { notes: 'E3/.25 G3/.25 A3/.25 B3/.25 D4/.25 E4/.25 G4/.5 B3+E4/2 r/4', bass: [40, 40] },
+      },
+      form: 'ABACABCABE',
+    },
+  ];
+  G.JAM_SONGS = JAM_SONGS;
+  const jamState = () => (G.state.jams = G.state.jams || {});
+  const NOTE_MIDI = (n) => { const m = /^([A-G])(#?)(\d)$/.exec(n); return 12 * (+m[3] + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0); };
+  // a song's notes ({ beat, midi, lane, dur }), its bass roots bar by bar, and how many beats long
+  function buildSong(song) {
+    const notes = [], bars = [];
+    let beat = 0;
+    for (const rid of song.form) {
+      const riff = song.riffs[rid];
+      for (const tok of riff.notes.split(/\s+/)) {
+        const [n, len] = tok.split('/');
+        if (n !== 'r') for (const one of n.split('+')) notes.push({ beat, midi: NOTE_MIDI(one) });
+        beat += +len;
+      }
+      bars.push(...riff.bass);
+    }
+    // the lowest notes go on the left string, the highest on the right
+    const pitches = [...new Set(notes.map((x) => x.midi))].sort((a, b) => a - b);
+    for (const x of notes) x.lane = Math.min(3, Math.floor((pitches.indexOf(x.midi) * 4) / pitches.length));
+    const out = notes.filter((x, i) => !notes.slice(0, i).some((y) => y.beat === x.beat && y.lane === x.lane));
+    for (const x of out) { const next = out.find((y) => y.beat > x.beat); x.dur = Math.min(0.7, ((next ? next.beat : x.beat + 1) - x.beat) * (60 / song.bpm) * 0.95); }
+    return { notes: out, bars, beats: beat };
+  }
+
+  // ---- the setlist: pick a song (the next one unlocks when you finish the one before)
+  function jamPickCmd() {
+    const J = jamState();
+    return {
+      start() { this.sel = Math.max(0, JAM_SONGS.findIndex((sg, i) => !J[sg.id] && (i === 0 || J[JAM_SONGS[i - 1].id]))); if (this.sel < 0) this.sel = 0; this.t = 0; G.play.overlay = this; },
+      open(i) { return i === 0 || !!J[JAM_SONGS[i - 1].id]; },
+      update() {
+        const inp = G.input;
+        this.t++;
+        if (inp.hit('up') && this.sel > 0) { this.sel--; G.audio.sfx('menu'); }
+        if (inp.hit('down') && this.sel < JAM_SONGS.length - 1) { this.sel++; G.audio.sfx('menu'); }
+        if (inp.hit('a')) { inp.eat('a'); if (this.open(this.sel)) { G.audio.sfx('select'); this.result = JAM_SONGS[this.sel]; return true; } G.audio.sfx('bump'); }
+        if (inp.hit('b') || quitHit()) { inp.eat('b'); G.audio.sfx('cancel'); this.result = null; return true; }
+        return false;
+      },
+      draw(ctx) {
+        benchBack(ctx, 'ABE\'S SETLIST', G.sayable(JAM_SONGS.filter((sg) => J[sg.id]).length) + '/' + G.sayable(JAM_SONGS.length) + ' played');
+        JAM_SONGS.forEach((sg, i) => {
+          const y = 18 + i * 34, on = i === this.sel, open = this.open(i), best = J[sg.id] || 0;
+          G.box(ctx, 8, y, 166, 31, on ? { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' } : undefined);
+          FT().draw(ctx, G.sayable(i + 1) + '. ' + (open ? sg.name : '???'), 16, y + 5, open ? (on ? '#f8d850' : '#f8f8f0') : '#5a4e70', { shadow: '#0c0814' });
+          FT().draw(ctx, open ? G.sayable(sg.bpm) + ' BPM   Hard: ' + '★'.repeat(sg.d) : 'Finish the one before it.', 16, y + 16, '#9890a8', { shadow: '#0c0814' });
+          if (best) FT().draw(ctx, '{y}' + '★'.repeat(best) + '{d}' + '★'.repeat(3 - best), 166 - FT().width('★★★'), y + 5, '#f8d850', { shadow: '#0c0814' });
+          else if (open) FT().draw(ctx, 'NEW', 166 - FT().width('NEW'), y + 5, '#78e070', { shadow: '#0c0814' });
+        });
+        // the Jazzmaster, on its stand
+        ctx.drawImage(G.spr.jazzmaster, 196, 24);
+        const sg = JAM_SONGS[this.sel];
+        FT().wrap(this.open(this.sel) ? sg.blurb : 'Locked.', 220).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 10, 122 + k * 9, '#c8c0d8', { shadow: '#000' }));
+        FT().draw(ctx, 'Z: play   X: done', 10, 145, '#9890a8', { shadow: '#000' });
+      },
+    };
+  }
+
+  // ---- THE JAM: notes slide down the strings; hit each one (← ↓ ↑ →) as it crosses the pickup.
+  // Hits fill the GROOVE meter, misses drain it; empty and Abe stops the band. Finish the song to
+  // pass it. Result: { passed, acc, stars, perfect, good, miss, maxCombo, score } (or 'quit').
+  function jamCmd(song, talk) {
+    const S0 = buildSong(song), fpb = 3600 / song.bpm, COUNT = Math.round(4 * fpb), LANES = [87, 109, 131, 153], HIT_Y = 116, TOP = 14;
+    const KEYS = ['left', 'down', 'up', 'right'], GEM = ['#c050a0', '#e08030', '#f0e6c0', '#78c8f8'], ARROWS = ['←', '↓', '↑', '→'];
+    const notes = S0.notes.map((n) => Object.assign({}, n, { t: COUNT + n.beat * fpb, done: null }));
+    const END = notes[notes.length - 1].t + 2 * fpb, speed = (HIT_Y - TOP) / song.lead;
+    return {
+      start() {
+        Object.assign(this, { f: 0, groove: 0.6, combo: 0, maxCombo: 0, score: 0, perfect: 0, good: 0, miss: 0, half: -1, bob: 0, sparks: [], judge: null, judgeT: 0, judgeL: 0, failT: 0, doneT: 0, msg: null, notes, song, fpb, COUNT });
+        talk.nowT = 0; G.audio.stop(); G.play.overlay = this;
+      },
+      mult() { return Math.min(4, 1 + Math.floor(this.combo / 8)); },
+      res(passed) {
+        const acc = (this.perfect + this.good * 0.6) / notes.length;
+        return { passed, acc, stars: acc >= 0.9 ? 3 : acc >= 0.75 ? 2 : 1, perfect: this.perfect, good: this.good, miss: this.miss, maxCombo: this.maxCombo, score: this.score };
+      },
+      // the band, every half beat: a count-in, then the drums and Abe's bass
+      band(h) {
+        if (h < 8) { if (h % 2 === 0) { G.audio.inst.hat(); this.bob = 6; } return; }
+        const k = h - 8;
+        if (k >= S0.beats * 2) return;
+        const root = S0.bars[Math.min(Math.floor(k / 8), S0.bars.length - 1)], pos = k % 8, st = song.style;
+        if (pos === 0 || pos === 4 || (st === 'drive' && pos % 2 === 0)) G.audio.inst.kick();
+        if (pos === 2 || pos === 6) G.audio.inst.snare();
+        G.audio.inst.hat();
+        if (st !== 'rock' || pos === 0 || pos === 3 || pos === 4) G.audio.inst.bass(st === 'surf' && pos % 2 ? root + 12 : root, st === 'rock' ? 0.3 : 0.16);
+        if (pos % 2 === 0) this.bob = 6;
+      },
+      strum(L) {
+        // the closest note still coming on that string, if it's close enough
+        let best = null, bd = 1e9;
+        for (const n of notes) if (!n.done && n.lane === L) { const d = Math.abs(n.t - this.f); if (d < bd) { bd = d; best = n; } }
+        if (best && bd <= song.good) {
+          const perfect = bd <= song.perfect;
+          best.done = perfect ? 'perfect' : 'good';
+          this[best.done]++; this.combo++; this.maxCombo = Math.max(this.maxCombo, this.combo);
+          this.score += (perfect ? 100 : 60) * this.mult();
+          this.groove = Math.min(1, this.groove + (perfect ? 0.03 : 0.015));
+          G.audio.inst.guitar(best.midi, best.dur);
+          for (let k = 0; k < 5; k++) this.sparks.push({ x: LANES[L], y: HIT_Y, vx: (Math.random() - 0.5) * 2.4, vy: -1 - Math.random() * 1.6, life: 16, c: GEM[L] });
+          this.judge = perfect ? 'PERFECT' : 'GOOD'; this.judgeT = 22; this.judgeL = L;
+          if (this.combo % 16 === 0) talk.say(['Nice!', 'Now you\'re playing!', 'YES. Yes. Keep it there.', 'You\'re a natural. Don\'t let it go to your head.'][(this.combo / 16 - 1) % 4]);
+        } else if (!best || bd > song.good * 2) {
+          // a strum with nothing there: a dead clunk
+          this.combo = 0; this.groove = Math.max(0, this.groove - 0.02);
+          G.audio.inst.guitar(40 + L * 5, 0.05, 0.06);
+          this.checkFail();
+        }
+      },
+      missed() {
+        this.miss++; this.combo = 0; this.groove -= song.drain;
+        this.judge = 'MISS'; this.judgeT = 22;
+        this.checkFail();
+        if (!this.failT && this.miss % 6 === 1) talk.say(['Stay with me!', 'Count it! One, two, three, four...', 'Listen to the bass. Lock in with me.'][Math.floor(this.miss / 6) % 3]);
+      },
+      checkFail() {
+        if (this.groove > 0 || this.failT) return;
+        this.groove = 0; this.failT = 90; G.audio.sfx('no');
+        talk.say('...Okay, stop, stop. You lost me.');
+      },
+      update() {
+        const inp = G.input;
+        talk.update();
+        if (this.judgeT > 0) this.judgeT--;
+        if (this.bob > 0) this.bob--;
+        for (const p of this.sparks) { p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.life--; }
+        this.sparks = this.sparks.filter((p) => p.life > 0);
+        if (this.failT > 0) { if (--this.failT === 0) { this.result = this.res(false); return true; } return false; }
+        if (this.doneT > 0) { if (--this.doneT === 0) { this.result = this.res(true); return true; } return false; }
+        if (quitHit()) { this.result = 'quit'; return true; }
+        this.f++;
+        const h = Math.floor(this.f / (fpb / 2));
+        if (h !== this.half) { this.half = h; this.band(h); }
+        for (let L = 0; L < 4; L++) if (inp.hit(KEYS[L])) this.strum(L);
+        for (const n of notes) if (!n.done && this.f - n.t > song.good) { n.done = 'miss'; this.missed(); }
+        if (!this.failT && this.f >= END) { this.doneT = 80; G.audio.sfx('fanfare'); this.msg = 'SONG CLEARED!'; talk.say(this.miss === 0 ? 'Not ONE miss?! Who taught you? ...Me. I taught you.' : 'That\'s the song! Nice.'); }
+        return false;
+      },
+      draw(ctx) {
+        benchBack(ctx, 'JAMMING WITH ABE', song.name);
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(0, 12, G.W, 2); ctx.fillStyle = '#c050a0'; ctx.fillRect(0, 12, Math.round(G.W * Math.min(1, this.f / END)), 2);
+        // the fretboard: rosewood with maple edges, the frets and dots sliding down toward you
+        ctx.fillStyle = '#d8a058'; ctx.fillRect(74, 14, 92, 118);
+        ctx.fillStyle = '#3a2214'; ctx.fillRect(76, 14, 88, 118);
+        const off = (this.f * speed) % 32;
+        for (let k = -1; k < 5; k++) {
+          const y = Math.round(TOP + off + k * 32);
+          if (y < 14 || y > 131) continue;
+          ctx.fillStyle = '#c8ccd4'; ctx.fillRect(76, y, 88, 1);
+          if (y + 16 < 131 && k % 2 === 0) { ctx.fillStyle = '#f0e8d8'; ctx.fillRect(119, y + 15, 2, 2); }
+        }
+        LANES.forEach((x, L) => { ctx.fillStyle = '#b8bcc4'; ctx.fillRect(x, 14, L < 2 ? 2 : 1, 118); });
+        // the pickup across the strings, where the notes are hit
+        ctx.fillStyle = '#efe6c8'; ctx.fillRect(78, HIT_Y - 3, 84, 7); ctx.fillStyle = '#c8bea0'; ctx.fillRect(78, HIT_Y + 3, 84, 1);
+        LANES.forEach((x, L) => {
+          const down = G.input.down(KEYS[L]);
+          ctx.fillStyle = down ? GEM[L] : '#5a4a3a';
+          for (let dy = -5; dy <= 5; dy++) { const w = Math.round(Math.sqrt(30 - dy * dy)); if (Math.abs(dy) > 3 && !down) { ctx.fillRect(x - w, HIT_Y + dy, 1, 1); ctx.fillRect(x + w, HIT_Y + dy, 1, 1); } else ctx.fillRect(x - w, HIT_Y + dy, w * 2 + 1, 1); }
+          FT().draw(ctx, ARROWS[L], x - 2, HIT_Y + 8, down ? '#f8f8f0' : '#9890a8', { shadow: '#000' });
+        });
+        // the notes coming down
+        for (const n of notes) {
+          if (n.done && n.done !== 'miss') continue;
+          const y = Math.round(HIT_Y - (n.t - this.f) * speed), x = LANES[n.lane];
+          if (y < TOP - 4 || y > 132) continue;
+          const col = n.done === 'miss' ? '#5a5a64' : GEM[n.lane];
+          for (let dy = -3; dy <= 3; dy++) { const w = Math.round(6 * Math.sqrt(1 - (dy / 3.6) ** 2)); ctx.fillStyle = Math.abs(dy) === 3 ? '#1c1424' : col; ctx.fillRect(x - w, y + dy, w * 2 + 1, 1); }
+          ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(x - 3, y - 2, 3, 1);
+        }
+        for (const p of this.sparks) { ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x), Math.round(p.y), 2, 2); }
+        if (this.judgeT > 0) {
+          const t = this.judge, w = FT().width(t), x = this.judge === 'MISS' ? 120 : LANES[this.judgeL];
+          FT().draw(ctx, t, Math.round(x - w / 2), HIT_Y - 22 - (22 - this.judgeT) / 3, t === 'PERFECT' ? '#f8d850' : t === 'GOOD' ? '#78e070' : '#f86858', { shadow: '#000' });
+        }
+        // Nate (with the Jazzmaster) on the left, the groove meter and the combo
+        const nate = (G.nateSprites ? G.nateSprites() : G.sprites.nate).down[0], abe = G.sprites.abe.down[0], b = this.bob > 3 ? 1 : 0;
+        ctx.drawImage(nate, 24, 46 + b, nate.width * 2, nate.height * 2);
+        ctx.save(); ctx.translate(40, 82 + b); ctx.rotate(-1.1); ctx.drawImage(jazzSmall(), -6, -18); ctx.restore();
+        FT().draw(ctx, 'GROOVE', 4, 18, '#c8c0d8', { shadow: '#000' });
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(6, 28, 8, 90);
+        const gh = Math.round(88 * this.groove);
+        ctx.fillStyle = this.groove > 0.5 ? '#78e070' : this.groove > 0.25 ? '#f8d850' : '#f86858'; ctx.fillRect(7, 117 - gh, 6, gh);
+        if (this.combo >= 4) FT().draw(ctx, G.sayable(this.combo) + ' in a row', 20, 120, '#f8d850', { shadow: '#000' });
+        // Abe on bass on the right, bobbing to the beat, and the score
+        ctx.drawImage(abe, 184, 40 + b, abe.width * 2, abe.height * 2);
+        FT().draw(ctx, 'SCORE', 176, 18, '#c8c0d8', { shadow: '#000' });
+        FT().draw(ctx, G.sayable(this.score), 176, 27, '#f8f8f0', { shadow: '#000' });
+        if (this.mult() > 1) FT().draw(ctx, 'x' + G.sayable(this.mult()), 216, 27, '#f8d850', { shadow: '#000' });
+        // the count-in
+        if (this.f < COUNT && this.f > 0) {
+          const n = G.sayable(Math.floor(this.f / fpb) + 1), w = FT().bigWidth(n, 3);
+          FT().drawBig(ctx, n, 120 - Math.round(w / 2), 50, 3, '#f8d850', '#1c1424');
+        }
+        if (this.msg && this.doneT) { const w = FT().width(this.msg); FT().draw(ctx, this.msg, 120 - Math.round(w / 2), 50, '#f8d850', { shadow: '#000' }); }
+        talk.draw(ctx);
+      },
+    };
+  }
+
+  // The little amp in Abe's office: once everything at the condo is done, Abe jams with Nate here.
+  S.abeAmp = function* () {
+    const f = flags(), s = G.state, J = jamState();
+    if (!G.condoDone()) {
+      yield G.say(null, 'A little vintage guitar amp.');
+      if (s.party.includes('abe') && !f.jamTease) {
+        f.jamTease = true;
+        yield* S.callIn('abe');
+        yield G.say('Abe', 'Once things calm down around here, come find me up here. Bring your ears.');
+      }
+      return;
+    }
+    yield* S.callIn('abe', 'Did somebody say amp?');
+    if (!f.jamMet) {
+      f.jamMet = true;
+      yield G.say('Abe', 'Romulus is home. Anette has her garden. It\'s finally quiet. Let\'s play.');
+      yield G.say(null, 'Abe opens a tweed case like it\'s a museum exhibit. Inside: a sparkly plum guitar with a tortoiseshell pickguard.');
+      yield G.say('Abe', 'My Jazzmaster. 1959 body. 1962 neck. 1959 electronics. Carefully. CAREFULLY.');
+      yield G.say('Abe', 'I\'ll play bass. You follow me. Three songs. Get through all three and... we\'ll talk.');
+    }
+    for (;;) {
+      const song = yield jamPickCmd();
+      if (!song) { G.play.overlay = null; yield G.say('Abe', 'Good session.'); return; }
+      yield howToCmd('JAMMING WITH ABE', HOW_TO.jam);
+      const r = yield jamCmd(song, dadTalk(JAZZ_TALK, 'abe', []));
+      G.play.overlay = null;
+      G.audio.play(G.play.world.def.music);
+      if (r === 'quit') { yield G.say('Abe', 'We\'ll pick it up later.'); return; }
+      if (!r.passed) { yield G.say('Abe', 'You lost me there. Let\'s take it from the top.'); continue; }
+      const first = !J[song.id], idx = JAM_SONGS.indexOf(song);
+      J[song.id] = Math.max(J[song.id] || 0, r.stars);
+      yield revealCmd(jazzSmall(), song.name, r.stars);
+      yield G.say('Abe', r.stars === 3 ? 'That was clean. Really clean.' : r.stars === 2 ? 'Good! A few clams. Everybody hits a few clams.' : 'We got through it! That counts.');
+      if (idx === JAM_SONGS.length - 1 && !G.instrumentHas('jazzmaster')) {
+        yield G.say('Abe', '...Okay. All three. That was actually good.');
+        yield G.say('Abe', 'I want you to have it. Not HAVE have. Borrow. A long-term borrow.');
+        instState().jazzmaster = true;
+        yield G.itemGet(jazzSmall(), 'You got {y}Abe\'s Jazzmaster{/}! (A loan. He was very clear.) It\'s in {y}COLLECTABLES{/}.');
+        yield G.say('Abe', 'It belonged to Al Alcorn before me. He invented Pong. Treat it like it invented Pong.');
+        G.play.autosave();
+      } else if (first && idx < JAM_SONGS.length - 1) yield G.say('Abe', 'Next one: ' + JAM_SONGS[idx + 1].name + '. It\'s faster.');
+    }
   };
 
   // Golden hour at the end of the driveway: Lily vs. Mikey.
@@ -9755,7 +10082,7 @@
       F.stand(sp.woodChest, 19, 14, 1, look('A dark wood chest at the foot of the bed.'), { ht: 2 });
       F.stand(sp.cubeShelf, 22, 18, 2, look('A white cube shelf: books, a whole row of records, two Catan boxes and little speakers, with a printer, a record player and a lamp on top.'));
       F.stand(sp.guitarTrio, 24, 17, 2, look('Three more of Abe\'s guitars, leaning in the corner. How many guitars does one man need? More. The answer is always more.'));
-      F.stand(sp.vibroAmp, 24, 18, 2, look('A little vintage guitar amp.'));
+      F.stand(sp.vibroAmp, 24, 18, 2, () => S.abeAmp());
       // ---- the upstairs bath (x 16-19, y 3-7): tub with sliding glass doors, vanity, toilet
       // FURNITURE (photos pending): towels, a bath mat, decor.
       F.stand(sp.tubGlass, 16, 3, 2, look('A bathtub behind sliding glass doors.'), { ht: 2 });

@@ -8512,6 +8512,60 @@
     p.vline(10, 14, 15, '#1a1a1a'); p.set(11, 15, '#1a1a1a');
     return finish(p);
   }
+  // Abe's Jazzmaster (from the user's photo): a sparkly plum offset body, a tortoiseshell pickguard,
+  // two cream soapbar pickups, the chrome bridge and tremolo (and its arm), a rosewood board with
+  // pearl dots on an aged maple neck, and the headstock with its gold logo and six tuners down one side
+  function jazzmaster() {
+    const W = 24, H = 74, p = new Pix(W, H);
+    // the headstock
+    for (let y = 0; y < 13; y++) {
+      const x0 = 9 + Math.round(y * 0.18), x1 = y < 2 ? 14 + y : 15;
+      p.hline(x0, x1, y, y < 1 ? '#c89048' : '#d8a058');
+      p.set(x1, y, '#b07838');
+    }
+    for (const y of [2, 4, 6, 8, 10, 12]) { p.set(7 + Math.round(y * 0.18), y, '#c8ccd4'); p.set(8 + Math.round(y * 0.18), y, '#8a8e98'); }
+    p.vline(13, 3, 6, '#e8c050'); p.set(12, 4, '#e8c050'); p.set(14, 6, '#e8c050');
+    // the neck: maple, with a rosewood board, frets and pearl dots
+    for (let y = 13; y < 50; y++) { p.hline(10, 14, y, '#d8a058'); p.hline(11, 13, y, '#3a2214'); }
+    let fy = 15;
+    for (let k = 1; fy < 48; k++) {
+      p.hline(11, 13, fy, '#c8ccd4');
+      if ([3, 5, 7, 9].includes(k)) p.set(12, fy + 1, '#f0e8d8');
+      if (k === 12) { p.set(11, fy - 1, '#f0e8d8'); p.set(13, fy - 1, '#f0e8d8'); }
+      fy += Math.max(2, Math.round(4 - k * 0.2));
+    }
+    // the body: an offset outline (the waist is crooked on purpose), plum with a little sparkle
+    const L = [[42, 6], [44, 3], [49, 3], [54, 5], [58, 3], [62, 2], [68, 2], [71, 4], [73, 8]];
+    const R = [[44, 18], [47, 21], [52, 20], [56, 19], [61, 22], [68, 22], [71, 20], [73, 16]];
+    const edge = (pts, y) => { if (y <= pts[0][0]) return pts[0][1]; for (let k = 1; k < pts.length; k++) if (y <= pts[k][0]) { const [y0, x0] = pts[k - 1], [y1, x1] = pts[k]; return x0 + ((x1 - x0) * (y - y0)) / (y1 - y0); } return pts[pts.length - 1][1]; };
+    for (let y = 42; y < H; y++) {
+      const x0 = Math.round(edge(L, y)), x1 = Math.round(y < 44 ? 15 : edge(R, y));
+      for (let x = x0; x <= x1; x++) {
+        const rim = x === x0 || x === x1 || y === H - 1;
+        p.set(x, y, rim ? '#5a1a40' : G.hash(x, y, 13) < 0.1 ? '#c868a8' : x < x0 + 2 ? '#a8447e' : '#8a2e62');
+      }
+    }
+    // the tortoiseshell pickguard, around the neck and both pickups
+    for (let y = 44; y < 65; y++) {
+      const x0 = Math.round(edge(L, y)) + 2, x1 = Math.round(edge(R, y)) - 2;
+      for (let x = x0; x <= x1; x++) {
+        if (y > 59 && x < 9 + (y - 59)) continue;
+        const h = G.hash(x, y, 17);
+        p.set(x, y, h < 0.25 ? '#c06a28' : h < 0.4 ? '#3a1a08' : '#7a3a14');
+      }
+    }
+    // the neck runs onto the body, then the strings to the bridge
+    for (let y = 42; y < 47; y++) { p.hline(10, 14, y, '#d8a058'); p.hline(11, 13, y, '#3a2214'); }
+    for (let y = 47; y < 62; y++) if (y % 2) { p.set(11, y, '#d8d8e0'); p.set(13, y, '#d8d8e0'); }
+    // the two soapbar pickups
+    for (const py of [49, 56]) { p.rect(8, py, 8, 3, '#efe6c8'); p.hline(8, 15, py + 2, '#c8bea0'); for (let k = 0; k < 6; k++) p.set(9 + k, py + 1, '#b8b0a0'); }
+    // the bridge, the tremolo plate and its arm, and the knobs
+    p.hline(9, 15, 62, '#c8ccd4'); p.hline(9, 15, 63, '#8a8e98');
+    p.rect(9, 65, 7, 5, '#b8bcc4'); p.hline(9, 15, 65, '#e8ecf0'); p.set(12, 67, '#8a8e98');
+    for (let k = 0; k < 5; k++) p.set(16 + k, 65 - k, '#c8ccd4');
+    p.set(18, 59, '#efe6c8'); p.set(19, 62, '#efe6c8'); p.set(6, 46, '#efe6c8');
+    return finish(p);
+  }
   G.TIN_IDS = ['lane1q', 'borkum', 'maidenLane', 'royalJersey', 'scottishCake', 'capstan', 'oldGowrie', 'cravensClaw', 'orlik', 'margate'];
 
   // ================================================================ EXPORTS
@@ -8743,6 +8797,7 @@
     S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
     S.pipeBook = pipeBookIcon();
+    S.jazzmaster = jazzmaster();
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
     S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();

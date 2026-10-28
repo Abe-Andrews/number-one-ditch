@@ -319,6 +319,35 @@ G.audio = (function () {
       tone(N(midi + 12), t, 0.25, 'sine', 0.03);
       noise(t, 0.3, 0.06, sfxBus, 1500);
     },
+    // Instruments, played a note at a time by the game loop (the jam with Abe): an electric guitar
+    // (two slightly detuned oscillators through a closing lowpass, like a plucked string), a bass,
+    // and a little drum kit. They go on the music bus.
+    inst: {
+      guitar(midi, dur = 0.45, vol = 0.16) {
+        if (!ctx || muted) return;
+        const t = ctx.currentTime + 0.005, f = N(midi), flt = ctx.createBiquadFilter(), g = ctx.createGain();
+        flt.type = 'lowpass'; flt.Q.value = 4;
+        flt.frequency.setValueAtTime(Math.min(6000, f * 9), t); flt.frequency.exponentialRampToValueAtTime(Math.max(300, f * 1.6), t + dur);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        for (const [type, mul] of [['sawtooth', 1], ['square', 1.004], ['sine', 0.5]]) {
+          const o = ctx.createOscillator();
+          o.type = type; o.frequency.setValueAtTime(f * mul, t);
+          // (a little of the Jazzmaster's floating tremolo)
+          o.frequency.setValueAtTime(f * mul, t + dur * 0.5); o.frequency.linearRampToValueAtTime(f * mul * 1.006, t + dur);
+          o.connect(flt); o.start(t); o.stop(t + dur + 0.03);
+        }
+        flt.connect(g); g.connect(musicBus);
+      },
+      bass(midi, dur = 0.35) {
+        if (!ctx || muted) return;
+        const t = ctx.currentTime + 0.005;
+        tone(N(midi), t, dur, 'triangle', 0.5, musicBus);
+        tone(N(midi), t, dur * 0.6, 'square', 0.06, musicBus);
+      },
+      kick() { if (!ctx || muted) return; const t = ctx.currentTime + 0.005; tone(130, t, 0.16, 'sine', 0.7, musicBus, 42); },
+      snare() { if (!ctx || muted) return; const t = ctx.currentTime + 0.005; noise(t, 0.14, 0.32, musicBus, 2200); tone(190, t, 0.07, 'triangle', 0.18, musicBus); },
+      hat() { if (!ctx || muted) return; const t = ctx.currentTime + 0.005; noise(t, 0.035, 0.12, musicBus, 8000); },
+    },
     toggleMute() {
       muted = !muted;
       if (master) master.gain.value = muted ? 0 : 0.5;

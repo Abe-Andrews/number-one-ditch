@@ -233,6 +233,7 @@
     { id: 'photos', name: 'Photos', icon: 'photo', count: () => [G.photosFound(), G.PHOTOS.length], blurb: 'Old family photos, hidden all over. Some of them Mom would rather nobody saw.' },
     { id: 'pipes', name: 'Dad\'s Pipes', icon: 'pipe', count: () => [G.pipesMadeCount(), G.PIPES.length], blurb: 'Pipes you turned on Dad\'s lathe and finished with him in the workshop. Pick one and Dad\'s Pipe looks just like it.' },
     { id: 'tins', name: 'Tobacco', icon: 'tin', count: () => [G.tinsMadeCount(), G.TOBACCOS.length], blurb: 'The tobaccos from Dad\'s pipe journal, blended with him in the workshop. Pack one in Dad\'s Pipe and the smoke comes out its color.' },
+    { id: 'instruments', name: 'Instruments', icon: 'guitar', count: () => [G.instrumentsCount(), G.INSTRUMENTS.length], blurb: 'Instruments you\'ve earned jamming with Abe at the condo. More to come.' },
   ];
   // the pipes page also has the one Dad gave Nate, first
   const benchList = (coll) => (coll === 'pipes' ? [{ id: 'dad', dad: true, name: 'Dad\'s Pipe', kind: 'The one Dad gave you. Hand-carved in his workshop.' }].concat(G.PIPES) : G.TOBACCOS);
@@ -244,7 +245,7 @@
 
   // ---- tiny 9x9 pixel icons for the tabs and stats (drawn once)
   const ICON_PAL = {
-    k: '#1c1424', w: '#f4ecd8', y: '#f8d850', o: '#c89838', b: '#8a5a34', g: '#b8b8c8', G: '#6a6a78', r: '#e85050',
+    k: '#1c1424', w: '#f4ecd8', y: '#f8d850', o: '#c89838', b: '#8a5a34', g: '#b8b8c8', G: '#6a6a78', r: '#e85050', v: '#a03a7a',
     c: '#78e8e8', C: '#3a98b8', s: '#f4c8aa', h: '#9a4a28', n: '#4a8a48', u: '#3a68b8', l: '#a8c8f0',
   };
   const ICON_ART = {
@@ -268,6 +269,7 @@
     photo: ['kkkkkkkkk', 'kwwwwwwwk', 'kwllllwwk', 'kwlsslllk', 'kwlsslllk', 'kwlnnnllk', 'kwnnnnnwk', 'kwwwwwwwk', 'kkkkkkkkk'],
     pipe: ['.........', '....kkkkk', '....kbbbk', '....kbbbk', 'kkkkkbbbk', 'GGGGkbbbk', 'kkkkkbbbk', '.....kkk.', '.........'],
     tin: ['.........', '..kkkkk..', '.kyyyyyk.', 'kyrrrrryk', 'kyrwwwryk', 'kyrrrrryk', 'kkyyyyykk', 'kokkkkkok', '.kkkkkkk.'],
+    guitar: ['......kk.', '.....kbk.', '....kbk..', '...kbk...', '.kkvbk...', 'kvvwvk...', 'kvwvvk...', '.kvvk....', '..kk.....'],
   };
   const iconCache = {};
   function icon(name) {
@@ -583,6 +585,13 @@
           const ph = G.PHOTOS[this.sel];
           if (ph && G.photoHas(ph.id)) { this.photoView = ph; G.audio.sfx('select'); } else G.audio.sfx('bump');
         }
+      } else if (this.tab === COLL_TAB && this.coll === 'instruments') {
+        const n = G.INSTRUMENTS.length, col = this.sel % 3, row = Math.floor(this.sel / 3);
+        if (inp.hit('left') && col > 0) this.move(-1, n);
+        if (inp.hit('right') && col < 2) this.move(1, n);
+        if (inp.hit('down') && this.sel + 3 < n) this.move(3, n);
+        if (inp.hit('up')) { if (row > 0) this.move(-3, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
+        if (inp.hit('a')) { inp.eat('a'); G.audio.sfx('bump'); }
       } else if (this.tab === COLL_TAB && (this.coll === 'pipes' || this.coll === 'tins')) {
         // DAD'S PIPES / TOBACCO: Z puts one to use (Z on the tobacco that's in empties the pipe)
         const list = benchList(this.coll), n = list.length, col = this.sel % 3, row = Math.floor(this.sel / 3);
@@ -1055,19 +1064,22 @@
       if (this.coll === 'rocks') this.drawRocks(ctx);
       else if (this.coll === 'photos') this.drawPhotos(ctx);
       else if (this.coll === 'pipes' || this.coll === 'tins') this.drawBench(ctx);
+      else if (this.coll === 'instruments') this.drawInstruments(ctx);
       else this.drawCollectList(ctx);
       if (this.photoView) ctx.drawImage(G.photoPage(this.photoView), 0, 0);
     }
     drawCollectList(ctx) {
       card(ctx, 5, 21, 112, 121, 'COLLECTABLES');
+      // (the rows squeeze together as more kinds get added)
+      const gap = Math.min(26, Math.floor(103 / COLLECTIONS.length)), h = gap - 3;
       COLLECTIONS.forEach((c, i) => {
-        const y = 39 + i * 26, sel = i === this.sel && !this.onTabs, [have, all] = c.count();
-        G.box(ctx, 9, y, 104, 22, sel ? SEL : { bg: '#1a1428', border: '#3e3460', inner: '#262038' });
-        ctx.drawImage(icon(c.icon), 14, y + 6);
-        TXT(ctx, c.name, 27, y + 4, sel ? C.gold : C.soft);
-        bar(ctx, 27, y + 14, 50, 5, have / all, have >= all ? C.green : C.cyan);
-        TXT(ctx, G.sayable(have) + '/' + G.sayable(all), 81, y + 12, C.gold);
-        if (sel) cursor(ctx, 3, y + 8);
+        const y = 37 + i * gap, sel = i === this.sel && !this.onTabs, [have, all] = c.count();
+        G.box(ctx, 9, y, 104, h, sel ? SEL : { bg: '#1a1428', border: '#3e3460', inner: '#262038' });
+        ctx.drawImage(icon(c.icon), 14, y + Math.round((h - 9) / 2));
+        TXT(ctx, c.name, 27, y + 2, sel ? C.gold : C.soft);
+        bar(ctx, 27, y + h - 7, 50, 4, have / all, have >= all ? C.green : C.cyan);
+        TXT(ctx, G.sayable(have) + '/' + G.sayable(all), 81, y + h - 10, C.gold);
+        if (sel) cursor(ctx, 3, y + Math.round(h / 2) - 3);
       });
       const c = COLLECTIONS[this.sel];
       card(ctx, 120, 21, 115, 121, c.name, C.cyan);
@@ -1110,6 +1122,34 @@
         for (let a = 0; a < Math.PI * 2; a += 0.4) ctx.fillRect(Math.round(222 + Math.cos(a) * 5), Math.round(121 + Math.sin(a) * 3.5), 1, 1);
       }
       TXT(ctx, it.id === cur ? (pipes ? '{g}Using this one' : '{g}In the pipe') : 'Z: ' + (pipes ? 'use it' : 'pack it'), 125, 128, C.dim);
+    }
+
+    // ---- INSTRUMENTS (earned jamming with Abe): the guitar, and its story
+    drawInstruments(ctx) {
+      const list = G.INSTRUMENTS, n = G.instrumentsCount();
+      card(ctx, 5, 21, 112, 121, 'INSTRUMENTS', C.gold, G.sayable(n) + '/' + G.sayable(list.length));
+      list.forEach((it, i) => {
+        const x = 9 + (i % 3) * 35, y = 37 + Math.floor(i / 3) * 44, sel = i === this.sel && !this.onTabs, img = it.art(), has = G.instrumentHas(it.id);
+        slot(ctx, x, y, 34, 42, has ? C.gold : undefined);
+        const k = 38 / img.height;
+        ctx.drawImage(has ? img : silhouette(img), x + Math.round((34 - img.width * k) / 2), y + 2, Math.round(img.width * k), 38);
+        if (sel) brackets(ctx, x - 1, y - 1, 36, 44);
+      });
+      const it = list[this.sel];
+      card(ctx, 120, 21, 115, 121);
+      if (!it) return;
+      // the guitar, lying across the top of the card
+      const img = it.art(), has = G.instrumentHas(it.id);
+      ctx.save(); ctx.translate(141, 28); ctx.rotate(-Math.PI / 2); ctx.drawImage(has ? img : silhouette(img), -img.width, 0); ctx.restore();
+      if (!has) {
+        TXT(ctx, '???', 125, 56, C.cyan);
+        F().wrap('Jam with Abe at the condo to earn it.', 104).forEach((l, k) => TXT(ctx, l, 125, 67 + k * 9, C.dim));
+        return;
+      }
+      TXT(ctx, fit(it.name, 106), 125, 56, C.cyan);
+      TXT(ctx, it.kind, 125, 66, C.dim);
+      let y = 78;
+      for (const line of it.about) for (const row of F().wrap(line, 104)) { if (y > 132) break; TXT(ctx, row, 125, y, C.soft); y += 9; }
     }
 
     // ---- PHOTOS: thumbnails on the left, the one you're on at the right
