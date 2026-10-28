@@ -44,7 +44,7 @@
     },
     update() { if (this.cur) this.advance(); },
     draw(ctx) { if (this.cur && this.cur.cmd && this.cur.cmd.draw) this.cur.cmd.draw(ctx); },
-    reset() { this.cur = null; this.queue = []; },
+    reset() { this.cur = null; this.queue = []; if (G.hidePipeBook) G.hidePipeBook(); },
   };
 
   // ------------------------------------------------------------ box drawing

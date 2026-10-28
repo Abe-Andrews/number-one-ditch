@@ -5890,89 +5890,60 @@
     yield G.say('Dad', 'I\'ll start a new one. I was almost out of pages anyway.');
     yield G.say(null, 'Read it any time: it\'s in {y}KEYS{/}.');
   }
-  // ---- reading it: the cover, a page for every pipe (in the order Dad numbered them), then
-  // the tobaccos. ←→ turns the pages.
-  function bookPage(draw) {
-    const c = G.canvas(G.W, G.H), x = c.getContext('2d');
-    x.fillStyle = '#f2ecdc'; x.fillRect(0, 0, G.W, G.H);
-    x.fillStyle = '#dcdcea'; for (let y = 17; y < G.H - 12; y += 9) x.fillRect(0, y, G.W, 1);
-    draw(x);
-    return c;
+  // ---- reading it: the real thing. Photos of every page of Dad's pipe journal, cover to last page,
+  // in order (assets/pipebook, cropped to the page and cleaned up from the family's photos; nothing
+  // added or left out). The game screen is too small to read handwriting, so the page is shown over
+  // the game at full size (a picture on top of the canvas), with the page count along the bottom.
+  // ←→ turn the pages, Z or X closes it.
+  const BOOK_PAGES = 28;
+  const bookSrc = (i) => 'assets/pipebook/' + String(i).padStart(2, '0') + '.jpg';
+  let bookEl = null;
+  function bookOverlay() {
+    if (bookEl) return bookEl;
+    const box = document.createElement('div'), img = document.createElement('img');
+    box.style.cssText = 'position:fixed;display:none;z-index:50;background:#16100c;align-items:center;justify-content:center;pointer-events:none';
+    img.style.cssText = 'max-height:96%;max-width:96%;box-shadow:0 4px 18px rgba(0,0,0,0.6);image-rendering:auto';
+    box.appendChild(img);
+    document.body.appendChild(box);
+    return (bookEl = { box, img, pre: [] });
   }
-  const PENCIL = '#4a4a52';
-  // Dad's notes, a line at a time from y down the page (and onto more pages if they run over)
-  function notesPages(pages, name, notes, y, head) {
-    const rows = [];
-    for (const l of notes) rows.push(...FT().wrap('- ' + l, 224));
-    let i = 0;
-    pages.push(bookPage((x) => { head(x); for (; i < rows.length && y <= G.H - 20; y += 9) FT().draw(x, rows[i++], 10, y, PENCIL); }));
-    while (i < rows.length) {
-      pages.push(bookPage((x) => {
-        FT().draw(x, name + ' (cont.)', 10, 3, '#2a2a32');
-        for (let yy = 18; i < rows.length && yy <= G.H - 20; yy += 9) FT().draw(x, rows[i++], 10, yy, PENCIL);
-      }));
-    }
-  }
-  function pipeBookPages() {
-    const pages = [];
-    // the cover
-    const cover = G.canvas(G.W, G.H), x = cover.getContext('2d');
-    x.fillStyle = '#16100c'; x.fillRect(0, 0, G.W, G.H);
-    x.fillStyle = '#2a4a8a'; x.fillRect(60, 8, 120, 140);
-    x.fillStyle = '#3a5aa8'; for (let yy = 9; yy < 147; yy++) for (let xx = 61 + (yy % 3); xx < 179; xx += 3) x.fillRect(xx, yy, 1, 1);
-    x.fillStyle = '#1a2a5a'; x.fillRect(60, 8, 4, 140);
-    x.fillStyle = '#e0b848'; x.fillRect(116, 66, 8, 8); x.fillStyle = '#f8e070'; x.fillRect(116, 66, 3, 3);
-    x.fillStyle = '#1a1a1a'; x.fillRect(150, 146, 3, 12);
-    const t = 'DAD\'S PIPE BOOK';
-    FT().draw(x, t, 120 - Math.round(FT().width(t) / 2), 92, '#e0b848', { shadow: '#1a2a5a' });
-    pages.push(cover);
-    // the pipes, in the order he numbered them
-    const made = G.state.pipesMade || {}, n = (p) => parseInt(p.num.replace(/\D/g, ''), 10);
-    for (const pipe of G.PIPES.slice().sort((a, b) => n(a) - n(b))) {
-      notesPages(pages, pipe.name, pipe.facts, 45, (x) => {
-        FT().draw(x, pipe.name, 10, 3, '#2a2a32');
-        x.drawImage(G.pipeLook(pipe.id, 0.75), 6, 15);
-        FT().wrap(pipe.kind, 170).slice(0, 2).forEach((l, k) => FT().draw(x, l, 60, 18 + k * 9, PENCIL));
-        const st = made[pipe.id] ? made[pipe.id].stars : 0;
-        FT().draw(x, 'Nate\'s: {y}' + '★'.repeat(st) + '{d}' + '★'.repeat(3 - st), 60, 34, PENCIL);
-        x.strokeStyle = PENCIL; x.lineWidth = 1;
-        const w = FT().width(pipe.num) + 6;
-        x.strokeRect(G.W - 8 - w + 0.5, 1.5, w, 11); FT().draw(x, pipe.num, G.W - 5 - w, 3, PENCIL);
-      });
-    }
-    // the tobaccos ("smoking experience")
-    const tins = G.state.tinsMade || {};
-    for (const tob of G.TOBACCOS) {
-      notesPages(pages, tob.name, [tob.clue].concat(tob.facts, ['Smoking experience: ' + tob.taste]), 45, (x) => {
-        FT().draw(x, tob.name, 10, 3, '#2a2a32');
-        x.drawImage(G.spr.tins[tob.id], 10, 16);
-        FT().wrap(tob.kind, 180).slice(0, 2).forEach((l, k) => FT().draw(x, l, 50, 18 + k * 10, PENCIL));
-        const st = tins[tob.id] ? tins[tob.id].stars : 0;
-        FT().draw(x, 'Nate\'s: {y}' + '★'.repeat(st) + '{d}' + '★'.repeat(3 - st), 50, 34, PENCIL);
-      });
-    }
-    return pages;
-  }
-  function pipeBookView(pages) {
+  G.hidePipeBook = () => { if (bookEl) bookEl.box.style.display = 'none'; };
+  function pipeBookView() {
     return {
-      start() { this.i = 0; this.t = 0; G.audio.sfx('menu'); },
+      start() {
+        this.i = 0; this.t = 0;
+        const o = bookOverlay();
+        // (load every page up front, so turning one is instant)
+        if (!o.pre.length) for (let i = 0; i < BOOK_PAGES; i++) { const im = new Image(); im.src = bookSrc(i); o.pre.push(im); }
+        this.show();
+        G.audio.sfx('menu');
+      },
+      // the page over the game screen (all but the strip along the bottom, where the page count goes)
+      show() {
+        const o = bookOverlay(), r = document.getElementById('screen').getBoundingClientRect(), strip = r.height * (11 / G.H);
+        Object.assign(o.box.style, { display: 'flex', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: (r.height - strip) + 'px' });
+        if (o.shown !== this.i) { o.img.src = bookSrc(this.i); o.shown = this.i; }
+        // (the pages are grayscale: a touch of sepia gives them their paper color back; the cover's in color)
+        o.img.style.filter = this.i ? 'sepia(0.28)' : 'none';
+      },
       update() {
         const inp = G.input;
         this.t++;
-        if (inp.hit('right') && this.i < pages.length - 1) { this.i++; G.audio.sfx('menu'); }
+        if (inp.hit('right') && this.i < BOOK_PAGES - 1) { this.i++; G.audio.sfx('menu'); }
         if (inp.hit('left') && this.i > 0) { this.i--; G.audio.sfx('menu'); }
-        if (this.t > 14 && (inp.hit('a') || inp.hit('b'))) { inp.eat('a'); inp.eat('b'); G.audio.sfx('cancel'); return true; }
+        if (this.t > 14 && (inp.hit('a') || inp.hit('b'))) { inp.eat('a'); inp.eat('b'); G.audio.sfx('cancel'); G.hidePipeBook(); return true; }
+        this.show();
         return false;
       },
       draw(ctx) {
-        ctx.drawImage(pages[this.i], 0, 0);
-        const hint = (this.i > 0 ? '← ' : '') + G.sayable(this.i + 1) + '/' + G.sayable(pages.length) + (this.i < pages.length - 1 ? ' →' : '') + '   Z: close';
-        FT().draw(ctx, hint, G.W - FT().width(hint) - 4, G.H - 9, this.i ? PENCIL : '#f8f8f0', this.i ? {} : { shadow: '#000' });
+        ctx.fillStyle = '#16100c'; ctx.fillRect(0, 0, G.W, G.H);
+        const hint = (this.i > 0 ? '← ' : '') + (this.i ? 'Page ' + G.sayable(this.i) + '/' + G.sayable(BOOK_PAGES - 1) : 'The cover') + (this.i < BOOK_PAGES - 1 ? ' →' : '') + '   Z: close';
+        FT().draw(ctx, hint, Math.round((G.W - FT().width(hint)) / 2), G.H - 9, '#c8b898', { shadow: '#000' });
       },
     };
   }
   S.readPipeBook = function* () {
-    yield pipeBookView(pipeBookPages());
+    yield pipeBookView();
     const f = flags();
     if (!f.pipeBookRead) { f.pipeBookRead = true; yield G.say('Nate', 'Every pipe. Every tobacco. Every fact. He really did tell me everything.'); }
   }

@@ -107,6 +107,7 @@
     loadMap(id, x, y, dir, skipEnter) {
       this.camFocus = null;
       this.overlay = null;
+      if (G.hidePipeBook) G.hidePipeBook();
       this.earworm = 0;
       G.pipe.active = false;
       this.world = new G.World(id);
