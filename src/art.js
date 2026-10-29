@@ -8662,6 +8662,42 @@
     p.outline();
     return p.canvas();
   }
+  // knitted baby hats (Hannah's NICU shifts): a ribbed brim and a knit crown, each its own pattern
+  function knitHat(kind) {
+    const p = new Pix(16, 13);
+    const C = { stripe: ['#8ab8e8', '#f4f4f0'], pompom: ['#d83848', '#f4f4f0'], bear: ['#8a5a38', '#c89068'], strawberry: ['#e83848', '#f8e070'], pumpkin: ['#f08a28', '#5aa040'], heart: ['#f4a8c8', '#d8386a'] }[kind];
+    const [a, b] = C, ad = shade(a, -0.25);
+    for (let y = 3; y < 13; y++) for (let x = 1; x < 15; x++) if (((x - 7.5) / 7) ** 2 + ((y - 12) / 9) ** 2 <= 1) {
+      let col = a;
+      if (kind === 'stripe') col = Math.floor(y / 2) % 2 ? a : b;
+      if (kind === 'strawberry' && (x * 3 + y * 5) % 7 === 0) col = b;
+      if (kind === 'pumpkin' && (x === 5 || x === 10)) col = ad;
+      p.set(x, y, x < 4 ? shade(col, 0.15) : col);
+    }
+    for (let x = 1; x < 15; x++) p.set(x, 11, x % 2 ? ad : a);
+    p.hline(1, 14, 12, ad);
+    if (kind === 'pompom') { p.rect(6, 0, 4, 3, b); p.set(6, 0, '#d8d8d0'); }
+    if (kind === 'bear') { p.rect(2, 2, 3, 3, a); p.set(3, 3, b); p.rect(11, 2, 3, 3, a); p.set(12, 3, b); }
+    if (kind === 'strawberry') { p.hline(5, 10, 3, '#5aa040'); p.set(7, 1, '#5aa040'); p.set(7, 2, '#5aa040'); p.set(8, 2, '#3a8030'); }
+    if (kind === 'pumpkin') { p.rect(7, 1, 2, 3, b); p.set(9, 1, b); }
+    if (kind === 'heart') { p.set(6, 6, b); p.set(9, 6, b); p.hline(5, 10, 7, b); p.hline(6, 9, 8, b); p.hline(7, 8, 9, b); p.set(7, 2, a); p.rect(7, 1, 2, 2, b); }
+    p.outline();
+    return p.canvas();
+  }
+  // the BMF belt (Nani's, then Doron's): a black strap and a big silver plate with BMF on it
+  function bmfIcon() {
+    const p = new Pix(18, 11);
+    p.rect(0, 3, 18, 5, '#1c1c24'); p.hline(0, 17, 3, '#3a3a44');
+    p.rect(3, 0, 12, 11, '#c8ccd4'); p.hline(3, 14, 0, '#f0f2f6'); p.vline(3, 0, 10, '#f0f2f6'); p.hline(4, 14, 10, '#8a8e98'); p.vline(14, 1, 10, '#8a8e98');
+    p.rect(5, 3, 8, 5, '#2a2a34');
+    // B M F, in white, very small
+    p.vline(6, 4, 6, '#ffffff'); p.set(7, 4, '#ffffff'); p.set(7, 6, '#ffffff');
+    p.vline(8, 4, 6, '#ffffff'); p.vline(10, 4, 6, '#ffffff'); p.set(9, 5, '#ffffff');
+    p.vline(11, 4, 6, '#ffffff'); p.set(12, 4, '#ffffff'); p.set(12, 5, '#d0d0d0');
+    p.rect(0, 4, 2, 3, '#c8ccd4'); p.rect(16, 4, 2, 3, '#c8ccd4');
+    p.outline();
+    return p.canvas();
+  }
   function pipeBookIcon() {
     const p = new Pix(14, 16);
     p.rect(2, 0, 11, 15, '#2a4a8a');
@@ -9057,7 +9093,7 @@
     S.goldenEgg = [goldenEgg(false), goldenEgg(true)]; S.egglet = { right: [egglet(0), egglet(1)] }; S.egglet.left = S.egglet.right.map(mirror);
     S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
-    S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon();
+    S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon(); S.bmfIcon = bmfIcon(); S.knitHats = {}; for (const k of ['stripe', 'pompom', 'bear', 'strawberry', 'pumpkin', 'heart']) S.knitHats[k] = knitHat(k);
     S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe();
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);

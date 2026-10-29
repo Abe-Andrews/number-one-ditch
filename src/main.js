@@ -49,6 +49,8 @@
       if (s.xItem === 'bass') s.xItem = null;
       // ...and from when Ben was Devin (whether he took one of Doron's tickets)
       if (f.ticket_Devin && !f.ticket_Ben) f.ticket_Ben = f.ticket_Devin;
+      // ...and from before beating Nani came with the BMF belt
+      if (s.fights && s.fights.nani) s.items.bmf = true;
       s.slot = n;
       return s;
     } catch (e) { return null; }

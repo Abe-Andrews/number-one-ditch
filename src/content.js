@@ -211,6 +211,13 @@
     coat: '#a88aa0', shirt: '#e8dce4', pants: '#4a6aa8', shoes: '#4a7a3a', boots: true, torso: 6, legs: 3,
   };
 
+  // Charge Nurse Dot (an original character): Hannah's charge nurse in the NICU. Short gray hair,
+  // reading glasses, purple scrubs, white clogs.
+  G.CAST.dot = {
+    skin: '#f0c8a8', hair: '#c8c4c8', hairStyle: 'cropped', glasses: '#6a3a7a', smile: '#ffffff',
+    shirt: '#7a5aa8', neckline: true, pants: '#7a5aa8', shoes: '#f4f4f0', torso: 6, legs: 3,
+  };
+
   // Nani: silver hair pulled loosely back with wispy bangs, rosy cheeks, a big
   // smile, amber drop earrings and a charcoal-navy knit sweater. (She mostly
   // shows up in the group chat, so her face is on her texts.)
@@ -301,6 +308,10 @@
     engDiploma: {
       kind: 'key', name: 'Diploma in EEENGLISH', icon: () => G.spr.diploma, has: () => !!fl().engPerfect,
       desc: 'Certifies that Nate speaks EEENGLISH. Three Es. Signed by Professor Pembrook and, in crayon, El EEENGLISH.',
+    },
+    bmf: {
+      kind: 'key', name: 'BMF Belt', short: 'BMF Belt', icon: () => G.spr.bmfIcon, has: () => !!st().items.bmf,
+      desc: 'Nani held it until Doron took it off her in the Expo Hall locker room. He is not allowed to say what the letters stand for at Nani\'s house.',
     },
     belt: {
       kind: 'key', name: 'Micro Mayhem Title Belt', short: 'Title Belt', icon: () => G.spr.beltIcon, has: () => !!st().items.belt,
@@ -426,7 +437,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -637,7 +648,12 @@
       const FS = s.fights || {}, five = G.FIGHTERS.filter((F) => !F.secret), nf = five.filter((F) => FS[F.id]).length;
       if (!f.fightMet) side.push({ name: 'The locker room', status: 'Sounds like a fight in there', kind: 'rumor', where: 'Easton Fair - the Expo Hall', hint: 'The locker room door at the back of the Expo Hall is propped open now. Bring Doron.' });
       else if (nf < five.length) add('Doron\'s fight night', false, G.sayable(nf) + '/' + G.sayable(five.length) + ' beaten', 'Easton Fair - the Expo Hall', 'Doron takes on his favorite UFC fighters in the Expo Hall locker room. Beat Jon Jones for the Micro Mayhem title belt.', [nf, five.length]);
-      else add('Doron\'s fight night', FS.nani && 'Beat Nani!', 'A secret challenger is waiting', 'Easton Fair - the Expo Hall', 'Someone in a knit sweater is waiting in the Expo Hall locker room. Nani has some notes.');
+      else add('Doron\'s fight night', FS.nani && 'BMF!', 'A secret challenger is waiting', 'Easton Fair - the Expo Hall', 'Someone in a knit sweater is waiting in the Expo Hall locker room. Nani has some notes.');
+    }
+    if (f.mobileBeaten && s.party.includes('hannah')) {
+      const nh = G.hatsCount();
+      if (!f.nicuMet) side.push({ name: 'Charge Nurse Dot', status: 'Hannah is late!', kind: 'rumor', where: 'CHKD - the NICU', hint: 'Hannah\'s charge nurse is back on the floor in the NICU, and she\'s looking for Hannah.' });
+      else add('Hannah\'s shift', nh >= G.HATS.length && 'All hats!', G.sayable(nh) + '/' + G.sayable(G.HATS.length) + ' baby hats', 'CHKD - the NICU', 'Talk to Charge Nurse Dot in the NICU with Hannah along. Take care of the babies to earn their knitted hats.', [nh, G.HATS.length]);
     }
     if (G.homeDone() && !f.pipeBench) side.push({ name: 'Dad\'s workshop', status: 'Dad has something to show you', kind: 'rumor', where: 'Home', hint: 'Things are finally quiet at home. Dad wants you in his workshop.' });
     if (f.pipeBench) {
@@ -3462,6 +3478,7 @@
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'], flags: { healerTalk: true, chkdArrived: true } },
     { name: 'CHKD: MECHA-BABY (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
     { name: 'CHKD: Hannah joined (to the roof)', map: 'chkdNicu', at: [7, 8, 'down'], flags: { mobileBeaten: true, kitGot: true }, party: ['hannah'], follower: 'hannah', items: { firstAid: 3 }, maxHp: 12 },
+    { name: 'CHKD: Hannah\'s shift (Charge Nurse Dot)', map: 'chkdNicu', at: [5, 8, 'up'], flags: { mobileBeaten: true, kitGot: true }, party: ['hannah'], follower: 'hannah', items: { firstAid: 3 }, maxHp: 12 },
     { name: 'FINALE: the Number One Ditch', map: 'ditchFinal', at: [7, 17, 'up'], flags: { mobileBeaten: true, roofSeen: true }, party: ['abe', 'hannah'], items: { pipe: true, hammer: true }, maxHp: 12 },
     { name: 'FINALE: Romulus (possessed)', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_intro: true, fin_freed: 5, signal_crack: true } },
     { name: 'FINALE: Eggmas, the relay', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_freed: 7, fin_relay: 0 } },
@@ -3522,7 +3539,7 @@
   // corn, the sloth, Mom's books...): having those early would jump their quests.
   G.adminAllItems = () => {
     const s = G.state, f = s.flags;
-    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true, belt: true });
+    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true, belt: true, bmf: true });
     s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40; s.items.firstAid = G.KIT_MAX;
     f.kitGot = true; f.bidetBig = true; f.bidetNozzle = true; s.items.bidetWater = G.BIDET_MAX;
     for (const sg of G.SIGNALS) f['signal_' + sg.id] = true;
@@ -3534,6 +3551,8 @@
     s.tinsMade = {}; for (const t of G.TOBACCOS) s.tinsMade[t.id] = { stars: 3 };
     s.instruments = {}; for (const it of G.INSTRUMENTS) s.instruments[it.id] = true;
     s.fights = {}; for (const F of G.FIGHTERS) s.fights[F.id] = true;
+    s.hats = {}; for (const h of G.HATS) s.hats[h.id] = true;
+    s.nicu = { care: 3, shift1: 3, shift2: 3, shift3: 3 };
   };
 
   // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)
@@ -5455,12 +5474,12 @@
   const zHeld = (cmd) => { if (!G.input.down('a')) cmd.zReady = true; return !!cmd.zReady && G.input.down('a'); };
 
   // ---- how to do the next step: a card over the workshop wall (Z: got it)
-  function howToCmd(title, lines) {
+  function howToCmd(title, lines, back) {
     return {
       start() { this.t = 0; G.play.overlay = this; G.audio.sfx('menu'); },
       update() { if (++this.t > 12 && (G.input.hit('a') || G.input.hit('b'))) { G.input.eat('a'); G.input.eat('b'); G.audio.sfx('select'); return true; } return false; },
       draw(ctx) {
-        benchBack(ctx, 'HOW TO: ' + title);
+        (back || benchBack)(ctx, 'HOW TO: ' + title);
         G.box(ctx, 10, 20, 220, 132);
         let y = 28;
         for (const l of lines) {
@@ -7203,7 +7222,7 @@
     },
     {
       id: 'nani', name: 'NANI', full: 'NANI', secret: true,
-      style: 'Loves you very much. Hits VERY hard.',
+      style: 'The reigning BMF. Loves you very much. Hits VERY hard.',
       hp: 190, speed: 1.45, dmg: 1.5, aggro: 0.95, block: 0.5, grab: 0.1, jump: 0.08, combo: 0.7,
       special: 'flurry', also: 'haymaker', every: 90,
       intro: 'Doron, sweetheart. Did you eat? ...You\'re going to need your strength.', rage: 'NANI IS VERY DISAPPOINTED.',
@@ -7451,7 +7470,7 @@
         const F = L[this.sel], open = fightOpen(FIGHTERS.indexOf(F)), D = fighterPoses('doron').idle1, O = fighterPoses(F.id).walkout;
         ctx.drawImage(D, 40 - (ROX + 8) * 3, 124 - D.height * 3, D.width * 3, D.height * 3);
         FT().draw(ctx, 'DORON', 10, 116, '#f8f8f0', { shadow: '#000' });
-        if (G.state.items.belt) FT().draw(ctx, 'CHAMPION', 6, 24, '#f8d850', { shadow: '#000' });
+        if (G.state.items.belt) FT().draw(ctx, G.state.items.bmf ? 'CHAMPION + BMF' : 'CHAMPION', 6, 24, '#f8d850', { shadow: '#000' });
         ctx.save(); ctx.translate(200, 0); ctx.scale(-1, 1);
         ctx.drawImage(open ? O : G.silhouette(O), -(ROX + 8) * 3, 124 - O.height * 3, O.width * 3, O.height * 3);
         ctx.restore();
@@ -8150,6 +8169,15 @@
       } else if (F.id === 'nani' && first) {
         yield G.say('Nani', 'Good boy. Now go eat something. You look thin.');
         yield G.say('Doron', 'Yes, Nani.');
+        // ...and she was the BMF the whole time
+        if (!s.items.bmf) {
+          yield G.say(null, 'Nani reaches under her sweater and unbuckles a silver belt. It says BMF on the front.');
+          yield G.say('Doron', 'NANI was the BMF?!');
+          yield G.say('Nani', 'Since before you were born, sweetheart. It\'s yours now. Don\'t you DARE say what it stands for in my house.');
+          s.items.bmf = true;
+          yield G.itemGet(G.spr.bmfIcon, 'You got the {y}BMF Belt{/}! Doron is wearing it over the other belt. Two belts. TWO BELTS.');
+          yield G.say('Doron', 'Nate. NATE. Two belts.');
+        }
       } else if (first && i < FIGHTERS.length - 2) yield G.say(null, '{y}A new challenger!{/} ' + FIGHTERS[i + 1].full + ' wants a piece of Doron.');
       if (first) G.play.autosave();
     }
@@ -12615,11 +12643,628 @@
         w.props.push({ img: null, x: 0, y: 0, base: 8 * 16 + 14, draw(ctx, cx, cy) { const bx = 12 * 16 - 36 - cx, by = 8 * 16 + 14 - 62 - cy; ctx.drawImage(G.spr.mech.left.idle[0], bx, by); ctx.drawImage(G.spr.mechDome.empty, bx + 22, by - 3); } });
         w.blockTiles(11, 8, 2, 1);
         w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [11 * 16, 7 * 16, 13 * 16, 9 * 16], talk: look('The mech, parked in the corner. Somebody stuck a note on it: OUT OF ORDER. NO BABIES ALLOWED.') });
+        // Hannah's charge nurse, back on the floor (Hannah's shift: the NICU minigame)
+        w.add(new G.NPC({ sprite: 'dot', name: 'Charge Nurse Dot', x: 5 * 16 + 8, y: 6 * 16 + 14, dir: 'down', talk: () => S.chargeNurse() }));
       }
       w.addTrigger(7, 10, 1, 1, () => { if (flags().mobileBeaten) G.script.run(S.nicuElevator()); else G.play.warp('chkdLobby', 3, 4, 'down'); });
     },
     onEnter() { return S.nicuEnter(); },
   };
+  // ================================================================ HANNAH'S SHIFT (the NICU minigame)
+  // After MECHA-BABY, Hannah's charge nurse (Charge Nurse Dot, an original character) is back on the
+  // floor in the NICU. Talk to her with Hannah along and you play as Hannah: quick NICU care tasks,
+  // each graded PERFECT / GOOD / OOPS. Care Time: one baby, all six tasks in a row (a tip before
+  // each one the first time). Shifts 1-3: a room of isolettes (4, 5, then 6 babies with twins),
+  // every baby popping up its own needs on its own timer, all at once; pick a baby (arrows, Z) and
+  // do its task while the others keep waiting. Stars at the end of a shift. Knitted baby hats are
+  // the prize (COLLECTABLES > Baby Hats), and the babies wear the ones you've earned.
+  // The six tasks: feed (tilt the bottle, keep the flow in the green), diaper (the steps, in
+  // order, wiping front to back), swaddle (hold each fold, let go in the green), temp (keep the
+  // baby's temperature between 36.5 and 37.5 C), monitor (put the leads back: "white on the right,
+  // smoke over fire", the real mnemonic; then the pulse ox on the foot), soothe (rock on the beat).
+  // State: s.nicu ({ care: best grade 0-3, shift1..3: best stars }), s.hats ({ id: true}).
+  // Flags: nicuMet, nicuHow_<task>.
+  G.HATS = [
+    { id: 'stripe', name: 'Blue Stripes', how: 'Finish a Care Time.' },
+    { id: 'pompom', name: 'Red Pom-Pom', how: 'Get through Shift 1.' },
+    { id: 'bear', name: 'Little Bear', how: 'Get through Shift 2.' },
+    { id: 'strawberry', name: 'Strawberry', how: 'Get through Shift 3 (the twins!).' },
+    { id: 'pumpkin', name: 'Pumpkin', how: 'Three stars on every shift.' },
+    { id: 'heart', name: 'Hannah\'s Heart', how: 'A Care Time with every task PERFECT.' },
+  ];
+  const hatState = () => (G.state.hats = G.state.hats || {});
+  G.hatHas = (id) => !!hatState()[id];
+  G.hatsCount = () => G.HATS.filter((h) => G.hatHas(h.id)).length;
+  const nicuState = () => (G.state.nicu = G.state.nicu || {});
+  const NICU_SHIFTS = [
+    { id: 'shift1', name: 'SHIFT 1', babies: 4, secs: 70, patience: 900, every: [320, 660], hat: 'pompom' },
+    { id: 'shift2', name: 'SHIFT 2', babies: 5, secs: 85, patience: 820, every: [300, 620], hat: 'bear' },
+    { id: 'shift3', name: 'SHIFT 3', babies: 6, secs: 100, patience: 760, every: [300, 600], hat: 'strawberry', twins: true },
+  ];
+  const BABY_NAMES = ['PEANUT', 'BEAN', 'WAFFLES', 'PICKLE', 'NOODLE', 'BISCUIT'];
+  const NICU_TASKS = {
+    feed: { name: 'FEEDING', need: 'Hungry', how: ['Hold ↑ and ↓ to tilt the bottle.', 'Keep the flow needle in the GREEN. Too fast and the baby sputters; too slow and the baby fusses.'] },
+    diaper: { name: 'DIAPER CHANGE', need: 'Wet diaper', how: ['Press the key each step shows, in order: open both tabs, wipe (↓ three times: front to back!), Z for a fresh diaper, then fasten both tabs.', 'Wrong key = OOPS. Quick is good, but right is better.'] },
+    swaddle: { name: 'SWADDLING', need: 'Kicked loose', how: ['Three folds: ↓, then ←, then →.', 'Hold the key to pull the fold snug, and let go when the bar is in the GREEN. Too loose and it falls open; too tight and the baby can\'t wiggle.'] },
+    temp: { name: 'TEMPERATURE', need: 'Too cold or warm', how: ['Babies this small can\'t keep themselves warm. The isolette does it for them.', 'Hold ↑ and ↓ to turn the heater up and down. Keep the baby between 36.5 and 37.5 degrees (C).'] },
+    monitor: { name: 'MONITOR ALARM', need: 'Monitor beeping', how: ['A lead came loose. Put each one back where it goes: ← baby\'s right shoulder, → baby\'s left shoulder, ↓ baby\'s left belly.', '"White on the right, smoke over fire": WHITE on the right, BLACK (smoke) above RED (fire). The baby\'s right is YOUR left!', 'Then Z: the pulse ox goes on the foot.'] },
+    soothe: { name: 'SOOTHING', need: 'Crying', how: ['Rock the baby: press ← when the marker reaches the left end, → at the right end.', 'Right on the beat is PERFECT. The baby calms down as you go.'] },
+  };
+  const GRADE = (sc) => (sc >= 0.85 ? 'PERFECT' : sc >= 0.6 ? 'GOOD' : 'OOPS');
+  const DOT_SAYS = {
+    PERFECT: ['Textbook, Hannah.', 'That\'s how it\'s done.', 'Perfect. Don\'t let it go to your head.'],
+    GOOD: ['Good. Again, a little faster.', 'Fine work. Not perfect. Fine.', 'Good. I\'ve seen you do better.'],
+    OOPS: ['We\'ll talk about that one later.', 'Hannah. HANNAH.', 'Deep breath. Next one.'],
+  };
+  const dotLine = (g) => DOT_SAYS[g][Math.floor(Math.random() * 3)];
+
+  // ---- drawing helpers: a pixel-ish circle, a baby's face in a knitted hat, the need icons
+  const disc = (ctx, cx, cy, r, col) => { ctx.fillStyle = col; for (let y = -r; y <= r; y++) { const w = Math.round(Math.sqrt(r * r - y * y)); ctx.fillRect(Math.round(cx - w), Math.round(cy + y), w * 2 + 1, 1); } };
+  function drawBaby(ctx, cx, cy, r, o = {}) {
+    // the swaddle (or just the onesie), then the head, the hat, and the face for its mood
+    if (o.body !== false) { disc(ctx, cx, cy + r * 1.35, Math.round(r * 0.95), o.blanket || '#cfe0f4'); ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(cx - r, cy + r * 1.35, r * 2, 2); }
+    disc(ctx, cx, cy, r, '#2a1c24');
+    disc(ctx, cx, cy, r - 1, o.skin || '#f6d2bc');
+    const hat = o.hat && G.spr.knitHats[o.hat];
+    // (the dome as wide as the head, its crown at the top of the head, the brim just above the
+    // eyes; the tiny ones in the shift's room are just shrunk)
+    if (hat) {
+      ctx.imageSmoothingEnabled = false;
+      const kx = r < 10 ? (r * 2.1) / 16 : r / 7, ky = r < 10 ? kx : r / 10, top = r < 10 ? cy - r * 1.25 : cy + r * 0.05 - hat.height * ky;
+      ctx.drawImage(hat, Math.round(cx - (hat.width * kx) / 2), Math.round(top), Math.round(hat.width * kx), Math.round(hat.height * ky));
+    }
+    else {
+      // a plain hospital cap: the top of the head, with a rolled brim
+      ctx.fillStyle = o.cap || '#8ab8e8';
+      for (let y = -r; y <= -r * 0.3; y++) { const w = Math.round(Math.sqrt(r * r - y * y)); ctx.fillRect(Math.round(cx - w), Math.round(cy + y), w * 2 + 1, 1); }
+      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(Math.round(cx - r * 0.95), Math.round(cy - r * 0.42), Math.round(r * 1.9), Math.max(1, Math.round(r * 0.14)));
+    }
+    const ey = Math.round(cy + r * 0.12), ex = Math.round(r * 0.38), m = o.mood || 'calm';
+    ctx.fillStyle = '#2a1c24';
+    if (m === 'cry') {
+      ctx.fillRect(cx - ex - 2, ey, 5, 1); ctx.fillRect(cx + ex - 2, ey, 5, 1);
+      disc(ctx, cx, Math.round(cy + r * 0.5), Math.max(2, Math.round(r * 0.22)), '#6a1a2a');
+      ctx.fillStyle = '#8ac8f8'; ctx.fillRect(cx - ex - 1, ey + 2, 2, 3); ctx.fillRect(cx + ex, ey + 2, 2, 3);
+    } else if (m === 'suck') {
+      ctx.fillRect(cx - ex - 2, ey, 5, 1); ctx.fillRect(cx + ex - 2, ey, 5, 1);
+      disc(ctx, cx, Math.round(cy + r * 0.48), Math.max(1, Math.round(r * 0.12)), '#d87888');
+    } else {
+      // closed, content eyes (little arcs) and a small smile
+      ctx.fillRect(cx - ex - 2, ey + 1, 1, 1); ctx.fillRect(cx - ex - 1, ey, 3, 1); ctx.fillRect(cx - ex + 2, ey + 1, 1, 1);
+      ctx.fillRect(cx + ex - 2, ey + 1, 1, 1); ctx.fillRect(cx + ex - 1, ey, 3, 1); ctx.fillRect(cx + ex + 2, ey + 1, 1, 1);
+      ctx.fillRect(cx - 1, Math.round(cy + r * 0.45), 3, 1);
+    }
+    ctx.fillStyle = '#f4a8b0'; ctx.fillRect(Math.round(cx - r * 0.7), Math.round(cy + r * 0.3), 3, 2); ctx.fillRect(Math.round(cx + r * 0.7) - 2, Math.round(cy + r * 0.3), 3, 2);
+  }
+  // a little icon for each need (in a thought bubble over the isolette)
+  function needIcon(ctx, kind, x, y) {
+    const R = (c, X, Y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x + X, y + Y, w, h); };
+    if (kind === 'feed') { R('#f4f4f0', 3, 3, 5, 7); R('#f8e8b8', 3, 6, 5, 4); R('#f4a8c8', 4, 0, 3, 3); }
+    else if (kind === 'diaper') { R('#f4f4f0', 1, 3, 9, 5); R('#8ac8f8', 1, 3, 2, 2); R('#8ac8f8', 8, 3, 2, 2); R('#f4f4f0', 3, 8, 5, 2); }
+    else if (kind === 'swaddle') { R('#cfe0f4', 1, 2, 9, 8); R('#f6d2bc', 3, 1, 5, 3); R('#8ab8e8', 1, 6, 9, 1); }
+    else if (kind === 'temp') { R('#f4f4f0', 4, 0, 3, 8); R('#d83838', 5, 3, 1, 5); R('#d83838', 3, 7, 5, 3); }
+    else if (kind === 'monitor') { R('#1c2a24', 0, 1, 11, 9); R('#78e070', 1, 5, 3, 1); R('#78e070', 4, 2, 1, 4); R('#78e070', 5, 6, 1, 2); R('#78e070', 6, 5, 4, 1); }
+    else { R('#8ac8f8', 2, 2, 2, 4); R('#8ac8f8', 7, 2, 2, 4); R('#8ac8f8', 2, 7, 7, 2); }
+  }
+  const nicuBack = (ctx, title, sub) => {
+    ctx.fillStyle = '#e8f0f4'; ctx.fillRect(0, 0, G.W, G.H);
+    ctx.fillStyle = '#d8e6ee'; for (let y = 14; y < G.H; y += 16) ctx.fillRect(0, y, G.W, 1);
+    ctx.fillStyle = '#5a8ab0'; ctx.fillRect(0, 0, G.W, 12);
+    FT().draw(ctx, title, 4, 2, '#f8f8f0', { shadow: '#1c2a3a' });
+    if (sub) FT().draw(ctx, sub, G.W - 4 - FT().width(sub), 2, '#d8eef8', { shadow: '#1c2a3a' });
+  };
+  const keyCap = (ctx, k, x, y, lit) => {
+    const w = Math.max(14, FT().width(k) + 6);
+    ctx.fillStyle = lit ? '#f8d850' : '#1c2a3a'; ctx.fillRect(x, y, w, 13);
+    ctx.fillStyle = lit ? '#fff4b0' : '#f8f8f0'; ctx.fillRect(x + 1, y + 1, w - 2, 11);
+    FT().draw(ctx, k, x + Math.round((w - FT().width(k)) / 2), y + 3, '#1c2a3a');
+    return w;
+  };
+  const bar = (ctx, x, y, w, h, k, col, back) => { ctx.fillStyle = back || '#1c2a3a'; ctx.fillRect(x, y, w, h); ctx.fillStyle = col; ctx.fillRect(x + 1, y + 1, Math.round((w - 2) * Math.max(0, Math.min(1, k))), h - 2); };
+
+  // ---- one care task. o: { quick (a shift's shorter version), baby: { name, hat, cap }, cold (the
+  // temp task starts cold, else warm), others (for the shift: the other babies' status strip) }.
+  // Result: { score 0-1, grade }.
+  function nicuTaskCmd(kind, o = {}) {
+    const q = o.quick, b = o.baby || {};
+    return {
+      start() {
+        Object.assign(this, { t: 0, done: 0, score: 0, inBand: 0, mistakes: 0, step: 0, stepT: 0, folds: [], fold: 0, hold: 0, lead: 0, leads: null, beats: [], swing: 0, shake: 0, msg: null });
+        if (kind === 'feed') { this.dur = q ? 180 : 300; this.angle = 0.2; this.center = 0.5; this.band = q ? 0.11 : 0.13; }
+        if (kind === 'temp') { this.dur = q ? 180 : 300; this.temp = o.cold === false ? (q ? 37.9 : 38.0) : q ? 36.1 : 35.9; this.heat = 0.5; }
+        if (kind === 'diaper') this.steps = [['left', 'Open the left tab'], ['right', 'Open the right tab'], ['down', 'Wipe front to back'], ['down', 'Wipe again'], ['down', 'One more wipe'], ['a', 'A fresh diaper'], ['left', 'Fasten the left tab'], ['right', 'Fasten the right tab']];
+        if (kind === 'swaddle') this.order = ['down', 'left', 'right'];
+        if (kind === 'monitor') {
+          const L = [['WHITE', '#f4f4f0', 'left'], ['BLACK', '#2a2a30', 'right'], ['RED', '#d83838', 'down']];
+          for (let i = L.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [L[i], L[j]] = [L[j], L[i]]; }
+          this.leads = L.concat([['PULSE OX', '#f86858', 'a']]); this.placed = [];
+        }
+        if (kind === 'soothe') { this.period = q ? 38 : 48; this.need = q ? 6 : 8; this.hits = []; this.side = -1; }
+        G.play.overlay = this;
+      },
+      finish() {
+        if (this.done) return;
+        const sc = Math.max(0, Math.min(1, this.score));
+        this.result = { score: sc, grade: GRADE(sc) };
+        this.done = 1; this.doneT = 60;
+        G.audio.sfx(this.result.grade === 'OOPS' ? 'no' : this.result.grade === 'PERFECT' ? 'fanfare' : 'select');
+      },
+      update() {
+        const inp = G.input;
+        if (o.tick) o.tick();
+        if (this.shake > 0) this.shake--;
+        if (this.done) { if (--this.doneT <= 0 || (this.doneT < 40 && inp.hit('a'))) { inp.eat('a'); return true; } return false; }
+        this.t++;
+        const K = (k) => inp.hit(k);
+        if (kind === 'feed') {
+          // the bottle's tilt is the flow; the baby's comfortable flow drifts
+          if (inp.down('up')) this.angle = Math.min(1, this.angle + 0.014);
+          if (inp.down('down')) this.angle = Math.max(0, this.angle - 0.014);
+          this.center = 0.5 + 0.22 * Math.sin(this.t / 55) + 0.08 * Math.sin(this.t / 17);
+          const w = this.band;
+          if (Math.abs(this.angle - this.center) <= w) this.inBand++;
+          if (this.t % 20 === 0 && this.angle - this.center > w) { this.shake = 6; G.audio.sfx('bump'); }
+          if (this.t >= this.dur) { this.score = this.inBand / this.dur; this.finish(); }
+        } else if (kind === 'temp') {
+          if (inp.down('up')) this.heat = Math.min(1, this.heat + 0.02);
+          if (inp.down('down')) this.heat = Math.max(0, this.heat - 0.02);
+          // the heater warms or cools the baby; the room pulls the temperature around on its own
+          this.temp += (this.heat - 0.5) * 0.02 + 0.0025 * Math.sin(this.t / 70) + (Math.random() - 0.5) * 0.004;
+          this.temp = Math.max(35.2, Math.min(38.8, this.temp));
+          if (this.temp >= 36.5 && this.temp <= 37.5) this.inBand++;
+          if (this.t >= this.dur) { this.score = Math.min(1, (this.inBand / this.dur) * 1.3); this.finish(); }
+        } else if (kind === 'diaper') {
+          const [key] = this.steps[this.step], lim = q ? 80 : 120;
+          this.stepT++;
+          const pressed = ['left', 'right', 'up', 'down', 'a', 'b'].find((k) => K(k));
+          if (pressed || this.stepT > lim) {
+            if (pressed === key) { this.score += (1 - 0.4 * Math.min(1, this.stepT / lim)) / this.steps.length; G.audio.sfx('menu'); this.step++; this.stepT = 0; }
+            else { this.mistakes++; this.shake = 8; G.audio.sfx('bump'); if (!pressed) { this.step++; this.stepT = 0; } }
+            if (inp.hit('a')) inp.eat('a');
+            if (this.step >= this.steps.length) { this.score = Math.max(0, this.score - this.mistakes * 0.08); this.finish(); }
+          }
+        } else if (kind === 'swaddle') {
+          // hold the fold's key to pull it snug; let go in the green
+          const key = this.order[this.fold], rate = q ? 1 / 36 : 1 / 48;
+          if (this.msgT > 0) this.msgT--;
+          if (inp.down(key)) { this.hold += rate; if (this.hold > 1.15) this.release(); }
+          else if (this.hold > 0) this.release();
+          else if (['left', 'right', 'down', 'up'].some((k) => k !== key && K(k))) { this.shake = 6; G.audio.sfx('bump'); }
+        } else if (kind === 'monitor') {
+          const [, , key] = this.leads[this.lead], lim = q ? 110 : 160;
+          this.stepT++;
+          const pressed = ['left', 'right', 'up', 'down', 'a'].find((k) => K(k));
+          if (pressed === key) { this.score += (this.tries ? 0.55 : 1 - 0.3 * Math.min(1, this.stepT / lim)) / this.leads.length; this.placed.push(this.leads[this.lead]); this.lead++; this.stepT = 0; this.tries = 0; G.audio.sfx('menu'); if (inp.hit('a')) inp.eat('a'); }
+          else if (pressed) { this.tries = (this.tries || 0) + 1; this.shake = 8; G.audio.sfx('bump'); if (pressed === 'a') inp.eat('a'); }
+          else if (this.stepT > lim * 1.5) { this.placed.push(this.leads[this.lead]); this.lead++; this.stepT = 0; this.tries = 0; }
+          if (this.lead >= this.leads.length) this.finish();
+        } else if (kind === 'soothe') {
+          // the marker swings end to end (it's at an end every P frames: right on odd beats, left on
+          // even ones); press that end's arrow as it gets there, once a beat
+          const P = this.period, ph = this.t % (P * 2);
+          this.mx = ph < P ? ph / P : 2 - ph / P;
+          const beat = Math.round(this.t / P), want = beat % 2 ? 'right' : 'left', off = Math.abs(this.t - beat * P);
+          const pressed = K('left') ? 'left' : K('right') ? 'right' : null;
+          if (pressed && beat >= 1 && beat !== this.lastBeat) {
+            const v = pressed !== want ? 0 : off <= 4 ? 1 : off <= 9 ? 0.7 : 0.35;
+            this.hits.push(v); this.lastBeat = beat;
+            this.msg = v >= 1 ? 'PERFECT' : v >= 0.7 ? 'GOOD' : 'MISS'; this.msgT = 20;
+            G.audio.sfx(v >= 0.7 ? 'menu' : 'bump');
+          }
+          if (this.msgT > 0) this.msgT--;
+          if (this.hits.length >= this.need || this.t > P * (this.need + 3) * 1.1) {
+            while (this.hits.length < this.need) this.hits.push(0);
+            this.score = this.hits.reduce((s, v) => s + v, 0) / this.need; this.finish();
+          }
+        }
+        return false;
+      },
+      release() {
+        const h = this.hold, v = h >= 0.7 && h <= 0.9 ? 1 : (h >= 0.55 && h < 0.7) || (h > 0.9 && h <= 1.02) ? 0.65 : 0.2;
+        this.folds.push({ h: Math.min(1, h), v }); this.hold = 0;
+        this.msg = v >= 1 ? 'SNUG!' : v >= 0.65 ? 'OKAY' : h > 1 ? 'TOO TIGHT!' : 'TOO LOOSE!'; this.msgT = 24;
+        G.audio.sfx(v >= 0.65 ? 'menu' : 'bump');
+        if (++this.fold >= this.order.length) { this.score = this.folds.reduce((s, f) => s + f.v, 0) / this.order.length; this.finish(); }
+      },
+      draw(ctx) {
+        const T = NICU_TASKS[kind];
+        nicuBack(ctx, T.name + (b.name ? ': BABY ' + b.name : ''), o.label || '');
+        const sx = this.shake ? Math.round((Math.random() - 0.5) * 4) : 0;
+        ctx.save(); ctx.translate(sx, 0);
+        if (kind === 'feed') this.drawFeed(ctx, b);
+        else if (kind === 'temp') this.drawTemp(ctx, b);
+        else if (kind === 'diaper') this.drawDiaper(ctx, b);
+        else if (kind === 'swaddle') this.drawSwaddle(ctx, b);
+        else if (kind === 'monitor') this.drawMonitor(ctx, b);
+        else this.drawSoothe(ctx, b);
+        ctx.restore();
+        if (o.others) o.others(ctx);
+        if (this.done) {
+          const g = this.result.grade, col = g === 'PERFECT' ? '#f8a020' : g === 'GOOD' ? '#38a858' : '#d83838';
+          ctx.fillStyle = 'rgba(232,240,244,0.75)'; ctx.fillRect(0, 50, G.W, 50);
+          const w = FT().bigWidth(g + '!', 3);
+          FT().drawBig(ctx, g + '!', Math.round(120 - w / 2), 58, 3, col, '#1c2a3a');
+        }
+      },
+      // the task screens
+      drawFeed(ctx, bb) {
+        drawBaby(ctx, 70, 66, 26, { hat: bb.hat, cap: bb.cap, mood: this.shake ? 'cry' : 'suck', blanket: '#cfe0f4' });
+        // the bottle, tipped to the baby's mouth
+        ctx.save(); ctx.translate(84, 74); ctx.rotate(-0.25 - this.angle * 0.9);
+        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(-1, -9, 44, 18);
+        ctx.fillStyle = '#f4f8fa'; ctx.fillRect(0, -8, 42, 16);
+        ctx.fillStyle = '#f8ecc8'; ctx.fillRect(Math.round(42 - 40 * (1 - this.t / this.dur)), -7, Math.round(40 * (1 - this.t / this.dur)), 14);
+        ctx.fillStyle = '#f4a8c8'; ctx.fillRect(-8, -4, 8, 8); ctx.fillStyle = '#e888a8'; ctx.fillRect(-12, -2, 4, 4);
+        ctx.restore();
+        // the flow meter
+        const x = 196, y0 = 22, h = 110, band = this.band;
+        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(x - 1, y0 - 1, 18, h + 2); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x, y0, 16, h);
+        ctx.fillStyle = '#9ce0a8'; ctx.fillRect(x, Math.round(y0 + h * (1 - this.center - band)), 16, Math.round(h * band * 2));
+        ctx.fillStyle = '#d83838'; ctx.fillRect(x - 4, Math.round(y0 + h * (1 - this.angle)) - 1, 24, 3);
+        FT().draw(ctx, 'FLOW', x - 1, y0 + h + 4, '#1c2a3a');
+        FT().draw(ctx, 'too fast', 138, y0 + 2, '#9a9aa8'); FT().draw(ctx, 'too slow', 138, y0 + h - 8, '#9a9aa8');
+        this.hint(ctx, ['↑', '↓'], 'tilt the bottle');
+        bar(ctx, 8, 140, 120, 6, this.t / this.dur, '#5a8ab0');
+      },
+      drawTemp(ctx, bb) {
+        drawBaby(ctx, 64, 60, 24, { hat: bb.hat, cap: bb.cap, mood: this.temp < 36.5 || this.temp > 37.5 ? 'cry' : 'calm', blanket: '#cfe0f4' });
+        // the isolette hood
+        ctx.strokeStyle = '#8ab8d8'; ctx.lineWidth = 2; ctx.strokeRect(20, 26, 90, 78); ctx.lineWidth = 1;
+        // the readout and a thermometer with the safe band
+        const ok = this.temp >= 36.5 && this.temp <= 37.5, txt = this.temp.toFixed(1) + ' C';
+        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(130, 24, 70, 26);
+        FT().drawBig(ctx, txt, 134, 28, 2, ok ? '#78e070' : '#f86858', '#0c1418');
+        const x = 210, y0 = 22, h = 104, k = (v) => y0 + h * (1 - (v - 35.2) / 3.6);
+        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(x - 1, y0 - 1, 12, h + 2); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x, y0, 10, h);
+        ctx.fillStyle = '#9ce0a8'; ctx.fillRect(x, Math.round(k(37.5)), 10, Math.round(k(36.5) - k(37.5)));
+        ctx.fillStyle = '#d83838'; ctx.fillRect(x + 3, Math.round(k(this.temp)), 4, Math.round(y0 + h - k(this.temp)));
+        // the heater dial
+        FT().draw(ctx, 'HEATER', 132, 60, '#1c2a3a');
+        bar(ctx, 132, 70, 66, 8, this.heat, this.heat > 0.6 ? '#f08a28' : this.heat < 0.4 ? '#8ab8e8' : '#f8d850');
+        FT().draw(ctx, 'Keep it 36.5-37.5', 132, 84, '#5a6a7a');
+        this.hint(ctx, ['↑', '↓'], 'heater up / down');
+        bar(ctx, 8, 140, 120, 6, this.t / this.dur, '#5a8ab0');
+      },
+      drawDiaper(ctx, bb) {
+        // the baby on the changing pad, from above: head, onesie, the diaper
+        ctx.fillStyle = '#d8e6ee'; ctx.fillRect(12, 26, 116, 100);
+        ctx.fillStyle = '#f6d2bc'; ctx.fillRect(46, 74, 6, 14); ctx.fillRect(88, 74, 6, 14); ctx.fillRect(57, 116, 9, 12); ctx.fillRect(74, 116, 9, 12);
+        drawBaby(ctx, 70, 46, 16, { hat: bb.hat, cap: bb.cap, mood: this.mistakes > 1 ? 'cry' : 'calm', body: false });
+        disc(ctx, 70, 82, 19, '#f4f4f0');
+        // the diaper and its two tabs (folded out while they're open), then the used wipes beside it
+        const s = this.step, fresh = s >= 6;
+        ctx.fillStyle = fresh ? '#cfe8f8' : '#f8f4e0'; ctx.fillRect(52, 94, 36, 22);
+        ctx.fillStyle = '#c8c4b0'; ctx.fillRect(52, 94, 36, 1);
+        ctx.fillStyle = fresh ? '#8ac8f8' : '#f8d850';
+        ctx.fillRect(s >= 1 && s < 7 ? 42 : 52, 96, 8, 4); ctx.fillRect(s >= 2 && s < 8 ? 90 : 80, 96, 8, 4);
+        for (let k = 0; k < Math.min(3, Math.max(0, s - 2)); k++) { ctx.fillStyle = '#a8d8f0'; ctx.fillRect(16 + k * 7, 110, 5, 10); }
+        // the step list
+        this.steps.forEach(([key, label], k) => {
+          const y = 22 + k * 13, now = k === s, done = k < s;
+          FT().draw(ctx, (done ? '✓ ' : now ? '> ' : '  ') + label, 136, y + 2, done ? '#38a858' : now ? '#1c2a3a' : '#9a9aa8');
+        });
+        if (s < this.steps.length) {
+          const k = this.steps[s][0], lab = { left: '←', right: '→', down: '↓', up: '↑', a: 'Z' }[k];
+          keyCap(ctx, lab, 64, 130, (this.t >> 3) & 1);
+        }
+      },
+      drawSwaddle(ctx, bb) {
+        // the blanket as a diamond, corners folding in as they're pulled
+        const cx = 80, cy = 82, R = 46;
+        ctx.fillStyle = '#9ab8d8';
+        for (let y = -R; y <= R; y++) { const w = R - Math.abs(y); ctx.fillRect(cx - w, cy + y, w * 2 + 1, 1); }
+        ctx.fillStyle = '#cfe0f4';
+        for (let y = -R + 3; y <= R - 3; y++) { const w = R - 3 - Math.abs(y); ctx.fillRect(cx - w, cy + y, w * 2 + 1, 1); }
+        drawBaby(ctx, cx, cy - 20, 13, { hat: bb.hat, cap: bb.cap, mood: 'calm', body: false });
+        disc(ctx, cx, cy + 8, 12, '#f4f4f0');
+        // folded corners so far, and the one being pulled
+        const folds = this.folds.map((f) => f.h).concat(this.fold < 3 ? [this.hold] : []);
+        folds.forEach((h, i) => {
+          const k = Math.min(1, h);
+          ctx.fillStyle = i === 0 ? '#b8d0e8' : i === 1 ? '#a8c4e0' : '#98b8d8';
+          if (i === 0) for (let y = 0; y < 30 * k; y++) { const w = Math.round(20 * (1 - y / 34)); ctx.fillRect(cx - w, cy + R - 4 - y, w * 2, 1); }
+          if (i === 1) for (let x = 0; x < 34 * k; x++) { const hh = Math.round(18 * (1 - x / 40)); ctx.fillRect(cx - R + 4 + x, cy - hh + 4, 1, hh * 2); }
+          if (i === 2) for (let x = 0; x < 34 * k; x++) { const hh = Math.round(18 * (1 - x / 40)); ctx.fillRect(cx + R - 4 - x, cy - hh + 4, 1, hh * 2); }
+        });
+        // the fold meter
+        const x = 150, y = 40;
+        FT().draw(ctx, 'FOLD ' + G.sayable(Math.min(3, this.fold + 1)) + '/3', x, y - 12, '#1c2a3a');
+        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(x - 1, y - 1, 66, 12); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x, y, 64, 10);
+        ctx.fillStyle = '#9ce0a8'; ctx.fillRect(x + Math.round(64 * 0.7), y, Math.round(64 * 0.2), 10);
+        ctx.fillStyle = '#f08a28'; ctx.fillRect(x, y + 2, Math.round(64 * Math.min(1, this.hold)), 6);
+        if (this.msgT > 0) { FT().draw(ctx, this.msg, x, y + 16, this.msg === 'SNUG!' ? '#38a858' : '#d83838', { shadow: '#f8f8f0' }); }
+        if (this.fold < 3) {
+          const lab = { down: '↓', left: '←', right: '→' }[this.order[this.fold]];
+          FT().draw(ctx, 'Hold', x, 80, '#1c2a3a'); keyCap(ctx, lab, x + 26, 77, (this.t >> 3) & 1); FT().draw(ctx, 'let go in the green', x - 2, 96, '#5a6a7a');
+        }
+      },
+      drawMonitor(ctx, bb) {
+        // the baby on its back, facing you (legs, tummy, a diaper, the head on top): the three
+        // spots on the chest, and the foot for the pulse ox
+        ctx.fillStyle = '#f6d2bc'; ctx.fillRect(63, 96, 10, 24); ctx.fillRect(80, 96, 10, 24);
+        disc(ctx, 76, 76, 24, '#f6d2bc');
+        ctx.fillStyle = '#f4f4f0'; ctx.fillRect(60, 92, 33, 12); ctx.fillStyle = '#d8d4c8'; ctx.fillRect(60, 92, 33, 1);
+        ctx.fillStyle = '#c89880'; ctx.fillRect(75, 84, 2, 2);
+        drawBaby(ctx, 76, 42, 14, { hat: bb.hat, cap: bb.cap, mood: this.lead < this.leads.length ? 'cry' : 'calm', body: false });
+        const spots = { left: [62, 66, 'baby\'s R'], right: [90, 66, 'baby\'s L'], down: [90, 84, ''], a: [85, 116, 'foot'] };
+        for (const k of ['left', 'right', 'down', 'a']) {
+          const [x, y, lab] = spots[k], got = this.placed.find((p) => p[2] === k);
+          if (got) disc(ctx, x, y, 4, got[1]); else { ctx.strokeStyle = '#9a9aa8'; ctx.strokeRect(x - 4, y - 4, 8, 8); }
+          FT().draw(ctx, { left: '←', right: '→', down: '↓', a: 'Z' }[k], x + (k === 'left' ? -14 : 8), y - 3, '#5a6a7a');
+          if (lab) FT().draw(ctx, lab, k === 'left' ? x - 14 - FT().width(lab) - 3 : x + (k === 'a' ? 18 : 17), y - 3, '#9a9aa8');
+        }
+        // the monitor: flat and beeping until everything's back on, then a heartbeat
+        const mx = 150, my = 22;
+        ctx.fillStyle = '#1c2a24'; ctx.fillRect(mx, my, 80, 50);
+        ctx.fillStyle = this.lead < this.leads.length ? ((this.t >> 3) & 1 ? '#f86858' : '#5a1a1a') : '#78e070';
+        for (let x = 0; x < 76; x++) { const beat = this.lead >= this.leads.length && (x + this.t) % 26 < 4; ctx.fillRect(mx + 2 + x, my + 26 - (beat ? ((x + this.t) % 26 < 2 ? 10 : -4) : 0), 1, 1); }
+        FT().draw(ctx, this.lead < this.leads.length ? 'LEADS OFF' : 'HR 142', mx + 4, my + 4, ctx.fillStyle);
+        if (this.lead < this.leads.length) {
+          const [nm, col] = this.leads[this.lead];
+          FT().draw(ctx, 'Put on:', mx, my + 58, '#1c2a3a');
+          disc(ctx, mx + 6, my + 74, 5, col); FT().draw(ctx, nm + (nm === 'PULSE OX' ? '' : ' lead'), mx + 14, my + 70, '#1c2a3a');
+          FT().draw(ctx, 'White on the right,', mx, my + 88, '#5a6a7a'); FT().draw(ctx, 'smoke over fire.', mx, my + 98, '#5a6a7a');
+        }
+      },
+      drawSoothe(ctx, bb) {
+        const k = this.hits.length ? this.hits.reduce((s, v) => s + v, 0) / this.need : 0, x = this.mx || 0;
+        ctx.save(); ctx.translate(80, 76); ctx.rotate((x - 0.5) * 0.35);
+        drawBaby(ctx, 0, -12, 24, { hat: bb.hat, cap: bb.cap, mood: k > 0.5 ? 'calm' : 'cry', blanket: '#f4c8d8' });
+        ctx.restore();
+        // the rocking bar: the marker swings end to end
+        const bx = 140, by = 70, bw = 90;
+        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(bx - 1, by - 1, bw + 2, 12); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(bx, by, bw, 10);
+        ctx.fillStyle = '#9ce0a8'; ctx.fillRect(bx, by, 8, 10); ctx.fillRect(bx + bw - 8, by, 8, 10);
+        ctx.fillStyle = '#d83838'; ctx.fillRect(bx + Math.round((bw - 4) * x), by - 3, 4, 16);
+        keyCap(ctx, '←', bx - 2, by + 18, x < 0.12); keyCap(ctx, '→', bx + bw - 12, by + 18, x > 0.88);
+        FT().draw(ctx, 'Calm: ' + G.sayable(Math.round(k * 100)) + '%', bx, by - 22, '#1c2a3a');
+        bar(ctx, bx, by - 12, bw, 6, k, '#f4a8c8');
+        if (this.msgT > 0) FT().draw(ctx, this.msg, bx + 28, by + 36, this.msg === 'MISS' ? '#d83838' : '#38a858');
+      },
+      hint(ctx, keys, what) {
+        let x = 8;
+        for (const k of keys) x += keyCap(ctx, k, x, 122, false) + 3;
+        FT().draw(ctx, what, x + 2, 125, '#1c2a3a');
+      },
+    };
+  }
+
+  // ---- Care Time: one baby, all six tasks in a row (a tip from Dot before each one, the first time)
+  function careTimeCmd() {
+    return {
+      start() {
+        this.order = ['temp', 'monitor', 'diaper', 'feed', 'swaddle', 'soothe'];
+        this.i = 0; this.results = []; this.t = 0; this.sub = null; this.phase = 'how';
+        const hats = G.HATS.filter((h) => G.hatHas(h.id)).map((h) => h.id);
+        this.baby = { name: BABY_NAMES[Math.floor(Math.random() * BABY_NAMES.length)], hat: hats[Math.floor(Math.random() * hats.length)], cap: '#8ab8e8' };
+        this.next();
+        G.play.overlay = this;
+      },
+      next() {
+        const k = this.order[this.i], f = flags();
+        if (!f['nicuHow_' + k]) { f['nicuHow_' + k] = true; this.sub = howToCmd(NICU_TASKS[k].name, NICU_TASKS[k].how, nicuBack); }
+        else this.sub = this.task(k);
+        this.sub.start();
+      },
+      update() {
+        G.play.overlay = this;
+        if (quitHit()) { this.result = 'quit'; return true; }
+        if (this.phase === 'dot') { if (++this.t > 50 || (this.t > 15 && G.input.hit('a'))) { G.input.eat('a'); this.phase = 'go'; this.i++; if (this.i >= this.order.length) { this.result = { results: this.results }; return true; } this.next(); G.play.overlay = this; } return false; }
+        if (this.sub.update()) {
+          if (this.sub.result && this.sub.result.grade) { this.results.push(this.sub.result); this.phase = 'dot'; this.t = 0; this.line = dotLine(this.sub.result.grade); }
+          else this.sub = this.task(this.order[this.i]), this.sub.start();
+        }
+        G.play.overlay = this;
+        return false;
+      },
+      task(k) { return nicuTaskCmd(k, { baby: this.baby, cold: Math.random() < 0.6, label: G.sayable(this.i + 1) + '/' + G.sayable(this.order.length) }); },
+      draw(ctx) {
+        this.sub.draw(ctx);
+        if (this.phase === 'dot') drawDot(ctx, this.line);
+      },
+    };
+  }
+  // Charge Nurse Dot, in the corner with something to say
+  function drawDot(ctx, line) {
+    const D = G.sprites.dot.down[0];
+    ctx.fillStyle = '#1c2a3a'; ctx.fillRect(4, 104, G.W - 8, 40); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(5, 105, G.W - 10, 38);
+    ctx.imageSmoothingEnabled = false; ctx.drawImage(D, 0, 0, 16, 14, 8, 108, 32, 28);
+    FT().draw(ctx, 'CHARGE NURSE DOT', 44, 108, '#7a5aa8');
+    FT().wrap(line, 186).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 44, 119 + k * 10, '#1c2a3a'));
+  }
+
+  // ---- a shift: the room, every baby on its own timer, all at once
+  function shiftCmd(S0) {
+    const hats = G.HATS.filter((h) => G.hatHas(h.id)).map((h) => h.id);
+    const kinds = ['blue', 'pink', 'mint'];
+    return {
+      start() {
+        const n = S0.babies;
+        this.babies = Array.from({ length: n }, (_, i) => ({
+          name: S0.twins && i >= n - 2 ? (i === n - 2 ? 'TWIN A' : 'TWIN B') : BABY_NAMES[i % BABY_NAMES.length],
+          hat: hats.length ? hats[(S0.twins && i === n - 1 ? n - 2 : i) % hats.length] : null, cap: ['#8ab8e8', '#f4a8c8', '#a8e0c8'][(S0.twins && i === n - 1 ? n - 2 : i) % 3], iso: kinds[i % 3],
+          need: null, wait: 0, next: 50 + i * 70 + Math.round(Math.random() * 100), happy: 0.8, cared: 0,
+        }));
+        this.t = 0; this.total = S0.secs * 60; this.sel = 0; this.task = null; this.over = 0; this.sum = 0;
+        G.play.overlay = this;
+      },
+      tick(skip) {
+        // every baby's needs, on its own clock (the one being cared for is skipped)
+        for (const b of this.babies) {
+          if (b === skip) continue;
+          if (!b.need) { if (--b.next <= 0) { b.need = ['feed', 'diaper', 'swaddle', 'temp', 'monitor', 'soothe'][Math.floor(Math.random() * 6)]; b.cold = Math.random() < 0.5; b.wait = 0; G.audio.sfx(b.need === 'monitor' ? 'buzz' : 'menu'); } }
+          else { b.wait++; b.happy = Math.max(0, b.happy - (b.wait > S0.patience ? 0.0012 : 0.0004)); }
+        }
+      },
+      update() {
+        if (quitHit()) { this.result = 'quit'; return true; }
+        if (this.over) { if (++this.over > 140 || (this.over > 40 && G.input.hit('a'))) { G.input.eat('a'); this.result = { stars: this.stars, avg: this.avg }; return true; } return false; }
+        this.t++;
+        // (the stars are for how happy the babies were the whole shift, not just at the end)
+        this.sum += this.babies.reduce((t, b) => t + b.happy, 0) / this.babies.length;
+        if (this.task) {
+          const tb = this.task.baby;
+          if (this.task.cmd.update()) {
+            const r = this.task.cmd.result;
+            tb.happy = Math.min(1, tb.happy + 0.25 + 0.4 * r.score); tb.need = null; tb.cared++;
+            tb.next = S0.every[0] + Math.round(Math.random() * (S0.every[1] - S0.every[0]));
+            this.task = null;
+          }
+        } else {
+          this.tick();
+          const inp = G.input, n = this.babies.length, cols = 3;
+          if (inp.hit('left') && this.sel % cols > 0) { this.sel--; G.audio.sfx('menu'); }
+          if (inp.hit('right') && this.sel % cols < cols - 1 && this.sel + 1 < n) { this.sel++; G.audio.sfx('menu'); }
+          if (inp.hit('up') && this.sel >= cols) { this.sel -= cols; G.audio.sfx('menu'); }
+          if (inp.hit('down') && Math.floor(this.sel / cols) < Math.floor((n - 1) / cols)) { this.sel = Math.min(n - 1, this.sel + cols); G.audio.sfx('menu'); }
+          if (inp.hit('a')) {
+            inp.eat('a');
+            const b = this.babies[this.sel];
+            if (b.need) {
+              const cmd = nicuTaskCmd(b.need, { quick: true, baby: b, cold: b.cold, tick: () => this.tick(b), others: (ctx) => this.drawStrip(ctx, b) });
+              cmd.start(); this.task = { cmd, baby: b };
+            } else { G.audio.sfx('bump'); this.msg = 'Baby ' + b.name + ' is fine right now.'; this.msgT = 60; }
+          }
+        }
+        if (this.msgT > 0) this.msgT--;
+        if (this.t >= this.total && !this.task) {
+          this.avg = this.sum / this.t;
+          this.stars = this.avg >= 0.8 ? 3 : this.avg >= 0.6 ? 2 : this.avg >= 0.35 ? 1 : 0;
+          this.over = 1; G.audio.sfx(this.stars ? 'fanfare' : 'no');
+        }
+        G.play.overlay = this;
+        return false;
+      },
+      // the room: isolettes in rows, each baby's name, need and mood; Hannah at the one she's on
+      draw(ctx) {
+        if (this.task) { this.task.cmd.draw(ctx); return; }
+        nicuBack(ctx, 'HANNAH\'S ' + S0.name, G.sayable(Math.max(0, Math.ceil((this.total - this.t) / 60))) + 's left');
+        ctx.imageSmoothingEnabled = false;
+        this.babies.forEach((b, i) => {
+          const x = 14 + (i % 3) * 76, y = 22 + Math.floor(i / 3) * 62, on = i === this.sel, cry = b.need && b.wait > S0.patience;
+          const jig = cry && (this.t >> 2) & 1 ? 1 : 0;
+          ctx.drawImage(G.spr.isolettes[b.iso], x + jig, y + 4, 64, 60);
+          drawBaby(ctx, x + jig + 43, y + 21, 6, { hat: b.hat, cap: b.cap, mood: cry ? 'cry' : 'calm', body: false });
+          if (on) { ctx.fillStyle = (this.t >> 3) & 1 ? '#f8d850' : '#f8a020'; ctx.fillRect(x - 2, y + 2, 68, 2); ctx.fillRect(x - 2, y + 62, 68, 2); ctx.fillRect(x - 2, y + 2, 2, 62); ctx.fillRect(x + 64, y + 2, 2, 62); }
+          // name tag and a happiness bar on the cart
+          ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x + 12, y + 44, 40, 9);
+          FT().draw(ctx, b.name, x + 32 - Math.round(FT().width(b.name) / 2), y + 45, '#1c2a3a');
+          bar(ctx, x + 12, y + 55, 40, 4, b.happy, b.happy > 0.6 ? '#78e070' : b.happy > 0.35 ? '#f8d850' : '#f86858');
+          if (b.need) {
+            // the need, in a bubble, with how long it's been waiting
+            const bx = x + 46, by = y - 2;
+            ctx.fillStyle = cry ? '#f86858' : '#1c2a3a'; ctx.fillRect(bx - 1, by - 1, 16, 16); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(bx, by, 14, 14);
+            needIcon(ctx, b.need, bx + 2, by + 2);
+            bar(ctx, bx - 1, by + 15, 16, 3, 1 - b.wait / S0.patience, cry ? '#f86858' : '#f8a020');
+          }
+        });
+        const H = G.sprites.hannah.right[0], hx = 14 + (this.sel % 3) * 76 - 12, hy = 22 + Math.floor(this.sel / 3) * 62 + 30;
+        ctx.drawImage(H, hx, hy);
+        const b = this.babies[this.sel];
+        FT().draw(ctx, this.msgT > 0 ? this.msg : b.need ? 'Z: ' + NICU_TASKS[b.need].name.toLowerCase() + ' for Baby ' + b.name : 'Arrows: pick a baby   Z: take care of it', 6, 148, '#1c2a3a');
+        if (this.over) {
+          ctx.fillStyle = 'rgba(232,240,244,0.85)'; ctx.fillRect(0, 40, G.W, 70);
+          const t = this.stars ? 'SHIFT DONE!' : 'ROUGH SHIFT...', w = FT().bigWidth(t, 2);
+          FT().drawBig(ctx, t, Math.round(120 - w / 2), 50, 2, this.stars ? '#38a858' : '#d83838', '#1c2a3a');
+          FT().draw(ctx, '★'.repeat(this.stars) + '☆'.repeat(3 - this.stars), 120 - Math.round(FT().width('★★★') / 2), 80, '#f8a020', { shadow: '#1c2a3a' });
+          FT().draw(ctx, 'Babies happy: ' + G.sayable(Math.round(this.avg * 100)) + '%', 120 - Math.round(FT().width('Babies happy: 100%') / 2), 94, '#1c2a3a');
+        }
+      },
+      // during a task: the other babies along the top, so you can see who's waiting
+      drawStrip(ctx, cur) {
+        let x = G.W - 4;
+        for (const b of this.babies.slice().reverse()) {
+          if (b === cur) continue;
+          x -= 15;
+          ctx.fillStyle = b.need ? (b.wait > S0.patience ? '#f86858' : '#f8a020') : '#78e070'; ctx.fillRect(x, 0, 13, 12);
+          if (b.need) needIcon(ctx, b.need, x + 1, 1);
+        }
+      },
+    };
+  }
+
+  // ---- the menu: Care Time, then the shifts (each opens when the one before is done)
+  function nicuMenuCmd() {
+    const N = nicuState();
+    const rows = [{ id: 'care', name: 'CARE TIME', blurb: 'One baby, all six tasks. Practice, with tips.' }].concat(NICU_SHIFTS.map((S0) => ({ id: S0.id, name: S0.name, blurb: G.sayable(S0.babies) + ' babies at once' + (S0.twins ? ', including TWINS' : '') + '. ' + G.sayable(S0.secs) + ' seconds.', S0 })));
+    const open = (i) => i === 0 || (i === 1 ? N.care != null : !!N[rows[i - 1].id]);
+    return {
+      start() { this.sel = Math.max(0, rows.findIndex((r, i) => open(i) && !N[r.id])); if (this.sel < 0) this.sel = 0; this.t = 0; G.play.overlay = this; },
+      update() {
+        const inp = G.input;
+        this.t++;
+        if (inp.hit('up') && this.sel > 0) { this.sel--; G.audio.sfx('menu'); }
+        if (inp.hit('down') && this.sel < rows.length - 1) { this.sel++; G.audio.sfx('menu'); }
+        if (inp.hit('a')) { inp.eat('a'); if (open(this.sel)) { G.audio.sfx('select'); this.result = rows[this.sel]; return true; } G.audio.sfx('bump'); }
+        if (inp.hit('b') || quitHit()) { inp.eat('b'); G.audio.sfx('cancel'); this.result = null; return true; }
+        return false;
+      },
+      draw(ctx) {
+        nicuBack(ctx, 'HANNAH\'S SHIFT', 'Hats: ' + G.sayable(G.hatsCount()) + '/' + G.sayable(G.HATS.length));
+        rows.forEach((r, i) => {
+          const y = 18 + i * 25, on = i === this.sel, ok = open(i), best = N[r.id];
+          ctx.fillStyle = on ? '#f8d850' : '#9ab8d0'; ctx.fillRect(8, y, 150, 22); ctx.fillStyle = on ? '#fff8d8' : '#f8f8f0'; ctx.fillRect(9, y + 1, 148, 20);
+          FT().draw(ctx, ok ? r.name : '???', 14, y + 3, ok ? '#1c2a3a' : '#9a9aa8');
+          FT().draw(ctx, ok ? (r.id === 'care' ? (best != null ? 'Best: ' + ['', 'OOPS', 'GOOD', 'PERFECT'][best] : 'NEW') : best ? '★'.repeat(best) + '☆'.repeat(3 - best) : 'NEW') : 'locked', 14, y + 12, ok ? '#5a6a7a' : '#b8b8c0');
+        });
+        const r = rows[this.sel];
+        FT().wrap(open(this.sel) ? r.blurb : 'Finish the one above first.', 70).forEach((l, k) => FT().draw(ctx, l, 166, 24 + k * 9, '#1c2a3a'));
+        const D = G.sprites.dot.down[0], H = G.sprites.hannah.down[0];
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(H, 168, 74, 32, H.height * 2); ctx.drawImage(D, 204, 74, 32, D.height * 2);
+        FT().draw(ctx, 'Z: start   X: done', 8, 148, '#5a6a7a');
+      },
+    };
+  }
+
+  // Charge Nurse Dot, back on the floor once MECHA-BABY is parked. With Hannah along, it's her shift.
+  S.chargeNurse = function* () {
+    const f = flags(), s = G.state, N = nicuState();
+    if (!(yield* S.callIn('hannah', 'Oh no. That\'s my charge nurse.'))) {
+      yield G.say('Charge Nurse Dot', 'Have you seen Hannah? She\'s on in five minutes. She is NEVER late.');
+      return;
+    }
+    if (!f.nicuMet) {
+      f.nicuMet = true;
+      yield G.say('Charge Nurse Dot', 'Hannah. Where have you BEEN? The whole unit took a nap, somebody parked a robot in the corner, and you\'re on in five.');
+      yield G.say('Hannah', 'I was... saving the world?');
+      yield G.say('Charge Nurse Dot', 'Save it after your shift. Babies first. Always.');
+      yield G.say('Hannah', 'Nate, want to see what I actually do all day? Grab a chair. Don\'t touch anything.');
+    } else yield G.say('Charge Nurse Dot', 'Back on the floor, Hannah? Good. They missed you.');
+    for (;;) {
+      const r = yield nicuMenuCmd();
+      if (!r) { G.play.overlay = null; yield G.say('Charge Nurse Dot', 'Good work today. Go home and sleep, Hannah.'); return; }
+      if (r.id === 'care') {
+        const res = yield careTimeCmd();
+        G.play.overlay = null;
+        if (res === 'quit') continue;
+        const avg = res.results.reduce((t, x) => t + x.score, 0) / res.results.length, grade = avg >= 0.85 ? 3 : avg >= 0.6 ? 2 : 1;
+        const allPerfect = res.results.every((x) => x.grade === 'PERFECT');
+        N.care = Math.max(N.care || 0, grade);
+        yield G.say('Charge Nurse Dot', allPerfect ? 'Every single one, perfect. ...Don\'t tell anyone I said this, but you\'re my favorite.' : grade === 3 ? 'That was a good Care Time, Hannah.' : grade === 2 ? 'Decent. The baby\'s happy. That\'s the job.' : 'The baby survived you. Let\'s go again.');
+        yield* nicuHat('stripe');
+        if (allPerfect) yield* nicuHat('heart');
+      } else {
+        const res = yield shiftCmd(r.S0);
+        G.play.overlay = null;
+        if (res === 'quit') continue;
+        if (!res.stars) { yield G.say('Charge Nurse Dot', 'Rough one. Every baby made it, though. Again.'); continue; }
+        N[r.id] = Math.max(N[r.id] || 0, res.stars);
+        yield G.say('Charge Nurse Dot', res.stars === 3 ? 'Every baby happy. Every single one. That\'s my nurse.' : res.stars === 2 ? 'Good shift. A couple of them waited too long, but good.' : 'You got through it. That counts. Barely.');
+        yield* nicuHat(r.S0.hat);
+        if (NICU_SHIFTS.every((S0) => N[S0.id] === 3)) yield* nicuHat('pumpkin');
+      }
+      G.play.autosave();
+    }
+  };
+  // a knitted hat for the collection (the babies wear the ones you've earned)
+  function* nicuHat(id) {
+    if (G.hatHas(id)) return;
+    hatState()[id] = true;
+    const h = G.HATS.find((x) => x.id === id);
+    yield G.itemGet(G.spr.knitHats[id], 'You got a knitted hat: {y}' + h.name + '{/}! The babies will wear it. It\'s in {y}COLLECTABLES{/}.');
+  }
+
   // ================================================================ CHKD, AFTER MECHA-BABY
   // Getting ready for the Number One Ditch (the user's picks): Hannah's first-aid kit (CHKD's
   // item, restocked at the supply closets), Ruby (a rock-collecting kid on the ward, an optional
