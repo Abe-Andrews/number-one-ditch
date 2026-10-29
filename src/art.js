@@ -351,6 +351,8 @@
   }
 
   function torsoPx(c, x, y, ty, edge) {
+    // a chest tattoo (McGregor's), inked over bare skin
+    if (c.tattoo && y - ty >= 1 && y - ty <= 3 && x >= 6 && x <= 9 && (x * 5 + y * 3) % 3 === 0) return c.tattoo;
     if (c.pattern === 'plaid') {
       const vx = x % 3 === 1, hy = (y - ty) % 3 === 2;
       if (vx && hy) return c.plaidW;
