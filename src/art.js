@@ -1970,6 +1970,33 @@
     return p.canvas();
   }
 
+  // Feldspar, the corn stalk in a pot in Nate's lab: a gold tassel on top, long leaves arching
+  // off both sides, and one ear of corn peeking out of its husk
+  function feldspar() {
+    const p = new Pix(16, 30), G1 = '#5aa848', G2 = '#3e8838', GL = '#8ad068', T1 = '#e0c068', T2 = '#b89040';
+    // the tassel
+    p.vline(7, 0, 4, T1); p.set(6, 1, T1); p.set(5, 2, T2); p.set(9, 1, T1); p.set(10, 2, T2); p.set(4, 3, T2); p.set(8, 2, T2);
+    // the stalk, with a node every few rows
+    p.vline(7, 4, 22, G1); p.vline(8, 3, 22, G2);
+    for (const y of [9, 14, 19]) p.hline(7, 8, y, '#7ab858');
+    // the leaves: [start x, start y, direction]
+    const leaf = (x, y, d, len) => {
+      for (let k = 0; k < len; k++) {
+        const lx = x + d * k, ly = y + Math.floor((k * k) / 7);
+        p.set(lx, ly, k < 2 ? G1 : GL); p.set(lx, ly + 1, G2);
+      }
+    };
+    leaf(6, 6, -1, 6); leaf(9, 4, 1, 6); leaf(9, 11, 1, 7); leaf(6, 16, -1, 6);
+    // the ear: husk around yellow kernels, a little silk on top
+    p.rect(3, 10, 4, 6, '#7ab858'); p.vline(6, 11, 15, G2); p.rect(4, 10, 2, 5, '#f0d050');
+    p.set(4, 11, '#d8a830'); p.set(5, 13, '#d8a830'); p.set(4, 14, '#d8a830');
+    p.set(4, 9, '#c89868'); p.set(5, 8, '#c89868'); p.set(5, 9, '#e0b080');
+    // the pot
+    p.rect(4, 22, 8, 7, '#c86838'); p.hline(3, 12, 22, '#e08850'); p.vline(11, 23, 28, '#a04c28'); p.hline(5, 10, 21, '#5a3a20');
+    p.outline();
+    return p.canvas();
+  }
+
   function cart() {
     const p = new Pix(36, 38);
     // umbrella
@@ -8577,6 +8604,108 @@
     p.set(18, 59, '#efe6c8'); p.set(19, 62, '#efe6c8'); p.set(6, 46, '#efe6c8');
     return finish(p);
   }
+  // Abe's 1984 Stratocaster (from the user's photo): black, a white pickguard and three white
+  // single-coils, white knobs, a maple neck with black dots, and the small vintage headstock
+  function stratocaster() {
+    const W = 24, H = 74, p = new Pix(W, H), MAP = '#e8b058', MAPD = '#c08838', DOT = '#2a2018';
+    const edge = (pts, y) => { if (y <= pts[0][0]) return pts[0][1]; for (let k = 1; k < pts.length; k++) if (y <= pts[k][0]) { const [y0, x0] = pts[k - 1], [y1, x1] = pts[k]; return x0 + ((x1 - x0) * (y - y0)) / (y1 - y0); } return pts[pts.length - 1][1]; };
+    // the headstock: tuners down the left, the curvy end bulging right
+    for (let y = 0; y < 14; y++) {
+      const x0 = 9 + Math.round(y * 0.1), x1 = y < 1 ? 13 : y < 2 ? 15 : y < 6 ? 16 : y < 9 ? 15 : 14;
+      p.hline(x0, x1, y, MAP); p.set(x1, y, MAPD);
+    }
+    for (const y of [1, 3, 5, 7, 9, 11]) { p.set(7 + Math.round(y * 0.1), y, '#c8ccd4'); p.set(8 + Math.round(y * 0.1), y, '#8a8e98'); }
+    p.set(13, 4, '#8a6030'); p.set(13, 5, '#8a6030'); p.set(14, 6, '#8a6030');
+    // the maple neck: frets and black dots
+    for (let y = 14; y < 52; y++) { p.hline(10, 14, y, MAP); p.set(14, y, MAPD); }
+    let fy = 16;
+    for (let k = 1; fy < 50; k++) {
+      p.hline(10, 14, fy, '#c8ccd4');
+      if ([3, 5, 7, 9].includes(k)) p.set(12, fy + 1, DOT);
+      if (k === 12) { p.set(11, fy - 1, DOT); p.set(13, fy - 1, DOT); }
+      fy += Math.max(2, Math.round(4 - k * 0.2));
+    }
+    // the body: the bass-side horn reaches higher than the treble side's, a waist, a round bottom
+    const L = [[41, 3], [42, 2], [44, 1], [47, 1], [50, 2], [53, 3], [56, 3], [59, 2], [62, 1], [66, 1], [69, 2], [71, 4], [73, 7]];
+    const R = [[45, 19], [46, 21], [48, 22], [50, 22], [53, 21], [56, 21], [59, 22], [62, 23], [66, 23], [69, 22], [71, 20], [73, 16]];
+    const LIN = [[41, 5], [43, 6], [45, 7], [47, 8], [49, 9]], RIN = [[45, 18], [47, 17], [49, 16]];
+    const inBody = (x, y) => {
+      if (y < 41 || y >= H) return false;
+      const x0 = Math.round(edge(L, y)), x1 = Math.round(edge(R, y));
+      if (x < x0 || x > x1 || (y < 45 && x > Math.round(edge(LIN, y)))) return false;
+      return y >= 50 || x <= Math.round(edge(LIN, y)) || x >= Math.round(edge(RIN, y));
+    };
+    for (let y = 41; y < H; y++) for (let x = 0; x < W; x++) {
+      if (!inBody(x, y)) continue;
+      const rim = !inBody(x - 1, y) || !inBody(x + 1, y) || !inBody(x, y + 1) || !inBody(x, y - 1);
+      p.set(x, y, rim ? '#0c0c10' : x < edge(L, y) + 2 ? '#4a4a56' : '#1a1a20');
+    }
+    // the white pickguard: from the neck down the middle to the knobs, black all around it
+    const GL = [[47, 9], [49, 7], [51, 5], [54, 4], [57, 4], [60, 5], [63, 7], [66, 9], [69, 12]];
+    const GR = [[47, 15], [49, 18], [51, 20], [54, 20], [57, 20], [60, 21], [63, 21], [66, 20], [69, 19], [70, 17]];
+    for (let y = 47; y < 71; y++) {
+      const x0 = Math.round(edge(GL, y)), x1 = Math.round(edge(GR, y));
+      for (let x = x0; x <= x1; x++) if (inBody(x, y)) p.set(x, y, x === x0 || x === x1 || y === 70 ? '#c8c8c0' : '#f2f2ec');
+    }
+    for (let y = 47; y < 52; y++) { p.hline(10, 14, y, MAP); p.set(14, y, MAPD); }
+    // strings, three single-coils, the bridge, knobs, the switch and the jack
+    for (let y = 52; y < 64; y++) if (y % 2) { p.set(11, y, '#a8acb4'); p.set(13, y, '#a8acb4'); }
+    for (const py of [52, 56, 60]) { p.rect(8, py, 9, 3, '#a8a8a0'); p.rect(9, py + 1, 7, 1, '#fafaf4'); for (let k = 0; k < 3; k++) p.set(10 + k * 2, py + 1, '#7a7a74'); }
+    p.rect(9, 64, 7, 2, '#c8ccd4'); p.hline(9, 15, 64, '#e8ecf0');
+    for (const [x, y] of [[18, 62], [19, 65], [18, 68]]) { p.set(x, y, '#fafaf4'); p.set(x, y + 1, '#a8a8a0'); }
+    p.set(19, 59, '#fafaf4');
+    p.set(21, 69, '#c8ccd4'); p.set(21, 70, '#8a8e98');
+    return finish(p);
+  }
+  // Abe's 1974 Telecaster Deluxe (from the user's photo): a red single-cutaway body with the paint
+  // worn through in spots, a big black pickguard, two chrome Wide Range humbuckers, four knobs, a
+  // hardtail bridge, a maple neck with black dots and the big '70s headstock
+  function teleDeluxe() {
+    const W = 24, H = 74, p = new Pix(W, H), MAP = '#ecc478', MAPD = '#c89c50', DOT = '#2a2018';
+    // the big headstock
+    for (let y = 0; y < 15; y++) {
+      const x0 = 9 + Math.round(y * 0.08), x1 = y < 1 ? 15 : y < 9 ? 18 - (y < 2 || y > 7 ? 1 : 0) : y < 12 ? 16 : 14;
+      p.hline(x0, x1, y, MAP); p.set(x1, y, MAPD);
+    }
+    for (const y of [2, 4, 6, 8, 10, 12]) { p.set(7 + Math.round(y * 0.08), y, '#c8ccd4'); p.set(8 + Math.round(y * 0.08), y, '#8a8e98'); }
+    p.set(14, 3, '#8a6030'); p.set(15, 4, '#8a6030'); p.set(15, 5, '#8a6030'); p.set(16, 6, '#8a6030');
+    for (let y = 15; y < 50; y++) { p.hline(10, 14, y, MAP); p.set(14, y, MAPD); }
+    let fy = 17;
+    for (let k = 1; fy < 48; k++) {
+      p.hline(10, 14, fy, '#c8ccd4');
+      if ([3, 5, 7, 9].includes(k)) p.set(12, fy + 1, DOT);
+      if (k === 12) { p.set(11, fy - 1, DOT); p.set(13, fy - 1, DOT); }
+      fy += Math.max(2, Math.round(4 - k * 0.2));
+    }
+    // the body: a rounded bass-side shoulder, one cutaway and a little horn on the treble side
+    const inBody = (x, y) => {
+      if (y < 43 || y >= H || x < 1 || x > 22) return false;
+      if (y < 48) return (x <= 10 && x >= 10 - (y - 43) * 2) || ((x - 19.5) ** 2 / 8 + (y - 48) ** 2 / 20 <= 1);
+      if (y < 51 && x >= 15 && x <= 17) return (x - 15) ** 2 + (y - 48) ** 2 > 9;
+      const bx = Math.max(0, 6 - x, x - 17), by = Math.max(0, y - 68);
+      return bx * bx + by * by <= 30;
+    };
+    for (let y = 43; y < H; y++) for (let x = 0; x < W; x++) {
+      if (!inBody(x, y) || (x >= 10 && x <= 14 && y < 50)) continue;
+      const edge = !inBody(x - 1, y) || !inBody(x + 1, y) || !inBody(x, y + 1), h = G.hash(x, y, 23);
+      p.set(x, y, h < 0.07 ? '#e8d8c0' : edge ? (h < 0.3 ? '#e8d8c0' : '#a02018') : x < 4 ? '#f05040' : '#d83828');
+    }
+    // the black pickguard: around the neck, both pickups and the knobs on the lower right
+    const edge = (pts, y) => { if (y <= pts[0][0]) return pts[0][1]; for (let k = 1; k < pts.length; k++) if (y <= pts[k][0]) { const [y0, x0] = pts[k - 1], [y1, x1] = pts[k]; return x0 + ((x1 - x0) * (y - y0)) / (y1 - y0); } return pts[pts.length - 1][1]; };
+    const GL = [[44, 9], [45, 7], [46, 5], [47, 3], [60, 3], [61, 4], [62, 6], [63, 14], [71, 14]];
+    const GR = [[44, 15], [46, 20], [48, 21], [66, 21], [67, 20], [69, 19], [71, 17]];
+    for (let y = 44; y < 72; y++) for (let x = Math.round(edge(GL, y)); x <= Math.round(edge(GR, y)); x++) {
+      if (!inBody(x, y) || !inBody(x - 1, y) || !inBody(x + 1, y) || !inBody(x, y + 1)) continue;
+      p.set(x, y, '#141418');
+    }
+    for (let y = 43; y < 50; y++) { p.hline(10, 14, y, MAP); p.set(14, y, MAPD); }
+    // strings, the two humbuckers, the hardtail bridge and the four knobs
+    for (let y = 50; y < 64; y++) if (y % 2) { p.set(11, y, '#a8acb4'); p.set(13, y, '#a8acb4'); }
+    for (const py of [51, 57]) { p.rect(8, py, 8, 3, '#c8ccd4'); p.hline(8, 15, py, '#e8ecf0'); for (let k = 0; k < 6; k++) p.set(9 + k, py + 1, '#6a6e78'); }
+    p.rect(8, 63, 8, 3, '#c8ccd4'); p.hline(8, 15, 63, '#e8ecf0'); for (let k = 0; k < 3; k++) p.set(9 + k * 2, 64, '#8a8e98');
+    for (const [x, y] of [[16, 63], [19, 64], [16, 67], [19, 68]]) { p.set(x, y, '#e8ecf0'); p.set(x + 1, y, '#a8acb4'); p.set(x, y + 1, '#5a5e68'); p.set(x + 1, y + 1, '#3a3e48'); }
+    return finish(p);
+  }
   G.TIN_IDS = ['lane1q', 'borkum', 'maidenLane', 'royalJersey', 'scottishCake', 'capstan', 'oldGowrie', 'cravensClaw', 'orlik', 'margate'];
 
   // ================================================================ EXPORTS
@@ -8605,7 +8734,7 @@
     S.shelf = bookshelf();
     S.poster = poster();
     S.rocks = rockTable();
-    S.plant = plant();
+    S.plant = plant(); S.feldspar = feldspar();
     S.cart = cart();
     S.shadow = shadowSprite(12);
     S.shadowBig = shadowSprite(20);
@@ -8808,7 +8937,7 @@
     S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
     S.pipeBook = pipeBookIcon();
-    S.jazzmaster = jazzmaster();
+    S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe();
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
     S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();

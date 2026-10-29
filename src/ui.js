@@ -18,6 +18,7 @@
     silCache.set(src, c);
     return c;
   }
+  G.silhouette = silhouette;
 
   function itemBox(ctx, x, y, label, icon, count) {
     G.box(ctx, x, y, 22, 22);
@@ -590,8 +591,12 @@
         if (inp.hit('up')) { if (row > 0) this.move(-COLS, COLS * ROWS); else { this.onTabs = true; G.audio.sfx('menu'); } }
         if (inp.hit('a')) return this.activate();
       } else if (this.tab === COLL_TAB && (this.photoView || this.instView)) {
-        // looking at a photo or an instrument: Z or X puts it away
-        if (inp.hit('a') || inp.hit('b')) { inp.eat('a'); inp.eat('b'); this.photoView = this.instView = null; this.strum = null; G.audio.sfx('cancel'); }
+        // looking at a photo or an instrument: Z or X puts it away (Z on one of Abe's guitars
+        // Nate isn't playing: he plays that one now)
+        const it = this.instView;
+        if (it && it.song && G.guitarNow() !== it && inp.hit('a')) {
+          inp.eat('a'); G.state.guitar = it.id; this.instView = null; this.strum = it.chord.slice(); G.audio.sfx('select'); this.flash('Nate\'s playing ' + it.name + ' now.');
+        } else if (inp.hit('a') || inp.hit('b')) { inp.eat('a'); inp.eat('b'); this.photoView = this.instView = null; this.strum = null; G.audio.sfx('cancel'); }
       } else if (this.tab === COLL_TAB && this.coll && inp.hit('b')) {
         inp.eat('b');
         this.sel = COLLECTIONS.findIndex((c) => c.id === this.coll);
@@ -740,14 +745,17 @@
       const admin = G.state.admin, act = {
         [QUEST_TAB]: QMODES[(this.qmode + 1) % QMODES.length] === 'ACTIVE' ? 'quests' : QMODES[(this.qmode + 1) % QMODES.length] === '100%' ? '100% list' : 'rules',
         [MAP_TAB]: null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
-        [COLL_TAB]: this.photoView || this.instView ? 'put away' : !this.coll ? 'open' : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
+        [COLL_TAB]: this.instView && this.instView.song && G.guitarNow() !== this.instView ? 'play it' : this.photoView || this.instView ? 'put away' : !this.coll ? 'open' : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
         [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here',
       }[this.tab];
       const pairs = act ? [['Z', act]] : [['↑↓←→', 'look around']];
       if (this.tab === COLL_TAB && this.coll && !this.photoView && !this.instView) pairs.push(['X', 'back']);
+      else if (this.tab === COLL_TAB && this.instView && act === 'play it') pairs.push(['X', 'put away']);
       else if (!admin && !(this.tab === COLL_TAB && (this.photoView || this.instView))) pairs.push(['X', 'quick save']);
       else if (this.tab === SAVE_TAB && this.admList) pairs.push(['X', 'back']);
-      pairs.push(['Q/E', 'pages'], ['ENTER', 'close']);
+      // (no room for the pages hint next to a guitar's play it / put away)
+      if (!(this.tab === COLL_TAB && this.instView && act === 'play it')) pairs.push(['Q/E', 'pages']);
+      pairs.push(['ENTER', 'close']);
       let x = 5;
       for (const [key, label] of pairs) {
         const w = F().width(key) + 6 + 3 + F().width(label);
@@ -1167,6 +1175,8 @@
         slot(ctx, x, y, 34, 42, has ? C.gold : undefined);
         const k = 38 / img.height;
         ctx.drawImage(has ? img : silhouette(img), x + Math.round((34 - img.width * k) / 2), y + 2, Math.round(img.width * k), 38);
+        // (a star on the guitar Nate's playing)
+        if (has && it.song && G.guitarNow() === it) TXT(ctx, '★', x + 26, y + 2, C.gold);
         if (sel) brackets(ctx, x - 1, y - 1, 36, 44);
       });
       const it = list[this.sel];
@@ -1183,7 +1193,9 @@
       TXT(ctx, fit(it.name, 106), 125, 56, C.cyan);
       F().wrap(it.kind, 104).slice(0, 2).forEach((l, k) => TXT(ctx, l, 125, 66 + k * 9, C.dim));
       const top = 66 + Math.min(2, F().wrap(it.kind, 104).length) * 9 + 3;
-      F().wrap(it.blurb, 104).forEach((l, k) => { if (top + k * 9 <= 132) TXT(ctx, l, 125, top + k * 9, C.soft); });
+      const playing = it.song && G.guitarNow() === it, room = playing ? 120 : 132;
+      F().wrap(it.blurb, 104).forEach((l, k) => { if (top + k * 9 <= room) TXT(ctx, l, 125, top + k * 9, C.soft); });
+      if (playing) TXT(ctx, '★ Nate plays this one', 125, 132, C.gold);
     }
 
     // ---- PHOTOS: thumbnails on the left, the one you're on at the right
