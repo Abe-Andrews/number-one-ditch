@@ -8603,6 +8603,16 @@
     return null;
   }
   // Dad's pipe book (his real journal: a blue textured notebook, a little gold emblem, a black ribbon)
+  // the Micro Mayhem title belt: a black strap and a big gold plate with a red stone
+  function beltIcon() {
+    const p = new Pix(16, 10);
+    p.rect(0, 3, 16, 4, '#1c1c24'); p.hline(0, 15, 3, '#3a3a44');
+    p.rect(4, 1, 8, 8, '#e8b830'); p.hline(4, 11, 1, '#f8e070'); p.vline(4, 1, 8, '#f8e070'); p.hline(5, 11, 8, '#a87a18'); p.vline(11, 2, 8, '#a87a18');
+    p.rect(6, 3, 4, 4, '#c8901c'); p.rect(7, 4, 2, 2, '#d83038'); p.set(7, 4, '#f87878');
+    p.rect(1, 4, 2, 2, '#c8a030'); p.rect(13, 4, 2, 2, '#c8a030');
+    p.outline();
+    return p.canvas();
+  }
   function pipeBookIcon() {
     const p = new Pix(14, 16);
     p.rect(2, 0, 11, 15, '#2a4a8a');
@@ -8998,7 +9008,7 @@
     S.goldenEgg = [goldenEgg(false), goldenEgg(true)]; S.egglet = { right: [egglet(0), egglet(1)] }; S.egglet.left = S.egglet.right.map(mirror);
     S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
-    S.pipeBook = pipeBookIcon();
+    S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon();
     S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe();
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);

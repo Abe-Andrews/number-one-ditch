@@ -139,6 +139,9 @@
     lemonade: { skin: '#f8d8c0', hair: '#e8c060', hairStyle: 'shoulder', shirt: '#f8e040', pants: '#5878b8', shoes: '#f0f0f0', torso: 5, legs: 3, blush: true, smile: '#ffffff' },
     ref: { skin: '#e8b890', hair: '#3a2418', hairStyle: 'buzz', shirt: '#f0f0f0', pattern: 'stripes', pants: '#1c1c24', shoes: '#1c1c24', torso: 6, legs: 3 },
     pete: { skin: '#e8b890', hair: '#6a4028', hairStyle: 'cap', hat: '#e05020', hatStyle: 'ball', beard: '#6a4028', shirt: '#2a2a30', pants: '#4a4038', shoes: '#3a2818', boots: true, torso: 7, legs: 3 },
+    // Sr. Siesta, Doron's first fight-night opponent (an original character): a sleepy heavyweight
+    // luchador with a sky-blue mask and a gold moon on it, a striped poncho and sandals.
+    siesta: { mask: '#78b8e8', maskTrim: '#f8f0d8', maskEmblem: '#f8d850', skin: '#d8a078', shirt: '#d86a30', pattern: 'chestStripes', pants: '#6a4a30', shoes: '#a07848', big: true, torso: 6, legs: 3 },
     // Luchador-style wrestlers: masks, singlets, boots.
     wrestler_red: { mask: '#d83038', maskTrim: '#f8d040', skin: '#e8b08a', shirt: '#d83038', pants: '#d83038', neckline: true, sleeves: 0, shorts: true, boots: true, shoes: '#f0f0f0', wide: true, torso: 4, legs: 3 },
     wrestler_blue: { mask: '#3058c8', maskTrim: '#e8e8f0', skin: '#c88a60', shirt: '#3058c8', pants: '#3058c8', neckline: true, sleeves: 0, shorts: true, boots: true, shoes: '#2a3a8a', wide: true, torso: 4, legs: 3 },
@@ -292,6 +295,10 @@
       kind: 'key', name: 'Diploma in EEENGLISH', icon: () => G.spr.diploma, has: () => !!fl().engPerfect,
       desc: 'Certifies that Nate speaks EEENGLISH. Three Es. Signed by Professor Pembrook and, in crayon, El EEENGLISH.',
     },
+    belt: {
+      kind: 'key', name: 'Micro Mayhem Title Belt', short: 'Title Belt', icon: () => G.spr.beltIcon, has: () => !!st().items.belt,
+      desc: 'Doron won it at fight night in the Expo Hall locker room: five fighters, five wins. He says champions have people to carry the belt. You\'re the people.',
+    },
     pipeBook: {
       kind: 'key', name: 'Dad\'s Pipe Book', short: 'Pipe Book', icon: () => G.spr.pipeBook, has: () => !!st().items.pipeBook,
       desc: 'Dad\'s journal: every pipe he\'s made and every tobacco he\'s smoked, with notes on all of it. He gave it to you. Press Z to read it.',
@@ -412,7 +419,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -436,7 +443,7 @@
   G.PARTY_ORDER = ['nate', 'doron', 'lily', 'abe', 'hannah'];
   G.PARTY_INFO = {
     nate: { name: 'Nate', bio: 'Geology major at Lafayette. Makes his own fireworks. Thinks about pH often.', skill: 'Rock hammer, chemistry, explosive presents' },
-    doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Never skips leg day. Owns three luchador masks. Responsible for the Alligator Incident.', skill: 'Lifts and smashes heavy things' },
+    doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Obsessed with the UFC. Never skips leg day. Owns three luchador masks. Responsible for the Alligator Incident.', skill: 'Lifts and smashes heavy things' },
     lily: { name: 'Lily', bio: 'Nate\'s sister. Survived a refrigerator. Still subscribed to Badlands Chugs.', skill: 'A "No." that pops balloons' },
     abe: { name: 'Abe', bio: '6\'5". Lives in Chesapeake with Hannah and Romulus. Sells yellow guitar cables on eBay (eventually). Gave Nate a bidet for Christmas, then took it back.', skill: 'He\'s 6\'5": reaches things up high, and boosts Nate over tall hedges' },
     hannah: { name: 'Hannah', bio: '5\'2". A nurse in the NICU at CHKD. Married to Abe. Romulus\'s favorite person. Father Eggmas hypnotized her babies, and now it\'s personal.', skill: 'Heals: patches Nate up when he\'s low, and gives him a checkup when you talk to her' },
@@ -618,6 +625,11 @@
       const nj = G.JAM_SONGS.filter((sg) => (s.jams || {})[sg.id]).length;
       if (!f.jamMet) side.push({ name: 'Abe\'s office', status: 'Abe wants to jam', kind: 'rumor', where: 'Chesapeake - the condo', hint: 'Things are quiet at the condo. Abe\'s little amp is upstairs, in his office.' });
       else add('Jamming with Abe', nj >= G.JAM_SONGS.length && 'All played!', G.sayable(nj) + '/' + G.sayable(G.JAM_SONGS.length) + ' songs', 'Chesapeake - Abe\'s office', 'Plug in at the little amp in Abe\'s office, upstairs, and play along with Abe.', [nj, G.JAM_SONGS.length]);
+    }
+    if (f.dadBeaten) {
+      const nf = G.FIGHTERS.filter((F) => (s.fights || {})[F.id]).length;
+      if (!f.fightMet) side.push({ name: 'The locker room', status: 'Sounds like a fight in there', kind: 'rumor', where: 'Easton Fair - the Expo Hall', hint: 'The locker room door at the back of the Expo Hall is propped open now. Bring Doron.' });
+      else add('Doron\'s fight night', nf >= G.FIGHTERS.length && 'Champion!', G.sayable(nf) + '/' + G.sayable(G.FIGHTERS.length) + ' beaten', 'Easton Fair - the Expo Hall', 'Doron fights in the Expo Hall locker room. Beat all five for the Micro Mayhem title belt.', [nf, G.FIGHTERS.length]);
     }
     if (G.homeDone() && !f.pipeBench) side.push({ name: 'Dad\'s workshop', status: 'Dad has something to show you', kind: 'rumor', where: 'Home', hint: 'Things are finally quiet at home. Dad wants you in his workshop.' });
     if (f.pipeBench) {
@@ -3416,6 +3428,7 @@
     { name: 'Hat back: fair road open', map: 'campus', at: [34, 12, 'right'], flags: { boulderSeen: true, boulderHitOnce: true, capQuest: true, capDone: true, capHeart: true, sixIntro: true }, items: { cap: true }, maxHp: 8 },
     { name: 'Easton Fairgrounds', map: 'fair', at: [1, 12, 'right'], flags: { doronChat: true } },
     { name: 'Main event: El EEENGLISH', map: 'arena', at: [11, 15, 'up'], flags: { doronDeal: true, ticketQuest: true }, items: { package: 5, tickets: 4 } },
+    { name: 'Doron\'s fight night (Expo Hall locker room)', map: 'arena', at: [11, 2, 'up'], flags: { mainEvent: true, dadBeaten: true, signal_peace: true }, items: { pipe: true, tickets: 0 }, party: ['doron'], follower: 'doron' },
     { name: 'Boulder: Doron\'s suplex', map: 'campus', at: [20, 25, 'down'], flags: { mainEvent: true, dadBeaten: true, signal_peace: true }, items: { pipe: true, tickets: 0 }, party: ['doron'], follower: 'doron' },
     { name: 'Arrive home', map: 'home', at: [1, 53, 'right'], flags: { boulderGone: true } },
     { name: 'Badlands Chugs (kitchen)', map: 'homeDown', at: [20, 15, 'up'], flags: { homeArrived: true, mikeyMet: true } },
@@ -3501,7 +3514,7 @@
   // corn, the sloth, Mom's books...): having those early would jump their quests.
   G.adminAllItems = () => {
     const s = G.state, f = s.flags;
-    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true });
+    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true, belt: true });
     s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40; s.items.firstAid = G.KIT_MAX;
     f.kitGot = true; f.bidetBig = true; f.bidetNozzle = true; s.items.bidetWater = G.BIDET_MAX;
     for (const sg of G.SIGNALS) f['signal_' + sg.id] = true;
@@ -3512,6 +3525,7 @@
     s.pipesMade = {}; for (const p of G.PIPES) s.pipesMade[p.id] = { stars: 3, stain: p.stain || 'oil' };
     s.tinsMade = {}; for (const t of G.TOBACCOS) s.tinsMade[t.id] = { stars: 3 };
     s.instruments = {}; for (const it of G.INSTRUMENTS) s.instruments[it.id] = true;
+    s.fights = {}; for (const F of G.FIGHTERS) s.fights[F.id] = true;
   };
 
   // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)
@@ -4481,11 +4495,6 @@
   };
 
   // ---------------------------------------------------------------- expo hall
-  S.lockerRoom = function* () {
-    yield G.say(null, 'LOCKER ROOM. {r}Wrestlers only.{/}');
-    yield G.say(null, 'You can hear someone inside doing very loud push-ups.');
-  };
-
   S.nachos = function* () {
     yield G.say(null, 'CONCESSIONS. Popcorn: {y}4 teeth{/}. Nachos: {r}6 teeth{/}.');
     yield G.say('Nate', 'Popcorn it is. ...Actually, I\'m saving my teeth.');
@@ -5464,6 +5473,7 @@
     stain: ['Pick the right jar with ↑↓ and Z. (Dad tells you which.)', 'Move the dauber with the arrows. HOLD Z to rub the stain on. Cover every bit before it dries.', 'Missed spots blink. Two-coat pipes: go over everything twice. On the harder pipes, too much puddles: keep moving.'],
     blend: ['Pick a jar with the arrows. Z adds a scoop. X puts the last one back.', 'A blend is four scoops. Dad tells you what goes in it.', 'With four in, he sniffs it and tells you how many are right.'],
     pack: ['The needle goes up and down. Press Z when it\'s inside the green box.', 'Three pinches: gently, then a little firmer, then firm.'],
+    fight: ['← → walk. Hold AWAY from him to block. ↑ jumps (hold ← or → to jump at him).', 'Z punches, X kicks (in the air too). C grabs: the ARMY SUPLEX. Get up close; it goes right through a block.', '↓ then → (toward him) then Z: the TAKEDOWN. Win two rounds to win the fight.'],
     jam: ['Notes slide down the strings. Hit each one with its arrow (← ↓ ↑ →) right as it crosses the pickup at the bottom.', 'Two notes at once? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
   };
 
@@ -7123,6 +7133,635 @@
         const next = G.GUITARS.find((it) => it.song === JAM_SONGS[idx + 1].id);
         yield G.say('Abe', 'Next one: ' + JAM_SONGS[idx + 1].name + '. It\'s faster.' + (next ? ' Get through it and my ' + next.name.replace('Abe\'s ', '') + ' is yours.' : ''));
       }
+    }
+  };
+
+  // ================================================================ DORON'S FIGHT NIGHT (the locker room)
+  // Once El EEENGLISH is beaten, the locker room at the back of the Expo Hall opens up, and Doron
+  // (obsessed with the UFC and fighting) takes on five fighters in a side-view fighting game, Street
+  // Fighter style. The select screen picks who to fight (only Sr. Siesta at first; beating one
+  // unlocks the next), then VS, then best of three rounds against the clock. ← → walk (hold away
+  // from him to block), ↑ jump, Z punch, X kick (in the air too), C grab (the ARMY SUPLEX: up close,
+  // right through a block), ↓ then → then Z the TAKEDOWN. Each fighter has his own style and
+  // special. Beat all five and Doron wins the Micro Mayhem title belt.
+  // State: s.fights ({ id: true }). Flags: fightMet, fightHow.
+  const FIGHTERS = [
+    {
+      id: 'siesta', name: 'SR. SIESTA', style: 'A heavyweight. Naps in the middle of a fight, then wakes up swinging.',
+      hp: 110, speed: 0.55, dmg: 1.35, aggro: 0.35, block: 0.1, grab: 0, jump: 0, special: 'splash', every: 280, sleepy: true,
+      intro: '...zzz... Huh? A fight? ...Five more minutes.',
+      win: 'He fell asleep standing up. I still had to hit him a LOT.',
+    },
+    {
+      id: 'rojo', name: 'EL ROJO', sprite: 'wrestler_red', style: 'Fast. Never stops coming. Throws chops in bunches.',
+      hp: 90, speed: 1.35, dmg: 0.9, aggro: 0.8, block: 0.15, grab: 0.05, jump: 0.04, special: 'chops', every: 150,
+      intro: 'Fast hands! FASTER feet!',
+      win: 'Fast guy. Doesn\'t matter how fast you are when you\'re on the floor.',
+    },
+    {
+      id: 'azul', name: 'EL AZUL', sprite: 'wrestler_blue', style: 'A high-flyer. Keeps his distance, then flies at you.',
+      hp: 95, speed: 1.1, dmg: 1, aggro: 0.45, block: 0.25, grab: 0, jump: 0.2, special: 'crossbody', every: 170, keepAway: true,
+      intro: 'Look up, big man!',
+      win: 'What goes up... gets suplexed.',
+    },
+    {
+      id: 'verde', name: 'EL VERDE', sprite: 'wrestler_green', style: 'A grappler. Blocks everything. Do NOT let him grab you.',
+      hp: 115, speed: 0.9, dmg: 1.1, aggro: 0.5, block: 0.55, grab: 0.45, jump: 0.02, special: 'slam', every: 200,
+      intro: 'Come here. I just want a hug.',
+      win: 'He wanted a hug. He got an Army hug.',
+    },
+    {
+      id: 'eng', name: 'EL EEENGLISH', sprite: 'elenglish', style: 'The main event. Throws his E\'s. Do you speak it?',
+      hp: 140, speed: 1.05, dmg: 1.15, aggro: 0.6, block: 0.35, grab: 0.15, jump: 0.08, special: 'letter', also: 'dropkick', every: 110,
+      intro: 'DO YOU SPEAK EEENGLISH? ...Don\'t tell your mother. I\'m at book club.',
+      win: 'Sorry, Dad. You taught me everything I know. Except that. The UFC taught me that.',
+    },
+  ];
+  G.FIGHTERS = FIGHTERS;
+  const fightState = () => (G.state.fights = G.state.fights || {});
+  const fightOpen = (i) => i === 0 || !!fightState()[FIGHTERS[i - 1].id];
+  // start / active / recovery frames, how far it reaches past the body, damage, hitstun.
+  // down: knocks him down. grab: a throw (goes through a block, misses in the air). leap: [run,
+  // jump] off the ground (aim: toward Doron), active until he lands. dash: slides forward.
+  // chain: thrown that many times in a row. shoot: throws an E. lean: tilts the pose.
+  const MOVES = {
+    punch: { start: 4, active: 3, rec: 8, reach: 26, dmg: 5, stun: 14, pose: 'punch' },
+    kick: { start: 7, active: 4, rec: 13, reach: 30, dmg: 8, stun: 18, pose: 'kick' },
+    knee: { start: 2, active: 999, rec: 4, reach: 22, dmg: 8, stun: 18, pose: 'knee', air: true },
+    grab: { start: 3, active: 3, rec: 20, reach: 22, dmg: 14, grab: true, pose: 'grab' },
+    takedown: { start: 8, active: 20, rec: 18, reach: 14, dmg: 12, down: true, dash: 3.2, pose: 'grab', lean: 0.5 },
+    chops: { start: 3, active: 3, rec: 5, reach: 26, dmg: 4, stun: 12, pose: 'punch', chain: 3 },
+    dropkick: { start: 10, active: 999, rec: 24, reach: 28, dmg: 11, down: true, pose: 'kick', leap: [2.8, 4.4], lean: -0.9 },
+    crossbody: { start: 12, active: 999, rec: 22, reach: 26, dmg: 12, down: true, pose: 'grab', leap: [3.6, 4.8], lean: 1.4 },
+    splash: { start: 26, active: 999, rec: 34, reach: 32, dmg: 16, down: true, pose: 'grab', leap: [0, 6.6], aim: true, landHit: true, lean: 1.5 },
+    slam: { start: 4, active: 3, rec: 24, reach: 22, dmg: 16, grab: true, pose: 'grab' },
+    letter: { start: 14, active: 1, rec: 18, pose: 'punch', shoot: true },
+    letterHit: { dmg: 7, stun: 16 },
+  };
+  const FLOOR = 138, GRAV = 0.32, ROUND_T = 99 * 60, LEFT = 16, RIGHT = 224, FIGHT_SC = 3;
+
+  // Fighter poses at 1x from the person's side sprite (facing right), with arms and legs drawn on,
+  // 26 wide so a fist or a boot can reach out past the body. Drawn at 3x in the fight.
+  const PW = 26, PX = 5;
+  const poseCache = {};
+  function fighterPoses(id) {
+    if (poseCache[id]) return poseCache[id];
+    const set = G.sprites[id], c = G.CAST[id], R = set.right;
+    const ty = 11, ly = ty + (c.torso || 6), sx1 = PX + (c.big ? 11 : c.wide ? 10 : 9);
+    const arm = c.coat || (c.sleeves === 0 ? c.skin : c.shirt), leg = c.shorts ? c.skin : c.pants, boot = c.shoes;
+    const mk = (src, parts) => {
+      const cv = G.canvas(PW, set.h), x = cv.getContext('2d');
+      x.drawImage(src, src.width === 16 ? PX : 0, 0);
+      if (parts) {
+        x.fillStyle = '#1c1424';
+        for (const [X, Y, w, h] of parts) x.fillRect(X - 1, Y - 1, w + 2, h + 2);
+        for (const [X, Y, w, h, col] of parts) { x.fillStyle = col; x.fillRect(X, Y, w, h); }
+      }
+      return cv;
+    };
+    return (poseCache[id] = {
+      idle: mk(R[0]), walk1: mk(R[1]), walk2: mk(R[2]), jump: mk(R[1]), hurt: mk(G.art.flash(R[0])), win: mk(set.hold),
+      punch: mk(R[0], [[sx1, ty + 1, 6, 2, arm], [sx1 + 6, ty, 3, 3, c.skin]]),
+      kick: mk(R[2], [[sx1 - 1, ly, 8, 2, leg], [sx1 + 7, ly - 1, 3, 4, boot]]),
+      block: mk(R[0], [[sx1, ty - 1, 2, 5, arm], [sx1, ty - 3, 2, 2, c.skin]]),
+      grab: mk(R[0], [[sx1, ty + 1, 6, 2, arm], [sx1, ty + 4, 6, 2, arm], [sx1 + 6, ty + 1, 2, 5, c.skin]]),
+      knee: mk(R[1], [[sx1 - 1, ly - 3, 5, 3, leg]]),
+    });
+  }
+
+  // the locker room: cinder block, two fluorescent lights, a MICRO MAYHEM banner, a row of
+  // lockers, a long bench, and the floor
+  let stageC = null;
+  function lockerStage() {
+    if (stageC) return stageC;
+    const c = G.canvas(G.W, G.H), x = c.getContext('2d');
+    x.fillStyle = '#2a3040'; x.fillRect(0, 0, G.W, G.H);
+    x.fillStyle = '#343c50';
+    for (let y = 0; y < 108; y += 10) { x.fillRect(0, y, G.W, 1); for (let X = (y / 10) % 2 ? 0 : 10; X < G.W; X += 20) x.fillRect(X, y, 1, 10); }
+    for (const lx of [36, 164]) { x.fillStyle = 'rgba(232,240,248,0.07)'; x.fillRect(lx - 20, 7, 80, 70); x.fillStyle = '#e8f0f8'; x.fillRect(lx, 4, 40, 3); }
+    x.fillStyle = '#7a1a2a'; x.fillRect(70, 14, 100, 17);
+    x.fillStyle = '#f8d850'; x.fillRect(70, 14, 100, 1); x.fillRect(70, 30, 100, 1);
+    FT().draw(x, 'MICRO MAYHEM', 120 - Math.round(FT().width('MICRO MAYHEM') / 2), 18, '#f8d850');
+    for (let k = 0; k < 12; k++) {
+      const lx = 2 + k * 20;
+      x.fillStyle = '#4a5a78'; x.fillRect(lx, 40, 18, 66);
+      x.fillStyle = '#5a6c8c'; x.fillRect(lx, 40, 18, 2);
+      x.fillStyle = '#3a4860'; x.fillRect(lx + 17, 40, 1, 66);
+      for (let v = 0; v < 3; v++) x.fillRect(lx + 4, 46 + v * 3, 10, 1);
+      x.fillStyle = '#c8ccd4'; x.fillRect(lx + 13, 70, 2, 5);
+    }
+    x.fillStyle = '#8a6440'; x.fillRect(0, 108, G.W, 5);
+    x.fillStyle = '#6a4a30'; x.fillRect(0, 113, G.W, 2);
+    x.fillStyle = '#4a4440'; x.fillRect(0, 118, G.W, 42);
+    x.fillStyle = '#3a3430'; x.fillRect(0, 118, G.W, 1);
+    x.fillStyle = '#54504a'; for (const y of [124, 131, 140, 151]) x.fillRect(0, y, G.W, 1);
+    return (stageC = c);
+  }
+
+  // ---- the select screen: Doron on the left, whoever you're on on the right, and the five faces
+  // along the bottom (a silhouette until the one before is beaten)
+  function fightSelectCmd() {
+    const FS = fightState();
+    return {
+      start() { this.sel = Math.max(0, FIGHTERS.findIndex((F, i) => fightOpen(i) && !FS[F.id])); this.t = 0; G.play.overlay = this; },
+      update() {
+        const inp = G.input;
+        this.t++;
+        if (inp.hit('left') && this.sel > 0) { this.sel--; G.audio.sfx('menu'); }
+        if (inp.hit('right') && this.sel < FIGHTERS.length - 1) { this.sel++; G.audio.sfx('menu'); }
+        if (inp.hit('a')) {
+          inp.eat('a');
+          if (fightOpen(this.sel)) { G.audio.sfx('select'); this.result = FIGHTERS[this.sel]; return true; }
+          G.audio.sfx('bump');
+        }
+        if (inp.hit('b') || quitHit()) { inp.eat('b'); G.audio.sfx('cancel'); this.result = null; return true; }
+        return false;
+      },
+      draw(ctx) {
+        ctx.fillStyle = '#16101e'; ctx.fillRect(0, 0, G.W, G.H);
+        ctx.fillStyle = '#1e1630';
+        for (let k = -G.H; k < G.W; k += 16) for (let y = 0; y < G.H; y += 2) ctx.fillRect(k + y, y, 6, 2);
+        FT().drawBig(ctx, 'FIGHT NIGHT', 6, 4, 2, '#f8d850', '#7a1a2a');
+        FT().draw(ctx, 'Z fight   X done', G.W - 6 - FT().width('Z fight   X done'), 7, '#9890a8', { shadow: '#000' });
+        ctx.imageSmoothingEnabled = false;
+        const D = G.sprites.doron.right[0];
+        ctx.drawImage(D, 6, 124 - D.height * 4, D.width * 4, D.height * 4);
+        FT().draw(ctx, 'DORON', 10, 126, '#f8f8f0', { shadow: '#000' });
+        if (G.state.items.belt) FT().draw(ctx, 'CHAMPION', 6, 24, '#f8d850', { shadow: '#000' });
+        const F = FIGHTERS[this.sel], open = fightOpen(this.sel), O = G.sprites[F.sprite || F.id].left[0];
+        ctx.drawImage(open ? O : G.silhouette(O), G.W - 6 - O.width * 4, 124 - O.height * 4, O.width * 4, O.height * 4);
+        // the middle: his name, his style, and whether he's beaten
+        const name = open ? F.name : '???';
+        FT().draw(ctx, name, 120 - Math.round(FT().width(name) / 2), 32, open ? '#f8d850' : '#5a4e70', { shadow: '#000' });
+        const about = open ? F.style : 'Beat ' + FIGHTERS[this.sel - 1].name + ' first.';
+        FT().wrap(about, 92).slice(0, 5).forEach((l, k) => FT().draw(ctx, l, 120 - Math.round(FT().width(l) / 2), 46 + k * 9, '#c8c0d8', { shadow: '#000' }));
+        if (fightState()[F.id]) FT().draw(ctx, '★ BEATEN', 120 - Math.round(FT().width('★ BEATEN') / 2), 100, '#78e070', { shadow: '#000' });
+        else if (open) FT().draw(ctx, 'NEW CHALLENGER', 120 - Math.round(FT().width('NEW CHALLENGER') / 2), 100, (this.t >> 4) & 1 ? '#f86858' : '#f8f8f0', { shadow: '#000' });
+        // the faces
+        FIGHTERS.forEach((G2, i) => {
+          const x = 41 + i * 32, y = 128, on = i === this.sel, ok = fightOpen(i), S2 = G.sprites[G2.sprite || G2.id].down[0];
+          ctx.fillStyle = on ? ((this.t >> 3) & 1 ? '#f8d850' : '#f8a040') : '#3e3460'; ctx.fillRect(x - 1, y - 1, 32, 30);
+          ctx.fillStyle = ok ? '#2a2040' : '#1a1428'; ctx.fillRect(x, y, 30, 28);
+          ctx.drawImage(ok ? S2 : G.silhouette(S2), 0, 0, 16, 13, x - 1, y + 1, 32, 26);
+          if (!ok) FT().draw(ctx, '?', x + 13, y + 10, '#9890a8');
+          if (fightState()[G2.id]) FT().draw(ctx, '★', x + 22, y + 1, '#f8d850', { shadow: '#000' });
+        });
+      },
+    };
+  }
+
+  // ---- the fight. Result: { won } (or 'quit').
+  function fightCmd(F) {
+    return {
+      start() {
+        Object.assign(this, { phase: 'vs', t: 0, round: 1, wins: [0, 0], sparks: [], shots: [], stop: 0, shakeT: 0, big: null, bubble: null, bubbleT: 0, buf: [], f: 0, holdBack: false, combo: 0, comboT: 0 });
+        this.reset();
+        G.play.overlay = this;
+      },
+      fighter(sprite, x, face, hp, speed) {
+        return { sprite, x, y: 0, vx: 0, vy: 0, face, hp, maxHp: hp, speed, st: 'idle', t: 0, move: null, moveName: null, hit: false, stun: 0, cool: 0, think: 0, blockT: 0, sleepT: 0, anim: 0, used: false, chain: 0, rot: 0 };
+      },
+      reset() {
+        this.p = this.fighter('doron', 80, 1, 100, 1.5);
+        this.e = this.fighter(F.sprite || F.id, 160, -1, F.hp, F.speed);
+        this.e.cool = Math.round(F.every * 0.6);
+        this.timer = ROUND_T; this.shots = []; this.combo = 0; this.comboT = 0;
+      },
+      go(phase) { this.phase = phase; this.t = 0; },
+      say(a, text) { this.bubble = { a, text }; this.bubbleT = 110; },
+      spark(x, y, cols) { for (let k = 0; k < 8; k++) this.sparks.push({ x, y, vx: (Math.random() - 0.5) * 3, vy: -0.5 - Math.random() * 2, life: 14 + Math.random() * 8, c: cols[k % cols.length] }); },
+      update() {
+        if (quitHit()) { this.result = 'quit'; return true; }
+        this.t++;
+        for (const s of this.sparks) { s.x += s.vx; s.y += s.vy; s.vy += 0.15; s.life--; }
+        this.sparks = this.sparks.filter((s) => s.life > 0);
+        if (this.bubbleT > 0) this.bubbleT--;
+        if (this.shakeT > 0) this.shakeT--;
+        if (this.phase === 'vs') {
+          if (this.t >= 130 || (this.t > 30 && G.input.hit('a'))) { G.input.eat('a'); this.go('round'); }
+          return false;
+        }
+        if (this.phase === 'round') {
+          if (this.t === 1) G.audio.sfx('bell');
+          if (this.t === 60) G.audio.sfx('yell');
+          this.big = this.t < 60 ? 'ROUND ' + G.sayable(this.round) : 'FIGHT!';
+          this.p.anim++; this.e.anim++;
+          if (this.t >= 100) { this.big = null; this.go('fight'); }
+          return false;
+        }
+        if (this.phase === 'ko') {
+          this.physics(this.p); this.physics(this.e);
+          if (this.t >= 120) {
+            this.wins[this.koWinner === 'p' ? 0 : 1]++;
+            if (this.wins[0] >= 2 || this.wins[1] >= 2) {
+              const won = this.wins[0] >= 2;
+              this.go('over');
+              this.big = won ? 'DORON WINS!' : F.name + ' WINS';
+              G.audio.sfx(won ? 'fanfare' : 'no');
+              const w = won ? this.p : this.e;
+              if (w.st !== 'down') w.st = 'win';
+            } else { this.round++; this.reset(); this.big = null; this.go('round'); }
+          }
+          return false;
+        }
+        if (this.phase === 'over') {
+          this.physics(this.p); this.physics(this.e);
+          if (this.t >= 150) { this.result = { won: this.wins[0] >= 2 }; return true; }
+          return false;
+        }
+        // the fight itself (a hit freezes everything for a few frames)
+        if (this.stop > 0) { this.stop--; return false; }
+        this.f++;
+        this.timer--;
+        this.playerInput();
+        this.ai();
+        this.tick(this.p, this.e);
+        this.tick(this.e, this.p);
+        this.shotsUpdate();
+        this.separate();
+        if (this.p.hp <= 0 || this.e.hp <= 0 || this.timer <= 0) this.endRound();
+        return false;
+      },
+
+      // ---- Doron: the keyboard
+      playerInput() {
+        const P = this.p, inp = G.input;
+        const fwd = P.face > 0 ? 'right' : 'left', back = P.face > 0 ? 'left' : 'right';
+        if (inp.hit('down')) this.buf.push(['d', this.f]);
+        if (inp.hit(fwd)) this.buf.push(['f', this.f]);
+        this.buf = this.buf.filter(([, t]) => this.f - t < 24);
+        // ↓ then → (toward him), then Z
+        const qcf = () => { const di = this.buf.findIndex(([k]) => k === 'd'); return di >= 0 && this.buf.slice(di + 1).some(([k]) => k === 'f'); };
+        this.holdBack = inp.down(back);
+        if (this.comboT > 0) this.comboT--;
+        if (P.st === 'air' && !P.used && (inp.hit('a') || inp.hit('b'))) { P.used = true; this.begin(P, 'knee'); return; }
+        if (P.st !== 'idle' && P.st !== 'walk') return;
+        if (inp.hit('c')) { this.begin(P, 'grab'); return; }
+        if (inp.hit('a') && qcf()) { this.buf = []; this.say(P, 'TAKEDOWN!'); this.begin(P, 'takedown'); return; }
+        if (inp.hit('a')) { this.begin(P, 'punch'); return; }
+        if (inp.hit('b')) { this.begin(P, 'kick'); return; }
+        const dir = (inp.down('right') ? 1 : 0) - (inp.down('left') ? 1 : 0);
+        if (inp.hit('up')) { this.jump(P, dir); return; }
+        P.vx = dir * P.speed * (dir && inp.down(back) ? 0.75 : 1);
+        P.st = dir ? 'walk' : 'idle';
+      },
+      jump(a, dir) { a.st = 'air'; a.vy = 5.6; a.y = 0.1; a.used = false; a.vx = dir * 1.8; G.audio.sfx('dash'); },
+
+      // ---- the other guy: walks in, throws hands, blocks some of what he sees coming, and uses
+      // his special when it's ready (the sleepy one sometimes just... dozes off)
+      ai() {
+        const E = this.e, P = this.p, dist = Math.abs(P.x - E.x), R = Math.random;
+        if (E.sleepT > 0) {
+          E.vx = 0;
+          if (E.st === 'idle' || E.st === 'walk') E.st = 'sleep';
+          if (--E.sleepT === 0 && E.st === 'sleep') { E.st = 'idle'; this.say(E, '...!'); }
+          return;
+        }
+        if (E.st === 'sleep') E.st = 'idle';
+        if (E.cool > 0) E.cool--;
+        if (E.st === 'air' && !E.used && dist < 44 && E.vy < 1) { E.used = true; this.begin(E, 'knee'); return; }
+        if (E.st !== 'idle' && E.st !== 'walk') return;
+        if (E.blockT > 0) { E.vx = 0; E.st = 'idle'; return; }
+        if (--E.think > 0) { E.st = E.vx ? 'walk' : 'idle'; return; }
+        E.think = Math.max(4, Math.round((24 - F.aggro * 16) * (0.6 + R() * 0.8)));
+        const toward = P.x > E.x ? 1 : -1;
+        if (E.cool <= 0) {
+          const sp = F.also && R() < 0.4 ? F.also : F.special;
+          const ok = { splash: dist > 30, chops: dist < 34, crossbody: dist > 40 && dist < 120, dropkick: dist > 36 && dist < 100, slam: dist < 28, letter: dist > 46 }[sp];
+          if (ok) {
+            E.cool = Math.round(F.every * (0.7 + R() * 0.6));
+            if (sp === 'splash') this.say(E, 'SIESTA SPLASH!');
+            if (sp === 'letter') this.say(E, 'EEE!');
+            this.begin(E, sp);
+            return;
+          }
+        }
+        if (F.sleepy && dist > 30 && R() < 0.07) { E.sleepT = 100 + Math.round(R() * 70); E.st = 'sleep'; this.say(E, 'Zzz...'); return; }
+        if (dist < 28 && R() < F.grab) { this.begin(E, F.id === 'verde' ? 'slam' : 'grab'); return; }
+        if (dist < 36 && R() < F.aggro) { this.begin(E, dist > 26 || R() < 0.5 ? 'kick' : 'punch'); return; }
+        if (dist > 40 && dist < 110 && R() < F.jump) { this.jump(E, toward); return; }
+        const away = F.keepAway && dist < 60 && R() < 0.6;
+        E.vx = (away ? -toward : dist > 30 ? toward : 0) * E.speed;
+        E.st = E.vx ? 'walk' : 'idle';
+      },
+
+      // ---- moves
+      begin(a, name) {
+        const m = MOVES[name], d = a === this.p ? this.e : this.p;
+        if (m.chain && a.moveName !== name) a.chain = 1;
+        a.st = 'atk'; a.move = m; a.moveName = name; a.t = 0; a.hit = false;
+        if (!m.air) a.vx = 0;
+        // the other guy might see it coming and put his guard up
+        if (a === this.p && !m.grab && Math.abs(d.x - a.x) < 60 && d.sleepT <= 0 && Math.random() < F.block) d.blockT = m.start + Math.min(m.active, 20) + 6;
+        G.audio.sfx(m.grab || m.leap ? 'dash' : 'swing');
+      },
+      inActive(a) { const m = a.move; return !!m && a.t >= m.start && a.t < m.start + m.active; },
+      atkTick(a, d) {
+        const m = a.move;
+        a.t++;
+        if (m.leap && a.t === m.start) {
+          // off the ground (the splash aims right at where Doron is standing)
+          a.vy = m.leap[1]; a.y = 0.1;
+          a.vx = m.aim ? Math.max(-3.5, Math.min(3.5, (d.x - a.x) / ((2 * m.leap[1]) / GRAV))) : a.face * m.leap[0];
+        }
+        if (m.dash && this.inActive(a)) a.vx = a.face * m.dash;
+        if (m.shoot && a.t === m.start) this.shots.push({ x: a.x + a.face * 14, y: 30, vx: a.face * 2.4, owner: a, life: 140 });
+        if (this.inActive(a) && !a.hit && !m.shoot && !m.landHit && !(m.leap && a.t < m.start)) this.tryHit(a, d);
+        if (a.t >= m.start + m.active + m.rec) {
+          if (m.chain && a.chain < m.chain) { a.chain++; this.begin(a, a.moveName); return; }
+          a.st = 'idle'; a.move = null; a.moveName = null; a.chain = 0;
+        }
+      },
+      tryHit(a, d) {
+        const m = a.move;
+        if (d.st === 'down' || d.st === 'thrown' || d.st === 'throw') return;
+        const x0 = a.x + a.face * 6, x1 = a.x + a.face * (6 + m.reach);
+        if (d.x + 9 < Math.min(x0, x1) || d.x - 9 > Math.max(x0, x1)) return;
+        if (Math.abs(a.y - d.y) > 30) return;
+        if (m.grab && d.y > 0) return;
+        a.hit = true;
+        this.connect(a, d, m);
+      },
+      // a hit lands (or gets blocked, or it's a grab)
+      connect(a, d, m) {
+        const fromP = a === this.p;
+        if (m.grab) {
+          a.st = 'throw'; a.t = 0; d.st = 'thrown'; d.t = 0; d.vx = d.vy = 0; d.sleepT = 0; d.move = null;
+          this.say(a, fromP ? 'ARMY... SUPLEX!' : F.id === 'verde' ? 'HUG TIME!' : 'GOTCHA!');
+          G.audio.sfx('yell');
+          return;
+        }
+        const guard = d === this.p ? this.holdBack : d.blockT > 0;
+        if (guard && d.y === 0 && d.sleepT <= 0 && (d.st === 'idle' || d.st === 'walk' || d.st === 'block')) {
+          d.st = 'block'; d.stun = 12; d.x += a.face * 5; d.vx = 0;
+          G.audio.sfx('clank');
+          this.spark(d.x - a.face * 8, FLOOR - 44 - d.y, ['#ffffff', '#c8d8f0']);
+          return;
+        }
+        d.hp = Math.max(0, d.hp - Math.round(m.dmg * (fromP ? 1 : F.dmg)));
+        if (d.sleepT > 0 || d.st === 'sleep') { d.sleepT = 0; this.say(d, '!!'); }
+        G.audio.sfx('hit');
+        this.stop = 5; this.shakeT = Math.max(this.shakeT, m.down ? 10 : 4);
+        this.spark(d.x - a.face * 6, FLOOR - 40 - d.y, ['#f8f8a0', '#f8a040', '#ffffff']);
+        d.combo = (d.combo || 0) + 1;
+        if (m.down || d.hp <= 0 || d.y > 0 || d.combo >= 3) this.knockDown(d, a.face);
+        else { d.st = 'hurt'; d.stun = m.stun; d.vx = a.face * 2.4; d.move = null; }
+        if (fromP) { this.combo = (this.comboT > 0 ? this.combo : 0) + 1; this.comboT = 50; }
+      },
+      knockDown(d, dir) { d.st = 'down'; d.t = 0; d.move = null; d.vx = dir * 2; d.vy = Math.max(d.vy, 2.6); d.y = Math.max(d.y, 1); },
+      // the suplex: lifted, flipped over his head, and slammed down behind him
+      throwTick(a, d) {
+        a.t++;
+        const th = Math.min(1, a.t / 30) * Math.PI;
+        d.x = a.x + a.face * 16 * Math.cos(th); d.y = 6 + 40 * Math.sin(th); d.rot = -a.face * d.face * th;
+        if (a.t === 30) {
+          d.hp = Math.max(0, d.hp - Math.round(a.move.dmg * (a === this.p ? 1 : F.dmg)));
+          d.y = 0; d.rot = 0; d.x = Math.max(LEFT, Math.min(RIGHT, a.x - a.face * 20));
+          d.st = 'down'; d.t = 0; d.vx = -a.face * 1.2;
+          G.audio.sfx('boom'); this.shakeT = 16; this.stop = 6;
+          this.spark(d.x, FLOOR - 6, ['#c8b8a0', '#ffffff', '#8a7a68']);
+        }
+        if (a.t >= 30 + a.move.rec) { a.st = 'idle'; a.move = null; a.moveName = null; }
+      },
+
+      // ---- one fighter's frame: movement, his state's timer, his attack, and which way he faces
+      tick(a, d) {
+        this.physics(a);
+        if (a.st === 'hurt' || a.st === 'block') { if (--a.stun <= 0) this.recover(a); }
+        else if (a.st === 'down') { if (++a.t >= 56 && a.hp > 0 && a.y === 0) { this.recover(a); a.vx = 0; } }
+        else if (a.st === 'throw') this.throwTick(a, d);
+        else if (a.st === 'atk') this.atkTick(a, d);
+        if (a.st === 'idle' || a.st === 'walk' || a.st === 'air' || a.st === 'block') a.face = d.x >= a.x ? 1 : -1;
+        if (a.blockT > 0) a.blockT--;
+        a.anim++;
+      },
+      recover(a) {
+        const was = a.st;
+        a.st = 'idle'; a.combo = 0;
+        if (a === this.e) { a.think = 0; if (was !== 'block' && Math.random() < F.block * 1.5) a.blockT = 18; }
+      },
+      physics(a) {
+        if (a.st === 'thrown') return;
+        a.x += a.vx;
+        if (a.y > 0 || a.vy > 0) {
+          a.y += a.vy; a.vy -= GRAV;
+          if (a.y <= 0) { a.y = 0; a.vy = 0; this.land(a); }
+        } else if (a.st !== 'walk' && !(a.st === 'atk' && a.move && a.move.dash && this.inActive(a))) a.vx *= 0.8;
+        a.x = Math.max(LEFT, Math.min(RIGHT, a.x));
+      },
+      land(a) {
+        const m = a.move;
+        if (a.st === 'air') { a.st = 'idle'; a.vx = 0; return; }
+        if (a.st === 'atk' && m && (m.leap || m.air)) {
+          // a flying move ends when he lands (the belly-flop is when he lands)
+          if (m.landHit && !a.hit) {
+            const d = a === this.p ? this.e : this.p;
+            a.hit = true;
+            if (Math.abs(d.x - a.x) < m.reach && d.y < 20 && d.st !== 'down' && d.st !== 'thrown') this.connect(a, d, m);
+          }
+          a.t = m.start + m.active; a.vx = 0;
+          if (m.leap) { G.audio.sfx('bump'); this.shakeT = Math.max(this.shakeT, m.landHit ? 12 : 4); }
+          return;
+        }
+        if (a.st === 'down') { a.vx *= 0.4; G.audio.sfx('bump'); }
+      },
+      // El EEENGLISH's E's: they fly straight; jump them or block them
+      shotsUpdate() {
+        for (const s of this.shots) {
+          s.x += s.vx; s.life--;
+          const d = s.owner === this.e ? this.p : this.e;
+          if (s.life > 0 && Math.abs(s.x - d.x) < 10 && d.y < 24 && d.st !== 'down' && d.st !== 'thrown') { s.life = 0; this.connect(s.owner, d, MOVES.letterHit); }
+        }
+        this.shots = this.shots.filter((s) => s.life > 0 && s.x > -10 && s.x < G.W + 10);
+      },
+      // nobody walks through anybody (jump over him, though)
+      separate() {
+        const P = this.p, E = this.e;
+        if ([P.st, E.st].some((st) => st === 'thrown' || st === 'throw')) return;
+        const dx = E.x - P.x, gap = 26;
+        if (Math.abs(dx) >= gap || Math.abs(P.y - E.y) >= 30) return;
+        const push = (gap - Math.abs(dx)) / 2, s = dx >= 0 ? 1 : -1;
+        P.x -= s * push; E.x += s * push;
+        for (const [a, b] of [[P, E], [E, P]]) {
+          if (a.x < LEFT) { b.x += LEFT - a.x; a.x = LEFT; }
+          if (a.x > RIGHT) { b.x -= a.x - RIGHT; a.x = RIGHT; }
+        }
+      },
+      endRound() {
+        const P = this.p, E = this.e;
+        const pWins = E.hp <= 0 ? true : P.hp <= 0 ? false : P.hp / P.maxHp >= E.hp / E.maxHp;
+        this.koWinner = pWins ? 'p' : 'e';
+        const ko = P.hp <= 0 || E.hp <= 0;
+        this.big = ko ? 'K.O.!' : 'TIME!';
+        G.audio.sfx(ko ? 'boom' : 'bell');
+        const loser = pWins ? E : P;
+        if (ko && loser.st !== 'down' && loser.st !== 'thrown') this.knockDown(loser, pWins ? P.face : E.face);
+        if (P.st === 'atk' || P.st === 'walk') P.st = 'idle';
+        if (E.st === 'atk' || E.st === 'walk' || E.st === 'sleep') E.st = 'idle';
+        this.shots = [];
+        this.go('ko');
+      },
+
+      // ---- drawing
+      draw(ctx) {
+        if (this.phase === 'vs') { this.drawVs(ctx); return; }
+        const sx = this.shakeT ? Math.round((Math.random() * 2 - 1) * 3) : 0;
+        ctx.save(); ctx.translate(sx, 0);
+        ctx.drawImage(lockerStage(), 0, 0);
+        for (const a of [this.p, this.e]) {
+          const w = Math.max(10, Math.round(28 - a.y / 3));
+          ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(Math.round(a.x - w / 2), FLOOR - 2, w, 3);
+        }
+        // whoever is mid-move (or doing the throwing) is drawn in front
+        const front = this.e.st === 'atk' || this.e.st === 'throw' || this.p.st === 'thrown' ? this.e : this.p;
+        this.drawFighter(ctx, front === this.p ? this.e : this.p);
+        this.drawFighter(ctx, front);
+        for (const s of this.shots) FT().drawBig(ctx, 'E', Math.round(s.x - 6), Math.round(FLOOR - s.y - 10), 2, '#d03038', '#1c1424');
+        for (const s of this.sparks) { ctx.fillStyle = s.c; ctx.fillRect(Math.round(s.x), Math.round(s.y), 2, 2); }
+        ctx.restore();
+        this.drawHud(ctx);
+      },
+      drawFighter(ctx, a) {
+        const P = fighterPoses(a.sprite), m = a.move, guard = a === this.p ? this.holdBack : a.blockT > 0;
+        let img = P.idle, rot = 0, lift = 0;
+        if (a.st === 'walk') img = (a.anim >> 3) & 1 ? P.walk1 : P.walk2;
+        else if (a.st === 'air') img = P.jump;
+        else if (a.st === 'hurt') img = (a.stun >> 1) & 1 ? P.hurt : P.idle;
+        else if (a.st === 'block' || (a.st === 'idle' && guard && this.phase === 'fight')) img = P.block;
+        else if (a.st === 'atk' && m) {
+          const on = a.t >= m.start - 2 && a.t < m.start + Math.min(m.active, 999) + 4;
+          if (on) { img = P[m.pose] || P.idle; if (m.lean && (!m.leap || a.y > 0)) rot = m.lean; }
+        }
+        else if (a.st === 'throw') img = P.grab;
+        else if (a.st === 'down') { rot = -Math.PI / 2; lift = 10; }
+        else if (a.st === 'win') img = P.win;
+        const bob = (a.st === 'idle' || a.st === 'sleep') && (a.anim >> 4) & 1 ? 1 : 0;
+        const w = PW * FIGHT_SC, h = img.height * FIGHT_SC;
+        if (a.st === 'thrown') {
+          // flipped head over heels, spinning around his middle on the way over
+          ctx.save();
+          ctx.translate(Math.round(a.x), Math.round(FLOOR - a.y - h / 2));
+          if (a.face < 0) ctx.scale(-1, 1);
+          ctx.rotate(a.rot || 0);
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(img, -(PX + 8) * FIGHT_SC, -h / 2, w, h);
+          ctx.restore();
+          return;
+        }
+        ctx.save();
+        ctx.translate(Math.round(a.x), Math.round(FLOOR - a.y - lift + bob));
+        if (a.face < 0) ctx.scale(-1, 1);
+        if (rot) ctx.rotate(rot);
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(img, -(PX + 8) * FIGHT_SC, -h + FIGHT_SC, w, h);
+        ctx.restore();
+        if (a.st === 'sleep') {
+          const top = FLOOR - a.y - h;
+          for (let k = 0; k < 3; k++) {
+            const zt = (a.anim + k * 20) % 60;
+            FT().draw(ctx, 'z', Math.round(a.x + 6 + zt / 4 + k * 3), Math.round(top + 6 - zt / 2), '#f8f8f0', { shadow: '#000' });
+          }
+        }
+        if (this.bubbleT > 0 && this.bubble && this.bubble.a === a) {
+          const lines = FT().wrap(this.bubble.text, 110), bw = Math.max(...lines.map((l) => FT().width(l))) + 8, bh = lines.length * 9 + 4;
+          const bx = Math.round(Math.max(4, Math.min(G.W - 4 - bw, a.x - bw / 2))), by = Math.round(Math.max(30, FLOOR - a.y - h - bh - 2));
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(bx - 1, by - 1, bw + 2, bh + 2);
+          ctx.fillStyle = '#f8f8f0'; ctx.fillRect(bx, by, bw, bh);
+          lines.forEach((l, k) => FT().draw(ctx, l, bx + 4, by + 3 + k * 9, '#1c1424'));
+        }
+      },
+      drawHud(ctx) {
+        const bar = (x, a, right) => {
+          const w = 96, k = a.hp / a.maxHp, fw = Math.round(w * k);
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(x - 1, 4, w + 2, 9);
+          ctx.fillStyle = '#7a1a1a'; ctx.fillRect(x, 5, w, 7);
+          ctx.fillStyle = k > 0.3 ? '#f8d850' : '#f86858'; ctx.fillRect(right ? x + w - fw : x, 5, fw, 7);
+          ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(right ? x + w - fw : x, 5, fw, 2);
+        };
+        bar(7, this.p, false); bar(137, this.e, true);
+        FT().draw(ctx, 'DORON', 7, 15, '#f8f8f0', { shadow: '#000' });
+        FT().draw(ctx, F.name, 233 - FT().width(F.name), 15, '#f8f8f0', { shadow: '#000' });
+        for (let i = 0; i < this.wins[0]; i++) FT().draw(ctx, '★', 48 + i * 9, 15, '#f8d850', { shadow: '#000' });
+        for (let i = 0; i < this.wins[1]; i++) FT().draw(ctx, '★', 233 - FT().width(F.name) - 12 - i * 9, 15, '#f8d850', { shadow: '#000' });
+        const sec = G.sayable(Math.max(0, Math.ceil(this.timer / 60)));
+        ctx.fillStyle = '#1c1424'; ctx.fillRect(106, 2, 28, 14);
+        FT().draw(ctx, sec, 120 - Math.round(FT().width(sec) / 2), 5, this.timer < 600 ? '#f86858' : '#f8f8f0');
+        if (this.comboT > 0 && this.combo >= 2) FT().draw(ctx, G.sayable(this.combo) + ' HITS!', 7, 26, '#f8d850', { shadow: '#000' });
+        if (this.big) {
+          const sc = this.big.length > 8 ? 2 : 3, w = FT().bigWidth(this.big, sc);
+          FT().drawBig(ctx, this.big, Math.round(120 - w / 2), 54, sc, '#f8d850', '#7a1a2a');
+        }
+      },
+      // VS: Doron slides in from the left, the other guy from the right
+      drawVs(ctx) {
+        const k = Math.min(1, this.t / 18), e = 1 - (1 - k) * (1 - k);
+        ctx.fillStyle = '#5a1418'; ctx.fillRect(0, 0, G.W, G.H);
+        ctx.fillStyle = '#14205a'; ctx.beginPath(); ctx.moveTo(136, 0); ctx.lineTo(G.W, 0); ctx.lineTo(G.W, G.H); ctx.lineTo(104, G.H); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#f8d850'; ctx.beginPath(); ctx.moveTo(133, 0); ctx.lineTo(139, 0); ctx.lineTo(107, G.H); ctx.lineTo(101, G.H); ctx.closePath(); ctx.fill();
+        const D = G.sprites.doron.right[0], O = G.sprites[F.sprite || F.id].left[0];
+        ctx.imageSmoothingEnabled = false;
+        ctx.drawImage(D, Math.round(-90 + e * 104), 140 - D.height * 5, D.width * 5, D.height * 5);
+        ctx.drawImage(O, Math.round(G.W + 10 - e * 104), 140 - O.height * 5, O.width * 5, O.height * 5);
+        if (this.t > 14) { const w = FT().bigWidth('VS', 4); FT().drawBig(ctx, 'VS', Math.round(120 - w / 2), 56, 4, '#f8d850', '#1c1424'); }
+        FT().draw(ctx, 'DORON', 8, 146, '#f8f8f0', { shadow: '#000' });
+        FT().draw(ctx, F.name, G.W - 8 - FT().width(F.name), 146, '#f8f8f0', { shadow: '#000' });
+        // and what he has to say about it
+        if (this.t > 24) {
+          const lines = FT().wrap(F.intro, 120), bw = Math.max(...lines.map((l) => FT().width(l))) + 8, bh = lines.length * 9 + 4, bx = G.W - 6 - bw;
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(bx - 1, 5, bw + 2, bh + 2);
+          ctx.fillStyle = '#f8f8f0'; ctx.fillRect(bx, 6, bw, bh);
+          lines.forEach((l, k) => FT().draw(ctx, l, bx + 4, 9 + k * 9, '#1c1424'));
+        }
+      },
+    };
+  }
+
+  // The locker room door at the back of the Expo Hall: before El EEENGLISH, wrestlers only. After,
+  // Doron's fight night.
+  S.lockerRoom = function* () {
+    const f = flags(), s = G.state;
+    if (!f.dadBeaten) {
+      yield G.say(null, 'LOCKER ROOM. {r}Wrestlers only.{/}');
+      yield G.say(null, 'You can hear someone inside doing very loud push-ups.');
+      return;
+    }
+    if (!(yield* S.callIn('doron', 'Is that... a LOCKER ROOM?'))) {
+      yield G.say(null, 'LOCKER ROOM. The door\'s propped open now. It sounds like a fight in there.');
+      yield G.say('Nate', 'Doron would LOVE this.');
+      return;
+    }
+    if (!f.fightMet) {
+      f.fightMet = true;
+      yield G.say(null, 'Inside: lockers, a long bench, wrestlers taping up their wrists... and a huge man in a poncho, fast asleep.');
+      yield G.say('Doron', 'Nate. NATE. This is a FIGHT NIGHT.');
+      yield G.say('Doron', 'I\'ve watched every UFC fight I could find since I was a kid. I\'ve been training for this my whole life.');
+      yield G.say('Nate', 'Training how?');
+      yield G.say('Doron', 'Mostly by watching the UFC. And the Army. Hold my hat.');
+      yield G.say('Nate', 'You\'re not wearing a hat.');
+      yield G.say('Doron', 'Then hold the water bottle. You\'re in my corner.');
+    } else yield G.say('Doron', 'Back for more? Let\'s GO.');
+    const FS = fightState();
+    let losses = 0;
+    for (;;) {
+      const F = yield fightSelectCmd();
+      if (!F) { G.play.overlay = null; yield G.say('Doron', 'Good session. Same time next week.'); return; }
+      if (!f.fightHow) { f.fightHow = true; yield howToCmd('DORON\'S FIGHT NIGHT', HOW_TO.fight); }
+      const r = yield fightCmd(F);
+      G.play.overlay = null;
+      if (r === 'quit') { yield G.say('Doron', 'Tapping out? ...Fine. We\'ll run it back.'); continue; }
+      if (!r.won) { yield G.say('Doron', ['He got lucky. Run it back.', 'I was feeling him out. NOW I\'m ready.', 'That didn\'t count. Nobody saw that.'][losses++ % 3]); continue; }
+      const first = !FS[F.id], i = FIGHTERS.indexOf(F);
+      FS[F.id] = true;
+      yield G.say('Doron', F.win);
+      if (first && i < FIGHTERS.length - 1) yield G.say(null, '{y}A new challenger!{/} ' + FIGHTERS[i + 1].name + ' wants a piece of Doron.');
+      if (FIGHTERS.every((x) => FS[x.id]) && !s.items.belt) {
+        yield G.say(null, 'The wrestlers carry out a gold belt with a plate the size of a dinner plate.');
+        yield G.say('Doron', 'Nate. NATE. I\'m the Micro Mayhem CHAMPION.');
+        s.items.belt = true;
+        yield G.itemGet(G.spr.beltIcon, 'You got the {y}Micro Mayhem Title Belt{/}! Doron says champions have people who carry the belt. You\'re the people.');
+        yield G.say('Doron', 'I\'m wearing this to Thanksgiving.');
+      }
+      if (first) G.play.autosave();
     }
   };
 
