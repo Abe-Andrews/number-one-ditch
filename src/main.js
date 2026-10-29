@@ -47,6 +47,8 @@
       if (s.rocksFound && s.rocksFound.eastonite) f.roseTraded = true;
       // ...and from when the half-finished bass was a weapon on X (it's an instrument now)
       if (s.xItem === 'bass') s.xItem = null;
+      // ...and from when Ben was Devin (whether he took one of Doron's tickets)
+      if (f.ticket_Devin && !f.ticket_Ben) f.ticket_Ben = f.ticket_Devin;
       s.slot = n;
       return s;
     } catch (e) { return null; }

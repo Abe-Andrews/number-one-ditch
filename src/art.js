@@ -185,6 +185,11 @@
       if (c.neck) { p.set(7, ty, c.neck); p.set(8, ty, c.neck); }
       if (c.collar) { p.set(6, ty, c.collar); p.set(9, ty, c.collar); p.set(7, ty, c.skin); p.set(8, ty, c.skin); p.set(7, ty + 1, c.shirtD); }
     }
+    // over-ear headphones resting around the neck (the cups on the collarbones; the band behind)
+    if (c.headphones) {
+      if (back) p.hline(6, 9, ty, c.headphones);
+      else { p.rect(5, ty, 2, 2, c.headphones); p.rect(9, ty, 2, 2, c.headphones); p.set(5, ty, shade(c.headphones, 0.4)); p.set(10, ty, shade(c.headphones, 0.4)); }
+    }
     if (c.logo && !back) p.set(bx1 - 1, ty + 2, c.logo);
     if (c.belt) {
       p.hline(bx0, bx1, ly - 1, c.belt);
@@ -236,6 +241,7 @@
     else if (c.smile) { p.set(6, y0 + 8, c.skinD); p.hline(7, 8, y0 + 8, c.smile); p.set(9, y0 + 8, c.skinD); }
     else p.hline(7, 8, y0 + 8, c.skinD);
     if (c.blush) { p.set(4, y0 + 7, BLUSH); p.set(11, y0 + 7, BLUSH); }
+    if (c.goatee) p.hline(6, 9, y0 + 9, c.goatee);
     hairFront(p, c, y0, ty);
     if (c.beard) {
       const b = c.beard;
@@ -353,6 +359,14 @@
     if (c.pattern === 'stripes') return x % 2 ? '#1c1c24' : c.shirt;
     if (c.pattern === 'chestStripes') { const r = y - ty; return r === 2 || r === 4 ? '#f0f0f0' : edge ? c.shirtD : c.shirt; }
     if (c.pattern === 'stars') return G.hash(x, y, 9) < 0.17 ? '#24305a' : edge ? c.shirtD : c.shirt;
+    if (c.pattern === 'cosmic') {
+      // a bright space print: white specks and little bursts of pink and cyan on blue (Dr. Nataro)
+      const h = G.hash(x, y, 11);
+      if (h < 0.1) return '#f8f8ff';
+      if (h < 0.2) return '#e050c0';
+      if (h < 0.28) return '#50d8f0';
+      return edge ? c.shirtD : c.shirt;
+    }
     if (c.pattern === 'floral') {
       const h = G.hash(x, y, 7);
       if (h < 0.18) return '#e27890';
@@ -452,6 +466,14 @@
       for (let y = y0 + 3; y <= y0 + 8; y++) { p.set(2, y, D); p.set(3, y, H); p.set(12, y, H); p.set(13, y, D); }
       p.set(3, y0 + 9, D); p.set(12, y0 + 9, D);
       p.hline(5, 9, y0 + 1, L); p.set(6, y0, L); p.set(10, y0 + 2, L);
+    } else if (s === 'locs') {
+      // shoulder-length twists (Bismarck): a few hanging down over the forehead, the rest framing
+      // the face, every other pixel a shade darker so they read as separate twists
+      top(3);
+      for (let x = 3; x <= 12; x++) p.set(x, y0 + 3, x % 2 ? D : H);
+      for (const x of [4, 7, 10]) p.set(x, y0 + 4, D);
+      for (let y = y0 + 4; y <= ty + 2; y++) { p.set(2, y, y % 2 ? D : H); p.set(3, y, y % 2 ? H : D); p.set(12, y, y % 2 ? D : H); p.set(13, y, y % 2 ? H : D); }
+      p.set(5, y0 + 1, L); p.set(8, y0, L); p.set(10, y0 + 1, L);
     } else if (s === 'cap') {
       // hair poking out under a cap
       for (let y = y0 + 3; y <= y0 + 6; y++) { p.set(3, y, H); p.set(12, y, H); }
@@ -486,6 +508,9 @@
       // the mop-top covers the ears and comes down over the back of the neck
       for (let y = y0 + 3; y <= y0 + 8; y++) { p.set(2, y, D); p.hline(3, 12, y, y > y0 + 7 ? D : H); p.set(13, y, D); }
       p.hline(4, 11, y0 + 9, D);
+    }
+    if (s === 'locs') {
+      for (let y = y0 + 3; y <= ty + 2; y++) for (let x = 2; x <= 13; x++) p.set(x, y, x % 2 ? D : H);
     }
     if (s === 'long' || s === 'wavy' || s === 'shoulder') {
       p.hline(5, 10, y0 + 9, H);
@@ -537,8 +562,8 @@
   function drawSide(p, c, step, y0, ty, ly, sy) {
     const sx0 = c.big ? 4 : c.wide ? 5 : 6, sx1 = c.big ? 11 : c.wide ? 10 : 9;
     const H = c.hair, D = c.hairD, s = c.hairStyle;
-    const longHair = s === 'long' || s === 'wavy' || s === 'shoulder';
-    const hairEnd = c.hairEnd != null ? ty + c.hairEnd : s === 'shoulder' ? ty + 1 : ty + 5;
+    const longHair = s === 'long' || s === 'wavy' || s === 'shoulder' || s === 'locs';
+    const hairEnd = c.hairEnd != null ? ty + c.hairEnd : s === 'shoulder' ? ty + 1 : s === 'locs' ? ty + 2 : ty + 5;
 
     // long hair / hood behind the body
     if (longHair) {
@@ -602,6 +627,7 @@
     if (c.neckline) p.set(sx1, ty, c.skin);
     if (c.collar) { p.set(sx1 - 1, ty, c.collar); p.set(sx1, ty, c.skin); }
     if (c.neck) p.set(sx1, ty, c.neck);
+    if (c.headphones) { p.rect(sx1 - 2, ty, 2, 2, c.headphones); p.set(sx1 - 2, ty, shade(c.headphones, 0.4)); }
     if (c.belt) p.hline(sx0, sx1, ly - 1, c.belt);
     if (c.coat) {
       for (let y = ty; y < ly; y++) p.hline(sx0, sx1 - 1, y, c.coat);
@@ -665,6 +691,7 @@
       if (s === 'swoop') p.set(12, y0 + 4, D);
       if (longHair) {
         for (let y = y0 + 4; y <= y0 + 9; y++) p.hline(3, 6, y, H);
+        if (s === 'locs') for (let y = y0 + 3; y <= y0 + 9; y++) { p.set(4, y, D); p.set(6, y, D); }
       } else {
         p.hline(3, 6, y0 + 4, H); p.hline(3, 5, y0 + 5, H); p.hline(3, 5, y0 + 6, D); p.hline(3, 4, y0 + 7, D);
       }
@@ -677,6 +704,7 @@
       p.hline(8, 12, y0 + 8, b); p.set(11, y0 + 8, c.smile || c.skinD);
       p.hline(7, 10, y0 + 9, b);
     }
+    if (c.goatee) p.hline(9, 11, y0 + 9, c.goatee);
     if (c.glasses) {
       const g = c.glasses;
       p.set(9, y0 + 5, g); p.set(9, y0 + 6, g); p.set(11, y0 + 5, g); p.set(11, y0 + 6, g);
@@ -2257,7 +2285,41 @@
     p.vline(2, 10, 16, '#5a5a64'); p.vline(13, 10, 16, '#5a5a64');
     p.outline();
     return p.canvas();
+  }  // the same desk, with Bismarck's giant law school prep book on it (bristling with colored tabs)
+  function schoolDeskBook() {
+    const c = schoolDesk(), x = c.getContext('2d');
+    x.fillStyle = '#1a2448'; x.fillRect(3, 3, 10, 6);
+    x.fillStyle = '#2a3a6a'; x.fillRect(3, 3, 9, 5);
+    x.fillStyle = '#f0ead8'; x.fillRect(3, 8, 9, 1);
+    x.fillStyle = '#d8b850'; x.fillRect(5, 4, 5, 1); x.fillRect(5, 6, 3, 1);
+    for (const [y, col] of [[3, '#f8d850'], [4, '#f86858'], [6, '#78c8f8'], [7, '#78e070']]) { x.fillStyle = col; x.fillRect(13, y, 1, 1); }
+    x.fillStyle = '#f86858'; x.fillRect(7, 2, 1, 1); x.fillStyle = '#78c8f8'; x.fillRect(10, 2, 1, 1);
+    return c;
   }
+  // a flyer pinned to the wall: a little church drawn in pen, and handwriting
+  function churchFlyer() {
+    const p = new Pix(10, 12);
+    p.rect(0, 0, 10, 12, '#f8f4e8'); p.vline(9, 0, 11, '#d8d0bc'); p.hline(0, 9, 11, '#d8d0bc');
+    p.set(4, 0, '#d83838'); p.set(5, 0, '#d83838');
+    const ink = '#2a3a8a';
+    p.vline(4, 1, 3, ink); p.hline(3, 5, 2, ink);
+    p.set(4, 4, ink); p.set(3, 5, ink); p.set(5, 5, ink); p.set(2, 6, ink); p.set(6, 6, ink);
+    p.vline(2, 7, 8, ink); p.vline(6, 7, 8, ink); p.hline(2, 6, 9, ink); p.set(4, 8, ink);
+    for (let x = 1; x < 8; x += 2) p.set(x, 10, '#8a90b8');
+    return p.canvas();
+  }
+  // the same desk, with a copy of the campus paper spread open on it (the masthead, a photo, columns)
+  function schoolDeskPaper() {
+    const c = schoolDesk(), x = c.getContext('2d');
+    x.fillStyle = '#7a7468'; x.fillRect(1, 3, 14, 7);
+    x.fillStyle = '#e4dccb'; x.fillRect(2, 3, 12, 6);
+    x.fillStyle = '#2a2420'; x.fillRect(3, 4, 10, 1);
+    x.fillStyle = '#3a3a5a'; x.fillRect(3, 6, 4, 3);
+    x.fillStyle = '#f4f4f0'; x.fillRect(4, 7, 2, 2);
+    x.fillStyle = '#8a8478'; x.fillRect(8, 6, 5, 1); x.fillRect(8, 8, 4, 1);
+    return c;
+  }
+
 
   function chalkboard(text = 'FINAL EXAM') {
     // (wide enough for the text, with room for the scribbles after it)
@@ -4499,7 +4561,7 @@
   }
 
   // ---- secret rocks: the carnival balloon booth (full, and after Lily), a
-  // funnel cake, and Dr. Moles' tray of three gray rocks with a dropper bottle
+  // funnel cake, and Dr. Nataro's tray of three gray rocks with a dropper bottle
   function balloonBooth(popped) {
     const W = 48, H = 44, p = new Pix(W, H);
     p.rect(0, 0, W, 8, '#e83030');
@@ -8757,7 +8819,7 @@
     S.ringLogo = ringLogo();
     S.cap = capIcon();
     S.heartBig = scale2(S.heart.full);
-    S.schoolDesk = schoolDesk();
+    S.schoolDesk = schoolDesk(); S.schoolDeskPaper = schoolDeskPaper(); S.schoolDeskBook = schoolDeskBook(); S.churchFlyer = churchFlyer();
     S.bouquet = bouquet();
     // home
     S.truck = truck();

@@ -75,13 +75,15 @@
 
   const BOX = { x: 6, w: 228, h: 44, lineH: 11, lines: 3 };
 
+  // who talks in a different voice (the sfx their text blips with)
+  const VOICES = { Brooks: 'squeak' };
   // who gets a little face on their name plate (their sprite's head)
   const FACES = {
     Lily: 'lily', Abe: 'abe', Hannah: 'hannah', Doron: 'doron', Dad: 'dad', Mikey: 'mikey', Michelle: 'michelle', Nani: 'nani', Tom: 'tom', 'Campus Safety': 'officer', 'Toll Collector': 'tollWorker', Anette: 'anette', 'Paul McCartney Lady': 'paulLady', Server: 'toroServer',
-    'Old Fisherman': 'fisherman', 'Hooded Figure': 'hooded', 'Professor Pembrook': 'pembrook', Devin: 'devin',
-    'Prof. Schist': 'prof', Vendor: 'vendor', Maya: 'maya', Jordan: 'jordan', Superfan: 'superfan', Attendant: 'attendant',
-    Lemonade: 'lemonade', Referee: 'ref', 'Pyro Pete': 'pete', Gus: 'gus', 'Dr. Moles': 'moles', 'Grandma Rose': 'rose',
-    'Big Earl': 'earl', Priya: 'priya', 'Ice JJ Fish': 'icejj', 'Badlands Chugs': 'badlands', 'Little Nate': 'nate_toddler',
+    'Old Fisherman': 'fisherman', 'Hooded Figure': 'hooded', 'Professor Pembrook': 'pembrook', Ben: 'ben',
+    'Prof. Sunderlin': 'prof', 'Prof. Carley': 'carley', Vendor: 'vendor', Maya: 'maya', Bismarck: 'bismarck', Superfan: 'superfan', Attendant: 'attendant',
+    Lemonade: 'lemonade', Referee: 'ref', 'Pyro Pete': 'pete', Gus: 'gus', 'Dr. Nataro': 'nataro', 'Grandma Rose': 'rose',
+    'Big Earl': 'earl', Brooks: 'brooks', 'Ice JJ Fish': 'icejj', 'Badlands Chugs': 'badlands', 'Little Nate': 'nate_toddler',
     'El EEENGLISH': 'elenglish', Ruby: 'rockKid',
   };
   function faceOf(name) {
@@ -114,7 +116,7 @@
         const len = this.pageLen();
         if (this.chars < len) {
           this.chars += inp.down('a') || inp.down('b') ? 2.5 : 0.75;
-          if (++this.blipT % 4 === 0) G.audio.sfx('blip');
+          if (++this.blipT % 4 === 0) G.audio.sfx(VOICES[name] || 'blip');
           if (inp.hit('a') && this.chars > 3) { this.chars = len; inp.eat('a'); }
           if (this.chars >= len) this.wait = 6;
           return false;

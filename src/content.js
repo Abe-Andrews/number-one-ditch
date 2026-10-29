@@ -77,10 +77,26 @@
       skin: '#f0c8a8', hair: '#5a4030', hairStyle: 'short', glasses: '#2a2a30', mask: '#1c2c6c', maskTrim: '#e8e8f0', maskEmblem: '#d03038',
       coat: '#6a5a40', shirt: '#e8e0c8', pants: '#4a4038', shoes: '#3a2818', torso: 7, legs: 3,
     },
-    devin: { skin: '#b07850', hair: '#1c1418', hairStyle: 'short', shirt: '#8a2034', pants: '#3a4258', shoes: '#e8e8e8', torso: 6, legs: 3 },
+    // Ben, Nate's real friend (from the user's photo in Refe Photos/Lafayette People): wavy, tousled
+    // light-brown hair, rosy cheeks, a light blue sweatshirt over a white tee, and black over-ear
+    // headphones around his neck. (He used to be "Devin"; same lines.)
+    ben: {
+      skin: '#f6d2bc', hair: '#9a7048', hairStyle: 'mop', blush: true, eyes: '#3a3a48',
+      shirt: '#9cb8cc', pants: '#4a5468', shoes: '#e8e8e8', neck: '#f4f4ee', headphones: '#1c1c22', torso: 6, legs: 3,
+    },
+    // Prof. Sunderlin, Nate's real geology professor (from the user's photo in Refe Photos/Lafayette
+    // People): short brown hair, clean-shaven, broad shoulders, a gray polo. (He used to be "Prof.
+    // Schist"; same lines.)
     prof: {
-      skin: '#f0c8a8', hair: '#d8d8e0', hairStyle: 'receding', beard: '#d8d8e0', glasses: '#2a2a30',
-      coat: '#7a5a3a', shirt: '#e8e0c8', pants: '#4a4038', shoes: '#3a2818', torso: 7, legs: 3,
+      skin: '#f0c4a0', hair: '#6a4a30', hairStyle: 'short',
+      shirt: '#7a8088', collar: '#9aa0a8', pants: '#5a5448', shoes: '#4a3424', wide: true, torso: 7, legs: 3,
+    },
+    // Prof. Carley, Nate's associate geology professor (from the user's photo in Refe Photos/Lafayette
+    // People): long straight brown hair, a big smile, a red cardigan over a white top, a little
+    // necklace, gray pants. She's taking Nate to New Zealand (geology study abroad).
+    carley: {
+      skin: '#f4d0b8', hair: '#6a4428', hairStyle: 'long', smile: '#ffffff', blush: true,
+      coat: '#d04848', shirt: '#f4f0ec', neckline: true, necklace: '#e8d8a0', pants: '#7a7a80', shoes: '#3a3038', torso: 6, legs: 3,
     },
     // Tom from Tom's Pizza (Union, NJ, and now Lafayette): older, salt-and-pepper hair and
     // gray stubble, super bushy dark eyebrows, blue cap, navy shirt with white stripes across
@@ -110,7 +126,13 @@
       shirt: '#f8f8f8', pants: '#5878b8', shoes: '#303030', torso: 7, legs: 3,
     },
     maya: { skin: '#d8a078', hair: '#2a1a14', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 },
-    jordan: { skin: '#f2c8a0', hair: '#e0c070', hairStyle: 'short', glasses: '#202020', shirt: '#5a8a5a', pants: '#2a2a30', shoes: '#a03030', torso: 6, legs: 3 },
+    // Bismarck, Nate's real friend (from the user's photo in Refe Photos/Lafayette People):
+    // shoulder-length black twists, a short goatee, a big grin, and an aqua tee with a little orange
+    // logo on the chest. (He used to be "Jordan"; same lines.)
+    bismarck: {
+      skin: '#7a4a30', hair: '#1c1412', hairStyle: 'locs', goatee: '#1c1412', smile: '#ffffff', grin: true,
+      shirt: '#7cc8cc', logo: '#e88a30', pants: '#3a4258', shoes: '#f0f0f0', torso: 6, legs: 3,
+    },
     // Fairgrounds
     superfan: { skin: '#f0c8a8', hair: '#5a3a20', hairStyle: 'cap', hat: '#d03038', hatStyle: 'ball', patch: '#f8d040', shirt: '#d03038', pants: '#3a4258', shoes: '#f0f0f0', torso: 6, legs: 3, smile: '#ffffff' },
     attendant: { skin: '#c88a60', hair: '#2a1a14', hairStyle: 'short', shirt: '#f08020', collar: '#f8e040', pants: '#3a3a44', shoes: '#202024', torso: 7, legs: 3 },
@@ -132,9 +154,12 @@
   };
 
   // Science Center classroom
-  G.CAST.moles = {
-    skin: '#d8a078', hair: '#e0e0e8', hairStyle: 'receding', glasses: '#2a2a30',
-    coat: '#f4f4f4', shirt: '#6a4a8a', pants: '#3a3a44', shoes: '#2a2a2a', torso: 7, legs: 3,
+  // Dr. Nataro, a real Lafayette chemistry professor (from the user's photo in Refe Photos/Lafayette
+  // People): a shaved head, a short salt-and-pepper beard, and a bright blue shirt with a space
+  // print. (He used to be "Dr. Nataro"; same lines.)
+  G.CAST.nataro = {
+    skin: '#f0c4a8', hair: '#c8c4c0', hairStyle: 'bald', beard: '#8a8884', beardLow: true,
+    shirt: '#2a5ab8', pattern: 'cosmic', sleeves: 'long', pants: '#3a3a44', shoes: '#2a2a2a', torso: 7, legs: 3,
   };
   G.CAST.rose = {
     skin: '#f4d4c0', hair: '#e8e8f0', hairStyle: 'shoulder', glasses: '#8a6a9a', smile: '#ffffff', blush: true,
@@ -162,7 +187,12 @@
     shirt: '#b83030', pattern: 'plaid', plaidL: '#d86060', plaidW: '#2a1a1a', sleeves: 'long', pants: '#3a4a6a', shoes: '#4a3428', boots: true,
     wide: true, torso: 8, legs: 4,
   };
-  G.CAST.priya = { skin: '#b07850', hair: '#1a1010', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 };
+  // Brooks, Nate's real friend (from the user's photo): tall and skinny, dark glasses, a light gray
+  // ball cap, an olive green hoodie (hood down) and black joggers. (He used to be "Priya"; same lines.)
+  G.CAST.brooks = {
+    skin: '#f2cab0', hair: '#3a2a20', hairStyle: 'cap', hat: '#d0d0d4', hatStyle: 'ball', glasses: '#202024',
+    shirt: '#6a7458', collar: '#545c44', sleeves: 'long', pants: '#1e1e24', shoes: '#2a2a30', torso: 7, legs: 4,
+  };
 
   // Mom: shoulder-length brown hair, tortoiseshell glasses, freckles, gold earrings,
   // a mauve puffer, jeans and green garden boots.
@@ -355,7 +385,7 @@
   G.KIT_MAX = 3;
   G.KIT_HEAL = 6;
   // how much spray the Portable Bidet holds (frames of holding X), and how much is in it
-  // (Dr. Moles's lab carboy, from the Science Center, doubles it)
+  // (Dr. Nataro's lab carboy, from the Science Center, doubles it)
   Object.defineProperty(G, 'BIDET_MAX', { get: () => (fl().bidetBig ? 300 : 150), configurable: true });
   // ...and how fast it fills back up while X is held at water, a sink or a toilet (about 5 seconds for a full tank)
   Object.defineProperty(G, 'BIDET_FILL', { get: () => (fl().bidetBig ? 1 : 0.5), configurable: true });
@@ -483,10 +513,13 @@
         : 'Singing "I Pray to Jesus" on a frozen pond north of the bridge. It snows there and nowhere else.'),
     },
     { id: 'gus', name: 'Gus', tag: '{y}Friend', met: () => fl().capQuest, bio: 'Lafayette\'s groundskeeper. Protector of petunias. Found Nate\'s hat.' },
-    { id: 'moles', name: 'Dr. Moles', tag: '{y}Friend', met: () => fl().chemMet, bio: 'Chemistry professor. Nobody has ever gotten the last question on his final right.' },
+    { id: 'nataro', name: 'Dr. Nataro', tag: '{y}Friend', met: () => fl().chemMet, bio: 'Chemistry professor. Nobody has ever gotten the last question on his final right.' },
     { id: 'pete', name: 'Pyro Pete', tag: '{y}Friend', met: () => fl().doronDeal, bio: 'Runs the pyro for Micro Mayhem. Thinks Nate\'s exploding present was beautiful.' },
-    { id: 'prof', name: 'Prof. Schist', tag: '{y}Friend', met: () => fl().profTalk, bio: 'Geology professor. Finds coastal plain ditches fascinating. Flat. Wet. Ditchy.' },
-    { id: 'devin', name: 'Devin', tag: '{y}Friend', met: () => fl().phDone, bio: 'Nate\'s lab partner. Was paid in shark teeth to ask about the pH of rainwater.' },
+    { id: 'prof', name: 'Prof. Sunderlin', tag: '{y}Friend', met: () => fl().profTalk, bio: 'Geology professor. Finds coastal plain ditches fascinating. Flat. Wet. Ditchy.' },
+    { id: 'carley', name: 'Prof. Carley', tag: '{y}Friend', met: () => fl().carleyMet, bio: 'Associate professor of geology, in Van Wickle Hall. She\'s taking Nate to New Zealand to study abroad: volcanoes, glaciers and a plate boundary.' },
+    { id: 'ben', name: 'Ben', tag: '{y}Friend', met: () => fl().phDone, bio: 'Nate\'s lab partner. Was paid in shark teeth to ask about the pH of rainwater. Once made the campus paper for his shirt.' },
+    { id: 'bismarck', name: 'Bismarck', tag: '{y}Friend', met: () => fl().bismarckMet, bio: 'A McKelvey Scholar from Manhattan who wants to be a lawyer. He invited Nate to church.' },
+    { id: 'brooks', name: 'Brooks', tag: '{y}Friend', met: () => fl().brooksMet, bio: 'Hilarious. His voice is impossibly high. Higher than his mom\'s.' },
     { id: 'anette', name: 'Anette', tag: '{y}Friend', met: () => fl().anetteMet, bio: 'Abe and Hannah\'s neighbor. Keeps potted plants all up and down the street. Her knees are done with watering cans.' },
     {
       id: 'paulLady', name: 'Paul McCartney Lady', tag: '{y}Friend', met: () => fl().ladyMet,
@@ -559,7 +592,7 @@
     if (f.capQuest || s.items.cap) add('Gus\'s lawn job', s.items.cap, G.sayable(G.capProgress()) + '/10 bonked', 'Lafayette', 'Bonk ten sacred numbers on the quad and Gus gives your hat back.', [G.capProgress(), 10]);
     if (f.dadBeaten && !f.engMet) side.push({ name: 'Pardee Hall', status: 'The door is open', kind: 'rumor', where: 'Lafayette', hint: 'The Department of EEENGLISH finally opened its doors. Someone inside keeps shouting.' });
     if (f.engMet) add('The EEENGLISH exam', f.engPerfect && 'Perfect!', f.engPassed ? 'Retake for diploma' : 'Not passed yet', 'Lafayette - Pardee Hall', f.engPassed ? 'Get all seven right without saying the sacred number.' : 'Professor Pembrook\'s exam: seven questions about things with "English" in the name.');
-    if (f.chemMet) add('The Chem Final', f.chemPerfect && 'Perfect!', f.chemPassed ? 'Retake for a heart' : 'Not passed yet', 'Lafayette - Science Center', f.chemPassed ? 'Ace it without saying the sacred number for a heart container.' : 'Dr. Moles is giving the final in the Science Center.');
+    if (f.chemMet) add('The Chem Final', f.chemPerfect && 'Perfect!', f.chemPassed ? 'Retake for a heart' : 'Not passed yet', 'Lafayette - Science Center', f.chemPassed ? 'Ace it without saying the sacred number for a heart container.' : 'Dr. Nataro is giving the final in the Science Center.');
     if (f.ticketQuest) {
       const left = s.items.tickets || 0;
       add('Doron\'s spare tickets', f.ticketsDone, left ? G.sayable(left) + ' left' : 'Tell Doron', 'Lafayette + Easton Fair', left ? 'Offer the tickets to people around campus and the fair. Most say no.' + (f.dadBeaten ? ' (They\'re for next week\'s show now.)' : '') : 'All given away! Go tell Doron.', [4 - left, 4]);
@@ -931,36 +964,116 @@
   };
 
   // ---------------------------------------------------------------- campus
-  S.devin = function* () {
+  // A copy of the campus paper, left on a desk in the Science Center. A true story from the user's
+  // dad: Ben wore a shirt that said "SEXY AS HELL" to the ball and ended up in the paper.
+  let benPaperC = null;
+  const benPaperPage = () => {
+    if (benPaperC) return benPaperC;
+    const c = G.canvas(G.W, G.H), x = c.getContext('2d'), INK = '#2a2420', SOFT = '#6a6258';
+    x.fillStyle = '#ece6d6'; x.fillRect(0, 0, G.W, G.H);
+    x.fillStyle = '#d8d0bc'; x.fillRect(0, 0, G.W, 2); x.fillRect(0, G.H - 2, G.W, 2);
+    // the masthead
+    const mw = FT().bigWidth('THE LAFAYETTE', 2);
+    FT().drawBig(x, 'THE LAFAYETTE', Math.round((G.W - mw) / 2), 6, 2, INK, '#c8c0ac');
+    x.fillStyle = INK; x.fillRect(8, 27, G.W - 16, 1); x.fillRect(8, 29, G.W - 16, 1);
+    FT().draw(x, 'CAMPUS LIFE', 8, 32, SOFT);
+    // the headline
+    FT().draw(x, 'ONE SHIRT STOLE THE BALL', 8, 43, INK);
+    x.fillRect(8, 53, G.W - 16, 1);
+    // the photo: Ben at the ball, under the string lights, in the shirt
+    x.fillStyle = INK; x.fillRect(8, 58, 78, 84);
+    x.fillStyle = '#2a2a48'; x.fillRect(9, 59, 76, 82);
+    for (let k = 0; k < 9; k++) { x.fillStyle = k % 2 ? '#f8e0a0' : '#f8c870'; x.fillRect(12 + k * 8, 62 + (k % 3), 2, 2); }
+    x.fillStyle = '#3a3a5a'; x.fillRect(9, 128, 76, 13);
+    const ben = G.art.person(Object.assign({}, G.CAST.ben, { shirt: '#f4f4f0', neck: null, headphones: null })).down[0];
+    x.save(); x.beginPath(); x.rect(9, 59, 76, 82); x.clip();
+    x.imageSmoothingEnabled = false;
+    x.drawImage(ben, 15, 63, ben.width * 4, ben.height * 4);
+    ['SEXY', 'AS', 'HELL'].forEach((w, k) => FT().draw(x, w, 47 - Math.round(FT().width(w) / 2), 111 + k * 8, '#c82838'));
+    x.restore();
+    FT().draw(x, 'Ben, at the ball.', 8, 145, SOFT);
+    // the story
+    const story = ['At the ball this year, one shirt stole the show.', 'Its message, in big letters: SEXY AS HELL.', 'Ben wore it all night. And he wore it well.'];
+    let y = 59;
+    for (const para of story) { for (const l of FT().wrap(para, 140)) { FT().draw(x, l, 94, y, INK); y += 9; } y += 4; }
+    return (benPaperC = c);
+  };
+  // Bismarck, the future lawyer: his law school prep book, left on a desk in Pardee Hall
+  S.lawBook = function* () {
+    yield G.say(null, 'A giant LSAT prep book. Every page is highlighted, color-coded and tabbed.');
+    yield G.say(null, 'Inside the cover, in very neat handwriting: "Property of Bismarck. Future lawyer."');
+    yield G.say('Nate', flags().churchFlyer ? 'He\'s going to be a great lawyer. He already talked me into going to church.' : 'He\'s going to be a great lawyer. He could talk anybody into anything.');
+  };
+  // ...and the flyer he pinned up in Nate's lab: he invited Nate to church
+  let flyerC = null;
+  const flyerPage = () => {
+    if (flyerC) return flyerC;
+    const c = G.canvas(G.W, G.H), x = c.getContext('2d'), INK = '#2a3a8a';
+    x.fillStyle = '#1c1424'; x.fillRect(0, 0, G.W, G.H);
+    x.fillStyle = '#0c0814'; x.fillRect(53, 9, 140, 146);
+    x.fillStyle = '#f8f4e8'; x.fillRect(50, 6, 140, 146);
+    x.fillStyle = '#c8d8f0'; for (let y = 34; y < 148; y += 12) x.fillRect(50, y, 140, 1);
+    x.fillStyle = '#e8a0a0'; x.fillRect(66, 6, 1, 146);
+    x.fillStyle = '#d83838'; x.fillRect(118, 3, 4, 4);
+    // a little church, in pen
+    x.fillStyle = INK;
+    x.fillRect(175, 12, 2, 10); x.fillRect(171, 15, 10, 2);
+    for (let k = 0; k < 9; k++) { x.fillRect(167 + k, 32 - k, 1, 1); x.fillRect(184 - k, 32 - k, 1, 1); }
+    x.fillRect(167, 32, 1, 14); x.fillRect(184, 32, 1, 14); x.fillRect(167, 46, 18, 1); x.fillRect(174, 39, 4, 7);
+    FT().drawBig(x, 'CHURCH!', 74, 14, 2, INK, '#c8d0e8');
+    ['Sunday morning.', 'You\'re coming.', 'No excuses. I\'ll save', 'you a seat.', '', '- Bismarck'].forEach((l, k) => FT().draw(x, l, 74, 51 + k * 12, INK));
+    return (flyerC = c);
+  };
+  S.churchFlyer = function* () {
+    const f = flags();
+    yield G.say(null, 'A flyer pinned to the wall, with a church drawn on it in pen.');
+    yield G.noteView([flyerPage()], 'Z: leave it up');
+    if (!f.churchFlyer) {
+      f.churchFlyer = true;
+      yield G.say('Nate', 'Bismarck invited me to church!');
+      yield G.say('Nate', 'Dad is going to be SO happy.');
+    } else yield G.say('Nate', 'Sunday. Bismarck\'s saving me a seat.');
+  };
+  S.benPaper = function* () {
+    const f = flags();
+    yield G.say(null, 'Someone left a copy of the campus paper on this desk.');
+    yield G.noteView([benPaperPage()], 'Z: put it down');
+    if (!f.benPaper) {
+      f.benPaper = true;
+      yield G.say('Nate', 'That\'s BEN! He made the paper!');
+      yield G.say('Nate', '...In THAT shirt.');
+    } else yield G.say('Nate', 'Still the best thing they\'ve ever printed.');
+  };
+  S.ben = function* () {
     const f = flags();
     if (f.phDone) {
-      yield G.say('Devin', 'Rain is acidic. Life is acidic. Go save your ditch, man.');
+      yield G.say('Ben', 'Rain is acidic. Life is acidic. Go save your ditch, man.');
       return;
     }
-    yield G.say('Devin', 'Nate! Perfect timing. Quick chem question for you.');
+    yield G.say('Ben', 'Nate! Perfect timing. Quick chem question for you.');
     let c;
     do {
-      c = yield G.ask('Devin', 'What is the pH of rainwater?', ['7', 'Why do you ask?']);
-      if (c === 1) yield G.say('Devin', 'No reason. Totally no reason. Nobody paid me to ask you this.');
+      c = yield G.ask('Ben', 'What is the pH of rainwater?', ['7', 'Why do you ask?']);
+      if (c === 1) yield G.say('Ben', 'No reason. Totally no reason. Nobody paid me to ask you this.');
     } while (c === 1);
-    yield G.say('Devin', 'Okay, sure. But what if it was... {y}slightly acidic{/}?');
+    yield G.say('Ben', 'Okay, sure. But what if it was... {y}slightly acidic{/}?');
     c = yield G.ask('Nate', 'Slightly acidic would be...', ['6', '5.6', 'Nice try.']);
     if (c === 0) {
       yield G.say('Nate', '6.');
       yield* slip();
       yield G.say('Nate', '...!!!');
       yield G.say('Nate', 'THAT\'S UNFAIR! I think about pH often!');
-      yield G.say('Devin', 'Abe said you\'d say exactly that. He paid me ten shark teeth.');
-      yield G.say('Devin', 'Here, you can have them. I feel kind of bad.');
+      yield G.say('Ben', 'Abe said you\'d say exactly that. He paid me ten shark teeth.');
+      yield G.say('Ben', 'Here, you can have them. I feel kind of bad.');
     } else if (c === 1) {
       yield G.say('Nate', '5.6. Clean rain absorbs CO2 and makes carbonic acid. Obviously.');
-      yield G.say('Devin', '...Wow. You really do think about pH often.');
+      yield G.say('Ben', '...Wow. You really do think about pH often.');
       yield G.say('Nate', 'I do.');
-      yield G.say('Devin', 'Abe bet me you\'d fall for it. Here, take the teeth he paid me.');
+      yield G.say('Ben', 'Abe bet me you\'d fall for it. Here, take the teeth he paid me.');
     } else {
-      yield G.say('Devin', 'Abe said you\'d fall for it...');
+      yield G.say('Ben', 'Abe said you\'d fall for it...');
       yield G.say('Nate', 'Tell Abe I am NOT gullible.');
-      yield G.say('Devin', 'He said you\'d say that too. Here, take these. Don\'t tell him.');
+      yield G.say('Ben', 'He said you\'d say that too. Here, take these. Don\'t tell him.');
     }
     f.phDone = true;
     G.audio.sfx('tooth');
@@ -971,10 +1084,10 @@
   S.prof = function* () {
     const f = flags();
     if (f.profTalk) { yield* S.profQuiz(); return; }
-    yield G.say('Prof. Schist', 'Nate! I hear a plush egg is after the Number One Ditch.');
-    yield G.say('Prof. Schist', 'Tragic. Coastal plain ditches are fascinating. Flat. Wet. Extremely ditchy.');
-    yield G.say('Prof. Schist', 'My advice: when in doubt, hit it with your rock hammer.');
-    yield G.say('Prof. Schist', 'Rocks, mostly. But those walking {r}sacred numbers{/} on the lawn seem to qualify.');
+    yield G.say('Prof. Sunderlin', 'Nate! I hear a plush egg is after the Number One Ditch.');
+    yield G.say('Prof. Sunderlin', 'Tragic. Coastal plain ditches are fascinating. Flat. Wet. Extremely ditchy.');
+    yield G.say('Prof. Sunderlin', 'My advice: when in doubt, hit it with your rock hammer.');
+    yield G.say('Prof. Sunderlin', 'Rocks, mostly. But those walking {r}sacred numbers{/} on the lawn seem to qualify.');
     f.profTalk = true;
   };
 
@@ -984,9 +1097,10 @@
     yield G.say('Maya', 'Apparently he\'s... VERY intense.');
   };
 
-  S.jordan = function* () {
-    yield G.say('Jordan', 'Did you see Pardee Hall? It\'s the Department of {y}EEENGLISH{/} now.');
-    yield G.say('Jordan', 'Some guy in a cream blazer keeps asking everyone if they speak it.');
+  S.bismarck = function* () {
+    flags().bismarckMet = true;
+    yield G.say('Bismarck', 'Did you see Pardee Hall? It\'s the Department of {y}EEENGLISH{/} now.');
+    yield G.say('Bismarck', 'Some guy in a cream blazer keeps asking everyone if they speak it.');
   };
 
   S.vendor = function* () {
@@ -1023,7 +1137,7 @@
     const f = flags(), p = P();
     if (walkedUp) p.dir = 'left';
     yield G.say('Campus Safety', 'Whoa there. It\'s finals week. Nobody leaves campus until their exams are done.');
-    if (f.chemMet) yield G.say('Nate', 'I still have Dr. Moles\'s chem final...');
+    if (f.chemMet) yield G.say('Nate', 'I still have Dr. Nataro\'s chem final...');
     else yield G.say('Nate', '...What exams?');
     yield G.say('Campus Safety', 'Chemistry final. Science Center. Pass it, and College Hill is all yours.');
     if (walkedUp) yield G.walkTo(p, p.x + 16, p.y, 1.2);
@@ -1093,70 +1207,70 @@
   S.chemFinal = function* () {
     const f = flags(), s = G.state;
     if (f.chemPerfect) {
-      yield G.say('Dr. Moles', 'My star student! Go blow something up. Responsibly.');
+      yield G.say('Dr. Nataro', 'My star student! Go blow something up. Responsibly.');
       return;
     }
     if (!f.chemMet) {
       f.chemMet = true;
-      yield G.say('Dr. Moles', 'Nate! You\'re late for the chemistry final.');
+      yield G.say('Dr. Nataro', 'Nate! You\'re late for the chemistry final.');
       yield G.say('Nate', 'Final? I have a ditch to save!');
-      yield G.say('Dr. Moles', 'Five questions. Answer carefully.');
+      yield G.say('Dr. Nataro', 'Five questions. Answer carefully.');
       yield G.say('Nate', 'How hard can it be?');
     } else {
-      yield G.say('Dr. Moles', 'Back for a retake? Same five questions.');
+      yield G.say('Dr. Nataro', 'Back for a retake? Same five questions.');
     }
-    const ready = yield G.ask('Dr. Moles', 'Ready to take the final?', ['Ready.', 'Not yet.']);
-    if (ready !== 0) { yield G.say('Dr. Moles', 'Come back when you\'re ready. Study your hexagons.'); return; }
+    const ready = yield G.ask('Dr. Nataro', 'Ready to take the final?', ['Ready.', 'Not yet.']);
+    if (ready !== 0) { yield G.say('Dr. Nataro', 'Come back when you\'re ready. Study your hexagons.'); return; }
 
     let score = 0, slips = 0;
     for (let i = 0; i < CHEM_FINAL.length; i++) {
       const Q = CHEM_FINAL[i];
-      if (Q.hard) yield G.say('Dr. Moles', 'And now... the final question. Nobody has ever gotten this one right.');
-      const a = yield G.ask('Dr. Moles', 'Question ' + (i + 1) + ': ' + Q.q, Q.opts);
+      if (Q.hard) yield G.say('Dr. Nataro', 'And now... the final question. Nobody has ever gotten this one right.');
+      const a = yield G.ask('Dr. Nataro', 'Question ' + (i + 1) + ': ' + Q.q, Q.opts);
       if (a === Q.opts.indexOf('6')) {
         slips++;
         yield G.say('Nate', '6.');
         yield* slip();
         if (Q.hard) {
-          yield G.say('Dr. Moles', 'Incorrect. AND you said the number. ' + Q.note);
+          yield G.say('Dr. Nataro', 'Incorrect. AND you said the number. ' + Q.note);
         } else {
           score++;
-          yield G.say('Dr. Moles', '...Correct. Why are you crying?');
+          yield G.say('Dr. Nataro', '...Correct. Why are you crying?');
         }
       } else if (a === Q.answer) {
         score++;
-        if (Q.hard) yield G.say('Dr. Moles', '...Correct?! Nobody has EVER gotten that right!');
-        else yield G.say('Dr. Moles', ['Correct!', 'Correct. Interesting phrasing.', 'Correct... I suppose.'][i % 3]);
+        if (Q.hard) yield G.say('Dr. Nataro', '...Correct?! Nobody has EVER gotten that right!');
+        else yield G.say('Dr. Nataro', ['Correct!', 'Correct. Interesting phrasing.', 'Correct... I suppose.'][i % 3]);
       } else {
-        yield G.say('Dr. Moles', 'Incorrect. ' + Q.note);
+        yield G.say('Dr. Nataro', 'Incorrect. ' + Q.note);
         if (Q.hard && a === Q.trap) {
           yield G.say('Nate', '...I just assumed it was the same as the others.');
-          yield G.say('Dr. Moles', 'Never assume. That\'s the first rule of chemistry.');
+          yield G.say('Dr. Nataro', 'Never assume. That\'s the first rule of chemistry.');
         }
       }
     }
 
-    yield G.say('Dr. Moles', 'Final score: ' + G.sayable(score) + ' out of 5.');
+    yield G.say('Dr. Nataro', 'Final score: ' + G.sayable(score) + ' out of 5.');
     if (score < 3) {
-      yield G.say('Dr. Moles', 'You need 3 to pass. Retake it whenever you\'re ready.');
+      yield G.say('Dr. Nataro', 'You need 3 to pass. Retake it whenever you\'re ready.');
       return;
     }
     if (!f.chemPassed) {
       f.chemPassed = true;
       G.play.addTeeth(30);
       G.audio.sfx('tooth');
-      yield G.say('Dr. Moles', 'You passed! Here, {y}30 shark teeth{/}. Don\'t ask why I have them.');
+      yield G.say('Dr. Nataro', 'You passed! Here, {y}30 shark teeth{/}. Don\'t ask why I have them.');
     }
     if (score === 5 && slips === 0) {
       f.chemPerfect = true;
       s.maxHp += 2;
       s.hp = s.maxHp;
-      yield G.say('Dr. Moles', 'A perfect score, and you never said the number once. That deserves extra credit.');
+      yield G.say('Dr. Nataro', 'A perfect score, and you never said the number once. That deserves extra credit.');
       yield G.itemGet(G.spr.heartBig, 'Extra credit! You got a {r}Heart Container{/}! Max hearts +1.');
     } else if (score === 5) {
-      yield G.say('Dr. Moles', 'A perfect score! But you said the sacred number. Retake it without saying it for {y}extra credit{/}.');
+      yield G.say('Dr. Nataro', 'A perfect score! But you said the sacred number. Retake it without saying it for {y}extra credit{/}.');
     } else {
-      yield G.say('Dr. Moles', 'Get a perfect score without saying the sacred number for {y}extra credit{/}.');
+      yield G.say('Dr. Nataro', 'Get a perfect score without saying the sacred number for {y}extra credit{/}.');
     }
   };
 
@@ -1248,9 +1362,22 @@
     }
   };
 
-  S.priya = function* () {
-    yield G.say('Priya', 'I heard nobody has EVER gotten the last question on this final right.');
-    yield G.say('Priya', 'Also, why are there fire extinguishers on every single wall in here?');
+  S.brooks = function* () {
+    const f = flags(), w = G.play.world;
+    f.brooksMet = true;
+    yield G.say('Brooks', 'I heard nobody has EVER gotten the last question on this final right.');
+    // his voice is so high that a beaker on the lab bench gives out (every time; Nate notices once)
+    G.audio.sfx('glass');
+    w.burst(2 * 16 + 8, 2 * 16 + 4, ['#e8f4fc', '#a8d8f0', '#ffffff'], 12, { speed: 1.4, up: 1, g: 0.12, life: 24, size: 1 });
+    w.pop(2 * 16 + 8, 3 * 16 + 4, 'CRACK!', '#a8d8f0');
+    G.play.shake(4, 1);
+    yield G.wait(24);
+    if (!f.brooksCrack) {
+      f.brooksCrack = true;
+      yield G.say(null, 'A beaker on the lab bench just cracked clean in half.');
+      yield G.say('Nate', '...Brooks. Was that your VOICE?');
+    }
+    yield G.say('Brooks', 'Also, why are there fire extinguishers on every single wall in here?');
   };
 
   S.notEast = function* () {
@@ -1390,16 +1517,17 @@
     'Superfan': { accept: true, lines: [['', 'A FREE TICKET?! I already have one, but now I can sit in TWO seats!']] },
     'Grandma Rose': { accept: true, lines: [['', 'Wrestling? At my age?'], ['', '...Absolutely. Do they still use the folding chairs?']] },
     'Gus': { accept: true, lines: [['', 'Haven\'t been to a wrestling show since \'89.'], ['', 'Sure. Why not. The lawn can wait.']] },
-    'Devin': { accept: true, lines: [['', 'Is this another one of Abe\'s tricks?'], ['n', 'No. It\'s one of Doron\'s.'], ['', '...Fine. I\'ll go.']] },
+    'Ben': { accept: true, lines: [['', 'Is this another one of Abe\'s tricks?'], ['n', 'No. It\'s one of Doron\'s.'], ['', '...Fine. I\'ll go.']] },
     'Attendant': { lines: [['', 'I\'m working, kid. Also, no.']] },
     'Pyro Pete': { lines: [['', 'Kid, I\'m literally running the pyro.']] },
     'Big Earl': { lines: [['', 'Wrestling\'s fake.'], ['n', 'The pyro is real.'], ['', 'Still no.']] },
-    'Prof. Schist': { lines: [['', 'I\'d rather watch sediment settle. And I do. Often.']] },
+    'Prof. Sunderlin': { lines: [['', 'I\'d rather watch sediment settle. And I do. Often.']] },
+    'Prof. Carley': { lines: [['', 'I would, but I\'m buried in New Zealand trip paperwork.'], ['', 'Have you sent in your passport info yet, Nate?']] },
     'Maya': { lines: [['', 'I have a thing tonight.'], ['', '...The thing is not going to wrestling.']] },
-    'Jordan': { lines: [['', 'Is that the show with the guy who yells about English? Hard pass.']] },
+    'Bismarck': { lines: [['', 'Is that the show with the guy who yells about English? Hard pass.']] },
     'Vendor': { lines: [['', 'And leave my Doosh unattended? Never.']] },
-    'Dr. Moles': { lines: [['', 'I have 200 finals to grade. Nobody got the last question right. Again.']] },
-    'Priya': { lines: [['', 'I\'m literally in the middle of an exam.']] },
+    'Dr. Nataro': { lines: [['', 'I have 200 finals to grade. Nobody got the last question right. Again.']] },
+    'Brooks': { lines: [['', 'I\'m literally in the middle of an exam.']] },
     'Referee': { lines: [['', 'I\'m already going. I\'m the REFEREE.']] },
   };
 
@@ -1484,7 +1612,7 @@
       Superfan: 'TWO SEATS! BEST NIGHT OF MY LIFE!',
       'Grandma Rose': 'That man in the blazer has wonderful form.',
       Gus: 'Haven\'t had this much fun since \'89.',
-      Devin: 'Okay. This is actually incredible.',
+      Ben: 'Okay. This is actually incredible.',
     };
     yield G.say(npc.name, lines[npc.name] || 'WOOOO!');
   };
@@ -2625,7 +2753,7 @@
     const f = flags(), s = G.state;
     return [
       ['Gus\'s lawn job', !!s.items.cap],
-      ['Devin\'s chem question', !!f.phDone],
+      ['Ben\'s chem question', !!f.phDone],
       ['The Chem Final (perfect)', !!f.chemPerfect],
       ['The EEENGLISH exam (perfect)', !!f.engPerfect],
       ['Doron\'s spare tickets', !!f.ticketsDone],
@@ -2840,6 +2968,30 @@
   };
 
   // ================================================================ VAN WICKLE HALL (geology)
+  // Prof. Carley, in the main hall: Nate's associate geology professor. He's going to New Zealand
+  // with her, a geology study abroad trip, and it's all she can talk about.
+  const CARLEY_LINES = [
+    'The Southern Alps are some of the fastest-rising mountains on Earth. We\'ll see them up close.',
+    'Rotorua smells like rotten eggs. That\'s the sulfur. You\'re going to love it, Nate.',
+    'The Alpine Fault runs right up the South Island. You can stand on it. Please don\'t jump on it.',
+    'Glaciers that reach almost down to the rainforest. Pack layers. Lots of layers.',
+    'Go save your ditch first. I can\'t take you to New Zealand if you\'re worried about a Number Two Ditch.',
+  ];
+  S.carley = function* () {
+    const f = flags();
+    if (!f.carleyMet) {
+      f.carleyMet = true;
+      yield G.say('Prof. Carley', 'Nate! Have you started packing for New Zealand yet?');
+      yield G.say('Nate', 'I\'ve been packing since the day I signed up.');
+      yield G.say('Prof. Carley', 'Good. We\'ll be right on top of a plate boundary the whole trip: the Pacific and Australian plates, grinding right past each other.');
+      yield G.say('Prof. Carley', 'Volcanoes, glaciers, geysers, the Alpine Fault... It\'s going to be the best field trip of your life.');
+      yield G.say('Nate', 'I\'m bringing my rock hammer.');
+      yield G.say('Prof. Carley', '...We\'ll talk about what you\'re allowed to bring home.');
+      return;
+    }
+    f.carleyLine = ((f.carleyLine || 0) + 1) % CARLEY_LINES.length;
+    yield G.say('Prof. Carley', CARLEY_LINES[f.carleyLine]);
+  };
   // Nate's favorite building on campus: rocks, minerals, and a rock crusher he
   // has written permission to use.
   const GARDEN = {
@@ -2873,7 +3025,7 @@
     if (!f.crusherIntro) {
       f.crusherIntro = true;
       yield G.say(null, 'The jaw crusher: two steel jaws that chew rocks into gravel. Taped to the front is a permission slip.');
-      yield G.say(null, '{d}"Nate is authorized to operate the rock crusher. Please supervise him anyway. - Prof. Schist"{/}');
+      yield G.say(null, '{d}"Nate is authorized to operate the rock crusher. Please supervise him anyway. - Prof. Sunderlin"{/}');
       yield G.say('Nate', 'I have a permission slip. For the rock crusher. This is the best day of my life.');
       if (G.with('doron')) { yield G.say('Doron', 'Can I put something in it?'); yield G.say('Nate', 'No.'); }
     }
@@ -2942,8 +3094,8 @@
     { id: 'lodestone', name: 'Lodestone', area: 'andover', r: 3, crush: { heart: 1 }, fact: 'Magnetite that\'s a natural magnet. Iron filings bristle off it. People used lodestones as the first compasses.' },
     { id: 'cannonball', name: 'Continental Cannonball', area: 'andover', r: 4, crush: null, fact: 'An iron cannonball, maybe cast from Andover ore when the Continental Congress ran the mine for the American army. It belongs in a museum. Nate is the museum.' },
     // Lafayette (College Hill, Easton PA)
-    { id: 'dolomite', area: 'lafayette', name: 'Allentown Dolomite', r: 0, crush: { teeth: 5 }, how: 'Dr. Moles left a tray of gray rocks in the Science Center. Only one of them is dolomite.', fact: 'The most common bedrock in the Lehigh Valley: dolostone from a warm, shallow sea about 500 million years ago.' },
-    { id: 'gneiss', area: 'lafayette', name: 'The Nicest Gneiss', r: 1, crush: { teeth: 15 }, how: 'Prof. Schist gives one out for a right answer.', fact: 'Banded Precambrian gneiss of the Reading Prong, over a billion years old. Easton\'s arts trail has a sign about it called "The Nicest Gneiss."' },
+    { id: 'dolomite', area: 'lafayette', name: 'Allentown Dolomite', r: 0, crush: { teeth: 5 }, how: 'Dr. Nataro left a tray of gray rocks in the Science Center. Only one of them is dolomite.', fact: 'The most common bedrock in the Lehigh Valley: dolostone from a warm, shallow sea about 500 million years ago.' },
+    { id: 'gneiss', area: 'lafayette', name: 'The Nicest Gneiss', r: 1, crush: { teeth: 15 }, how: 'Prof. Sunderlin gives one out for a right answer.', fact: 'Banded Precambrian gneiss of the Reading Prong, over a billion years old. Easton\'s arts trail has a sign about it called "The Nicest Gneiss."' },
     { id: 'stromatolite', area: 'lafayette', name: 'Stromatolite', r: 2, crush: { teeth: 30 }, how: 'Something big and strong could crack the dolomite ledge.', fact: 'Fossil mats of ancient microbes, layered like a cabbage, from the Allentown Formation. Some of the oldest life you can hold.' },
     // Easton (the fairgrounds)
     { id: 'cementrock', area: 'easton', name: 'Cement Rock', r: 0, crush: { teeth: 5 }, how: 'Top prize at the balloon game. Nobody can pop those balloons. Not with darts, anyway.', fact: 'Shaly limestone from the Jacksonburg Formation. The Lehigh Valley ground it into Portland cement and was once the cement capital of America.' },
@@ -3136,7 +3288,7 @@
     }
   };
 
-  // Prof. Schist's pop quiz (once a visit): a right answer earns a piece of gneiss.
+  // Prof. Sunderlin's pop quiz (once a visit): a right answer earns a piece of gneiss.
   const PROF_QUIZ = [
     { q: 'Which mineral is harder?', opts: ['Calcite', 'Quartz'], right: 1, why: 'Quartz is a 7 on the Mohs scale. Calcite is a 3. Quartz scratches glass.' },
     { q: 'Gneiss forms from...', opts: ['Cooling lava', 'Heat and pressure', 'River sand'], right: 1, why: 'Gneiss is metamorphic: cooked and squeezed deep underground.' },
@@ -3147,19 +3299,19 @@
   ];
   S.profQuiz = function* () {
     const w = G.play.world;
-    if (w.profQuizzed) { yield G.say('Prof. Schist', 'Remember: every rock tells a story. Most of them are about pressure.'); return; }
-    const c = yield G.ask('Prof. Schist', 'Pop quiz, Nate! Get it right and you get a rock from my office.', ['Bring it on', 'Not now']);
+    if (w.profQuizzed) { yield G.say('Prof. Sunderlin', 'Remember: every rock tells a story. Most of them are about pressure.'); return; }
+    const c = yield G.ask('Prof. Sunderlin', 'Pop quiz, Nate! Get it right and you get a rock from my office.', ['Bring it on', 'Not now']);
     if (c) return;
     w.profQuizzed = true;
     const q = PROF_QUIZ[Math.floor(Math.random() * PROF_QUIZ.length)];
-    const a = yield G.ask('Prof. Schist', q.q, q.opts);
+    const a = yield G.ask('Prof. Sunderlin', q.q, q.opts);
     if (a !== q.right) {
-      yield G.say('Prof. Schist', 'Ooh. No. ' + q.why);
-      yield G.say('Prof. Schist', 'Come back later and I\'ll give you another one.');
+      yield G.say('Prof. Sunderlin', 'Ooh. No. ' + q.why);
+      yield G.say('Prof. Sunderlin', 'Come back later and I\'ll give you another one.');
       return;
     }
-    yield G.say('Prof. Schist', 'Correct! ' + q.why);
-    yield G.say('Prof. Schist', 'Here: the nicest gneiss in my collection. Get it? NICE. GNEISS.');
+    yield G.say('Prof. Sunderlin', 'Correct! ' + q.why);
+    yield G.say('Prof. Sunderlin', 'Here: the nicest gneiss in my collection. Get it? NICE. GNEISS.');
     yield* S.rockGive('gneiss');
   };
 
@@ -4262,7 +4414,7 @@
     else yield G.say('Doron', 'Somebody around here would probably trade you something for that.');
   };
 
-  // Dr. Moles' tray of three gray rocks: which one is dolomite? (the acid test)
+  // Dr. Nataro's tray of three gray rocks: which one is dolomite? (the acid test)
   S.acidTest = function* () {
     const f = flags();
     if (f.acidDone) { yield G.say(null, 'The tray of gray rocks. Nate already found the dolomite. Rock C. Obviously.'); return; }
@@ -4277,7 +4429,7 @@
     }
     f.acidDone = true;
     yield G.say('Nate', 'C. Dolomite barely reacts to cold acid, until you powder it. Calcite fizzes right away. Quartz never does.');
-    yield G.say('Dr. Moles', 'Correct! Keep it. You\'re the first student all week who didn\'t try to lick them.');
+    yield G.say('Dr. Nataro', 'Correct! Keep it. You\'re the first student all week who didn\'t try to lick them.');
     yield* S.rockGive('dolomite');
   };
 
@@ -4375,6 +4527,7 @@
         img: G.spr.poster, tx: 5, ty: 1, dy: -2, flat: true, hit: [5, 1, 1, 1],
         talk: say('A periodic table. Nate has memorized it. Twice.', ['Nate', 'Hydrogen ion concentration... I think about pH often.']),
       });
+      w.addProp({ img: G.spr.churchFlyer, tx: 6, ty: 1, dx: 3, dy: -2, flat: true, hit: [6, 1, 1, 1], talk: S.churchFlyer });
       w.addProp({ img: G.spr.desk, tx: 7, ty: 2, solid: [7, 2, 2, 1], hit: [7, 2, 2, 1], talk: S.phone });
       w.addProp({
         img: G.spr.shelf, tx: 9, ty: 2, solid: [9, 2, 1, 1], hit: [9, 2, 1, 1],
@@ -4464,10 +4617,10 @@
 
       const npc = (sprite, name, tx, ty, talk, o = {}) =>
         w.add(new G.NPC(Object.assign({ sprite, name, x: tx * 16 + 8, y: ty * 16 + 14, talk }, o)));
-      npc('devin', 'Devin', 9, 10, S.devin);
-      npc('prof', 'Prof. Schist', 30, 10, S.prof, { wander: 20 });
+      npc('ben', 'Ben', 9, 10, S.ben);
+      npc('prof', 'Prof. Sunderlin', 30, 10, S.prof, { wander: 20 });
       npc('maya', 'Maya', 15, 18, S.maya, { dir: 'left' });
-      npc('jordan', 'Jordan', 23, 9, S.jordan, { wander: 16 });
+      npc('bismarck', 'Bismarck', 23, 9, S.bismarck, { wander: 16 });
       npc('vendor', 'Vendor', 24, 15, S.vendor, { dir: 'left' });
 
       w.add(new G.Sign(8, 8, 'NATE\'S DORM. Home of "The Lab." (Not an official lab.)'));
@@ -4495,7 +4648,7 @@
       });
       w.addTrigger(18, 29, 4, 1, () => G.play.warp('home', 1, 53, 'right'));
       w.add(new G.Sign(37, 11, 'EAST: Easton Fairgrounds. Tonight: {y}MICRO MAYHEM WRESTLING{/}!'));
-      w.add(new G.Sign(35, 8, ['SCIENCE CENTER. Reopened (mostly) after "an incident involving homemade fireworks."', 'Today: {y}CHEMISTRY FINAL{/} with Dr. Moles.']));
+      w.add(new G.Sign(35, 8, ['SCIENCE CENTER. Reopened (mostly) after "an incident involving homemade fireworks."', 'Today: {y}CHEMISTRY FINAL{/} with Dr. Nataro.']));
       // the fairgrounds only open up once the boulder (and Doron's text) gives Nate a reason to go
       w.addTrigger(39, 12, 1, 2, () => {
         if (flags().doronChat && G.state.items.cap) G.play.warp('fair', 1, 12, 'right');
@@ -4540,11 +4693,15 @@
       w.addProp({ img: G.spr.bench, tx: 1, ty: 2, solid: [1, 2, 3, 1], hit: [1, 2, 3, 1], talk: S.acidTest });
       w.addProp({ img: G.spr.rockTray, tx: 1, ty: 2, dx: 15, dy: -10, base: 3 * 16 });
       for (const y of [4, 6, 8]) {
-        for (const x of [2, 4, 10, 12]) w.addProp({ img: G.spr.schoolDesk, tx: x, ty: y, solid: [x, y, 1, 1] });
+        for (const x of [2, 4, 10, 12]) {
+          // (the back-left desk has the campus paper on it, with Ben in it)
+          const paper = x === 2 && y === 8;
+          w.addProp({ img: paper ? G.spr.schoolDeskPaper : G.spr.schoolDesk, tx: x, ty: y, solid: [x, y, 1, 1], hit: paper ? [x, y, 1, 1] : null, talk: paper ? S.benPaper : null });
+        }
       }
-      w.add(new G.NPC({ sprite: 'moles', name: 'Dr. Moles', x: 7 * 16 + 8, y: 3 * 16 + 14, dir: 'down', talk: S.chemFinal }));
-      w.add(new G.NPC({ sprite: 'priya', name: 'Priya', x: 13 * 16 + 8, y: 7 * 16 + 14, dir: 'left', talk: S.priya }));
-      // the emergency shower and eyewash (Dr. Moles upgrades the bidet here; it refills it too)
+      w.add(new G.NPC({ sprite: 'nataro', name: 'Dr. Nataro', x: 7 * 16 + 8, y: 3 * 16 + 14, dir: 'down', talk: S.chemFinal }));
+      w.add(new G.NPC({ sprite: 'brooks', name: 'Brooks', x: 13 * 16 + 8, y: 7 * 16 + 14, dir: 'left', talk: S.brooks }));
+      // the emergency shower and eyewash (Dr. Nataro upgrades the bidet here; it refills it too)
       w.addProp({ img: G.spr.safetyStation, tx: 12, ty: 2, solid: [12, 2, 1, 1], hit: [12, 2, 1, 1], talk: S.safetyShower });
       w.addWarp(7, 10, 1, 1, 'campus', 33, 7, 'down');
     },
@@ -4597,7 +4754,11 @@
       F.stand(sp.bookshelf2, 12, 2, 1, look('"The Complete Works of EEENGLISH." Every book has had extra Es added in pen.'));
       F.stand(sp.bookshelf2, 13, 2, 1, look('A whole shelf of English muffin cookbooks. All of them are from New York.'));
       w.addProp({ img: sp.desk, tx: 6, ty: 3, solid: [6, 3, 2, 1] });
-      for (const y of [5, 7]) for (const x of [2, 4, 10, 12]) w.addProp({ img: sp.schoolDesk, tx: x, ty: y, solid: [x, y, 1, 1] });
+      // (Bismarck left his law school prep book on one: he wants to be a lawyer)
+      for (const y of [5, 7]) for (const x of [2, 4, 10, 12]) {
+        const book = x === 4 && y === 7;
+        w.addProp({ img: book ? sp.schoolDeskBook : sp.schoolDesk, tx: x, ty: y, solid: [x, y, 1, 1], hit: book ? [x, y, 1, 1] : null, talk: book ? S.lawBook : null });
+      }
       w.prof = w.add(new G.NPC({ sprite: 'pembrook', name: 'Professor Pembrook', x: 8 * 16 + 8, y: 3 * 16 + 14, dir: 'down', talk: S.englishExam }));
       w.addWarp(7, 10, 1, 1, 'campus', 19, 7, 'down');
     },
@@ -7269,6 +7430,7 @@
       F.stand(sp.mineralCases.fossil, 17, 8, 2, () => S.vwCase('fossil')());
       F.stand(sp.mineralCases.pyrite, 19, 8, 2, () => S.vwCase('pyrite')());
       F.stand(sp.meteorite, 3, 11, 1, look('A meteorite under a glass dome. An actual rock from outer space.', ['Nate', 'I am not allowed to touch it. I think about touching it every day.']));
+      w.add(new G.NPC({ sprite: 'carley', name: 'Prof. Carley', x: 14 * 16 + 8, y: 11 * 16 + 14, dir: 'down', talk: S.carley }));
       w.add(new G.Sign(18, 11, ['GEOLOGY & ENVIRONMENTAL GEOSCIENCES', '"Every rock has a story." Exhibits open weekdays. Please do not lick the minerals.']));
       // ---- rock prep lab
       w.crusherProp = F.stand(sp.jawCrusher, 2, 3, 2, () => S.crusher());
@@ -8671,28 +8833,28 @@
     w.race = null;
   };
 
-  // ---- the Science Center: Dr. Moles upgrades the bidet's tank (a spare lab carboy)
+  // ---- the Science Center: Dr. Nataro upgrades the bidet's tank (a spare lab carboy)
   S.safetyShower = function* () {
     const f = flags(), s = G.state;
     if (!s.items.bidet) {
       yield G.say(null, 'The emergency shower and eyewash station. A big green sign: PULL ONLY IN AN EMERGENCY.');
-      yield G.say('Dr. Moles', 'Do NOT touch that unless something is on fire. Or in your eyes. Or both.');
+      yield G.say('Dr. Nataro', 'Do NOT touch that unless something is on fire. Or in your eyes. Or both.');
       return;
     }
     if (f.bidetBig) { yield G.say(null, 'The emergency shower and eyewash station. There\'s one less spare jug on the shelf under it.'); return; }
     yield G.say(null, 'The emergency shower and eyewash station. The eyewash runs off a big jug of water on a shelf underneath.');
     yield G.say('Nate', 'That\'s a LOT of water...');
     yield G.say(null, 'Nate holds the Portable Bidet up next to the jug.');
-    yield G.say('Dr. Moles', 'Nate. Is that a BIDET?');
-    yield G.say('Dr. Moles', 'In MY lab?');
+    yield G.say('Dr. Nataro', 'Nate. Is that a BIDET?');
+    yield G.say('Dr. Nataro', 'In MY lab?');
     yield G.say('Nate', 'It\'s a long story. It only holds about a cup of water.');
-    yield G.say('Dr. Moles', '...That tank is pathetic. Give it here.');
-    yield G.say(null, 'Dr. Moles unscrews the little tank and hooks the bidet up to a spare jug from under the eyewash. Lab tape. A LOT of lab tape.');
+    yield G.say('Dr. Nataro', '...That tank is pathetic. Give it here.');
+    yield G.say(null, 'Dr. Nataro unscrews the little tank and hooks the bidet up to a spare jug from under the eyewash. Lab tape. A LOT of lab tape.');
     f.bidetBig = true;
     s.items.bidetWater = G.BIDET_MAX;
     G.audio.sfx('chest');
     yield G.itemGet(G.spr.carboyIcon, 'Your Portable Bidet got a {y}Lab Carboy Tank{/}! It holds twice the water now, and fills up twice as fast.');
-    yield G.say('Dr. Moles', 'Now get that thing out of my lab. And return my carboy. Eventually. Never.');
+    yield G.say('Dr. Nataro', 'Now get that thing out of my lab. And return my carboy. Eventually. Never.');
   };
 
   // The little cave under the fairgrounds (past the protest): a limestone hollow
@@ -8775,7 +8937,7 @@
       w.add(new G.NPC({ sprite: 'ref', name: 'Referee', x: 18 * 16 + 8, y: 15 * 16 + 14, talk: S.ref, wander: 20 }));
       if (flags().dadBeaten && !flags().homeArrived) w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 7 * 16 + 8, y: 15 * 16 + 14, dir: 'left', talk: S.dadArena }));
       // everyone Nate gave one of Doron's tickets to shows up ringside
-      [['superfan', 'Superfan', 5, 8, 'right'], ['rose', 'Grandma Rose', 18, 8, 'left'], ['gus', 'Gus', 5, 10, 'right'], ['devin', 'Devin', 18, 10, 'left']]
+      [['superfan', 'Superfan', 5, 8, 'right'], ['rose', 'Grandma Rose', 18, 8, 'left'], ['gus', 'Gus', 5, 10, 'right'], ['ben', 'Ben', 18, 10, 'left']]
         .forEach(([sprite, name, x, y, dir]) => {
           if (flags()['ticket_' + name] !== 'yes') return;
           w.add(new G.NPC({ sprite, name, x: x * 16 + 8, y: y * 16 + 14, dir, talk: S.ringsideFan }));
