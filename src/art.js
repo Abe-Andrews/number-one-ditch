@@ -3797,21 +3797,32 @@
     p.rect(41, 5, 3, 6, BROUT); p.rect(47, 5, 3, 6, BROUT);
     return finish(p);
   }
-  // The bass Nate swings: body at the far end, held down by the headstock.
-  function bassSwing() {
-    const p = new Pix(14, 34);
-    for (let y = 0; y < 22; y++) for (let x = 0; x < 14; x++) {
-      const body = (x - 6.5) ** 2 / 42 + (y - 7) ** 2 / 50 <= 1;
-      const hornL = (x - 1.8) ** 2 / 3 + (y - 15) ** 2 / 20 <= 1;
-      const hornR = (x - 11.5) ** 2 / 3 + (y - 13.5) ** 2 / 14 <= 1;
-      if (body || hornL || hornR) p.set(x, y, x < 3 ? BWALL : x > 10 ? BWALD : (x * 3 + y * 5) % 11 ? BWAL : BWALD);
+  // Nate's half-finished bass, standing up (COLLECTABLES > Instruments): a 4-in-line maple headstock
+  // with empty tuner holes, a maple neck with the frets in, and a bare walnut body with its pickup
+  // and bridge routed out but nothing in them. No strings, no finish.
+  function natesBass() {
+    const W = 22, H = 72, p = new Pix(W, H);
+    for (let y = 0; y < 13; y++) {
+      const x0 = 8 + Math.round(y * 0.1), x1 = y < 2 ? 12 + y : 14;
+      p.hline(x0, x1, y, y < 1 ? BMAPD : BMAP); p.set(x0, y, BMAPL); p.set(x1, y, BMAPD);
     }
-    p.rect(5, 1, 4, 29, BMAP); p.vline(5, 1, 29, BMAPL); p.vline(8, 1, 29, BMAPD);
-    p.rect(4, 4, 6, 2, BROUT); p.rect(4, 9, 6, 2, BROUT);
-    let fy = 15, gap = 1.8;
-    while (fy < 29) { p.hline(5, 8, Math.round(fy), BFRET); fy += gap; gap *= 1.07; }
-    for (let y = 28; y < 34; y++) for (let x = 2; x < 12; x++) if ((x - 7) ** 2 / 20 + (y - 31) ** 2 / 9 <= 1) p.set(x, y, BMAP);
-    p.set(5, 30, BROUT); p.set(9, 30, BROUT); p.set(5, 32, BROUT); p.set(9, 32, BROUT);
+    for (const y of [2, 5, 8, 11]) p.set(10, y, BROUT);
+    for (let y = 13; y < 50; y++) { p.hline(9, 13, y, BMAP); p.set(9, y, BMAPL); p.set(13, y, BMAPD); }
+    p.hline(9, 13, 13, BFRET);
+    let fy = 16, gap = 3.4;
+    while (fy < 46) { p.hline(10, 12, Math.round(fy), BFRET); fy += gap; gap = Math.max(1.6, gap * 0.94); }
+    for (let y = 36; y < H; y++) for (let x = 0; x < W; x++) {
+      const low = (x - 11) ** 2 / 112 + (y - 61) ** 2 / 110 <= 1;
+      const up = (x - 11) ** 2 / 69 + (y - 50) ** 2 / 64 <= 1;
+      const hornU = (x - 4) ** 2 / 8 + (y - 43) ** 2 / 42 <= 1;
+      const hornL = (x - 18) ** 2 / 6 + (y - 46) ** 2 / 20 <= 1;
+      if (!(low || up || hornU || hornL) || (x >= 9 && x <= 13 && y < 50)) continue;
+      p.set(x, y, x < 3 ? BWALL : x > 18 || y > 69 ? BWALD : (x * 3 + y * 7) % 13 ? BWAL : BWALD);
+    }
+    // the routes: a split pickup, the control cavity and the bridge screw holes, all empty
+    p.rect(7, 53, 4, 2, BROUT); p.rect(11, 55, 4, 2, BROUT);
+    p.set(17, 59, BROUT); p.set(18, 62, BROUT);
+    for (const x of [8, 10, 12, 14]) p.set(x, 65, BROUT);
     return finish(p);
   }
   function bassIcon() {
@@ -8683,7 +8694,7 @@
     S.wateringCan = wateringCan(); S.wateringCanR = mirror(S.wateringCan);
     S.chewedPage = chewedPage(); S.pastorBook = pastorBook(); S.keyring = keyring(); S.earplugs = earplugs();
     // Dad's workshop
-    S.convertible = convertible(); S.workbench = workbench(); S.bassOnBench = bassOnBench(); S.bassSwing = bassSwing(); S.bassIcon = bassIcon();
+    S.convertible = convertible(); S.workbench = workbench(); S.bassOnBench = bassOnBench(); S.natesBass = natesBass(); S.bassIcon = bassIcon();
     S.shopShelves = shopShelves(false); S.shopShelvesPlane = shopShelves(true); S.sepiaPhoto = sepiaPhoto(); S.toolChest = toolChest(); S.lumberPile = lumberPile();
     S.drillPress = drillPress(); S.lathe = lathe(); S.bandsaw = bandsaw(); S.tableSaw = tableSaw(); S.planer = planer(); S.sander = sander();
     S.miterSaw = miterSaw(); S.dustCollector = dustCollector(); S.shopVac = shopVac(); S.feedBags = feedBags(); S.buckets = buckets(); S.oldFridge = oldFridge();

@@ -246,10 +246,6 @@
           + (ups.length ? ' Upgraded: ' + ups.join(' and ') + '.' : '');
       },
     },
-    bass: {
-      kind: 'gear', equip: true, name: 'Half-Finished Bass', short: 'Bass', icon: () => G.spr.bassIcon, has: () => !!st().items.bass,
-      desc: 'Nate\'s homemade bass: walnut body, maple neck, no strings. Press X to swing it in a huge arc. Hits twice as hard as the hammer.',
-    },
     rod: {
       kind: 'gear', equip: true, name: 'Surf Rod', short: 'Surf Rod', icon: () => G.spr.rodIcon, has: () => !!st().items.rod,
       desc: 'The old fisherman\'s spare, from the bridge-tunnel island. Press X to cast. Whatever you hook gets reeled in: fish, gulls, teeth... people.',
@@ -354,7 +350,7 @@
     },
   };
   // grid order; null = an empty slot for things Nate hasn't found yet
-  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'bass', 'chicken', 'rod', 'sifter', 'bidet', 'firstAid', null, null];
+  G.GEAR_SLOTS = ['hammer', 'doosh', 'package', 'pipe', 'chicken', 'rod', 'sifter', 'bidet', 'firstAid', null, null, null];
   // Hannah's first-aid kit: how many uses it holds, and how much each one heals (half hearts)
   G.KIT_MAX = 3;
   G.KIT_HEAL = 6;
@@ -1833,12 +1829,11 @@
     yield G.say(null, 'On the workbench: a walnut bass body and a maple neck with the frets already in. No strings. No finish.');
     yield G.say('Nate', 'My bass! I\'ve been building it out here in Dad\'s workshop. It\'s... not done yet.');
     s.items.bass = true;
-    s.xItem = 'bass';
     if (w.bassProp) w.bassProp.img = null;
-    yield G.itemGet(G.spr.bassIcon, 'You got the {y}Half-Finished Bass{/}! No strings, all heft. It\'s on {y}X{/}: swing it in a huge arc. (Switch X items in the menu.)');
-    yield G.say('Nate', 'It can\'t play a single note. But it can absolutely hit things.');
-    if (G.with('doron')) yield G.say('Doron', 'Now THAT is a weapon.');
-    if (G.with('lily')) yield G.say('Lily', 'Please don\'t hit me with the bass.');
+    yield G.itemGet(G.spr.bassIcon, 'You got the {y}Half-Finished Bass{/}! It\'s with the instruments in {y}COLLECTABLES{/}.');
+    yield G.say('Nate', 'It can\'t play a single note yet. But it will. Someday. Probably.');
+    if (G.with('doron')) yield G.say('Doron', 'Strings are kind of the whole thing with a bass, Nate.');
+    if (G.with('lily')) yield G.say('Lily', 'It\'s very pretty for something that doesn\'t make any noise.');
   };
 
   S.homeFlag = function* () {
@@ -3276,7 +3271,7 @@
     { name: 'El Toro Loco: Romulus\'s sloth', map: 'toroLoco', at: [11, 8, 'up'], flags: { romHide: 8, romToGolf: true, slothQuest: 1 } },
     { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { slothQuest: 4, ladyMet: true, bassGiven: true, romGap: true }, items: { abeBass: true, yellowCable: true, sloth: true } },
     { name: 'Abe joined: his reach', map: 'condo', at: [16, 13, 'right'], flags: { romulusBeaten: true }, party: ['abe'], follower: 'abe' },
-    { name: 'Jamming with Abe (condo office)', map: 'condoUp', at: [23, 17, 'right'], flags: { plantQuest: true, plantsDone: true, gardenOpen: true } },
+    { name: 'Jamming with Abe (condo office)', map: 'condoUp', at: [22, 17, 'down'], flags: { plantQuest: true, plantsDone: true, gardenOpen: true } },
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'], flags: { healerTalk: true, chkdArrived: true } },
     { name: 'CHKD: MECHA-BABY (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
     { name: 'CHKD: Hannah joined (to the roof)', map: 'chkdNicu', at: [7, 8, 'down'], flags: { mobileBeaten: true, kitGot: true }, party: ['hannah'], follower: 'hannah', items: { firstAid: 3 }, maxHp: 12 },
@@ -6527,18 +6522,38 @@
   // game: notes slide down the Jazzmaster's fretboard on four strings (← ↓ ↑ →), and Nate hits them
   // on the beat while Abe plays bass and the drums keep time. Three songs, each one faster (finish
   // one to unlock the next); get through all three and Abe lends Nate his Jazzmaster. Instruments
-  // are collectables (COLLECTABLES > Instruments), for recording music later. More instruments
-  // will come the same way.
-  // State: s.jams ({ song id: best stars }), s.instruments ({ id: true }). Flags: jamTease, jamMet.
+  // are collectables (COLLECTABLES > Instruments, where Z takes a closer look), for recording music
+  // later. Nate's half-finished bass, from Dad's workbench, is one too. More will come.
+  // An instrument: blurb (a line or two for the card), about (paragraphs for the closer look),
+  // how (the hint before it's found), chord (what it plays when you look; none = no strings).
+  // State: s.jams ({ song id: best stars }), s.instruments ({ id: true }; the bass is s.items.bass).
+  // Flags: jamTease, jamMet.
   G.condoDone = () => { const f = flags(); return !!(f.romulusBeaten && f.plantsDone && f.gardenOpen); };
   G.INSTRUMENTS = [
     {
+      id: 'bass', name: 'Half-Finished Bass', kind: 'Electric bass (some assembly required)', art: () => G.spr.natesBass,
+      has: () => !!G.state.items.bass,
+      blurb: 'Nate\'s own build. It looks like a bass. It does not sound like one. Yet.',
+      about: [
+        'Nate\'s own build, on Dad\'s workbench in the garage: a walnut body and a maple neck, with the frets already in.',
+        'That\'s as far as it got: no strings, no finish, not one note. Someday it\'ll play. Until then, it\'s the quietest instrument in the family.',
+      ],
+      how: 'Nate left something half done on Dad\'s workbench, in the garage at home.',
+    },
+    {
       id: 'jazzmaster', name: 'Abe\'s Jazzmaster', kind: 'Electric guitar', art: () => G.spr.jazzmaster,
-      about: ['1959 body. 1962 neck. 1959 electronics.', 'Restored by Dave Petillo.', 'Before Abe, it belonged to Al Alcorn: the man who invented Pong.'],
+      chord: [40, 47, 52, 56, 59, 64],
+      blurb: 'A vintage Fender with a story for every scratch. On loan from Abe. Very carefully.',
+      about: [
+        'Abe\'s pride and joy. The body and the wiring are from 1959, the neck is from 1962, and Dave Petillo brought all of it back to life.',
+        'The story goes that before Abe, it was Al Alcorn\'s: the engineer who built Pong. A video game legend\'s guitar, in a video game.',
+        'Abe would like you to stop touching it now.',
+      ],
+      how: 'Jam with Abe at the condo to earn it.',
     },
   ];
   const instState = () => (G.state.instruments = G.state.instruments || {});
-  G.instrumentHas = (id) => !!instState()[id];
+  G.instrumentHas = (id) => { const it = G.INSTRUMENTS.find((i) => i.id === id); return it && it.has ? it.has() : !!instState()[id]; };
   G.instrumentsCount = () => G.INSTRUMENTS.filter((it) => G.instrumentHas(it.id)).length;
   // the Jazzmaster, small enough to hold over Nate's head
   let jazzSmallC = null;
@@ -6550,9 +6565,9 @@
   };
   // what Abe talks about while they play
   const JAZZ_TALK = [
-    'This is my Jazzmaster. 1959 body. 1962 neck. 1959 electronics.',
-    'Dave Petillo restored it. The man is a legend.',
-    'Before me, it belonged to Al Alcorn. He invented PONG, Nate. Pong.',
+    'The body on this thing is from 1959. The neck showed up in 1962. They get along great.',
+    'Dave Petillo brought it back to life. The man is a legend.',
+    'Before me, it was Al Alcorn\'s. He built PONG, Nate. The paddle game. Pong!',
     'Fender made the Jazzmaster for jazz players. Then the surf bands got it.',
     'The waist is crooked on purpose. An offset body. It sits better on your leg.',
     'The tremolo floats. Don\'t yank it. Just think about it and it wobbles.',
@@ -6812,7 +6827,7 @@
       f.jamMet = true;
       yield G.say('Abe', 'Romulus is home. Anette has her garden. It\'s finally quiet. Let\'s play.');
       yield G.say(null, 'Abe opens a tweed case like it\'s a museum exhibit. Inside: a sparkly plum guitar with a tortoiseshell pickguard.');
-      yield G.say('Abe', 'My Jazzmaster. 1959 body. 1962 neck. 1959 electronics. Carefully. CAREFULLY.');
+      yield G.say('Abe', 'My Jazzmaster. It\'s been making noise since 1959. Hold it like a baby bird. Carefully. CAREFULLY.');
       yield G.say('Abe', 'I\'ll play bass. You follow me. Three songs. Get through all three and... we\'ll talk.');
     }
     for (;;) {
@@ -10068,9 +10083,9 @@
       // From the user's photos, tidied up (no suitcases, clothes or clutter): the white desk with two monitors and a
       // gray office chair between the bath and closet doors, a black floor lamp, the spare bed with its iron headboard
       // against the left wall and a wood chest at its foot, the white cube shelf (books, records, Catan, speakers; a
-      // printer, record player and lamp on top) and three guitars and an amp in the corner, two framed vintage guitar
-      // ads and the WILCO poster on the wall (keep x 16, y 11 clear for the door from the loft, and x 18 and x 23 at
-      // y 11 for the bath and closet doors).
+      // printer, record player and lamp on top), Abe's little amp and three guitars in the corner, two framed vintage
+      // guitar ads and the WILCO poster on the wall (keep x 16, y 11 clear for the door from the loft, x 18 and x 23 at
+      // y 11 for the bath and closet doors, and x 22-23, y 17 so Nate can reach the amp to jam).
       F.hang(sp.atticHatch, 25, 10, 1, look('A little attic hatch. Whatever is up there can stay up there.'), 8);
       spot(18, 19, 2, 1, look('A double window, right over the front door.'));
       F.hang(sp.guitarAdPrints, 22, 10, 1, look('Two framed vintage guitar ads: old-timey paintings, with speech bubbles about guitars.'), 2);
@@ -10080,9 +10095,9 @@
       F.stand(sp.officeChair, 20, 12, 1, look('A gray office chair. It spins. Nate spins it.'));
       F.stand(sp.guestBed, 16, 14, 3, look('The spare bed: a black iron headboard and a white comforter with gray vines. Made, for once.'), { ht: 2 });
       F.stand(sp.woodChest, 19, 14, 1, look('A dark wood chest at the foot of the bed.'), { ht: 2 });
-      F.stand(sp.cubeShelf, 22, 18, 2, look('A white cube shelf: books, a whole row of records, two Catan boxes and little speakers, with a printer, a record player and a lamp on top.'));
-      F.stand(sp.guitarTrio, 24, 17, 2, look('Three more of Abe\'s guitars, leaning in the corner. How many guitars does one man need? More. The answer is always more.'));
-      F.stand(sp.vibroAmp, 24, 18, 2, () => S.abeAmp());
+      F.stand(sp.cubeShelf, 20, 18, 2, look('A white cube shelf: books, a whole row of records, two Catan boxes and little speakers, with a printer, a record player and a lamp on top.'));
+      F.stand(sp.guitarTrio, 24, 18, 2, look('Three more of Abe\'s guitars, leaning in the corner. How many guitars does one man need? More. The answer is always more.'));
+      F.stand(sp.vibroAmp, 22, 18, 2, () => S.abeAmp());
       // ---- the upstairs bath (x 16-19, y 3-7): tub with sliding glass doors, vanity, toilet
       // FURNITURE (photos pending): towels, a bath mat, decor.
       F.stand(sp.tubGlass, 16, 3, 2, look('A bathtub behind sliding glass doors.'), { ht: 2 });
@@ -10539,7 +10554,7 @@
       yield G.say(L, 'Oh, I\'d give him right back. Only I\'ve got a problem.');
       yield G.say(L, 'It\'s open mic night in the cantina, and I\'m on tonight. And my bass is busted. The neck snapped clean off.');
       yield G.say(L, 'Find me a bass, and a cable to plug it in with, and the sloth\'s all yours. Deal?');
-      if (G.itemHas('bass')) {
+      if (G.instrumentHas('bass')) {
         yield G.say('Nate', 'I have a bass!');
         yield G.say(null, 'Nate holds up his half-finished bass.');
         yield G.say(L, '...It\'s got no strings, honey.');

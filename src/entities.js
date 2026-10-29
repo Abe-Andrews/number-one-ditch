@@ -130,14 +130,6 @@
         return;
       }
 
-      // the half-finished bass: a big, slow, wide arc that hits twice as hard
-      if (this.state === 'bass') {
-        this.t++;
-        if (this.t >= 12 && this.t <= 26) this.swingHits(w, this.bassRect(), 2);
-        if (this.t >= 38) this.state = 'walk';
-        return;
-      }
-
       // puffing Dad's pipe: Nate stands still, the world keeps going
       if (this.state === 'pipe') { G.pipe.update(); return; }
 
@@ -264,30 +256,12 @@
       }
     }
 
-    startBass() {
-      if (this.state !== 'walk') return;
-      this.state = 'bass';
-      this.t = 0;
-      this.hitSet.clear();
-      G.audio.sfx('bass');
-    }
-
-    bassRect() {
-      const { x, y } = this;
-      switch (this.dir) {
-        case 'right': return [x + 2, y - 32, x + 32, y + 12];
-        case 'left': return [x - 32, y - 32, x - 2, y + 12];
-        case 'up': return [x - 20, y - 44, x + 20, y - 6];
-        default: return [x - 20, y - 8, x + 20, y + 24];
-      }
-    }
-
-    swingHits(w, r = this.swingRect(), dmg = 1) {
+    swingHits(w, r = this.swingRect()) {
       for (const e of w.ents) {
         if (e.dead || this.hitSet.has(e)) continue;
         if (e.enemy && G.overlap(r, e.hurtBox())) {
           this.hitSet.add(e);
-          e.hit(dmg, this.x, this.y);
+          e.hit(1, this.x, this.y);
         } else if (e.onHammer && G.overlap(r, e.box())) {
           this.hitSet.add(e);
           e.onHammer(this);
@@ -375,9 +349,8 @@
       else img = S[this.dir][this.state === 'walk' ? walkFrame(this.anim, this.moving) : 0];
       // (z: up in the air, e.g. Abe boosting Nate over a hedge)
       const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2 - (this.z || 0)) - cy;
-      const swinging = this.state === 'swing', bassing = this.state === 'bass';
+      const swinging = this.state === 'swing';
       if (swinging && this.dir === 'up') this.drawHammer(ctx, cx, cy);
-      if (bassing && this.dir === 'up') this.drawBass(ctx, cx, cy);
       const charged = this.state === 'charge' && this.t >= NO_FULL && (G.tick >> 2) & 1;
       ctx.drawImage((this.state === 'hurt' && (this.t >> 1) & 1) || charged ? G.art.flash(img) : img, sx, sy);
       // (Doron, in the finale, with a rock over his head)
@@ -390,7 +363,6 @@
         ctx.fillRect(bx, by, Math.round(16 * k), 2);
       }
       if (swinging && this.dir !== 'up') this.drawHammer(ctx, cx, cy);
-      if (bassing && this.dir !== 'up') this.drawBass(ctx, cx, cy);
       if (this.pose === 'hold' && this.holdIcon) {
         const ic = this.holdIcon, ix = Math.round(this.x - ic.width / 2) - cx, iy = sy - ic.height - 1;
         // a slow burst of light behind whatever Nate just found
@@ -452,21 +424,6 @@
         const pos = { right: [11, 7], left: [-3, 7], down: [8, 8] }[this.dir];
         ctx.drawImage(G.pipeSmall(this.dir === 'left'), sx + pos[0], sy + pos[1]);
       }
-    }
-
-    // Held by the neck, the bass sweeps through a wide arc in front of Nate.
-    drawBass(ctx, cx, cy) {
-      const img = G.spr.bassSwing;
-      const base = { right: 0, down: Math.PI / 2, left: Math.PI, up: -Math.PI / 2 }[this.dir];
-      // a slow wind-up, then the big sweep
-      const k = Math.max(0, Math.min(1, (this.t - 8) / 18)), flip = this.dir === 'left' || this.dir === 'down' ? -1 : 1;
-      const a = base + flip * (-1.2 + k * 2.4);
-      const hand = { right: [4, -9], left: [-4, -9], down: [2, -7], up: [-2, -12] }[this.dir];
-      ctx.save();
-      ctx.translate(Math.round(this.x + hand[0]) - cx, Math.round(this.y + hand[1]) - cy);
-      ctx.rotate(a + Math.PI / 2);
-      ctx.drawImage(img, -7, -32);
-      ctx.restore();
     }
 
     drawHammer(ctx, cx, cy) {
@@ -4138,7 +4095,7 @@
     }
     onHammer(p) {
       if (this.dead) return;
-      this.hits += p.state === 'bass' ? 2 : 1;
+      this.hits++;
       this.shakeT = 8;
       G.audio.sfx('clank');
       const w = this.world;

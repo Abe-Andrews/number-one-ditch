@@ -233,7 +233,7 @@
     { id: 'photos', name: 'Photos', icon: 'photo', count: () => [G.photosFound(), G.PHOTOS.length], blurb: 'Old family photos, hidden all over. Some of them Mom would rather nobody saw.' },
     { id: 'pipes', name: 'Dad\'s Pipes', icon: 'pipe', count: () => [G.pipesMadeCount(), G.PIPES.length], blurb: 'Pipes you turned on Dad\'s lathe and finished with him in the workshop. Pick one and Dad\'s Pipe looks just like it.' },
     { id: 'tins', name: 'Tobacco', icon: 'tin', count: () => [G.tinsMadeCount(), G.TOBACCOS.length], blurb: 'The tobaccos from Dad\'s pipe journal, blended with him in the workshop. Pack one in Dad\'s Pipe and the smoke comes out its color.' },
-    { id: 'instruments', name: 'Instruments', icon: 'guitar', count: () => [G.instrumentsCount(), G.INSTRUMENTS.length], blurb: 'Instruments you\'ve earned jamming with Abe at the condo. More to come.' },
+    { id: 'instruments', name: 'Instruments', icon: 'guitar', count: () => [G.instrumentsCount(), G.INSTRUMENTS.length], blurb: 'Nate\'s instruments: the ones he builds, and the ones he earns jamming with Abe. More to come.' },
   ];
   // the pipes page also has the one Dad gave Nate, first
   const benchList = (coll) => (coll === 'pipes' ? [{ id: 'dad', dad: true, name: 'Dad\'s Pipe', kind: 'The one Dad gave you. Hand-carved in his workshop.' }].concat(G.PIPES) : G.TOBACCOS);
@@ -446,6 +446,32 @@
     if (ready) photoPages.set(ph.id, c);
     return c;
   };
+  // An instrument, full screen: lying across the top at twice the size, its name, and its story.
+  const instPages = new Map();
+  G.instrumentPage = (it) => {
+    if (instPages.has(it.id)) return instPages.get(it.id);
+    const c = G.canvas(G.W, G.H), x = c.getContext('2d'), img = it.art(), tw = G.W - 16;
+    x.fillStyle = '#1c1424'; x.fillRect(0, 0, G.W, G.H);
+    // a felt-lined case for it to lie in
+    const cw = img.height * 2 + 10, ch = img.width * 2 + 6, cx = Math.round((G.W - cw) / 2);
+    x.fillStyle = '#0c0814'; x.fillRect(cx + 2, 5, cw, ch);
+    x.fillStyle = '#4a2a3a'; x.fillRect(cx, 3, cw, ch);
+    x.fillStyle = '#5c3448'; x.fillRect(cx + 1, 4, cw - 2, 1);
+    x.save(); x.translate(cx + 5, 6 + img.width * 2); x.rotate(-Math.PI / 2); x.drawImage(img, 0, 0, img.width * 2, img.height * 2); x.restore();
+    let y = ch + 9;
+    TXT(x, it.name, 8, y, C.gold);
+    // (the kind goes at the right, or under the name when they don't both fit)
+    if (F().width(it.name) + 10 + F().width(it.kind) <= tw) TXT(x, it.kind, G.W - 8 - F().width(it.kind), y, C.cyan);
+    else TXT(x, it.kind, 8, (y += 10), C.cyan);
+    x.fillStyle = '#3e3460'; x.fillRect(8, y + 10, tw, 1);
+    y += 14;
+    for (const para of it.about) {
+      for (const l of F().wrap(para, tw)) { if (y > 137) break; TXT(x, l, 8, y, C.soft); y += 9; }
+      y += 2;
+    }
+    instPages.set(it.id, c);
+    return c;
+  };
   // a tiny framed version, for the "you got it" fanfare
   G.photoIcon = (ph) => {
     const c = G.canvas(12, 15), x = c.getContext('2d');
@@ -490,6 +516,7 @@
       this.admList = null;
       this.coll = null;
       this.photoView = null;
+      this.instView = null;
       this.sel = 0;
       this.scroll = 0;
       G.audio.sfx('menu');
@@ -514,6 +541,7 @@
       const inp = G.input;
       this.openT++;
       if (this.msgT > 0) this.msgT--;
+      if (this.strum && this.strum.length) G.audio.inst.guitar(this.strum.shift(), 1.6, 0.08);
       // "overwrite File N?" on the SAVE tab
       if (this.confirm) {
         if (inp.hit('a')) { inp.eat('a'); this.saveTo(this.confirm); }
@@ -561,9 +589,9 @@
         if (inp.hit('down') && row < ROWS - 1) this.move(COLS, COLS * ROWS);
         if (inp.hit('up')) { if (row > 0) this.move(-COLS, COLS * ROWS); else { this.onTabs = true; G.audio.sfx('menu'); } }
         if (inp.hit('a')) return this.activate();
-      } else if (this.tab === COLL_TAB && this.photoView) {
-        // looking at a photo: Z or X puts it away
-        if (inp.hit('a') || inp.hit('b')) { inp.eat('a'); inp.eat('b'); this.photoView = null; G.audio.sfx('cancel'); }
+      } else if (this.tab === COLL_TAB && (this.photoView || this.instView)) {
+        // looking at a photo or an instrument: Z or X puts it away
+        if (inp.hit('a') || inp.hit('b')) { inp.eat('a'); inp.eat('b'); this.photoView = this.instView = null; this.strum = null; G.audio.sfx('cancel'); }
       } else if (this.tab === COLL_TAB && this.coll && inp.hit('b')) {
         inp.eat('b');
         this.sel = COLLECTIONS.findIndex((c) => c.id === this.coll);
@@ -591,7 +619,12 @@
         if (inp.hit('right') && col < 2) this.move(1, n);
         if (inp.hit('down') && this.sel + 3 < n) this.move(3, n);
         if (inp.hit('up')) { if (row > 0) this.move(-3, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
-        if (inp.hit('a')) { inp.eat('a'); G.audio.sfx('bump'); }
+        if (inp.hit('a')) {
+          inp.eat('a');
+          // a closer look (and a strum, if it has strings)
+          const it = G.INSTRUMENTS[this.sel];
+          if (it && G.instrumentHas(it.id)) { this.instView = it; G.audio.sfx('select'); this.strum = it.chord ? it.chord.slice() : null; } else G.audio.sfx('bump');
+        }
       } else if (this.tab === COLL_TAB && (this.coll === 'pipes' || this.coll === 'tins')) {
         // DAD'S PIPES / TOBACCO: Z puts one to use (Z on the tobacco that's in empties the pipe)
         const list = benchList(this.coll), n = list.length, col = this.sel % 3, row = Math.floor(this.sel / 3);
@@ -707,12 +740,12 @@
       const admin = G.state.admin, act = {
         [QUEST_TAB]: QMODES[(this.qmode + 1) % QMODES.length] === 'ACTIVE' ? 'quests' : QMODES[(this.qmode + 1) % QMODES.length] === '100%' ? '100% list' : 'rules',
         [MAP_TAB]: null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
-        [COLL_TAB]: this.photoView ? 'put away' : !this.coll ? 'open' : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
+        [COLL_TAB]: this.photoView || this.instView ? 'put away' : !this.coll ? 'open' : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
         [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here',
       }[this.tab];
       const pairs = act ? [['Z', act]] : [['↑↓←→', 'look around']];
-      if (this.tab === COLL_TAB && this.coll && !this.photoView) pairs.push(['X', 'back']);
-      else if (!admin && !(this.tab === COLL_TAB && this.photoView)) pairs.push(['X', 'quick save']);
+      if (this.tab === COLL_TAB && this.coll && !this.photoView && !this.instView) pairs.push(['X', 'back']);
+      else if (!admin && !(this.tab === COLL_TAB && (this.photoView || this.instView))) pairs.push(['X', 'quick save']);
       else if (this.tab === SAVE_TAB && this.admList) pairs.push(['X', 'back']);
       pairs.push(['Q/E', 'pages'], ['ENTER', 'close']);
       let x = 5;
@@ -1067,6 +1100,7 @@
       else if (this.coll === 'instruments') this.drawInstruments(ctx);
       else this.drawCollectList(ctx);
       if (this.photoView) ctx.drawImage(G.photoPage(this.photoView), 0, 0);
+      if (this.instView) ctx.drawImage(G.instrumentPage(this.instView), 0, 0);
     }
     drawCollectList(ctx) {
       card(ctx, 5, 21, 112, 121, 'COLLECTABLES');
@@ -1124,7 +1158,7 @@
       TXT(ctx, it.id === cur ? (pipes ? '{g}Using this one' : '{g}In the pipe') : 'Z: ' + (pipes ? 'use it' : 'pack it'), 125, 128, C.dim);
     }
 
-    // ---- INSTRUMENTS (earned jamming with Abe): the guitar, and its story
+    // ---- INSTRUMENTS (built at home, earned jamming with Abe): the instrument, and a line about it (Z: a closer look)
     drawInstruments(ctx) {
       const list = G.INSTRUMENTS, n = G.instrumentsCount();
       card(ctx, 5, 21, 112, 121, 'INSTRUMENTS', C.gold, G.sayable(n) + '/' + G.sayable(list.length));
@@ -1138,18 +1172,18 @@
       const it = list[this.sel];
       card(ctx, 120, 21, 115, 121);
       if (!it) return;
-      // the guitar, lying across the top of the card
+      // the instrument, lying across the top of the card
       const img = it.art(), has = G.instrumentHas(it.id);
-      ctx.save(); ctx.translate(141, 28); ctx.rotate(-Math.PI / 2); ctx.drawImage(has ? img : silhouette(img), -img.width, 0); ctx.restore();
+      ctx.save(); ctx.translate(120 + Math.round((115 - img.height) / 2), 28 + Math.round((24 - img.width) / 2)); ctx.rotate(-Math.PI / 2); ctx.drawImage(has ? img : silhouette(img), -img.width, 0); ctx.restore();
       if (!has) {
         TXT(ctx, '???', 125, 56, C.cyan);
-        F().wrap('Jam with Abe at the condo to earn it.', 104).forEach((l, k) => TXT(ctx, l, 125, 67 + k * 9, C.dim));
+        F().wrap(it.how, 104).forEach((l, k) => TXT(ctx, l, 125, 67 + k * 9, C.dim));
         return;
       }
       TXT(ctx, fit(it.name, 106), 125, 56, C.cyan);
-      TXT(ctx, it.kind, 125, 66, C.dim);
-      let y = 78;
-      for (const line of it.about) for (const row of F().wrap(line, 104)) { if (y > 132) break; TXT(ctx, row, 125, y, C.soft); y += 9; }
+      F().wrap(it.kind, 104).slice(0, 2).forEach((l, k) => TXT(ctx, l, 125, 66 + k * 9, C.dim));
+      const top = 66 + Math.min(2, F().wrap(it.kind, 104).length) * 9 + 3;
+      F().wrap(it.blurb, 104).forEach((l, k) => { if (top + k * 9 <= 132) TXT(ctx, l, 125, top + k * 9, C.soft); });
     }
 
     // ---- PHOTOS: thumbnails on the left, the one you're on at the right

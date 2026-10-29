@@ -45,6 +45,8 @@
       // ...from before Ice JJ needed a booking, and before Grandma Rose wanted a funnel cake
       if (f.jjMet) f.jjSeen = true;
       if (s.rocksFound && s.rocksFound.eastonite) f.roseTraded = true;
+      // ...and from when the half-finished bass was a weapon on X (it's an instrument now)
+      if (s.xItem === 'bass') s.xItem = null;
       s.slot = n;
       return s;
     } catch (e) { return null; }
@@ -289,8 +291,6 @@
         w.burst(p.x, p.y - 14, ['#f86868', '#ffffff', '#f8a8c8'], 10, { speed: 1, up: 0.8, life: 22, size: 2 });
       } else if (s.xItem === 'pipe') {
         G.pipe.start();
-      } else if (s.xItem === 'bass') {
-        this.player.startBass();
       } else if (s.xItem === 'chicken') {
         // the chicken lays... fires... an egg (with a cooldown)
         if (this.eggCool > 0) { G.audio.sfx('bump'); return; }
