@@ -5481,7 +5481,7 @@
     stain: ['Pick the right jar with ↑↓ and Z. (Dad tells you which.)', 'Move the dauber with the arrows. HOLD Z to rub the stain on. Cover every bit before it dries.', 'Missed spots blink. Two-coat pipes: go over everything twice. On the harder pipes, too much puddles: keep moving.'],
     blend: ['Pick a jar with the arrows. Z adds a scoop. X puts the last one back.', 'A blend is four scoops. Dad tells you what goes in it.', 'With four in, he sniffs it and tells you how many are right.'],
     pack: ['The needle goes up and down. Press Z when it\'s inside the green box.', 'Three pinches: gently, then a little firmer, then firm.'],
-    fight: ['← → walk (tap twice to dash). ↑ jump. ↓ crouch: it ducks high punches. Z punch, X kick; ↓+Z a low jab, ↓+X a sweep.', 'In the air, Z or X plus a direction: nothing = spin kick, toward him = flying knee, away = back kick, ↑ = up swipe, ↓ = a stomp that SPIKES him.', 'Hold V to block (hold ↓ too for low kicks). Tap V as a hit lands to PARRY. C grabs: the ARMY SUPLEX. ↓ then → then Z: TAKEDOWN. Full FIGHT meter: C is GROUND AND POUND. Win two rounds.'],
+    fight: ['← → walk (tap twice to dash). ↑ jump. ↓ crouch: it ducks high punches. Z punch, X kick; ↓+Z a low jab, ↓+X a sweep.', 'In the air, Z or X plus a direction: nothing = spin kick, toward him = flying knee, away = back kick, ↑ = up swipe, ↓ = a stomp that SPIKES him.', 'Hold away from him (or hold V) to block; add ↓ for low kicks. Tap V as a hit lands to PARRY. C grabs: the ARMY SUPLEX. ↓ then → then Z: TAKEDOWN. Full FIGHT meter: C is GROUND AND POUND. Win two rounds.'],
     jam: ['Notes slide down the strings. Hit each one with its arrow (← ↓ ↑ →) right as it crosses the pickup at the bottom.', 'Two notes at once? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
   };
 
@@ -7393,6 +7393,21 @@
   // ---- the select screen: Doron on the left, whoever you're on on the right, and the faces along
   // the bottom (a silhouette until the one before is beaten; Nani's isn't there at all until Jon
   // Jones is beaten)
+  // Doron's moves, for the MOVES page on the select screen: [what, how]
+  const FIGHT_MOVES = [
+    ['MOVING', [
+      ['Walk', '← →'], ['Dash', 'tap ← or → twice'], ['Jump', '↑'], ['Crouch (ducks high punches)', '↓'],
+      ['Block', 'hold away, or hold V'], ['Block low kicks', '↓ + away (or ↓ + V)'], ['PARRY', 'tap V as a hit lands'],
+    ]],
+    ['ATTACKING', [
+      ['Punch / Kick', 'Z / X'], ['Low jab / Sweep', '↓+Z / ↓+X'], ['Combos', 'Z Z X, Z Z Z, ↓Z X'],
+      ['ARMY SUPLEX (beats a block)', 'C up close'], ['TAKEDOWN', '↓ then → then Z'], ['GROUND AND POUND', 'full FIGHT meter + C'],
+    ]],
+    ['IN THE AIR (Z or X)', [
+      ['Spin kick (hits both sides)', 'no direction'], ['Flying knee', 'toward him'], ['Back kick', 'away from him'],
+      ['Up swipe', '↑'], ['Stomp (SPIKES him down)', '↓'],
+    ]],
+  ];
   function fightSelectCmd() {
     const FS = fightState();
     return {
@@ -7404,6 +7419,13 @@
       update() {
         const inp = G.input, L = fightersShown();
         this.t++;
+        // the moves list: ← → turn the page, any button closes it
+        if (this.moves != null) {
+          if (inp.hit('left') || inp.hit('right')) { this.moves = (this.moves + (inp.hit('right') ? 1 : FIGHT_MOVES.length - 1)) % FIGHT_MOVES.length; G.audio.sfx('menu'); }
+          else if (inp.hit('a') || inp.hit('b') || inp.hit('c')) { inp.eat('a'); inp.eat('b'); this.moves = null; G.audio.sfx('cancel'); }
+          return false;
+        }
+        if (inp.hit('c')) { this.moves = 0; G.audio.sfx('select'); return false; }
         if (inp.hit('left') && this.sel > 0) { this.sel--; G.audio.sfx('menu'); }
         if (inp.hit('right') && this.sel < L.length - 1) { this.sel++; G.audio.sfx('menu'); }
         if (inp.hit('a')) {
@@ -7421,7 +7443,9 @@
         ctx.fillStyle = '#1e1630';
         for (let k = -G.H; k < G.W; k += 16) for (let y = 0; y < G.H; y += 2) ctx.fillRect(k + y, y, 6, 2);
         FT().drawBig(ctx, 'FIGHT NIGHT', 6, 4, 2, '#f8d850', '#7a1a2a');
-        FT().draw(ctx, 'Z fight   X done', G.W - 6 - FT().width('Z fight   X done'), 7, '#9890a8', { shadow: '#000' });
+        FT().draw(ctx, 'Z fight   X done', G.W - 6 - FT().width('Z fight   X done'), 4, '#9890a8', { shadow: '#000' });
+        FT().draw(ctx, 'C moves', G.W - 6 - FT().width('C moves'), 13, '#f8d850', { shadow: '#000' });
+        if (this.moves != null) { this.drawMoves(ctx); return; }
         ctx.imageSmoothingEnabled = false;
         // Doron and the pick, in their walkout looks
         const F = L[this.sel], open = fightOpen(FIGHTERS.indexOf(F)), D = fighterPoses('doron').idle1, O = fighterPoses(F.id).walkout;
@@ -7449,6 +7473,20 @@
           if (!ok) FT().draw(ctx, '?', x + 13, yy + 10, '#9890a8');
           if (fightState()[G2.id]) FT().draw(ctx, '★', x + 22, yy + 1, '#f8d850', { shadow: '#000' });
         });
+      },
+      drawMoves(ctx) {
+        const [title, rows] = FIGHT_MOVES[this.moves];
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(6, 24, G.W - 12, 128);
+        ctx.fillStyle = '#3e3460'; ctx.fillRect(6, 24, G.W - 12, 1); ctx.fillRect(6, 151, G.W - 12, 1);
+        FT().draw(ctx, 'DORON\'S MOVES: ' + title, 12, 28, '#f8d850', { shadow: '#000' });
+        const pg = G.sayable(this.moves + 1) + '/' + G.sayable(FIGHT_MOVES.length) + '  ← →';
+        FT().draw(ctx, pg, G.W - 12 - FT().width(pg), 28, '#9890a8', { shadow: '#000' });
+        rows.forEach(([what, how], k) => {
+          const y = 42 + k * 13;
+          FT().draw(ctx, what, 12, y, '#f8f8f0', { shadow: '#000' });
+          FT().draw(ctx, how, G.W - 12 - FT().width(how), y, '#78e8f8', { shadow: '#000' });
+        });
+        FT().draw(ctx, 'Z, X or C: back', 12, 142, '#9890a8', { shadow: '#000' });
       },
     };
   }
@@ -7542,7 +7580,8 @@
         // ↓ then → (toward him), then Z
         const qcf = () => { const di = this.buf.findIndex(([k]) => k === 'd'); return di >= 0 && this.buf.slice(di + 1).some(([k]) => k === 'f'); };
         if (inp.hit('v')) this.parryAt = this.f;
-        this.guard = inp.down('v');
+        this.vGuard = inp.down('v');
+        this.guard = this.vGuard || inp.down(P.face > 0 ? 'left' : 'right');
         if (this.comboT > 0) this.comboT--;
         // in the air, Z or X with a direction: an aerial (one per jump)
         if (P.st === 'air' && !P.used && (inp.hit('a') || inp.hit('b'))) {
@@ -7567,7 +7606,7 @@
           return;
         }
         if (P.st === 'crouch') P.st = 'idle';
-        if (this.guard) { P.vx = 0; P.st = 'idle'; return; }
+        if (this.vGuard) { P.vx = 0; P.st = 'idle'; return; }
         if (inp.hit('a')) { this.begin(P, 'punch'); return; }
         if (inp.hit('b')) { this.begin(P, 'kick'); return; }
         const dir = (inp.down('right') ? 1 : 0) - (inp.down('left') ? 1 : 0);
@@ -7952,7 +7991,7 @@
           ctx.drawImage(img, -cx, -h / 2, w, h);
         } else {
           ctx.translate(Math.round(a.x), Math.round(FLOOR - a.y - lift));
-          const spun = a.st === 'atk' && m && m.spin && a.t < m.start && a.t > 2;
+          const spun = !!(a.st === 'atk' && m && m.spin && a.t < m.start && a.t > 2);
           if ((a.face < 0) !== spun) ctx.scale(-1, 1);
           if (rot) ctx.rotate(rot);
           ctx.drawImage(img, -cx, -h + FIGHT_SC, w, h);
@@ -7994,9 +8033,11 @@
         // the FIGHT meter, along the bottom
         const full = this.meter >= 100;
         FT().draw(ctx, 'FIGHT', 7, 147, full && (this.t >> 3) & 1 ? '#f8d850' : '#c8c0d8', { shadow: '#000' });
-        ctx.fillStyle = '#1c1424'; ctx.fillRect(36, 148, 72, 7);
-        ctx.fillStyle = full ? ((this.t >> 2) & 1 ? '#f8d850' : '#f86858') : '#f8a040'; ctx.fillRect(37, 149, Math.round(70 * this.meter / 100), 5);
-        if (full) FT().draw(ctx, 'C: GROUND AND POUND', 112, 147, (this.t >> 3) & 1 ? '#f8d850' : '#f8f8f0', { shadow: '#000' });
+        ctx.fillStyle = '#1c1424'; ctx.fillRect(36, 148, 46, 7);
+        ctx.fillStyle = full ? ((this.t >> 2) & 1 ? '#f8d850' : '#f86858') : '#f8a040'; ctx.fillRect(37, 149, Math.round(44 * this.meter / 100), 5);
+        // (and what the buttons do, right there; full, C is the super)
+        const keys = full ? 'C: GROUND AND POUND!' : 'Z punch X kick C grab V block';
+        FT().draw(ctx, keys, G.W - 6 - FT().width(keys), 147, full ? ((this.t >> 3) & 1 ? '#f8d850' : '#f8f8f0') : '#9890a8', { shadow: '#000' });
         // pops: PARRY! COUNTER! COMBO! (they float up)
         this.pops.forEach((pp, k) => {
           const w = FT().width(pp.text);
@@ -8052,7 +8093,7 @@
       f.fightMet = true;
       yield G.say(null, 'Inside: lockers, a long bench, wrestlers taping up their wrists... and some VERY familiar faces.');
       yield G.say('Doron', 'Nate. NATE. Those are UFC fighters. In the Micro Mayhem locker room. In EASTON.');
-      yield G.say('Doron', 'Rampage. McGregor. KHABIB. Mighty Mouse. Jon Jones. I\'ve watched every one of their fights. I\'ve been training for this my whole life.');
+      yield G.say('Doron', 'I\'ve watched every one of their fights. I\'ve been training for this my whole life.');
       yield G.say('Nate', 'Training how?');
       yield G.say('Doron', 'Mostly by watching them. And the Army. Hold my hat.');
       yield G.say('Nate', 'You\'re not wearing a hat.');
