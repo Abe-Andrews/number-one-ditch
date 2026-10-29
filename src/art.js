@@ -2213,6 +2213,48 @@
     return p.canvas();
   }
 
+  // The Expo Hall locker room (Doron's fight night): a bank of three gray-blue lockers, a long
+  // wooden bench, a red heavy bag on a chain, and the fight card pinned to the wall.
+  function lockerBank() {
+    const p = new Pix(48, 30);
+    for (let k = 0; k < 3; k++) {
+      const x = k * 16;
+      p.rect(x, 0, 16, 30, '#5a6a88'); p.hline(x, x + 15, 0, '#7a8aa8'); p.vline(x + 15, 0, 29, '#3a4860');
+      for (let v = 0; v < 3; v++) p.hline(x + 4, x + 11, 4 + v * 3, '#3a4860');
+      p.rect(x + 12, 15, 2, 4, '#c8ccd4');
+      p.hline(x, x + 15, 29, '#2a3448');
+    }
+    p.set(20, 22, '#c03040'); p.set(21, 22, '#c03040');
+    p.outline();
+    return p.canvas();
+  }
+  function lockerBench() {
+    const p = new Pix(32, 10);
+    p.rect(0, 0, 32, 4, '#a07448'); p.hline(0, 31, 0, '#c89460'); p.hline(0, 31, 3, '#7a5430');
+    for (const x of [3, 27]) p.rect(x, 4, 2, 6, '#6a6e78');
+    p.outline();
+    return p.canvas();
+  }
+  function heavyBag() {
+    const p = new Pix(12, 30);
+    p.vline(6, 0, 5, '#8a8e98'); p.vline(5, 1, 4, '#c8ccd4');
+    p.rect(1, 6, 10, 22, '#b02838'); p.vline(1, 6, 27, '#d84858'); p.vline(10, 6, 27, '#801828');
+    p.hline(1, 10, 6, '#1c1c22'); p.hline(1, 10, 27, '#1c1c22'); p.hline(2, 9, 16, '#801828');
+    p.outline();
+    return p.canvas();
+  }
+  function fightCard() {
+    const p = new Pix(22, 18);
+    p.rect(0, 0, 22, 18, '#c8a070'); p.hline(0, 21, 0, '#e0b888'); p.hline(0, 21, 17, '#8a6a40');
+    p.rect(3, 2, 16, 14, '#a01828');
+    p.hline(5, 16, 4, '#f8d850'); p.hline(6, 15, 6, '#f8d850');
+    // a fist
+    p.rect(8, 8, 6, 5, '#f8f0e8'); p.vline(8, 9, 12, '#d8c8b8'); p.hline(9, 13, 10, '#d8c8b8');
+    p.set(4, 14, '#f8f0e8'); p.set(17, 14, '#f8f0e8'); p.set(11, 2, '#f0f0f0');
+    p.outline();
+    return p.canvas();
+  }
+
   // The booby-trapped Christmas present: red paper, gold ribbon, a bow on top.
   function gift(lit) {
     const p = new Pix(14, 14);
@@ -8830,7 +8872,7 @@
     S.trash = trashCan();
     S.ring = ring();
     S.concession = concession();
-    S.lockerDoor = lockerDoor();
+    S.lockerDoor = lockerDoor(); S.lockerBank = lockerBank(); S.lockerBench = lockerBench(); S.heavyBag = heavyBag(); S.fightCard = fightCard();
     S.gift = gift(false);
     S.giftLit = gift(true);
     S.ringLogo = ringLogo();

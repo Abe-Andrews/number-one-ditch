@@ -147,7 +147,7 @@
     rampage: { skin: '#5a3626', hair: '#141014', hairStyle: 'buzz', beard: '#1c1414', beardLow: true, shirt: '#5a3626', sleeves: 0, pants: '#1c1c22', belt: '#c83030', shorts: true, shoes: '#5a3626', gloves: '#1c1c22', wide: true, torso: 7, legs: 3, walkout: 'chain' },
     conor: { skin: '#f2c8aa', hair: '#3a2418', hairStyle: 'swoop', beard: '#b0582c', shirt: '#f2c8aa', tattoo: '#3a4a5a', sleeves: 0, pants: '#2a8040', belt: '#f0f0f0', shorts: true, shoes: '#f2c8aa', gloves: '#1c1c22', wide: true, torso: 6, legs: 3 },
     khabib: { skin: '#e8c0a0', hair: '#1c1614', hairStyle: 'buzz', beard: '#1c1614', shirt: '#e8c0a0', sleeves: 0, pants: '#1c1c22', shorts: true, shoes: '#e8c0a0', gloves: '#1c1c22', wide: true, torso: 6, legs: 3, walkout: 'papakha' },
-    mouse: { skin: '#6a4430', hair: '#141014', hairStyle: 'buzz', shirt: '#6a4430', sleeves: 0, pants: '#e8e8f0', belt: '#d83038', shorts: true, shoes: '#6a4430', gloves: '#1c1c22', torso: 5, legs: 3 },
+    mouse: { skin: '#6a4430', hair: '#141014', hairStyle: 'bald', shirt: '#6a4430', sleeves: 0, pants: '#e8e8f0', belt: '#d83038', shorts: true, shoes: '#6a4430', gloves: '#1c1c22', torso: 5, legs: 3 },
     jones: { skin: '#5e3a28', hair: '#141014', hairStyle: 'buzz', beard: '#1c1414', beardLow: true, shirt: '#5e3a28', sleeves: 0, pants: '#1c1c22', belt: '#f0f0f0', shorts: true, shoes: '#5e3a28', gloves: '#1c1c22', torso: 7, legs: 5, reach: true },
     // Luchador-style wrestlers: masks, singlets, boots.
     wrestler_red: { mask: '#d83038', maskTrim: '#f8d040', skin: '#e8b08a', shirt: '#d83038', pants: '#d83038', neckline: true, sleeves: 0, shorts: true, boots: true, shoes: '#f0f0f0', wide: true, torso: 4, legs: 3 },
@@ -3436,7 +3436,7 @@
     { name: 'Hat back: fair road open', map: 'campus', at: [34, 12, 'right'], flags: { boulderSeen: true, boulderHitOnce: true, capQuest: true, capDone: true, capHeart: true, sixIntro: true }, items: { cap: true }, maxHp: 8 },
     { name: 'Easton Fairgrounds', map: 'fair', at: [1, 12, 'right'], flags: { doronChat: true } },
     { name: 'Main event: El EEENGLISH', map: 'arena', at: [11, 15, 'up'], flags: { doronDeal: true, ticketQuest: true }, items: { package: 5, tickets: 4 } },
-    { name: 'Doron\'s fight night (Expo Hall locker room)', map: 'arena', at: [11, 2, 'up'], flags: { mainEvent: true, dadBeaten: true, signal_peace: true }, items: { pipe: true, tickets: 0 }, party: ['doron'], follower: 'doron' },
+    { name: 'Doron\'s fight night (Expo Hall locker room)', map: 'locker', at: [7, 2, 'up'], flags: { mainEvent: true, dadBeaten: true, signal_peace: true }, items: { pipe: true, tickets: 0 }, party: ['doron'], follower: 'doron' },
     { name: 'Boulder: Doron\'s suplex', map: 'campus', at: [20, 25, 'down'], flags: { mainEvent: true, dadBeaten: true, signal_peace: true }, items: { pipe: true, tickets: 0 }, party: ['doron'], follower: 'doron' },
     { name: 'Arrive home', map: 'home', at: [1, 53, 'right'], flags: { boulderGone: true } },
     { name: 'Badlands Chugs (kitchen)', map: 'homeDown', at: [20, 15, 'up'], flags: { homeArrived: true, mikeyMet: true } },
@@ -8076,29 +8076,45 @@
 
 
   // The locker room door at the back of the Expo Hall: before El EEENGLISH, wrestlers only. After,
-  // Doron's fight night.
+  // it's open: walk in (G.MAPS.locker), and the fight card on the wall is Doron's fight night.
   S.lockerRoom = function* () {
-    const f = flags(), s = G.state;
-    if (!f.dadBeaten) {
+    if (!flags().dadBeaten) {
       yield G.say(null, 'LOCKER ROOM. {r}Wrestlers only.{/}');
       yield G.say(null, 'You can hear someone inside doing very loud push-ups.');
       return;
     }
+    G.audio.sfx('door');
+    G.play.warp('locker', 8, 8, 'up');
+  };
+  // walking in the first time (Doron's lines, if he's along; none of the fighters by name, so
+  // nothing's spoiled)
+  S.lockerEnter = function* () {
+    const f = flags();
+    if (f.fightMet) return;
+    yield G.wait(20);
     if (!(yield* S.callIn('doron', 'Is that... a LOCKER ROOM?'))) {
-      yield G.say(null, 'LOCKER ROOM. The door\'s propped open now. It sounds like a fight in there.');
-      yield G.say('Nate', 'Doron would LOVE this.');
+      yield G.say('Nate', 'A real wrestlers\' locker room. Doron would LOVE this.');
       return;
     }
-    if (!f.fightMet) {
-      f.fightMet = true;
-      yield G.say(null, 'Inside: lockers, a long bench, wrestlers taping up their wrists... and some VERY familiar faces.');
-      yield G.say('Doron', 'Nate. NATE. Those are UFC fighters. In the Micro Mayhem locker room. In EASTON.');
-      yield G.say('Doron', 'I\'ve watched every one of their fights. I\'ve been training for this my whole life.');
-      yield G.say('Nate', 'Training how?');
-      yield G.say('Doron', 'Mostly by watching them. And the Army. Hold my hat.');
-      yield G.say('Nate', 'You\'re not wearing a hat.');
-      yield G.say('Doron', 'Then hold the water bottle. You\'re in my corner.');
-    } else yield G.say('Doron', 'Back for more? Let\'s GO.');
+    f.fightMet = true;
+    yield G.say(null, 'Lockers, a long bench, a heavy bag, wrestlers taping up their wrists... and some VERY familiar faces warming up in the back.');
+    yield G.say('Doron', 'Nate. NATE. Those are UFC fighters. In the Micro Mayhem locker room. In EASTON.');
+    yield G.say('Doron', 'I\'ve watched every one of their fights. I\'ve been training for this my whole life.');
+    yield G.say('Nate', 'Training how?');
+    yield G.say('Doron', 'Mostly by watching them. And the Army. Hold my hat.');
+    yield G.say('Nate', 'You\'re not wearing a hat.');
+    yield G.say('Doron', 'Then hold the water bottle. You\'re in my corner. The fight card\'s on the wall.');
+  };
+  // the fight card: Doron's fight night
+  S.fightCard = function* () {
+    const f = flags(), s = G.state;
+    if (!(yield* S.callIn('doron', 'Is my name on that card?'))) {
+      yield G.say(null, 'The fight card. Somebody wrote DORON at the top in Sharpie.');
+      yield G.say('Nate', 'Doron has to be here for this.');
+      return;
+    }
+    if (!f.fightMet) yield* S.lockerEnter();
+    else yield G.say('Doron', 'Back for more? Let\'s GO.');
     const FS = fightState();
     let losses = 0;
     for (;;) {
@@ -8137,6 +8153,39 @@
       } else if (first && i < FIGHTERS.length - 2) yield G.say(null, '{y}A new challenger!{/} ' + FIGHTERS[i + 1].full + ' wants a piece of Doron.');
       if (first) G.play.autosave();
     }
+  };
+
+  // The Expo Hall locker room (through the door at the back of the Expo Hall, once El EEENGLISH is
+  // beaten): lockers along the back wall, the fight card, a heavy bag, two long benches, a blue mat
+  // in the middle, and a couple of Micro Mayhem wrestlers getting ready.
+  G.MAPS.locker = {
+    name: 'Locker Room',
+    music: 'arena',
+    tiles: [
+      'wwwwwwwwwwwwwwww',
+      'wvvvvvvvvvvvvvvw',
+      'wCCCCCCCCCCCCCCw',
+      'wCCCnnnnnnnnCCCw',
+      'wCCCnnnnnnnnCCCw',
+      'wCCCnnnnnnnnCCCw',
+      'wCCCnnnnnnnnCCCw',
+      'wCCCCCCCCCCCCCCw',
+      'wCCCCCCCCCCCCCCw',
+      'wwwwwwwwxxwwwwww',
+    ],
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      F.stand(sp.lockerBank, 1, 2, 3, look('Lockers. One has a sticky note on it: "Do NOT touch the protein powder."'), { dy: -2 });
+      F.stand(sp.lockerBank, 12, 2, 3, look('More lockers. Somebody\'s luchador mask is hanging off a door to dry.'), { dy: -2 });
+      F.hang(sp.fightCard, 7, 1, 2, () => S.fightCard(), 4);
+      F.stand(sp.heavyBag, 4, 2, 1, look('A heavy bag. Nate gives it a little punch. It does not move. His hand does.'));
+      F.stand(sp.lockerBench, 1, 7, 2, look('A long bench. It smells like tape and determination.'));
+      F.stand(sp.lockerBench, 13, 7, 2, look('Another bench, with a pile of hand wraps on it.'));
+      w.add(new G.NPC({ sprite: 'wrestler_gold', name: 'Wrestler', x: 11 * 16 + 8, y: 3 * 16 + 14, dir: 'down', talk: look(['Wrestler', '...ninety-eight... ninety-nine... ONE HUNDRED.'], ['Wrestler', '...One. Two...']) }));
+      w.add(new G.NPC({ sprite: 'wrestler_blue', name: 'Wrestler', x: 2 * 16 + 8, y: 5 * 16 + 14, dir: 'right', talk: look(['Wrestler', 'Taping up for the late show. Your brother keeps staring at the fight card.']) }));
+      w.addWarp(8, 9, 2, 1, 'arena', 11, 2, 'down');
+    },
+    onEnter() { return S.lockerEnter(); },
   };
 
   // Golden hour at the end of the driveway: Lily vs. Mikey.
