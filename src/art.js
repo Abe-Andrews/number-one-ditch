@@ -129,12 +129,13 @@
     for (const dir of ['down', 'up', 'right']) set[dir] = [0, 1, 2].map((s) => make(dir, s));
     set.left = set.right.map(mirror);
     set.hold = make('down', 0, 'hold');
+    set.torso = make('right', 0, 'torso');
     return set;
   }
 
   function drawPerson(p, c, dir, step, pose) {
     const y0 = 1, ty = y0 + 10, ly = ty + c.torso, sy = ly + c.legs;
-    if (dir === 'right') return drawSide(p, c, step, y0, ty, ly, sy);
+    if (dir === 'right') return drawSide(p, c, step, y0, ty, ly, sy, pose);
     const back = dir === 'up';
     const bx0 = c.big ? 3 : c.wide ? 4 : 5, bx1 = c.big ? 12 : c.wide ? 11 : 10;
     const ax0 = bx0 - 1, ax1 = bx1 + 1;
@@ -559,7 +560,9 @@
     if (c.hatStyle !== 'flat') { p.set(7, y0 + 3, c.hair); p.set(8, y0 + 3, c.hair); }
   }
 
-  function drawSide(p, c, step, y0, ty, ly, sy) {
+  // (pose 'torso': no arms or legs, for a fighter's jointed limbs to be drawn on in Doron's fight night)
+  function drawSide(p, c, step, y0, ty, ly, sy, pose) {
+    const limbs = pose !== 'torso';
     const sx0 = c.big ? 4 : c.wide ? 5 : 6, sx1 = c.big ? 11 : c.wide ? 10 : 9;
     const H = c.hair, D = c.hairD, s = c.hairStyle;
     const longHair = s === 'long' || s === 'wavy' || s === 'shoulder' || s === 'locs';
@@ -582,7 +585,9 @@
     }
 
     // legs
-    if (c.dress) {
+    if (!limbs) {
+      // (none)
+    } else if (c.dress) {
       for (let y = ly; y < sy; y++) {
         const spread = Math.min(2, (y - ly + 1) >> 1);
         p.hline(sx0 - spread, sx1 + spread, y, c.dress);
@@ -639,7 +644,7 @@
     // arm
     const ax = 7 + (step === 1 ? 1 : step === 2 ? -1 : 0);
     const end = ly - 1 - (step ? 0 : 0);
-    for (let y = ty + 1; y <= end; y++) {
+    for (let y = ty + 1; y <= (limbs ? end : -1); y++) {
       let col;
       if (y === end) col = c.skin;
       else if (c.coat) col = c.coatD;

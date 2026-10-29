@@ -45,7 +45,7 @@ G.input = (function () {
     ArrowRight: 'right', KeyD: 'right',
     KeyZ: 'a', Space: 'a', KeyJ: 'a',
     KeyX: 'b', KeyK: 'b',
-    KeyC: 'c',
+    KeyC: 'c', KeyV: 'v',
     Enter: 'start', Escape: 'start',
     KeyQ: 'l', BracketLeft: 'l',
     KeyE: 'r', BracketRight: 'r',

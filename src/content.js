@@ -5473,7 +5473,7 @@
     stain: ['Pick the right jar with ↑↓ and Z. (Dad tells you which.)', 'Move the dauber with the arrows. HOLD Z to rub the stain on. Cover every bit before it dries.', 'Missed spots blink. Two-coat pipes: go over everything twice. On the harder pipes, too much puddles: keep moving.'],
     blend: ['Pick a jar with the arrows. Z adds a scoop. X puts the last one back.', 'A blend is four scoops. Dad tells you what goes in it.', 'With four in, he sniffs it and tells you how many are right.'],
     pack: ['The needle goes up and down. Press Z when it\'s inside the green box.', 'Three pinches: gently, then a little firmer, then firm.'],
-    fight: ['← → walk. Hold AWAY from him to block. ↑ jumps (hold ← or → to jump at him).', 'Z punches, X kicks (in the air too). C grabs: the ARMY SUPLEX. Get up close; it goes right through a block.', '↓ then → (toward him) then Z: the TAKEDOWN. Win two rounds to win the fight.'],
+    fight: ['← → walk (tap twice to dash). ↑ jump. Hold V to block. Tap V right as a hit lands to PARRY him: no damage, and he\'s wide open.', 'Z punches, X kicks (in the air: a flying knee). Z Z X and Z Z Z are combos. C grabs: the ARMY SUPLEX, which beats a block. ↓ then → (toward him) then Z: the TAKEDOWN.', 'Hits fill the FIGHT meter at the bottom. When it\'s full, press C for GROUND AND POUND. Win two rounds to win the fight.'],
     jam: ['Notes slide down the strings. Hit each one with its arrow (← ↓ ↑ →) right as it crosses the pickup at the bottom.', 'Two notes at once? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
   };
 
@@ -7140,93 +7140,157 @@
   // Once El EEENGLISH is beaten, the locker room at the back of the Expo Hall opens up, and Doron
   // (obsessed with the UFC and fighting) takes on five fighters in a side-view fighting game, Street
   // Fighter style. The select screen picks who to fight (only Sr. Siesta at first; beating one
-  // unlocks the next), then VS, then best of three rounds against the clock. ← → walk (hold away
-  // from him to block), ↑ jump, Z punch, X kick (in the air too), C grab (the ARMY SUPLEX: up close,
-  // right through a block), ↓ then → then Z the TAKEDOWN. Each fighter has his own style and
-  // special. Beat all five and Doron wins the Micro Mayhem title belt.
+  // unlocks the next), then VS, then best of three rounds against the clock.
+  // ← → walk (tap twice to dash), ↑ jump, Z punch, X kick (in the air: a flying knee), V block (hold;
+  // tap it right as a hit lands to PARRY), C grab (the ARMY SUPLEX: beats a block), ↓ then → then Z
+  // the TAKEDOWN. Z Z X / Z Z Z are combos. Landing hits, blocking and parrying fill the FIGHT meter;
+  // full, C is GROUND AND POUND. Hitting him while he winds up is a COUNTER (more damage). Under 30%
+  // health a fighter gets angry. Beat all five and Doron wins the Micro Mayhem title belt.
   // State: s.fights ({ id: true }). Flags: fightMet, fightHow.
   const FIGHTERS = [
     {
       id: 'siesta', name: 'SR. SIESTA', style: 'A heavyweight. Naps in the middle of a fight, then wakes up swinging.',
       hp: 110, speed: 0.55, dmg: 1.35, aggro: 0.35, block: 0.1, grab: 0, jump: 0, special: 'splash', every: 280, sleepy: true,
-      intro: '...zzz... Huh? A fight? ...Five more minutes.',
+      intro: '...zzz... Huh? A fight? ...Five more minutes.', rage: 'NOW I\'M AWAKE!',
       win: 'He fell asleep standing up. I still had to hit him a LOT.',
     },
     {
       id: 'rojo', name: 'EL ROJO', sprite: 'wrestler_red', style: 'Fast. Never stops coming. Throws chops in bunches.',
       hp: 90, speed: 1.35, dmg: 0.9, aggro: 0.8, block: 0.15, grab: 0.05, jump: 0.04, special: 'chops', every: 150,
-      intro: 'Fast hands! FASTER feet!',
+      intro: 'Fast hands! FASTER feet!', rage: 'FASTER! FASTER!',
       win: 'Fast guy. Doesn\'t matter how fast you are when you\'re on the floor.',
     },
     {
       id: 'azul', name: 'EL AZUL', sprite: 'wrestler_blue', style: 'A high-flyer. Keeps his distance, then flies at you.',
       hp: 95, speed: 1.1, dmg: 1, aggro: 0.45, block: 0.25, grab: 0, jump: 0.2, special: 'crossbody', every: 170, keepAway: true,
-      intro: 'Look up, big man!',
+      intro: 'Look up, big man!', rage: 'TO THE SKY!',
       win: 'What goes up... gets suplexed.',
     },
     {
       id: 'verde', name: 'EL VERDE', sprite: 'wrestler_green', style: 'A grappler. Blocks everything. Do NOT let him grab you.',
       hp: 115, speed: 0.9, dmg: 1.1, aggro: 0.5, block: 0.55, grab: 0.45, jump: 0.02, special: 'slam', every: 200,
-      intro: 'Come here. I just want a hug.',
+      intro: 'Come here. I just want a hug.', rage: 'NO MORE MR. NICE HUG.',
       win: 'He wanted a hug. He got an Army hug.',
     },
     {
       id: 'eng', name: 'EL EEENGLISH', sprite: 'elenglish', style: 'The main event. Throws his E\'s. Do you speak it?',
-      hp: 140, speed: 1.05, dmg: 1.15, aggro: 0.6, block: 0.35, grab: 0.15, jump: 0.08, special: 'letter', also: 'dropkick', every: 110,
-      intro: 'DO YOU SPEAK EEENGLISH? ...Don\'t tell your mother. I\'m at book club.',
+      hp: 155, speed: 1.05, dmg: 1.2, aggro: 0.6, block: 0.45, grab: 0.15, jump: 0.08, special: 'letter', also: 'dropkick', every: 110,
+      intro: 'DO YOU SPEAK EEENGLISH? ...Don\'t tell your mother. I\'m at book club.', rage: 'DO. YOU. SPEAK. EEENGLISH?!',
       win: 'Sorry, Dad. You taught me everything I know. Except that. The UFC taught me that.',
     },
   ];
   G.FIGHTERS = FIGHTERS;
   const fightState = () => (G.state.fights = G.state.fights || {});
   const fightOpen = (i) => i === 0 || !!fightState()[FIGHTERS[i - 1].id];
-  // start / active / recovery frames, how far it reaches past the body, damage, hitstun.
-  // down: knocks him down. grab: a throw (goes through a block, misses in the air). leap: [run,
-  // jump] off the ground (aim: toward Doron), active until he lands. dash: slides forward.
-  // chain: thrown that many times in a row. shoot: throws an E. lean: tilts the pose.
+  // start / active / recovery frames, how far it reaches past the body, damage, hitstun, and the
+  // pose for each part (wind-up, hit, recovery). down: knocks him down. grab: a throw (beats a block,
+  // misses in the air). leap: [run, jump] off the ground (aim: toward Doron), active until he lands.
+  // dash: slides forward. chain: thrown that many times in a row. shoot: throws E's. next: what Z
+  // (a) or X (b) cancel into once it's hit (combos). super: GROUND AND POUND when it connects.
   const MOVES = {
-    punch: { start: 4, active: 3, rec: 8, reach: 26, dmg: 5, stun: 14, pose: 'punch' },
-    kick: { start: 7, active: 4, rec: 13, reach: 30, dmg: 8, stun: 18, pose: 'kick' },
-    knee: { start: 2, active: 999, rec: 4, reach: 22, dmg: 8, stun: 18, pose: 'knee', air: true },
-    grab: { start: 3, active: 3, rec: 20, reach: 22, dmg: 14, grab: true, pose: 'grab' },
-    takedown: { start: 8, active: 20, rec: 18, reach: 14, dmg: 12, down: true, dash: 3.2, pose: 'grab', lean: 0.5 },
-    chops: { start: 3, active: 3, rec: 5, reach: 26, dmg: 4, stun: 12, pose: 'punch', chain: 3 },
-    dropkick: { start: 10, active: 999, rec: 24, reach: 28, dmg: 11, down: true, pose: 'kick', leap: [2.8, 4.4], lean: -0.9 },
-    crossbody: { start: 12, active: 999, rec: 22, reach: 26, dmg: 12, down: true, pose: 'grab', leap: [3.6, 4.8], lean: 1.4 },
-    splash: { start: 26, active: 999, rec: 34, reach: 32, dmg: 16, down: true, pose: 'grab', leap: [0, 6.6], aim: true, landHit: true, lean: 1.5 },
-    slam: { start: 4, active: 3, rec: 24, reach: 22, dmg: 16, grab: true, pose: 'grab' },
-    letter: { start: 14, active: 1, rec: 18, pose: 'punch', shoot: true },
+    punch: { start: 4, active: 3, rec: 9, reach: 26, dmg: 5, stun: 16, poses: ['punch1', 'punch2', 'punch1'], next: { a: 'punch2', b: 'roundhouse' } },
+    punch2: { start: 3, active: 3, rec: 10, reach: 26, dmg: 6, stun: 16, poses: ['punch1', 'punch3', 'punch1'], next: { a: 'uppercut', b: 'roundhouse' } },
+    uppercut: { start: 5, active: 4, rec: 16, reach: 22, dmg: 9, down: true, poses: ['punch1', 'upper', 'upper'] },
+    roundhouse: { start: 6, active: 4, rec: 16, reach: 32, dmg: 10, down: true, poses: ['kick1', 'kick2', 'kick1'] },
+    kick: { start: 7, active: 4, rec: 13, reach: 30, dmg: 8, stun: 18, poses: ['kick1', 'kick2', 'kick1'] },
+    knee: { start: 2, active: 999, rec: 4, reach: 22, dmg: 8, stun: 18, poses: ['knee', 'knee', 'jump'], air: true },
+    grab: { start: 3, active: 3, rec: 20, reach: 22, dmg: 14, grab: true, poses: ['grab', 'grab', 'grab'] },
+    takedown: { start: 8, active: 20, rec: 18, reach: 14, dmg: 12, down: true, dash: 3.2, poses: ['block', 'shoot', 'block'] },
+    rush: { start: 12, active: 30, rec: 30, reach: 18, dash: 4.5, super: true, poses: ['block', 'shoot', 'block'] },
+    chops: { start: 3, active: 3, rec: 5, reach: 26, dmg: 4, stun: 12, poses: ['punch1', 'punch2', 'punch1'], chain: 3 },
+    dropkick: { start: 10, active: 999, rec: 24, reach: 28, dmg: 11, down: true, poses: ['kick1', 'kick2', 'idle1'], leap: [2.8, 4.4], lean: -0.9 },
+    crossbody: { start: 12, active: 999, rec: 22, reach: 26, dmg: 12, down: true, poses: ['block', 'grab', 'idle1'], leap: [3.6, 4.8], lean: 1.4 },
+    splash: { start: 26, active: 999, rec: 34, reach: 32, dmg: 16, down: true, poses: ['win', 'grab', 'idle1'], leap: [0, 6.6], aim: true, landHit: true, lean: 1.5 },
+    slam: { start: 4, active: 3, rec: 24, reach: 22, dmg: 16, grab: true, poses: ['grab', 'grab', 'grab'] },
+    letter: { start: 14, active: 1, rec: 18, shoot: 1, poses: ['lift', 'punch2', 'punch2'] },
+    letter3: { start: 14, active: 17, rec: 20, shoot: 3, poses: ['lift', 'punch2', 'punch2'] },
     letterHit: { dmg: 7, stun: 16 },
   };
   const FLOOR = 138, GRAV = 0.32, ROUND_T = 99 * 60, LEFT = 16, RIGHT = 224, FIGHT_SC = 3;
 
-  // Fighter poses at 1x from the person's side sprite (facing right), with arms and legs drawn on,
-  // 26 wide so a fist or a boot can reach out past the body. Drawn at 3x in the fight.
-  const PW = 26, PX = 5;
-  const poseCache = {};
+  // ---- the fighters' bodies: the person's side sprite without its arms and legs (set.torso), with
+  // jointed arms and legs drawn on for each pose: two segments each, angles in degrees from
+  // straight down (90 is forward, 180 is straight up). The standing leg plants on the floor, so
+  // bending the knees crouches the whole body. The back arm and leg are a shade darker, behind
+  // him. fa/ba: front/back arm, fl/bl: front/back leg, bx: lean (pixels), air: don't plant.
+  const POSES = {
+    idle1: { fa: [60, 155], ba: [35, 160], fl: [35, -5], bl: [-35, -5] },
+    idle2: { fa: [65, 150], ba: [40, 155], fl: [42, -12], bl: [-42, -12] },
+    walk1: { fa: [60, 155], ba: [35, 160], fl: [45, 10], bl: [-35, -25], bx: 1 },
+    walk2: { fa: [60, 155], ba: [35, 160], fl: [-20, -30], bl: [25, 5] },
+    punch1: { fa: [5, 170], ba: [50, 150], fl: [35, -5], bl: [-40, -10], bx: -2 },
+    punch2: { fa: [92, 92], ba: [20, 160], fl: [50, 5], bl: [-50, -25], bx: 2 },
+    punch3: { fa: [40, 160], ba: [95, 92], fl: [50, 5], bl: [-50, -25], bx: 3 },
+    upper: { fa: [135, 165], ba: [35, 160], fl: [15, -5], bl: [-40, -15], bx: 2 },
+    kick1: { fa: [70, 150], ba: [-30, 20], fl: [100, -15], bl: [-10, 0], bx: -2 },
+    kick2: { fa: [80, 120], ba: [-60, -30], fl: [100, 100], bl: [-25, -10], bx: -3 },
+    knee: { fa: [70, 150], ba: [45, 160], fl: [115, -30], bl: [25, -45], air: true },
+    jump: { fa: [120, 165], ba: [100, 170], fl: [70, -30], bl: [35, -45], air: true },
+    block: { fa: [80, 175], ba: [70, 170], fl: [40, -10], bl: [-40, -10], bx: -1 },
+    grab: { fa: [88, 88], ba: [80, 96], fl: [50, 5], bl: [-45, -20], bx: 2 },
+    shoot: { fa: [85, 88], ba: [75, 95], fl: [70, 0], bl: [-60, -80], bx: 3 },
+    lift: { fa: [170, 178], ba: [160, 178], fl: [25, 0], bl: [-25, 0], bx: -2 },
+    hurt: { fa: [-50, -90], ba: [-65, -110], fl: [20, 0], bl: [-20, 0], bx: -3 },
+    win: { fa: [165, 178], ba: [155, 172], fl: [18, 0], bl: [-18, 0] },
+    sleep: { fa: [10, 5], ba: [5, 0], fl: [20, -5], bl: [-20, -5], by: 1 },
+    pound: { fa: [130, 70], ba: [40, 150], fl: [85, -75], bl: [-65, -100], bx: 3 },
+    pound2: { fa: [60, 150], ba: [130, 70], fl: [85, -75], bl: [-65, -100], bx: 3 },
+  };
+  const RW = 36, ROX = 10;
+  const rigCache = {};
   function fighterPoses(id) {
-    if (poseCache[id]) return poseCache[id];
-    const set = G.sprites[id], c = G.CAST[id], R = set.right;
-    const ty = 11, ly = ty + (c.torso || 6), sx1 = PX + (c.big ? 11 : c.wide ? 10 : 9);
-    const arm = c.coat || (c.sleeves === 0 ? c.skin : c.shirt), leg = c.shorts ? c.skin : c.pants, boot = c.shoes;
-    const mk = (src, parts) => {
-      const cv = G.canvas(PW, set.h), x = cv.getContext('2d');
-      x.drawImage(src, src.width === 16 ? PX : 0, 0);
-      if (parts) {
-        x.fillStyle = '#1c1424';
-        for (const [X, Y, w, h] of parts) x.fillRect(X - 1, Y - 1, w + 2, h + 2);
-        for (const [X, Y, w, h, col] of parts) { x.fillStyle = col; x.fillRect(X, Y, w, h); }
-      }
+    if (rigCache[id]) return rigCache[id];
+    const set = G.sprites[id], sh = G.art.shade, H = set.h;
+    const c = Object.assign({ skin: '#f2c8a0', shirt: '#4878c8', pants: '#383848', shoes: '#4a3428', torso: 6, legs: 3, sleeves: 2 }, G.CAST[id]);
+    // (fighters get long arms and legs, so a punch or a kick really reaches; PAD rows on top
+    // leave room for a taller stance)
+    const PAD = 6, ty = 11 + PAD, ly = ty + c.torso, sy = ly + c.legs, thick = c.big || c.wide ? 2 : 1;
+    const Lu = c.torso >= 6 ? 4 : 3, Lf = Lu;
+    const Lt = Math.ceil(c.legs / 2) + 1, Ls = c.legs + 2 - Lt;
+    const armUp = c.coat || (c.sleeves === 0 ? c.skin : c.shirt), armLo = c.coat || (c.sleeves === 'long' ? c.shirt : c.skin);
+    const thigh = c.pants, shin = c.shorts ? c.skin : c.pants, boot = c.shoes;
+    const rad = (a) => (a * Math.PI) / 180;
+    const seg = (x, X, Y, ang, len, w, col) => {
+      const dx = Math.sin(rad(ang)), dy = Math.cos(rad(ang)), o = (w - 1) / 2;
+      x.fillStyle = col;
+      for (let t = 0; t <= len + 0.01; t += 0.34) x.fillRect(Math.round(X + dx * t - o), Math.round(Y + dy * t - o), w, w);
+      return [X + dx * len, Y + dy * len];
+    };
+    const arm = (x, X, Y, [a1, a2], dark) => {
+      const k = dark ? -0.28 : 0, [ex, ey] = seg(x, X, Y, a1, Lu, thick, sh(armUp, k)), [hx, hy] = seg(x, ex, ey, a2, Lf, thick, sh(armLo, k));
+      x.fillStyle = sh(c.skin, k); x.fillRect(Math.round(hx - 1), Math.round(hy - 1), 2, 2);
+    };
+    const leg = (x, X, Y, [a1, a2], dark) => {
+      const k = dark ? -0.28 : 0, [kx, ky] = seg(x, X, Y, a1, Lt, 2, sh(thigh, k)), [fx, fy] = seg(x, kx, ky, a2, Ls, 2, sh(shin, k));
+      // the shoe points forward on the floor, and along the leg when it's kicked up
+      x.fillStyle = sh(boot, k);
+      if (a2 > 60) x.fillRect(Math.round(fx - 1), Math.round(fy - 2), 2, 3); else x.fillRect(Math.round(fx - 1), Math.round(fy), 3, 2);
+    };
+    // the lowest point of a leg (knee or foot), to plant the standing one on the floor
+    const low = ([a1, a2]) => { const ky = Lt * Math.cos(rad(a1)); return Math.max(ky, ky + Ls * Math.cos(rad(a2))); };
+    const outlined = (src) => {
+      const W = src.width, Hh = src.height, d = src.getContext('2d').getImageData(0, 0, W, Hh).data, out = G.canvas(W, Hh), ox = out.getContext('2d');
+      const on = (X, Y) => X >= 0 && Y >= 0 && X < W && Y < Hh && d[(Y * W + X) * 4 + 3] > 0;
+      ox.fillStyle = '#1c1424';
+      for (let Y = 0; Y < Hh; Y++) for (let X = 0; X < W; X++) if (!on(X, Y) && (on(X - 1, Y) || on(X + 1, Y) || on(X, Y - 1) || on(X, Y + 1))) ox.fillRect(X, Y, 1, 1);
+      ox.drawImage(src, 0, 0);
+      return out;
+    };
+    const make = (P) => {
+      const drop = Math.round((P.air ? 0 : c.legs - Math.max(low(P.fl), low(P.bl))) + (P.by || 0)), bx = ROX + (P.bx || 0);
+      const back = G.canvas(RW, H + PAD), front = G.canvas(RW, H + PAD);
+      leg(back.getContext('2d'), bx + 7, ly + drop, P.bl, true); arm(back.getContext('2d'), bx + 7, ty + 1 + drop, P.ba, true);
+      leg(front.getContext('2d'), bx + 8, ly + drop, P.fl, false); arm(front.getContext('2d'), bx + 8, ty + 1 + drop, P.fa, false);
+      const cv = G.canvas(RW, H + PAD), x = cv.getContext('2d');
+      x.drawImage(outlined(back), 0, 0);
+      x.drawImage(set.torso, bx, drop + PAD);
+      x.drawImage(outlined(front), 0, 0);
       return cv;
     };
-    return (poseCache[id] = {
-      idle: mk(R[0]), walk1: mk(R[1]), walk2: mk(R[2]), jump: mk(R[1]), hurt: mk(G.art.flash(R[0])), win: mk(set.hold),
-      punch: mk(R[0], [[sx1, ty + 1, 6, 2, arm], [sx1 + 6, ty, 3, 3, c.skin]]),
-      kick: mk(R[2], [[sx1 - 1, ly, 8, 2, leg], [sx1 + 7, ly - 1, 3, 4, boot]]),
-      block: mk(R[0], [[sx1, ty - 1, 2, 5, arm], [sx1, ty - 3, 2, 2, c.skin]]),
-      grab: mk(R[0], [[sx1, ty + 1, 6, 2, arm], [sx1, ty + 4, 6, 2, arm], [sx1 + 6, ty + 1, 2, 5, c.skin]]),
-      knee: mk(R[1], [[sx1 - 1, ly - 3, 5, 3, leg]]),
-    });
+    const poses = {};
+    for (const k in POSES) poses[k] = make(POSES[k]);
+    poses.flash = G.art.flash(poses.hurt);
+    return (rigCache[id] = poses);
   }
 
   // the locker room: cinder block, two fluorescent lights, a MICRO MAYHEM banner, a row of
@@ -7284,12 +7348,14 @@
         FT().drawBig(ctx, 'FIGHT NIGHT', 6, 4, 2, '#f8d850', '#7a1a2a');
         FT().draw(ctx, 'Z fight   X done', G.W - 6 - FT().width('Z fight   X done'), 7, '#9890a8', { shadow: '#000' });
         ctx.imageSmoothingEnabled = false;
-        const D = G.sprites.doron.right[0];
-        ctx.drawImage(D, 6, 124 - D.height * 4, D.width * 4, D.height * 4);
+        // Doron and the pick, big, in their fighting stances
+        const D = fighterPoses('doron').idle1, F = FIGHTERS[this.sel], open = fightOpen(this.sel), O = fighterPoses(F.sprite || F.id).idle1;
+        ctx.drawImage(D, 40 - (ROX + 8) * 3, 124 - D.height * 3, D.width * 3, D.height * 3);
         FT().draw(ctx, 'DORON', 10, 126, '#f8f8f0', { shadow: '#000' });
         if (G.state.items.belt) FT().draw(ctx, 'CHAMPION', 6, 24, '#f8d850', { shadow: '#000' });
-        const F = FIGHTERS[this.sel], open = fightOpen(this.sel), O = G.sprites[F.sprite || F.id].left[0];
-        ctx.drawImage(open ? O : G.silhouette(O), G.W - 6 - O.width * 4, 124 - O.height * 4, O.width * 4, O.height * 4);
+        ctx.save(); ctx.translate(200, 0); ctx.scale(-1, 1);
+        ctx.drawImage(open ? O : G.silhouette(O), -(ROX + 8) * 3, 124 - O.height * 3, O.width * 3, O.height * 3);
+        ctx.restore();
         // the middle: his name, his style, and whether he's beaten
         const name = open ? F.name : '???';
         FT().draw(ctx, name, 120 - Math.round(FT().width(name) / 2), 32, open ? '#f8d850' : '#5a4e70', { shadow: '#000' });
@@ -7314,14 +7380,15 @@
   function fightCmd(F) {
     return {
       start() {
-        Object.assign(this, { phase: 'vs', t: 0, round: 1, wins: [0, 0], sparks: [], shots: [], stop: 0, shakeT: 0, big: null, bubble: null, bubbleT: 0, buf: [], f: 0, holdBack: false, combo: 0, comboT: 0 });
+        Object.assign(this, { phase: 'vs', t: 0, round: 1, wins: [0, 0], sparks: [], shots: [], pops: [], stop: 0, shakeT: 0, flashT: 0, big: null, bubble: null, bubbleT: 0, buf: [], f: 0, guard: false, parryAt: -99, lastTap: null, lastTapF: -99, combo: 0, comboT: 0, meter: 0 });
         this.reset();
         G.play.overlay = this;
       },
       fighter(sprite, x, face, hp, speed) {
-        return { sprite, x, y: 0, vx: 0, vy: 0, face, hp, maxHp: hp, speed, st: 'idle', t: 0, move: null, moveName: null, hit: false, stun: 0, cool: 0, think: 0, blockT: 0, sleepT: 0, anim: 0, used: false, chain: 0, rot: 0 };
+        return { sprite, x, y: 0, vx: 0, vy: 0, face, hp, maxHp: hp, speed, st: 'idle', t: 0, move: null, moveName: null, hit: false, stun: 0, cool: 0, think: 0, blockT: 0, sleepT: 0, anim: 0, used: false, chain: 0, rot: 0, combo: 0, raged: false };
       },
       reset() {
+        // (the FIGHT meter carries over from round to round)
         this.p = this.fighter('doron', 80, 1, 100, 1.5);
         this.e = this.fighter(F.sprite || F.id, 160, -1, F.hp, F.speed);
         this.e.cool = Math.round(F.every * 0.6);
@@ -7329,14 +7396,19 @@
       },
       go(phase) { this.phase = phase; this.t = 0; },
       say(a, text) { this.bubble = { a, text }; this.bubbleT = 110; },
+      pop(text, col) { this.pops.push({ text, col: col || '#f8d850', t: 0 }); },
       spark(x, y, cols) { for (let k = 0; k < 8; k++) this.sparks.push({ x, y, vx: (Math.random() - 0.5) * 3, vy: -0.5 - Math.random() * 2, life: 14 + Math.random() * 8, c: cols[k % cols.length] }); },
+      gain(n) { this.meter = Math.min(100, this.meter + n); },
       update() {
         if (quitHit()) { this.result = 'quit'; return true; }
         this.t++;
         for (const s of this.sparks) { s.x += s.vx; s.y += s.vy; s.vy += 0.15; s.life--; }
         this.sparks = this.sparks.filter((s) => s.life > 0);
+        for (const pp of this.pops) pp.t++;
+        this.pops = this.pops.filter((pp) => pp.t < 50);
         if (this.bubbleT > 0) this.bubbleT--;
         if (this.shakeT > 0) this.shakeT--;
+        if (this.flashT > 0) this.flashT--;
         if (this.phase === 'vs') {
           if (this.t >= 130 || (this.t > 30 && G.input.hit('a'))) { G.input.eat('a'); this.go('round'); }
           return false;
@@ -7365,7 +7437,7 @@
           return false;
         }
         if (this.phase === 'over') {
-          this.physics(this.p); this.physics(this.e);
+          this.physics(this.p); this.physics(this.e); this.p.anim++; this.e.anim++;
           if (this.t >= 150) { this.result = { won: this.wins[0] >= 2 }; return true; }
           return false;
         }
@@ -7386,29 +7458,51 @@
       // ---- Doron: the keyboard
       playerInput() {
         const P = this.p, inp = G.input;
-        const fwd = P.face > 0 ? 'right' : 'left', back = P.face > 0 ? 'left' : 'right';
+        const fwd = P.face > 0 ? 'right' : 'left';
         if (inp.hit('down')) this.buf.push(['d', this.f]);
         if (inp.hit(fwd)) this.buf.push(['f', this.f]);
         this.buf = this.buf.filter(([, t]) => this.f - t < 24);
         // ↓ then → (toward him), then Z
         const qcf = () => { const di = this.buf.findIndex(([k]) => k === 'd'); return di >= 0 && this.buf.slice(di + 1).some(([k]) => k === 'f'); };
-        this.holdBack = inp.down(back);
+        if (inp.hit('v')) this.parryAt = this.f;
+        this.guard = inp.down('v');
         if (this.comboT > 0) this.comboT--;
         if (P.st === 'air' && !P.used && (inp.hit('a') || inp.hit('b'))) { P.used = true; this.begin(P, 'knee'); return; }
+        // combos: once a punch has hit, Z or X cancels the rest of it into the next one
+        if (P.st === 'atk' && P.hit && P.move && P.move.next && P.t >= P.move.start + P.move.active) {
+          const nx = inp.hit('a') ? P.move.next.a : inp.hit('b') ? P.move.next.b : null;
+          if (nx) { this.begin(P, nx); return; }
+        }
         if (P.st !== 'idle' && P.st !== 'walk') return;
-        if (inp.hit('c')) { this.begin(P, 'grab'); return; }
+        if (this.guard) { P.vx = 0; P.st = 'idle'; return; }
+        if (inp.hit('c')) { if (this.meter >= 100) this.superMove(); else this.begin(P, 'grab'); return; }
         if (inp.hit('a') && qcf()) { this.buf = []; this.say(P, 'TAKEDOWN!'); this.begin(P, 'takedown'); return; }
         if (inp.hit('a')) { this.begin(P, 'punch'); return; }
         if (inp.hit('b')) { this.begin(P, 'kick'); return; }
         const dir = (inp.down('right') ? 1 : 0) - (inp.down('left') ? 1 : 0);
         if (inp.hit('up')) { this.jump(P, dir); return; }
-        P.vx = dir * P.speed * (dir && inp.down(back) ? 0.75 : 1);
+        // tap a direction twice for a dash
+        const tap = inp.hit('right') ? 1 : inp.hit('left') ? -1 : 0;
+        if (tap) {
+          if (this.lastTap === tap && this.f - this.lastTapF < 12) { this.lastTap = null; this.dash(P, tap); return; }
+          this.lastTap = tap; this.lastTapF = this.f;
+        }
+        P.vx = dir * P.speed;
         P.st = dir ? 'walk' : 'idle';
       },
       jump(a, dir) { a.st = 'air'; a.vy = 5.6; a.y = 0.1; a.used = false; a.vx = dir * 1.8; G.audio.sfx('dash'); },
+      dash(a, dir) { a.st = 'dash'; a.t = 0; a.vx = dir * 3.6; G.audio.sfx('dash'); },
+      superMove() {
+        this.meter = 0; this.flashT = 24; this.stop = 18;
+        this.pop('GROUND AND POUND!');
+        this.say(this.p, 'UFC, BABY!');
+        G.audio.sfx('yell');
+        this.begin(this.p, 'rush');
+      },
 
-      // ---- the other guy: walks in, throws hands, blocks some of what he sees coming, and uses
-      // his special when it's ready (the sleepy one sometimes just... dozes off)
+      // ---- the other guy: walks in, throws hands, blocks some of what he sees coming, grabs you
+      // if you sit there blocking, and uses his special when it's ready (the sleepy one sometimes
+      // just... dozes off). Under 30% health he gets mad: faster, meaner, more specials.
       ai() {
         const E = this.e, P = this.p, dist = Math.abs(P.x - E.x), R = Math.random;
         if (E.sleepT > 0) {
@@ -7418,30 +7512,33 @@
           return;
         }
         if (E.st === 'sleep') E.st = 'idle';
-        if (E.cool > 0) E.cool--;
+        if (!E.raged && E.hp > 0 && E.hp < E.maxHp * 0.3) { E.raged = true; this.say(E, F.rage); this.pop('HE\'S MAD!', '#f86858'); E.cool = 0; }
+        const rage = E.raged ? 1 : 0;
+        if (E.cool > 0) E.cool -= 1 + rage;
         if (E.st === 'air' && !E.used && dist < 44 && E.vy < 1) { E.used = true; this.begin(E, 'knee'); return; }
         if (E.st !== 'idle' && E.st !== 'walk') return;
         if (E.blockT > 0) { E.vx = 0; E.st = 'idle'; return; }
         if (--E.think > 0) { E.st = E.vx ? 'walk' : 'idle'; return; }
-        E.think = Math.max(4, Math.round((24 - F.aggro * 16) * (0.6 + R() * 0.8)));
+        E.think = Math.max(3, Math.round((24 - F.aggro * 16) * (0.6 + R() * 0.8) * (rage ? 0.6 : 1)));
         const toward = P.x > E.x ? 1 : -1;
         if (E.cool <= 0) {
-          const sp = F.also && R() < 0.4 ? F.also : F.special;
+          let sp = F.also && R() < 0.4 ? F.also : F.special;
           const ok = { splash: dist > 30, chops: dist < 34, crossbody: dist > 40 && dist < 120, dropkick: dist > 36 && dist < 100, slam: dist < 28, letter: dist > 46 }[sp];
           if (ok) {
             E.cool = Math.round(F.every * (0.7 + R() * 0.6));
             if (sp === 'splash') this.say(E, 'SIESTA SPLASH!');
-            if (sp === 'letter') this.say(E, 'EEE!');
+            if (sp === 'letter') { this.say(E, rage ? 'EEE! EEE! EEE!' : 'EEE!'); if (rage) sp = 'letter3'; }
             this.begin(E, sp);
             return;
           }
         }
-        if (F.sleepy && dist > 30 && R() < 0.07) { E.sleepT = 100 + Math.round(R() * 70); E.st = 'sleep'; this.say(E, 'Zzz...'); return; }
-        if (dist < 28 && R() < F.grab) { this.begin(E, F.id === 'verde' ? 'slam' : 'grab'); return; }
-        if (dist < 36 && R() < F.aggro) { this.begin(E, dist > 26 || R() < 0.5 ? 'kick' : 'punch'); return; }
+        if (F.sleepy && !rage && dist > 30 && R() < 0.07) { E.sleepT = 100 + Math.round(R() * 70); E.st = 'sleep'; this.say(E, 'Zzz...'); return; }
+        // turtling? he grabs you
+        if (dist < 28 && R() < (this.guard ? 0.5 : F.grab)) { this.begin(E, F.id === 'verde' ? 'slam' : 'grab'); return; }
+        if (dist < 36 && R() < Math.min(0.95, F.aggro + rage * 0.15)) { this.begin(E, dist > 26 || R() < 0.5 ? 'kick' : 'punch'); return; }
         if (dist > 40 && dist < 110 && R() < F.jump) { this.jump(E, toward); return; }
         const away = F.keepAway && dist < 60 && R() < 0.6;
-        E.vx = (away ? -toward : dist > 30 ? toward : 0) * E.speed;
+        E.vx = (away ? -toward : dist > 30 ? toward : 0) * E.speed * (rage ? 1.2 : 1);
         E.st = E.vx ? 'walk' : 'idle';
       },
 
@@ -7452,8 +7549,8 @@
         a.st = 'atk'; a.move = m; a.moveName = name; a.t = 0; a.hit = false;
         if (!m.air) a.vx = 0;
         // the other guy might see it coming and put his guard up
-        if (a === this.p && !m.grab && Math.abs(d.x - a.x) < 60 && d.sleepT <= 0 && Math.random() < F.block) d.blockT = m.start + Math.min(m.active, 20) + 6;
-        G.audio.sfx(m.grab || m.leap ? 'dash' : 'swing');
+        if (a === this.p && !m.grab && !m.super && Math.abs(d.x - a.x) < 60 && d.sleepT <= 0 && Math.random() < F.block) d.blockT = m.start + Math.min(m.active, 20) + 6;
+        G.audio.sfx(m.grab || m.leap || m.super ? 'dash' : 'swing');
       },
       inActive(a) { const m = a.move; return !!m && a.t >= m.start && a.t < m.start + m.active; },
       atkTick(a, d) {
@@ -7465,7 +7562,7 @@
           a.vx = m.aim ? Math.max(-3.5, Math.min(3.5, (d.x - a.x) / ((2 * m.leap[1]) / GRAV))) : a.face * m.leap[0];
         }
         if (m.dash && this.inActive(a)) a.vx = a.face * m.dash;
-        if (m.shoot && a.t === m.start) this.shots.push({ x: a.x + a.face * 14, y: 30, vx: a.face * 2.4, owner: a, life: 140 });
+        if (m.shoot) for (let k = 0; k < m.shoot; k++) if (a.t === m.start + k * 8) this.shots.push({ x: a.x + a.face * 14, y: 30 - k * 4, vx: a.face * (2.4 + k * 0.3), owner: a, life: 140 });
         if (this.inActive(a) && !a.hit && !m.shoot && !m.landHit && !(m.leap && a.t < m.start)) this.tryHit(a, d);
         if (a.t >= m.start + m.active + m.rec) {
           if (m.chain && a.chain < m.chain) { a.chain++; this.begin(a, a.moveName); return; }
@@ -7474,7 +7571,7 @@
       },
       tryHit(a, d) {
         const m = a.move;
-        if (d.st === 'down' || d.st === 'thrown' || d.st === 'throw') return;
+        if (d.st === 'down' || d.st === 'thrown' || d.st === 'throw' || d.st === 'pound') return;
         const x0 = a.x + a.face * 6, x1 = a.x + a.face * (6 + m.reach);
         if (d.x + 9 < Math.min(x0, x1) || d.x - 9 > Math.max(x0, x1)) return;
         if (Math.abs(a.y - d.y) > 30) return;
@@ -7482,33 +7579,62 @@
         a.hit = true;
         this.connect(a, d, m);
       },
-      // a hit lands (or gets blocked, or it's a grab)
+      // a hit lands (or gets blocked, or parried, or it's a grab or the super)
       connect(a, d, m) {
         const fromP = a === this.p;
+        if (m.super) {
+          // GROUND AND POUND: down he goes, and Doron's on top of him
+          a.st = 'pound'; a.t = 0; a.vx = 0; a.move = null;
+          d.st = 'down'; d.t = 0; d.vx = 0; d.vy = 0; d.y = 0; d.sleepT = 0; d.pinned = true; d.move = null;
+          d.x = Math.max(LEFT, Math.min(RIGHT, a.x + a.face * 16));
+          G.audio.sfx('hit'); this.shakeT = 10;
+          return;
+        }
         if (m.grab) {
           a.st = 'throw'; a.t = 0; d.st = 'thrown'; d.t = 0; d.vx = d.vy = 0; d.sleepT = 0; d.move = null;
           this.say(a, fromP ? 'ARMY... SUPLEX!' : F.id === 'verde' ? 'HUG TIME!' : 'GOTCHA!');
           G.audio.sfx('yell');
           return;
         }
-        const guard = d === this.p ? this.holdBack : d.blockT > 0;
-        if (guard && d.y === 0 && d.sleepT <= 0 && (d.st === 'idle' || d.st === 'walk' || d.st === 'block')) {
+        const ready = d.y === 0 && (d.st === 'idle' || d.st === 'walk' || d.st === 'block');
+        // a PARRY: V tapped right before the hit lands. No damage, and he's wide open.
+        if (d === this.p && ready && this.f - this.parryAt <= 8) {
+          this.parryAt = -99;
+          if (a.st === 'atk') { a.st = 'hurt'; a.stun = 32; a.move = null; a.moveName = null; a.chain = 0; }
+          d.st = 'block'; d.stun = 6;
+          G.audio.sfx('secret'); this.stop = 8; this.gain(20);
+          this.pop('PARRY!', '#78e8f8');
+          this.spark(d.x + d.face * 10, FLOOR - 44, ['#78e8f8', '#ffffff']);
+          return;
+        }
+        const guard = d === this.p ? this.guard : d.blockT > 0;
+        if (guard && ready && d.sleepT <= 0) {
           d.st = 'block'; d.stun = 12; d.x += a.face * 5; d.vx = 0;
+          if (d === this.p) this.gain(3);
           G.audio.sfx('clank');
           this.spark(d.x - a.face * 8, FLOOR - 44 - d.y, ['#ffffff', '#c8d8f0']);
           return;
         }
-        d.hp = Math.max(0, d.hp - Math.round(m.dmg * (fromP ? 1 : F.dmg)));
+        // caught winding up his own move: a COUNTER, for half again the damage
+        const counter = d.st === 'atk' && d.move && d.t < d.move.start;
+        let dmg = m.dmg * (fromP ? 1 : F.dmg) * (counter ? 1.5 : 1);
+        d.hp = Math.max(0, d.hp - Math.round(dmg));
+        if (counter && fromP) this.pop('COUNTER!', '#f8a040');
         if (d.sleepT > 0 || d.st === 'sleep') { d.sleepT = 0; this.say(d, '!!'); }
+        this.gain(fromP ? 5 : 4);
         G.audio.sfx('hit');
-        this.stop = 5; this.shakeT = Math.max(this.shakeT, m.down ? 10 : 4);
-        this.spark(d.x - a.face * 6, FLOOR - 40 - d.y, ['#f8f8a0', '#f8a040', '#ffffff']);
+        this.stop = counter ? 8 : 5; this.shakeT = Math.max(this.shakeT, m.down ? 10 : 4);
+        this.spark(d.x - a.face * 6, FLOOR - 40 - d.y, counter ? ['#f8a040', '#f86858', '#ffffff'] : ['#f8f8a0', '#f8a040', '#ffffff']);
+        // the third clean hit in a row knocks him down (no endless combos)
         d.combo = (d.combo || 0) + 1;
         if (m.down || d.hp <= 0 || d.y > 0 || d.combo >= 3) this.knockDown(d, a.face);
-        else { d.st = 'hurt'; d.stun = m.stun; d.vx = a.face * 2.4; d.move = null; }
-        if (fromP) { this.combo = (this.comboT > 0 ? this.combo : 0) + 1; this.comboT = 50; }
+        else { d.st = 'hurt'; d.stun = m.stun; d.vx = a.face * 2.4; d.move = null; d.moveName = null; d.chain = 0; }
+        if (fromP) {
+          this.combo = (this.comboT > 0 ? this.combo : 0) + 1; this.comboT = 50;
+          if (this.combo === 3) this.pop('COMBO!');
+        }
       },
-      knockDown(d, dir) { d.st = 'down'; d.t = 0; d.move = null; d.vx = dir * 2; d.vy = Math.max(d.vy, 2.6); d.y = Math.max(d.y, 1); },
+      knockDown(d, dir) { d.st = 'down'; d.t = 0; d.move = null; d.moveName = null; d.chain = 0; d.vx = dir * 2; d.vy = Math.max(d.vy, 2.6); d.y = Math.max(d.y, 1); },
       // the suplex: lifted, flipped over his head, and slammed down behind him
       throwTick(a, d) {
         a.t++;
@@ -7518,18 +7644,37 @@
           d.hp = Math.max(0, d.hp - Math.round(a.move.dmg * (a === this.p ? 1 : F.dmg)));
           d.y = 0; d.rot = 0; d.x = Math.max(LEFT, Math.min(RIGHT, a.x - a.face * 20));
           d.st = 'down'; d.t = 0; d.vx = -a.face * 1.2;
+          if (a === this.p) this.gain(10);
           G.audio.sfx('boom'); this.shakeT = 16; this.stop = 6;
           this.spark(d.x, FLOOR - 6, ['#c8b8a0', '#ffffff', '#8a7a68']);
         }
         if (a.t >= 30 + a.move.rec) { a.st = 'idle'; a.move = null; a.moveName = null; }
+      },
+      // GROUND AND POUND: six punches, then one big one
+      poundTick(a, d) {
+        a.t++;
+        d.t = 0;
+        if (a.t % 7 === 3 && a.t < 44) {
+          d.hp = Math.max(0, d.hp - 4);
+          G.audio.sfx('hit'); this.shakeT = 4;
+          this.spark(d.x, FLOOR - 8, ['#f8f8a0', '#f8a040', '#ffffff']);
+        }
+        if (a.t === 50) {
+          d.hp = Math.max(0, d.hp - 6);
+          G.audio.sfx('boom'); this.shakeT = 14; this.stop = 8;
+          this.spark(d.x, FLOOR - 8, ['#f86858', '#f8d850', '#ffffff']);
+        }
+        if (a.t >= 64) { a.st = 'idle'; d.pinned = false; d.t = 20; }
       },
 
       // ---- one fighter's frame: movement, his state's timer, his attack, and which way he faces
       tick(a, d) {
         this.physics(a);
         if (a.st === 'hurt' || a.st === 'block') { if (--a.stun <= 0) this.recover(a); }
-        else if (a.st === 'down') { if (++a.t >= 56 && a.hp > 0 && a.y === 0) { this.recover(a); a.vx = 0; } }
+        else if (a.st === 'down') { if (!a.pinned && ++a.t >= 56 && a.hp > 0 && a.y === 0) { this.recover(a); a.vx = 0; } }
+        else if (a.st === 'dash') { if (++a.t >= 14) { a.st = 'idle'; a.vx = 0; } }
         else if (a.st === 'throw') this.throwTick(a, d);
+        else if (a.st === 'pound') this.poundTick(a, d);
         else if (a.st === 'atk') this.atkTick(a, d);
         if (a.st === 'idle' || a.st === 'walk' || a.st === 'air' || a.st === 'block') a.face = d.x >= a.x ? 1 : -1;
         if (a.blockT > 0) a.blockT--;
@@ -7546,7 +7691,7 @@
         if (a.y > 0 || a.vy > 0) {
           a.y += a.vy; a.vy -= GRAV;
           if (a.y <= 0) { a.y = 0; a.vy = 0; this.land(a); }
-        } else if (a.st !== 'walk' && !(a.st === 'atk' && a.move && a.move.dash && this.inActive(a))) a.vx *= 0.8;
+        } else if (a.st !== 'walk' && a.st !== 'dash' && !(a.st === 'atk' && a.move && a.move.dash && this.inActive(a))) a.vx *= 0.8;
         a.x = Math.max(LEFT, Math.min(RIGHT, a.x));
       },
       land(a) {
@@ -7565,19 +7710,19 @@
         }
         if (a.st === 'down') { a.vx *= 0.4; G.audio.sfx('bump'); }
       },
-      // El EEENGLISH's E's: they fly straight; jump them or block them
+      // El EEENGLISH's E's: they fly straight; jump them, block them, or parry them
       shotsUpdate() {
         for (const s of this.shots) {
           s.x += s.vx; s.life--;
           const d = s.owner === this.e ? this.p : this.e;
-          if (s.life > 0 && Math.abs(s.x - d.x) < 10 && d.y < 24 && d.st !== 'down' && d.st !== 'thrown') { s.life = 0; this.connect(s.owner, d, MOVES.letterHit); }
+          if (s.life > 0 && Math.abs(s.x - d.x) < 10 && d.y < 24 && d.st !== 'down' && d.st !== 'thrown' && d.st !== 'pound') { s.life = 0; this.connect(s.owner, d, MOVES.letterHit); }
         }
         this.shots = this.shots.filter((s) => s.life > 0 && s.x > -10 && s.x < G.W + 10);
       },
       // nobody walks through anybody (jump over him, though)
       separate() {
         const P = this.p, E = this.e;
-        if ([P.st, E.st].some((st) => st === 'thrown' || st === 'throw')) return;
+        if ([P.st, E.st].some((st) => st === 'thrown' || st === 'throw' || st === 'pound')) return;
         const dx = E.x - P.x, gap = 26;
         if (Math.abs(dx) >= gap || Math.abs(P.y - E.y) >= 30) return;
         const push = (gap - Math.abs(dx)) / 2, s = dx >= 0 ? 1 : -1;
@@ -7595,9 +7740,9 @@
         this.big = ko ? 'K.O.!' : 'TIME!';
         G.audio.sfx(ko ? 'boom' : 'bell');
         const loser = pWins ? E : P;
+        loser.pinned = false;
         if (ko && loser.st !== 'down' && loser.st !== 'thrown') this.knockDown(loser, pWins ? P.face : E.face);
-        if (P.st === 'atk' || P.st === 'walk') P.st = 'idle';
-        if (E.st === 'atk' || E.st === 'walk' || E.st === 'sleep') E.st = 'idle';
+        for (const a of [P, E]) if (a.st === 'atk' || a.st === 'walk' || a.st === 'sleep' || a.st === 'dash' || a.st === 'pound' || a.st === 'throw') a.st = 'idle';
         this.shots = [];
         this.go('ko');
       },
@@ -7608,12 +7753,14 @@
         const sx = this.shakeT ? Math.round((Math.random() * 2 - 1) * 3) : 0;
         ctx.save(); ctx.translate(sx, 0);
         ctx.drawImage(lockerStage(), 0, 0);
+        if (this.flashT > 0) { ctx.fillStyle = 'rgba(12,8,20,' + Math.min(0.6, this.flashT / 30) + ')'; ctx.fillRect(0, 0, G.W, G.H); }
         for (const a of [this.p, this.e]) {
           const w = Math.max(10, Math.round(28 - a.y / 3));
           ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(Math.round(a.x - w / 2), FLOOR - 2, w, 3);
         }
         // whoever is mid-move (or doing the throwing) is drawn in front
-        const front = this.e.st === 'atk' || this.e.st === 'throw' || this.p.st === 'thrown' ? this.e : this.p;
+        const busy = (a) => a.st === 'atk' || a.st === 'throw' || a.st === 'pound';
+        const front = busy(this.e) || this.p.st === 'thrown' ? this.e : this.p;
         this.drawFighter(ctx, front === this.p ? this.e : this.p);
         this.drawFighter(ctx, front);
         for (const s of this.shots) FT().drawBig(ctx, 'E', Math.round(s.x - 6), Math.round(FLOOR - s.y - 10), 2, '#d03038', '#1c1424');
@@ -7621,39 +7768,51 @@
         ctx.restore();
         this.drawHud(ctx);
       },
-      drawFighter(ctx, a) {
-        const P = fighterPoses(a.sprite), m = a.move, guard = a === this.p ? this.holdBack : a.blockT > 0;
-        let img = P.idle, rot = 0, lift = 0;
-        if (a.st === 'walk') img = (a.anim >> 3) & 1 ? P.walk1 : P.walk2;
-        else if (a.st === 'air') img = P.jump;
-        else if (a.st === 'hurt') img = (a.stun >> 1) & 1 ? P.hurt : P.idle;
-        else if (a.st === 'block' || (a.st === 'idle' && guard && this.phase === 'fight')) img = P.block;
-        else if (a.st === 'atk' && m) {
-          const on = a.t >= m.start - 2 && a.t < m.start + Math.min(m.active, 999) + 4;
-          if (on) { img = P[m.pose] || P.idle; if (m.lean && (!m.leap || a.y > 0)) rot = m.lean; }
+      // which pose he's in right now
+      poseOf(a) {
+        const m = a.move;
+        switch (a.st) {
+          case 'walk': return (a.anim >> 3) & 1 ? 'walk1' : 'walk2';
+          case 'dash': return 'walk1';
+          case 'air': return 'jump';
+          case 'hurt': return (a.stun >> 1) & 1 ? 'flash' : 'hurt';
+          case 'block': return 'block';
+          case 'sleep': return 'sleep';
+          case 'win': return (a.anim >> 4) & 1 ? 'win' : 'idle1';
+          case 'throw': return a.t < 10 ? 'grab' : 'lift';
+          case 'thrown': case 'down': return 'hurt';
+          case 'pound': return ((a.t + 4) / 7 | 0) & 1 ? 'pound2' : 'pound';
+          case 'atk': {
+            if (!m) return 'idle1';
+            const ph = a.t < m.start ? 0 : a.t < m.start + m.active ? 1 : 2;
+            let pz = m.poses[ph];
+            if (a.moveName === 'chops' && a.chain % 2 === 0 && pz === 'punch2') pz = 'punch3';
+            return pz;
+          }
         }
-        else if (a.st === 'throw') img = P.grab;
-        else if (a.st === 'down') { rot = -Math.PI / 2; lift = 10; }
-        else if (a.st === 'win') img = P.win;
-        const bob = (a.st === 'idle' || a.st === 'sleep') && (a.anim >> 4) & 1 ? 1 : 0;
-        const w = PW * FIGHT_SC, h = img.height * FIGHT_SC;
+        if (a === this.p ? this.guard && this.phase === 'fight' : a.blockT > 0) return 'block';
+        return (a.anim >> 4) & 1 ? 'idle2' : 'idle1';
+      },
+      drawFighter(ctx, a) {
+        const P = fighterPoses(a.sprite), m = a.move, img = P[this.poseOf(a)] || P.idle1;
+        let rot = 0, lift = 0;
+        if (a.st === 'atk' && m && m.lean && (!m.leap || a.y > 0) && a.t >= m.start) rot = m.lean;
+        if (a.st === 'down') { rot = -Math.PI / 2; lift = 12; }
+        const w = RW * FIGHT_SC, h = img.height * FIGHT_SC, cx = (ROX + 8) * FIGHT_SC;
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
         if (a.st === 'thrown') {
           // flipped head over heels, spinning around his middle on the way over
-          ctx.save();
           ctx.translate(Math.round(a.x), Math.round(FLOOR - a.y - h / 2));
           if (a.face < 0) ctx.scale(-1, 1);
           ctx.rotate(a.rot || 0);
-          ctx.imageSmoothingEnabled = false;
-          ctx.drawImage(img, -(PX + 8) * FIGHT_SC, -h / 2, w, h);
-          ctx.restore();
-          return;
+          ctx.drawImage(img, -cx, -h / 2, w, h);
+        } else {
+          ctx.translate(Math.round(a.x), Math.round(FLOOR - a.y - lift));
+          if (a.face < 0) ctx.scale(-1, 1);
+          if (rot) ctx.rotate(rot);
+          ctx.drawImage(img, -cx, -h + FIGHT_SC, w, h);
         }
-        ctx.save();
-        ctx.translate(Math.round(a.x), Math.round(FLOOR - a.y - lift + bob));
-        if (a.face < 0) ctx.scale(-1, 1);
-        if (rot) ctx.rotate(rot);
-        ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(img, -(PX + 8) * FIGHT_SC, -h + FIGHT_SC, w, h);
         ctx.restore();
         if (a.st === 'sleep') {
           const top = FLOOR - a.y - h;
@@ -7662,6 +7821,7 @@
             FT().draw(ctx, 'z', Math.round(a.x + 6 + zt / 4 + k * 3), Math.round(top + 6 - zt / 2), '#f8f8f0', { shadow: '#000' });
           }
         }
+        if (a.raged && (a.anim >> 2) & 1 && a.st !== 'down') { ctx.fillStyle = '#f86858'; ctx.fillRect(Math.round(a.x - 2), Math.round(FLOOR - a.y - h + 4), 4, 2); }
         if (this.bubbleT > 0 && this.bubble && this.bubble.a === a) {
           const lines = FT().wrap(this.bubble.text, 110), bw = Math.max(...lines.map((l) => FT().width(l))) + 8, bh = lines.length * 9 + 4;
           const bx = Math.round(Math.max(4, Math.min(G.W - 4 - bw, a.x - bw / 2))), by = Math.round(Math.max(30, FLOOR - a.y - h - bh - 2));
@@ -7687,6 +7847,17 @@
         ctx.fillStyle = '#1c1424'; ctx.fillRect(106, 2, 28, 14);
         FT().draw(ctx, sec, 120 - Math.round(FT().width(sec) / 2), 5, this.timer < 600 ? '#f86858' : '#f8f8f0');
         if (this.comboT > 0 && this.combo >= 2) FT().draw(ctx, G.sayable(this.combo) + ' HITS!', 7, 26, '#f8d850', { shadow: '#000' });
+        // the FIGHT meter, along the bottom
+        const full = this.meter >= 100;
+        FT().draw(ctx, 'FIGHT', 7, 147, full && (this.t >> 3) & 1 ? '#f8d850' : '#c8c0d8', { shadow: '#000' });
+        ctx.fillStyle = '#1c1424'; ctx.fillRect(36, 148, 72, 7);
+        ctx.fillStyle = full ? ((this.t >> 2) & 1 ? '#f8d850' : '#f86858') : '#f8a040'; ctx.fillRect(37, 149, Math.round(70 * this.meter / 100), 5);
+        if (full) FT().draw(ctx, 'C: GROUND AND POUND', 112, 147, (this.t >> 3) & 1 ? '#f8d850' : '#f8f8f0', { shadow: '#000' });
+        // pops: PARRY! COUNTER! COMBO! (they float up)
+        this.pops.forEach((pp, k) => {
+          const w = FT().width(pp.text);
+          FT().draw(ctx, pp.text, Math.round(120 - w / 2), Math.round(46 + k * 10 - pp.t / 5), pp.col, { shadow: '#000' });
+        });
         if (this.big) {
           const sc = this.big.length > 8 ? 2 : 3, w = FT().bigWidth(this.big, sc);
           FT().drawBig(ctx, this.big, Math.round(120 - w / 2), 54, sc, '#f8d850', '#7a1a2a');
@@ -7698,10 +7869,12 @@
         ctx.fillStyle = '#5a1418'; ctx.fillRect(0, 0, G.W, G.H);
         ctx.fillStyle = '#14205a'; ctx.beginPath(); ctx.moveTo(136, 0); ctx.lineTo(G.W, 0); ctx.lineTo(G.W, G.H); ctx.lineTo(104, G.H); ctx.closePath(); ctx.fill();
         ctx.fillStyle = '#f8d850'; ctx.beginPath(); ctx.moveTo(133, 0); ctx.lineTo(139, 0); ctx.lineTo(107, G.H); ctx.lineTo(101, G.H); ctx.closePath(); ctx.fill();
-        const D = G.sprites.doron.right[0], O = G.sprites[F.sprite || F.id].left[0];
+        const D = fighterPoses('doron').idle1, O = fighterPoses(F.sprite || F.id).idle1;
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(D, Math.round(-90 + e * 104), 140 - D.height * 5, D.width * 5, D.height * 5);
-        ctx.drawImage(O, Math.round(G.W + 10 - e * 104), 140 - O.height * 5, O.width * 5, O.height * 5);
+        ctx.drawImage(D, Math.round(-120 + e * 104), 140 - D.height * 5, D.width * 5, D.height * 5);
+        ctx.save(); ctx.translate(Math.round(G.W + 120 - e * 104), 0); ctx.scale(-1, 1);
+        ctx.drawImage(O, 0, 140 - O.height * 5, O.width * 5, O.height * 5);
+        ctx.restore();
         if (this.t > 14) { const w = FT().bigWidth('VS', 4); FT().drawBig(ctx, 'VS', Math.round(120 - w / 2), 56, 4, '#f8d850', '#1c1424'); }
         FT().draw(ctx, 'DORON', 8, 146, '#f8f8f0', { shadow: '#000' });
         FT().draw(ctx, F.name, G.W - 8 - FT().width(F.name), 146, '#f8f8f0', { shadow: '#000' });
@@ -7710,7 +7883,7 @@
           const lines = FT().wrap(F.intro, 120), bw = Math.max(...lines.map((l) => FT().width(l))) + 8, bh = lines.length * 9 + 4, bx = G.W - 6 - bw;
           ctx.fillStyle = '#1c1424'; ctx.fillRect(bx - 1, 5, bw + 2, bh + 2);
           ctx.fillStyle = '#f8f8f0'; ctx.fillRect(bx, 6, bw, bh);
-          lines.forEach((l, k) => FT().draw(ctx, l, bx + 4, 9 + k * 9, '#1c1424'));
+          lines.forEach((l, k2) => FT().draw(ctx, l, bx + 4, 9 + k2 * 9, '#1c1424'));
         }
       },
     };
