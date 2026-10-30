@@ -1038,37 +1038,7 @@
   S.lawBook = function* () {
     yield G.say(null, 'A giant LSAT prep book. Every page is highlighted, color-coded and tabbed.');
     yield G.say(null, 'Inside the cover, in very neat handwriting: "Property of Bismarck. Future lawyer."');
-    yield G.say('Nate', flags().churchFlyer ? 'He\'s going to be a great lawyer. He already talked me into going to church.' : 'He\'s going to be a great lawyer. He could talk anybody into anything.');
-  };
-  // ...and the flyer he pinned up in Nate's lab: he invited Nate to church
-  let flyerC = null;
-  const flyerPage = () => {
-    if (flyerC) return flyerC;
-    const c = G.canvas(G.W, G.H), x = c.getContext('2d'), INK = '#2a3a8a';
-    x.fillStyle = '#1c1424'; x.fillRect(0, 0, G.W, G.H);
-    x.fillStyle = '#0c0814'; x.fillRect(53, 9, 140, 146);
-    x.fillStyle = '#f8f4e8'; x.fillRect(50, 6, 140, 146);
-    x.fillStyle = '#c8d8f0'; for (let y = 34; y < 148; y += 12) x.fillRect(50, y, 140, 1);
-    x.fillStyle = '#e8a0a0'; x.fillRect(66, 6, 1, 146);
-    x.fillStyle = '#d83838'; x.fillRect(118, 3, 4, 4);
-    // a little church, in pen
-    x.fillStyle = INK;
-    x.fillRect(175, 12, 2, 10); x.fillRect(171, 15, 10, 2);
-    for (let k = 0; k < 9; k++) { x.fillRect(167 + k, 32 - k, 1, 1); x.fillRect(184 - k, 32 - k, 1, 1); }
-    x.fillRect(167, 32, 1, 14); x.fillRect(184, 32, 1, 14); x.fillRect(167, 46, 18, 1); x.fillRect(174, 39, 4, 7);
-    FT().drawBig(x, 'CHURCH!', 74, 14, 2, INK, '#c8d0e8');
-    ['Sunday morning.', 'You\'re coming.', 'No excuses. I\'ll save', 'you a seat.', '', '- Bismarck'].forEach((l, k) => FT().draw(x, l, 74, 51 + k * 12, INK));
-    return (flyerC = c);
-  };
-  S.churchFlyer = function* () {
-    const f = flags();
-    yield G.say(null, 'A flyer pinned to the wall, with a church drawn on it in pen.');
-    yield G.noteView([flyerPage()], 'Z: leave it up');
-    if (!f.churchFlyer) {
-      f.churchFlyer = true;
-      yield G.say('Nate', 'Bismarck invited me to church!');
-      yield G.say('Nate', 'Dad is going to be SO happy.');
-    } else yield G.say('Nate', 'Sunday. Bismarck\'s saving me a seat.');
+    yield G.say('Nate', 'He\'s going to be a great lawyer. He could talk anybody into anything.');
   };
   S.benPaper = function* () {
     const f = flags();
@@ -4562,7 +4532,6 @@
         img: G.spr.poster, tx: 5, ty: 1, dy: -2, flat: true, hit: [5, 1, 1, 1],
         talk: say('A periodic table. Nate has memorized it. Twice.', ['Nate', 'Hydrogen ion concentration... I think about pH often.']),
       });
-      w.addProp({ img: G.spr.churchFlyer, tx: 6, ty: 1, dx: 3, dy: -2, flat: true, hit: [6, 1, 1, 1], talk: S.churchFlyer });
       w.addProp({ img: G.spr.desk, tx: 7, ty: 2, solid: [7, 2, 2, 1], hit: [7, 2, 2, 1], talk: S.phone });
       w.addProp({
         img: G.spr.shelf, tx: 9, ty: 2, solid: [9, 2, 1, 1], hit: [9, 2, 1, 1],

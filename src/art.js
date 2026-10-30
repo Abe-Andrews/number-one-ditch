@@ -2345,18 +2345,6 @@
     x.fillStyle = '#f86858'; x.fillRect(7, 2, 1, 1); x.fillStyle = '#78c8f8'; x.fillRect(10, 2, 1, 1);
     return c;
   }
-  // a flyer pinned to the wall: a little church drawn in pen, and handwriting
-  function churchFlyer() {
-    const p = new Pix(10, 12);
-    p.rect(0, 0, 10, 12, '#f8f4e8'); p.vline(9, 0, 11, '#d8d0bc'); p.hline(0, 9, 11, '#d8d0bc');
-    p.set(4, 0, '#d83838'); p.set(5, 0, '#d83838');
-    const ink = '#2a3a8a';
-    p.vline(4, 1, 3, ink); p.hline(3, 5, 2, ink);
-    p.set(4, 4, ink); p.set(3, 5, ink); p.set(5, 5, ink); p.set(2, 6, ink); p.set(6, 6, ink);
-    p.vline(2, 7, 8, ink); p.vline(6, 7, 8, ink); p.hline(2, 6, 9, ink); p.set(4, 8, ink);
-    for (let x = 1; x < 8; x += 2) p.set(x, 10, '#8a90b8');
-    return p.canvas();
-  }
   // the same desk, with a copy of the campus paper spread open on it (the masthead, a photo, columns)
   function schoolDeskPaper() {
     const c = schoolDesk(), x = c.getContext('2d');
@@ -8892,7 +8880,7 @@
     S.ringLogo = ringLogo();
     S.cap = capIcon();
     S.heartBig = scale2(S.heart.full);
-    S.schoolDesk = schoolDesk(); S.schoolDeskPaper = schoolDeskPaper(); S.schoolDeskBook = schoolDeskBook(); S.churchFlyer = churchFlyer();
+    S.schoolDesk = schoolDesk(); S.schoolDeskPaper = schoolDeskPaper(); S.schoolDeskBook = schoolDeskBook();
     S.bouquet = bouquet();
     // home
     S.truck = truck();
