@@ -235,7 +235,6 @@
     { id: 'pipes', name: 'Dad\'s Pipes', icon: 'pipe', count: () => [G.pipesMadeCount(), G.PIPES.length], blurb: 'Pipes you turned on Dad\'s lathe and finished with him in the workshop. Pick one and Dad\'s Pipe looks just like it.' },
     { id: 'tins', name: 'Tobacco', icon: 'tin', count: () => [G.tinsMadeCount(), G.TOBACCOS.length], blurb: 'The tobaccos from Dad\'s pipe journal, blended with him in the workshop. Pack one in Dad\'s Pipe and the smoke comes out its color.' },
     { id: 'instruments', name: 'Instruments', icon: 'guitar', count: () => [G.instrumentsCount(), G.INSTRUMENTS.length], blurb: 'Nate\'s instruments: the ones he builds, and the ones he earns jamming with Abe. More to come.' },
-    { id: 'hats', name: 'Baby Hats', icon: 'knit', count: () => [G.hatsCount(), G.HATS.length], blurb: 'Knitted hats for the NICU babies, earned on Hannah\'s shifts with Charge Nurse Dot. The babies wear the ones you\'ve got.' },
   ];
   // the pipes page also has the one Dad gave Nate, first
   const benchList = (coll) => (coll === 'pipes' ? [{ id: 'dad', dad: true, name: 'Dad\'s Pipe', kind: 'The one Dad gave you. Hand-carved in his workshop.' }].concat(G.PIPES) : G.TOBACCOS);
@@ -271,7 +270,6 @@
     photo: ['kkkkkkkkk', 'kwwwwwwwk', 'kwllllwwk', 'kwlsslllk', 'kwlsslllk', 'kwlnnnllk', 'kwnnnnnwk', 'kwwwwwwwk', 'kkkkkkkkk'],
     pipe: ['.........', '....kkkkk', '....kbbbk', '....kbbbk', 'kkkkkbbbk', 'GGGGkbbbk', 'kkkkkbbbk', '.....kkk.', '.........'],
     tin: ['.........', '..kkkkk..', '.kyyyyyk.', 'kyrrrrryk', 'kyrwwwryk', 'kyrrrrryk', 'kkyyyyykk', 'kokkkkkok', '.kkkkkkk.'],
-    knit: ['....w....', '...www...', '..kkkkk..', '.krwrwrk.', 'krrrrrrrk', 'kwrwrwrwk', 'krrrrrrrk', 'kwwwwwwwk', '.kkkkkkk.'],
     guitar: ['......kk.', '.....kbk.', '....kbk..', '...kbk...', '.kkvbk...', 'kvvwvk...', 'kvwvvk...', '.kvvk....', '..kk.....'],
   };
   const iconCache = {};
@@ -632,12 +630,6 @@
           const it = G.INSTRUMENTS[this.sel];
           if (it && G.instrumentHas(it.id)) { this.instView = it; G.audio.sfx('select'); this.strum = it.chord ? it.chord.slice() : null; } else G.audio.sfx('bump');
         }
-      } else if (this.tab === COLL_TAB && this.coll === 'hats') {
-        const n = G.HATS.length, col = this.sel % 3, row = Math.floor(this.sel / 3);
-        if (inp.hit('left') && col > 0) this.move(-1, n);
-        if (inp.hit('right') && col < 2) this.move(1, n);
-        if (inp.hit('down') && this.sel + 3 < n) this.move(3, n);
-        if (inp.hit('up')) { if (row > 0) this.move(-3, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
       } else if (this.tab === COLL_TAB && (this.coll === 'pipes' || this.coll === 'tins')) {
         // DAD'S PIPES / TOBACCO: Z puts one to use (Z on the tobacco that's in empties the pipe)
         const list = benchList(this.coll), n = list.length, col = this.sel % 3, row = Math.floor(this.sel / 3);
@@ -1114,7 +1106,6 @@
       else if (this.coll === 'photos') this.drawPhotos(ctx);
       else if (this.coll === 'pipes' || this.coll === 'tins') this.drawBench(ctx);
       else if (this.coll === 'instruments') this.drawInstruments(ctx);
-      else if (this.coll === 'hats') this.drawHats(ctx);
       else this.drawCollectList(ctx);
       if (this.photoView) ctx.drawImage(G.photoPage(this.photoView), 0, 0);
       if (this.instView) ctx.drawImage(G.instrumentPage(this.instView), 0, 0);
@@ -1213,26 +1204,6 @@
       const playing = it.song && G.guitarNow() === it, room = playing ? 120 : 132;
       F().wrap(it.blurb, 104).forEach((l, k) => { if (top + k * 9 <= room) TXT(ctx, l, 125, top + k * 9, C.soft); });
       if (playing) TXT(ctx, '★ Nate plays this one', 125, 132, C.gold);
-    }
-
-    // ---- BABY HATS (earned on Hannah's shifts in the NICU): the hat, and how to get it
-    drawHats(ctx) {
-      const list = G.HATS;
-      card(ctx, 5, 21, 112, 121, 'BABY HATS', C.gold, G.sayable(G.hatsCount()) + '/' + G.sayable(list.length));
-      list.forEach((h, i) => {
-        const x = 9 + (i % 3) * 35, y = 37 + Math.floor(i / 3) * 40, sel = i === this.sel && !this.onTabs, img = G.spr.knitHats[h.id], has = G.hatHas(h.id);
-        slot(ctx, x, y, 34, 38, has ? C.pink : undefined);
-        ctx.drawImage(has ? img : silhouette(img), x + 1, y + 6, img.width * 2, img.height * 2);
-        if (sel) brackets(ctx, x - 1, y - 1, 36, 40);
-      });
-      const h = list[this.sel];
-      card(ctx, 120, 21, 115, 121);
-      if (!h) return;
-      const img = G.spr.knitHats[h.id], has = G.hatHas(h.id);
-      ctx.drawImage(has ? img : silhouette(img), 177 - img.width * 1.5, 28, img.width * 3, img.height * 3);
-      TXT(ctx, has ? h.name : '???', 125, 72, C.cyan);
-      F().wrap(has ? 'Knitted for the NICU babies. They wear it on Hannah\'s shift.' : h.how, 104).slice(0, 4).forEach((l, k) => TXT(ctx, l, 125, 84 + k * 9, has ? C.soft : C.dim));
-      if (has) F().wrap('Earned: ' + h.how, 104).slice(0, 2).forEach((l, k) => TXT(ctx, l, 125, 116 + k * 9, C.dim));
     }
 
     // ---- PHOTOS: thumbnails on the left, the one you're on at the right

@@ -51,6 +51,9 @@
       if (f.ticket_Devin && !f.ticket_Ben) f.ticket_Ben = f.ticket_Devin;
       // ...and from before beating Nani came with the BMF belt
       if (s.fights && s.fights.nani) s.items.bmf = true;
+      // ...and from the first Hannah's shift (?v=182), which kept grades and knitted hats
+      if (s.nicu) for (const k in s.nicu) if (typeof s.nicu[k] !== 'object') delete s.nicu[k];
+      delete s.hats;
       s.slot = n;
       return s;
     } catch (e) { return null; }

@@ -8662,28 +8662,6 @@
     p.outline();
     return p.canvas();
   }
-  // knitted baby hats (Hannah's NICU shifts): a ribbed brim and a knit crown, each its own pattern
-  function knitHat(kind) {
-    const p = new Pix(16, 13);
-    const C = { stripe: ['#8ab8e8', '#f4f4f0'], pompom: ['#d83848', '#f4f4f0'], bear: ['#8a5a38', '#c89068'], strawberry: ['#e83848', '#f8e070'], pumpkin: ['#f08a28', '#5aa040'], heart: ['#f4a8c8', '#d8386a'] }[kind];
-    const [a, b] = C, ad = shade(a, -0.25);
-    for (let y = 3; y < 13; y++) for (let x = 1; x < 15; x++) if (((x - 7.5) / 7) ** 2 + ((y - 12) / 9) ** 2 <= 1) {
-      let col = a;
-      if (kind === 'stripe') col = Math.floor(y / 2) % 2 ? a : b;
-      if (kind === 'strawberry' && (x * 3 + y * 5) % 7 === 0) col = b;
-      if (kind === 'pumpkin' && (x === 5 || x === 10)) col = ad;
-      p.set(x, y, x < 4 ? shade(col, 0.15) : col);
-    }
-    for (let x = 1; x < 15; x++) p.set(x, 11, x % 2 ? ad : a);
-    p.hline(1, 14, 12, ad);
-    if (kind === 'pompom') { p.rect(6, 0, 4, 3, b); p.set(6, 0, '#d8d8d0'); }
-    if (kind === 'bear') { p.rect(2, 2, 3, 3, a); p.set(3, 3, b); p.rect(11, 2, 3, 3, a); p.set(12, 3, b); }
-    if (kind === 'strawberry') { p.hline(5, 10, 3, '#5aa040'); p.set(7, 1, '#5aa040'); p.set(7, 2, '#5aa040'); p.set(8, 2, '#3a8030'); }
-    if (kind === 'pumpkin') { p.rect(7, 1, 2, 3, b); p.set(9, 1, b); }
-    if (kind === 'heart') { p.set(6, 6, b); p.set(9, 6, b); p.hline(5, 10, 7, b); p.hline(6, 9, 8, b); p.hline(7, 8, 9, b); p.set(7, 2, a); p.rect(7, 1, 2, 2, b); }
-    p.outline();
-    return p.canvas();
-  }
   // the BMF belt (Nani's, then Doron's): a black strap and a big silver plate with BMF on it
   function bmfIcon() {
     const p = new Pix(18, 11);
@@ -9093,7 +9071,7 @@
     S.goldenEgg = [goldenEgg(false), goldenEgg(true)]; S.egglet = { right: [egglet(0), egglet(1)] }; S.egglet.left = S.egglet.right.map(mirror);
     S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
-    S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon(); S.bmfIcon = bmfIcon(); S.knitHats = {}; for (const k of ['stripe', 'pompom', 'bear', 'strawberry', 'pumpkin', 'heart']) S.knitHats[k] = knitHat(k);
+    S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon(); S.bmfIcon = bmfIcon();
     S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe();
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);

@@ -651,9 +651,9 @@
       else add('Doron\'s fight night', FS.nani && 'BMF!', 'A secret challenger is waiting', 'Easton Fair - the Expo Hall', 'Someone in a knit sweater is waiting in the Expo Hall locker room. Nani has some notes.');
     }
     if (f.mobileBeaten && s.party.includes('hannah')) {
-      const nh = G.hatsCount();
+      const N = s.nicu || {}, ns = ['shift1', 'shift2', 'shift3'].reduce((t, k) => t + ((N[k] && N[k].stars) || 0), 0);
       if (!f.nicuMet) side.push({ name: 'Charge Nurse Dot', status: 'Hannah is late!', kind: 'rumor', where: 'CHKD - the NICU', hint: 'Hannah\'s charge nurse is back on the floor in the NICU, and she\'s looking for Hannah.' });
-      else add('Hannah\'s shift', nh >= G.HATS.length && 'All hats!', G.sayable(nh) + '/' + G.sayable(G.HATS.length) + ' baby hats', 'CHKD - the NICU', 'Talk to Charge Nurse Dot in the NICU with Hannah along. Take care of the babies to earn their knitted hats.', [nh, G.HATS.length]);
+      else add('Hannah\'s shift', ns >= 9 && 'Every star!', G.sayable(ns) + '/' + G.sayable(9) + ' stars', 'CHKD - the NICU', 'Talk to Charge Nurse Dot in the NICU with Hannah along, and run the NICU as Hannah. Three shifts, three stars each.', [ns, 9]);
     }
     if (G.homeDone() && !f.pipeBench) side.push({ name: 'Dad\'s workshop', status: 'Dad has something to show you', kind: 'rumor', where: 'Home', hint: 'Things are finally quiet at home. Dad wants you in his workshop.' });
     if (f.pipeBench) {
@@ -3551,8 +3551,7 @@
     s.tinsMade = {}; for (const t of G.TOBACCOS) s.tinsMade[t.id] = { stars: 3 };
     s.instruments = {}; for (const it of G.INSTRUMENTS) s.instruments[it.id] = true;
     s.fights = {}; for (const F of G.FIGHTERS) s.fights[F.id] = true;
-    s.hats = {}; for (const h of G.HATS) s.hats[h.id] = true;
-    s.nicu = { care: 3, shift1: 3, shift2: 3, shift3: 3 };
+    s.nicu = { shift1: { stars: 3, best: 300 }, shift2: { stars: 3, best: 420 }, shift3: { stars: 3, best: 540 } };
   };
 
   // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)
@@ -12652,100 +12651,65 @@
   };
   // ================================================================ HANNAH'S SHIFT (the NICU minigame)
   // After MECHA-BABY, Hannah's charge nurse (Charge Nurse Dot, an original character) is back on the
-  // floor in the NICU. Talk to her with Hannah along and you play as Hannah: quick NICU care tasks,
-  // each graded PERFECT / GOOD / OOPS. Care Time: one baby, all six tasks in a row (a tip before
-  // each one the first time). Shifts 1-3: a room of isolettes (4, 5, then 6 babies with twins),
-  // every baby popping up its own needs on its own timer, all at once; pick a baby (arrows, Z) and
-  // do its task while the others keep waiting. Stars at the end of a shift. Knitted baby hats are
-  // the prize (COLLECTABLES > Baby Hats), and the babies wear the ones you've earned.
-  // The six tasks: feed (tilt the bottle, keep the flow in the green), diaper (the steps, in
-  // order, wiping front to back), swaddle (hold each fold, let go in the green), temp (keep the
-  // baby's temperature between 36.5 and 37.5 C), monitor (put the leads back: "white on the right,
-  // smoke over fire", the real mnemonic; then the pulse ox on the foot), soothe (rock on the beat).
-  // State: s.nicu ({ care: best grade 0-3, shift1..3: best stars }), s.hats ({ id: true}).
-  // Flags: nicuMet, nicuHow_<task>.
-  G.HATS = [
-    { id: 'stripe', name: 'Blue Stripes', how: 'Finish a Care Time.' },
-    { id: 'pompom', name: 'Red Pom-Pom', how: 'Get through Shift 1.' },
-    { id: 'bear', name: 'Little Bear', how: 'Get through Shift 2.' },
-    { id: 'strawberry', name: 'Strawberry', how: 'Get through Shift 3 (the twins!).' },
-    { id: 'pumpkin', name: 'Pumpkin', how: 'Three stars on every shift.' },
-    { id: 'heart', name: 'Hannah\'s Heart', how: 'A Care Time with every task PERFECT.' },
-  ];
-  const hatState = () => (G.state.hats = G.state.hats || {});
-  G.hatHas = (id) => !!hatState()[id];
-  G.hatsCount = () => G.HATS.filter((h) => G.hatHas(h.id)).length;
+  // floor in the NICU. Talk to her with Hannah along and you ARE Hannah, running a NICU room against
+  // the clock, kitchen-rush style: the babies in their isolettes call for things (a bubble with a
+  // timer), and Hannah runs for the supplies and gets it done before the timer runs out.
+  // Arrows run, X dashes, Z picks up / puts down, HOLD Z does the job (feed, change, swaddle, put the
+  // leads back on, wash up, rock). What the babies need:
+  //   feed: a bottle from the fridge, into the bottle warmer (warm after 3 seconds, too hot 8 seconds
+  //     after that: bin it), then hold Z at the baby
+  //   diaper: a clean one from the shelf, hold Z at the baby, the dirty one in the bin, then hold Z at
+  //     the sink (dirty hands can't touch a baby, an isolette or anything clean)
+  //   cold: tap Z at the isolette to turn its heat up
+  //   swaddle (Shift 2 on): a warm blanket from the blanket warmer
+  //   leads (Shift 2 on): the monitor's beeping; lead stickers from the cart
+  //   cry (Shift 3): pick the baby up, rock them in the glider, put them back in their own isolette
+  // Any counter holds whatever you set on it. Points for every baby looked after (more for being
+  // quick); a need that runs out costs 10, and 5 more every 8 seconds it keeps waiting. Stars for
+  // the score. Three shifts, each opening once the one before has a star; Shift 3 has twins (who want
+  // the same thing at the same time) and Dot doing her rounds, right through the middle of the room.
+  // State: s.nicu ({ shift1..3: { stars, best } }). Flags: nicuMet, nicuHow_<shift>.
   const nicuState = () => (G.state.nicu = G.state.nicu || {});
+  const NT = 16, NOY = 16; // the room's tiles, and its top (under the HUD bar)
+  const WARM = 180, HOT = 660; // a bottle in the warmer: warm, then too hot
+  const NICU_NAMES = ['PEANUT', 'BEAN', 'WAFFLES', 'PICKLE', 'NOODLE', 'BISCUIT'];
+  const NICU_SUPPLY = { F: 'bottle', D: 'diaper', B: 'blanket', L: 'leads' };
+  const NICU_NEEDS = {
+    feed: { pts: 25, w: 3, item: 'bottle', hold: 80, ask: 'is hungry. Warm up a bottle.' },
+    diaper: { pts: 25, w: 3, item: 'diaper', hold: 70, ask: 'needs a clean diaper.' },
+    cold: { pts: 10, w: 1, ask: 'is cold.' },
+    swaddle: { pts: 20, w: 2, item: 'blanket', hold: 60, ask: 'kicked loose. Bring a warm blanket.' },
+    leads: { pts: 20, w: 2, item: 'leads', hold: 50, ask: 'pulled a lead off. Bring stickers.' },
+    cry: { pts: 30, w: 1, ask: 'is crying.' },
+  };
+  const DIRTY = 'Hands, Hannah! Wash them at the sink.';
+  // The rooms (15x8 tiles): c counter, F milk fridge, W bottle warmer, D diapers, B blanket warmer,
+  // L lead stickers, S sink, T diaper pail, G glider, I/i an isolette (2x2), . floor.
   const NICU_SHIFTS = [
-    { id: 'shift1', name: 'SHIFT 1', babies: 4, secs: 70, patience: 900, every: [320, 660], hat: 'pompom' },
-    { id: 'shift2', name: 'SHIFT 2', babies: 5, secs: 85, patience: 820, every: [300, 620], hat: 'bear' },
-    { id: 'shift3', name: 'SHIFT 3', babies: 6, secs: 100, patience: 760, every: [300, 600], hat: 'strawberry', twins: true },
+    {
+      id: 'shift1', name: 'SHIFT 1', title: 'DAY SHIFT', secs: 120, patience: 35, every: [300, 660], needs: ['feed', 'diaper', 'cold'], stars: [140, 260, 380],
+      blurb: 'Three babies. Bottles, diapers and cold babies. Learn the room.',
+      map: ['cFWccccccccccDc', 'c.............c', 'c..Ii..Ii..Ii.c', 'c..ii..ii..ii.c', 'c.............c', 'c.............T', 'c.............c', 'ccccccSSccccccc'],
+      how: [
+        ['HANNAH\'S SHIFT', ['You\'re Hannah. Arrows run, X dashes. Z picks things up and puts them down. HOLD Z to do the job.', 'A baby who needs something shows it in a bubble, with a timer under it. Get there before it runs out!', 'Any counter holds whatever you set on it. Enter ends the shift early.']],
+        ['BOTTLES AND DIAPERS', ['HUNGRY: a bottle from the FRIDGE, into the BOTTLE WARMER until it dings, then hold Z at the baby. Leave it too long and it\'s too hot: bin it.', 'DIAPER: a clean one from the SHELF, hold Z at the baby, toss the dirty one in the PAIL, then hold Z at the SINK. Dirty hands can\'t touch anything.', 'COLD: just tap Z at the isolette.']],
+      ],
+    },
+    {
+      id: 'shift2', name: 'SHIFT 2', title: 'EVENING SHIFT', secs: 150, patience: 38, every: [360, 760], needs: ['feed', 'diaper', 'cold', 'swaddle', 'leads'], stars: [210, 400, 580],
+      blurb: 'Four babies, two bottle warmers, and two new jobs: swaddling and the monitor leads.',
+      map: ['cFWWcccBcccLcDc', 'c.............c', 'c...Ii...Ii...c', 'c...ii...ii...c', 'c.............c', 'c...Ii...Ii...T', 'c...ii...ii...c', 'cccccccSScccccc'],
+      how: [['SWADDLES AND LEADS', ['KICKED LOOSE: a warm blanket from the BLANKET WARMER, then hold Z at the baby.', 'MONITOR BEEPING: a lead came off. Grab lead stickers from the CART, then hold Z at the baby.']]],
+    },
+    {
+      id: 'shift3', name: 'SHIFT 3', title: 'NIGHT SHIFT', secs: 180, patience: 36, every: [340, 720], needs: ['feed', 'diaper', 'cold', 'swaddle', 'leads', 'cry'], stars: [290, 520, 760], twins: true, dot: [[1, 1], [13, 1], [13, 4], [1, 4]],
+      blurb: 'Five babies, including TWINS, a glider for crying babies, and Dot doing her rounds.',
+      map: ['cFWWcBcccLcDcTc', 'c.............c', 'c.Ii..Ii..Ii..c', 'c.ii..ii..ii..c', 'c.............c', 'G...Ii...Ii...c', 'c...ii...ii...c', 'ccccccSSccccccc'],
+      how: [['CRYING BABIES', ['CRYING: pick the baby up (tap Z), carry them to the GLIDER and hold Z to rock them, then put them back in their OWN isolette.', 'The TWINS want the same thing at the same time. Always.', 'And Dot is doing her rounds. Don\'t run into Dot.']]],
+    },
   ];
-  const BABY_NAMES = ['PEANUT', 'BEAN', 'WAFFLES', 'PICKLE', 'NOODLE', 'BISCUIT'];
-  const NICU_TASKS = {
-    feed: { name: 'FEEDING', need: 'Hungry', how: ['Hold ↑ and ↓ to tilt the bottle.', 'Keep the flow needle in the GREEN. Too fast and the baby sputters; too slow and the baby fusses.'] },
-    diaper: { name: 'DIAPER CHANGE', need: 'Wet diaper', how: ['Press the key each step shows, in order: open both tabs, wipe (↓ three times: front to back!), Z for a fresh diaper, then fasten both tabs.', 'Wrong key = OOPS. Quick is good, but right is better.'] },
-    swaddle: { name: 'SWADDLING', need: 'Kicked loose', how: ['Three folds: ↓, then ←, then →.', 'Hold the key to pull the fold snug, and let go when the bar is in the GREEN. Too loose and it falls open; too tight and the baby can\'t wiggle.'] },
-    temp: { name: 'TEMPERATURE', need: 'Too cold or warm', how: ['Babies this small can\'t keep themselves warm. The isolette does it for them.', 'Hold ↑ and ↓ to turn the heater up and down. Keep the baby between 36.5 and 37.5 degrees (C).'] },
-    monitor: { name: 'MONITOR ALARM', need: 'Monitor beeping', how: ['A lead came loose. Put each one back where it goes: ← baby\'s right shoulder, → baby\'s left shoulder, ↓ baby\'s left belly.', '"White on the right, smoke over fire": WHITE on the right, BLACK (smoke) above RED (fire). The baby\'s right is YOUR left!', 'Then Z: the pulse ox goes on the foot.'] },
-    soothe: { name: 'SOOTHING', need: 'Crying', how: ['Rock the baby: press ← when the marker reaches the left end, → at the right end.', 'Right on the beat is PERFECT. The baby calms down as you go.'] },
-  };
-  const GRADE = (sc) => (sc >= 0.85 ? 'PERFECT' : sc >= 0.6 ? 'GOOD' : 'OOPS');
-  const DOT_SAYS = {
-    PERFECT: ['Textbook, Hannah.', 'That\'s how it\'s done.', 'Perfect. Don\'t let it go to your head.'],
-    GOOD: ['Good. Again, a little faster.', 'Fine work. Not perfect. Fine.', 'Good. I\'ve seen you do better.'],
-    OOPS: ['We\'ll talk about that one later.', 'Hannah. HANNAH.', 'Deep breath. Next one.'],
-  };
-  const dotLine = (g) => DOT_SAYS[g][Math.floor(Math.random() * 3)];
 
-  // ---- drawing helpers: a pixel-ish circle, a baby's face in a knitted hat, the need icons
-  const disc = (ctx, cx, cy, r, col) => { ctx.fillStyle = col; for (let y = -r; y <= r; y++) { const w = Math.round(Math.sqrt(r * r - y * y)); ctx.fillRect(Math.round(cx - w), Math.round(cy + y), w * 2 + 1, 1); } };
-  function drawBaby(ctx, cx, cy, r, o = {}) {
-    // the swaddle (or just the onesie), then the head, the hat, and the face for its mood
-    if (o.body !== false) { disc(ctx, cx, cy + r * 1.35, Math.round(r * 0.95), o.blanket || '#cfe0f4'); ctx.fillStyle = 'rgba(0,0,0,0.08)'; ctx.fillRect(cx - r, cy + r * 1.35, r * 2, 2); }
-    disc(ctx, cx, cy, r, '#2a1c24');
-    disc(ctx, cx, cy, r - 1, o.skin || '#f6d2bc');
-    const hat = o.hat && G.spr.knitHats[o.hat];
-    // (the dome as wide as the head, its crown at the top of the head, the brim just above the
-    // eyes; the tiny ones in the shift's room are just shrunk)
-    if (hat) {
-      ctx.imageSmoothingEnabled = false;
-      const kx = r < 10 ? (r * 2.1) / 16 : r / 7, ky = r < 10 ? kx : r / 10, top = r < 10 ? cy - r * 1.25 : cy + r * 0.05 - hat.height * ky;
-      ctx.drawImage(hat, Math.round(cx - (hat.width * kx) / 2), Math.round(top), Math.round(hat.width * kx), Math.round(hat.height * ky));
-    }
-    else {
-      // a plain hospital cap: the top of the head, with a rolled brim
-      ctx.fillStyle = o.cap || '#8ab8e8';
-      for (let y = -r; y <= -r * 0.3; y++) { const w = Math.round(Math.sqrt(r * r - y * y)); ctx.fillRect(Math.round(cx - w), Math.round(cy + y), w * 2 + 1, 1); }
-      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(Math.round(cx - r * 0.95), Math.round(cy - r * 0.42), Math.round(r * 1.9), Math.max(1, Math.round(r * 0.14)));
-    }
-    const ey = Math.round(cy + r * 0.12), ex = Math.round(r * 0.38), m = o.mood || 'calm';
-    ctx.fillStyle = '#2a1c24';
-    if (m === 'cry') {
-      ctx.fillRect(cx - ex - 2, ey, 5, 1); ctx.fillRect(cx + ex - 2, ey, 5, 1);
-      disc(ctx, cx, Math.round(cy + r * 0.5), Math.max(2, Math.round(r * 0.22)), '#6a1a2a');
-      ctx.fillStyle = '#8ac8f8'; ctx.fillRect(cx - ex - 1, ey + 2, 2, 3); ctx.fillRect(cx + ex, ey + 2, 2, 3);
-    } else if (m === 'suck') {
-      ctx.fillRect(cx - ex - 2, ey, 5, 1); ctx.fillRect(cx + ex - 2, ey, 5, 1);
-      disc(ctx, cx, Math.round(cy + r * 0.48), Math.max(1, Math.round(r * 0.12)), '#d87888');
-    } else {
-      // closed, content eyes (little arcs) and a small smile
-      ctx.fillRect(cx - ex - 2, ey + 1, 1, 1); ctx.fillRect(cx - ex - 1, ey, 3, 1); ctx.fillRect(cx - ex + 2, ey + 1, 1, 1);
-      ctx.fillRect(cx + ex - 2, ey + 1, 1, 1); ctx.fillRect(cx + ex - 1, ey, 3, 1); ctx.fillRect(cx + ex + 2, ey + 1, 1, 1);
-      ctx.fillRect(cx - 1, Math.round(cy + r * 0.45), 3, 1);
-    }
-    ctx.fillStyle = '#f4a8b0'; ctx.fillRect(Math.round(cx - r * 0.7), Math.round(cy + r * 0.3), 3, 2); ctx.fillRect(Math.round(cx + r * 0.7) - 2, Math.round(cy + r * 0.3), 3, 2);
-  }
-  // a little icon for each need (in a thought bubble over the isolette)
-  function needIcon(ctx, kind, x, y) {
-    const R = (c, X, Y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x + X, y + Y, w, h); };
-    if (kind === 'feed') { R('#f4f4f0', 3, 3, 5, 7); R('#f8e8b8', 3, 6, 5, 4); R('#f4a8c8', 4, 0, 3, 3); }
-    else if (kind === 'diaper') { R('#f4f4f0', 1, 3, 9, 5); R('#8ac8f8', 1, 3, 2, 2); R('#8ac8f8', 8, 3, 2, 2); R('#f4f4f0', 3, 8, 5, 2); }
-    else if (kind === 'swaddle') { R('#cfe0f4', 1, 2, 9, 8); R('#f6d2bc', 3, 1, 5, 3); R('#8ab8e8', 1, 6, 9, 1); }
-    else if (kind === 'temp') { R('#f4f4f0', 4, 0, 3, 8); R('#d83838', 5, 3, 1, 5); R('#d83838', 3, 7, 5, 3); }
-    else if (kind === 'monitor') { R('#1c2a24', 0, 1, 11, 9); R('#78e070', 1, 5, 3, 1); R('#78e070', 4, 2, 1, 4); R('#78e070', 5, 6, 1, 2); R('#78e070', 6, 5, 4, 1); }
-    else { R('#8ac8f8', 2, 2, 2, 4); R('#8ac8f8', 7, 2, 2, 4); R('#8ac8f8', 2, 7, 7, 2); }
-  }
+  // ---- drawing: the NICU background (menus and HOW TO cards), the need icons, items, a bar
   const nicuBack = (ctx, title, sub) => {
     ctx.fillStyle = '#e8f0f4'; ctx.fillRect(0, 0, G.W, G.H);
     ctx.fillStyle = '#d8e6ee'; for (let y = 14; y < G.H; y += 16) ctx.fillRect(0, y, G.W, 1);
@@ -12753,443 +12717,423 @@
     FT().draw(ctx, title, 4, 2, '#f8f8f0', { shadow: '#1c2a3a' });
     if (sub) FT().draw(ctx, sub, G.W - 4 - FT().width(sub), 2, '#d8eef8', { shadow: '#1c2a3a' });
   };
-  const keyCap = (ctx, k, x, y, lit) => {
-    const w = Math.max(14, FT().width(k) + 6);
-    ctx.fillStyle = lit ? '#f8d850' : '#1c2a3a'; ctx.fillRect(x, y, w, 13);
-    ctx.fillStyle = lit ? '#fff4b0' : '#f8f8f0'; ctx.fillRect(x + 1, y + 1, w - 2, 11);
-    FT().draw(ctx, k, x + Math.round((w - FT().width(k)) / 2), y + 3, '#1c2a3a');
-    return w;
+  // an 11x11 icon for each need (in the bubble over the isolette): a bottle, a diaper, a snowflake,
+  // a blanket, the monitor beeping, a crying face
+  const NEED_ART = {
+    feed: ['....ppp....', '...ppppp...', '...kkkkk...', '..kwwwwwk..', '..kwmmmwk..', '..kwmmmwk..', '..kwmmmwk..', '..kwmmmwk..', '..kwmmmwk..', '..kwwwwwk..', '...kkkkk...'],
+    diaper: ['...........', 'kkkkkkkkkkk', 'kbbbbbbbbbk', 'kwwwwwwwwwk', 'kbwwwwwwwbk', 'kwwwwwwwwwk', '.kwwwwwwwk.', '..kwwwwwk..', '...kwwwk...', '....kkk....', '...........'],
+    cold: ['.....c.....', '..c..c..c..', '...c.c.c...', '....ccc....', '.cccccccccc', '....ccc....', '...c.c.c...', '..c..c..c..', '.....c.....', '...........', '...........'],
+    swaddle: ['...........', 'kkkkkkkkkkk', 'klllllllllk', 'kpppppppppk', 'klllllllllk', 'klllllllllk', 'kpppppppppk', 'klllllllllk', 'kkkkkkkkkkk', '...........', '...........'],
+    leads: ['kkkkkkkkkkk', 'kdddddddddk', 'kdddddrdddk', 'kddddrdrddk', 'krrrrdddrrk', 'kdddddddddk', 'kkkkkkkkkkk', '....kkk....', '...........', '...........', '...........'],
+    cry: ['..kkkkkkk..', '.ksssssssk.', 'kskkssskksk', 'ktssssssstk', 'ktssrrrsstk', 'ktsrrrrrstk', '.ksssssssk.', '..kkkkkkk..', '...........', '...........', '...........'],
   };
+  const NEED_PAL = { k: '#2a3440', w: '#f8f8f4', b: '#8ac8f8', p: '#f4a8c8', m: '#f8e0a0', c: '#3a88d8', l: '#a8c8f0', d: '#1c2a24', r: '#f84848', s: '#f6d2bc', t: '#5ab8f0' };
+  function needIcon(ctx, kind, x, y) {
+    const art = NEED_ART[kind], dy = kind === 'leads' || kind === 'cry' ? 2 : kind === 'cold' || kind === 'swaddle' ? 1 : 0;
+    art.forEach((row, j) => [...row].forEach((c, i) => { if (c !== '.') { ctx.fillStyle = NEED_PAL[c]; ctx.fillRect(x + i, y + j + dy, 1, 1); } }));
+  }
+  // the things Hannah carries (10x10)
+  function nicuItem(ctx, it, x, y, t) {
+    const R = (c, X, Y, w, h) => { ctx.fillStyle = c; ctx.fillRect(Math.round(x + X), Math.round(y + Y), w, h); };
+    if (it.kind === 'bottle') {
+      const hot = it.heat >= HOT, warm = it.heat >= WARM;
+      R('#7a8696', 2, 2, 6, 8); R(hot ? '#f86858' : warm ? '#f8e8b0' : '#dfeefa', 3, 4, 4, 5); R('#f4f4f0', 3, 3, 4, 1); R('#c8ccd4', 2, 2, 6, 1); R('#f4a8c8', 3, 0, 4, 2);
+      if (hot && (t >> 3) & 1) { R('#c8ccd4', 1, -3, 1, 2); R('#c8ccd4', 5, -4, 1, 2); R('#c8ccd4', 8, -3, 1, 2); }
+    } else if (it.kind === 'diaper' || it.kind === 'dirty') {
+      const d = it.kind === 'dirty';
+      R('#7a8696', 0, 2, 10, 7); R(d ? '#e8dca8' : '#f8f8f4', 1, 3, 8, 5); R(d ? '#c8b070' : '#8ac8f8', 0, 3, 2, 2); R(d ? '#c8b070' : '#8ac8f8', 8, 3, 2, 2);
+      if (d) { R('#a87838', 3, 5, 3, 2); const k = (t >> 3) & 1; R('#78b048', 2, -2 - k, 1, 2); R('#78b048', 7, -3 + k, 1, 2); }
+    } else if (it.kind === 'blanket') { R('#7a8696', 0, 2, 10, 8); R('#a8c8f0', 1, 3, 8, 6); R('#f4a8c8', 1, 5, 8, 1); R('#f8f8f4', 1, 3, 8, 1); }
+    else if (it.kind === 'leads') { R('#7a8696', 0, 2, 10, 7); R('#f4f4f0', 1, 3, 8, 5); R('#c8c8c8', 2, 4, 2, 2); R('#2a2a30', 4, 4, 2, 2); R('#d83838', 6, 4, 2, 2); }
+    else if (it.kind === 'baby') {
+      const b = it.baby;
+      R('#7a8696', 0, 1, 10, 10); R('#a8c8f0', 1, 2, 8, 8); R('#f6d2bc', 3, 2, 4, 4); R(b.cap, 3, 1, 4, 2); R('#2a1c24', 3, 4, 1, 1); R('#2a1c24', 6, 4, 1, 1);
+      if (!b.rocked && (t >> 3) & 1) { R('#8ac8f8', 2, 5, 1, 2); R('#8ac8f8', 7, 5, 1, 2); }
+    }
+  }
   const bar = (ctx, x, y, w, h, k, col, back) => { ctx.fillStyle = back || '#1c2a3a'; ctx.fillRect(x, y, w, h); ctx.fillStyle = col; ctx.fillRect(x + 1, y + 1, Math.round((w - 2) * Math.max(0, Math.min(1, k))), h - 2); };
+  // a big pixel star (9x9 at 2x), gold if earned
+  const STAR = ['....#....', '....#....', '...###...', '#########', '.#######.', '..#####..', '..##.##..', '.##...##.', '.#.....#.'];
+  const bigStar = (ctx, x, y, got) => STAR.forEach((row, j) => [...row].forEach((c, i) => {
+    if (c !== '#') return;
+    ctx.fillStyle = '#1c2a3a'; ctx.fillRect(x + i * 2 + 1, y + j * 2 + 1, 2, 2);
+    ctx.fillStyle = got ? (j < 3 ? '#fce890' : '#f8a020') : '#c8d0d8'; ctx.fillRect(x + i * 2, y + j * 2, 2, 2);
+  }));
+  const starRow = (ctx, n, cx, y) => { const w = FT().width('★★★'); FT().draw(ctx, '★'.repeat(n), cx - Math.round(w / 2), y, '#f8a020', { shadow: '#1c2a3a' }); FT().draw(ctx, '★'.repeat(3 - n), cx - Math.round(w / 2) + FT().width('★'.repeat(n)), y, '#b8c4d0', { shadow: '#1c2a3a' }); };
 
-  // ---- one care task. o: { quick (a shift's shorter version), baby: { name, hat, cap }, cold (the
-  // temp task starts cold, else warm), others (for the shift: the other babies' status strip) }.
-  // Result: { score 0-1, grade }.
-  function nicuTaskCmd(kind, o = {}) {
-    const q = o.quick, b = o.baby || {};
-    return {
-      start() {
-        Object.assign(this, { t: 0, done: 0, score: 0, inBand: 0, mistakes: 0, step: 0, stepT: 0, folds: [], fold: 0, hold: 0, lead: 0, leads: null, beats: [], swing: 0, shake: 0, msg: null });
-        if (kind === 'feed') { this.dur = q ? 180 : 300; this.angle = 0.2; this.center = 0.5; this.band = q ? 0.11 : 0.13; }
-        if (kind === 'temp') { this.dur = q ? 180 : 300; this.temp = o.cold === false ? (q ? 37.9 : 38.0) : q ? 36.1 : 35.9; this.heat = 0.5; }
-        if (kind === 'diaper') this.steps = [['left', 'Open the left tab'], ['right', 'Open the right tab'], ['down', 'Wipe front to back'], ['down', 'Wipe again'], ['down', 'One more wipe'], ['a', 'A fresh diaper'], ['left', 'Fasten the left tab'], ['right', 'Fasten the right tab']];
-        if (kind === 'swaddle') this.order = ['down', 'left', 'right'];
-        if (kind === 'monitor') {
-          const L = [['WHITE', '#f4f4f0', 'left'], ['BLACK', '#2a2a30', 'right'], ['RED', '#d83838', 'down']];
-          for (let i = L.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [L[i], L[j]] = [L[j], L[i]]; }
-          this.leads = L.concat([['PULSE OX', '#f86858', 'a']]); this.placed = [];
-        }
-        if (kind === 'soothe') { this.period = q ? 38 : 48; this.need = q ? 6 : 8; this.hits = []; this.side = -1; }
-        G.play.overlay = this;
-      },
-      finish() {
-        if (this.done) return;
-        const sc = Math.max(0, Math.min(1, this.score));
-        this.result = { score: sc, grade: GRADE(sc) };
-        this.done = 1; this.doneT = 60;
-        G.audio.sfx(this.result.grade === 'OOPS' ? 'no' : this.result.grade === 'PERFECT' ? 'fanfare' : 'select');
-      },
-      update() {
-        const inp = G.input;
-        if (o.tick) o.tick();
-        if (this.shake > 0) this.shake--;
-        if (this.done) { if (--this.doneT <= 0 || (this.doneT < 40 && inp.hit('a'))) { inp.eat('a'); return true; } return false; }
-        this.t++;
-        const K = (k) => inp.hit(k);
-        if (kind === 'feed') {
-          // the bottle's tilt is the flow; the baby's comfortable flow drifts
-          if (inp.down('up')) this.angle = Math.min(1, this.angle + 0.014);
-          if (inp.down('down')) this.angle = Math.max(0, this.angle - 0.014);
-          this.center = 0.5 + 0.22 * Math.sin(this.t / 55) + 0.08 * Math.sin(this.t / 17);
-          const w = this.band;
-          if (Math.abs(this.angle - this.center) <= w) this.inBand++;
-          if (this.t % 20 === 0 && this.angle - this.center > w) { this.shake = 6; G.audio.sfx('bump'); }
-          if (this.t >= this.dur) { this.score = this.inBand / this.dur; this.finish(); }
-        } else if (kind === 'temp') {
-          if (inp.down('up')) this.heat = Math.min(1, this.heat + 0.02);
-          if (inp.down('down')) this.heat = Math.max(0, this.heat - 0.02);
-          // the heater warms or cools the baby; the room pulls the temperature around on its own
-          this.temp += (this.heat - 0.5) * 0.02 + 0.0025 * Math.sin(this.t / 70) + (Math.random() - 0.5) * 0.004;
-          this.temp = Math.max(35.2, Math.min(38.8, this.temp));
-          if (this.temp >= 36.5 && this.temp <= 37.5) this.inBand++;
-          if (this.t >= this.dur) { this.score = Math.min(1, (this.inBand / this.dur) * 1.3); this.finish(); }
-        } else if (kind === 'diaper') {
-          const [key] = this.steps[this.step], lim = q ? 80 : 120;
-          this.stepT++;
-          const pressed = ['left', 'right', 'up', 'down', 'a', 'b'].find((k) => K(k));
-          if (pressed || this.stepT > lim) {
-            if (pressed === key) { this.score += (1 - 0.4 * Math.min(1, this.stepT / lim)) / this.steps.length; G.audio.sfx('menu'); this.step++; this.stepT = 0; }
-            else { this.mistakes++; this.shake = 8; G.audio.sfx('bump'); if (!pressed) { this.step++; this.stepT = 0; } }
-            if (inp.hit('a')) inp.eat('a');
-            if (this.step >= this.steps.length) { this.score = Math.max(0, this.score - this.mistakes * 0.08); this.finish(); }
-          }
-        } else if (kind === 'swaddle') {
-          // hold the fold's key to pull it snug; let go in the green
-          const key = this.order[this.fold], rate = q ? 1 / 36 : 1 / 48;
-          if (this.msgT > 0) this.msgT--;
-          if (inp.down(key)) { this.hold += rate; if (this.hold > 1.15) this.release(); }
-          else if (this.hold > 0) this.release();
-          else if (['left', 'right', 'down', 'up'].some((k) => k !== key && K(k))) { this.shake = 6; G.audio.sfx('bump'); }
-        } else if (kind === 'monitor') {
-          const [, , key] = this.leads[this.lead], lim = q ? 110 : 160;
-          this.stepT++;
-          const pressed = ['left', 'right', 'up', 'down', 'a'].find((k) => K(k));
-          if (pressed === key) { this.score += (this.tries ? 0.55 : 1 - 0.3 * Math.min(1, this.stepT / lim)) / this.leads.length; this.placed.push(this.leads[this.lead]); this.lead++; this.stepT = 0; this.tries = 0; G.audio.sfx('menu'); if (inp.hit('a')) inp.eat('a'); }
-          else if (pressed) { this.tries = (this.tries || 0) + 1; this.shake = 8; G.audio.sfx('bump'); if (pressed === 'a') inp.eat('a'); }
-          else if (this.stepT > lim * 1.5) { this.placed.push(this.leads[this.lead]); this.lead++; this.stepT = 0; this.tries = 0; }
-          if (this.lead >= this.leads.length) this.finish();
-        } else if (kind === 'soothe') {
-          // the marker swings end to end (it's at an end every P frames: right on odd beats, left on
-          // even ones); press that end's arrow as it gets there, once a beat
-          const P = this.period, ph = this.t % (P * 2);
-          this.mx = ph < P ? ph / P : 2 - ph / P;
-          const beat = Math.round(this.t / P), want = beat % 2 ? 'right' : 'left', off = Math.abs(this.t - beat * P);
-          const pressed = K('left') ? 'left' : K('right') ? 'right' : null;
-          if (pressed && beat >= 1 && beat !== this.lastBeat) {
-            const v = pressed !== want ? 0 : off <= 4 ? 1 : off <= 9 ? 0.7 : 0.35;
-            this.hits.push(v); this.lastBeat = beat;
-            this.msg = v >= 1 ? 'PERFECT' : v >= 0.7 ? 'GOOD' : 'MISS'; this.msgT = 20;
-            G.audio.sfx(v >= 0.7 ? 'menu' : 'bump');
-          }
-          if (this.msgT > 0) this.msgT--;
-          if (this.hits.length >= this.need || this.t > P * (this.need + 3) * 1.1) {
-            while (this.hits.length < this.need) this.hits.push(0);
-            this.score = this.hits.reduce((s, v) => s + v, 0) / this.need; this.finish();
-          }
-        }
-        return false;
-      },
-      release() {
-        const h = this.hold, v = h >= 0.7 && h <= 0.9 ? 1 : (h >= 0.55 && h < 0.7) || (h > 0.9 && h <= 1.02) ? 0.65 : 0.2;
-        this.folds.push({ h: Math.min(1, h), v }); this.hold = 0;
-        this.msg = v >= 1 ? 'SNUG!' : v >= 0.65 ? 'OKAY' : h > 1 ? 'TOO TIGHT!' : 'TOO LOOSE!'; this.msgT = 24;
-        G.audio.sfx(v >= 0.65 ? 'menu' : 'bump');
-        if (++this.fold >= this.order.length) { this.score = this.folds.reduce((s, f) => s + f.v, 0) / this.order.length; this.finish(); }
-      },
-      draw(ctx) {
-        const T = NICU_TASKS[kind];
-        nicuBack(ctx, T.name + (b.name ? ': BABY ' + b.name : ''), o.label || '');
-        const sx = this.shake ? Math.round((Math.random() - 0.5) * 4) : 0;
-        ctx.save(); ctx.translate(sx, 0);
-        if (kind === 'feed') this.drawFeed(ctx, b);
-        else if (kind === 'temp') this.drawTemp(ctx, b);
-        else if (kind === 'diaper') this.drawDiaper(ctx, b);
-        else if (kind === 'swaddle') this.drawSwaddle(ctx, b);
-        else if (kind === 'monitor') this.drawMonitor(ctx, b);
-        else this.drawSoothe(ctx, b);
-        ctx.restore();
-        if (o.others) o.others(ctx);
-        if (this.done) {
-          const g = this.result.grade, col = g === 'PERFECT' ? '#f8a020' : g === 'GOOD' ? '#38a858' : '#d83838';
-          ctx.fillStyle = 'rgba(232,240,244,0.75)'; ctx.fillRect(0, 50, G.W, 50);
-          const w = FT().bigWidth(g + '!', 3);
-          FT().drawBig(ctx, g + '!', Math.round(120 - w / 2), 58, 3, col, '#1c2a3a');
-        }
-      },
-      // the task screens
-      drawFeed(ctx, bb) {
-        drawBaby(ctx, 70, 66, 26, { hat: bb.hat, cap: bb.cap, mood: this.shake ? 'cry' : 'suck', blanket: '#cfe0f4' });
-        // the bottle, tipped to the baby's mouth
-        ctx.save(); ctx.translate(84, 74); ctx.rotate(-0.25 - this.angle * 0.9);
-        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(-1, -9, 44, 18);
-        ctx.fillStyle = '#f4f8fa'; ctx.fillRect(0, -8, 42, 16);
-        ctx.fillStyle = '#f8ecc8'; ctx.fillRect(Math.round(42 - 40 * (1 - this.t / this.dur)), -7, Math.round(40 * (1 - this.t / this.dur)), 14);
-        ctx.fillStyle = '#f4a8c8'; ctx.fillRect(-8, -4, 8, 8); ctx.fillStyle = '#e888a8'; ctx.fillRect(-12, -2, 4, 4);
-        ctx.restore();
-        // the flow meter
-        const x = 196, y0 = 22, h = 110, band = this.band;
-        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(x - 1, y0 - 1, 18, h + 2); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x, y0, 16, h);
-        ctx.fillStyle = '#9ce0a8'; ctx.fillRect(x, Math.round(y0 + h * (1 - this.center - band)), 16, Math.round(h * band * 2));
-        ctx.fillStyle = '#d83838'; ctx.fillRect(x - 4, Math.round(y0 + h * (1 - this.angle)) - 1, 24, 3);
-        FT().draw(ctx, 'FLOW', x - 1, y0 + h + 4, '#1c2a3a');
-        FT().draw(ctx, 'too fast', 138, y0 + 2, '#9a9aa8'); FT().draw(ctx, 'too slow', 138, y0 + h - 8, '#9a9aa8');
-        this.hint(ctx, ['↑', '↓'], 'tilt the bottle');
-        bar(ctx, 8, 140, 120, 6, this.t / this.dur, '#5a8ab0');
-      },
-      drawTemp(ctx, bb) {
-        drawBaby(ctx, 64, 60, 24, { hat: bb.hat, cap: bb.cap, mood: this.temp < 36.5 || this.temp > 37.5 ? 'cry' : 'calm', blanket: '#cfe0f4' });
-        // the isolette hood
-        ctx.strokeStyle = '#8ab8d8'; ctx.lineWidth = 2; ctx.strokeRect(20, 26, 90, 78); ctx.lineWidth = 1;
-        // the readout and a thermometer with the safe band
-        const ok = this.temp >= 36.5 && this.temp <= 37.5, txt = this.temp.toFixed(1) + ' C';
-        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(130, 24, 70, 26);
-        FT().drawBig(ctx, txt, 134, 28, 2, ok ? '#78e070' : '#f86858', '#0c1418');
-        const x = 210, y0 = 22, h = 104, k = (v) => y0 + h * (1 - (v - 35.2) / 3.6);
-        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(x - 1, y0 - 1, 12, h + 2); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x, y0, 10, h);
-        ctx.fillStyle = '#9ce0a8'; ctx.fillRect(x, Math.round(k(37.5)), 10, Math.round(k(36.5) - k(37.5)));
-        ctx.fillStyle = '#d83838'; ctx.fillRect(x + 3, Math.round(k(this.temp)), 4, Math.round(y0 + h - k(this.temp)));
-        // the heater dial
-        FT().draw(ctx, 'HEATER', 132, 60, '#1c2a3a');
-        bar(ctx, 132, 70, 66, 8, this.heat, this.heat > 0.6 ? '#f08a28' : this.heat < 0.4 ? '#8ab8e8' : '#f8d850');
-        FT().draw(ctx, 'Keep it 36.5-37.5', 132, 84, '#5a6a7a');
-        this.hint(ctx, ['↑', '↓'], 'heater up / down');
-        bar(ctx, 8, 140, 120, 6, this.t / this.dur, '#5a8ab0');
-      },
-      drawDiaper(ctx, bb) {
-        // the baby on the changing pad, from above: head, onesie, the diaper
-        ctx.fillStyle = '#d8e6ee'; ctx.fillRect(12, 26, 116, 100);
-        ctx.fillStyle = '#f6d2bc'; ctx.fillRect(46, 74, 6, 14); ctx.fillRect(88, 74, 6, 14); ctx.fillRect(57, 116, 9, 12); ctx.fillRect(74, 116, 9, 12);
-        drawBaby(ctx, 70, 46, 16, { hat: bb.hat, cap: bb.cap, mood: this.mistakes > 1 ? 'cry' : 'calm', body: false });
-        disc(ctx, 70, 82, 19, '#f4f4f0');
-        // the diaper and its two tabs (folded out while they're open), then the used wipes beside it
-        const s = this.step, fresh = s >= 6;
-        ctx.fillStyle = fresh ? '#cfe8f8' : '#f8f4e0'; ctx.fillRect(52, 94, 36, 22);
-        ctx.fillStyle = '#c8c4b0'; ctx.fillRect(52, 94, 36, 1);
-        ctx.fillStyle = fresh ? '#8ac8f8' : '#f8d850';
-        ctx.fillRect(s >= 1 && s < 7 ? 42 : 52, 96, 8, 4); ctx.fillRect(s >= 2 && s < 8 ? 90 : 80, 96, 8, 4);
-        for (let k = 0; k < Math.min(3, Math.max(0, s - 2)); k++) { ctx.fillStyle = '#a8d8f0'; ctx.fillRect(16 + k * 7, 110, 5, 10); }
-        // the step list
-        this.steps.forEach(([key, label], k) => {
-          const y = 22 + k * 13, now = k === s, done = k < s;
-          FT().draw(ctx, (done ? '✓ ' : now ? '> ' : '  ') + label, 136, y + 2, done ? '#38a858' : now ? '#1c2a3a' : '#9a9aa8');
-        });
-        if (s < this.steps.length) {
-          const k = this.steps[s][0], lab = { left: '←', right: '→', down: '↓', up: '↑', a: 'Z' }[k];
-          keyCap(ctx, lab, 64, 130, (this.t >> 3) & 1);
-        }
-      },
-      drawSwaddle(ctx, bb) {
-        // the blanket as a diamond, corners folding in as they're pulled
-        const cx = 80, cy = 82, R = 46;
-        ctx.fillStyle = '#9ab8d8';
-        for (let y = -R; y <= R; y++) { const w = R - Math.abs(y); ctx.fillRect(cx - w, cy + y, w * 2 + 1, 1); }
-        ctx.fillStyle = '#cfe0f4';
-        for (let y = -R + 3; y <= R - 3; y++) { const w = R - 3 - Math.abs(y); ctx.fillRect(cx - w, cy + y, w * 2 + 1, 1); }
-        drawBaby(ctx, cx, cy - 20, 13, { hat: bb.hat, cap: bb.cap, mood: 'calm', body: false });
-        disc(ctx, cx, cy + 8, 12, '#f4f4f0');
-        // folded corners so far, and the one being pulled
-        const folds = this.folds.map((f) => f.h).concat(this.fold < 3 ? [this.hold] : []);
-        folds.forEach((h, i) => {
-          const k = Math.min(1, h);
-          ctx.fillStyle = i === 0 ? '#b8d0e8' : i === 1 ? '#a8c4e0' : '#98b8d8';
-          if (i === 0) for (let y = 0; y < 30 * k; y++) { const w = Math.round(20 * (1 - y / 34)); ctx.fillRect(cx - w, cy + R - 4 - y, w * 2, 1); }
-          if (i === 1) for (let x = 0; x < 34 * k; x++) { const hh = Math.round(18 * (1 - x / 40)); ctx.fillRect(cx - R + 4 + x, cy - hh + 4, 1, hh * 2); }
-          if (i === 2) for (let x = 0; x < 34 * k; x++) { const hh = Math.round(18 * (1 - x / 40)); ctx.fillRect(cx + R - 4 - x, cy - hh + 4, 1, hh * 2); }
-        });
-        // the fold meter
-        const x = 150, y = 40;
-        FT().draw(ctx, 'FOLD ' + G.sayable(Math.min(3, this.fold + 1)) + '/3', x, y - 12, '#1c2a3a');
-        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(x - 1, y - 1, 66, 12); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x, y, 64, 10);
-        ctx.fillStyle = '#9ce0a8'; ctx.fillRect(x + Math.round(64 * 0.7), y, Math.round(64 * 0.2), 10);
-        ctx.fillStyle = '#f08a28'; ctx.fillRect(x, y + 2, Math.round(64 * Math.min(1, this.hold)), 6);
-        if (this.msgT > 0) { FT().draw(ctx, this.msg, x, y + 16, this.msg === 'SNUG!' ? '#38a858' : '#d83838', { shadow: '#f8f8f0' }); }
-        if (this.fold < 3) {
-          const lab = { down: '↓', left: '←', right: '→' }[this.order[this.fold]];
-          FT().draw(ctx, 'Hold', x, 80, '#1c2a3a'); keyCap(ctx, lab, x + 26, 77, (this.t >> 3) & 1); FT().draw(ctx, 'let go in the green', x - 2, 96, '#5a6a7a');
-        }
-      },
-      drawMonitor(ctx, bb) {
-        // the baby on its back, facing you (legs, tummy, a diaper, the head on top): the three
-        // spots on the chest, and the foot for the pulse ox
-        ctx.fillStyle = '#f6d2bc'; ctx.fillRect(63, 96, 10, 24); ctx.fillRect(80, 96, 10, 24);
-        disc(ctx, 76, 76, 24, '#f6d2bc');
-        ctx.fillStyle = '#f4f4f0'; ctx.fillRect(60, 92, 33, 12); ctx.fillStyle = '#d8d4c8'; ctx.fillRect(60, 92, 33, 1);
-        ctx.fillStyle = '#c89880'; ctx.fillRect(75, 84, 2, 2);
-        drawBaby(ctx, 76, 42, 14, { hat: bb.hat, cap: bb.cap, mood: this.lead < this.leads.length ? 'cry' : 'calm', body: false });
-        const spots = { left: [62, 66, 'baby\'s R'], right: [90, 66, 'baby\'s L'], down: [90, 84, ''], a: [85, 116, 'foot'] };
-        for (const k of ['left', 'right', 'down', 'a']) {
-          const [x, y, lab] = spots[k], got = this.placed.find((p) => p[2] === k);
-          if (got) disc(ctx, x, y, 4, got[1]); else { ctx.strokeStyle = '#9a9aa8'; ctx.strokeRect(x - 4, y - 4, 8, 8); }
-          FT().draw(ctx, { left: '←', right: '→', down: '↓', a: 'Z' }[k], x + (k === 'left' ? -14 : 8), y - 3, '#5a6a7a');
-          if (lab) FT().draw(ctx, lab, k === 'left' ? x - 14 - FT().width(lab) - 3 : x + (k === 'a' ? 18 : 17), y - 3, '#9a9aa8');
-        }
-        // the monitor: flat and beeping until everything's back on, then a heartbeat
-        const mx = 150, my = 22;
-        ctx.fillStyle = '#1c2a24'; ctx.fillRect(mx, my, 80, 50);
-        ctx.fillStyle = this.lead < this.leads.length ? ((this.t >> 3) & 1 ? '#f86858' : '#5a1a1a') : '#78e070';
-        for (let x = 0; x < 76; x++) { const beat = this.lead >= this.leads.length && (x + this.t) % 26 < 4; ctx.fillRect(mx + 2 + x, my + 26 - (beat ? ((x + this.t) % 26 < 2 ? 10 : -4) : 0), 1, 1); }
-        FT().draw(ctx, this.lead < this.leads.length ? 'LEADS OFF' : 'HR 142', mx + 4, my + 4, ctx.fillStyle);
-        if (this.lead < this.leads.length) {
-          const [nm, col] = this.leads[this.lead];
-          FT().draw(ctx, 'Put on:', mx, my + 58, '#1c2a3a');
-          disc(ctx, mx + 6, my + 74, 5, col); FT().draw(ctx, nm + (nm === 'PULSE OX' ? '' : ' lead'), mx + 14, my + 70, '#1c2a3a');
-          FT().draw(ctx, 'White on the right,', mx, my + 88, '#5a6a7a'); FT().draw(ctx, 'smoke over fire.', mx, my + 98, '#5a6a7a');
-        }
-      },
-      drawSoothe(ctx, bb) {
-        const k = this.hits.length ? this.hits.reduce((s, v) => s + v, 0) / this.need : 0, x = this.mx || 0;
-        ctx.save(); ctx.translate(80, 76); ctx.rotate((x - 0.5) * 0.35);
-        drawBaby(ctx, 0, -12, 24, { hat: bb.hat, cap: bb.cap, mood: k > 0.5 ? 'calm' : 'cry', blanket: '#f4c8d8' });
-        ctx.restore();
-        // the rocking bar: the marker swings end to end
-        const bx = 140, by = 70, bw = 90;
-        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(bx - 1, by - 1, bw + 2, 12); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(bx, by, bw, 10);
-        ctx.fillStyle = '#9ce0a8'; ctx.fillRect(bx, by, 8, 10); ctx.fillRect(bx + bw - 8, by, 8, 10);
-        ctx.fillStyle = '#d83838'; ctx.fillRect(bx + Math.round((bw - 4) * x), by - 3, 4, 16);
-        keyCap(ctx, '←', bx - 2, by + 18, x < 0.12); keyCap(ctx, '→', bx + bw - 12, by + 18, x > 0.88);
-        FT().draw(ctx, 'Calm: ' + G.sayable(Math.round(k * 100)) + '%', bx, by - 22, '#1c2a3a');
-        bar(ctx, bx, by - 12, bw, 6, k, '#f4a8c8');
-        if (this.msgT > 0) FT().draw(ctx, this.msg, bx + 28, by + 36, this.msg === 'MISS' ? '#d83838' : '#38a858');
-      },
-      hint(ctx, keys, what) {
-        let x = 8;
-        for (const k of keys) x += keyCap(ctx, k, x, 122, false) + 3;
-        FT().draw(ctx, what, x + 2, 125, '#1c2a3a');
-      },
-    };
-  }
-
-  // ---- Care Time: one baby, all six tasks in a row (a tip from Dot before each one, the first time)
-  function careTimeCmd() {
-    return {
-      start() {
-        this.order = ['temp', 'monitor', 'diaper', 'feed', 'swaddle', 'soothe'];
-        this.i = 0; this.results = []; this.t = 0; this.sub = null; this.phase = 'how';
-        const hats = G.HATS.filter((h) => G.hatHas(h.id)).map((h) => h.id);
-        this.baby = { name: BABY_NAMES[Math.floor(Math.random() * BABY_NAMES.length)], hat: hats[Math.floor(Math.random() * hats.length)], cap: '#8ab8e8' };
-        this.next();
-        G.play.overlay = this;
-      },
-      next() {
-        const k = this.order[this.i], f = flags();
-        if (!f['nicuHow_' + k]) { f['nicuHow_' + k] = true; this.sub = howToCmd(NICU_TASKS[k].name, NICU_TASKS[k].how, nicuBack); }
-        else this.sub = this.task(k);
-        this.sub.start();
-      },
-      update() {
-        G.play.overlay = this;
-        if (quitHit()) { this.result = 'quit'; return true; }
-        if (this.phase === 'dot') { if (++this.t > 50 || (this.t > 15 && G.input.hit('a'))) { G.input.eat('a'); this.phase = 'go'; this.i++; if (this.i >= this.order.length) { this.result = { results: this.results }; return true; } this.next(); G.play.overlay = this; } return false; }
-        if (this.sub.update()) {
-          if (this.sub.result && this.sub.result.grade) { this.results.push(this.sub.result); this.phase = 'dot'; this.t = 0; this.line = dotLine(this.sub.result.grade); }
-          else this.sub = this.task(this.order[this.i]), this.sub.start();
-        }
-        G.play.overlay = this;
-        return false;
-      },
-      task(k) { return nicuTaskCmd(k, { baby: this.baby, cold: Math.random() < 0.6, label: G.sayable(this.i + 1) + '/' + G.sayable(this.order.length) }); },
-      draw(ctx) {
-        this.sub.draw(ctx);
-        if (this.phase === 'dot') drawDot(ctx, this.line);
-      },
-    };
-  }
-  // Charge Nurse Dot, in the corner with something to say
-  function drawDot(ctx, line) {
-    const D = G.sprites.dot.down[0];
-    ctx.fillStyle = '#1c2a3a'; ctx.fillRect(4, 104, G.W - 8, 40); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(5, 105, G.W - 10, 38);
-    ctx.imageSmoothingEnabled = false; ctx.drawImage(D, 0, 0, 16, 14, 8, 108, 32, 28);
-    FT().draw(ctx, 'CHARGE NURSE DOT', 44, 108, '#7a5aa8');
-    FT().wrap(line, 186).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 44, 119 + k * 10, '#1c2a3a'));
-  }
-
-  // ---- a shift: the room, every baby on its own timer, all at once
+  // ---- a shift: the room, Hannah, the babies, the clock
   function shiftCmd(S0) {
-    const hats = G.HATS.filter((h) => G.hatHas(h.id)).map((h) => h.id);
-    const kinds = ['blue', 'pink', 'mint'];
+    const inp = G.input;
+    const DIRV = { up: [0, -1], down: [0, 1], left: [-1, 0], right: [1, 0] };
     return {
       start() {
-        const n = S0.babies;
-        this.babies = Array.from({ length: n }, (_, i) => ({
-          name: S0.twins && i >= n - 2 ? (i === n - 2 ? 'TWIN A' : 'TWIN B') : BABY_NAMES[i % BABY_NAMES.length],
-          hat: hats.length ? hats[(S0.twins && i === n - 1 ? n - 2 : i) % hats.length] : null, cap: ['#8ab8e8', '#f4a8c8', '#a8e0c8'][(S0.twins && i === n - 1 ? n - 2 : i) % 3], iso: kinds[i % 3],
-          need: null, wait: 0, next: 50 + i * 70 + Math.round(Math.random() * 100), happy: 0.8, cared: 0,
-        }));
-        this.t = 0; this.total = S0.secs * 60; this.sel = 0; this.task = null; this.over = 0; this.sum = 0;
+        this.map = S0.map.map((r) => r.split(''));
+        this.W = this.map[0].length; this.H = this.map.length;
+        this.cell = []; this.stations = []; this.babies = [];
+        for (let y = 0; y < this.H; y++) for (let x = 0; x < this.W; x++) {
+          const ch = this.map[y][x];
+          if (ch !== '.' && ch !== 'i') this.stations.push({ kind: ch, x, y, w: ch === 'I' ? 2 : 1, h: ch === 'I' ? 2 : 1, item: null });
+        }
+        for (const st of this.stations) for (let j = 0; j < st.h; j++) for (let i = 0; i < st.w; i++) this.cell[(st.y + j) * this.W + st.x + i] = st;
+        const isos = this.stations.filter((st) => st.kind === 'I');
+        isos.forEach((st, i) => {
+          const twin = !!S0.twins && i >= isos.length - 2;
+          st.baby = {
+            st, twin, name: twin ? (i === isos.length - 2 ? 'TWIN A' : 'TWIN B') : NICU_NAMES[i],
+            iso: twin ? 'mint' : ['blue', 'pink', 'mint'][i % 3], cap: twin ? '#a8e0c8' : ['#8ab8e8', '#f4a8c8', '#a8e0c8'][i % 3],
+            need: null, next: 90 + i * 140 + Math.round(Math.random() * 100), prog: 0,
+          };
+          this.babies.push(st.baby);
+        });
+        Object.assign(this, { hx: 7 * NT + 8, hy: NOY + 4 * NT + 12, dir: 'up', anim: 0, moving: false, dashT: 0, dashCD: 0, held: null, dirty: false, wash: 0 });
+        Object.assign(this, { t: 0, left: S0.secs * 60, score: 0, done: 0, missed: 0, phase: 'ready', pops: [], msg: null, msgT: 0, focus: null, working: null });
+        if (S0.dot) { const [x, y] = S0.dot[0]; this.dot = { x: x * NT + 8, y: NOY + y * NT + 12, i: 1, step: 1, dir: 'right', anim: 0, wait: 0 }; }
         G.play.overlay = this;
       },
-      tick(skip) {
-        // every baby's needs, on its own clock (the one being cared for is skipped)
-        for (const b of this.babies) {
-          if (b === skip) continue;
-          if (!b.need) { if (--b.next <= 0) { b.need = ['feed', 'diaper', 'swaddle', 'temp', 'monitor', 'soothe'][Math.floor(Math.random() * 6)]; b.cold = Math.random() < 0.5; b.wait = 0; G.audio.sfx(b.need === 'monitor' ? 'buzz' : 'menu'); } }
-          else { b.wait++; b.happy = Math.max(0, b.happy - (b.wait > S0.patience ? 0.0012 : 0.0004)); }
+      // ---- the room's layout
+      solidAt(px, py) {
+        const tx = Math.floor(px / NT), ty = Math.floor((py - NOY) / NT);
+        return tx < 0 || ty < 0 || tx >= this.W || ty >= this.H || this.map[ty][tx] !== '.';
+      },
+      blocked(x, y) {
+        for (const [px, py] of [[x - 5, y - 5], [x + 4, y - 5], [x - 5, y - 1], [x + 4, y - 1]]) if (this.solidAt(px, py)) return true;
+        return !!this.dot && Math.abs(this.dot.x - x) < 11 && Math.abs(this.dot.y - y) < 8;
+      },
+      // the station right in front of Hannah
+      target() {
+        const [dx, dy] = DIRV[this.dir], px = this.hx + dx * 11, py = this.hy - 3 + dy * 11;
+        const tx = Math.floor(px / NT), ty = Math.floor((py - NOY) / NT);
+        if (tx < 0 || ty < 0 || tx >= this.W || ty >= this.H) return null;
+        return this.cell[ty * this.W + tx] || null;
+      },
+      say(txt) { this.msg = txt; this.msgT = 150; },
+      pop(st, txt, col) { this.pops.push({ x: st.x * NT + st.w * 8, y: NOY + st.y * NT - 4, txt, col, t: 50 }); },
+      // ---- what Z does at a station: { tap }, { hold, dur, prog, set, done, baby }, or { no: why }
+      act(st) {
+        const h = this.held, k = st.kind, no = (why) => ({ no: why });
+        if (k === 'I') return this.isoAct(st.baby);
+        if (k === 'T') {
+          if (!h) return no('The diaper pail. Dirty diapers go in here.');
+          if (h.kind === 'baby') return no('You can\'t throw away a baby, Hannah.');
+          return { what: 'Z: toss it in the pail', tap: () => { this.held = null; G.audio.sfx('poof'); } };
         }
+        if (k === 'S') {
+          if (h) return no(h.kind === 'dirty' ? 'Diaper in the pail first. Then wash.' : 'Put that down first.');
+          if (!this.dirty) return no('Your hands are already clean.');
+          return { what: 'Hold Z: wash your hands', hold: 'wash', dur: 60, prog: () => this.wash, set: (v) => (this.wash = v), done: () => { this.dirty = false; this.wash = 0; G.audio.sfx('select'); this.say('Squeaky clean.'); } };
+        }
+        if (NICU_SUPPLY[k]) {
+          const it = NICU_SUPPLY[k];
+          // (an unused one goes back where it came from)
+          if (h && h.kind === it && !(it === 'bottle' && h.heat)) return { what: 'Z: put it back', tap: () => { this.held = null; G.audio.sfx('menu'); } };
+          if (h) return no('Your hands are full.');
+          if (this.dirty) return no(DIRTY);
+          return { what: 'Z: take ' + { bottle: 'a bottle of milk', diaper: 'a clean diaper', blanket: 'a warm blanket', leads: 'lead stickers' }[it], tap: () => { this.held = it === 'bottle' ? { kind: 'bottle', heat: 0 } : { kind: it }; G.audio.sfx('pop'); } };
+        }
+        if (k === 'W') {
+          if (st.item) {
+            if (h) return no('Your hands are full.');
+            if (this.dirty) return no(DIRTY);
+            const ht = st.item.heat;
+            return { what: 'Z: take the bottle ' + (ht >= HOT ? '(TOO HOT)' : ht >= WARM ? '(warm!)' : '(still warming)'), tap: () => { this.held = st.item; st.item = null; G.audio.sfx('pop'); } };
+          }
+          if (!h) return no('The bottle warmer. Fridge bottles go in here.');
+          if (h.kind !== 'bottle') return no('Only bottles go in the bottle warmer.');
+          return { what: 'Z: put the bottle in to warm up', tap: () => { st.item = h; this.held = null; G.audio.sfx('menu'); } };
+        }
+        if (k === 'c') {
+          if (st.item) {
+            if (h) return no('Your hands are full.');
+            if (this.dirty && st.item.kind !== 'dirty') return no(DIRTY);
+            return { what: 'Z: pick it up', tap: () => { this.held = st.item; st.item = null; G.audio.sfx('pop'); } };
+          }
+          if (!h) return no(null);
+          if (h.kind === 'baby') return no('Babies go in their isolettes, not on the counter.');
+          return { what: 'Z: set it down here', tap: () => { st.item = h; this.held = null; G.audio.sfx('menu'); } };
+        }
+        if (k === 'G') {
+          if (!h || h.kind !== 'baby') return no('The glider. For rocking a crying baby.');
+          const b = h.baby;
+          if (b.rocked) return no('Baby ' + b.name + ' is calm now. Back in their isolette.');
+          return { what: 'Hold Z: rock Baby ' + b.name, hold: 'rock', dur: 100, baby: b, prog: () => b.prog, set: (v) => (b.prog = v), done: () => { b.rocked = true; b.prog = 0; G.audio.sfx('giggle'); this.say('Baby ' + b.name + ' calmed down. Now back to bed.'); } };
+        }
+        return no(null);
+      },
+      isoAct(b) {
+        const h = this.held, N = b.need && NICU_NEEDS[b.need], no = (why) => ({ no: why });
+        if (h && h.kind === 'baby') {
+          if (h.baby !== b) return no('That\'s not Baby ' + h.baby.name + '\'s isolette.');
+          return { what: 'Z: put Baby ' + b.name + ' back to bed', tap: () => { this.held = null; b.out = false; if (b.rocked) this.complete(b); else { G.audio.sfx('wah'); this.say('Baby ' + b.name + ' is still crying.'); } } };
+        }
+        if (this.dirty) return no(DIRTY);
+        if (!b.need) return no('Baby ' + b.name + ' is sound asleep.');
+        if (b.need === 'cold') return { what: 'Z: turn up the heat for Baby ' + b.name, tap: () => { G.audio.sfx('menu'); this.complete(b); } };
+        if (b.need === 'cry') {
+          if (h) return no('Put that down to pick up Baby ' + b.name + '.');
+          return { what: 'Z: pick up Baby ' + b.name, tap: () => { this.held = { kind: 'baby', baby: b }; b.out = true; b.rocked = false; b.prog = 0; G.audio.sfx('pop'); } };
+        }
+        if (h && h.kind === 'bottle' && b.need === 'feed' && (h.heat < WARM || h.heat >= HOT)) return no(h.heat < WARM ? 'Too cold! Warm it up in the bottle warmer.' : 'Way too hot! Bin it and start over.');
+        if (!h || h.kind !== N.item) return no('Baby ' + b.name + ' ' + N.ask);
+        return { what: b.need === 'leads' ? 'Hold Z: stick Baby ' + b.name + '\'s leads back on' : 'Hold Z: ' + { feed: 'feed', diaper: 'change', swaddle: 'swaddle' }[b.need] + ' Baby ' + b.name, hold: b.need, dur: N.hold, baby: b, prog: () => b.prog, set: (v) => (b.prog = v), done: () => {
+          if (b.need === 'diaper') { this.held = { kind: 'dirty' }; this.dirty = true; } else this.held = null;
+          this.complete(b);
+        } };
+      },
+      complete(b) {
+        const N = NICU_NEEDS[b.need], pts = b.left <= 0 ? Math.round(N.pts / 2) : N.pts + Math.round((10 * b.left) / b.max);
+        this.score += pts; this.done++;
+        this.pop(b.st, '+' + G.sayable(pts), '#38a858');
+        G.audio.sfx('select');
+        Object.assign(b, { need: null, prog: 0, rocked: false, next: S0.every[0] + Math.round(Math.random() * (S0.every[1] - S0.every[0])) });
+      },
+      newNeed(b) {
+        const pool = S0.needs.flatMap((k) => Array(NICU_NEEDS[k].w).fill(k)), k = pool[Math.floor(Math.random() * pool.length)];
+        // (the twins want the same thing at the same time)
+        const who = b.twin ? this.babies.filter((o) => o.twin && !o.need && !o.out) : [b];
+        for (const o of who) Object.assign(o, { need: k, left: S0.patience * 60, max: S0.patience * 60, prog: 0, overT: 0 });
+        G.audio.sfx(k === 'leads' ? 'buzz' : k === 'cry' ? 'wah' : 'blip');
       },
       update() {
         if (quitHit()) { this.result = 'quit'; return true; }
-        if (this.over) { if (++this.over > 140 || (this.over > 40 && G.input.hit('a'))) { G.input.eat('a'); this.result = { stars: this.stars, avg: this.avg }; return true; } return false; }
         this.t++;
-        // (the stars are for how happy the babies were the whole shift, not just at the end)
-        this.sum += this.babies.reduce((t, b) => t + b.happy, 0) / this.babies.length;
-        if (this.task) {
-          const tb = this.task.baby;
-          if (this.task.cmd.update()) {
-            const r = this.task.cmd.result;
-            tb.happy = Math.min(1, tb.happy + 0.25 + 0.4 * r.score); tb.need = null; tb.cared++;
-            tb.next = S0.every[0] + Math.round(Math.random() * (S0.every[1] - S0.every[0]));
-            this.task = null;
-          }
-        } else {
-          this.tick();
-          const inp = G.input, n = this.babies.length, cols = 3;
-          if (inp.hit('left') && this.sel % cols > 0) { this.sel--; G.audio.sfx('menu'); }
-          if (inp.hit('right') && this.sel % cols < cols - 1 && this.sel + 1 < n) { this.sel++; G.audio.sfx('menu'); }
-          if (inp.hit('up') && this.sel >= cols) { this.sel -= cols; G.audio.sfx('menu'); }
-          if (inp.hit('down') && Math.floor(this.sel / cols) < Math.floor((n - 1) / cols)) { this.sel = Math.min(n - 1, this.sel + cols); G.audio.sfx('menu'); }
-          if (inp.hit('a')) {
-            inp.eat('a');
-            const b = this.babies[this.sel];
-            if (b.need) {
-              const cmd = nicuTaskCmd(b.need, { quick: true, baby: b, cold: b.cold, tick: () => this.tick(b), others: (ctx) => this.drawStrip(ctx, b) });
-              cmd.start(); this.task = { cmd, baby: b };
-            } else { G.audio.sfx('bump'); this.msg = 'Baby ' + b.name + ' is fine right now.'; this.msgT = 60; }
-          }
-        }
+        for (const p of this.pops) { p.t--; p.y -= 0.4; }
+        this.pops = this.pops.filter((p) => p.t > 0);
         if (this.msgT > 0) this.msgT--;
-        if (this.t >= this.total && !this.task) {
-          this.avg = this.sum / this.t;
-          this.stars = this.avg >= 0.8 ? 3 : this.avg >= 0.6 ? 2 : this.avg >= 0.35 ? 1 : 0;
-          this.over = 1; G.audio.sfx(this.stars ? 'fanfare' : 'no');
+        if (this.phase === 'ready') { if (this.t === 60) G.audio.sfx('bell'); if (this.t >= 100) this.phase = 'play'; return false; }
+        if (this.phase === 'over') { if (++this.overT > 100) this.phase = 'results'; return false; }
+        if (this.phase === 'results') { if (inp.hit('a')) { inp.eat('a'); this.result = { score: this.score, stars: this.stars, done: this.done, missed: this.missed }; return true; } return false; }
+        // the clock
+        if (--this.left <= 0) {
+          this.phase = 'over'; this.overT = 0;
+          this.stars = S0.stars.filter((s) => this.score >= s).length;
+          G.audio.sfx('fanfare');
+          return false;
         }
-        G.play.overlay = this;
+        if (this.left === 600) this.say('Ten seconds left!');
+        // what Z does right now
+        const tgt = this.target(), a = tgt ? this.act(tgt) : null;
+        this.focus = tgt; this.working = null; this.hint = a && (a.what || a.no);
+        if (inp.hit('a')) { if (a && a.tap) a.tap(); else if (a && a.no) { this.say(a.no); G.audio.sfx('bump'); } }
+        const busy = inp.down('a') && a && a.hold;
+        if (busy) {
+          a.set(a.prog() + 1 / a.dur);
+          this.working = a.baby || null;
+          if (this.t % 14 === 0) G.audio.sfx(a.hold === 'wash' ? 'spray' : 'blip');
+          if (a.prog() >= 1) a.done();
+        }
+        // Hannah runs (not while she's busy with something)
+        this.moving = false;
+        if (this.dashCD > 0) this.dashCD--;
+        if (!busy) {
+          let mx = (inp.down('right') ? 1 : 0) - (inp.down('left') ? 1 : 0), my = (inp.down('down') ? 1 : 0) - (inp.down('up') ? 1 : 0);
+          if (mx && !my) this.dir = mx > 0 ? 'right' : 'left';
+          else if (my && !mx) this.dir = my > 0 ? 'down' : 'up';
+          else if (mx && my && !((this.dir === 'left' && mx < 0) || (this.dir === 'right' && mx > 0) || (this.dir === 'up' && my < 0) || (this.dir === 'down' && my > 0))) this.dir = mx > 0 ? 'right' : 'left';
+          if (inp.hit('b') && !this.dashCD) { this.dashT = 9; this.dashCD = 40; G.audio.sfx('dash'); }
+          let sp = 1.35;
+          if (this.dashT > 0) { this.dashT--; sp = 3.4; if (!mx && !my) [mx, my] = DIRV[this.dir]; }
+          if (mx && my) sp *= 0.72;
+          const nx = this.hx + mx * sp, ny = this.hy + my * sp;
+          if (mx && !this.blocked(nx, this.hy)) { this.hx = nx; this.moving = true; }
+          if (my && !this.blocked(this.hx, ny)) { this.hy = ny; this.moving = true; }
+          if (this.moving) this.anim++;
+        }
+        // the babies' needs, each on its own clock (not while Hannah's carrying one or working on one)
+        for (const b of this.babies) {
+          if (b.out) continue;
+          if (!b.need) { if (--b.next <= 0) this.newNeed(b); continue; }
+          if (this.working === b) continue;
+          b.left--;
+          if (b.left === 0) { this.score = Math.max(0, this.score - 10); this.missed++; this.pop(b.st, '-10', '#d83838'); G.audio.sfx('wah'); this.say('Baby ' + b.name + ' waited too long!'); }
+          else if (b.left < 0 && ++b.overT % 480 === 0) { this.score = Math.max(0, this.score - 5); this.pop(b.st, '-5', '#d83838'); G.audio.sfx('wah'); }
+        }
+        // the bottle warmers
+        for (const st of this.stations) {
+          if (st.kind !== 'W' || !st.item) continue;
+          const h = ++st.item.heat;
+          if (h === WARM) { G.audio.sfx('bell'); this.pop(st, 'DING!', '#38a858'); }
+          if (h === HOT) { G.audio.sfx('no'); this.pop(st, 'TOO HOT', '#d83838'); }
+        }
+        // Dot, doing her rounds (she waits for Hannah to get out of the way)
+        const d = this.dot;
+        if (d) {
+          const [tx, ty] = S0.dot[d.i], gx = tx * NT + 8, gy = NOY + ty * NT + 12, dx = gx - d.x, dy = gy - d.y, dist = Math.hypot(dx, dy);
+          const n = S0.dot.length;
+          if (dist < 0.7) { d.x = gx; d.y = gy; d.i = (d.i + d.step + n) % n; }
+          else {
+            const nx = d.x + (dx / dist) * 0.6, ny = d.y + (dy / dist) * 0.6;
+            // (blocked for long enough, she turns around and walks her rounds the other way)
+            if (Math.abs(nx - this.hx) < 11 && Math.abs(ny - this.hy) < 8) { if (++d.wait === 40) this.say('Dot: Excuse me, Hannah.'); if (d.wait >= 90) { d.step = -d.step; d.i = (d.i + d.step + n) % n; d.wait = 0; } }
+            else { d.x = nx; d.y = ny; d.wait = 0; d.anim++; d.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : dy > 0 ? 'down' : 'up'; }
+          }
+        }
         return false;
       },
-      // the room: isolettes in rows, each baby's name, need and mood; Hannah at the one she's on
+
+      // ---- drawing
       draw(ctx) {
-        if (this.task) { this.task.cmd.draw(ctx); return; }
-        nicuBack(ctx, 'HANNAH\'S ' + S0.name, G.sayable(Math.max(0, Math.ceil((this.total - this.t) / 60))) + 's left');
-        ctx.imageSmoothingEnabled = false;
-        this.babies.forEach((b, i) => {
-          const x = 14 + (i % 3) * 76, y = 22 + Math.floor(i / 3) * 62, on = i === this.sel, cry = b.need && b.wait > S0.patience;
-          const jig = cry && (this.t >> 2) & 1 ? 1 : 0;
-          ctx.drawImage(G.spr.isolettes[b.iso], x + jig, y + 4, 64, 60);
-          drawBaby(ctx, x + jig + 43, y + 21, 6, { hat: b.hat, cap: b.cap, mood: cry ? 'cry' : 'calm', body: false });
-          if (on) { ctx.fillStyle = (this.t >> 3) & 1 ? '#f8d850' : '#f8a020'; ctx.fillRect(x - 2, y + 2, 68, 2); ctx.fillRect(x - 2, y + 62, 68, 2); ctx.fillRect(x - 2, y + 2, 2, 62); ctx.fillRect(x + 64, y + 2, 2, 62); }
-          // name tag and a happiness bar on the cart
-          ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x + 12, y + 44, 40, 9);
-          FT().draw(ctx, b.name, x + 32 - Math.round(FT().width(b.name) / 2), y + 45, '#1c2a3a');
-          bar(ctx, x + 12, y + 55, 40, 4, b.happy, b.happy > 0.6 ? '#78e070' : b.happy > 0.35 ? '#f8d850' : '#f86858');
-          if (b.need) {
-            // the need, in a bubble, with how long it's been waiting
-            const bx = x + 46, by = y - 2;
-            ctx.fillStyle = cry ? '#f86858' : '#1c2a3a'; ctx.fillRect(bx - 1, by - 1, 16, 16); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(bx, by, 14, 14);
-            needIcon(ctx, b.need, bx + 2, by + 2);
-            bar(ctx, bx - 1, by + 15, 16, 3, 1 - b.wait / S0.patience, cry ? '#f86858' : '#f8a020');
+        ctx.fillStyle = '#e8f0f4'; ctx.fillRect(0, 0, G.W, G.H);
+        this.drawRoom(ctx);
+        // the HUD: the shift, the clock, the score
+        ctx.fillStyle = '#5a8ab0'; ctx.fillRect(0, 0, G.W, NOY);
+        ctx.fillStyle = '#3a6a90'; ctx.fillRect(0, NOY - 1, G.W, 1);
+        FT().draw(ctx, S0.name, 4, 4, '#f8f8f0', { shadow: '#1c2a3a' });
+        const secs = Math.max(0, Math.ceil(this.left / 60)), tt = 'TIME ' + G.sayable(secs);
+        FT().draw(ctx, tt, 120 - Math.round(FT().width(tt) / 2), 4, secs <= 10 && (this.t >> 4) & 1 ? '#f86858' : '#f8f8f0', { shadow: '#1c2a3a' });
+        const sc = 'SCORE ' + G.sayable(this.score);
+        FT().draw(ctx, sc, G.W - 4 - FT().width(sc), 4, '#f8d850', { shadow: '#1c2a3a' });
+        // the message strip: what just happened, or the controls
+        const my = NOY + this.H * NT;
+        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(0, my, G.W, G.H - my);
+        // (what just happened; else what Z does at whatever Hannah's facing; else the controls)
+        const line = this.phase === 'ready' ? 'Get ready...' : this.phase !== 'play' ? '' : this.msgT > 0 ? this.msg : this.hint ? this.hint : this.dirty ? 'Your hands are dirty: wash them at the sink.' : this.held && this.held.kind === 'baby' ? 'Carrying Baby ' + this.held.baby.name : 'Z grab / put down   hold Z: do it   X dash';
+        FT().draw(ctx, FT().wrap(line, 232)[0], 4, my + 4, this.msgT > 0 || this.dirty ? '#f8d850' : this.hint ? '#f8f8f0' : '#a8b8c8');
+        // the big words
+        const big = (txt, col) => { const w = FT().bigWidth(txt, 3); FT().drawBig(ctx, txt, Math.round(120 - w / 2), 60, 3, col, '#1c2a3a'); };
+        if (this.phase === 'ready') big(this.t < 60 ? 'READY...' : 'GO!', this.t < 60 ? '#f8d850' : '#78e070');
+        if (this.phase === 'over') big('TIME\'S UP!', '#f86858');
+        if (this.phase === 'results') this.drawResults(ctx);
+      },
+      drawRoom(ctx) {
+        const T = this.t;
+        // the floor
+        for (let y = 0; y < this.H; y++) for (let x = 0; x < this.W; x++) {
+          ctx.fillStyle = (x + y) % 2 ? '#e2eaf0' : '#eaf1f5'; ctx.fillRect(x * NT, NOY + y * NT, NT, NT);
+        }
+        // the counters and what's on them
+        for (const st of this.stations) {
+          const x = st.x * NT, y = NOY + st.y * NT;
+          if (st.kind === 'I' || st.kind === 'G') continue;
+          if (st.kind !== 'T') {
+            ctx.fillStyle = '#7a8696'; ctx.fillRect(x, y, NT, NT);
+            ctx.fillStyle = '#e4e9ef'; ctx.fillRect(x, y, NT, 12);
+            ctx.fillStyle = '#f6f8fa'; ctx.fillRect(x, y, NT, 1);
+            ctx.fillStyle = '#aeb9c6'; ctx.fillRect(x, y + 12, NT, 3);
+            ctx.fillStyle = '#cdd5de'; ctx.fillRect(x, y + 1, 1, 11);
           }
-        });
-        const H = G.sprites.hannah.right[0], hx = 14 + (this.sel % 3) * 76 - 12, hy = 22 + Math.floor(this.sel / 3) * 62 + 30;
-        ctx.drawImage(H, hx, hy);
-        const b = this.babies[this.sel];
-        FT().draw(ctx, this.msgT > 0 ? this.msg : b.need ? 'Z: ' + NICU_TASKS[b.need].name.toLowerCase() + ' for Baby ' + b.name : 'Arrows: pick a baby   Z: take care of it', 6, 148, '#1c2a3a');
-        if (this.over) {
-          ctx.fillStyle = 'rgba(232,240,244,0.85)'; ctx.fillRect(0, 40, G.W, 70);
-          const t = this.stars ? 'SHIFT DONE!' : 'ROUGH SHIFT...', w = FT().bigWidth(t, 2);
-          FT().drawBig(ctx, t, Math.round(120 - w / 2), 50, 2, this.stars ? '#38a858' : '#d83838', '#1c2a3a');
-          FT().draw(ctx, '★'.repeat(this.stars) + '☆'.repeat(3 - this.stars), 120 - Math.round(FT().width('★★★') / 2), 80, '#f8a020', { shadow: '#1c2a3a' });
-          FT().draw(ctx, 'Babies happy: ' + G.sayable(Math.round(this.avg * 100)) + '%', 120 - Math.round(FT().width('Babies happy: 100%') / 2), 94, '#1c2a3a');
+          this.drawStation(ctx, st, x, y, T);
+          if (st.item && st.kind !== 'W') nicuItem(ctx, st.item, x + 3, y + 1, T);
+        }
+        // the sprites, back to front: isolettes, the glider, Hannah, Dot
+        const list = [];
+        for (const st of this.stations) {
+          if (st.kind === 'I') list.push({ y: NOY + (st.y + 2) * NT, draw: () => this.drawIsolette(ctx, st.baby, T) });
+          // (the glider sits back against the wall: Hannah, beside it, is in front of it)
+          if (st.kind === 'G') list.push({ y: NOY + st.y * NT + 4, draw: () => this.drawGlider(ctx, st, T) });
+        }
+        list.push({ y: this.hy, draw: () => this.drawHannah(ctx, T) });
+        if (this.dot) {
+          const d = this.dot, S = G.sprites.dot;
+          list.push({ y: d.y, draw: () => ctx.drawImage(S[d.dir][walkFrameOf(d.anim, d.wait === 0)], Math.round(d.x - 8), Math.round(d.y - S.h + 2)) });
+        }
+        list.sort((a, b) => a.y - b.y).forEach((s) => s.draw());
+        // what Z would work on: corners around it
+        const f = this.focus;
+        if (f && this.phase === 'play') {
+          const x = f.x * NT, y = NOY + f.y * NT, w = f.w * NT, h = f.h * NT, c = (T >> 3) & 1 ? '#f8d850' : '#f8a020';
+          ctx.fillStyle = c;
+          for (const [cx, cy, sx, sy] of [[x, y, 1, 1], [x + w - 1, y, -1, 1], [x, y + h - 1, 1, -1], [x + w - 1, y + h - 1, -1, -1]]) { ctx.fillRect(sx > 0 ? cx : cx - 3, cy, 4, 1); ctx.fillRect(cx, sy > 0 ? cy : cy - 3, 1, 4); }
+        }
+        // the bubbles over babies who need something, and the scores floating up
+        for (const b of this.babies) if (b.need && !b.out) this.drawBubble(ctx, b, T);
+        for (const p of this.pops) FT().draw(ctx, p.txt, Math.round(p.x - FT().width(p.txt) / 2), Math.round(p.y), p.col, { shadow: '#f8f8f0' });
+      },
+      drawStation(ctx, st, x, y, T) {
+        const R = (c, X, Y, w, h) => { ctx.fillStyle = c; ctx.fillRect(x + X, y + Y, w, h); };
+        if (st.kind === 'F') {
+          // the milk fridge: a little white fridge with a bottle on the door
+          R('#7a8696', 1, 0, 14, 15); R('#f4f6f8', 2, 1, 12, 13); R('#c8d0d8', 2, 6, 12, 1); R('#9aa6b4', 12, 2, 1, 3); R('#9aa6b4', 12, 8, 1, 4);
+          R('#f4a8c8', 6, 8, 2, 1); R('#dfeefa', 5, 9, 4, 4); R('#7a8696', 5, 9, 4, 1);
+        } else if (st.kind === 'W') {
+          // the bottle warmer: the bottle in its well, and a light for how it's doing
+          R('#5a6676', 2, 3, 12, 10); R('#f4f6f8', 3, 4, 10, 8); R('#2a3440', 5, 4, 6, 3); R('#f8a020', 4, 9, 2, 1); R('#f8a020', 4, 10, 1, 1);
+          const it = st.item, h = it ? it.heat : 0, blink = (T >> 3) & 1;
+          if (it) nicuItem(ctx, it, x + 3, y - 4, T);
+          R(!it ? '#5a6676' : h >= HOT ? '#f83838' : h >= WARM ? (blink ? '#78e070' : '#3a8a48') : blink ? '#f8a020' : '#a86010', 10, 9, 2, 2);
+          if (it && h < WARM) bar(ctx, x + 2, y + 13, 12, 3, h / WARM, '#f8a020');
+        } else if (st.kind === 'D') {
+          // a basket of clean diapers
+          for (const [X, Y] of [[2, 2], [9, 1], [5, 0]]) { R('#7a8696', X, Y, 6, 6); R('#f8f8f4', X + 1, Y + 1, 4, 4); R('#8ac8f8', X + 1, Y + 2, 1, 1); R('#8ac8f8', X + 4, Y + 2, 1, 1); }
+          R('#2a5a80', 1, 6, 14, 8); R('#5a8ab0', 2, 7, 12, 6); R('#8ab8d8', 2, 7, 12, 1); R('#3a6a90', 2, 10, 12, 1);
+        } else if (st.kind === 'B') {
+          // the blanket warmer: a cabinet with a glass door and folded blankets
+          R('#7a8696', 1, 0, 14, 14); R('#c8d4e0', 2, 1, 12, 12);
+          ['#f4a8c8', '#a8c8f0', '#f8e8a0', '#a8e0c8'].forEach((c, k) => R(c, 3, 2 + k * 3, 10, 2));
+          R('#f8a020', 12, 11, 1, 1);
+        } else if (st.kind === 'L') {
+          R('#7a8696', 2, 3, 12, 9); R('#f4f4f0', 3, 4, 10, 7);
+          R('#c8c8c8', 4, 6, 2, 2); R('#2a2a30', 7, 6, 2, 2); R('#d83838', 10, 6, 2, 2);
+        } else if (st.kind === 'S') {
+          R('#7a8696', 1, 2, 14, 10); R('#c8d4e0', 2, 3, 12, 8); R('#9aa8b8', 3, 5, 10, 5); R('#5a6676', 7, 0, 2, 4); R('#5a6676', 7, 4, 1, 1);
+          if (this.wash > 0 && this.focus === st) for (let k = 0; k < 4; k++) R('#f8f8f8', 4 + ((k * 3 + (T >> 2)) % 9), 4 + ((k * 5 + (T >> 3)) % 5), 2, 2);
+        } else if (st.kind === 'T') {
+          // the diaper pail
+          ctx.fillStyle = (st.x + st.y) % 2 ? '#e2eaf0' : '#eaf1f5'; ctx.fillRect(x, y, NT, NT);
+          R('#7a8696', 3, 3, 10, 12); R('#f4f4f0', 4, 5, 8, 9); R('#7a8696', 2, 2, 12, 3); R('#c8ccd4', 3, 3, 10, 1); R('#f8d850', 6, 8, 4, 3); R('#5a6676', 6, 14, 4, 2);
         }
       },
-      // during a task: the other babies along the top, so you can see who's waiting
-      drawStrip(ctx, cur) {
-        let x = G.W - 4;
-        for (const b of this.babies.slice().reverse()) {
-          if (b === cur) continue;
-          x -= 15;
-          ctx.fillStyle = b.need ? (b.wait > S0.patience ? '#f86858' : '#f8a020') : '#78e070'; ctx.fillRect(x, 0, 13, 12);
-          if (b.need) needIcon(ctx, b.need, x + 1, 1);
-        }
+      drawIsolette(ctx, b, T) {
+        const st = b.st, late = b.need && b.left <= 0, sx = st.x * NT + (late && (T >> 2) & 1 ? 1 : 0), sy = NOY + st.y * NT + 2;
+        ctx.drawImage(G.spr.isolettes[b.iso], sx, sy);
+        const R = (c, X, Y, w, h) => { ctx.fillStyle = c; ctx.fillRect(sx + X, sy + Y, w, h); };
+        if (b.out) { R('#cfe6f2', 10, 5, 15, 10); R('#f8f4ee', 10, 8, 12, 6); return; }
+        R(b.cap, 19, 6, 5, 3);
+        if (b.need && (T >> 3) & 1) { R('#8ac8f8', 18, 10, 1, 2); R('#8ac8f8', 24, 10, 1, 2); }
+      },
+      drawGlider(ctx, st, T) {
+        const h = this.held, rocking = h && h.kind === 'baby' && this.focus === st && h.baby.prog > 0 && inp.down('a');
+        const x = st.x * NT, y = NOY + st.y * NT, dx = rocking ? Math.round(Math.sin(T / 8) * 1.5) : 0;
+        ctx.drawImage(G.spr.nicuGlider, x - 1 + dx, y - 8);
+      },
+      drawHannah(ctx, T) {
+        const S = G.sprites.hannah, img = S[this.dir][walkFrameOf(this.anim, this.moving)], x = Math.round(this.hx), y = Math.round(this.hy);
+        const it = this.held, pos = { down: [-5, -15], up: [-5, -19], left: [-12, -14], right: [2, -14] }[this.dir];
+        if (it && this.dir === 'up') nicuItem(ctx, it, x + pos[0], y + pos[1], T);
+        // (a puff of dust while she dashes)
+        if (this.dashT > 0) { ctx.fillStyle = '#c8d0d8'; ctx.fillRect(x - 6 - DIRV[this.dir][0] * 6, y - 3, 3, 2); ctx.fillRect(x + 3 - DIRV[this.dir][0] * 6, y - 2, 2, 2); }
+        ctx.drawImage(img, x - 8, y - S.h + 2);
+        if (it && this.dir !== 'up') nicuItem(ctx, it, x + pos[0], y + pos[1], T);
+        // (dirty hands: stink wisps over her head)
+        if (this.dirty) for (let k = 0; k < 3; k++) { const wx = x - 6 + k * 5, wy = y - S.h - 3 - (((T >> 3) + k) & 1); ctx.fillStyle = '#78b048'; ctx.fillRect(wx, wy, 1, 2); ctx.fillRect(wx + 1, wy - 2, 1, 2); ctx.fillRect(wx, wy - 4, 1, 2); }
+        // the job's progress, over her head
+        const a = this.focus && inp.down('a') ? this.act(this.focus) : null;
+        if (a && a.hold && a.prog() > 0) bar(ctx, x - 9, y - S.h - 4, 18, 4, a.prog(), '#78e070');
+      },
+      drawBubble(ctx, b, T) {
+        const st = b.st, x = st.x * NT + 8, y = NOY + st.y * NT - 9, late = b.left <= 0;
+        ctx.fillStyle = late && (T >> 3) & 1 ? '#d83838' : '#1c2a3a'; ctx.fillRect(x, y, 16, 15); ctx.fillRect(x + 6, y + 15, 4, 2);
+        ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x + 1, y + 1, 14, 13); ctx.fillRect(x + 7, y + 14, 2, 2);
+        needIcon(ctx, b.need, x + 3, y + 2);
+        const k = Math.max(0, b.left / b.max);
+        bar(ctx, x, y - 4, 16, 4, k, k > 0.5 ? '#78e070' : k > 0.25 ? '#f8d850' : '#f86858');
+        if (b.prog > 0) bar(ctx, x, y + 17, 16, 3, b.prog, '#5a8ab0');
+      },
+      drawResults(ctx) {
+        ctx.fillStyle = 'rgba(28,42,58,0.55)'; ctx.fillRect(0, 0, G.W, G.H);
+        ctx.fillStyle = '#1c2a3a'; ctx.fillRect(40, 24, 160, 112); ctx.fillStyle = '#f8f8f0'; ctx.fillRect(41, 25, 158, 110);
+        ctx.fillStyle = '#5a8ab0'; ctx.fillRect(41, 25, 158, 12);
+        const c = (txt, y, col) => FT().draw(ctx, txt, 120 - Math.round(FT().width(txt) / 2), y, col || '#1c2a3a');
+        c(S0.title + ' OVER', 27, '#f8f8f0');
+        const sc = G.sayable(this.score), w = FT().bigWidth(sc, 2);
+        FT().drawBig(ctx, sc, Math.round(120 - w / 2), 44, 2, '#1c2a3a', '#b8c4d0');
+        c('POINTS', 64, '#5a6a7a');
+        for (let k = 0; k < 3; k++) bigStar(ctx, 120 - 33 + k * 24, 72, k < this.stars);
+        c('Babies looked after: ' + G.sayable(this.done), 94);
+        c('Waited too long: ' + G.sayable(this.missed), 104, this.missed ? '#d83838' : '#1c2a3a');
+        const nx = S0.stars.find((s) => this.score < s);
+        c(nx ? 'Next star at ' + G.sayable(nx) : 'Every star!', 114, '#5a6a7a');
+        if ((this.t >> 4) & 1) c('Z: done', 125, '#5a8ab0');
       },
     };
   }
+  const walkFrameOf = (anim, moving) => (moving ? [1, 0, 2, 0][Math.floor(anim / 8) % 4] : 0);
 
-  // ---- the menu: Care Time, then the shifts (each opens when the one before is done)
+  // ---- the menu: the shifts (each opens once the one before has a star), and HOW TO PLAY
   function nicuMenuCmd() {
-    const N = nicuState();
-    const rows = [{ id: 'care', name: 'CARE TIME', blurb: 'One baby, all six tasks. Practice, with tips.' }].concat(NICU_SHIFTS.map((S0) => ({ id: S0.id, name: S0.name, blurb: G.sayable(S0.babies) + ' babies at once' + (S0.twins ? ', including TWINS' : '') + '. ' + G.sayable(S0.secs) + ' seconds.', S0 })));
-    const open = (i) => i === 0 || (i === 1 ? N.care != null : !!N[rows[i - 1].id]);
+    const N = nicuState(), rows = NICU_SHIFTS.concat([{ id: 'how', name: 'HOW TO PLAY', blurb: 'The controls, and how to look after every kind of baby.' }]);
+    const open = (i) => i === 0 || i === rows.length - 1 || !!(N[rows[i - 1].id] && N[rows[i - 1].id].stars);
     return {
-      start() { this.sel = Math.max(0, rows.findIndex((r, i) => open(i) && !N[r.id])); if (this.sel < 0) this.sel = 0; this.t = 0; G.play.overlay = this; },
+      start() { this.sel = Math.max(0, NICU_SHIFTS.findIndex((S0, i) => open(i) && !(N[S0.id] && N[S0.id].stars >= 3))); this.t = 0; G.play.overlay = this; },
       update() {
         const inp = G.input;
         this.t++;
@@ -13200,18 +13144,22 @@
         return false;
       },
       draw(ctx) {
-        nicuBack(ctx, 'HANNAH\'S SHIFT', 'Hats: ' + G.sayable(G.hatsCount()) + '/' + G.sayable(G.HATS.length));
+        const stars = NICU_SHIFTS.reduce((t, S0) => t + ((N[S0.id] && N[S0.id].stars) || 0), 0);
+        nicuBack(ctx, 'HANNAH\'S SHIFT', '★ ' + G.sayable(stars) + '/' + G.sayable(NICU_SHIFTS.length * 3));
         rows.forEach((r, i) => {
-          const y = 18 + i * 25, on = i === this.sel, ok = open(i), best = N[r.id];
-          ctx.fillStyle = on ? '#f8d850' : '#9ab8d0'; ctx.fillRect(8, y, 150, 22); ctx.fillStyle = on ? '#fff8d8' : '#f8f8f0'; ctx.fillRect(9, y + 1, 148, 20);
-          FT().draw(ctx, ok ? r.name : '???', 14, y + 3, ok ? '#1c2a3a' : '#9a9aa8');
-          FT().draw(ctx, ok ? (r.id === 'care' ? (best != null ? 'Best: ' + ['', 'OOPS', 'GOOD', 'PERFECT'][best] : 'NEW') : best ? '★'.repeat(best) + '☆'.repeat(3 - best) : 'NEW') : 'locked', 14, y + 12, ok ? '#5a6a7a' : '#b8b8c0');
+          const y = 18 + i * 28, on = i === this.sel, ok = open(i), best = N[r.id];
+          ctx.fillStyle = on ? '#f8d850' : '#9ab8d0'; ctx.fillRect(8, y, 150, 25); ctx.fillStyle = on ? '#fff8d8' : '#f8f8f0'; ctx.fillRect(9, y + 1, 148, 23);
+          if (r.id === 'how') { FT().draw(ctx, r.name, 14, y + 8, '#1c2a3a'); return; }
+          FT().draw(ctx, ok ? r.name + ': ' + r.title : r.name + ': ???', 14, y + 3, ok ? '#1c2a3a' : '#9a9aa8');
+          if (!ok) FT().draw(ctx, 'locked', 14, y + 13, '#b8b8c0');
+          else if (!best) FT().draw(ctx, 'NEW', 14, y + 13, '#38a858');
+          else { starRow(ctx, best.stars, 30, y + 13); FT().draw(ctx, 'BEST ' + G.sayable(best.best), 62, y + 13, '#5a6a7a'); }
         });
         const r = rows[this.sel];
-        FT().wrap(open(this.sel) ? r.blurb : 'Finish the one above first.', 70).forEach((l, k) => FT().draw(ctx, l, 166, 24 + k * 9, '#1c2a3a'));
+        FT().wrap(open(this.sel) ? r.blurb : 'Get a star on ' + rows[this.sel - 1].name + ' first.', 70).forEach((l, k) => FT().draw(ctx, l, 166, 20 + k * 9, '#1c2a3a'));
         const D = G.sprites.dot.down[0], H = G.sprites.hannah.down[0];
         ctx.imageSmoothingEnabled = false;
-        ctx.drawImage(H, 168, 74, 32, H.height * 2); ctx.drawImage(D, 204, 74, 32, D.height * 2);
+        ctx.drawImage(H, 168, 92, 32, H.height * 2); ctx.drawImage(D, 204, 92, 32, D.height * 2);
         FT().draw(ctx, 'Z: start   X: done', 8, 148, '#5a6a7a');
       },
     };
@@ -13219,7 +13167,7 @@
 
   // Charge Nurse Dot, back on the floor once MECHA-BABY is parked. With Hannah along, it's her shift.
   S.chargeNurse = function* () {
-    const f = flags(), s = G.state, N = nicuState();
+    const f = flags(), N = nicuState();
     if (!(yield* S.callIn('hannah', 'Oh no. That\'s my charge nurse.'))) {
       yield G.say('Charge Nurse Dot', 'Have you seen Hannah? She\'s on in five minutes. She is NEVER late.');
       return;
@@ -13229,41 +13177,33 @@
       yield G.say('Charge Nurse Dot', 'Hannah. Where have you BEEN? The whole unit took a nap, somebody parked a robot in the corner, and you\'re on in five.');
       yield G.say('Hannah', 'I was... saving the world?');
       yield G.say('Charge Nurse Dot', 'Save it after your shift. Babies first. Always.');
-      yield G.say('Hannah', 'Nate, want to see what I actually do all day? Grab a chair. Don\'t touch anything.');
+      yield G.say('Hannah', 'Nate, want to see what I actually do all day? Stand by the door. Don\'t touch anything. I have to RUN.');
     } else yield G.say('Charge Nurse Dot', 'Back on the floor, Hannah? Good. They missed you.');
     for (;;) {
       const r = yield nicuMenuCmd();
       if (!r) { G.play.overlay = null; yield G.say('Charge Nurse Dot', 'Good work today. Go home and sleep, Hannah.'); return; }
-      if (r.id === 'care') {
-        const res = yield careTimeCmd();
-        G.play.overlay = null;
-        if (res === 'quit') continue;
-        const avg = res.results.reduce((t, x) => t + x.score, 0) / res.results.length, grade = avg >= 0.85 ? 3 : avg >= 0.6 ? 2 : 1;
-        const allPerfect = res.results.every((x) => x.grade === 'PERFECT');
-        N.care = Math.max(N.care || 0, grade);
-        yield G.say('Charge Nurse Dot', allPerfect ? 'Every single one, perfect. ...Don\'t tell anyone I said this, but you\'re my favorite.' : grade === 3 ? 'That was a good Care Time, Hannah.' : grade === 2 ? 'Decent. The baby\'s happy. That\'s the job.' : 'The baby survived you. Let\'s go again.');
-        yield* nicuHat('stripe');
-        if (allPerfect) yield* nicuHat('heart');
-      } else {
-        const res = yield shiftCmd(r.S0);
-        G.play.overlay = null;
-        if (res === 'quit') continue;
-        if (!res.stars) { yield G.say('Charge Nurse Dot', 'Rough one. Every baby made it, though. Again.'); continue; }
-        N[r.id] = Math.max(N[r.id] || 0, res.stars);
-        yield G.say('Charge Nurse Dot', res.stars === 3 ? 'Every baby happy. Every single one. That\'s my nurse.' : res.stars === 2 ? 'Good shift. A couple of them waited too long, but good.' : 'You got through it. That counts. Barely.');
-        yield* nicuHat(r.S0.hat);
-        if (NICU_SHIFTS.every((S0) => N[S0.id] === 3)) yield* nicuHat('pumpkin');
+      if (r.id === 'how') {
+        // (the cards for every shift that's open)
+        for (let i = 0; i < NICU_SHIFTS.length; i++) if (i === 0 || (N[NICU_SHIFTS[i - 1].id] && N[NICU_SHIFTS[i - 1].id].stars)) for (const [t, lines] of NICU_SHIFTS[i].how) yield howToCmd(t, lines, nicuBack);
+        continue;
       }
+      if (!f['nicuHow_' + r.id]) { f['nicuHow_' + r.id] = true; for (const [t, lines] of r.how) yield howToCmd(t, lines, nicuBack); }
+      const res = yield shiftCmd(r);
+      G.play.overlay = null;
+      if (res === 'quit') { yield G.say('Charge Nurse Dot', 'Leaving in the middle of a shift? ...Fine. Go drink some water.'); continue; }
+      const was = N[r.id] || { stars: 0, best: 0 }, i = NICU_SHIFTS.indexOf(r);
+      N[r.id] = { stars: Math.max(was.stars, res.stars), best: Math.max(was.best, res.score) };
+      yield G.say('Charge Nurse Dot', [
+        'We\'ll talk about that one later. Again.',
+        'Every baby made it. That\'s the job. Barely.',
+        'Good shift. A couple of them waited too long, but good.',
+        'Every baby happy. Every single one. That\'s my nurse.',
+      ][res.stars]);
+      if (!was.stars && res.stars && i < NICU_SHIFTS.length - 1) yield G.say(null, '{y}' + NICU_SHIFTS[i + 1].name + ': ' + NICU_SHIFTS[i + 1].title + '{/} is open!');
+      if (i === NICU_SHIFTS.length - 1 && res.stars === 3 && was.stars < 3) yield G.say('Charge Nurse Dot', 'The night shift. Twins. Three stars. Hannah, when I retire, this unit is yours.');
       G.play.autosave();
     }
   };
-  // a knitted hat for the collection (the babies wear the ones you've earned)
-  function* nicuHat(id) {
-    if (G.hatHas(id)) return;
-    hatState()[id] = true;
-    const h = G.HATS.find((x) => x.id === id);
-    yield G.itemGet(G.spr.knitHats[id], 'You got a knitted hat: {y}' + h.name + '{/}! The babies will wear it. It\'s in {y}COLLECTABLES{/}.');
-  }
 
   // ================================================================ CHKD, AFTER MECHA-BABY
   // Getting ready for the Number One Ditch (the user's picks): Hannah's first-aid kit (CHKD's
