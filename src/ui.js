@@ -545,7 +545,7 @@
       const inp = G.input;
       this.openT++;
       if (this.msgT > 0) this.msgT--;
-      if (this.strum && this.strum.length) G.audio.inst.guitar(this.strum.shift(), 1.6, 0.08);
+      if (this.strum && this.strum.length) G.audio.inst.guitar(this.strum.shift(), 1.6, 0.08, this.strumTone);
       if (this.fill) { this.fillT++; for (const [f, play] of this.fill) if (f === this.fillT) play(); }
       // "overwrite File N?" on the SAVE tab
       if (this.confirm) {
@@ -599,7 +599,7 @@
         // Nate isn't playing: he plays that one now)
         const it = this.instView;
         if (it && G.GUITARS.includes(it) && G.guitarNow() !== it && inp.hit('a')) {
-          inp.eat('a'); G.state.guitar = it.id; this.instView = null; this.strum = it.chord.slice(); G.audio.sfx('select'); this.flash('Nate\'s playing ' + it.name + ' now.');
+          inp.eat('a'); G.state.guitar = it.id; this.instView = null; this.strum = it.chord.slice(); this.strumTone = it.id; G.audio.sfx('select'); this.flash('Nate\'s playing ' + it.name + ' now.');
         } else if (inp.hit('a') || inp.hit('b')) { inp.eat('a'); inp.eat('b'); this.photoView = this.instView = null; this.strum = this.fill = null; G.audio.sfx('cancel'); }
       } else if (this.tab === COLL_TAB && this.coll && inp.hit('b')) {
         inp.eat('b');
@@ -632,7 +632,7 @@
           inp.eat('a');
           // a closer look (and a strum, if it has strings)
           const it = G.INSTRUMENTS[this.sel];
-          if (it && G.instrumentHas(it.id)) { this.instView = it; G.audio.sfx('select'); this.strum = it.chord ? it.chord.slice() : null; this.fill = it.fill || null; this.fillT = 0; } else G.audio.sfx('bump');
+          if (it && G.instrumentHas(it.id)) { this.instView = it; G.audio.sfx('select'); this.strum = it.chord ? it.chord.slice() : null; this.strumTone = it.id; this.fill = it.fill || null; this.fillT = 0; } else G.audio.sfx('bump');
         }
       } else if (this.tab === COLL_TAB && (this.coll === 'pipes' || this.coll === 'tins')) {
         // DAD'S PIPES / TOBACCO: Z puts one to use (Z on the tobacco that's in empties the pipe)

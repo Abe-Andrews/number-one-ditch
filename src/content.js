@@ -6994,7 +6994,8 @@
         const had = G.guitarsHad();
         if ((inp.hit('left') || inp.hit('right')) && had.length > 1 && !JAM_SONGS[this.sel].drums) {
           const i = had.indexOf(G.guitarNow()), it = had[(i + (inp.hit('left') ? had.length - 1 : 1)) % had.length];
-          G.state.guitar = it.id; G.audio.sfx('menu'); G.audio.inst.guitar(52, 0.4, 0.1);
+          // (a quick strum, so you hear its tone)
+          G.state.guitar = it.id; G.audio.sfx('menu'); for (const m of it.chord.slice(1, 4)) G.audio.inst.guitar(m, 0.8, 0.06, it.id);
         }
         if (inp.hit('a')) { inp.eat('a'); if (this.open(this.sel)) { G.audio.sfx('select'); this.result = JAM_SONGS[this.sel]; return true; } G.audio.sfx('bump'); }
         if (inp.hit('b') || quitHit()) { inp.eat('b'); G.audio.sfx('cancel'); this.result = null; return true; }
@@ -7049,7 +7050,7 @@
     const KEYS = ['left', 'down', 'up', 'right'], ARROWS = ['←', '↓', '↑', '→'];
     const GEM = { bongos: ['#f8d890', 0, 0, '#e09048'], pan: ['#b8d8f8', '#b8f0c8', '#f8e8a0', '#f8c0d8'], kit: ['#f8d850', '#c050a0', '#f0f0f0', '#78c8f8'] }[drums] || ['#c050a0', '#e08030', '#f0e6c0', '#78c8f8'];
     // what a hit sounds like (a drum still sounds when you hit it with no note there)
-    const sound = (n) => (n.hit ? n.hit() : drums === 'pan' ? G.audio.inst.pan(n.midi, 0.7) : G.audio.inst.guitar(n.midi, n.dur));
+    const sound = (n) => (n.hit ? n.hit() : drums === 'pan' ? G.audio.inst.pan(n.midi, 0.7) : G.audio.inst.guitar(n.midi, n.dur, undefined, gt.id));
     const abeGuitar = G.guitarNow();
     const notes = S0.notes.map((n) => Object.assign({}, n, { t: COUNT + n.beat * fpb, done: null }));
     const END = notes[notes.length - 1].t + 2 * fpb, speed = (HIT_Y - TOP) / song.lead;
@@ -7085,7 +7086,7 @@
         const root = S0.bars[Math.min(Math.floor(k / 8), S0.bars.length - 1)], pos = k % 8, st = song.style;
         if (drums) {
           // a drum song: Abe on guitar (root, fifth and octave) with a bass line under him
-          const chord = (dur, vol) => { for (const m of [root + 12, root + 19, root + 24]) G.audio.inst.guitar(m, dur, vol); };
+          const chord = (dur, vol) => { for (const m of [root + 12, root + 19, root + 24]) G.audio.inst.guitar(m, dur, vol, abeGuitar.id); };
           if (st === 'bongo') { if (pos === 0 || pos === 3 || pos === 6) chord(0.5, 0.05); if (pos === 0 || pos === 4) G.audio.inst.bass(root, 0.3); }
           else if (st === 'calypso') { if (pos % 2) chord(0.16, 0.05); if (pos === 0 || pos === 3 || pos === 4) G.audio.inst.bass(root, 0.22); }
           else { chord(0.12, 0.04); if (pos % 2 === 0) G.audio.inst.bass(root, 0.16); }
@@ -7116,7 +7117,7 @@
           // a strum with nothing there: a dead clunk (a drum just sounds, off the beat)
           this.combo = 0; this.groove = Math.max(0, this.groove - 0.02);
           if (drums) { const n = S0.notes.find((x) => x.lane === L); if (n) sound(n); this.hitT[L] = 8; }
-          else G.audio.inst.guitar(40 + L * 5, 0.05, 0.06);
+          else G.audio.inst.guitar(40 + L * 5, 0.05, 0.06, gt.id);
           this.checkFail();
         }
       },

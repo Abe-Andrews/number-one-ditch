@@ -297,6 +297,24 @@ G.audio = (function () {
     }
   }
 
+  // Abe's guitars, each its own voice. osc: [wave, pitch multiple, level]; the lowpass opens to
+  // f * open and closes to f * close (never below floor), q its peak; sustain stretches the note.
+  //   strat: bright and glassy, a peaky filter for that in-between-pickups quack, the lows thinned
+  //   tele: two fat, detuned saws and a sub, smoother filter, into a pushed amp (soft clipping)
+  //   jazzmaster: warm and round (a triangle), longer notes, the tremolo wobble, a slapback echo
+  const GUITAR_TONES = {
+    strat: { osc: [['sawtooth', 1, 1], ['square', 1.004, 0.6], ['sine', 2, 0.2]], open: 12, close: 2.4, floor: 500, q: 7, sustain: 1, gain: 1, hp: 200 },
+    tele: { osc: [['sawtooth', 0.997, 1], ['sawtooth', 1.003, 1], ['sine', 0.5, 0.7]], open: 6, close: 1.5, floor: 350, q: 2, sustain: 1.15, gain: 0.75, drive: 3 },
+    jazzmaster: { osc: [['triangle', 1, 1], ['sawtooth', 1.002, 0.7], ['sine', 0.5, 0.3]], open: 9, close: 1.8, floor: 320, q: 1.4, sustain: 1.3, gain: 0.75, wobble: 0.008, echo: 0.11 },
+  };
+  const driveCurves = {};
+  function driveCurve(k) {
+    if (driveCurves[k]) return driveCurves[k];
+    const c = new Float32Array(1024);
+    for (let i = 0; i < 1024; i++) { const x = (i / 1023) * 2 - 1; c[i] = Math.tanh(k * x) / Math.tanh(k); }
+    return (driveCurves[k] = c);
+  }
+
   function stopSong() {
     if (timer) clearInterval(timer);
     timer = null;
@@ -323,23 +341,30 @@ G.audio = (function () {
       noise(t, 0.3, 0.06, sfxBus, 1500);
     },
     // Instruments, played a note at a time by the game loop (the jam with Abe): an electric guitar
-    // (two slightly detuned oscillators through a closing lowpass, like a plucked string), a bass,
-    // and a little drum kit. They go on the music bus.
+    // (detuned oscillators through a closing lowpass, like a plucked string), a bass, and drums.
+    // They go on the music bus. Each of Abe's guitars has its own tone (GUITAR_TONES).
     inst: {
-      guitar(midi, dur = 0.45, vol = 0.16) {
+      guitar(midi, dur = 0.45, vol = 0.16, tone = 'strat') {
         if (!ctx || muted) return;
-        const t = ctx.currentTime + 0.005, f = N(midi), flt = ctx.createBiquadFilter(), g = ctx.createGain();
-        flt.type = 'lowpass'; flt.Q.value = 4;
-        flt.frequency.setValueAtTime(Math.min(6000, f * 9), t); flt.frequency.exponentialRampToValueAtTime(Math.max(300, f * 1.6), t + dur);
-        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-        for (const [type, mul] of [['sawtooth', 1], ['square', 1.004], ['sine', 0.5]]) {
-          const o = ctx.createOscillator();
+        const T = GUITAR_TONES[tone] || GUITAR_TONES.strat, t = ctx.currentTime + 0.005, f = N(midi), len = dur * T.sustain;
+        const flt = ctx.createBiquadFilter(), g = ctx.createGain();
+        flt.type = 'lowpass'; flt.Q.value = T.q;
+        flt.frequency.setValueAtTime(Math.min(8000, f * T.open), t); flt.frequency.exponentialRampToValueAtTime(Math.max(T.floor, f * T.close), t + len);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * T.gain, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        for (const [type, mul, lvl] of T.osc) {
+          const o = ctx.createOscillator(), og = ctx.createGain();
           o.type = type; o.frequency.setValueAtTime(f * mul, t);
-          // (a little of the Jazzmaster's floating tremolo)
-          o.frequency.setValueAtTime(f * mul, t + dur * 0.5); o.frequency.linearRampToValueAtTime(f * mul * 1.006, t + dur);
-          o.connect(flt); o.start(t); o.stop(t + dur + 0.03);
+          // (the Jazzmaster's floating tremolo: the pitch drifts up, then sags)
+          if (T.wobble) { o.frequency.setValueAtTime(f * mul, t + len * 0.3); o.frequency.linearRampToValueAtTime(f * mul * (1 + T.wobble), t + len * 0.6); o.frequency.linearRampToValueAtTime(f * mul * (1 - T.wobble / 2), t + len); }
+          og.gain.value = lvl; o.connect(og); og.connect(flt); o.start(t); o.stop(t + len + 0.03);
         }
-        flt.connect(g); g.connect(musicBus);
+        // the Strat's single coils are thin (a highpass); the Tele Deluxe's humbuckers push the amp (drive)
+        let out = flt;
+        if (T.hp) { const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = T.hp; out.connect(hp); out = hp; }
+        if (T.drive) { const ws = ctx.createWaveShaper(); ws.curve = driveCurve(T.drive); out.connect(ws); out = ws; }
+        out.connect(g); g.connect(musicBus);
+        // the Jazzmaster gets a surf-style slapback echo
+        if (T.echo) { const d = ctx.createDelay(0.5), dg = ctx.createGain(); d.delayTime.value = T.echo; dg.gain.value = 0.35; g.connect(d); d.connect(dg); dg.connect(musicBus); }
       },
       bass(midi, dur = 0.35) {
         if (!ctx || muted) return;
