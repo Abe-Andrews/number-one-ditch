@@ -453,12 +453,15 @@
     if (instPages.has(it.id)) return instPages.get(it.id);
     const c = G.canvas(G.W, G.H), x = c.getContext('2d'), img = it.art(), tw = G.W - 16;
     x.fillStyle = '#1c1424'; x.fillRect(0, 0, G.W, G.H);
-    // a felt-lined case for it to lie in
-    const cw = img.height * 2 + 10, ch = img.width * 2 + 6, cx = Math.round((G.W - cw) / 2);
+    // a felt-lined case for it to lie in (a drum stands up on a little riser instead, no taller than
+    // 48 so its write-up fits)
+    const dk = it.drum ? Math.max(1, Math.min(2, Math.floor(48 / img.height))) : 2;
+    const cw = (it.drum ? img.width : img.height) * dk + 10, ch = (it.drum ? img.height : img.width) * dk + 6, cx = Math.round((G.W - cw) / 2);
     x.fillStyle = '#0c0814'; x.fillRect(cx + 2, 5, cw, ch);
     x.fillStyle = '#4a2a3a'; x.fillRect(cx, 3, cw, ch);
     x.fillStyle = '#5c3448'; x.fillRect(cx + 1, 4, cw - 2, 1);
-    x.save(); x.translate(cx + 5, 6 + img.width * 2); x.rotate(-Math.PI / 2); x.drawImage(img, 0, 0, img.width * 2, img.height * 2); x.restore();
+    if (it.drum) x.drawImage(img, cx + 5, 6, img.width * dk, img.height * dk);
+    else { x.save(); x.translate(cx + 5, 6 + img.width * 2); x.rotate(-Math.PI / 2); x.drawImage(img, 0, 0, img.width * 2, img.height * 2); x.restore(); }
     let y = ch + 9;
     TXT(x, it.name, 8, y, C.gold);
     // (the kind goes at the right, or under the name when they don't both fit)
@@ -543,6 +546,7 @@
       this.openT++;
       if (this.msgT > 0) this.msgT--;
       if (this.strum && this.strum.length) G.audio.inst.guitar(this.strum.shift(), 1.6, 0.08);
+      if (this.fill) { this.fillT++; for (const [f, play] of this.fill) if (f === this.fillT) play(); }
       // "overwrite File N?" on the SAVE tab
       if (this.confirm) {
         if (inp.hit('a')) { inp.eat('a'); this.saveTo(this.confirm); }
@@ -594,9 +598,9 @@
         // looking at a photo or an instrument: Z or X puts it away (Z on one of Abe's guitars
         // Nate isn't playing: he plays that one now)
         const it = this.instView;
-        if (it && it.song && G.guitarNow() !== it && inp.hit('a')) {
+        if (it && G.GUITARS.includes(it) && G.guitarNow() !== it && inp.hit('a')) {
           inp.eat('a'); G.state.guitar = it.id; this.instView = null; this.strum = it.chord.slice(); G.audio.sfx('select'); this.flash('Nate\'s playing ' + it.name + ' now.');
-        } else if (inp.hit('a') || inp.hit('b')) { inp.eat('a'); inp.eat('b'); this.photoView = this.instView = null; this.strum = null; G.audio.sfx('cancel'); }
+        } else if (inp.hit('a') || inp.hit('b')) { inp.eat('a'); inp.eat('b'); this.photoView = this.instView = null; this.strum = this.fill = null; G.audio.sfx('cancel'); }
       } else if (this.tab === COLL_TAB && this.coll && inp.hit('b')) {
         inp.eat('b');
         this.sel = COLLECTIONS.findIndex((c) => c.id === this.coll);
@@ -628,7 +632,7 @@
           inp.eat('a');
           // a closer look (and a strum, if it has strings)
           const it = G.INSTRUMENTS[this.sel];
-          if (it && G.instrumentHas(it.id)) { this.instView = it; G.audio.sfx('select'); this.strum = it.chord ? it.chord.slice() : null; } else G.audio.sfx('bump');
+          if (it && G.instrumentHas(it.id)) { this.instView = it; G.audio.sfx('select'); this.strum = it.chord ? it.chord.slice() : null; this.fill = it.fill || null; this.fillT = 0; } else G.audio.sfx('bump');
         }
       } else if (this.tab === COLL_TAB && (this.coll === 'pipes' || this.coll === 'tins')) {
         // DAD'S PIPES / TOBACCO: Z puts one to use (Z on the tobacco that's in empties the pipe)
@@ -745,7 +749,7 @@
       const admin = G.state.admin, act = {
         [QUEST_TAB]: QMODES[(this.qmode + 1) % QMODES.length] === 'ACTIVE' ? 'quests' : QMODES[(this.qmode + 1) % QMODES.length] === '100%' ? '100% list' : 'rules',
         [MAP_TAB]: null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
-        [COLL_TAB]: this.instView && this.instView.song && G.guitarNow() !== this.instView ? 'play it' : this.photoView || this.instView ? 'put away' : !this.coll ? 'open' : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
+        [COLL_TAB]: this.instView && G.GUITARS.includes(this.instView) && G.guitarNow() !== this.instView ? 'play it' : this.photoView || this.instView ? 'put away' : !this.coll ? 'open' : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
         [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here',
       }[this.tab];
       const pairs = act ? [['Z', act]] : [['↑↓←→', 'look around']];
@@ -1178,21 +1182,24 @@
     drawInstruments(ctx) {
       const list = G.INSTRUMENTS, n = G.instrumentsCount();
       card(ctx, 5, 21, 112, 121, 'INSTRUMENTS', C.gold, G.sayable(n) + '/' + G.sayable(list.length));
+      // (the rows get shorter once there are more than two of them)
+      const rh = list.length > 6 ? 34 : 44;
       list.forEach((it, i) => {
-        const x = 9 + (i % 3) * 35, y = 37 + Math.floor(i / 3) * 44, sel = i === this.sel && !this.onTabs, img = it.art(), has = G.instrumentHas(it.id);
-        slot(ctx, x, y, 34, 42, has ? C.gold : undefined);
-        const k = 38 / img.height;
-        ctx.drawImage(has ? img : silhouette(img), x + Math.round((34 - img.width * k) / 2), y + 2, Math.round(img.width * k), 38);
+        const x = 9 + (i % 3) * 35, y = 37 + Math.floor(i / 3) * rh, sel = i === this.sel && !this.onTabs, img = it.art(), has = G.instrumentHas(it.id);
+        slot(ctx, x, y, 34, rh - 2, has ? C.gold : undefined);
+        const k = Math.min((rh - 6) / img.height, 30 / img.width), w = Math.round(img.width * k), h = Math.round(img.height * k);
+        ctx.drawImage(has ? img : silhouette(img), x + Math.round((34 - w) / 2), y + Math.round((rh - 2 - h) / 2), w, h);
         // (a star on the guitar Nate's playing)
         if (has && it.song && G.guitarNow() === it) TXT(ctx, '★', x + 26, y + 2, C.gold);
-        if (sel) brackets(ctx, x - 1, y - 1, 36, 44);
+        if (sel) brackets(ctx, x - 1, y - 1, 36, rh);
       });
       const it = list[this.sel];
       card(ctx, 120, 21, 115, 121);
       if (!it) return;
-      // the instrument, lying across the top of the card
+      // the instrument, lying across the top of the card (a drum, standing up)
       const img = it.art(), has = G.instrumentHas(it.id);
-      ctx.save(); ctx.translate(120 + Math.round((115 - img.height) / 2), 28 + Math.round((24 - img.width) / 2)); ctx.rotate(-Math.PI / 2); ctx.drawImage(has ? img : silhouette(img), -img.width, 0); ctx.restore();
+      if (it.drum) { const k = Math.min(1, 24 / img.height), w = Math.round(img.width * k); ctx.drawImage(has ? img : silhouette(img), 177 - Math.round(w / 2), 52 - Math.round(img.height * k), w, Math.round(img.height * k)); }
+      else { ctx.save(); ctx.translate(120 + Math.round((115 - img.height) / 2), 28 + Math.round((24 - img.width) / 2)); ctx.rotate(-Math.PI / 2); ctx.drawImage(has ? img : silhouette(img), -img.width, 0); ctx.restore(); }
       if (!has) {
         TXT(ctx, '???', 125, 56, C.cyan);
         F().wrap(it.how, 104).forEach((l, k) => TXT(ctx, l, 125, 67 + k * 9, C.dim));

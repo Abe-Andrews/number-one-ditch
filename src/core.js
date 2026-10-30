@@ -350,6 +350,16 @@ G.audio = (function () {
       kick() { if (!ctx || muted) return; const t = ctx.currentTime + 0.005; tone(130, t, 0.16, 'sine', 0.7, musicBus, 42); },
       snare() { if (!ctx || muted) return; const t = ctx.currentTime + 0.005; noise(t, 0.14, 0.32, musicBus, 2200); tone(190, t, 0.07, 'triangle', 0.18, musicBus); },
       hat() { if (!ctx || muted) return; const t = ctx.currentTime + 0.005; noise(t, 0.035, 0.12, musicBus, 8000); },
+      // Nate's drums: bongos (a pitched thump that drops, with a slap of skin), a steel pan (a sine
+      // with its bright, slightly-off overtones), toms, and a crash
+      bongo(hi) { if (!ctx || muted) return; const t = ctx.currentTime + 0.005, f = hi ? 440 : 280; tone(f, t, hi ? 0.12 : 0.17, 'sine', 0.45, musicBus, f * 0.82); noise(t, 0.02, 0.12, musicBus, hi ? 3200 : 2200); },
+      pan(midi, dur = 0.6) {
+        if (!ctx || muted) return;
+        const t = ctx.currentTime + 0.005, f = N(midi);
+        tone(f, t, dur, 'sine', 0.24, musicBus); tone(f * 2, t, dur * 0.7, 'sine', 0.09, musicBus); tone(f * 3.01, t, dur * 0.35, 'sine', 0.04, musicBus); tone(f * 4.07, t, 0.08, 'triangle', 0.03, musicBus);
+      },
+      tom(hi) { if (!ctx || muted) return; const t = ctx.currentTime + 0.005, f = hi ? 190 : 120; tone(f, t, 0.28, 'sine', 0.55, musicBus, f * 0.7); noise(t, 0.05, 0.08, musicBus, 1200); },
+      crash() { if (!ctx || muted) return; const t = ctx.currentTime + 0.005; noise(t, 0.9, 0.2, musicBus, 6500); noise(t, 0.4, 0.12, musicBus, 4000); },
     },
     toggleMute() {
       muted = !muted;

@@ -8673,6 +8673,57 @@
     p.vline(10, 14, 15, '#1a1a1a'); p.set(11, 15, '#1a1a1a');
     return finish(p);
   }
+  // Abe's drums (made up: Abe doesn't own any), won jamming with him: bongos, a steel drum, a kit
+  // the bongos: a small drum (the macho) and a big one (the hembra), wooden shells with chrome hoops
+  // and tuning lugs, cream skin heads, joined by a block of wood
+  function bongos() {
+    const p = new Pix(28, 18), WOOD = '#c8823a', WD = '#8a5424', WL = '#e0a058', HOOP = '#b8bcc4', SKIN = '#f4e8c8', SD = '#dccca0';
+    const drum = (cx, rx, top, bot) => {
+      p.rect(cx - rx, top + 1, rx * 2 + 1, bot - top, WOOD);
+      p.vline(cx - rx + 1, top + 2, bot, WL); p.vline(cx + rx - 1, top + 2, bot, WD);
+      p.hline(cx - rx, cx + rx, bot - 3, WD);
+      for (const dx of [-rx + 2, 0, rx - 2]) p.vline(cx + dx, top + 2, top + 5, '#5a5a64');
+      ell(p, cx, top + 1, rx, 2, HOOP); ell(p, cx, top + 1, rx - 1, 1, SKIN); p.hline(cx - rx + 2, cx + rx - 3, top + 2, SD);
+    };
+    p.rect(11, 8, 6, 3, WD); p.hline(11, 16, 8, WOOD);
+    drum(6, 5, 2, 15); drum(20, 7, 1, 16);
+    p.outline();
+    return p.canvas();
+  }
+  // the steel drum: a chrome bowl hammered into note dents, on a black stand
+  function steelPan() {
+    const p = new Pix(32, 24), CH = '#c8ccd4', CL = '#eef0f4', CD = '#8a909a';
+    for (const x of [6, 25]) { p.vline(x, 12, 22, '#2a2a30'); p.set(x - 1, 23, '#2a2a30'); p.set(x + 1, 23, '#2a2a30'); }
+    p.hline(6, 25, 18, '#2a2a30');
+    p.rect(2, 7, 28, 7, CH); p.vline(4, 8, 13, CL); p.vline(5, 8, 13, CL); p.vline(27, 8, 13, CD); p.hline(2, 29, 13, CD);
+    ell(p, 16, 7, 14, 5, CD); ell(p, 16, 7, 13, 4, '#d8dce4');
+    // the note dents, each its own little shiny circle
+    for (const [x, y, r] of [[9, 6, 2], [16, 4, 2], [23, 6, 2], [12, 9, 1], [20, 9, 1], [16, 7, 1]]) { ell(p, x, y, r + 1, 1, '#b8bec8'); p.set(x - 1, y, CL); }
+    p.outline();
+    return p.canvas();
+  }
+  // the drum kit, in blue sparkle: the kick drum in front, a rack tom on top, a snare and the
+  // hi-hat on the left, the floor tom and the crash on the right
+  function drumKit() {
+    const p = new Pix(48, 34), SH = '#2a58b8', SL = '#5a88e8', SD = '#1a3478', HEAD = '#f4f0e4', HD = '#d8d2c0', CY = '#e8c048', CYD = '#b08828', ST = '#9aa0aa';
+    const sparkle = (x0, y0, w, h) => { for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) if ((x * 7 + y * 3) % 11 === 0) p.set(x, y, SL); };
+    // stands
+    p.vline(5, 8, 32, ST); p.hline(3, 7, 33, ST); p.vline(42, 6, 32, ST); p.hline(40, 44, 33, ST);
+    // hi-hat (two cymbals) and crash
+    ell(p, 5, 9, 5, 1, CYD); ell(p, 5, 8, 5, 1, CY);
+    ell(p, 41, 5, 7, 1, CYD); p.hline(36, 46, 4, CY); p.set(41, 3, CY);
+    // snare: a short drum with a white head and a chrome band
+    p.rect(7, 17, 11, 6, SH); sparkle(7, 17, 11, 6); p.hline(7, 17, 22, ST); ell(p, 12, 17, 5, 1, HEAD); p.vline(12, 23, 31, ST);
+    // floor tom on its legs
+    p.rect(33, 19, 11, 11, SH); sparkle(33, 19, 11, 11); p.hline(33, 43, 29, SD); ell(p, 38, 19, 5, 1, HEAD); p.vline(34, 30, 33, ST); p.vline(43, 30, 33, ST);
+    // kick drum: the big round front head, with a blue stripe across it
+    ell(p, 24, 23, 10, 10, SD); ell(p, 24, 23, 9, 9, HEAD); ell(p, 24, 23, 7, 7, HD); p.rect(15, 21, 19, 4, SH); p.hline(15, 33, 21, SL);
+    p.vline(18, 32, 33, ST); p.vline(30, 32, 33, ST);
+    // rack tom, on top of the kick
+    p.rect(19, 7, 11, 7, SH); sparkle(19, 7, 11, 7); p.hline(19, 29, 13, SD); ell(p, 24, 7, 5, 1, HEAD);
+    p.outline();
+    return p.canvas();
+  }
   // Abe's Jazzmaster (from the user's photo): a sparkly plum offset body, a tortoiseshell pickguard,
   // two cream soapbar pickups, the chrome bridge and tremolo (and its arm), a rosewood board with
   // pearl dots on an aged maple neck, and the headstock with its gold logo and six tuners down one side
@@ -9060,7 +9111,7 @@
     S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
     S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon(); S.bmfIcon = bmfIcon();
-    S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe();
+    S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe(); S.bongos = bongos(); S.steelPan = steelPan(); S.drumKit = drumKit();
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
     S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();
