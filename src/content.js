@@ -211,6 +211,12 @@
     coat: '#a88aa0', shirt: '#e8dce4', pants: '#4a6aa8', shoes: '#4a7a3a', boots: true, torso: 6, legs: 3,
   };
 
+  // Rae (an original character): the studio tech in Studio B. Shoulder-length dark hair, a black
+  // band tee, headphones around her neck.
+  G.CAST.rae = {
+    skin: '#c08a68', hair: '#2a1c18', hairStyle: 'shoulder', smile: '#ffffff', headphones: '#1c1c22',
+    shirt: '#2a2a30', pants: '#3a4a6a', shoes: '#e8e8e8', torso: 6, legs: 3,
+  };
   // Charge Nurse Dot (an original character): Hannah's charge nurse in the NICU. Short gray hair,
   // reading glasses, purple scrubs, white clogs.
   G.CAST.dot = {
@@ -308,6 +314,10 @@
     engDiploma: {
       kind: 'key', name: 'Diploma in EEENGLISH', icon: () => G.spr.diploma, has: () => !!fl().engPerfect,
       desc: 'Certifies that Nate speaks EEENGLISH. Three Es. Signed by Professor Pembrook and, in crayon, El EEENGLISH.',
+    },
+    metronome: {
+      kind: 'key', name: 'Abe\'s Metronome', short: 'Metronome', icon: () => G.spr.metronomeIcon, has: () => !!st().items.metronome,
+      desc: 'A little wooden metronome from Abe, for keeping time in Studio B at the Williams Center. "Not your foot. Your foot lies."',
     },
     bmf: {
       kind: 'key', name: 'BMF Belt', short: 'BMF Belt', icon: () => G.spr.bmfIcon, has: () => !!st().items.bmf,
@@ -437,7 +447,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -649,6 +659,11 @@
       if (!f.fightMet) side.push({ name: 'The locker room', status: 'Sounds like a fight in there', kind: 'rumor', where: 'Easton Fair - the Expo Hall', hint: 'The locker room door at the back of the Expo Hall is propped open now. Bring Doron.' });
       else if (nf < five.length) add('Doron\'s fight night', false, G.sayable(nf) + '/' + G.sayable(five.length) + ' beaten', 'Easton Fair - the Expo Hall', 'Doron takes on his favorite UFC fighters in the Expo Hall locker room. Beat Jon Jones for the Micro Mayhem title belt.', [nf, five.length]);
       else add('Doron\'s fight night', FS.nani && 'BMF!', 'A secret challenger is waiting', 'Easton Fair - the Expo Hall', 'Someone in a knit sweater is waiting in the Expo Hall locker room. Nani has some notes.');
+    }
+    if (G.studioOpen && G.studioOpen()) {
+      const ns = (s.songs || []).length;
+      if (!f.studioMet) side.push({ name: 'Studio B', status: 'A recording studio', kind: 'rumor', where: 'Lafayette - the Williams Center', hint: 'There\'s a recording studio in the Williams Center for the Arts, up the path north of the quad. Nate has an instrument now.' });
+      else add('Nate\'s studio', false, G.sayable(ns) + ' song' + (ns === 1 ? '' : 's') + ' saved', 'Lafayette - Studio B', 'Record up to eight tracks, live, at the console in Studio B. Save a song, then PLAY IN GAME to make it the game\'s music.' + (s.items.metronome ? '' : ' (Abe might have a metronome once you\'ve got three instruments.)'));
     }
     if (f.mobileBeaten && s.party.includes('hannah')) {
       const N = s.nicu || {}, ns = ['shift1', 'shift2', 'shift3'].reduce((t, k) => t + ((N[k] && N[k].stars) || 0), 0);
@@ -3445,6 +3460,7 @@
     { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { slothQuest: 4, ladyMet: true, bassGiven: true, romGap: true }, items: { abeBass: true, yellowCable: true, sloth: true } },
     { name: 'Abe joined: his reach', map: 'condo', at: [16, 13, 'right'], flags: { romulusBeaten: true }, party: ['abe'], follower: 'abe' },
     { name: 'Jamming with Abe (condo office)', map: 'condoUp', at: [22, 17, 'down'], flags: { plantQuest: true, plantsDone: true, gardenOpen: true } },
+    { name: 'Lafayette: Studio B (three instruments, metronome)', alone: true, map: 'studioB', at: [7, 8, 'up'], flags: { chemPassed: true, jamMet: true, studioTold: true }, jams: { shoolby: 2, bongos: 2, island: 2 }, items: { metronome: true } },
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'], flags: { healerTalk: true, chkdArrived: true } },
     { name: 'CHKD: MECHA-BABY (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
     { name: 'CHKD: Hannah joined (to the roof)', map: 'chkdNicu', at: [7, 8, 'down'], flags: { mobileBeaten: true, kitGot: true }, party: ['hannah'], follower: 'hannah', items: { firstAid: 3 }, maxHp: 12 },
@@ -3509,7 +3525,7 @@
   // corn, the sloth, Mom's books...): having those early would jump their quests.
   G.adminAllItems = () => {
     const s = G.state, f = s.flags;
-    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true, belt: true, bmf: true });
+    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true, belt: true, bmf: true, metronome: true });
     s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40; s.items.firstAid = G.KIT_MAX;
     f.kitGot = true; f.bidetBig = true; f.bidetNozzle = true; s.items.bidetWater = G.BIDET_MAX;
     for (const sg of G.SIGNALS) f['signal_' + sg.id] = true;
@@ -4568,6 +4584,7 @@
       fill(6, 7, 1, 5, '=');
       fill(19, 7, 1, 5, '=');
       fill(33, 7, 1, 5, '=');
+      fill(27, 0, 2, 12, '='); // (north, between Pardee Hall and the Science Center: the Williams Center)
       // pond
       fill(8, 16, 7, 5, '#');
       fill(9, 17, 5, 3, '~');
@@ -4584,7 +4601,7 @@
       // the gravel bed of Van Wickle's rock garden (east side, like the real one)
       fill(34, 20, 4, 2, 'g');
       // tree border with a gap for the south road
-      for (let x = 0; x < W; x += 2) { set(x, 0, 'T'); if (x < 18 || x > 20) set(x, 28, 'T'); }
+      for (let x = 0; x < W; x += 2) { if (x !== 26 && x !== 28) set(x, 0, 'T'); if (x < 18 || x > 20) set(x, 28, 'T'); }
       for (let y = 2; y < 28; y += 2) { if (y !== 12) { set(0, y, 'T'); set(38, y, 'T'); } }
       // scattered trees
       [[3, 16], [4, 20], [24, 23], [34, 17], [13, 22]].forEach(([x, y]) => set(x, y, 'T'));
@@ -4628,6 +4645,8 @@
       npc('vendor', 'Vendor', 24, 15, S.vendor, { dir: 'left' });
 
       w.add(new G.Sign(8, 8, 'NATE\'S DORM. Home of "The Lab." (Not an official lab.)'));
+      w.add(new G.Sign(26, 10, ['NORTH: the Williams Center for the Arts.', 'Music, theater, the art gallery. And downstairs: {y}STUDIO B{/}, a recording studio.']));
+      w.addTrigger(27, 0, 2, 1, () => G.play.warp('arts', 14, 20, 'up'));
       w.add(new G.Sign(17, 7, 'PARDEE HALL. Department of {y}EEENGLISH{/}. Do you speak it?'));
       w.add(new G.Sign(22, 26, [
         'SOUTH: Chesapeake, VA. 251 miles.',
@@ -5470,6 +5489,11 @@
     pack: ['The needle goes up and down. Press Z when it\'s inside the green box.', 'Three pinches: gently, then a little firmer, then firm.'],
     fight: ['← → walk (tap twice to dash). ↑ jump. ↓ crouch: it ducks high punches. Z punch, X kick; ↓+Z a low jab, ↓+X a sweep.', 'In the air, Z or X plus a direction: nothing = spin kick, toward him = flying knee, away = back kick, ↑ = up swipe, ↓ = a stomp that SPIKES him.', 'Hold away from him (or hold V) to block; add ↓ for low kicks. Tap V as a hit lands to PARRY. C grabs: the ARMY SUPLEX. ↓ then → then Z: TAKEDOWN. Full FIGHT meter: C is GROUND AND POUND. Win two rounds.'],
     jam: ['Notes slide down the strings. Hit each one with its arrow (← ↓ ↑ →) right as it crosses the pickup at the bottom.', 'Two notes at once? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
+    studio: [
+      ['Eight tracks. ↑↓ picks a track, ←→ its instrument: anything you\'ve won from Abe.', 'Z records. You play it LIVE on the keyboard: the home row (A S D F...) and the row above it. There\'s no editing and no moving notes. You play it, it\'s on the record.', 'Not recording? The letter keys let you try the instrument out.'],
+      ['The first track you record sets how long the song is. Record the rest on top of it while it plays back.', 'While recording, ENTER stops the take and BACKSPACE scraps it. C plays the song. V mutes a track; - and + set its volume.', 'ENTER opens the menu: the song\'s key, SAVE SONG, LOAD SONG, and PLAY IN GAME, which makes your song the game\'s music.'],
+    ],
+    metronome: ['Abe\'s metronome is on the desk now. It clicks four times before every take, then keeps time while you record.', 'ENTER > TEMPO sets how fast. ENTER > CLICK turns it off. And with it on, the first track rounds up to a whole bar.'],
     jam_bongos: ['← hits the little drum (the macho), → the big one (the hembra). Hit each note right as it lands on its drum.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     jam_pan: ['Every dent in the steel drum is a note: ← ↓ ↑ → from low to high. Hit each note right as it lands on its dent.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     jam_kit: ['← hi-hat, ↓ kick drum, ↑ snare, → crash and toms. Hit each note right as it lands on its drum.', 'Two at once (like kick and hi-hat)? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
@@ -7276,6 +7300,7 @@
       yield G.say('Abe', 'I\'ll play bass. You follow me. Three songs, three of my guitars. Get through a song and its guitar is yours. On loan.');
       yield G.say('Abe', 'And there\'s a second page on the setlist. Drums. Don\'t tell Hannah.');
     }
+    yield* abeStudioNews();
     for (;;) {
       const song = yield jamPickCmd();
       if (!song) { G.play.overlay = null; yield G.say('Abe', 'Good session.'); return; }
@@ -7316,12 +7341,610 @@
         if (prize.id === 'jazzmaster') yield G.say('Abe', 'It belonged to Al Alcorn before me. He invented Pong. Treat it like it invented Pong.');
         G.play.autosave();
       }
+      if (first && prize) yield* abeStudioNews();
       const nextSong = JAM_SONGS[idx + 1];
       if (first && nextSong && jamTrack(nextSong) === jamTrack(song)) {
         const next = jamPrize(nextSong);
         yield G.say('Abe', 'Next one: ' + nextSong.name + '. It\'s faster.' + (next ? ' Get through it and my ' + (next.drum ? next.name.replace('Abe\'s ', '').toLowerCase() : next.name.replace('Abe\'s ', '')) + (next.drum === 'bongos' ? ' are yours.' : ' is yours.') : ''));
       }
     }
+  };
+
+  // ================================================================ STUDIO B (the Williams Center for the Arts)
+  // Nate is very into music production. North of the quad (a new path between Pardee Hall and the
+  // Science Center), the Williams Center for the Arts (Lafayette's real arts building; the music
+  // department is in it) sits on its own plaza. Inside: Studio B, with Rae, the studio tech (an
+  // original character), and a recording console.
+  // The console opens once Nate has won his first instrument from Abe (any of the guitars or drums;
+  // Abe mentions the studio the next time he's at the amp). Eight tracks, each played LIVE on the
+  // keyboard and recorded as played: there's no editing and no moving notes. ↑↓ track, ←→ its
+  // instrument (only the ones Nate has won), Z record, C play, V mute, - + volume, Enter the menu.
+  // Recording: the home row (A S D F G H J K L ; ') and the row above (Q to P). Guitars and the steel
+  // drum play the song's key (a pentatonic scale: always in tune) on the home row; the top row is
+  // power chords on the guitars and the next octave up on the steel drum. Bongos: A-F the little
+  // drum, H-L the big one. Kit: A kick, S snare, D hi-hat, F crash, J and K toms. The first track
+  // sets the song's length; later tracks record over it while the others play back. Enter stops a
+  // take, Backspace scraps it.
+  // Once Nate has three instruments from Abe, Abe gives him his metronome (s.items.metronome), and it
+  // sits on the studio desk: TEMPO and CLICK in the menu, four clicks before every take and a click
+  // while it records (the first track's length rounds up to a whole bar).
+  // Songs: the one being worked on is s.studio (kept in the save); SAVE SONG names it and keeps a
+  // copy in s.songs (up to four); PLAY IN GAME (s.mixtape: which saved song) makes it the game's
+  // music, everywhere, until it's turned off (G.mixFor, G.audio.setMix).
+  // A song: { name, key, bpm, click, len (ms), tracks: [8 x { inst, vol (0-4), mute, ev: [[ms, n]] }] }.
+  // Flags: studioTold, studioMet, studioHow, metroHow.
+  const STUDIO_INST = ['strat', 'tele', 'jazzmaster', 'bongos', 'steelpan', 'drumkit'];
+  const STUDIO_SHORT = { strat: 'STRAT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONGOS', steelpan: 'STEEL', drumkit: 'KIT' };
+  const STUDIO_COL = { strat: '#f4f0e8', tele: '#f86858', jazzmaster: '#c878d8', bongos: '#e0a058', steelpan: '#b8d8f8', drumkit: '#5a88e8' };
+  const SONG_KEYS = [
+    { name: 'E MINOR', root: 40, scale: [0, 3, 5, 7, 10] },
+    { name: 'A MINOR', root: 45, scale: [0, 3, 5, 7, 10] },
+    { name: 'G MAJOR', root: 43, scale: [0, 2, 4, 7, 9] },
+    { name: 'C MAJOR', root: 48, scale: [0, 2, 4, 7, 9] },
+  ];
+  const HOME_ROW = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote'];
+  const TOP_ROW = ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP'];
+  const KIT_KEYS = { KeyA: 0, KeyS: 1, KeyD: 2, KeyF: 3, KeyJ: 4, KeyK: 5 };
+  const KIT_NAMES = ['KICK', 'SNARE', 'HI-HAT', 'CRASH', 'HIGH TOM', 'LOW TOM'];
+  const BONGO_KEYS = { KeyA: 0, KeyS: 0, KeyD: 0, KeyF: 0, KeyH: 1, KeyJ: 1, KeyK: 1, KeyL: 1 };
+  const VOLS = [0.3, 0.55, 0.8, 1, 1.3];
+  const SONG_SLOTS = 4, MAX_LEN = 180;
+  const keyLabel = (code) => ({ Semicolon: ';', Quote: '\'' }[code] || code.slice(3));
+  // which sound (n) a key plays on an instrument, or null
+  function studioNote(inst, code) {
+    if (inst === 'drumkit') return code in KIT_KEYS ? KIT_KEYS[code] : null;
+    if (inst === 'bongos') return code in BONGO_KEYS ? BONGO_KEYS[code] : null;
+    const h = HOME_ROW.indexOf(code);
+    if (h >= 0) return h;
+    const t = TOP_ROW.indexOf(code);
+    return t >= 0 ? 11 + t : null;
+  }
+  const scaleNote = (K, i, base) => base + 12 * Math.floor(i / 5) + K.scale[i % 5];
+  // play sound n of an instrument in a key (now, or at an audio time)
+  function studioSound(inst, n, keyIdx, at) {
+    const K = SONG_KEYS[keyIdx] || SONG_KEYS[0], I = G.audio.inst;
+    if (inst === 'drumkit') return [() => I.kick(at), () => I.snare(at), () => I.hat(at), () => I.crash(at), () => I.tom(true, at), () => I.tom(false, at)][n]();
+    if (inst === 'bongos') return I.bongo(n === 0, at);
+    if (inst === 'steelpan') { const base = K.root + (K.root < 44 ? 24 : 12); return I.pan(scaleNote(K, n < 11 ? n : n - 6, base), 0.7, at); }
+    // a guitar: single notes on the home row, power chords (root, fifth, octave) on the top row
+    if (n < 11) return I.guitar(scaleNote(K, n, K.root), 0.8, 0.16, inst, at);
+    const r = scaleNote(K, n - 11, K.root);
+    for (const m of [r, r + 7, r + 12]) I.guitar(m, 0.8, 0.07, inst, at);
+  }
+  const newSong = () => ({ name: 'UNTITLED', key: 0, bpm: 100, click: true, len: 0, tracks: Array.from({ length: 8 }, () => ({ inst: null, vol: 3, mute: false, ev: [] })) });
+  const studioWork = () => (G.state.studio = G.state.studio || newSong());
+  const songsSaved = () => (G.state.songs = G.state.songs || []);
+  const cloneSong = (sg) => JSON.parse(JSON.stringify(sg));
+  // a song's notes, for the player: every unmuted track (but `skip`), in time order
+  function songEvents(song, skip) {
+    const ev = [];
+    song.tracks.forEach((tr, i) => {
+      if (!tr.inst || tr.mute || i === skip) return;
+      const v = VOLS[tr.vol];
+      for (const [ms, n] of tr.ev) ev.push({ t: ms / 1000, play: (at) => G.audio.withLevel(v, () => studioSound(tr.inst, n, song.key, at)) });
+    });
+    return ev.sort((a, b) => a.t - b.t);
+  }
+  // Nate's song as the game's music (main.js asks on every map change)
+  let mixCache = { song: null, mix: null };
+  G.mixFor = () => {
+    const s = G.state, sg = s && s.mixtape != null && s.songs && s.songs[s.mixtape];
+    if (!sg) return null;
+    if (mixCache.song !== sg) mixCache = { song: sg, mix: { events: songEvents(sg), len: Math.max(1, sg.len / 1000) } };
+    return mixCache.mix;
+  };
+  // the studio opens with Nate's first instrument from Abe; the metronome comes with the third
+  G.abeInstruments = () => STUDIO_INST.filter((id) => G.instrumentHas(id)).length;
+  G.studioOpen = () => G.abeInstruments() > 0;
+  const mmss = (sec) => { const s2 = Math.max(0, Math.floor(sec)); return Math.floor(s2 / 60) + ':' + String(s2 % 60).padStart(2, '0'); };
+  const studioBack = (ctx, title, sub) => {
+    ctx.fillStyle = '#16121e'; ctx.fillRect(0, 0, G.W, G.H);
+    ctx.fillStyle = '#1c1726'; for (let y = 14; y < G.H; y += 12) ctx.fillRect(0, y, G.W, 1);
+    ctx.fillStyle = '#2a2238'; ctx.fillRect(0, 0, G.W, 12);
+    FT().draw(ctx, title, 4, 2, '#f8d850', { shadow: '#000' });
+    if (sub) FT().draw(ctx, sub, G.W - 4 - FT().width(sub), 2, '#c8c0d8', { shadow: '#000' });
+  };
+
+  // ---- the console. Its own keyboard listener (the whole keyboard is the instrument, and nothing
+  // reaches the rest of the game while it's open). Modes: nav, count (the count-in), rec, play, menu,
+  // name (typing a song name), pick (a list of saved songs), confirm.
+  function studioCmd() {
+    return {
+      start() {
+        Object.assign(this, { song: studioWork(), sel: 0, mode: 'nav', t: 0, msg: null, msgT: 0, lit: {}, take: [], players: [], bins: [], menuSel: 0, pickSel: 0 });
+        G.audio.stop();
+        this.onKey = (e) => this.key(e);
+        addEventListener('keydown', this.onKey, true);
+        this.rebin();
+        const tr = this.song.tracks[0];
+        if (!tr.inst && !tr.ev.length) tr.inst = this.have()[0];
+        G.play.overlay = this;
+      },
+      done() { removeEventListener('keydown', this.onKey, true); this.stopPlayers(); this.result = true; },
+      have() { return STUDIO_INST.filter((id) => G.instrumentHas(id)); },
+      metro() { return !!G.state.items.metronome; },
+      // (the audio clock, so takes line up with playback; the system clock if audio isn't running)
+      clock() { return G.audio.running ? G.audio.now() : performance.now() / 1000; },
+      say(m) { this.msg = m; this.msgT = 180; },
+      stopPlayers() { for (const p of this.players) p.stop(); this.players = []; },
+      lenS() { return this.song.len / 1000; },
+      // the little marks along each track's timeline (150 bins)
+      rebin() {
+        const L = this.lenS() || 1;
+        this.bins = this.song.tracks.map((tr) => { const b = new Uint8Array(150); for (const [ms] of tr.ev) b[Math.min(149, Math.floor((ms / 1000 / L) * 150))] = 1; return b; });
+      },
+      // ---- the keyboard
+      key(e) {
+        // (M still mutes the game and the number keys do their usual thing, except while typing a name)
+        if (this.mode !== 'name' && (e.code === 'KeyM' || e.code.startsWith('Digit'))) return;
+        G.audio.unlock();
+        const handled = this.handle(e);
+        if (handled !== false) { e.preventDefault(); e.stopPropagation(); }
+      },
+      handle(e) {
+        const c = e.code, m = this.mode, tr = this.song.tracks[this.sel];
+        if (m === 'name') return this.typeName(e);
+        if (e.repeat) return true;
+        if (m === 'count' || m === 'rec') {
+          if (c === 'Enter') return this.endTake(true);
+          if (c === 'Backspace' || c === 'Escape') return this.endTake(false);
+          const n = studioNote(this.recInst, c);
+          if (n == null) return true;
+          G.audio.withLevel(VOLS[tr.vol], () => studioSound(this.recInst, n, this.song.key));
+          this.lit[c] = 8;
+          const t = this.clock() - this.start0;
+          if (t >= -0.15) this.take.push([Math.max(0, Math.round(t * 1000)), n]);
+          return true;
+        }
+        if (m === 'play') { if (c === 'KeyC' || c === 'Enter' || c === 'Escape' || c === 'KeyX') { this.stopPlayers(); this.mode = 'nav'; } return true; }
+        if (m === 'confirm') {
+          if (c === 'KeyZ' || c === 'Enter') { const f = this.onYes; this.mode = 'nav'; f(); G.audio.sfx('select'); }
+          else if (c === 'KeyX' || c === 'Escape' || c === 'Backspace') { this.mode = this.confirmBack || 'nav'; G.audio.sfx('cancel'); }
+          return true;
+        }
+        if (m === 'menu') return this.menuKey(c);
+        if (m === 'pick') return this.pickKey(c);
+        // nav
+        if (c === 'ArrowUp' && this.sel > 0) { this.sel--; G.audio.sfx('menu'); }
+        else if (c === 'ArrowDown' && this.sel < 7) { this.sel++; G.audio.sfx('menu'); }
+        else if (c === 'ArrowLeft' || c === 'ArrowRight') this.cycleInst(c === 'ArrowLeft' ? -1 : 1);
+        else if (c === 'KeyZ') this.askRecord();
+        else if (c === 'KeyC') this.playSong();
+        else if (c === 'KeyV') { if (tr.inst) { tr.mute = !tr.mute; G.audio.sfx('menu'); } }
+        else if (c === 'Minus' || c === 'Equal') { tr.vol = Math.max(0, Math.min(4, tr.vol + (c === 'Equal' ? 1 : -1))); G.audio.sfx('menu'); }
+        else if (c === 'Enter') { this.mode = 'menu'; this.menuSel = 0; G.audio.sfx('select'); }
+        else if (c === 'KeyX' || c === 'Escape') { G.audio.sfx('cancel'); this.done(); }
+        else {
+          // any other key: try the selected track's instrument (nothing's recorded)
+          const inst = tr.inst || this.have()[0], n = studioNote(inst, c);
+          if (n == null) return false;
+          G.audio.withLevel(VOLS[tr.vol], () => studioSound(inst, n, this.song.key));
+          this.lit[c] = 8;
+        }
+        return true;
+      },
+      cycleInst(d) {
+        const tr = this.song.tracks[this.sel], have = this.have();
+        if (tr.ev.length) { this.say('That track\'s recorded. Clear it first (ENTER > CLEAR TRACK) to change it.'); G.audio.sfx('bump'); return; }
+        const i = have.indexOf(tr.inst);
+        tr.inst = have[(i + d + have.length) % have.length];
+        G.audio.sfx('menu');
+      },
+      confirm(text, yes, back) { this.mode = 'confirm'; this.confirmText = text; this.onYes = yes; this.confirmBack = back; },
+      askRecord() {
+        const tr = this.song.tracks[this.sel];
+        if (!tr.inst) tr.inst = this.have()[0];
+        if (tr.ev.length) this.confirm('Record over track ' + G.sayable(this.sel + 1) + '? The old take is gone for good.', () => this.record());
+        else this.record();
+      },
+      // a take: a count-in (four clicks with the metronome; a silent 3-2-1 without), then everything
+      // played is recorded, with the other tracks playing back underneath
+      record() {
+        const sg = this.song, tr = sg.tracks[this.sel], metro = this.metro() && sg.click, beat = 60 / sg.bpm, now = this.clock(), len = this.lenS();
+        this.recInst = tr.inst; this.recTrack = this.sel; this.take = []; this.metroOn = metro;
+        this.start0 = now + (metro ? 4 * beat : 1.8) + 0.05;
+        this.stopPlayers();
+        const others = songEvents(sg, this.sel);
+        if (others.length) this.players.push(G.audio.player(others, len, false, this.start0));
+        if (metro) {
+          const clicks = [], total = (len || MAX_LEN) + 4 * beat;
+          for (let k = 0; k * beat < total; k++) clicks.push({ t: k * beat, play: (at) => G.audio.inst.click(k % 4 === 0, at) });
+          this.players.push(G.audio.player(clicks, 0, false, this.start0 - 4 * beat));
+        }
+        this.mode = 'count';
+        G.audio.sfx('select');
+      },
+      endTake(keep) {
+        const sg = this.song, tr = sg.tracks[this.recTrack], firstLen = !sg.len;
+        this.stopPlayers();
+        this.mode = 'nav';
+        if (!keep) { this.say('Take scrapped.'); G.audio.sfx('cancel'); return true; }
+        if (!this.take.length) { this.say('Nothing played. Nothing recorded.'); G.audio.sfx('bump'); return true; }
+        if (firstLen) {
+          let L = Math.max(1, Math.min(MAX_LEN, this.clock() - this.start0));
+          if (this.metroOn) { const bar = (4 * 60) / sg.bpm; L = Math.ceil(L / bar - 0.05) * bar; }
+          sg.len = Math.round(L * 1000);
+        }
+        tr.ev = this.take.filter(([ms]) => ms < sg.len).sort((a, b) => a[0] - b[0]);
+        tr.inst = this.recInst;
+        this.rebin();
+        G.audio.sfx('fanfare');
+        this.say('Track ' + G.sayable(this.recTrack + 1) + ': ' + G.sayable(tr.ev.length) + ' notes.' + (firstLen ? ' The song is ' + mmss(sg.len / 1000) + ' long now.' : ''));
+        return true;
+      },
+      playSong() {
+        const ev = songEvents(this.song);
+        if (!ev.length) { this.say('Nothing to play yet. Z records a track.'); G.audio.sfx('bump'); return; }
+        this.stopPlayers();
+        this.start0 = this.clock() + 0.1;
+        this.players.push(G.audio.player(ev, this.lenS(), false, this.start0));
+        this.mode = 'play';
+      },
+      // ---- the menu
+      menuItems() {
+        const sg = this.song, s = G.state, mixName = s.mixtape != null && s.songs && s.songs[s.mixtape] ? s.songs[s.mixtape].name : 'OFF';
+        return [
+          { label: 'KEY: ' + SONG_KEYS[sg.key].name, adj: (d) => { sg.key = (sg.key + d + SONG_KEYS.length) % SONG_KEYS.length; } },
+          { label: this.metro() ? 'TEMPO: ' + G.sayable(sg.bpm) + ' BPM' : 'TEMPO: (needs a metronome)', adj: (d) => { if (this.metro()) sg.bpm = Math.max(60, Math.min(200, sg.bpm + d * 5)); } },
+          { label: this.metro() ? 'CLICK: ' + (sg.click ? 'ON' : 'OFF') : 'CLICK: (needs a metronome)', adj: () => { if (this.metro()) sg.click = !sg.click; }, act: () => { if (this.metro()) sg.click = !sg.click; } },
+          { label: 'SAVE SONG', act: () => { this.mode = 'name'; this.typed = sg.name === 'UNTITLED' ? 'SONG ' + (songsSaved().length + 1) : sg.name; } },
+          { label: 'LOAD SONG', act: () => this.openPick('load') },
+          { label: 'PLAY IN GAME: ' + mixName, act: () => this.openPick('mix') },
+          { label: 'CLEAR TRACK ' + G.sayable(this.sel + 1), act: () => { const tr = sg.tracks[this.sel]; if (!tr.ev.length) { this.mode = 'nav'; this.say('That track\'s already empty.'); return; } this.confirm('Clear track ' + G.sayable(this.sel + 1) + '? Every note on it goes.', () => { tr.ev = []; tr.mute = false; if (sg.tracks.every((x) => !x.ev.length)) sg.len = 0; this.rebin(); this.say('Track cleared.'); }, 'menu'); } },
+          { label: 'NEW SONG', act: () => this.confirm('Start a new song? (Save this one first if you want it.)', () => { G.state.studio = newSong(); this.song = G.state.studio; this.song.tracks[0].inst = this.have()[0]; this.sel = 0; this.rebin(); this.say('A blank song.'); }, 'menu') },
+          { label: 'LEAVE THE STUDIO', act: () => this.done() },
+        ];
+      },
+      menuKey(c) {
+        const items = this.menuItems(), it = items[this.menuSel];
+        if (c === 'ArrowUp') this.menuSel = (this.menuSel + items.length - 1) % items.length;
+        else if (c === 'ArrowDown') this.menuSel = (this.menuSel + 1) % items.length;
+        else if ((c === 'ArrowLeft' || c === 'ArrowRight') && it.adj) it.adj(c === 'ArrowLeft' ? -1 : 1);
+        else if ((c === 'KeyZ' || c === 'Enter') && it.act) { G.audio.sfx('select'); it.act(); return true; }
+        else if (c === 'KeyX' || c === 'Escape' || c === 'Backspace') { this.mode = 'nav'; G.audio.sfx('cancel'); return true; }
+        else return true;
+        G.audio.sfx('menu');
+        return true;
+      },
+      // ---- typing a song's name, then saving it (over the one with that name, or a new slot, or
+      // pick one to replace when all four are full)
+      typeName(e) {
+        const c = e.code;
+        if (c === 'Enter') { const nm = this.typed.trim() || 'UNTITLED'; this.song.name = nm; this.saveAs(nm); return true; }
+        if (c === 'Escape') { this.mode = 'menu'; G.audio.sfx('cancel'); return true; }
+        if (c === 'Backspace') { this.typed = this.typed.slice(0, -1); return true; }
+        if (this.typed.length >= 14) return true;
+        if (/^Key[A-Z]$/.test(c)) this.typed += c.slice(3);
+        else if (/^Digit\d$/.test(c)) this.typed += c.slice(5);
+        else if (c === 'Space') this.typed += ' ';
+        else if (c === 'Minus') this.typed += '-';
+        else return false;
+        G.audio.sfx('blip');
+        return true;
+      },
+      saveAs(nm) {
+        const songs = songsSaved(), i = songs.findIndex((x) => x.name === nm);
+        if (i >= 0 || songs.length < SONG_SLOTS) {
+          const at = i >= 0 ? i : songs.length;
+          songs[at] = cloneSong(this.song);
+          this.mode = 'nav'; G.audio.sfx('fanfare'); this.say('Saved "' + nm + '".' + (G.state.mixtape === at ? ' (It\'s the game\'s music, too.)' : ''));
+          G.play.autosave();
+          return;
+        }
+        this.openPick('save');
+      },
+      openPick(kind) {
+        const songs = songsSaved();
+        if (kind !== 'save' && kind !== 'mix' && !songs.length) { this.mode = 'nav'; this.say('No saved songs yet. ENTER > SAVE SONG keeps one.'); G.audio.sfx('bump'); return; }
+        this.pickKind = kind; this.pickSel = 0; this.mode = 'pick';
+      },
+      pickRows() { return (this.pickKind === 'mix' ? [{ name: 'OFF (the game\'s own music)', off: true }] : []).concat(songsSaved()); },
+      pickKey(c) {
+        const rows = this.pickRows();
+        if (c === 'ArrowUp') this.pickSel = (this.pickSel + rows.length - 1) % rows.length;
+        else if (c === 'ArrowDown') this.pickSel = (this.pickSel + 1) % rows.length;
+        else if (c === 'KeyX' || c === 'Escape' || c === 'Backspace') { this.mode = 'menu'; G.audio.sfx('cancel'); return true; }
+        else if (c === 'KeyZ' || c === 'Enter') {
+          const row = rows[this.pickSel], songs = songsSaved(), i = songs.indexOf(row);
+          G.audio.sfx('select');
+          if (this.pickKind === 'load') this.confirm('Load "' + row.name + '"? (Save this one first if you want it.)', () => { G.state.studio = cloneSong(row); this.song = G.state.studio; this.sel = 0; this.rebin(); this.say('Loaded "' + row.name + '".'); }, 'pick');
+          else if (this.pickKind === 'save') this.confirm('Save over "' + row.name + '"?', () => { songs[i] = cloneSong(this.song); G.play.autosave(); this.say('Saved "' + this.song.name + '".'); }, 'pick');
+          else {
+            G.state.mixtape = row.off ? null : i;
+            G.audio.setMix(G.mixFor());
+            this.mode = 'nav';
+            this.say(row.off ? 'The game\'s own music is back.' : '"' + row.name + '" is the game\'s music now. Everywhere.');
+            G.play.autosave();
+          }
+          return true;
+        } else return true;
+        G.audio.sfx('menu');
+        return true;
+      },
+      update() {
+        this.t++;
+        if (this.msgT > 0) this.msgT--;
+        for (const k in this.lit) if (--this.lit[k] <= 0) delete this.lit[k];
+        if (this.mode === 'count' && this.clock() >= this.start0) this.mode = 'rec';
+        if (this.mode === 'rec') {
+          const pos = this.clock() - this.start0, len = this.lenS();
+          if ((len && pos >= len) || pos >= MAX_LEN) this.endTake(true);
+        }
+        if (this.mode === 'play' && this.clock() - this.start0 >= this.lenS() + 0.3) { this.stopPlayers(); this.mode = 'nav'; }
+        G.play.overlay = this;
+        return !!this.result;
+      },
+
+      // ---- drawing
+      draw(ctx) {
+        const sg = this.song, m = this.mode, rec = m === 'rec' || m === 'count', pos = this.clock() - this.start0;
+        const right = SONG_KEYS[sg.key].name + (this.metro() ? '  ' + G.sayable(sg.bpm) + ' BPM' : '') + '  ' + (sg.len ? mmss(sg.len / 1000) : '-:--');
+        studioBack(ctx, 'STUDIO B: ' + sg.name, right);
+        if (rec && (this.t >> 4) & 1) { ctx.fillStyle = '#f83838'; ctx.fillRect(G.W - 6 - FT().width(right) - 10, 3, 6, 6); }
+        // the eight tracks
+        const TX = 86, TW = 150, L = sg.len ? sg.len / 1000 : Math.max(10, rec && m === 'rec' ? pos * 1.25 : 10);
+        sg.tracks.forEach((tr, i) => {
+          const y = 15 + i * 12, on = i === this.sel, live = rec && i === this.recTrack;
+          ctx.fillStyle = live ? '#4a1c2a' : on ? '#3a3058' : i % 2 ? '#1e1828' : '#231c30'; ctx.fillRect(2, y, 236, 11);
+          if (on) { ctx.fillStyle = '#f8d850'; ctx.fillRect(2, y, 1, 11); ctx.fillRect(237, y, 1, 11); }
+          FT().draw(ctx, G.sayable(i + 1), 5, y + 2, on ? '#f8d850' : '#9890a8');
+          if (tr.inst) {
+            // (a drum shrunk to fit; a little guitar, lying down, in its color)
+            const it = G.INSTRUMENTS.find((x) => x.id === tr.inst), img = it.art();
+            if (it.drum) { const k = Math.min(9 / img.height, 12 / img.width); ctx.drawImage(img, 22, y + 1, Math.round(img.width * k), Math.round(img.height * k)); }
+            else {
+              ctx.fillStyle = '#1c1424'; ctx.fillRect(21, y + 2, 7, 7); ctx.fillRect(27, y + 4, 7, 3);
+              ctx.fillStyle = STUDIO_COL[tr.inst]; ctx.fillRect(22, y + 3, 5, 5); ctx.fillStyle = '#c8945a'; ctx.fillRect(27, y + 5, 6, 1); ctx.fillStyle = '#5a3a24'; ctx.fillRect(32, y + 4, 2, 3);
+            }
+            FT().draw(ctx, STUDIO_SHORT[tr.inst], 36, y + 2, tr.mute ? '#5a4e70' : STUDIO_COL[tr.inst]);
+          } else FT().draw(ctx, '-', 36, y + 2, '#5a4e70');
+          // volume pips
+          for (let v = 0; v < 5; v++) { ctx.fillStyle = v <= tr.vol ? (tr.mute ? '#4a4258' : '#78e070') : '#2e2840'; ctx.fillRect(74 + v * 2, y + 7 - v, 1, 2 + v); }
+          // the timeline
+          ctx.fillStyle = '#120e18'; ctx.fillRect(TX, y + 1, TW, 9);
+          ctx.fillStyle = tr.mute ? '#4a4258' : STUDIO_COL[tr.inst] || '#9890a8';
+          if (live) { for (const [ms] of this.take) ctx.fillRect(TX + Math.min(TW - 1, Math.floor((ms / 1000 / L) * TW)), y + 2, 1, 7); }
+          else if (sg.len) { const b = this.bins[i]; for (let x = 0; x < 150; x++) if (b[x]) ctx.fillRect(TX + x, y + 2, 1, 7); }
+          if (tr.mute) FT().draw(ctx, 'MUTE', TX + TW - FT().width('MUTE') - 2, y + 2, '#f86858');
+        });
+        // the playhead
+        if ((m === 'rec' || m === 'play') && pos >= 0) { ctx.fillStyle = '#f86858'; ctx.fillRect(TX + Math.min(TW - 1, Math.floor((pos / L) * TW)), 14, 1, 97); }
+        // the panel along the bottom
+        ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 112, G.W, 48);
+        if (rec) this.drawKeys(ctx, pos);
+        else if (m === 'play') {
+          FT().draw(ctx, 'PLAYING  ' + mmss(pos) + ' / ' + mmss(this.lenS()), 6, 118, '#78e070');
+          FT().draw(ctx, 'C or ENTER: stop', 6, 130, '#9890a8');
+        } else {
+          const tr = sg.tracks[this.sel], inst = tr.inst && G.INSTRUMENTS.find((x) => x.id === tr.inst);
+          const line = this.msgT > 0 ? this.msg : 'TRACK ' + G.sayable(this.sel + 1) + ': ' + (inst ? inst.name.replace('Abe\'s ', '') : 'no instrument') + (tr.ev.length ? '  (' + G.sayable(tr.ev.length) + ' notes)' : '  ←→ instrument');
+          FT().wrap(line, 228).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 6, 115 + k * 9, this.msgT > 0 ? '#f8d850' : '#f8f8f0'));
+          FT().draw(ctx, 'Z record  C play  V mute  - + volume', 6, 136, '#9890a8');
+          FT().draw(ctx, 'ENTER menu  X leave  (letter keys: try it)', 6, 146, '#9890a8');
+        }
+        // the count-in
+        if (m === 'count') {
+          const left = this.start0 - this.clock(), beat = 60 / sg.bpm, n = this.metroOn ? Math.min(4, Math.floor(4 - left / beat) + 1) : Math.min(3, Math.floor(3 - left / 0.6) + 1);
+          const txt = n >= 1 ? G.sayable(n) : 'READY', w = FT().bigWidth(txt, 3);
+          ctx.fillStyle = 'rgba(12,10,18,0.6)'; ctx.fillRect(70, 44, 100, 34);
+          FT().drawBig(ctx, txt, Math.round(120 - w / 2), 50, 3, '#f8d850', '#1c1424');
+        }
+        if (m === 'menu') this.drawMenu(ctx);
+        if (m === 'name') this.drawName(ctx);
+        if (m === 'pick') this.drawPick(ctx);
+        if (m === 'confirm') this.drawConfirm(ctx);
+      },
+      // while recording: the keys for the instrument (they light up when played)
+      drawKeys(ctx, pos) {
+        const inst = this.recInst, cap = (code, x, y) => {
+          const on = !!this.lit[code], lab = keyLabel(code);
+          ctx.fillStyle = on ? '#f8d850' : '#3e3460'; ctx.fillRect(x, y, 11, 11);
+          ctx.fillStyle = on ? '#fff4b0' : '#1e1828'; ctx.fillRect(x + 1, y + 1, 9, 9);
+          FT().draw(ctx, lab, x + 6 - Math.round(FT().width(lab) / 2), y + 2, on ? '#1c1424' : '#c8c0d8');
+        };
+        if (inst === 'drumkit') {
+          Object.keys(KIT_KEYS).forEach((code, k) => { const x = 6 + (k % 3) * 76, y = 115 + Math.floor(k / 3) * 13; cap(code, x, y); FT().draw(ctx, KIT_NAMES[KIT_KEYS[code]], x + 14, y + 2, '#c8c0d8'); });
+        } else if (inst === 'bongos') {
+          ['KeyA', 'KeyS', 'KeyD', 'KeyF'].forEach((code, k) => cap(code, 6 + k * 12, 115)); FT().draw(ctx, 'LITTLE DRUM (MACHO)', 56, 117, '#c8c0d8');
+          ['KeyH', 'KeyJ', 'KeyK', 'KeyL'].forEach((code, k) => cap(code, 6 + k * 12, 128)); FT().draw(ctx, 'BIG DRUM (HEMBRA)', 56, 130, '#c8c0d8');
+        } else {
+          TOP_ROW.forEach((code, k) => cap(code, 10 + k * 12, 114)); FT().draw(ctx, inst === 'steelpan' ? 'HIGH' : 'CHORDS', 134, 116, '#c8c0d8');
+          HOME_ROW.forEach((code, k) => cap(code, 6 + k * 12, 127)); FT().draw(ctx, 'NOTES', 140, 129, '#c8c0d8');
+        }
+        const len = this.lenS();
+        FT().draw(ctx, (this.mode === 'count' ? 'GET READY' : 'REC ' + mmss(pos) + (len ? ' / ' + mmss(len) : '')) + '   ENTER stop  BACKSPACE scrap', 6, 147, this.mode === 'count' ? '#f8d850' : '#f86858');
+      },
+      drawBox(ctx, x, y, w, h, title) {
+        ctx.fillStyle = 'rgba(8,6,12,0.6)'; ctx.fillRect(0, 0, G.W, G.H);
+        G.box(ctx, x, y, w, h);
+        if (title) FT().draw(ctx, title, x + 8, y + 6, '#f8d850', { shadow: '#000' });
+      },
+      drawMenu(ctx) {
+        const items = this.menuItems();
+        this.drawBox(ctx, 40, 14, 160, 22 + items.length * 11, 'MENU');
+        items.forEach((it, k) => {
+          const y = 30 + k * 11, on = k === this.menuSel;
+          FT().draw(ctx, (on ? '> ' : '  ') + it.label, 48, y, on ? '#f8d850' : '#f8f8f0', { shadow: '#000' });
+          if (on && it.adj) FT().draw(ctx, '←→', 182, y, '#9890a8', { shadow: '#000' });
+        });
+      },
+      drawName(ctx) {
+        this.drawBox(ctx, 30, 44, 180, 60, 'NAME YOUR SONG');
+        ctx.fillStyle = '#0c0a12'; ctx.fillRect(40, 64, 160, 14);
+        FT().draw(ctx, this.typed + ((this.t >> 4) & 1 ? '_' : ''), 44, 67, '#f8f8f0');
+        FT().draw(ctx, 'Type it. ENTER save  ESC back', 40, 88, '#9890a8', { shadow: '#000' });
+      },
+      drawPick(ctx) {
+        const rows = this.pickRows(), title = { load: 'LOAD WHICH SONG?', save: 'ALL FULL: SAVE OVER WHICH?', mix: 'PLAY WHICH SONG IN THE GAME?' }[this.pickKind];
+        this.drawBox(ctx, 30, 30, 180, 30 + rows.length * 12, title);
+        rows.forEach((r, k) => {
+          const on = k === this.pickSel, playing = !r.off && songsSaved().indexOf(r) === G.state.mixtape;
+          FT().draw(ctx, (on ? '> ' : '  ') + r.name + (r.len ? '  ' + mmss(r.len / 1000) : '') + (playing ? '  ♪' : ''), 38, 48 + k * 12, on ? '#f8d850' : '#f8f8f0', { shadow: '#000' });
+        });
+      },
+      drawConfirm(ctx) {
+        this.drawBox(ctx, 24, 50, 192, 56);
+        FT().wrap(this.confirmText, 176).slice(0, 3).forEach((l, k) => FT().draw(ctx, l, 32, 58 + k * 10, '#f8f8f0', { shadow: '#000' }));
+        FT().draw(ctx, 'Z yes   X no', 32, 92, '#f8d850', { shadow: '#000' });
+      },
+    };
+  }
+
+  // the console in Studio B
+  S.studioDesk = function* () {
+    const f = flags();
+    if (!G.studioOpen()) {
+      yield G.say(null, 'A real recording console: faders, knobs, meters, a computer, a pair of studio monitors.');
+      yield G.say('Nate', 'Eight tracks. I could make a whole song in here. If I had something to PLAY.');
+      if (f.condoArrived) yield G.say('Nate', '...Abe has a LOT of instruments.');
+      return;
+    }
+    f.studioMet = true;
+    if (!f.studioHow) { f.studioHow = true; for (const lines of HOW_TO.studio) yield howToCmd('STUDIO B', lines, studioBack); }
+    if (G.state.items.metronome && !f.metroHow) { f.metroHow = true; yield howToCmd('ABE\'S METRONOME', HOW_TO.metronome, studioBack); }
+    yield studioCmd();
+    G.play.overlay = null;
+    G.audio.play(G.play.world.def.music);
+    G.play.autosave();
+  };
+  // Rae, the studio tech
+  S.rae = function* () {
+    const f = flags();
+    if (!f.raeMet) {
+      f.raeMet = true;
+      yield G.say('Rae', 'Hey! Welcome to Studio B. I run the place. Anyone with an instrument can record here.');
+      yield G.say('Rae', 'We do it the old way: eight tracks, every one played live. No fixing notes on a computer. You play it, it\'s on the record.');
+      if (!G.studioOpen()) yield G.say('Rae', 'No instrument? Then today you\'re a listener. Come back when you\'ve got something to play.');
+      else yield G.say('Rae', 'The console\'s all yours.');
+      return;
+    }
+    if (!G.studioOpen()) { yield G.say('Rae', 'Find an instrument and the console\'s yours. Ask around. Musicians love lending gear. Sort of.'); return; }
+    const lines = [
+      'The first track you record sets how long the song is. Make it a good one.',
+      'Somebody left a tambourine in here in 2004. We\'re still finding the jingles.',
+      'Save your song and you can play it as the game\'s music. Menu, PLAY IN GAME.',
+      'Mute a track with V if it\'s fighting the others. Or turn it down with minus.',
+    ];
+    if (G.state.items.metronome) lines.push('Is that a metronome on my desk? Look at you. Professional.');
+    if (songsSaved().length) lines.push('I heard "' + songsSaved()[songsSaved().length - 1].name + '" through the wall. Not bad. NOT bad.');
+    f.raeLine = ((f.raeLine || 0) + 1) % lines.length;
+    yield G.say('Rae', lines[f.raeLine]);
+  };
+  // Abe's news, at the amp: the studio (once Nate has an instrument of his) and the metronome (three)
+  function* abeStudioNews() {
+    const f = flags(), s = G.state, n = G.abeInstruments();
+    if (n >= 1 && !f.studioTold) {
+      f.studioTold = true;
+      yield G.say('Abe', 'Hey. You know Lafayette has a recording studio? Studio B, in the Williams Center for the Arts. North of the quad.');
+      yield G.say('Abe', 'Take what you\'ve got up there and record something. Play it all live. That\'s how you learn.');
+    }
+    if (n >= 3 && !s.items.metronome) {
+      yield G.say('Abe', 'Three instruments. You\'re officially a musician. One more thing.');
+      yield G.say(null, 'Abe digs through a desk drawer and comes up with a little wooden metronome.');
+      s.items.metronome = true;
+      yield G.itemGet(G.spr.metronomeIcon, 'You got {y}Abe\'s Metronome{/}! It goes on the desk in {y}Studio B{/}, at the Williams Center.');
+      yield G.say('Abe', 'Keep time with this. Not with your foot. Your foot lies.');
+      G.play.autosave();
+    }
+  }
+
+  // The Williams Center's plaza: north of the quad, its own open space. A path up from campus to the
+  // building, lawns with trees, flower beds, benches, lampposts, a red sculpture and a poster kiosk.
+  G.MAPS.arts = {
+    name: 'Williams Center for the Arts',
+    music: 'field',
+    tiles() {
+      const W = 30, H = 22;
+      const g = Array.from({ length: H }, () => Array(W).fill('.'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (y + j < H && x + i < W) g[y + j][x + i] = c; };
+      for (let i = 0; i < 40; i++) { const x = Math.floor(G.hash(i, 31) * W), y = Math.floor(G.hash(i, 32) * H); if (y > 9) g[y][x] = ','; }
+      // the plaza in front of the building, and the path down to campus
+      fill(6, 9, 18, 5, 'p');
+      fill(14, 14, 2, 8, '=');
+      // flower beds along the plaza
+      fill(6, 13, 5, 1, 'F'); fill(19, 13, 5, 1, 'F');
+      // the tree border (a gap at the bottom for the path)
+      for (let x = 0; x < W; x += 2) { g[0][x] = 'T'; if (x < 12 || x > 16) g[20][x] = 'T'; }
+      for (let y = 2; y < 20; y += 2) { g[y][0] = 'T'; g[y][28] = 'T'; }
+      [[3, 15], [24, 15], [4, 4], [24, 5]].forEach(([x, y]) => { g[y][x] = 'T'; });
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr;
+      // the building (its glass doors lead into Studio B)
+      w.addProp({ img: sp.williamsCenter, tx: 9, ty: 3, h: 6 });
+      w.blockTiles(9, 3, 11, 6);
+      w.block[8 * w.w + 14] = 0;
+      w.addWarp(14, 8, 1, 1, 'studioB', 7, 9, 'up');
+      w.add(new G.Sign(12, 9, ['WILLIAMS CENTER FOR THE ARTS', 'Music. Theater. The art gallery. Opened 1983.', 'Downstairs: {y}STUDIO B{/}, the recording studio.']));
+      for (const x of [7, 22]) w.addProp({ img: sp.lamppost, tx: x, ty: 9, dx: 2, solid: [x, 9, 1, 1] });
+      w.addProp({ img: sp.parkBench, tx: 8, ty: 11, h: 1, solid: [8, 11, 2, 1], hit: [8, 11, 2, 1], talk: look('A bench. Somebody carved a treble clef into it.') });
+      w.addProp({ img: sp.parkBench, tx: 20, ty: 11, h: 1, solid: [20, 11, 2, 1], hit: [20, 11, 2, 1], talk: look('A bench, still warm. Someone was just sitting here humming.') });
+      w.addProp({ img: sp.arcSculpture, tx: 5, ty: 17, h: 1, solid: [5, 17, 2, 1], hit: [5, 17, 2, 1], talk: look('A big red steel sculpture: two arcs leaning on each other. The plaque says "Harmony."', ['Nate', 'Two things leaning on each other. Like a bass line and a drum beat.']) });
+      w.addProp({ img: sp.posterKiosk, tx: 23, ty: 17, h: 1, solid: [23, 17, 1, 1], hit: [23, 17, 1, 1], talk: look('A kiosk covered in posters: the Lafayette Jazz Ensemble, a student theater show, an a cappella group, and a flyer that just says "BAND NEEDS DRUMMER."') });
+      w.addTrigger(14, 21, 2, 1, () => G.play.warp('campus', 27, 1, 'down'));
+      w.add(new G.Sign(16, 19, 'SOUTH: the quad.'));
+    },
+  };
+
+  // Studio B: the console in the middle of the back wall with a monitor on each side, foam on the
+  // walls, an ON AIR light, the instruments Nate has won (guitars on stands, the drums on the
+  // right), a couch, and Rae.
+  G.MAPS.studioB = {
+    name: 'Williams Center: Studio B',
+    music: 'house',
+    tiles: [
+      'wwwwwwwwwwwwwww',
+      'vvvvvvvvvvvvvvv',
+      '***************',
+      '***************',
+      '***************',
+      '****rrrrrrr****',
+      '****rrrrrrr****',
+      '****rrrrrrr****',
+      '***************',
+      '***************',
+      'wwwwwwwxwwwwwww',
+    ],
+    setup(w) {
+      const F = furnish(w), sp = G.spr, s = G.state;
+      for (const x of [1, 2, 3, 13, 14]) F.hang(sp.acousticPanel, x, 1, 1, null, 2);
+      // the ON AIR light, over the drums (lit while the studio's recording)
+      w.props.push({ img: null, x: 0, y: 0, base: 16, draw(ctx, cx, cy) {
+        const x = 11 * 16 - cx, y = 18 - cy, on = G.script.cur && G.script.cur.cmd && G.script.cur.cmd.mode === 'rec';
+        ctx.fillStyle = '#1c1c22'; ctx.fillRect(x, y, 30, 11); ctx.fillStyle = on ? '#f83838' : '#5a1c1c'; ctx.fillRect(x + 1, y + 1, 28, 9);
+        FT().draw(ctx, 'ON AIR', x + 15 - Math.round(FT().width('ON AIR') / 2), y + 2, on ? '#fff0f0' : '#8a4a4a');
+      } });
+      F.stand(sp.mixingDesk, 5, 2, 4, () => S.studioDesk());
+      F.stand(sp.studioMonitor, 4, 2, 1, look('A studio monitor. Flat, honest sound. It will tell you EXACTLY how your song sounds.'));
+      F.stand(sp.studioMonitor, 9, 2, 1, look('The other studio monitor. There\'s a sticky note on it: "NO SUBWOOFER JOKES."'));
+      // the metronome on the desk, once Abe's given it to Nate (its pendulum swings)
+      if (s.items.metronome) w.props.push({ img: null, x: 0, y: 0, base: 3 * 16 - 1, draw(ctx, cx, cy) {
+        const x = 8 * 16 + 1 - cx, y = 2 * 16 - 2 - cy;
+        ctx.drawImage(G.spr.metronomeIcon, x, y);
+        const a = Math.sin(performance.now() / 300) * 0.5;
+        ctx.fillStyle = '#2a2a30'; for (let k = 0; k < 7; k++) ctx.fillRect(Math.round(x + 6 + Math.sin(a) * k), Math.round(y + 10 - Math.cos(a) * k), 1, 1);
+      } });
+      // the guitars Nate has won, on stands along the left wall
+      ['strat', 'tele', 'jazzmaster'].forEach((id, k) => {
+        if (!G.instrumentHas(id)) return;
+        const it = G.INSTRUMENTS.find((x) => x.id === id), img = it.art();
+        w.props.push({ img: null, x: 0, y: 0, base: (4 + k * 2) * 16 + 15, hit: [0, (4 + k * 2) * 16, 32, (5 + k * 2) * 16], talk: look(it.name + ', on a stand. Ready to record.'), draw(ctx, cx, cy) {
+          const x = 10 - cx, y = (4 + k * 2) * 16 + 15 - cy;
+          ctx.fillStyle = '#2a2a30'; ctx.fillRect(x + 2, y - 2, 12, 2); ctx.fillRect(x + 7, y - 8, 2, 6);
+          ctx.drawImage(img, x + 8 - img.width / 4, y - img.height / 2 - 2, img.width / 2, img.height / 2);
+        } });
+        w.blockTiles(0, 4 + k * 2, 2, 1);
+      });
+      // the drums on the right
+      if (G.instrumentHas('drumkit')) F.stand(sp.drumKit, 11, 3, 3, look('Abe\'s drum kit, in blue sparkle. Rae says it\'s the loudest thing that\'s ever been in here.'));
+      if (G.instrumentHas('steelpan')) F.stand(sp.steelPan, 12, 6, 2, look('Abe\'s steel drum. Still has never been to the beach.'));
+      if (G.instrumentHas('bongos')) F.stand(sp.bongos, 12, 8, 2, look('Abe\'s bongos. Hannah does not miss them.'));
+      F.stand(sp.studioCouch, 1, 9, 3, look('A beat-up purple couch. Every studio has one. Nobody knows where it came from.'));
+      F.stand(sp.monstera, 4, 9, 1, look('A big plant. Rae says it likes jazz.'));
+      w.add(new G.NPC({ sprite: 'rae', name: 'Rae', x: 10 * 16 + 8, y: 4 * 16 + 14, dir: 'left', talk: S.rae }));
+      w.addWarp(7, 10, 1, 1, 'arts', 14, 9, 'down');
+    },
   };
 
   // ================================================================ DORON'S FIGHT NIGHT (the locker room)

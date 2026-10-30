@@ -137,6 +137,8 @@
       const s = G.state;
       s.map = id; s.x = x; s.y = y; s.dir = dir;
       (s.visited = s.visited || {})[id] = 1;
+      // (Nate's own song, if he set one to play in the game, plays instead of the map's music)
+      if (G.mixFor) G.audio.setMix(G.mixFor());
       G.audio.play(this.world.def.music);
       G.areaBanner.show(this.world.def.name);
       this.snapCam();
@@ -618,7 +620,7 @@
       this.t = 0;
       this.sel = 0;
       this.opts = (G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game']).concat('Admin');
-      G.audio.play('title');
+      G.audio.setMix(null); G.audio.play('title');
     },
     update() {
       this.t++;
@@ -681,12 +683,15 @@
     s.teeth = 100;
     for (let j = 0; j <= i; j++) {
       const c = cps[j];
+      // (a side checkpoint, alone: true, only counts when it's the one you picked)
+      if (c.alone && j !== i) continue;
       Object.assign(s.flags, c.flags || {});
       Object.assign(s.items, c.items || {});
       for (const id of c.party || []) if (!s.party.includes(id)) s.party.push(id);
       if (c.follower !== undefined) s.follower = c.follower;
       if (c.maxHp) s.maxHp = c.maxHp;
       if (c.teeth) s.teeth = c.teeth;
+      if (c.jams) s.jams = Object.assign(s.jams || {}, c.jams);
       if (c.rocks) { s.rocks = s.rocks || {}; s.rocksFound = s.rocksFound || {}; for (const r of G.ROCKS) { s.rocks[r.id] = 1; s.rocksFound[r.id] = 1; } }
     }
     const c = cps[i];
@@ -805,7 +810,7 @@
       this.i = 0;
       this.t = 0;
       this.startPage();
-      G.audio.play('title');
+      G.audio.setMix(null); G.audio.play('title');
     },
     startPage() {
       const pg = this.pages[this.i];

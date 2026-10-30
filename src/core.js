@@ -97,6 +97,11 @@ G.audio = (function () {
   let want = null;      // song requested (may be before unlock)
   let song = null;      // { name, tracks: [{ notes, i, t }], bpm }
   let timer = null;
+  let mix = null, mixPlayer = null; // Nate's own song, playing as the game's music
+  let level = 1; // the studio's track volume (G.audio.withLevel)
+  const lv = (v) => v * level;
+  // a note's start: an audio-clock time to schedule it for, or right now
+  const when = (at) => Math.max(ctx.currentTime, at || 0) + 0.005;
 
   function unlock() {
     if (ctx) {
@@ -262,6 +267,7 @@ G.audio = (function () {
   function startSong(name) {
     stopSong();
     if (!ctx) return;
+    if (mix) { song = { name, mix: true }; mixPlayer = makePlayer(mix.events, mix.len, true, ctx.currentTime + 0.1); return; }
     const file = G.SONG_FILES && G.SONG_FILES[name];
     if (file && recorded[name] !== false) { startRecorded(name, file); return; }
     startSynth(name);
@@ -315,9 +321,30 @@ G.audio = (function () {
     return (driveCurves[k] = c);
   }
 
+  // a recorded song's events, scheduled a little ahead on the audio clock
+  function makePlayer(events, len, loop, startAt) {
+    const p = { at0: startAt, i: 0, dead: false };
+    p.tick = () => {
+      if (p.dead || !ctx) return;
+      const horizon = ctx.currentTime + 0.2;
+      while (events.length) {
+        if (p.i >= events.length) { if (!loop || len <= 0) return; p.i = 0; p.at0 += len; }
+        const e = events[p.i], at = p.at0 + e.t;
+        if (at > horizon) return;
+        if (at > ctx.currentTime - 0.05) e.play(at);
+        p.i++;
+      }
+    };
+    p.timer = setInterval(p.tick, 25);
+    p.tick();
+    p.stop = () => { p.dead = true; clearInterval(p.timer); };
+    return p;
+  }
+
   function stopSong() {
     if (timer) clearInterval(timer);
     timer = null;
+    if (mixPlayer) { mixPlayer.stop(); mixPlayer = null; }
     song = null;
     if (recSource) { try { recSource.stop(); } catch (e) { /* already stopped */ } recSource = null; }
   }
@@ -327,6 +354,8 @@ G.audio = (function () {
     sfx,
     play(name) {
       if (want === name && song) return;
+      // (the mixtape keeps playing from map to map instead of starting over)
+      if (mix && song && song.mix) { want = name; return; }
       want = name;
       if (ctx) startSong(name);
     },
@@ -344,13 +373,15 @@ G.audio = (function () {
     // (detuned oscillators through a closing lowpass, like a plucked string), a bass, and drums.
     // They go on the music bus. Each of Abe's guitars has its own tone (GUITAR_TONES).
     inst: {
-      guitar(midi, dur = 0.45, vol = 0.16, tone = 'strat') {
+      // every instrument takes an optional `at` last (an audio-clock time: the studio and the
+      // mixtape schedule notes ahead), and plays at the current level (G.audio.withLevel)
+      guitar(midi, dur = 0.45, vol = 0.16, tone = 'strat', at) {
         if (!ctx || muted) return;
-        const T = GUITAR_TONES[tone] || GUITAR_TONES.strat, t = ctx.currentTime + 0.005, f = N(midi), len = dur * T.sustain;
+        const T = GUITAR_TONES[tone] || GUITAR_TONES.strat, t = when(at), f = N(midi), len = dur * T.sustain;
         const flt = ctx.createBiquadFilter(), g = ctx.createGain();
         flt.type = 'lowpass'; flt.Q.value = T.q;
         flt.frequency.setValueAtTime(Math.min(8000, f * T.open), t); flt.frequency.exponentialRampToValueAtTime(Math.max(T.floor, f * T.close), t + len);
-        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol * T.gain, t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(lv(vol * T.gain), t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
         for (const [type, mul, lvl] of T.osc) {
           const o = ctx.createOscillator(), og = ctx.createGain();
           o.type = type; o.frequency.setValueAtTime(f * mul, t);
@@ -366,26 +397,40 @@ G.audio = (function () {
         // the Jazzmaster gets a surf-style slapback echo
         if (T.echo) { const d = ctx.createDelay(0.5), dg = ctx.createGain(); d.delayTime.value = T.echo; dg.gain.value = 0.35; g.connect(d); d.connect(dg); dg.connect(musicBus); }
       },
-      bass(midi, dur = 0.35) {
+      bass(midi, dur = 0.35, at) {
         if (!ctx || muted) return;
-        const t = ctx.currentTime + 0.005;
-        tone(N(midi), t, dur, 'triangle', 0.5, musicBus);
-        tone(N(midi), t, dur * 0.6, 'square', 0.06, musicBus);
+        const t = when(at);
+        tone(N(midi), t, dur, 'triangle', lv(0.5), musicBus);
+        tone(N(midi), t, dur * 0.6, 'square', lv(0.06), musicBus);
       },
-      kick() { if (!ctx || muted) return; const t = ctx.currentTime + 0.005; tone(130, t, 0.16, 'sine', 0.7, musicBus, 42); },
-      snare() { if (!ctx || muted) return; const t = ctx.currentTime + 0.005; noise(t, 0.14, 0.32, musicBus, 2200); tone(190, t, 0.07, 'triangle', 0.18, musicBus); },
-      hat() { if (!ctx || muted) return; const t = ctx.currentTime + 0.005; noise(t, 0.035, 0.12, musicBus, 8000); },
+      kick(at) { if (!ctx || muted) return; const t = when(at); tone(130, t, 0.16, 'sine', lv(0.7), musicBus, 42); },
+      snare(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.14, lv(0.32), musicBus, 2200); tone(190, t, 0.07, 'triangle', lv(0.18), musicBus); },
+      hat(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.035, lv(0.12), musicBus, 8000); },
       // Nate's drums: bongos (a pitched thump that drops, with a slap of skin), a steel pan (a sine
       // with its bright, slightly-off overtones), toms, and a crash
-      bongo(hi) { if (!ctx || muted) return; const t = ctx.currentTime + 0.005, f = hi ? 440 : 280; tone(f, t, hi ? 0.12 : 0.17, 'sine', 0.45, musicBus, f * 0.82); noise(t, 0.02, 0.12, musicBus, hi ? 3200 : 2200); },
-      pan(midi, dur = 0.6) {
+      bongo(hi, at) { if (!ctx || muted) return; const t = when(at), f = hi ? 440 : 280; tone(f, t, hi ? 0.12 : 0.17, 'sine', lv(0.45), musicBus, f * 0.82); noise(t, 0.02, lv(0.12), musicBus, hi ? 3200 : 2200); },
+      pan(midi, dur = 0.6, at) {
         if (!ctx || muted) return;
-        const t = ctx.currentTime + 0.005, f = N(midi);
-        tone(f, t, dur, 'sine', 0.24, musicBus); tone(f * 2, t, dur * 0.7, 'sine', 0.09, musicBus); tone(f * 3.01, t, dur * 0.35, 'sine', 0.04, musicBus); tone(f * 4.07, t, 0.08, 'triangle', 0.03, musicBus);
+        const t = when(at), f = N(midi);
+        tone(f, t, dur, 'sine', lv(0.24), musicBus); tone(f * 2, t, dur * 0.7, 'sine', lv(0.09), musicBus); tone(f * 3.01, t, dur * 0.35, 'sine', lv(0.04), musicBus); tone(f * 4.07, t, 0.08, 'triangle', lv(0.03), musicBus);
       },
-      tom(hi) { if (!ctx || muted) return; const t = ctx.currentTime + 0.005, f = hi ? 190 : 120; tone(f, t, 0.28, 'sine', 0.55, musicBus, f * 0.7); noise(t, 0.05, 0.08, musicBus, 1200); },
-      crash() { if (!ctx || muted) return; const t = ctx.currentTime + 0.005; noise(t, 0.9, 0.2, musicBus, 6500); noise(t, 0.4, 0.12, musicBus, 4000); },
+      tom(hi, at) { if (!ctx || muted) return; const t = when(at), f = hi ? 190 : 120; tone(f, t, 0.28, 'sine', lv(0.55), musicBus, f * 0.7); noise(t, 0.05, lv(0.08), musicBus, 1200); },
+      crash(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.9, lv(0.2), musicBus, 6500); noise(t, 0.4, lv(0.12), musicBus, 4000); },
+      // the metronome: a woodblock tick, higher on the one
+      click(accent, at) { if (!ctx || muted) return; const t = when(at); tone(accent ? 1800 : 1250, t, 0.04, 'square', lv(accent ? 0.12 : 0.08), musicBus); },
     },
+    // the audio clock (seconds), for timing the studio's live playing against
+    now() { return ctx ? ctx.currentTime : 0; },
+    get running() { return !!ctx && ctx.state === 'running'; },
+    // play whatever fn plays at a level (0-1+) (a studio track's volume)
+    withLevel(v, fn) { const o = level; level = v; try { fn(); } finally { level = o; } },
+    // A player for a recorded song: events [{ t (seconds), play(at) }] in order, len seconds long,
+    // starting at audio time startAt; loop goes around forever. Returns { stop(), at0 }.
+    player(events, len, loop, startAt) { return makePlayer(events, len, loop, startAt); },
+    // Nate's song as the game's music (the mixtape): { events, len } or null. While it's set, every
+    // song the game asks for plays the mixtape instead (it keeps going from map to map).
+    setMix(m) { if (m === mix) return; mix = m; if (ctx && want) startSong(want); },
+    get mixOn() { return !!mix; },
     toggleMute() {
       muted = !muted;
       if (master) master.gain.value = muted ? 0 : 0.5;

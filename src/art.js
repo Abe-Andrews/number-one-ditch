@@ -8673,6 +8673,135 @@
     p.vline(10, 14, 15, '#1a1a1a'); p.set(11, 15, '#1a1a1a');
     return finish(p);
   }
+  // ================================================================ THE WILLIAMS CENTER FOR THE ARTS
+  // Lafayette's real arts building (it opened in 1983; the music department's in it), on its own
+  // plaza north of the quad: a two-story red-brick block with a flat roof and a concrete parapet, long
+  // bands of windows on both wings, a maroon Lafayette banner, and a tall glass entrance in the middle
+  // under a concrete canopy. Inside: Studio B.
+  function williamsCenter() {
+    const W = 176, H = 96, p = new Pix(W, H);
+    const brick = '#a85a3a', brickD = '#8a4630', brickL = '#c06a48', cap = '#c8c0b0', capD = '#9a9488';
+    const glass = '#34485a', glassL = '#5a7890', mull = '#c8ccd0';
+    for (let y = 6; y < 92; y++) for (let x = 0; x < W; x++) {
+      const course = (y - 6) % 4 === 3, joint = (x + (Math.floor((y - 6) / 4) % 2) * 4) % 8 === 0;
+      p.set(x, y, course || joint ? brickD : (x * 3 + y * 7) % 23 === 0 ? brickL : brick);
+    }
+    // the parapet and the stone plinth
+    p.rect(0, 0, W, 6, cap); p.hline(0, W - 1, 0, '#e0d8c8'); p.hline(0, W - 1, 5, capD);
+    p.rect(0, 92, W, 4, '#9a9488'); p.hline(0, W - 1, 92, '#b8b0a0');
+    // window bands on both wings, two stories
+    for (const [x0, x1] of [[6, 56], [120, 170]]) for (const y0 of [16, 50]) {
+      p.rect(x0 - 1, y0 - 1, x1 - x0 + 2, 14, '#d8d0c0');
+      p.rect(x0, y0, x1 - x0, 12, glass);
+      for (let x = x0; x < x1; x += 10) p.vline(x, y0, y0 + 11, mull);
+      for (let x = x0 + 2; x < x1; x += 10) p.rect(x, y0 + 1, 3, 3, glassL);
+    }
+    // a maroon Lafayette banner on the left wing
+    p.rect(26, 32, 9, 16, '#8a1c2c'); p.hline(26, 34, 32, '#a83040'); for (let y = 35; y < 46; y += 3) p.hline(28, 32, y, '#f4f0e8');
+    // the tall glass entrance, with its mullions, under the canopy
+    p.rect(62, 10, 52, 82, '#d8d0c0');
+    p.rect(64, 12, 48, 80, glass);
+    for (let x = 64; x < 112; x += 8) p.vline(x, 12, 91, mull);
+    for (let y = 12; y < 92; y += 16) p.hline(64, 111, y, mull);
+    for (let k = 0; k < 6; k++) p.rect(66 + k * 8, 14, 3, 6, glassL);
+    // canopy, and the doors under it
+    p.rect(56, 58, 64, 5, cap); p.hline(56, 119, 58, '#e8e0d0'); p.hline(56, 119, 63, '#5a5248');
+    p.rect(78, 66, 20, 26, '#1e2a34'); p.vline(87, 66, 91, mull); p.vline(88, 66, 91, mull);
+    p.rect(85, 76, 1, 5, '#e8e8e8'); p.rect(90, 76, 1, 5, '#e8e8e8');
+    p.outline();
+    return p.canvas();
+  }
+  // a park bench: wooden slats on black iron
+  function parkBench() {
+    const p = new Pix(32, 16), wood = '#a8743c', woodD = '#7a5228', iron = '#2a2a30';
+    p.rect(1, 0, 30, 3, wood); p.hline(1, 30, 2, woodD); p.rect(1, 4, 30, 3, wood); p.hline(1, 30, 6, woodD);
+    p.rect(0, 8, 32, 3, wood); p.hline(0, 31, 10, woodD);
+    for (const x of [2, 28]) { p.vline(x, 0, 15, iron); p.vline(x + 1, 0, 15, iron); }
+    return finish(p);
+  }
+  // an abstract steel sculpture on a plinth: two red arcs leaning on each other
+  function arcSculpture() {
+    const p = new Pix(24, 40), red = '#c83838', redD = '#8a2020', redL = '#e85a4a';
+    p.rect(2, 32, 20, 8, '#b8b0a0'); p.hline(2, 21, 32, '#d8d0c0'); p.hline(2, 21, 39, '#8a8478');
+    for (let a = 0; a <= 40; a++) {
+      const t = (a / 40) * Math.PI;
+      const x1 = 12 - Math.round(Math.cos(t) * 9), y1 = 31 - Math.round(Math.sin(t) * 26);
+      p.rect(x1 - 1, y1, 3, 2, red); p.set(x1 - 1, y1, redL);
+      const x2 = 12 + Math.round(Math.cos(t) * 6) + 2, y2 = 31 - Math.round(Math.sin(t) * 17);
+      p.rect(x2, y2, 2, 2, redD);
+    }
+    return finish(p);
+  }
+  // a round kiosk covered in concert posters
+  function posterKiosk() {
+    const p = new Pix(16, 34);
+    p.rect(1, 4, 14, 28, '#2a3a2a'); p.rect(0, 0, 16, 5, '#1c2a1c'); p.hline(0, 15, 0, '#3a4a3a'); p.rect(2, 32, 12, 2, '#1c2a1c');
+    const posters = [['#f8d850', '#8a1c2c'], ['#78c8f8', '#1c2a58'], ['#f4f0e8', '#c83838'], ['#f8a0c8', '#2a1c3a']];
+    posters.forEach(([bg, ink], k) => { const x = 2 + (k % 2) * 6, y = 6 + Math.floor(k / 2) * 13; p.rect(x, y, 6, 11, bg); p.hline(x + 1, x + 4, y + 2, ink); p.hline(x + 1, x + 3, y + 4, ink); p.rect(x + 1, y + 6, 4, 3, ink); });
+    return finish(p);
+  }
+  // Studio B: the mixing console (four tiles wide, reaching up the wall behind it): a computer
+  // screen with waveforms, rows of faders and knobs, and the meters
+  function mixingDesk() {
+    const W = 64, H = 38, p = new Pix(W, H), body = '#2a2a34', bodyL = '#3e3e4c', top = '#4a4a58';
+    // the screen on its arm
+    p.rect(20, 0, 24, 15, '#1c1c22'); p.rect(21, 1, 22, 12, '#0e1a24');
+    for (let x = 22; x < 42; x++) { const a = Math.round(Math.abs(Math.sin(x * 1.3) * 3)); p.vline(x, 4 - a, 4 + a, '#58c8f8'); const b = Math.round(Math.abs(Math.sin(x * 0.7 + 1) * 2)); p.vline(x, 10 - b, 10 + b, '#78e070'); }
+    p.rect(30, 15, 4, 4, '#1c1c22');
+    // the console: a sloped top full of channel strips
+    p.rect(0, 18, W, 20, body); p.rect(1, 19, W - 2, 11, top); p.hline(0, W - 1, 18, bodyL);
+    for (let k = 0; k < 8; k++) {
+      const x = 4 + k * 7;
+      p.set(x, 20, ['#f86858', '#f8d850', '#78e070', '#58c8f8'][k % 4]); p.set(x + 2, 20, '#e8e8e8');
+      p.set(x + 1, 22, '#e8e8e8');
+      p.vline(x + 1, 24, 29, '#1c1c22'); p.rect(x, 25 + (k * 3) % 4, 3, 2, '#f4f0e8');
+    }
+    // the meters, and the front lip
+    p.rect(57, 20, 5, 9, '#1c1c22'); for (let y = 21; y < 28; y++) p.hline(58, 60, y, y < 23 ? '#f86858' : y < 25 ? '#f8d850' : '#78e070');
+    p.rect(0, 31, W, 7, '#1e1e26'); p.hline(0, W - 1, 31, '#5a5a68');
+    p.outline();
+    return p.canvas();
+  }
+  // a studio monitor on its stand
+  function studioMonitor() {
+    const p = new Pix(12, 32);
+    p.rect(0, 0, 12, 16, '#1c1c22'); p.rect(1, 1, 10, 14, '#2a2a34');
+    for (let y = -3; y <= 3; y++) { const w = Math.round(Math.sqrt(9.5 - y * y)); p.hline(6 - w, 5 + w, 6 + y, '#14141a'); }
+    p.rect(5, 6, 2, 1, '#5a5a68'); p.rect(4, 12, 4, 2, '#14141a'); p.set(9, 2, '#58c8f8');
+    p.rect(5, 16, 2, 14, '#5a5a68'); p.rect(2, 30, 8, 2, '#3a3a44');
+    p.outline();
+    return p.canvas();
+  }
+  // gray acoustic foam, hung on the wall
+  function acousticPanel() {
+    const p = new Pix(14, 14);
+    for (let y = 0; y < 14; y++) for (let x = 0; x < 14; x++) {
+      const u = x % 7, v = y % 7, sq = Math.floor(x / 7) + Math.floor(y / 7);
+      const ridge = sq % 2 ? u === 3 || u === 2 : v === 3 || v === 2;
+      p.set(x, y, ridge ? '#7a7a88' : (sq % 2 ? u : v) < 3 ? '#5a5a68' : '#4a4a56');
+    }
+    p.outline();
+    return p.canvas();
+  }
+  // a beat-up studio couch (seen from the front)
+  function studioCouch() {
+    const p = new Pix(40, 22), c = '#6a3a5a', cL = '#8a4a72', cD = '#4a2840';
+    p.rect(0, 2, 40, 12, c); p.hline(0, 39, 2, cL); p.rect(4, 4, 15, 9, cL); p.rect(21, 4, 15, 9, cL);
+    p.rect(0, 12, 40, 7, c); p.hline(0, 39, 12, cL); p.vline(20, 12, 18, cD);
+    p.rect(0, 2, 4, 17, cD); p.rect(36, 2, 4, 17, cD); p.rect(2, 19, 3, 3, '#2a1a10'); p.rect(35, 19, 3, 3, '#2a1a10');
+    p.rect(26, 6, 6, 4, '#f8d850');
+    p.outline();
+    return p.canvas();
+  }
+  // Abe's metronome: a little wooden pyramid with a pendulum (the icon, and on the studio desk)
+  function metronomeIcon() {
+    const p = new Pix(12, 15), wood = '#a8743c', woodD = '#7a5228', woodL = '#c8945a';
+    for (let y = 0; y < 13; y++) { const w = 1 + Math.floor(y / 2.6); p.hline(6 - w, 5 + w, y + 1, y < 2 ? woodL : wood); p.set(6 - w, y + 1, woodD); }
+    p.rect(4, 3, 4, 8, '#f4ecd8'); p.vline(6, 2, 10, '#2a2a30'); p.rect(5, 4, 3, 2, '#c8b048');
+    p.rect(0, 13, 12, 2, woodD);
+    p.outline();
+    return p.canvas();
+  }
   // Abe's drums (made up: Abe doesn't own any), won jamming with him: bongos, a steel drum, a kit
   // the bongos: a small drum (the macho) and a big one (the hembra), wooden shells with chrome hoops
   // and tuning lugs, cream skin heads, joined by a block of wood
@@ -9112,6 +9241,7 @@
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
     S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon(); S.bmfIcon = bmfIcon();
     S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe(); S.bongos = bongos(); S.steelPan = steelPan(); S.drumKit = drumKit();
+    S.williamsCenter = williamsCenter(); S.parkBench = parkBench(); S.arcSculpture = arcSculpture(); S.posterKiosk = posterKiosk(); S.mixingDesk = mixingDesk(); S.studioMonitor = studioMonitor(); S.acousticPanel = acousticPanel(); S.studioCouch = studioCouch(); S.metronomeIcon = metronomeIcon();
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
     S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();
