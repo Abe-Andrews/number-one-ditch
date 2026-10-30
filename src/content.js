@@ -5491,9 +5491,9 @@
     jam: ['Notes slide down the strings. Hit each one with its arrow (← ↓ ↑ →) right as it crosses the pickup at the bottom.', 'Two notes at once? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     studio: [
       ['Eight tracks. ↑↓ picks a track, ←→ its instrument: anything you\'ve won from Abe.', 'Z records. You play it LIVE on the keyboard: the home row (A S D F...) and the row above it. There\'s no editing and no moving notes. You play it, it\'s on the record.', 'Not recording? The letter keys let you try the instrument out.'],
-      ['The first track you record sets how long the song is. Record the rest on top of it while it plays back.', 'While recording, ENTER stops the take and BACKSPACE scraps it. C plays the song. V mutes a track; - and + set its volume.', 'ENTER opens the menu: the song\'s key, SAVE SONG, LOAD SONG, and PLAY IN GAME, which makes your song the game\'s music.'],
+      ['Z gets you ready: play along as long as you like (nothing records yet), then ENTER starts the take. ENTER stops it; BACKSPACE scraps it.', 'The first track you record sets how long the song is. Record the rest on top of it. C plays the song. V mutes a track; - and + set its volume.', 'ENTER opens the menu: the song\'s key, SAVE SONG, LOAD SONG, and PLAY IN GAME, which makes your song the game\'s music.'],
     ],
-    metronome: ['Abe\'s metronome is on the desk now. It clicks four times before every take, then keeps time while you record.', 'ENTER > TEMPO sets how fast. ENTER > CLICK turns it off. And with it on, the first track rounds up to a whole bar.'],
+    metronome: ['Abe\'s metronome is on the desk now. It starts clicking as soon as you get ready, so you can warm up on the beat. Press ENTER and it counts four more, then you\'re recording.', 'ENTER > TEMPO sets how fast. ENTER > CLICK turns it off. And with it on, the first track rounds up to a whole bar.'],
     jam_bongos: ['← hits the little drum (the macho), → the big one (the hembra). Hit each note right as it lands on its drum.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     jam_pan: ['Every dent in the steel drum is a note: ← ↓ ↑ → from low to high. Hit each note right as it lands on its dent.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     jam_kit: ['← hi-hat, ↓ kick drum, ↑ snare, → crash and toms. Hit each note right as it lands on its drum.', 'Two at once (like kick and hi-hat)? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
@@ -7496,6 +7496,16 @@
         const c = e.code, m = this.mode, tr = this.song.tracks[this.sel];
         if (m === 'name') return this.typeName(e);
         if (e.repeat) return true;
+        if (m === 'ready') {
+          if (c === 'Enter' || c === 'Space' || c === 'KeyZ') { this.record(); return true; }
+          if (c === 'Backspace' || c === 'Escape' || c === 'KeyX') { this.stopPlayers(); this.mode = 'nav'; G.audio.sfx('cancel'); return true; }
+          const n = studioNote(this.recInst, c);
+          if (n == null) return true;
+          G.audio.withLevel(VOLS[tr.vol], () => studioSound(this.recInst, n, this.song.key));
+          this.lit[c] = 8; this.hitT = 7;
+          this.floats.push({ x: 104 + Math.random() * 32, y: 54, vx: (Math.random() - 0.5) * 0.8, life: 46, col: ['#f8d850', '#78e070', '#78c8f8', '#f8a0c8'][Math.floor(Math.random() * 4)] });
+          return true;
+        }
         if (m === 'count' || m === 'rec') {
           if (c === 'Enter') return this.endTake(true);
           if (c === 'Backspace' || c === 'Escape') return this.endTake(false);
@@ -7546,22 +7556,40 @@
       askRecord() {
         const tr = this.song.tracks[this.sel];
         if (!tr.inst) tr.inst = this.have()[0];
-        if (tr.ev.length) this.confirm('Record over track ' + G.sayable(this.sel + 1) + '? The old take is gone for good.', () => this.record());
-        else this.record();
+        if (tr.ev.length) this.confirm('Record over track ' + G.sayable(this.sel + 1) + '? The old take is gone for good.', () => this.ready());
+        else this.ready();
       },
-      // a take: a count-in (four clicks with the metronome; a silent 3-2-1 without), then everything
-      // played is recorded, with the other tracks playing back underneath
-      record() {
-        const sg = this.song, tr = sg.tracks[this.sel], metro = this.metro() && sg.click, beat = 60 / sg.bpm, now = this.clock(), len = this.lenS();
+      // READY: warm up before a take. The metronome starts clicking (a bar, around and around) and
+      // the tracks already recorded loop along; whatever's played sounds, but nothing's recorded.
+      // ENTER (or SPACE, or Z) starts the take; BACKSPACE goes back to the console.
+      ready() {
+        const sg = this.song, tr = sg.tracks[this.sel], metro = this.metro() && sg.click, beat = 60 / sg.bpm, len = this.lenS();
         this.recInst = tr.inst; this.recTrack = this.sel; this.take = []; this.metroOn = metro;
-        this.start0 = now + (metro ? 4 * beat : 1.8) + 0.05;
         this.stopPlayers();
+        this.readyT0 = this.clock() + 0.1;
         const others = songEvents(sg, this.sel);
+        if (others.length && len) this.players.push(G.audio.player(others, len, true, this.readyT0));
+        if (metro) this.players.push(G.audio.player([0, 1, 2, 3].map((k) => ({ t: k * beat, play: (at) => G.audio.inst.click(k === 0, at) })), 4 * beat, true, this.readyT0));
+        this.mode = 'ready';
+        G.audio.sfx('select');
+      },
+      // the take: a count-in (four clicks with the metronome, on the beat it's already keeping; a
+      // silent 3-2-1 without), then everything played is recorded, with the other tracks playing
+      // back underneath from the top
+      record() {
+        const sg = this.song, metro = this.metroOn, beat = 60 / sg.bpm, now = this.clock(), len = this.lenS();
+        this.stopPlayers();
+        this.take = [];
+        // (the count-in starts on the metronome's next beat, far enough off that its last scheduled
+        // click can't double up with the first new one)
+        const c = metro ? this.readyT0 + Math.ceil((now + 0.25 - this.readyT0) / beat) * beat : now;
+        this.start0 = metro ? c + 4 * beat : now + 1.85;
+        const others = songEvents(sg, this.recTrack);
         if (others.length) this.players.push(G.audio.player(others, len, false, this.start0));
         if (metro) {
           const clicks = [], total = (len || MAX_LEN) + 4 * beat;
           for (let k = 0; k * beat < total; k++) clicks.push({ t: k * beat, play: (at) => G.audio.inst.click(k % 4 === 0, at) });
-          this.players.push(G.audio.player(clicks, 0, false, this.start0 - 4 * beat));
+          this.players.push(G.audio.player(clicks, 0, false, c));
         }
         this.mode = 'count';
         G.audio.sfx('select');
@@ -7693,10 +7721,11 @@
       // ---- drawing
       draw(ctx) {
         const sg = this.song, m = this.mode, rec = m === 'rec' || m === 'count', pos = this.clock() - this.start0;
+        const live = rec || m === 'ready';
         const right = SONG_KEYS[sg.key].name + (this.metro() ? '  ' + G.sayable(sg.bpm) + ' BPM' : '') + '  ' + (sg.len ? mmss(sg.len / 1000) : '-:--');
         studioBack(ctx, 'STUDIO B: ' + sg.name, right);
         if (rec && (this.t >> 4) & 1) { ctx.fillStyle = '#f83838'; ctx.fillRect(G.W - 6 - FT().width(right) - 10, 3, 6, 6); }
-        if (rec) this.drawLive(ctx, pos);
+        if (live) this.drawLive(ctx, pos);
         else this.drawConsole(ctx, pos);
         if (m === 'menu') this.drawMenu(ctx);
         if (m === 'name') this.drawName(ctx);
@@ -7757,8 +7786,10 @@
         ctx.fillStyle = '#6a4a2e'; for (let y = 88; y < 104; y += 5) ctx.fillRect(0, y, G.W, 1);
         ctx.fillStyle = '#8a2a3a'; ctx.fillRect(64, 90, 112, 12); ctx.fillStyle = '#a83a4a'; ctx.fillRect(66, 92, 108, 1);
         ctx.drawImage(G.spr.studioMonitor, 18, FLOOR - 32); ctx.drawImage(G.spr.studioMonitor, 210, FLOOR - 32);
-        ctx.fillStyle = '#1c1c22'; ctx.fillRect(G.W - 36, 26, 30, 11); ctx.fillStyle = (this.t >> 5) & 1 || this.mode === 'rec' ? '#f83838' : '#a82828'; ctx.fillRect(G.W - 35, 27, 28, 9);
-        FT().draw(ctx, 'ON AIR', G.W - 21 - Math.round(FT().width('ON AIR') / 2), 28, '#fff0f0');
+        // (ON AIR: off while warming up, blinking through the count-in, on while it records)
+        const air = this.mode === 'rec' || (this.mode === 'count' && (this.t >> 3) & 1);
+        ctx.fillStyle = '#1c1c22'; ctx.fillRect(G.W - 36, 26, 30, 11); ctx.fillStyle = air ? '#f83838' : '#4a1c1c'; ctx.fillRect(G.W - 35, 27, 28, 9);
+        FT().draw(ctx, 'ON AIR', G.W - 21 - Math.round(FT().width('ON AIR') / 2), 28, air ? '#fff0f0' : '#7a4a4a');
         // Nate, three times size, with the instrument
         const nate = (G.nateSprites ? G.nateSprites() : G.sprites.nate).down[0], k = 3, bob = this.hitT > 3 ? 2 : 0, jolt = this.hitT > 4 ? 1 : 0;
         const nx = 120 - (nate.width * k) / 2, ny = FLOOR - nate.height * k - bob, img = it.art();
@@ -7777,15 +7808,25 @@
         for (const f of this.floats) { const x = Math.round(f.x), y = Math.round(f.y); ctx.fillStyle = f.col; ctx.fillRect(x, y + 4, 3, 2); ctx.fillRect(x + 2, y, 1, 5); ctx.fillRect(x + 3, y, 2, 1); }
         // what's going on: the track, the time, how to stop
         FT().draw(ctx, 'TRACK ' + G.sayable(this.recTrack + 1) + ': ' + STUDIO_SHORT[inst], 6, 15, STUDIO_COL[inst], { shadow: '#000' });
-        const tl = this.mode === 'count' ? 'GET READY' : 'REC ' + mmss(pos) + (len ? ' / ' + mmss(len) : '');
-        FT().draw(ctx, tl, G.W - 6 - FT().width(tl), 15, this.mode === 'count' ? '#f8d850' : '#f86858', { shadow: '#000' });
-        FT().draw(ctx, 'ENTER stop', 6, 25, '#f8f8f0', { shadow: '#000' }); FT().draw(ctx, 'BACKSPACE scrap', 6, 34, '#f8f8f0', { shadow: '#000' });
+        const ready = this.mode === 'ready', tl = ready ? 'WARMING UP' : this.mode === 'count' ? 'GET READY' : 'REC ' + mmss(pos) + (len ? ' / ' + mmss(len) : '');
+        FT().draw(ctx, tl, G.W - 6 - FT().width(tl), 15, ready ? '#78e070' : this.mode === 'count' ? '#f8d850' : '#f86858', { shadow: '#000' });
+        FT().draw(ctx, ready ? 'ENTER record' : 'ENTER stop', 6, 25, '#f8f8f0', { shadow: '#000' }); FT().draw(ctx, ready ? 'BACKSPACE back' : 'BACKSPACE scrap', 6, 34, '#f8f8f0', { shadow: '#000' });
+        if (ready) {
+          // play along until you're ready (and the metronome's beat, flashing)
+          const msg = 'Play along. Nothing\'s recording yet.', w = FT().width(msg);
+          FT().draw(ctx, msg, 120 - Math.round(w / 2), 92, '#f8f8f0', { shadow: '#000' });
+          if (this.metroOn) {
+            const beat = 60 / sg.bpm, b = (this.clock() - this.readyT0) / beat, on = b >= 0 && b - Math.floor(b) < 0.25;
+            for (let k = 0; k < 4; k++) { ctx.fillStyle = on && Math.floor(b) % 4 === k ? (k ? '#f8d850' : '#f86858') : '#3e3460'; ctx.fillRect(G.W - 38 + k * 8, 40, 6, 6); }
+          }
+        }
         // the take so far, along a timeline
         const L = len || Math.max(10, pos * 1.25);
         ctx.fillStyle = '#120e18'; ctx.fillRect(0, 104, G.W, 8);
         ctx.fillStyle = STUDIO_COL[inst];
         for (const [ms] of this.take) ctx.fillRect(Math.min(G.W - 1, Math.floor((ms / 1000 / L) * G.W)), 105, 1, 6);
         if (this.mode === 'rec' && pos >= 0) { ctx.fillStyle = '#f86858'; ctx.fillRect(Math.min(G.W - 1, Math.floor((pos / L) * G.W)), 104, 1, 8); }
+        if (this.mode === 'ready') { const t2 = len ? 'Song: ' + mmss(len) + '. The take starts at the top.' : 'This first take sets the song\'s length.'; FT().draw(ctx, t2, 120 - Math.round(FT().width(t2) / 2), 104, '#9890a8'); }
         ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 112, G.W, 48);
         this.drawKeys(ctx);
         // the count-in
