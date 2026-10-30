@@ -7400,12 +7400,23 @@
     return t >= 0 ? 11 + t : null;
   }
   const scaleNote = (K, i, base) => base + 12 * Math.floor(i / 5) + K.scale[i % 5];
+  const panBase = (K) => K.root + (K.root < 44 ? 24 : 12);
+  const panStep = (n) => (n < 11 ? n : n - 6); // (its top row: the home row's notes, an octave up)
+  const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  // what key n plays on a melodic instrument, for the guide while recording: a note's letter, or a
+  // power chord's root with a 5 (E5 = E and its fifth); and which octave, for its tint
+  function studioLabel(inst, n, keyIdx) {
+    const K = SONG_KEYS[keyIdx] || SONG_KEYS[0];
+    if (inst === 'steelpan') return { txt: NOTE_NAMES[scaleNote(K, panStep(n), panBase(K)) % 12], oct: Math.floor(panStep(n) / 5) };
+    if (n < 11) return { txt: NOTE_NAMES[scaleNote(K, n, K.root) % 12], oct: Math.floor(n / 5) };
+    return { txt: NOTE_NAMES[scaleNote(K, n - 11, K.root) % 12] + '5', oct: Math.floor((n - 11) / 5) };
+  }
   // play sound n of an instrument in a key (now, or at an audio time)
   function studioSound(inst, n, keyIdx, at) {
     const K = SONG_KEYS[keyIdx] || SONG_KEYS[0], I = G.audio.inst;
     if (inst === 'drumkit') return [() => I.kick(at), () => I.snare(at), () => I.hat(at), () => I.crash(at), () => I.tom(true, at), () => I.tom(false, at)][n]();
     if (inst === 'bongos') return I.bongo(n === 0, at);
-    if (inst === 'steelpan') { const base = K.root + (K.root < 44 ? 24 : 12); return I.pan(scaleNote(K, n < 11 ? n : n - 6, base), 0.7, at); }
+    if (inst === 'steelpan') return I.pan(scaleNote(K, panStep(n), panBase(K)), 0.7, at);
     // a guitar: single notes on the home row, power chords (root, fifth, octave) on the top row
     if (n < 11) return I.guitar(scaleNote(K, n, K.root), 0.8, 0.16, inst, at);
     const r = scaleNote(K, n - 11, K.root);
@@ -7451,7 +7462,7 @@
   function studioCmd() {
     return {
       start() {
-        Object.assign(this, { song: studioWork(), sel: 0, mode: 'nav', t: 0, msg: null, msgT: 0, lit: {}, take: [], players: [], bins: [], menuSel: 0, pickSel: 0 });
+        Object.assign(this, { song: studioWork(), sel: 0, mode: 'nav', t: 0, msg: null, msgT: 0, lit: {}, take: [], players: [], bins: [], menuSel: 0, pickSel: 0, hitT: 0, floats: [] });
         G.audio.stop();
         this.onKey = (e) => this.key(e);
         addEventListener('keydown', this.onKey, true);
@@ -7491,7 +7502,8 @@
           const n = studioNote(this.recInst, c);
           if (n == null) return true;
           G.audio.withLevel(VOLS[tr.vol], () => studioSound(this.recInst, n, this.song.key));
-          this.lit[c] = 8;
+          this.lit[c] = 8; this.hitT = 7;
+          this.floats.push({ x: 104 + Math.random() * 32, y: 54, vx: (Math.random() - 0.5) * 0.8, life: 46, col: ['#f8d850', '#78e070', '#78c8f8', '#f8a0c8'][Math.floor(Math.random() * 4)] });
           const t = this.clock() - this.start0;
           if (t >= -0.15) this.take.push([Math.max(0, Math.round(t * 1000)), n]);
           return true;
@@ -7665,6 +7677,9 @@
         this.t++;
         if (this.msgT > 0) this.msgT--;
         for (const k in this.lit) if (--this.lit[k] <= 0) delete this.lit[k];
+        if (this.hitT > 0) this.hitT--;
+        for (const f of this.floats) { f.x += f.vx; f.y -= 0.6; f.life--; }
+        this.floats = this.floats.filter((f) => f.life > 0);
         if (this.mode === 'count' && this.clock() >= this.start0) this.mode = 'rec';
         if (this.mode === 'rec') {
           const pos = this.clock() - this.start0, len = this.lenS();
@@ -7681,11 +7696,21 @@
         const right = SONG_KEYS[sg.key].name + (this.metro() ? '  ' + G.sayable(sg.bpm) + ' BPM' : '') + '  ' + (sg.len ? mmss(sg.len / 1000) : '-:--');
         studioBack(ctx, 'STUDIO B: ' + sg.name, right);
         if (rec && (this.t >> 4) & 1) { ctx.fillStyle = '#f83838'; ctx.fillRect(G.W - 6 - FT().width(right) - 10, 3, 6, 6); }
+        if (rec) this.drawLive(ctx, pos);
+        else this.drawConsole(ctx, pos);
+        if (m === 'menu') this.drawMenu(ctx);
+        if (m === 'name') this.drawName(ctx);
+        if (m === 'pick') this.drawPick(ctx);
+        if (m === 'confirm') this.drawConfirm(ctx);
+      },
+      // the console: the eight tracks, and the controls along the bottom
+      drawConsole(ctx, pos) {
+        const sg = this.song, m = this.mode;
         // the eight tracks
-        const TX = 86, TW = 150, L = sg.len ? sg.len / 1000 : Math.max(10, rec && m === 'rec' ? pos * 1.25 : 10);
+        const TX = 86, TW = 150, L = sg.len ? sg.len / 1000 : 10;
         sg.tracks.forEach((tr, i) => {
-          const y = 15 + i * 12, on = i === this.sel, live = rec && i === this.recTrack;
-          ctx.fillStyle = live ? '#4a1c2a' : on ? '#3a3058' : i % 2 ? '#1e1828' : '#231c30'; ctx.fillRect(2, y, 236, 11);
+          const y = 15 + i * 12, on = i === this.sel;
+          ctx.fillStyle = on ? '#3a3058' : i % 2 ? '#1e1828' : '#231c30'; ctx.fillRect(2, y, 236, 11);
           if (on) { ctx.fillStyle = '#f8d850'; ctx.fillRect(2, y, 1, 11); ctx.fillRect(237, y, 1, 11); }
           FT().draw(ctx, G.sayable(i + 1), 5, y + 2, on ? '#f8d850' : '#9890a8');
           if (tr.inst) {
@@ -7703,16 +7728,14 @@
           // the timeline
           ctx.fillStyle = '#120e18'; ctx.fillRect(TX, y + 1, TW, 9);
           ctx.fillStyle = tr.mute ? '#4a4258' : STUDIO_COL[tr.inst] || '#9890a8';
-          if (live) { for (const [ms] of this.take) ctx.fillRect(TX + Math.min(TW - 1, Math.floor((ms / 1000 / L) * TW)), y + 2, 1, 7); }
-          else if (sg.len) { const b = this.bins[i]; for (let x = 0; x < 150; x++) if (b[x]) ctx.fillRect(TX + x, y + 2, 1, 7); }
+          if (sg.len) { const b = this.bins[i]; for (let x = 0; x < 150; x++) if (b[x]) ctx.fillRect(TX + x, y + 2, 1, 7); }
           if (tr.mute) FT().draw(ctx, 'MUTE', TX + TW - FT().width('MUTE') - 2, y + 2, '#f86858');
         });
         // the playhead
-        if ((m === 'rec' || m === 'play') && pos >= 0) { ctx.fillStyle = '#f86858'; ctx.fillRect(TX + Math.min(TW - 1, Math.floor((pos / L) * TW)), 14, 1, 97); }
+        if (m === 'play' && pos >= 0) { ctx.fillStyle = '#f86858'; ctx.fillRect(TX + Math.min(TW - 1, Math.floor((pos / L) * TW)), 14, 1, 97); }
         // the panel along the bottom
         ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 112, G.W, 48);
-        if (rec) this.drawKeys(ctx, pos);
-        else if (m === 'play') {
+        if (m === 'play') {
           FT().draw(ctx, 'PLAYING  ' + mmss(pos) + ' / ' + mmss(this.lenS()), 6, 118, '#78e070');
           FT().draw(ctx, 'C or ENTER: stop', 6, 130, '#9890a8');
         } else {
@@ -7722,20 +7745,60 @@
           FT().draw(ctx, 'Z record  C play  V mute  - + volume', 6, 136, '#9890a8');
           FT().draw(ctx, 'ENTER menu  X leave  (letter keys: try it)', 6, 146, '#9890a8');
         }
+      },
+      // While a take records: Nate in the live room, playing it. Foam on the walls, a wood floor and a
+      // rug, the monitors, the ON AIR light lit, an amp beside him for the guitars; he bobs on every
+      // note and the notes float up. Then the take's timeline, and the keys (with what they play).
+      drawLive(ctx, pos) {
+        const sg = this.song, inst = this.recInst, it = G.INSTRUMENTS.find((x) => x.id === inst), len = this.lenS(), FLOOR = 98;
+        ctx.fillStyle = '#2a2438'; ctx.fillRect(0, 12, G.W, 72);
+        for (let x = 2; x < G.W; x += 16) for (let y = 15; y < 72; y += 16) ctx.drawImage(G.spr.acousticPanel, x, y);
+        ctx.fillStyle = '#7a5a3a'; ctx.fillRect(0, 84, G.W, 20);
+        ctx.fillStyle = '#6a4a2e'; for (let y = 88; y < 104; y += 5) ctx.fillRect(0, y, G.W, 1);
+        ctx.fillStyle = '#8a2a3a'; ctx.fillRect(64, 90, 112, 12); ctx.fillStyle = '#a83a4a'; ctx.fillRect(66, 92, 108, 1);
+        ctx.drawImage(G.spr.studioMonitor, 18, FLOOR - 32); ctx.drawImage(G.spr.studioMonitor, 210, FLOOR - 32);
+        ctx.fillStyle = '#1c1c22'; ctx.fillRect(G.W - 36, 26, 30, 11); ctx.fillStyle = (this.t >> 5) & 1 || this.mode === 'rec' ? '#f83838' : '#a82828'; ctx.fillRect(G.W - 35, 27, 28, 9);
+        FT().draw(ctx, 'ON AIR', G.W - 21 - Math.round(FT().width('ON AIR') / 2), 28, '#fff0f0');
+        // Nate, three times size, with the instrument
+        const nate = (G.nateSprites ? G.nateSprites() : G.sprites.nate).down[0], k = 3, bob = this.hitT > 3 ? 2 : 0, jolt = this.hitT > 4 ? 1 : 0;
+        const nx = 120 - (nate.width * k) / 2, ny = FLOOR - nate.height * k - bob, img = it.art();
+        if (!it.drum) { const amp = G.spr.vibroAmp; ctx.drawImage(amp, 160, FLOOR - amp.height); }
+        ctx.drawImage(nate, Math.round(nx), Math.round(ny), nate.width * k, nate.height * k);
+        if (!it.drum) {
+          // a guitar slung across him (and a little flash where he strums)
+          ctx.save(); ctx.translate(nx + 24, ny + 54); ctx.rotate(-1.1 + jolt * 0.05); ctx.drawImage(img, -9, -27, 18, 55); ctx.restore();
+          if (this.hitT > 3) { ctx.fillStyle = '#fff8c8'; ctx.fillRect(Math.round(nx + 30), Math.round(ny + 52), 3, 1); ctx.fillRect(Math.round(nx + 31), Math.round(ny + 51), 1, 3); }
+        } else {
+          // the drum in front of him (it jumps when he hits it)
+          const dk = { bongos: 2, pan: 2, kit: 1.5 }[it.drum], w = img.width * dk, h = img.height * dk;
+          ctx.drawImage(img, Math.round(120 - w / 2), Math.round(FLOOR + 2 - h + jolt), Math.round(w), Math.round(h));
+        }
+        // the notes floating up
+        for (const f of this.floats) { const x = Math.round(f.x), y = Math.round(f.y); ctx.fillStyle = f.col; ctx.fillRect(x, y + 4, 3, 2); ctx.fillRect(x + 2, y, 1, 5); ctx.fillRect(x + 3, y, 2, 1); }
+        // what's going on: the track, the time, how to stop
+        FT().draw(ctx, 'TRACK ' + G.sayable(this.recTrack + 1) + ': ' + STUDIO_SHORT[inst], 6, 15, STUDIO_COL[inst], { shadow: '#000' });
+        const tl = this.mode === 'count' ? 'GET READY' : 'REC ' + mmss(pos) + (len ? ' / ' + mmss(len) : '');
+        FT().draw(ctx, tl, G.W - 6 - FT().width(tl), 15, this.mode === 'count' ? '#f8d850' : '#f86858', { shadow: '#000' });
+        FT().draw(ctx, 'ENTER stop', 6, 25, '#f8f8f0', { shadow: '#000' }); FT().draw(ctx, 'BACKSPACE scrap', 6, 34, '#f8f8f0', { shadow: '#000' });
+        // the take so far, along a timeline
+        const L = len || Math.max(10, pos * 1.25);
+        ctx.fillStyle = '#120e18'; ctx.fillRect(0, 104, G.W, 8);
+        ctx.fillStyle = STUDIO_COL[inst];
+        for (const [ms] of this.take) ctx.fillRect(Math.min(G.W - 1, Math.floor((ms / 1000 / L) * G.W)), 105, 1, 6);
+        if (this.mode === 'rec' && pos >= 0) { ctx.fillStyle = '#f86858'; ctx.fillRect(Math.min(G.W - 1, Math.floor((pos / L) * G.W)), 104, 1, 8); }
+        ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 112, G.W, 48);
+        this.drawKeys(ctx);
         // the count-in
-        if (m === 'count') {
+        if (this.mode === 'count') {
           const left = this.start0 - this.clock(), beat = 60 / sg.bpm, n = this.metroOn ? Math.min(4, Math.floor(4 - left / beat) + 1) : Math.min(3, Math.floor(3 - left / 0.6) + 1);
           const txt = n >= 1 ? G.sayable(n) : 'READY', w = FT().bigWidth(txt, 3);
-          ctx.fillStyle = 'rgba(12,10,18,0.6)'; ctx.fillRect(70, 44, 100, 34);
-          FT().drawBig(ctx, txt, Math.round(120 - w / 2), 50, 3, '#f8d850', '#1c1424');
+          ctx.fillStyle = 'rgba(12,10,18,0.6)'; ctx.fillRect(70, 36, 100, 34);
+          FT().drawBig(ctx, txt, Math.round(120 - w / 2), 42, 3, '#f8d850', '#1c1424');
         }
-        if (m === 'menu') this.drawMenu(ctx);
-        if (m === 'name') this.drawName(ctx);
-        if (m === 'pick') this.drawPick(ctx);
-        if (m === 'confirm') this.drawConfirm(ctx);
       },
-      // while recording: the keys for the instrument (they light up when played)
-      drawKeys(ctx, pos) {
+      // while recording: the keys for the instrument (they light up when played), each with the note
+      // or chord it plays under it (tinted by octave: dim, white, then gold the highest)
+      drawKeys(ctx) {
         const inst = this.recInst, cap = (code, x, y) => {
           const on = !!this.lit[code], lab = keyLabel(code);
           ctx.fillStyle = on ? '#f8d850' : '#3e3460'; ctx.fillRect(x, y, 11, 11);
@@ -7748,11 +7811,17 @@
           ['KeyA', 'KeyS', 'KeyD', 'KeyF'].forEach((code, k) => cap(code, 6 + k * 12, 115)); FT().draw(ctx, 'LITTLE DRUM (MACHO)', 56, 117, '#c8c0d8');
           ['KeyH', 'KeyJ', 'KeyK', 'KeyL'].forEach((code, k) => cap(code, 6 + k * 12, 128)); FT().draw(ctx, 'BIG DRUM (HEMBRA)', 56, 130, '#c8c0d8');
         } else {
-          TOP_ROW.forEach((code, k) => cap(code, 10 + k * 12, 114)); FT().draw(ctx, inst === 'steelpan' ? 'HIGH' : 'CHORDS', 134, 116, '#c8c0d8');
-          HOME_ROW.forEach((code, k) => cap(code, 6 + k * 12, 127)); FT().draw(ctx, 'NOTES', 140, 129, '#c8c0d8');
+          const TINT = ['#a8a0c0', '#f8f8f0', '#f8d850'], label = (code, x, y) => {
+            const L = studioLabel(inst, studioNote(inst, code), this.song.key);
+            FT().draw(ctx, L.txt, x + 6 - Math.round(FT().width(L.txt) / 2), y, this.lit[code] ? '#78e070' : TINT[L.oct]);
+          };
+          // (the top row spaced wider, so a chord's two characters fit under its key)
+          TOP_ROW.forEach((code, k) => { cap(code, 6 + k * 15, 113); label(code, 6 + k * 15, 125); });
+          FT().draw(ctx, inst === 'steelpan' ? 'HIGH' : 'CHORDS', 160, 115, '#c8c0d8');
+          HOME_ROW.forEach((code, k) => { cap(code, 6 + k * 12, 135); label(code, 6 + k * 12, 147); });
+          FT().draw(ctx, 'NOTES', 140, 137, '#c8c0d8');
+          FT().draw(ctx, SONG_KEYS[this.song.key].name, 140, 147, '#9890a8');
         }
-        const len = this.lenS();
-        FT().draw(ctx, (this.mode === 'count' ? 'GET READY' : 'REC ' + mmss(pos) + (len ? ' / ' + mmss(len) : '')) + '   ENTER stop  BACKSPACE scrap', 6, 147, this.mode === 'count' ? '#f8d850' : '#f86858');
       },
       drawBox(ctx, x, y, w, h, title) {
         ctx.fillStyle = 'rgba(8,6,12,0.6)'; ctx.fillRect(0, 0, G.W, G.H);
