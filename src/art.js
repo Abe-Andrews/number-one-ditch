@@ -1302,6 +1302,12 @@
         for (let i = 0; i < 2; i++) p.set(r() * 16, y + 1 + Math.floor(r() * 2), r() < 0.5 ? '#b87a40' : '#dca064');
       }
     },
+    // a creaky floorboard (the 2 AM Taco Bell run): the same honey oak, a shade darker, with a crack
+    creakFloor(p, r, v) {
+      TILE_DRAW.oakFloor(p, r, v);
+      for (let y = 4; y < 8; y++) p.hline(0, 15, y, y === 4 ? '#c88a50' : y === 7 ? '#94602e' : '#b47840');
+      p.set(5, 5, '#7a4a20'); p.set(6, 6, '#7a4a20'); p.set(7, 5, '#7a4a20'); p.set(8, 6, '#7a4a20');
+    },
     bathTile(p, r) {
       p.rect(0, 0, 16, 16, '#ddd3bd');
       p.hline(0, 15, 7, '#c4b8a0'); p.hline(0, 15, 15, '#c4b8a0'); p.vline(7, 0, 15, '#c4b8a0'); p.vline(15, 0, 15, '#c4b8a0');
@@ -3940,7 +3946,8 @@
   }
   function dresserWhite() {
     const p = new Pix(32, 26);
-    p.rect(3, 0, 3, 4, '#f4e8d8'); p.set(4, 0, '#f8b040'); p.rect(10, 1, 6, 3, '#e8a0b8'); p.hline(10, 15, 1, '#f8c8d8'); p.rect(22, 2, 6, 2, '#c8a050');
+    p.rect(3, 0, 3, 4, '#f4e8d8'); p.set(4, 0, '#f8b040'); p.rect(10, 1, 6, 3, '#e8a0b8'); p.hline(10, 15, 1, '#f8c8d8');
+    p.rect(23, 0, 4, 4, '#2ac8b8'); p.hline(23, 26, 0, '#7a3aa8'); p.set(24, 2, '#7a3aa8'); p.set(25, 2, '#e8fff8');
     p.rect(0, 4, 32, 3, WHITE); p.hline(0, 31, 4, '#ffffff');
     p.rect(1, 7, 30, 17, WHITE); for (const y of [12, 18]) p.hline(2, 29, y, WHITE_D);
     for (const y of [9, 15, 21]) { p.set(8, y, '#c8c8c8'); p.set(23, y, '#c8c8c8'); }
@@ -3972,6 +3979,34 @@
     const p = new Pix(10, 24);
     p.vline(5, 0, 13, '#c8c8d0');
     for (let y = 14; y < 24; y++) for (let x = 0; x < 10; x++) if ((x - 4.5) ** 2 + (y - 18.5) ** 2 <= 21) p.set(x, y, (x + y) % 2 ? '#d8dce8' : (x * y) % 3 ? '#a8b0c0' : '#ffffff');
+    return finish(p);
+  }
+
+  // LILY AND TACO BELL: her shoebox of hot sauce packets, the bag from the 2 AM run (an item), and the
+  // menu board items for the drive-thru (10x10 icons)
+  function sauceBox() {
+    const p = new Pix(16, 14);
+    for (let i = 0; i < 14; i++) { const x = 1 + ((i * 5) % 13), y = (i * 3) % 5; p.rect(x, y, 3, 2, ['#5aa83a', '#f08020', '#c82020', '#4a1e5a'][i % 4]); p.set(x, y, '#ffffff'); }
+    p.rect(0, 5, 16, 9, '#e8e4dc'); p.hline(0, 15, 5, '#f8f6f0'); p.hline(0, 15, 9, '#c8c0b0'); p.rect(5, 7, 6, 2, '#f8f8f0'); p.hline(6, 9, 7, '#8a8a90');
+    return finish(p);
+  }
+  function tacoBag() {
+    const p = new Pix(14, 15);
+    for (let x = 2; x < 12; x++) p.set(x, 1 + (x % 2), '#e8e0d0');
+    p.rect(2, 2, 10, 12, '#f4f0e8'); p.hline(2, 11, 3, '#d8d0c0'); p.rect(2, 7, 10, 3, '#7a3aa8'); p.hline(2, 11, 7, '#9a5ac8');
+    p.rect(5, 11, 4, 2, '#e8c070');
+    return finish(p);
+  }
+  function menuIcon(kind) {
+    const p = new Pix(12, 12);
+    if (kind === 'crunchwrap') { for (let y = 1; y < 11; y++) { const half = 5 - Math.max(0, Math.abs(y - 5.5) - 2); p.hline(6 - half, 5 + half, y, '#e8c070'); } for (const y of [4, 7]) p.hline(3, 8, y, '#b88a40'); }
+    if (kind === 'baja') { p.rect(3, 2, 6, 9, '#2ac8b8'); p.hline(3, 8, 2, '#7a3aa8'); p.vline(7, 0, 2, '#f0f0f0'); p.rect(4, 5, 4, 2, '#7a3aa8'); }
+    if (kind === 'gordita') { p.rect(1, 5, 10, 5, '#e8d8a8'); p.rect(2, 3, 8, 4, '#e8a040'); p.hline(3, 8, 3, '#5aa83a'); p.set(5, 4, '#c82020'); }
+    if (kind === 'doritos') { for (let y = 3; y < 10; y++) p.hline(1 + Math.floor((9 - y) / 2), 10 - Math.floor((9 - y) / 2), y, '#f08a20'); p.hline(2, 9, 3, '#5aa83a'); p.set(4, 6, '#c83818'); p.set(7, 7, '#c83818'); }
+    if (kind === 'burrito') { p.rect(1, 4, 10, 5, '#e8d8a8'); p.rect(6, 4, 5, 5, '#f4f0e8'); p.vline(6, 4, 8, '#c8c0b0'); p.set(2, 6, '#c8b088'); }
+    if (kind === 'nachos') { p.rect(1, 7, 10, 3, '#2a2a30'); for (const [x, y] of [[2, 5], [5, 4], [8, 5], [3, 6], [7, 6]]) { p.set(x, y, '#f0c040'); p.set(x + 1, y, '#e8b030'); } p.hline(3, 8, 6, '#f8d850'); }
+    if (kind === 'twists') { p.rect(2, 3, 8, 8, '#f4f0e8'); p.rect(2, 3, 8, 2, '#7a3aa8'); for (const x of [3, 5, 7]) { p.vline(x, 0, 3, '#d8a868'); p.set(x + 1, 1, '#f8f0e0'); } }
+    if (kind === 'pizza') { for (let y = 2; y < 10; y++) for (let x = 1; x < 11; x++) if ((x - 5.5) ** 2 + (y - 5.5) ** 2 <= 18) p.set(x, y, (x - 5.5) ** 2 + (y - 5.5) ** 2 > 13 ? '#e8c070' : '#c84828'); for (const [x, y] of [[4, 4], [7, 5], [5, 7]]) p.set(x, y, '#f8d850'); }
     return finish(p);
   }
 
@@ -9797,6 +9832,7 @@
     S.bedMission = homeBed({ w: 16, h: 48, quilt: '#2a3a5a', pattern: 'plaid', patC: '#4a6a4a', pillows: ['#f4f4f0'], head: '#4a2a1a', slats: true });
     S.posterCollage = posterCollage(); S.lilyShelves = lilyShelves(); S.chickenArt = chickenArt(); S.nightWhite = nightWhite(); S.victrola = victrola();
     S.dresserWhite = dresserWhite(); S.wickerShelf = wickerShelf(); S.clothesRack = clothesRack(); S.clothesPile = clothesPile(); S.discoBall = discoBall();
+    S.sauceBox = sauceBox(); S.tacoBag = tacoBag(); S.menuIcon = {}; for (const k of ['crunchwrap', 'baja', 'gordita', 'doritos', 'burrito', 'nachos', 'twists', 'pizza']) S.menuIcon[k] = menuIcon(k);
     S.readingChair = readingChair(); S.tbrStack = tbrStack(); S.nookTable = nookTable(); S.openBook = openBook(); S.tentBook = tentBook();
     S.bedLilyWhite = homeBed({ w: 32, h: 50, quilt: '#26305a', pillows: ['#f0ece0', '#e8907a'], head: '#f4f0e6', skirt: '#e8e4d8' });
     // yard

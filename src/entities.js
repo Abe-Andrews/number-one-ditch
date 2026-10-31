@@ -227,6 +227,8 @@
     }
 
     startSwing() {
+      // (sneaking out at 2 AM: no swinging, no "No.")
+      if (this.world && this.world.def.quiet) return;
       // the finale: each of the family has their own move on Z (Lily's is her "No.")
       if (G.state.playAs && G.RELAY_MOVE[G.state.playAs]) { G.RELAY_MOVE[G.state.playAs](this, this.world); return; }
       if (G.state.playAs === 'lily') { this.chargeNo(); return; }

@@ -201,6 +201,8 @@ G.audio = (function () {
     horn: (t) => { tone(147, t, 0.9, 'sawtooth', 0.06); tone(149, t, 0.9, 'square', 0.04); },
     splash: (t) => { noise(t, 0.3, 0.3, sfxBus, 1100); tone(420, t, 0.12, 'sine', 0.06, sfxBus, 160); },
     reel: (t) => noise(t, 0.025, 0.12, sfxBus, 4200),
+    // a floorboard creaking under somebody sneaking out
+    creak: (t) => { tone(190, t, 0.32, 'sawtooth', 0.035, sfxBus, 140); tone(260, t + 0.05, 0.22, 'square', 0.015, sfxBus, 200); noise(t, 0.1, 0.06, sfxBus, 700); },
     // the finale: an egg cracking, Father Eggmas laughing, and the possession taking hold
     crack: (t) => { noise(t, 0.12, 0.4, sfxBus, 4200); tone(1400, t, 0.12, 'square', 0.06, sfxBus, 300); noise(t + 0.08, 0.22, 0.28, sfxBus, 1500); tone(180, t + 0.05, 0.3, 'sawtooth', 0.08, sfxBus, 60); },
     hohoho: (t) => { [0, 0.32, 0.64].forEach((d) => { tone(130, t + d, 0.24, 'sawtooth', 0.09, sfxBus, 104); tone(98, t + d, 0.24, 'square', 0.05); }); },

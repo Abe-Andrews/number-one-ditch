@@ -143,6 +143,8 @@
       G.areaBanner.show(this.world.def.name);
       this.snapCam();
       if (this.world.def.onEnter && !skipEnter) G.script.run(this.world.def.onEnter());
+      // (Lily's Taco Bell line for some places, the first time she walks in with Nate)
+      if (!skipEnter && G.lilyMapLine) G.script.run(G.lilyMapLine(id));
     },
 
     // Swap who's following Nate (null = nobody); poof = with a little puff.
@@ -287,6 +289,17 @@
           s.flags.ateDoosh = true;
           G.script.run((function* () { yield G.say('Nate', 'Mmm. Doosh De Luche. Delicioso.'); })());
         }
+      } else if (s.xItem === 'tacoBag') {
+        // the bag from Lily's 2 AM Taco Bell run: every heart back
+        const p = this.player, w = this.world;
+        if (!(s.items.tacoBag > 0)) { G.audio.sfx('bump'); w.pop(p.x, p.y - 30, 'All gone. Lily could do another run...', '#f8f8f0'); return; }
+        if (s.hp >= s.maxHp) { G.script.run((function* () { yield G.say('Nate', 'I\'m not hungry yet. (Your hearts are full.)'); })()); return; }
+        if (this.healQ > 0) return;
+        s.items.tacoBag--;
+        this.healQ += s.maxHp - s.hp;
+        G.audio.sfx('gulp');
+        w.pop(p.x, p.y - 30, '*crunch*', '#c8a0f0');
+        if (G.with('lily') && !s.flags.ateTaco) { s.flags.ateTaco = true; G.script.run((function* () { yield G.say('Lily', 'That was MY Crunchwrap.'); })()); }
       } else if (s.xItem === 'firstAid') {
         // Hannah's first-aid kit: a few hearts back per use; restock it at a supply closet
         const p = this.player, w = this.world;

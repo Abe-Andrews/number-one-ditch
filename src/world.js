@@ -125,6 +125,8 @@
     // home: the breakfast room's walls, and the navy lattice rug in Dad's den
     '\u00ef': { k: 'faceDining', solid: true, edge: true },
     '\u00e2': { k: 'rugDen', edge: true },
+    // the 2 AM Taco Bell run: a floorboard that creaks
+    '\u00ee': { k: 'creakFloor' },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 
