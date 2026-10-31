@@ -122,6 +122,9 @@
     '\u00e4': { k: 'roofDeck' },
     '\u00f6': { k: 'roofSky', solid: true },
     '\u00eb': { k: 'roofLedge', solid: true },
+    // home: the breakfast room's walls, and the navy lattice rug in Dad's den
+    '\u00ef': { k: 'faceDining', solid: true, edge: true },
+    '\u00e2': { k: 'rugDen', edge: true },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 

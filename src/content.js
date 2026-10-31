@@ -2499,7 +2499,7 @@
       yield* craftEarplugs();
       return;
     }
-    yield G.say(null, 'A dresser with a mirror, a jewelry box, and a candle that smells like a cupcake.');
+    yield G.say(null, 'A white dresser with a jewelry box and a candle that smells like a cupcake.');
   };
 
   // Books back: Mom finally opens the flower stand she's always wanted.
@@ -3676,12 +3676,12 @@
     yield G.say('Michelle', 'Is this for your father? Your father is not allowed candy corn. Your father knows why.');
     yield G.say('Nate', '...She\'s definitely hiding it.');
     if (G.with('lily')) {
-      yield G.say('Lily', 'She hides the good candy in the good china. Living room.');
+      yield G.say('Lily', 'She hides the good candy in the good china. The red cupboard in the breakfast room.');
       yield G.say('Lily', 'Nobody is allowed to touch the good china, so nobody ever looks there.');
       return;
     }
     G.audio.sfx('buzz');
-    yield G.text('Lily', 'mom hides the good candy in the good china. living room');
+    yield G.text('Lily', 'mom hides the good candy in the good china. red cupboard in the breakfast room');
     yield G.text('Lily', 'nobody is allowed to touch the good china so nobody ever looks');
     // (the fridge only comes up once Nate's found her in it)
     yield G.text('Lily', f.badlandsMet && !f.lilySaved ? 'also im still in a fridge. ok bye' : 'you didnt hear it from me');
@@ -3866,6 +3866,20 @@
   };
   const CHANTS = ['GIVE BACK THE QUAD!', 'SAVE THE GRASS!', 'WHO APPROVED THIS?!', 'RESPECT LITTLE PEOPLE!', 'WHERE\'S THE MONEY?!'];
 
+  // Dad's den: his favorite room in the house
+  S.denFirst = function* () {
+    flags().denSeen = true;
+    yield G.say('Nate', 'Dad\'s den. His favorite room in the house.');
+    yield G.say('Nate', 'A fire going, a wall of old books, and his pipes. If Dad ever goes missing, check here first.');
+  };
+  S.denFire = function* () {
+    yield G.say(null, 'A fire crackling behind the black screen. The old stone fireplace has a white mantel, a mantel clock ticking away, and two cobalt-blue oil lamps.');
+    yield G.say(null, 'Over it: a print of a harbor at night, a tall ship tied up at the wharf under the moon.');
+  };
+  S.rockCabinet = function* () {
+    yield G.say(null, 'The glass cabinet: shelf after shelf of rocks, fossils and shells, a pair of antlers and a big hunk of amethyst.');
+    yield G.say('Nate', 'Half of these I found. The other half I found and Mom won\'t let me take back to college.');
+  };
   S.denShelf = function* () {
     const f = flags(), s = G.state;
     if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten) {
@@ -3878,7 +3892,7 @@
       yield G.say(null, 'Built-in shelves with big gaps everywhere. A few books left behind have little bite marks in them.');
       return;
     }
-    yield G.say(null, 'Built-in shelves packed with books: thrillers, cookbooks, and seven different Bibles.');
+    yield G.say(null, 'Built-in shelves of old leather-bound books, the gold worn off the spines. Seven of them are Bibles.');
   };
 
   S.homeGrill = function* () {
@@ -4877,7 +4891,7 @@
       room(37, 1, 12, 9, '3', 'o');  // den
       room(1, 11, 15, 6, '2', 'o');  // sunroom
       room(37, 11, 5, 6, '6', 'o');  // mudroom
-      room(43, 11, 6, 6, '7', 'o');  // family room
+      room(43, 11, 6, 6, '\u00ef', 'o');  // breakfast room
       // the powder room, tucked into the corner of the hall
       fill(19, 1, 1, 5, 'w'); fill(19, 5, 4, 1, 'w');
       room(20, 1, 3, 4, '5', 'z');
@@ -4892,19 +4906,16 @@
       door(36, 5, 1, 2);   // kitchen / den
       door(36, 14, 1, 2);  // kitchen / mudroom
       door(39, 10, 1, 3);  // den / mudroom
-      door(48, 10, 1, 3);  // den / family room
-      door(42, 14, 1, 2);  // mudroom / family room
+      door(48, 10, 1, 3);  // den / breakfast room
+      door(42, 14, 1, 2);  // mudroom / breakfast room
       fill(17, 3, 2, 5, 'S'); // stairs up
       // south wall: windows, and the three doors out
       fill(2, 17, 13, 1, 'G'); fill(27, 17, 6, 1, 'G'); fill(44, 17, 4, 1, 'G');
       set(4, 17, 'x'); set(20, 17, 'x'); set(39, 17, 'x');
       // rugs
-      fill(4, 5, 10, 5, 'q');
       fill(3, 14, 8, 2, 'R');
-      fill(19, 9, 2, 6, 'R');
       fill(27, 15, 6, 1, 'R');
-      fill(39, 5, 8, 4, 'i');
-      fill(44, 14, 4, 2, 'R');
+      fill(38, 5, 9, 4, '\u00e2');
       // kitchen counters
       fill(26, 3, 10, 1, 'Q');
       fill(26, 16, 9, 1, 'Q');
@@ -4912,23 +4923,29 @@
     },
     setup(w) {
       const F = furnish(w), sp = G.spr, f = flags();
-      // ---- living room
-      F.stand(sp.curio, 1, 3, 1, S.goodChina);
-      F.hang(sp.frenchDoor, 3, 2, 1, look('French doors out to the side steps by the chimney.'), 1);
-      w.addProp({ img: sp.brickFireplace, tx: 5, ty: 1, h: 3, flat: true, solid: [5, 3, 2, 1], hit: [5, 3, 2, 1], talk: look('The brick fireplace, with a landscape hung over the mantel.', 'The chimney outside is older than everybody in the family put together.') });
-      F.hang(sp.frenchDoor, 8, 2, 1, look('More French doors. This house loves a French door.'), 1);
+      // ---- living room (from the family's photos): blue-gray walls, a corner brick fireplace with an oak
+      // mantel, the glass cabinet of rocks and fossils between a bird chart and a mushroom chart, Mom's
+      // painted chest, the TV cabinet, the armoire, a cream sectional and a cream-and-navy rug
+      w.props.push({ img: sp.livingRug, x: 4 * 16, y: 5 * 16, flat: true, base: 0 });
+      w.props.push({ img: sp.braidedLiving, x: 4 * 16 + 2, y: 4 * 16 - 1, flat: true, base: 0 });
+      F.hang(sp.frenchDoor, 1, 2, 1, look('French doors out to the side steps by the chimney.'), 1);
+      F.stand(sp.wingCream, 2, 3, 1, look('A cream wingback chair with a little yellow pillow.'));
+      F.stand(sp.chairTufted, 3, 3, 1, look('A tufted brown leather chair. It squeaks when you sit down. Everyone pretends it doesn\'t.'));
+      F.stand(sp.roundLampTable, 4, 3, 1, look('A little round table with a brass lamp and a wooden sign that says JESUS.'));
+      w.addProp({ img: sp.livingFireplace, tx: 5, ty: 1, h: 3, flat: true, solid: [5, 3, 2, 1], hit: [5, 3, 2, 1], talk: look('The corner fireplace: red brick, a big oak mantel, and a painting of a red barn over it.', '"GATHER," says the sign on the mantel, over a string of little fall flags.') });
       if (f.fcBeaten) w.addProp({ img: sp.fc.sweater, tx: 7, ty: 3, dx: -7, solid: [7, 3, 1, 1], hit: [7, 3, 1, 1], talk: S.fcHome });
-      F.hang(sp.bayWindow, 10, 2, 4, null, 1);
-      F.stand(sp.tuftedSofa, 10, 3, 3, look('The tufted sofa under the big window. Prime napping real estate.'));
-      F.stand(sp.gingerLamp, 9, 3, 1, look('A blue-and-white ginger jar lamp. Very fancy. Do not throw a ball near it.'));
-      F.stand(sp.gingerLamp, 13, 3, 1, look('Another ginger jar lamp. They come in pairs, like Nate and Lily.'));
-      F.stand(sp.secretary, 15, 3, 1, look('A tall old secretary desk. The little drawers are full of rubber bands and mystery keys.'));
-      F.stand(sp.chairWhite, 6, 6, 1, look('A white armchair. Comfy. Nobody eats on it.'));
-      F.stand(sp.coffeeTable, 8, 6, 2, look('A coffee table with big books nobody reads and two candlesticks.'));
-      F.stand(sp.chairBlue, 11, 6, 1, look('A pale blue armchair with a view of the fire.'));
-      F.stand(sp.drumStool, 5, 8, 1, look('A red ceramic garden stool. Is it a table? A seat? Nobody knows.'));
-      F.stand(sp.sofaBack, 8, 8, 3, look('The red floral sofa. Somehow it goes with everything.'));
-      F.stand(sp.chairLeather, 2, 6, 1, look('A worn leather club chair. It squeaks when you sit down. Everyone pretends it doesn\'t.'));
+      else F.stand(sp.windsorRed, 7, 3, 1, look('A little red chair by the fire. Too small for anybody. Just right for a pumpkin.'));
+      F.hang(sp.frenchDoor, 8, 2, 1, look('More French doors. This house loves a French door.'), 1);
+      F.stand(sp.floorLampSilver, 9, 3, 1, look('A tall floor lamp. It leans a little. It has always leaned a little.'));
+      F.hang(sp.birdChart, 10, 2, 1, look('An old pull-down school chart: BIRDS. A cardinal, a blue jay, a goldfinch...'), 4);
+      F.stand(sp.rockCurio, 11, 3, 1, S.rockCabinet);
+      F.hang(sp.mushroomChart, 12, 2, 1, look('Another old school chart: FUNGI. Nate knows which of these you can eat. He is not telling.'), 4);
+      F.stand(sp.folkChest, 12, 3, 1, look('A painted blanket chest with red and orange tulips on the front. On top: a "give thanks" sign and a book about Italy.'));
+      F.stand(sp.tvConsole, 13, 3, 2, look('The TV, up on a white cabinet with glass doors.'));
+      F.stand(sp.armoire, 15, 3, 1, look('A tall dark armoire in the corner. Every family has a cabinet nobody opens. This is it.'));
+      F.stand(sp.coffeeDark, 7, 6, 2, look('The coffee table: a yellow bowl, a box of who-knows-what, and somebody\'s reading glasses.'));
+      F.stand(sp.twigRocker, 11, 6, 1, look('A rocking chair made of bent branches. It creaks like a porch in a ghost story.'));
+      F.stand(sp.sectionalBack, 5, 8, 4, look('The big cream sectional. Everybody has a spot. Nobody sits in anybody else\'s spot.'));
       // ---- sunroom
       F.hang(sp.archMirror, 2, 12, 1, look('An arched mirror. Nate checks his hat. Still distinguished.'), 3);
       F.hang(sp.louverDoor, 13, 12, 1, look('A closet full of board games with missing pieces.'), 1);
@@ -4938,16 +4955,22 @@
       F.stand(sp.tuftedOttoman, 6, 15, 1, look('A big round tufted ottoman. Feet up!'), { dx: -3 });
       F.stand(sp.grandfatherClock, 15, 13, 1, look('The grandfather clock. It chimes on the hour. It has never once been on time.'));
       F.stand(sp.plant, 13, 16, 1, look('A potted cactus soaking up the sun. It is doing better than all of us.'));
-      // ---- front hall and powder room
+      // ---- front hall and powder room (from the photos): louvered closets, a braided rug, a brass candle
+      // chandelier, a roll-top desk, a framed house blessing, and a gilded table and chair by the door
       F.hang(sp.horsePrint, 20, 2, 1, look('An old print of a racehorse.'), 8);
       F.hang(sp.ovalMirror, 21, 2, 1, null, 3);
       F.hang(sp.horsePrint, 22, 2, 1, look('Another racehorse. This one is winning.'), 8);
-      F.stand(sp.demilune, 21, 3, 1, look('The powder room: white paneling, a dark wood vanity and horse prints. Fancy, for a bathroom.'));
+      F.stand(sp.demilune, 21, 3, 1, look('The powder room: a dark wood vanity, an oval mirror, and horse prints. Fancy, for a bathroom.'));
       F.stand(sp.toilet, 22, 4, 1, look('...It\'s a toilet, Nate.'));
-      F.hang(sp.giltMirror, 19, 7, 2, null, 3);
+      F.hang(sp.houseBlessing, 19, 7, 1, look('A framed house blessing, in curly old letters. Mom reads it every time she walks by. Nate has never once read it.'), 6);
+      F.hang(sp.louverDoor, 20, 7, 1, look('A louvered closet: coats, boots, and an umbrella nobody has opened in years.'), 1);
+      F.hang(sp.louverDoor, 21, 7, 1, look('The other half of the closet. More coats.'), 1);
       w.addProp({ img: sp.basementDoor, tx: 22, ty: 7, flat: true, hit: [22, 7, 1, 1], talk: S.basementDoor });
-      F.stand(sp.hallConsole, 19, 8, 2, look('A hall table with a lamp and a bowl for keys. The keys are never in the bowl.'));
-      F.stand(sp.hallBench, 22, 15, 1, look('A little bench by the front door for pulling off muddy boots.'));
+      F.stand(sp.rollTopDesk, 19, 8, 1, look('An old roll-top desk. Roll it up and it\'s all pigeonholes, stamps and church bulletins.'));
+      w.props.push({ img: sp.braidedHall, x: 19 * 16 + 4, y: 9 * 16 + 4, flat: true, base: 0 });
+      w.props.push({ img: sp.brassChandelier, x: 19 * 16 + 6, y: 10 * 16, base: 13 * 16 });
+      F.stand(sp.giltTable, 21, 15, 1, look('A little gilded table by the front door, with a tiny potted tree in a red pot.'));
+      F.stand(sp.giltChair, 22, 15, 1, look('A gilded chair with a cane seat. It is for looking at, not for sitting on.'));
       // ---- kitchen
       w.fridge = w.addProp({ img: sp.fridge, tx: 24, ty: 3, h: 1, solid: [24, 3, 2, 1], hit: [24, 3, 2, 1], talk: () => S.fridgeTalk() });
       // while Lily is inside, the fridge rattles every few seconds
@@ -4976,25 +4999,38 @@
         w.badlands = w.add(new G.NPC({ sprite: 'badlands', name: 'Badlands Chugs', x: 30 * 16 + 8, y: 4 * 16 + 14, dir: 'down', talk: S.badlands }));
         w.addTrigger(24, 3, 12, 14, () => { if (!flags().badlandsMet) G.script.run(S.badlandsIntro()); });
       }
-      // ---- den
-      F.stand(sp.floorLamp, 37, 3, 1, look('A floor lamp with a woven shade.'));
-      F.stand(sp.bookshelf2, 38, 3, 1, () => S.denShelf());
-      w.addProp({ img: sp.stoneFireplace, tx: 39, ty: 1, h: 3, flat: true, solid: [39, 3, 2, 1], hit: [39, 3, 2, 1], talk: look('The den: a stone fireplace with the TV right above it. Game nights happen here.') });
-      F.stand(sp.bookshelf2, 41, 3, 1, () => S.denShelf());
-      F.hang(sp.guitar, 43, 2, 1, look('An acoustic guitar on the wall. Somebody knows three chords on it.'), 3);
-      F.hang(sp.wallWindow.one, 45, 2, 1, null, 3);
-      F.hang(sp.barometer, 47, 2, 1, look('A barometer. It says CHANGE. It always says CHANGE.'), 8);
-      F.stand(sp.chairLeather, 43, 5, 1, look('A leather armchair angled at the TV.'));
-      w.addProp({ img: sp.router, tx: 46, ty: 8, dy: -16, base: 8 * 16 + 16, hit: [46, 8, 1, 1], talk: S.wifi });
-      F.stand(sp.writingDesk, 45, 8, 2, look('A writing desk buried in mail and old crossword puzzles.'));
+      // ---- DAD'S DEN: his favorite room in the house (from the family's photos). Butter-yellow walls and
+      // white wainscoting, the fieldstone fireplace with a white mantel and the moonlit harbor print,
+      // leather-bound books on the built-ins, striped swing-arm lamps, a Tiffany lamp, the tufted sofa
+      // under the big mirror, his pipe racks, Windsor chairs, a twig rocker and a navy lattice rug.
+      F.hang(sp.blinds.plain, 37, 2, 1, null, 1);
+      F.stand(sp.windsorQuilt, 37, 3, 1, look('A pine Windsor chair with a patchwork quilt thrown over the back.'));
+      F.stand(sp.swingLamp, 38, 3, 1, look('A swing-arm floor lamp with a striped, pleated shade.'));
+      F.stand(sp.leatherShelf, 39, 3, 1, () => S.denShelf());
+      w.addProp({ img: sp.denFireplace, tx: 40, ty: 1, h: 3, flat: true, solid: [40, 3, 2, 1], hit: [40, 3, 2, 1], talk: S.denFire });
+      F.stand(sp.leatherShelf, 42, 3, 1, () => S.denShelf());
+      F.stand(sp.swingLamp, 43, 3, 1, look('The other striped lamp. They come in pairs, like Nate and Lily.'));
+      F.stand(sp.tiffanyTable, 44, 3, 1, look('A Tiffany lamp, all amber and gold glass, glowing on a dark end table. There\'s a little wooden bowl next to it.'));
+      F.hang(sp.denMirror, 45, 2, 3, look('A big silver mirror over the sofa. The whole den is in it: books, lamps, the blinds.'), 6);
+      F.stand(sp.denSofa, 45, 3, 3, look('The tufted sofa, with Mom\'s floral pillows. The best nap in the house.'));
+      F.hang(sp.pipeRack, 48, 2, 1, look('Dad\'s pipe racks: rows and rows of his pipes. Every one of them carved in the workshop.'), 4);
+      F.stand(sp.denSideTable, 48, 3, 1);
+      w.addProp({ img: sp.router, tx: 48, ty: 3, dy: -22, base: 3 * 16 + 17, hit: [48, 3, 1, 1], talk: S.wifi });
+      F.stand(sp.firewoodCrate, 39, 4, 1, look('A crate of split firewood and kindling. Dad keeps it full all winter.'));
+      F.stand(sp.windsorPine, 40, 5, 1, look('Another Windsor chair, pulled right up to the fire.'));
+      F.stand(sp.twigRocker, 42, 5, 1, look('A rocking chair made of bent branches, by the fire. Dad\'s chair. Nobody else sits in Dad\'s chair.'));
+      w.addTrigger(37, 3, 12, 7, () => { if (!flags().denSeen && !G.script.busy) G.script.run(S.denFirst()); });
       // ---- mudroom
       F.hang(sp.coatHooks, 37, 12, 2, look('Coat hooks, overloaded with coats from every season.'), 2);
       F.stand(sp.bootBench, 37, 13, 2, () => S.clueMudroom());
       F.stand(sp.washerDryer, 40, 13, 2, look('The washer and dryer. The dryer eats exactly one sock per load.'));
-      // ---- family room
-      F.hang(sp.bayWindow, 44, 12, 4, null, 1);
-      F.stand(sp.blueHutch, 43, 13, 1, look('A light blue painted hutch full of pretty plates.'));
-      F.stand(sp.trainTable, 45, 14, 2, look('An old wooden train table. Somebody built a whole little town on it.'));
+      // ---- the breakfast room (the room before the den, from the photos): the bay window with Mom's potted
+      // seedlings, the red cupboard of good china over a white sideboard, and the oak table under two
+      // bronze pendant lights
+      F.hang(sp.bayWindowPlants, 44, 12, 4, look('The bay window. Mom has little potted trees lined up on the sill, soaking up the sun.'), 1);
+      F.stand(sp.redCupboard, 43, 13, 1, S.goodChina);
+      F.stand(sp.breakfastTable, 44, 14, 3, look('The oak breakfast table. It\'s usually buried in projects, mail and somebody\'s rocks.'), { ht: 2 });
+      for (const x of [44 * 16 + 6, 45 * 16 + 14]) w.props.push({ img: sp.pendantLamp, x, y: 12 * 16 - 4, base: 16 * 16 });
       // ---- critters: Nate's corn, Nate's cereal and Nate's fireworks, all very much alive
       // house critters stay gone once beaten (flag gone_<map>_<x>_<y>)
       const at = (Kind, x, y) => {
@@ -5033,7 +5069,7 @@
       const room = (x, y, w, h, face, floor) => { fill(x, y, w, 2, face); fill(x, y + 2, w, h - 2, floor); };
       room(1, 1, 12, 7, '6', 'o');   // Dad and Michelle's room
       room(14, 1, 6, 7, '8', 'z');   // bathroom
-      room(21, 1, 7, 7, '9', 'o');   // Nate's room
+      room(21, 1, 7, 7, '9', '(');   // Nate's room (carpet)
       room(29, 1, 6, 7, '7', 'o');   // the giraffe room
       room(1, 9, 34, 4, '5', 'o');   // hallway
       room(1, 14, 10, 6, '0', 'o');  // Lily's room
@@ -5044,10 +5080,8 @@
       door(6, 8, 1, 3); door(16, 8, 1, 3); door(24, 8, 1, 3); door(31, 8, 1, 3);
       door(9, 13, 1, 3); door(25, 13, 1, 3); door(31, 13, 1, 3);
       fill(3, 6, 8, 2, 'R');
-      fill(22, 6, 3, 2, 'q');
       fill(30, 6, 4, 2, 'q');
       fill(2, 11, 10, 2, 'R'); fill(16, 11, 18, 2, 'R');
-      fill(2, 18, 6, 2, 'R');
       fill(18, 18, 6, 2, 'R');
       return g.map((r) => r.join(''));
     },
@@ -5067,13 +5101,19 @@
       F.hang(sp.paintSunset, 18, 2, 1, look('A painting of the sun going down over the water.'), 8);
       F.stand(sp.toilet, 19, 3, 1, () => S.alligatorToilet());
       F.stand(sp.tub, 18, 6, 2, look('A bathtub. Rubber duck not included.'), { ht: 2 });
-      // ---- Nate's room
-      F.hang(sp.poster, 21, 2, 1, look('The periodic table Nate memorized in seventh grade. Twice.'), 6);
-      F.hang(sp.fireworksPoster, 23, 2, 1, look('"FIREWORKS: A CHEMICAL HISTORY." Nate\'s most treasured possession.'), 5);
-      F.hang(sp.wallWindow.one, 25, 2, 1, null, 3);
+      // ---- Nate's room (from the photos): cream walls, wood blinds (rocks on one sill, an air conditioner in
+      // the other window), a deer skull, a Mission bed with a plaid comforter, a dark dresser lined with
+      // rocks, a green armchair and books stacked on the carpet. (The chem desk stays: blue food coloring.)
+      F.hang(sp.blinds.rocks, 21, 2, 1, look('Rocks lined up along the windowsill, sorted by... something. Nate knows.'), 1);
       w.chemDesk = F.stand(f.badlandsBeaten || G.state.items.dye ? sp.chemDeskEmpty : sp.chemDesk, 21, 3, 2, () => S.chemDesk());
-      F.stand(sp.bedNate, 26, 3, 1, look('Nate\'s old bed. The plaid quilt matches his shirt. It always has.'), { ht: 3 });
-      F.stand(sp.rocks, 27, 3, 1, look('Nate\'s first rock collection. Mostly gravel from the driveway. Labeled anyway.'));
+      F.hang(sp.deerSkull, 23, 2, 1, look('A deer skull mounted on a wooden plaque. It keeps an eye on things.'), 6);
+      F.stand(sp.amberLampTable, 23, 3, 1, look('A little table with an amber glass lamp, a couple of rocks and a phone charger.'));
+      F.stand(sp.bedMission, 24, 3, 1, look('Nate\'s bed: dark Mission-style wood and a navy and green plaid comforter. It matches his shirt. It always has.'), { ht: 3 });
+      F.hang(sp.artTiles, 25, 2, 1, look('Two little art tiles on the wall.'), 10);
+      F.hang(sp.blinds.ac, 26, 2, 1, look('A window air conditioner. It rattles all night. Nate sleeps right through it.'), 1);
+      F.stand(sp.dresserRocks, 26, 3, 2, look('Nate\'s first rock collection, lined up along the dresser. Mostly gravel from the driveway. Labeled anyway.'));
+      F.stand(sp.chairGreen, 27, 6, 1, look('A green armchair. Mostly it\'s a place to put books.'));
+      F.stand(sp.bookStacks, 21, 6, 1, look('Stacks of books on the floor: geology, chemistry, and a few with no covers left.'));
       // ---- the giraffe room
       F.hang(sp.wallWindow.curtains, 31, 2, 1, null, 3);
       F.stand(sp.glider, 29, 3, 1, look('A gray glider chair. It glides.'));
@@ -5084,14 +5124,24 @@
       F.hang(sp.familyPhotos, 19, 10, 2, look('More family photos. Somebody is always blinking.'), 5);
       F.hang(sp.homeAtticHatch, 11, 10, 2, () => S.abeReach('attic'), 17);
       F.hang(sp.paintSmall, 28, 10, 1, look('A little painting of a flower pot.'), 8);
-      // ---- Lily's room
-      F.hang(sp.wallWindow.shade, 2, 15, 1, null, 3);
-      F.hang(sp.paintBarn, 6, 15, 2, look('A painting of a red barn and a white horse.'), 8);
-      F.stand(sp.hamper, 1, 16, 1, look('A wicker hamper. Full. Always full.'));
-      F.stand(sp.bedLily, 4, 16, 2, look('Lily\'s bed: a navy quilt, leopard print pillows, and a flowered quilt folded at the foot.'), { ht: 3 });
-      F.stand(sp.nightCream, 6, 16, 1, () => S.clueLily());
-      F.stand(sp.dresser, 7, 16, 2, () => S.lilyDresser());
+      // ---- Lily's room (from the photos): posters, drawings and polaroids all over the wall, a disco ball,
+      // a white bed with navy sheets, a teal record player, a wicker bookshelf with a rubber chicken on top,
+      // a clothes rack, and clothes on the floor
+      F.hang(sp.blinds.plain, 1, 15, 1, null, 1);
+      F.stand(sp.hamper, 1, 16, 1, look('A wicker hamper. Full. Always full. The rest of the clothes are on the floor.'));
+      F.hang(sp.posterCollage, 2, 15, 2, look('Posters, drawings and polaroids, all the way up the wall.'), 6);
+      F.stand(sp.bedLilyWhite, 2, 16, 2, look('Lily\'s bed: a white frame, navy sheets, and a pile of blankets she swears is organized.'), { ht: 3 });
+      F.hang(sp.lilyShelves, 4, 15, 1, look('Little wall shelves: a plant, a few records, a painted plate.'), 8);
+      F.stand(sp.nightWhite, 4, 16, 1, () => S.clueLily());
+      F.hang(sp.blinds.plate, 5, 15, 1, look('An old New Jersey license plate, hung up over the window.'), 1);
+      F.stand(sp.victrola, 5, 16, 1, look('A teal suitcase record player, on a little stand stuffed with records.'));
+      F.stand(sp.dresserWhite, 6, 16, 2, () => S.lilyDresser());
+      F.hang(sp.chickenArt, 7, 15, 1, look('A drawing of a chicken, with polaroids taped up around it.'), 8);
+      F.stand(sp.wickerShelf, 8, 16, 1, look('A white wicker bookshelf. On top: a rubber chicken. Nobody asks about the rubber chicken.'));
       F.stand(sp.catalogBin, 10, 16, 1, () => S.lilyCatalogs());
+      F.stand(sp.clothesRack, 10, 18, 1, look('A clothes rack, so full it bends in the middle.'));
+      w.props.push({ img: sp.clothesPile, x: 6 * 16, y: 18 * 16 + 4, flat: true, base: 0 });
+      w.props.push({ img: sp.discoBall, x: 5 * 16 + 11, y: 16 * 16 + 10, base: 19 * 16 });
       // ---- guest room
       F.hang(sp.paintSea, 18, 15, 2, look('A painting of a sailboat out on the bay.'), 8);
       F.hang(sp.wallWindow.shade, 23, 15, 1, null, 3);
