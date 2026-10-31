@@ -514,17 +514,29 @@
         ctx.drawImage(img, Math.round(this.x - w2 / 2) - cx, Math.round(this.y + 2 - h2) - cy, w2, h2);
         return;
       }
-      const can = this.held === G.spr.wateringCan;
+      const can = this.held === G.spr.wateringCan, mega = this.held === G.spr.megaphone;
       if (can && this.dir === 'up') this.drawCan(ctx, cx, cy);
+      if (mega && this.dir === 'up') this.drawMegaphone(ctx, cx, cy);
       // (z: up in the air, e.g. Abe leaping out of a bush)
       ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2 - (this.z || 0)) - cy);
       if (can && this.dir !== 'up') this.drawCan(ctx, cx, cy);
+      else if (mega) { if (this.dir !== 'up') this.drawMegaphone(ctx, cx, cy); }
       else if (this.held && !can) {
         // (heldAt: [dx, dy] to hold it off to one side, e.g. Mikey's bouquet, so it doesn't cover him)
         const [hx, hy] = this.heldAt || [0, 0];
         ctx.drawImage(this.held, Math.round(this.x - this.held.width / 2 + hx) - cx, Math.round(this.y - S.h + 10 + hy - (this.z || 0)) - cy);
       }
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, Math.round(this.y - S.h - 10) - cy);
+    }
+
+    // The protest organizer's megaphone: up at her mouth when she's turned to the side, down at her
+    // side by the handle when she's facing you (or away, peeking out behind her).
+    drawMegaphone(ctx, cx, cy) {
+      const d = this.dir, S = this.S, side = d === 'left' || d === 'right';
+      const img = d === 'right' ? G.spr.megaphone : d === 'left' ? G.spr.megaphoneL : G.spr.megaphoneDown;
+      const x = d === 'right' ? this.x + 3 : d === 'left' ? this.x - 13 : d === 'down' ? this.x + 3 : this.x - 10;
+      const y = side ? this.y - S.h + 7 : this.y - 15;
+      ctx.drawImage(img, Math.round(x) - cx, Math.round(y - (this.z || 0)) - cy);
     }
 
     // Mom's watering can, held at her side by the grip; tipped toward whatever

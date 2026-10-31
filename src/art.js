@@ -9151,7 +9151,9 @@
     S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone']) S.rockIcons[k] = rockIcon(k);
     S.oreVein = [oreVein(0), oreVein(1), oreVein(2)]; S.dumpPile = dumpPile(false); S.slagPile = dumpPile(true);
     S.furnaceRuin = furnaceRuin(); S.adit = adit(); S.bat = [batFrame(true), batFrame(false)];
-    S.megaphone = megaphone(); S.cavePearls = cavePearls();
+    S.megaphone = megaphone(); S.megaphoneL = mirror(S.megaphone); S.cavePearls = cavePearls();
+    // (and pointing down, for holding it by the handle at her side)
+    { const m = S.megaphone, c = G.canvas(m.height, m.width), x = c.getContext('2d'); x.translate(m.height, 0); x.rotate(Math.PI / 2); x.drawImage(m, 0, 0); S.megaphoneDown = c; }
     S.outcrops = { laf: outcrop('laf'), eas: outcrop('eas'), bed: outcrop('bed') };
     S.quarryRubble = quarryRubble(); S.bigBasalt = bigRock('basalt'); S.bigDolomite = bigRock('dolomite'); S.gravelBar = gravelBar();
     S.fc = { idle: fatherChristmas(false, false), up: fatherChristmas(true, false), idleRage: fatherChristmas(false, true), upRage: fatherChristmas(true, true), sweater: fatherChristmas(false, false, true) };

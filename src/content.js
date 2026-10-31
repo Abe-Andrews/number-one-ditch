@@ -1042,10 +1042,19 @@
     for (let k = 0; k < 9; k++) { x.fillStyle = k % 2 ? '#f8e0a0' : '#f8c870'; x.fillRect(12 + k * 8, 62 + (k % 3), 2, 2); }
     x.fillStyle = '#3a3a5a'; x.fillRect(9, 128, 76, 13);
     const ben = G.art.person(Object.assign({}, G.CAST.ben, { shirt: '#f4f4f0', neck: null, headphones: null })).down[0];
+    // (a waist-up shot, big, with the words centered on the shirt itself: find its white on the sprite)
+    const px = ben.getContext('2d').getImageData(0, 0, ben.width, ben.height).data;
+    let sx0 = 99, sx1 = -1, sy0 = 99, sy1 = -1;
+    for (let j = 0; j < ben.height; j++) for (let i = 0; i < ben.width; i++) {
+      const o = (j * ben.width + i) * 4;
+      if (px[o] === 0xf4 && px[o + 1] === 0xf4 && px[o + 2] === 0xf0 && px[o + 3]) { sx0 = Math.min(sx0, i); sx1 = Math.max(sx1, i); sy0 = Math.min(sy0, j); sy1 = Math.max(sy1, j); }
+    }
+    const k = 5, ox = 9 + Math.round((76 - ben.width * k) / 2), oy = 141 - (sy1 + 1) * k;
     x.save(); x.beginPath(); x.rect(9, 59, 76, 82); x.clip();
     x.imageSmoothingEnabled = false;
-    x.drawImage(ben, 15, 63, ben.width * 4, ben.height * 4);
-    ['SEXY', 'AS', 'HELL'].forEach((w, k) => FT().draw(x, w, 47 - Math.round(FT().width(w) / 2), 111 + k * 8, '#c82838'));
+    x.drawImage(ben, ox, oy, ben.width * k, ben.height * k);
+    const scx = ox + ((sx0 + sx1 + 1) * k) / 2, sty = oy + Math.round(((sy0 + sy1 + 1) * k) / 2) - 11;
+    ['SEXY', 'AS', 'HELL'].forEach((w, n) => FT().draw(x, w, Math.round(scx - FT().width(w) / 2), sty + n * 8, '#c82838'));
     x.restore();
     FT().draw(x, 'Ben, at the ball.', 8, 145, SOFT);
     // the story
@@ -1092,10 +1101,13 @@
       yield G.say('Ben', 'Abe said you\'d say exactly that. He paid me ten shark teeth.');
       yield G.say('Ben', 'Here, you can have them. I feel kind of bad.');
     } else if (c === 1) {
-      yield G.say('Nate', '5.6. Clean rain absorbs CO2 and makes carbonic acid. Obviously.');
-      yield G.say('Ben', '...Wow. You really do think about pH often.');
-      yield G.say('Nate', 'I do.');
-      yield G.say('Ben', 'Abe bet me you\'d fall for it. Here, take the teeth he paid me.');
+      // (the right answer has the sacred number in it too: Abe's trap has no way out but "Nice try.")
+      yield G.say('Nate', '5.6. Clean rain absorbs CO2 and makes carbonic acid. Obvi-');
+      yield* slip();
+      yield G.say('Nate', '...!!!');
+      yield G.say('Nate', 'The RIGHT answer has it in it?! That\'s a TRAP!');
+      yield G.say('Ben', 'Abe said you\'d get it right AND still say it. He paid me ten shark teeth.');
+      yield G.say('Ben', 'Here, you can have them. That one was just mean.');
     } else {
       yield G.say('Ben', 'Abe said you\'d fall for it...');
       yield G.say('Nate', 'Tell Abe I am NOT gullible.');
