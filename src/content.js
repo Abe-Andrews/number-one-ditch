@@ -1170,6 +1170,16 @@
   // Abe's Rule #1 applies to on-screen counters too: 6 is shown as "5+1".
   G.sayable = (n) => (String(n).includes('6') ? (n - 1) + '+1' : String(n));
 
+  // The north path to the Williams Center (music, theater, Studio B): Nate won't head up until he's
+  // jammed with Abe once (G.jammedOnce).
+  S.artsPath = function* () {
+    const f = flags(), p = P();
+    p.dir = 'up';
+    yield G.say('Nate', 'The Williams Center for the Arts. Music, theater, a whole recording studio...');
+    if (f.jamMet) yield G.say('Nate', 'I should get through a song with Abe first. THEN I can call myself a musician.');
+    else yield G.say('Nate', '...I don\'t even play anything. Abe keeps saying he\'ll teach me someday.');
+    yield G.walkTo(p, p.x, p.y + 16, 1.2);
+  };
   // Finals week: no leaving campus for College Hill until the Chem Final is done.
   S.campusSafety = function* (walkedUp) {
     const f = flags(), p = P();
@@ -4659,7 +4669,12 @@
 
       w.add(new G.Sign(8, 8, 'NATE\'S DORM. Home of "The Lab." (Not an official lab.)'));
       w.add(new G.Sign(26, 10, ['NORTH: the Williams Center for the Arts.', 'Music, theater, the art gallery. And downstairs: {y}STUDIO B{/}, a recording studio.']));
+      // north: the Williams Center (Studio B). Closed until Nate has jammed with Abe once: he turns himself around.
       w.addTrigger(27, 0, 2, 1, () => G.play.warp('arts', 14, 20, 'up'));
+      if (!G.jammedOnce()) {
+        w.blockTiles(27, 0, 2, 1);
+        w.addTrigger(27, 1, 2, 1, () => { if (!G.jammedOnce()) G.script.run(S.artsPath()); });
+      }
       w.add(new G.Sign(17, 7, 'PARDEE HALL. Department of {y}EEENGLISH{/}. Do you speak it?'));
       w.add(new G.Sign(22, 26, [
         'SOUTH: Chesapeake, VA. 251 miles.',
@@ -6789,6 +6804,8 @@
   // a guitar or drum is also had once its song is passed), s.guitar (the one Nate plays).
   // Flags: jamTease, jamMet, jamDrum_<song>.
   G.condoDone = () => { const f = flags(); return !!(f.romulusBeaten && f.plantsDone && f.gardenOpen); };
+  // Nate has gotten through at least one song with Abe (opens the path to the Williams Center)
+  G.jammedOnce = () => Object.keys(G.state.jams || {}).length > 0;
   G.INSTRUMENTS = [
     {
       id: 'bass', name: 'Half-Finished Bass', kind: 'Electric bass (some assembly required)', art: () => G.spr.natesBass,
