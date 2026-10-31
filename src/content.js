@@ -98,7 +98,7 @@
       skin: '#f4d0b8', hair: '#6a4428', hairStyle: 'long', smile: '#ffffff', blush: true,
       coat: '#d04848', shirt: '#f4f0ec', neckline: true, necklace: '#e8d8a0', pants: '#7a7a80', shoes: '#3a3038', torso: 6, legs: 3,
     },
-    // Tom from Tom's Pizza (Union, NJ, and now Lafayette): older, salt-and-pepper hair and
+    // Tom from Tom's Pizza (Springfield, NJ, then College Hill by Lafayette): older, salt-and-pepper hair and
     // gray stubble, super bushy dark eyebrows, blue cap, navy shirt with white stripes across
     // the chest, a navy apron, a gold chain
     tom: {
@@ -3211,7 +3211,7 @@
     {
       id: 'dadAndTom', name: 'Dad and Tom', place: 'Tom\'s Pizza', file: 'assets/photos/dad-and-tom.png',
       how: 'Hanging on the wall of a pizza place.',
-      caption: 'Dad and Tom at the original Tom\'s Pizza in Union, NJ. The whole family calls in orders just to hear Tom pick up the phone: "TOM\'S PIZZA!"',
+      caption: 'Dad and Tom at the original Tom\'s Pizza in Springfield, NJ. The whole family called in orders just to hear Tom pick up the phone: "TOM\'S PIZZA!"',
     },
     {
       id: 'atticSelfie', name: 'Backyard Selfie', place: 'Home', file: 'assets/photos/attic-selfie.png',
@@ -4278,10 +4278,11 @@
   };
 
   // ---------------------------------------------------------------- the Alligator Incident
-  // A true family story: Doron left a surprise in the upstairs toilet to gross
-  // out Abe. Abe never saw it. Three-year-old Nate did.
+  // A true family story: at Kit and Gail's house (family friends), Doron left a surprise in their
+  // toilet to gross out Abe. Abe never saw it. Three-year-old Nate did. The upstairs toilet at home
+  // brings it back; the flashback plays at Kit and Gail's (G.MAPS.kitGail).
   S.alligatorToilet = function* () {
-    const f = flags(), s = G.state, w = G.play.world, p = P();
+    const f = flags(), p = P();
     if (f.alligator) {
       yield G.say(null, 'The upstairs toilet. No alligators today. Nate checked. Twice.');
       return;
@@ -4289,43 +4290,50 @@
     f.alligator = true;
     yield G.say(null, 'The upstairs toilet.');
     yield G.emote(p, 'bang', 30);
-    yield G.say('Nate', '...I don\'t like this toilet.');
-    const doron = yield* S.callIn('doron', 'Wait. Is this THE toilet?');
+    yield G.say('Nate', '...I don\'t like toilets. Not since Kit and Gail\'s.');
+    const doron = yield* S.callIn('doron', 'Toilets still freak you out?');
     if (doron) {
-      yield G.say('Doron', 'HA! Nate. Remember the alligator?');
+      yield G.say('Doron', 'HA! Nate. Remember the alligator? At Kit and Gail\'s?');
       yield G.say('Nate', 'Don\'t.');
-      yield G.say('Doron', 'I pooped in there to gross out Abe. Didn\'t flush. It was a masterpiece.');
+      yield G.say('Doron', 'I pooped in their toilet to gross out Abe. Didn\'t flush. It was a masterpiece.');
       yield G.say('Doron', 'But Abe never came. THIS guy did. Three years old, needs the bathroom...');
     } else {
-      yield G.say('Nate', 'Doron once did something unspeakable in here, just to gross out Abe. He didn\'t flush.');
+      yield G.say('Nate', 'At Kit and Gail\'s house once, Doron did something unspeakable in their bathroom, just to gross out Abe. He didn\'t flush.');
       yield G.say('Nate', 'Abe never saw it. I did. I was three.');
     }
-    // flashback
+    // flashback: Kit and Gail's house, a long time ago
+    const back = { x: p.x, y: p.y, dir: p.dir };
     yield G.fadeOut(20);
     G.flashback = true;
-    const hide = (v) => { p.hidden = v; for (const e of w.ents) if (e instanceof G.Follower) e.hidden = v; };
-    hide(true);
-    const kid = w.add(new G.NPC({ sprite: 'nate_toddler', name: 'Little Nate', x: 18 * 16 + 8, y: 5 * 16 + 14, dir: 'up' }));
-    yield G.camFocus(17 * 16, 8 * 16, 1);
+    G.play.loadMap('kitGail', 9 * 16 + 8, 9 * 16 + 14, 'up', true);
+    const fw = G.play.world;
+    G.play.player.hidden = true;
+    const kid = fw.add(new G.NPC({ sprite: 'nate_toddler', name: 'Little Nate', x: 9 * 16 + 8, y: 8 * 16 + 14, dir: 'up' }));
+    yield G.camFocus(7 * 16, 5 * 16 + 8, 1);
     yield G.fadeIn(20);
-    yield G.banner('FLASHBACK', 'Rattlesnake Bridge Rd, a long time ago', 120);
+    yield G.banner('FLASHBACK', 'Kit and Gail\'s house, a long time ago', 120);
+    // down the hall, into the bathroom, up to the toilet...
+    yield G.walkTo(kid, 9 * 16 + 8, 5 * 16 + 14, 0.8);
+    yield G.walkTo(kid, 1 * 16 + 8, 5 * 16 + 14, 0.8);
+    yield G.walkTo(kid, 1 * 16 + 8, 4 * 16 + 14, 0.8);
+    kid.dir = 'up';
     yield G.wait(40);
     yield G.emote(kid, 'bang', 40);
     G.audio.sfx('yell');
     yield G.shakeCmd(20, 2);
-    yield G.walkTo(kid, 16 * 16 + 8, 7 * 16 + 14, 2);
-    yield G.camFocus(17 * 16, 10 * 16, 20);
-    yield G.walkTo(kid, 16 * 16 + 8, 11 * 16 + 14, 2);
+    // ...and back out, as fast as three-year-old legs go
+    yield G.walkTo(kid, 1 * 16 + 8, 5 * 16 + 14, 2.2);
+    yield G.walkTo(kid, 9 * 16 + 8, 5 * 16 + 14, 2.2);
+    yield G.walkTo(kid, 9 * 16 + 8, 8 * 16 + 14, 2.2);
     kid.dir = 'down';
-    w.pop(kid.x, kid.y - 26, 'WAAAAAH!', '#78c8ff');
+    fw.pop(kid.x, kid.y - 26, 'WAAAAAH!', '#78c8ff');
     yield G.shakeCmd(30, 3);
     yield G.say('Little Nate', 'THERE\'S AN ALLIGATOR IN THE TOILET!!!', { top: true });
-    w.pop(kid.x, kid.y - 26, 'WAAAAAAAAAH!', '#78c8ff');
+    fw.pop(kid.x, kid.y - 26, 'WAAAAAAAAAH!', '#78c8ff');
     yield G.wait(60);
     yield G.fadeOut(20);
-    kid.dead = true;
     G.flashback = false;
-    hide(false);
+    G.play.loadMap('homeUp', back.x, back.y, back.dir, true);
     yield G.camFocus(null, null, 1);
     yield G.fadeIn(20);
     if (doron) {
@@ -4757,6 +4765,36 @@
     };
   }
   const look = (...pages) => function* () { for (const pg of pages) yield Array.isArray(pg) ? G.say(pg[0], pg[1]) : G.say(null, pg); };
+
+  // Kit and Gail's house (family friends): only for the Alligator Incident flashback. Their bathroom
+  // (toilet, vanity and mirror, tub, bath mat) and the hall outside it. Nobody follows Nate here:
+  // it's a memory.
+  G.MAPS.kitGail = {
+    name: 'Kit and Gail\'s house',
+    music: 'house',
+    noFollower: true,
+    tiles() {
+      const W = 14, H = 11, g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      const room = (x, y, w, h, face, floor) => { fill(x, y, w, 2, face); fill(x, y + 2, w, h - 2, floor); };
+      room(1, 1, 5, 7, '8', 'z');   // the bathroom
+      room(7, 1, 6, 9, '6', 'o');   // the hall
+      fill(6, 5, 1, 1, 'z');        // the bathroom door
+      fill(8, 4, 3, 4, 'r');        // a runner down the hall
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      F.hang(sp.bathMirror, 3, 2, 2, null, 8);
+      F.stand(sp.condoVanity, 3, 3, 2);
+      F.stand(sp.toilet, 1, 3, 1);
+      F.stand(sp.tubCurtain, 1, 6, 3, null, { ht: 2 });
+      w.props.push({ img: sp.bathMat, x: 3 * 16 + 2, y: 4 * 16 + 4, flat: true, base: 0 });
+      F.hang(sp.paintLand, 8, 2, 1, null, 10);
+      F.hang(sp.sepiaPhoto, 10, 2, 2, null, 6);
+      F.stand(sp.plant, 12, 9, 1);
+    },
+  };
 
   // Pardee Hall: one lecture hall of the Department of EEENGLISH.
   G.MAPS.pardee = {
@@ -12387,27 +12425,28 @@
   };
 
   // ================================================================ TOM'S PIZZA (Lafayette)
-  // A real family favorite in Union, NJ: Tom always picks up the phone with "TOM'S PIZZA!"
-  // and everybody calls in orders just to hear it. Here he's just opened his second store.
+  // A real family favorite in Springfield, NJ (closed now, in real life): Tom always picked up the
+  // phone with "TOM'S PIZZA!" and everybody called in orders just to hear it. In the game he closed
+  // the Springfield shop and moved it to College Hill, because he wanted to feed the Lafayette kids.
   S.tom = function* () {
     const f = flags();
     if (!f.tomMet) {
       f.tomMet = true;
       yield G.say('Tom', 'TOM\'S PIZZA!');
-      yield G.say('Nate', '...Tom? From Union? What are you doing in Easton?');
-      yield G.say('Tom', 'I just opened my second store! Right here on College Hill, by Lafayette!');
-      yield G.say('Tom', 'Union, and now College Hill. Two Tom\'s Pizzas.');
+      yield G.say('Nate', '...Tom? From Springfield? What are you doing in Easton?');
+      yield G.say('Tom', 'I closed up the Springfield shop and moved the whole thing out here, to College Hill!');
+      yield G.say('Tom', 'All these Lafayette kids, up all night studying, nobody feeding them right. Somebody had to.');
       yield G.say('Nate', 'Dad is going to lose his mind.');
       yield G.say('Tom', 'Your father! Tell him I said hello. His picture is on the wall over there.');
       return;
     }
     f.tomLine = ((f.tomLine || 0) + 1) % 3;
-    yield G.say('Tom', ['TOM\'S PIZZA!', 'Two stores! Union and College Hill. You tell everybody.', 'Next time, call ahead. I like to answer the phone.'][f.tomLine]);
+    yield G.say('Tom', ['TOM\'S PIZZA!', 'Springfield was good to me. But these Lafayette kids NEED me.', 'Next time, call ahead. I like to answer the phone.'][f.tomLine]);
   };
   // the framed photo of Dad and Tom on the wall
   S.tomPhoto = function* () {
     if (G.photoHas('dadAndTom')) { yield G.say(null, 'Dad and Tom, framed on the wall of Tom\'s Pizza.'); return; }
-    yield G.say(null, 'A framed photo on the wall: Dad and Tom, behind the counter at the original Tom\'s Pizza in Union.');
+    yield G.say(null, 'A framed photo on the wall: Dad and Tom, behind the counter at the original Tom\'s Pizza in Springfield.');
     yield G.say('Nate', 'Dad looks thrilled. Tom looks like he has eleven pizzas in the oven.');
     G.audio.sfx('blip');
     yield G.wait(14);
@@ -12444,7 +12483,7 @@
       // lampposts along the sidewalk
       for (const x of [1, 11, 21, 28]) w.addProp({ img: sp.lamppost, tx: x, ty: 6, dx: 2, solid: [x, 6, 1, 1] });
       w.add(new G.Sign(29, 10, ['COLLEGE HILL', 'EAST: back to campus.']));
-      w.add(new G.Sign(17, 7, ['TOM\'S PIZZA', 'Our second location! (The first one is in Union, NJ.) Call ahead.']));
+      w.add(new G.Sign(17, 7, ['TOM\'S PIZZA', 'Formerly of Springfield, NJ. Now feeding Lafayette. Call ahead.']));
       // the street runs east, back to campus (onto the main path)
       w.addTrigger(31, 8, 1, 2, () => G.play.warp('campus', 1, 12, 'right'));
       w.blockTiles(31, 6, 1, 2); w.blockTiles(31, 10, 1, 1);

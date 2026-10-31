@@ -82,7 +82,7 @@
 
   // Fainting: the frame Nate hits the ground, and the share of his shark teeth he drops.
   const FAINT_LAND = G.FAINT_LAND = 54;
-  const FAINT_COST = 0.2;
+  const FAINT_COST = 0.15;
 
   // ================================================================ PLAY SCENE
   G.play = {
@@ -861,7 +861,7 @@
       this.t = 0;
       this.sel = 0;
       G.script.reset();
-      // fainting drops a fifth of Nate's shark teeth: taken out of the save he'll continue from
+      // fainting drops 15% of Nate's shark teeth: taken out of the save he'll continue from
       // (an admin run's save is the copy it keeps in memory)
       const cur = G.state, saved = cur.admin ? G.adminSnap : G.loadSave(cur.slot);
       this.lost = Math.floor(((saved || cur).teeth || 0) * FAINT_COST);

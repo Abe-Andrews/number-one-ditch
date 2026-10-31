@@ -6758,7 +6758,7 @@
   }
 
   // ================================================================ TOM'S PIZZA (Lafayette)
-  // Tom's second store (the first is in Union, NJ): a little storefront with a red, white
+  // Tom's store (moved here from Springfield, NJ): a little storefront with a red, white
   // and green awning, and inside, the deck ovens, the hood, the mosaic counter with its
   // glass pizza case, stacks of boxes, and red-checkered tables.
   // A College Hill storefront: flat roof, brick front, a sign, a striped scalloped awning,
