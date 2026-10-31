@@ -3975,6 +3975,52 @@
     return finish(p);
   }
 
+  // HANNAH'S READING NOOK (the condo's big front window): an overstuffed lavender reading chair with a
+  // cream knit blanket over the arm, her to-be-read tower (mostly Sarah J. Maas), a little table with a
+  // mug of tea and a candle, and her book (open in her hands, or face-down on the cushion holding her place).
+  function readingChair() {
+    const p = new Pix(18, 24), c = '#b4a4c0', d = '#9686a4', l = '#cabcd4';
+    p.rect(2, 0, 14, 11, c); p.hline(3, 14, 0, l); for (const x of [6, 11]) p.vline(x, 2, 9, d);
+    p.rect(0, 6, 4, 13, c); p.rect(14, 6, 4, 13, c); p.hline(0, 3, 6, l); p.hline(14, 17, 6, l); p.vline(3, 7, 18, d); p.vline(14, 7, 18, d);
+    p.rect(4, 11, 10, 8, '#c2b4cc'); p.hline(4, 13, 11, l);
+    p.rect(1, 19, 16, 2, d);
+    p.rect(14, 4, 4, 16, '#f0e6d4'); for (let y = 5; y < 19; y += 2) p.set(16, y, '#d6c8ac'); p.vline(14, 5, 19, '#e2d6bf');
+    for (const x of [14, 16]) p.set(x, 20, '#e2d6bf');
+    p.rect(2, 21, 2, 3, '#5a3a24'); p.rect(14, 21, 2, 3, '#5a3a24');
+    return finish(p);
+  }
+  function tbrStack() {
+    const p = new Pix(14, 36);
+    const cols = ['#1e4a58', '#6a1e34', '#2a2a3a', '#4a2a6a', '#8a2a2a', '#1e3a2a', '#3a2a4a', '#5a1e2a', '#1c2a4a', '#6a4a1e', '#2a1e3a'];
+    for (let i = 0; i < 11; i++) {
+      const y = 33 - i * 3, x = 1 + ((i * 5) % 3), w = 11 - ((i * 7) % 3);
+      p.rect(x, y, w, 3, cols[i]); p.hline(x, x + w - 1, y, shade(cols[i], 0.25)); p.set(x + 1, y + 1, '#d8b050'); p.set(x + w - 2, y + 1, '#d8b050');
+    }
+    p.rect(4, 0, 6, 3, '#f8e070'); p.hline(5, 8, 1, '#c8a830');
+    return finish(p);
+  }
+  function nookTable() {
+    const p = new Pix(14, 26);
+    p.rect(2, 4, 4, 5, '#f4f0e8'); p.vline(6, 5, 7, '#f4f0e8'); p.set(3, 2, '#e8e8f0'); p.set(4, 1, '#e8e8f0'); p.set(4, 3, '#e8e8f0');
+    p.rect(9, 5, 3, 4, '#f6eed8'); p.set(10, 4, '#2a2a30'); p.set(10, 3, '#f8c040'); p.set(10, 2, '#fff0a0');
+    p.rect(1, 9, 12, 2, '#3a5a5a'); p.hline(1, 12, 9, '#4a7070');
+    p.rect(0, 11, 14, 3, '#c89a6a'); p.hline(0, 13, 11, '#e0b888');
+    p.vline(7, 14, 23, '#a87a4a'); p.hline(3, 11, 24, '#a87a4a'); p.hline(5, 9, 23, '#a87a4a');
+    return finish(p);
+  }
+  function openBook() {
+    const p = new Pix(10, 5);
+    p.rect(0, 1, 10, 4, '#1e4a58'); p.rect(1, 0, 4, 4, '#f8f4e8'); p.rect(5, 0, 4, 4, '#f0ead8'); p.vline(5, 0, 3, '#c8c0b0');
+    for (const y of [1, 2]) { p.hline(2, 3, y, '#b8b0a0'); p.hline(6, 7, y, '#b8b0a0'); }
+    return finish(p);
+  }
+  function tentBook() {
+    const p = new Pix(10, 5);
+    for (let x = 0; x < 10; x++) { const top = Math.abs(x - 4.5) < 1 ? 0 : Math.round(Math.abs(x - 4.5) / 1.5); p.vline(x, top, 4, '#1e4a58'); }
+    p.vline(4, 0, 4, '#d8b050'); p.vline(5, 0, 4, '#d8b050'); p.hline(0, 9, 4, '#f4f0e4');
+    return finish(p);
+  }
+
   // Framed paintings from the listing photos.
   function painting(kind) {
     const W = kind === 'small' ? 14 : 24, H = 16, p = new Pix(W, H);
@@ -9751,6 +9797,7 @@
     S.bedMission = homeBed({ w: 16, h: 48, quilt: '#2a3a5a', pattern: 'plaid', patC: '#4a6a4a', pillows: ['#f4f4f0'], head: '#4a2a1a', slats: true });
     S.posterCollage = posterCollage(); S.lilyShelves = lilyShelves(); S.chickenArt = chickenArt(); S.nightWhite = nightWhite(); S.victrola = victrola();
     S.dresserWhite = dresserWhite(); S.wickerShelf = wickerShelf(); S.clothesRack = clothesRack(); S.clothesPile = clothesPile(); S.discoBall = discoBall();
+    S.readingChair = readingChair(); S.tbrStack = tbrStack(); S.nookTable = nookTable(); S.openBook = openBook(); S.tentBook = tentBook();
     S.bedLilyWhite = homeBed({ w: 32, h: 50, quilt: '#26305a', pillows: ['#f0ece0', '#e8907a'], head: '#f4f0e6', skirt: '#e8e4d8' });
     // yard
     S.gatePost = gatePost(); S.flag = flagFrames(); S.kidneyPool = kidneyPool(); S.marketUmbrella = marketUmbrella();

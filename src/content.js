@@ -486,7 +486,7 @@
     doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Obsessed with the UFC. Never skips leg day. Owns three luchador masks. Responsible for the Alligator Incident.', skill: 'Lifts and smashes heavy things' },
     lily: { name: 'Lily', bio: 'Nate\'s sister. Survived a refrigerator. Still subscribed to Badlands Chugs.', skill: 'A "No." that pops balloons' },
     abe: { name: 'Abe', bio: '6\'5". Lives in Chesapeake with Hannah and Romulus. Sells yellow guitar cables on eBay (eventually). Gave Nate a bidet for Christmas, then took it back.', skill: 'He\'s 6\'5": reaches things up high, and boosts Nate over tall hedges' },
-    hannah: { name: 'Hannah', bio: '5\'2". A nurse in the NICU at CHKD. Married to Abe. Romulus\'s favorite person. Father Eggmas hypnotized her babies, and now it\'s personal.', skill: 'Heals: patches Nate up when he\'s low, and gives him a checkup when you talk to her' },
+    hannah: { name: 'Hannah', bio: '5\'2". A nurse in the NICU at CHKD. Married to Abe. Romulus\'s favorite person. Reads fantasy every spare minute, Sarah J. Maas above all. Father Eggmas hypnotized her babies, and now it\'s personal.', skill: 'Heals: patches Nate up when he\'s low, and gives him a checkup when you talk to her' },
   };
 
   // ================================================================ PEOPLE (menu tab)
@@ -12743,6 +12743,19 @@
       F.stand(sp.condoEndTable, 9, 11, 1, look('A little cream end table with a drawer, and a brass lamp with a crystal shade.'));
       F.stand(sp.condoSofa, 8, 12, 2, look('The cream couch. Comfy. Prime real estate.'), { ht: 4 });
       F.stand(sp.smallChest, 8, 18, 1, look('A small wooden chest of drawers, with a pothos on top.'));
+      // Hannah's reading nook, by the big window: her chair, her to-be-read tower (mostly Sarah J. Maas) and a
+      // little table. While she's in the party but not the one with Nate, she's curled up in the chair reading.
+      F.stand(sp.tbrStack, 3, 18, 1, () => S.hannahStack());
+      w.nook = F.stand(sp.readingChair, 4, 18, 1, () => S.hannahNook());
+      w.nook.draw = function (ctx, cx, cy) {
+        const x = this.x - cx, y = this.y - cy;
+        ctx.drawImage(this.img, x, y);
+        if (!G.hannahReading()) { ctx.drawImage(sp.tentBook, x + 4, y + 12); return; }
+        const h = G.sprites.hannah.down[0];
+        ctx.drawImage(h, 0, 0, h.width, 15, x + 1, y - 2, h.width, 15);
+        ctx.drawImage(sp.openBook, x + 4, y + 10);
+      };
+      F.stand(sp.nookTable, 5, 18, 1, look('A little side table: a mug of tea gone cold, a candle, and a pile of bookmarks.'));
       spot(0, 12, 1, 1, look('A window looking out toward the golf course.'));
       spot(0, 16, 1, 1, look('A window looking out toward the golf course.'));
       spot(3, 19, 5, 1, look('The big window nook, looking out at the front walk.'));
@@ -13839,6 +13852,42 @@
     w.burst(p.x, p.y - 14, ['#f86868', '#ffffff', '#f8a8c8'], 10, { speed: 1, up: 0.8, life: 22, size: 2 });
   };
   // talking to her: a checkup (all hearts back, when nothing's attacking)
+  // ---- Hannah's reading nook (the condo's big front window). She loves fantasy, Sarah J. Maas most of all.
+  // She's in the chair whenever she's in the party but not the one with Nate (flags.nookTalks counts visits).
+  G.hannahReading = () => G.state.party.includes('hannah') && !G.with('hannah');
+  S.hannahNook = function* () {
+    const f = flags();
+    if (G.hannahReading()) {
+      f.nookTalks = (f.nookTalks || 0) + 1;
+      yield G.say('Hannah', 'One more chapter.');
+      if (f.nookTalks === 1) {
+        yield G.say('Nate', 'You said that an hour ago.');
+        yield G.say('Hannah', 'And I MEANT it an hour ago. Then the chapter ended on a cliffhanger. That\'s not my fault. That\'s Sarah J. Maas\'s fault.');
+        yield G.say('Hannah', 'If you need a healer, bring me along from your PEOPLE page. I\'ll bring the book.');
+        return;
+      }
+      yield G.say('Hannah', [
+        'Shh. Somebody is about to fall in love with a High Lord. I can FEEL it.',
+        'Have you read A Court of Thorns and Roses? No? Nate. NATE. You\'re borrowing my copy. Don\'t crack the spine.',
+        'Five more pages. Then I\'m all yours. ...Okay, ten.',
+        'This is my third time reading this one. It gets better every time. How does it get BETTER?',
+      ][(f.nookTalks - 2) % 4]);
+      return;
+    }
+    if (!G.state.party.includes('hannah')) {
+      yield G.say(null, 'A reading chair by the big window, a knit blanket over the arm. A book lies face-down on the cushion, holding somebody\'s place.');
+      if (G.with('abe')) yield G.say('Abe', 'That\'s Hannah\'s chair. Do NOT lose her page.');
+      else yield G.say('Nate', 'Hannah\'s chair. She\'s at work. She will know if I move that book.');
+      return;
+    }
+    yield G.say(null, 'Hannah\'s reading chair by the big window, a knit blanket over the arm, her book face-down on the cushion.');
+    yield G.say('Hannah', 'Don\'t lose my page. I mean it.');
+  };
+  S.hannahStack = function* () {
+    yield G.say(null, 'A to-be-read pile: A Court of Thorns and Roses, Throne of Glass, Crescent City... It\'s mostly Sarah J. Maas, and it is not getting any shorter.');
+    yield G.say(null, 'A sticky note on top: DO NOT MOVE. IT\'S IN ORDER.');
+    if (G.with('hannah')) yield G.say('Hannah', 'Those are just the ones I\'m RE-reading.');
+  };
   S.hannahCheckup = function* () {
     const f = flags(), s = G.state, w = G.play.world, p = P();
     if (f.mobileBeaten && !f.kitGot) {
