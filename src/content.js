@@ -370,7 +370,7 @@
     milk: { kind: 'key', name: 'Milk', icon: () => G.spr.milk, has: () => !!st().items.milk && !fl().badlandsBeaten, desc: 'From Dad\'s garage fridge. The expiration date is a mystery.' },
     dye: { kind: 'key', name: 'Blue Food Coloring', icon: () => G.spr.dye, has: () => !!st().items.dye && !fl().badlandsBeaten, desc: 'From Nate\'s old chemistry set. Turns anything the color of a smurf.' },
     smoke: { kind: 'key', name: 'Liquid Smoke', icon: () => G.spr.liquidSmoke, has: () => !!st().items.smoke && !fl().badlandsBeaten, desc: 'Hickory flavor. From Dad\'s grill stuff. Never drink this.' },
-    vodka: { kind: 'key', name: 'Vodka Shooters', icon: () => G.spr.vodka, has: () => !!st().items.vodka && !fl().badlandsBeaten, desc: 'Three tiny bottles. Mom confiscated them from a hollow "War and Peace" years ago, then sold them back to Nate.' },
+    vodka: { kind: 'key', name: 'Vodka Shooters', icon: () => G.spr.vodka, has: () => !!st().items.vodka && !fl().badlandsBeaten, desc: 'Three tiny bottles from a gift basket somebody gave the family years ago. Nobody ever drank them. Mom finally found a use for them.' },
     chicken: {
       kind: 'gear', equip: true, name: 'The Chicken', short: 'Chicken', icon: () => G.spr.chickens.white.right[0], has: () => !!st().items.chicken,
       count: () => st().items.eggs || 0,
@@ -2208,7 +2208,7 @@
     yield G.say('Nate', 'Okay. Think like a chemist. Things that should never, ever be in the same glass.');
     yield G.say('Nate', '{y}Milk{/}: Dad keeps some in the garage fridge. {y}Liquid smoke{/}: with the grill stuff out on the patio.');
     yield G.say('Nate', '{y}Blue food coloring{/}: my old chemistry set, upstairs. And {y}vodka shooters{/}...');
-    yield G.say('Nate', 'Mom confiscated a whole stash of those once. If anybody still has them, it\'s Mom. She\'s usually out in the garden.');
+    yield G.say('Nate', 'Somebody gave us a gift basket full of those years ago. Nobody ever drank them. Mom would know where they ended up. She\'s usually out in the garden.');
     f.fridgeGame = true;
     yield G.banner('THE REFRIGERATOR GAME', 'Find: Milk, Blue Food Coloring, Liquid Smoke, Vodka Shooters', 240);
   };
@@ -2341,14 +2341,15 @@
     flags().booksQuest = true;
   }
 
-  // The refrigerator game needs vodka shooters, and Mom has the only ones.
+  // The refrigerator game needs vodka shooters: the ones from a gift basket years ago, which nobody in
+  // the family ever drank. Mom knows where they are.
   function* askMomForVodka() {
     flags().vodkaAsked = true;
-    yield G.say('Nate', 'Also... hypothetically... do you still have any vodka shooters?');
-    yield G.say('Michelle', 'The ones I found in a hollowed-out "War and Peace"? Who exactly are these for?');
-    yield G.say('Nate', 'Badlands Chugs. He locked Lily in the fridge. It\'s for the refrigerator game.');
+    yield G.say('Nate', 'Also... do we still have those little vodka shooters? From the gift basket?');
+    yield G.say('Michelle', 'Those? They\'ve been in the back of a cabinet for years. Nobody in this house has ever touched them.');
+    yield G.say('Nate', 'Badlands Chugs locked Lily in the fridge. They\'re for the refrigerator game.');
     yield G.say('Michelle', '...I\'m not even going to ask.');
-    yield G.say('Michelle', 'I\'ve been saving these for a special occasion. This is a special occasion.');
+    yield G.say('Michelle', 'Take them. I\'m just glad SOMEBODY finally has a use for them.');
     yield* getIngredient('vodka');
   }
   // what Mom talks about before the books go missing (before Golden Hour)
@@ -2513,7 +2514,7 @@
     G.audio.sfx('secret');
     yield G.banner('MICHELLE\'S FLOWERS', 'now open!', 130);
     yield G.say('Michelle', 'Welcome to {p}Michelle\'s Flower Stand{/}! Not "the pastor\'s wife\'s flower stand." MICHELLE\'s.');
-    yield G.say('Michelle', 'Fresh flowers, Doosh for the road... and one very special hen.');
+    yield G.say('Michelle', 'Fresh flowers, Doosh for the road... and one very special chicken.');
     standOpening = true;
     yield* S.michelleShop();
     standOpening = false;
@@ -2591,13 +2592,12 @@
       yield G.say('Michelle', 'Pressed flowers in a little heart-shaped frame. It\'s good for you. Don\'t ask how.');
     }]);
     if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten) menu.push(['Vodka Shooters: 10', function* () {
-      yield G.say('Michelle', 'Vodka shooters. Who exactly are these for?');
-      yield G.say('Nate', 'Badlands Chugs. He locked Lily in the fridge. It\'s for the refrigerator game.');
+      yield G.say('Michelle', 'The vodka shooters from that old gift basket? Nobody in this family has ever opened one.');
+      yield G.say('Nate', 'Badlands Chugs locked Lily in the fridge. They\'re for the refrigerator game.');
       yield G.say('Michelle', '...I\'m not even going to ask.');
-      yield G.say('Michelle', 'I found these in a hollowed-out "War and Peace" years ago. I\'ve been saving them for a special occasion.');
-      yield G.say('Michelle', 'This is a special occasion.');
+      yield G.say('Michelle', 'They\'ve been gathering dust long enough. Better a refrigerator game than the back of a cabinet.');
       if (s.teeth >= 10) G.play.addTeeth(-10);
-      else yield G.say('Michelle', 'You\'re short? ...Just take them. Don\'t tell your father.');
+      else yield G.say('Michelle', 'You\'re short? ...Just take them. They were a gift anyway.');
       yield* getIngredient('vodka');
     }]);
     menu.push(['Doosh De Luche: 10', function* () {
@@ -3106,7 +3106,7 @@
     // the Andover mines
     { id: 'hematite', name: 'Hematite', area: 'andover', r: 0, crush: { teeth: 5 }, fact: 'Andover\'s red iron ore: the biggest hematite deposit in New Jersey. Scratch it on tile and the streak is reddish brown.' },
     { id: 'magnetite', name: 'Magnetite', area: 'andover', r: 0, crush: { teeth: 5 }, fact: 'Black iron ore that sticks to a magnet. Andover and Sulphur Hill shipped as much as 400,000 tons of iron ore.' },
-    { id: 'calcite', name: 'Calcite', area: 'andover', r: 0, crush: { eggs: 12 }, fact: 'Soft and milky white, and it fizzes in acid. It came up with the ore. Crushed, it\'s calcium grit for laying hens.' },
+    { id: 'calcite', name: 'Calcite', area: 'andover', r: 0, crush: { eggs: 12 }, fact: 'Soft and milky white, and it fizzes in acid. It came up with the ore. Crushed, it\'s calcium grit for the chickens.' },
     { id: 'marble', name: 'Franklin Marble', area: 'andover', r: 0, crush: { teeth: 5 }, fact: 'The white, sugary marble of the New Jersey Highlands, over a billion years old. The iron ore formed in rock like this.' },
     { id: 'quartz', name: 'Quartz', area: 'andover', r: 0, crush: { teeth: 5 }, fact: 'Clear six-sided crystals. Hardness 7: it scratches glass. Found almost everywhere, loved anyway.' },
     { id: 'jasper', name: 'Jasper', area: 'andover', r: 1, crush: { teeth: 10 }, fact: 'Opaque red quartz, colored by iron. Old reports list jasper right alongside Andover\'s ore.' },
@@ -3849,8 +3849,8 @@
   S.denShelf = function* () {
     const f = flags(), s = G.state;
     if (f.fridgeGame && !s.items.vodka && !f.badlandsBeaten) {
-      yield G.say(null, 'Built-in shelves packed with books. There\'s a hollow copy of "War and Peace" up top. Empty.');
-      yield G.say('Nate', 'This is where the stash used to be. Mom found it years ago. She definitely still has it.');
+      yield G.say(null, 'Built-in shelves packed with books. No vodka shooters.');
+      yield G.say('Nate', 'Mom put that old gift basket away somewhere. She\'d know where. She\'s usually out in the garden.');
       return;
     }
     if (f.booksQuest && !f.cluesDone && !f.clue_den) { yield* S.clueDen(); return; }
@@ -5095,7 +5095,7 @@
       F.stand(sp.bandsaw, 20, 3, 1, look('A bandsaw for cutting curves. Like the curves of a bass body.'));
       F.stand(sp.convertible, 2, 6, 3, look('The old red convertible, under a blanket of sawdust.', 'The trunk is covered in little handprints and a message nobody will admit to writing.'), { ht: 4 });
       F.stand(G.spr.hay, 1, 8, 1, look('A bale of straw for the chicken coop.'));
-      F.stand(sp.feedBags, 1, 10, 2, look('Bags of layer feed. The hens know exactly where these are.'));
+      F.stand(sp.feedBags, 1, 10, 2, look('Bags of chicken feed. The chickens know exactly where these are.'));
       F.stand(sp.drillPress, 8, 6, 1, look('A drill press older than Nate. It works better than Nate.'));
       F.stand(sp.lathe, 10, 7, 3, look('Dad\'s lathe. This is where the pipe bowls get turned. There are wood shavings in places wood shavings should never be.'));
       F.stand(sp.sander, 15, 6, 1, look('Drum and belt sanders. Everything in here is sanded. Even the air.'), { dx: -5 });
@@ -9267,7 +9267,7 @@
       w.addProp({ img: G.spr.woodRack, tx: 31, ty: 34, solid: [31, 34, 3, 1], hit: [31, 34, 3, 1], talk: S.homeFirewood });
       w.addProp({ img: G.spr.woodPile, tx: 31, ty: 35, dx: 1, solid: [31, 35, 2, 1], hit: [31, 35, 2, 1], talk: S.homeFirewood });
       w.addProp({ img: G.spr.hoop, tx: 34, ty: 34, dx: -6, solid: [34, 34, 1, 1], hit: [34, 34, 1, 1], talk: S.homeHoop });
-      w.addBuilding({ x: 35, y: 30, w: 7, h: 4, door: 3, style: 'shake', wall: '#2f4a3e', roof: '#4a4c56', garageDoors: 3, cupola: true, weathervane: true, to: { map: 'garage', x: 10, y: 11 } });
+      w.addBuilding({ x: 35, y: 30, w: 7, h: 4, door: 3, style: 'shake', wall: '#2f4a3e', roof: '#4a4c56', garageDoors: 3, openDoor: 1, cupola: true, weathervane: true, to: { map: 'garage', x: 10, y: 11 } });
       w.addProp({ img: G.spr.truck, tx: 44, ty: 36, h: 3, dx: 2, solid: [44, 36, 2, 3], hit: [44, 36, 2, 3], talk: S.homeTruck });
       // across the driveway: the little white pool house on the pool's left, lined up with its middle
       w.addProp({ img: G.spr.poolHouse, tx: 44, ty: 30, h: 3, dx: -4, solid: [44, 30, 2, 3], hit: [44, 30, 2, 3], talk: S.homePoolHouse });

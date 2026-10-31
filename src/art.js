@@ -1831,6 +1831,18 @@
       for (let i = 0; i < n; i++) {
         const x0 = 4 + i * (dw2 + gap), y0 = wy + wallH - dh2;
         p.rect(x0 - 1, y0 - 1, dw2 + 2, dh2 + 1, '#e8e8e8');
+        if (def.openDoor === i) {
+          // (openDoor: this one's rolled up, the way in: the door bunched at the top, and the dark
+          // workshop behind it with a lamp hanging over a workbench and tools on the back wall)
+          p.rect(x0, y0, dw2, dh2, '#2a2018');
+          p.rect(x0, y0, dw2, 4, '#f8f8f4'); p.hline(x0, x0 + dw2 - 1, y0 + 2, '#c8c8c8'); p.hline(x0, x0 + dw2 - 1, y0 + 4, '#8a8a8a');
+          const mx = x0 + (dw2 >> 1);
+          p.vline(mx, y0 + 5, y0 + 8, '#4a4a4a'); p.rect(mx - 2, y0 + 9, 5, 2, '#f8d878'); p.rect(mx - 4, y0 + 11, 9, 2, '#5a4a30');
+          for (let k = 0; k < 4; k++) { p.vline(x0 + 4 + k * 4, y0 + 8, y0 + 12, '#8a8a92'); p.set(x0 + 4 + k * 4, y0 + 7, '#a8a8b0'); }
+          p.rect(x0 + 3, y0 + dh2 - 9, dw2 - 6, 2, '#a87a48'); p.vline(x0 + 4, y0 + dh2 - 7, y0 + dh2 - 1, '#5a3a20'); p.vline(x0 + dw2 - 5, y0 + dh2 - 7, y0 + dh2 - 1, '#5a3a20');
+          p.hline(x0, x0 + dw2 - 1, y0 + dh2 - 1, '#4a3a2a');
+          continue;
+        }
         p.rect(x0, y0, dw2, dh2, '#f8f8f4');
         for (let yy = y0 + 4; yy < y0 + dh2; yy += 6) p.hline(x0, x0 + dw2 - 1, yy, '#c8c8c8');
         for (let xx = x0 + 5; xx < x0 + dw2 - 2; xx += 6) p.vline(xx, y0, y0 + dh2 - 1, '#dcdcdc');
