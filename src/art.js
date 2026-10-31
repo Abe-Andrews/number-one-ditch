@@ -7437,7 +7437,7 @@
   }
 
   // ---- the storage garage: junk, and a TON of yellow guitar cables (Abe bought
-  // them to sell on eBay)
+  // way too many and can't give them away)
   function cableCoil(p, cx, cy, r, c = ['#f0c820', '#e0b418', '#8a6a0c']) {
     const ry = r * 0.6;
     for (let y = Math.floor(cy - ry); y <= cy + ry; y++) for (let x = Math.floor(cx - r); x <= cx + r; x++) {

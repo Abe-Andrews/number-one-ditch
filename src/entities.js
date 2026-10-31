@@ -3616,7 +3616,7 @@
   G.Bird = Bird;
 
   // ============================================================== THE CONDO (Chesapeake)
-  // One of Abe's yellow guitar cables (his eBay "inventory"), come alive: it slithers after Nate
+  // One of Abe's yellow guitar cables (he bought way too many and can't give them away), come alive: it slithers after Nate
   // in a wave, rears back, and lunges. A lunge that lands bites AND tangles him up (half speed
   // for a second). Its body follows its plug, with a plug on the tail end too. The surf rod can
   // reel one in (it's a cable: Nate just winds it up).

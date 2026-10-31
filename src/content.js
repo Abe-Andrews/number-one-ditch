@@ -425,7 +425,7 @@
     },
     yellowCable: {
       kind: 'key', name: 'Yellow Guitar Cable', short: 'Cable', icon: () => G.spr.cableIcon, has: () => !!st().items.yellowCable && !fl().bassGiven,
-      desc: 'One of Abe\'s thousands of yellow guitar cables, from the storage room. They\'re "inventory." He won\'t miss one.',
+      desc: 'One of Abe\'s thousands of yellow guitar cables, from the storage room. He bought WAY too many and he\'s been begging people to take them. Nobody does.',
     },
     sloth: {
       kind: 'key', name: 'Romulus\'s Sloth', short: 'Sloth', icon: () => G.spr.slothIcon, has: () => !!st().items.sloth && !fl().romGap,
@@ -500,7 +500,7 @@
     nate: { name: 'Nate', bio: 'Geology major at Lafayette. Makes his own fireworks. Thinks about pH often.', skill: 'Rock hammer, chemistry, explosive presents' },
     doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Obsessed with the UFC. Never skips leg day. Owns three luchador masks. Responsible for the Alligator Incident.', skill: 'Lifts and smashes heavy things' },
     lily: { name: 'Lily', bio: 'Nate\'s sister. Survived a refrigerator. Still subscribed to Badlands Chugs.', skill: 'A "No." that pops balloons' },
-    abe: { name: 'Abe', bio: '6\'5". Lives in Chesapeake with Hannah and Romulus. Sells yellow guitar cables on eBay (eventually). Gave Nate a bidet for Christmas, then took it back.', skill: 'He\'s 6\'5": reaches things up high, and boosts Nate over tall hedges' },
+    abe: { name: 'Abe', bio: '6\'5". Lives in Chesapeake with Hannah and Romulus. Bought way too many yellow guitar cables, and can\'t even give them away. Gave Nate a bidet for Christmas, then took it back.', skill: 'He\'s 6\'5": reaches things up high, and boosts Nate over tall hedges' },
     hannah: { name: 'Hannah', bio: '5\'2". A nurse in the NICU at CHKD. Married to Abe. Romulus\'s favorite person. Reads fantasy every spare minute, Sarah J. Maas above all. Father Eggmas hypnotized her babies, and now it\'s personal.', skill: 'Heals: patches Nate up when he\'s low, and gives him a checkup when you talk to her' },
   };
 
@@ -4275,7 +4275,7 @@
     flower: [['Nate', 'Snapdragons. Living up to the name.']],
     gourd: [['Nate', 'Birdhouse gourds. Hopping. Something is definitely living in there.']],
     bear: [['Nate', 'A BEAR! Bedminster really does have bears!']],
-    cable: [['Nate', 'Is that one of Abe\'s yellow guitar cables? It\'s... SLITHERING.'], ['Nate', 'Father Eggmas got to the inventory.']],
+    cable: [['Nate', 'Is that one of Abe\'s yellow guitar cables? It\'s... SLITHERING.'], ['Nate', 'Father Eggmas got to Abe\'s cables.']],
     goose: [['Nate', 'Canada geese. Off the golf course.'], ['Nate', 'Rule number one in Virginia: you do NOT make eye contact with a goose.'], ['Nate', '...I made eye contact with a goose.']],
   };
   S.critterIntro = function (kind) {
@@ -4284,7 +4284,7 @@
     f['met_' + kind] = true;
     const lines = CRITTER_LINES[kind].slice();
     if (kind === 'bear' && G.with('doron')) lines.push(['Doron', 'I could take him.'], ['Nate', 'Do NOT suplex the bear.']);
-    if (kind === 'cable' && G.with('abe')) lines.push(['Abe', 'Don\'t hurt the inventory!'], ['Nate', 'The inventory is trying to STRANGLE me, Abe.'], ['Abe', '...Okay. Hurt the inventory a little.']);
+    if (kind === 'cable' && G.with('abe')) lines.push(['Abe', 'Finally! Somebody wants one!'], ['Nate', 'It\'s trying to STRANGLE me, Abe.'], ['Abe', 'Take it anyway. Take two. Please.']);
     if (kind === 'goose' && G.with('abe')) lines.push(['Abe', 'They chased Romulus into the pond once. He still won\'t go near water.']);
     if (kind === 'goose' && G.with('hannah')) lines.push(['Hannah', 'One took my sandwich right out of my hand. I still think about it.']);
     G.script.run((function* () { for (const [who, text] of lines) yield G.say(who, text); })());
@@ -4441,7 +4441,7 @@
     const lines = {
       abe: [
         'I can see over everything from up here. You should try it sometime.',
-        'The yellow cables are an investment. The market will come around.',
+        'Still got about nine hundred yellow guitar cables. Free to a good home. Free to ANY home.',
         'Romulus isn\'t scared of ANYBODY. Except you. Still no idea why.',
         'Keep the bidet topped off. You never know.',
       ],
@@ -11648,7 +11648,7 @@
     f.abeLine = ((f.abeLine || 0) + 1) % 3;
     yield G.say('Abe', [
       'Hannah gets off work later. Make yourselves at home.',
-      'The yellow cables in the storage room are inventory. Do NOT touch the inventory.',
+      'Want a yellow guitar cable? Take one. Take ten. I bought WAY too many and nobody wants them.',
       'I\'m working from home today. Technically. My office is upstairs.',
     ][f.abeLine]);
   };
@@ -11865,12 +11865,12 @@
     yield G.say('Nate', 'A sunburst bass! Abe has a BASS too?');
     yield G.say('Nate', 'He has so many guitars, he won\'t even notice.');
   };
-  // the yellow guitar cables in the storage room (Abe's "inventory")
+  // the yellow guitar cables in the storage room (Abe bought way too many and can't give them away)
   S.storageCable = function* (text) {
     const f = flags(), s = G.state;
     if (f.slothQuest !== 2 || s.items.yellowCable || f.bassGiven) { yield G.say(null, text); return; }
-    yield G.say('Nate', 'Abe said not to touch the inventory.');
-    yield G.say('Nate', '...He has thousands. He won\'t miss one.');
+    yield G.say('Nate', 'Abe has been trying to give these away for MONTHS.');
+    yield G.say('Nate', 'He\'s going to be so happy one of them is finally leaving.');
     yield G.say(null, 'Nate pulls out a yellow cable. It\'s tangled up with one, two, three, four, five...');
     yield G.say('Nate', '...a LOT of other cables.');
     yield G.say(null, 'It takes a while, but Nate gets it untangled.');
@@ -13349,7 +13349,8 @@
   };
 
   // ---------------------------------------------------------------- the storage garage
-  // No room to park: it's all junk, and a TON of yellow guitar cables Abe bought to sell on eBay.
+  // No room to park: it's all junk, and a TON of yellow guitar cables Abe bought way too many of (he's
+  // trying to give them away; nobody wants them).
   G.MAPS.condoStorage = {
     name: 'The Storage Room',
     music: 'house',
@@ -13366,9 +13367,9 @@
       const F = furnish(w), sp = G.spr;
       // FURNITURE (photos pending): anything else that lives in storage (open floor around x 3-9, y 4-5).
       const cables = [
-        'Yellow guitar cables. A TON of them. Abe bought them to sell on eBay.',
+        'Yellow guitar cables. A TON of them. Abe bought way too many, and he can\'t even give them away.',
         'More yellow guitar cables. They might be multiplying.',
-        'Yellow guitar cables, all the way down. The eBay empire is still in the warehouse phase.',
+        'Yellow guitar cables, all the way down. Abe would PAY somebody to take some.',
       ].map((t) => () => S.storageCable(t));
       F.stand(sp.cableTotes, 1, 3, 1, cables[0]);
       F.stand(sp.storageBoxes, 2, 3, 2, look('Boxes. Taped, half taped, and not taped at all.'));
@@ -13455,7 +13456,7 @@
   // hands over the sloth
   S.ladyTrade = function* () {
     const f = flags(), s = G.state, w = G.play.world, lady = w.lady, L = 'Paul McCartney Lady';
-    yield G.say('Nate', 'One bass, from Abe\'s closet. And one yellow guitar cable, from Abe\'s "inventory."');
+    yield G.say('Nate', 'One bass, from Abe\'s closet. And one yellow guitar cable. Abe will be thrilled. He\'s been trying to get rid of them for months.');
     yield G.say(L, 'Oh, she\'s a beauty.');
     yield G.say(null, 'She flips the bass upside down.');
     yield G.say('Nate', 'Um. You\'re holding it upside down.');
