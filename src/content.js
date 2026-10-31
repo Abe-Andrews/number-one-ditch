@@ -559,7 +559,7 @@
     { id: 'carley', name: 'Prof. Carley', tag: '{y}Friend', met: () => fl().carleyMet, bio: 'Associate professor of geology, in Van Wickle Hall. She\'s taking Nate to New Zealand to study abroad: volcanoes, glaciers and a plate boundary.' },
     { id: 'ben', name: 'Ben', tag: '{y}Friend', met: () => fl().phDone, bio: 'Nate\'s lab partner. Was paid in shark teeth to ask about the pH of rainwater. Once made the campus paper for his shirt.' },
     { id: 'bismarck', name: 'Bismarck', tag: '{y}Friend', met: () => fl().bismarckMet, bio: 'A McKelvey Scholar from Manhattan who wants to be a lawyer. He invited Nate to church.' },
-    { id: 'brooks', name: 'Brooks', tag: '{y}Friend', met: () => fl().brooksMet, bio: 'Hilarious. His voice is impossibly high. Higher than his mom\'s.' },
+    { id: 'brooks', name: 'Brooks', tag: '{y}Friend', met: () => fl().brooksMet, bio: 'Hilarious. Always asks the question everybody else is too nervous to ask.' },
     { id: 'anette', name: 'Anette', tag: '{y}Friend', met: () => fl().anetteMet, bio: 'Abe and Hannah\'s neighbor. Keeps potted plants all up and down the street. Her knees are done with watering cans.' },
     {
       id: 'paulLady', name: 'Paul McCartney Lady', tag: '{y}Friend', met: () => fl().ladyMet,
@@ -1389,20 +1389,8 @@
   };
 
   S.brooks = function* () {
-    const f = flags(), w = G.play.world;
-    f.brooksMet = true;
+    flags().brooksMet = true;
     yield G.say('Brooks', 'I heard nobody has EVER gotten the last question on this final right.');
-    // his voice is so high that a beaker on the lab bench gives out (every time; Nate notices once)
-    G.audio.sfx('glass');
-    w.burst(2 * 16 + 8, 2 * 16 + 4, ['#e8f4fc', '#a8d8f0', '#ffffff'], 12, { speed: 1.4, up: 1, g: 0.12, life: 24, size: 1 });
-    w.pop(2 * 16 + 8, 3 * 16 + 4, 'CRACK!', '#a8d8f0');
-    G.play.shake(4, 1);
-    yield G.wait(24);
-    if (!f.brooksCrack) {
-      f.brooksCrack = true;
-      yield G.say(null, 'A beaker on the lab bench just cracked clean in half.');
-      yield G.say('Nate', '...Brooks. Was that your VOICE?');
-    }
     yield G.say('Brooks', 'Also, why are there fire extinguishers on every single wall in here?');
   };
 

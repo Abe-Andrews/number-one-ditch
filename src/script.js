@@ -75,8 +75,8 @@
 
   const BOX = { x: 6, w: 228, h: 44, lineH: 11, lines: 3 };
 
-  // who talks in a different voice (the sfx their text blips with)
-  const VOICES = { Brooks: 'squeak' };
+  // who talks in a different voice (the sfx their text blips with; nobody, right now)
+  const VOICES = {};
   // who gets a little face on their name plate (their sprite's head)
   const FACES = {
     Lily: 'lily', Abe: 'abe', Hannah: 'hannah', Doron: 'doron', Dad: 'dad', Mikey: 'mikey', Michelle: 'michelle', Nani: 'nani', Tom: 'tom', 'Campus Safety': 'officer', 'Toll Collector': 'tollWorker', Anette: 'anette', 'Paul McCartney Lady': 'paulLady', Server: 'toroServer',

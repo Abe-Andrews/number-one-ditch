@@ -161,9 +161,6 @@ G.audio = (function () {
 
   const SFX = {
     blip: (t) => tone(1046, t, 0.025, 'square', 0.05),
-    // Brooks's voice: impossibly high (higher than his mom's), a little chirp on every blip
-    squeak: (t) => tone(2300 + Math.random() * 700, t, 0.03, 'square', 0.04, sfxBus, 3400),
-    glass: (t) => { noise(t, 0.08, 0.3, sfxBus, 7000); [3136, 2637, 3520, 2349].forEach((f, i) => tone(f, t + 0.02 + i * 0.04, 0.12, 'triangle', 0.06)); noise(t + 0.1, 0.25, 0.12, sfxBus, 5000); },
     menu: (t) => tone(784, t, 0.04, 'square', 0.08),
     select: (t) => { tone(784, t, 0.05, 'square', 0.09); tone(1175, t + 0.05, 0.08, 'square', 0.09); },
     cancel: (t) => { tone(523, t, 0.05, 'square', 0.08); tone(392, t + 0.05, 0.08, 'square', 0.08); },
