@@ -419,6 +419,27 @@ G.audio = (function () {
       // the metronome: a woodblock tick, higher on the one
       click(accent, at) { if (!ctx || muted) return; const t = when(at); tone(accent ? 1800 : 1250, t, 0.04, 'square', lv(accent ? 0.12 : 0.08), musicBus); },
     },
+    // A baby crying (Hannah's shift): a sawtooth wail that swoops up and falls ("WAAAH"), with a quick
+    // vibrato, through two vowel formants. pitch: each baby's own (about 0.8-1.2); loud: 0.5 a
+    // whimper, up to about 1.6 a scream (longer, higher, shakier, with a rasp of breath).
+    cry(pitch = 1, loud = 1) {
+      if (!ctx || muted) return;
+      const t = ctx.currentTime + 0.005, dur = 0.3 + 0.42 * loud, f0 = 360 * pitch * (1 + 0.18 * Math.max(0, loud - 1));
+      const o = ctx.createOscillator(), vib = ctx.createOscillator(), vg = ctx.createGain(), mix = ctx.createGain(), g = ctx.createGain();
+      o.type = 'sawtooth';
+      o.frequency.setValueAtTime(f0 * 0.8, t); o.frequency.linearRampToValueAtTime(f0 * 1.3, t + 0.1); o.frequency.exponentialRampToValueAtTime(f0 * 0.85, t + dur);
+      vib.frequency.value = 6 + loud * 3; vg.gain.value = f0 * 0.03 * loud; vib.connect(vg); vg.connect(o.frequency);
+      for (const [fq, q, lvl] of [[1100, 5, 1], [2700, 7, 0.6]]) {
+        const bp = ctx.createBiquadFilter(), bg = ctx.createGain();
+        bp.type = 'bandpass'; bp.frequency.value = fq * pitch; bp.Q.value = q; bg.gain.value = lvl;
+        o.connect(bp); bp.connect(bg); bg.connect(mix);
+      }
+      const v = 0.35 * loud;
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.04); g.gain.setValueAtTime(v, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      mix.connect(g); g.connect(sfxBus);
+      o.start(t); vib.start(t); o.stop(t + dur + 0.05); vib.stop(t + dur + 0.05);
+      if (loud > 1) noise(t, dur * 0.8, 0.025 * loud, sfxBus, 3000);
+    },
     // the audio clock (seconds), for timing the studio's live playing against
     now() { return ctx ? ctx.currentTime : 0; },
     get running() { return !!ctx && ctx.state === 'running'; },

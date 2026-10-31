@@ -213,6 +213,11 @@
 
   // Rae (an original character): the studio tech in Studio B. Shoulder-length dark hair, a black
   // band tee, headphones around her neck.
+  // The oncoming nurses who want report in Hannah's SHIFT CHANGE (original characters).
+  G.CAST.nurseKim = { skin: '#e8c0a0', hair: '#1c1418', hairStyle: 'shoulder', shirt: '#4a8ad8', pants: '#4a8ad8', shoes: '#f0f0f0', torso: 5, legs: 3, smile: '#ffffff' };
+  G.CAST.nurseJoe = { skin: '#b07850', hair: '#2a1c14', hairStyle: 'buzz', shirt: '#3a8a6a', pants: '#3a8a6a', shoes: '#2a2a30', torso: 6, legs: 3, smile: '#ffffff' };
+  G.CAST.nurseTasha = { skin: '#7a4a30', hair: '#1c1418', hairStyle: 'locs', shirt: '#c85a8a', pants: '#c85a8a', shoes: '#f0f0f0', torso: 5, legs: 3, smile: '#ffffff' };
+  G.CAST.nurseLuis = { skin: '#d0a078', hair: '#3a2418', hairStyle: 'short', shirt: '#5a5ab8', pants: '#5a5ab8', shoes: '#f0f0f0', torso: 6, legs: 3, smile: '#ffffff' };
   G.CAST.rae = {
     skin: '#c08a68', hair: '#2a1c18', hairStyle: 'shoulder', smile: '#ffffff', headphones: '#1c1c22',
     shirt: '#2a2a30', pants: '#3a4a6a', shoes: '#e8e8e8', torso: 6, legs: 3,
@@ -666,9 +671,9 @@
       else add('Nate\'s studio', false, G.sayable(ns) + ' song' + (ns === 1 ? '' : 's') + ' saved', 'Lafayette - Studio B', 'Record up to eight tracks, live, at the console in Studio B. Save a song, then PLAY IN GAME to make it the game\'s music.' + (s.items.metronome ? '' : ' (Abe might have a metronome once you\'ve got three instruments.)'));
     }
     if (f.mobileBeaten && s.party.includes('hannah')) {
-      const N = s.nicu || {}, ns = ['shift1', 'shift2', 'shift3'].reduce((t, k) => t + ((N[k] && N[k].stars) || 0), 0);
+      const N = s.nicu || {}, ns = ['shift1', 'shift2', 'shift3', 'shift4'].reduce((t, k) => t + ((N[k] && N[k].stars) || 0), 0);
       if (!f.nicuMet) side.push({ name: 'Charge Nurse Dot', status: 'Hannah is late!', kind: 'rumor', where: 'CHKD - the NICU', hint: 'Hannah\'s charge nurse is back on the floor in the NICU, and she\'s looking for Hannah.' });
-      else add('Hannah\'s shift', ns >= 9 && 'Every star!', G.sayable(ns) + '/' + G.sayable(9) + ' stars', 'CHKD - the NICU', 'Talk to Charge Nurse Dot in the NICU with Hannah along, and run the NICU as Hannah. Three shifts, three stars each.', [ns, 9]);
+      else add('Hannah\'s shift', ns >= 12 && 'Every star!', G.sayable(ns) + '/' + G.sayable(12) + ' stars', 'CHKD - the NICU', 'Talk to Charge Nurse Dot in the NICU with Hannah along, and run the NICU as Hannah. Four shifts, three stars each.', [ns, 12]);
     }
     if (G.homeDone() && !f.pipeBench) side.push({ name: 'Dad\'s workshop', status: 'Dad has something to show you', kind: 'rumor', where: 'Home', hint: 'Things are finally quiet at home. Dad wants you in his workshop.' });
     if (f.pipeBench) {
@@ -3537,7 +3542,7 @@
     s.tinsMade = {}; for (const t of G.TOBACCOS) s.tinsMade[t.id] = { stars: 3 };
     s.instruments = {}; for (const it of G.INSTRUMENTS) s.instruments[it.id] = true;
     s.fights = {}; for (const F of G.FIGHTERS) s.fights[F.id] = true;
-    s.nicu = { shift1: { stars: 3, best: 300 }, shift2: { stars: 3, best: 420 }, shift3: { stars: 3, best: 540 } };
+    s.nicu = { shift1: { stars: 3, best: 400 }, shift2: { stars: 3, best: 600 }, shift3: { stars: 3, best: 800 }, shift4: { stars: 3, best: 800 } };
   };
 
   // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)
@@ -13561,14 +13566,25 @@
   //   cry (Shift 3): pick the baby up, rock them in the glider, put them back in their own isolette
   // Any counter holds whatever you set on it. Points for every baby looked after (more for being
   // quick); a need that runs out costs 10, and 5 more every 8 seconds it keeps waiting. Stars for
-  // the score. Three shifts, each opening once the one before has a star; Shift 3 has twins (who want
-  // the same thing at the same time) and Dot doing her rounds, right through the middle of the room.
-  // State: s.nicu ({ shift1..3: { stars, best } }). Flags: nicuMet, nicuHow_<shift>.
+  // the score. Four shifts, each opening once the one before has a star; Shift 3 has twins (who want
+  // the same thing at the same time) and Dot doing her rounds, right through the middle of the room;
+  // Shift 4 (SHIFT CHANGE) has six babies, meds and report:
+  //   meds: the bubble shows a syringe in a color; take the same color from the med drawers (1 red,
+  //     2 blue, 3 gold) and hold Z at the baby (the wrong one won't go in)
+  //   report: the next shift's nurses come to the door; hold Z there to give report before they give
+  //     up and leave (10 points off)
+  // Babies with a need start whimpering when their timer's half gone, and scream when they're crying
+  // (until they're rocked) or overdue: each in their own pitch (G.audio.cry), so a full room is LOUD.
+  // State: s.nicu ({ shift1..4: { stars, best } }). Flags: nicuMet, nicuHow_<shift>.
   const nicuState = () => (G.state.nicu = G.state.nicu || {});
   const NT = 16, NOY = 16; // the room's tiles, and its top (under the HUD bar)
   const WARM = 180, HOT = 660; // a bottle in the warmer: warm, then too hot
   const NICU_NAMES = ['PEANUT', 'BEAN', 'WAFFLES', 'PICKLE', 'NOODLE', 'BISCUIT'];
   const NICU_SUPPLY = { F: 'bottle', D: 'diaper', B: 'blanket', L: 'leads' };
+  // the med drawers (1, 2, 3) and their colors
+  const MED_DRAWERS = { 1: 0, 2: 1, 3: 2 }, MED_COLORS = ['#e84848', '#3a78d8', '#f0c020'], MED_NAMES = ['red', 'blue', 'gold'];
+  // the oncoming nurses who want report (original characters)
+  const REPORT_NURSES = [['nurseKim', 'Nurse Kim'], ['nurseJoe', 'Nurse Joe'], ['nurseTasha', 'Nurse Tasha'], ['nurseLuis', 'Nurse Luis']];
   const NICU_NEEDS = {
     feed: { pts: 25, w: 3, item: 'bottle', hold: 80, ask: 'is hungry. Warm up a bottle.' },
     diaper: { pts: 25, w: 3, item: 'diaper', hold: 70, ask: 'needs a clean diaper.' },
@@ -13576,10 +13592,12 @@
     swaddle: { pts: 20, w: 2, item: 'blanket', hold: 60, ask: 'kicked loose. Bring a warm blanket.' },
     leads: { pts: 20, w: 2, item: 'leads', hold: 50, ask: 'pulled a lead off. Bring stickers.' },
     cry: { pts: 30, w: 1, ask: 'is crying.' },
+    meds: { pts: 25, w: 2, item: 'med', hold: 50, ask: 'is due for meds.' },
   };
   const DIRTY = 'Hands, Hannah! Wash them at the sink.';
   // The rooms (15x8 tiles): c counter, F milk fridge, W bottle warmer, D diapers, B blanket warmer,
-  // L lead stickers, S sink, T diaper pail, G glider, I/i an isolette (2x2), . floor.
+  // L lead stickers, S sink, T diaper pail, G glider, 1/2/3 med drawers, R the door (report),
+  // I/i an isolette (2x2), . floor.
   const NICU_SHIFTS = [
     {
       id: 'shift1', name: 'SHIFT 1', title: 'DAY SHIFT', secs: 120, patience: 35, every: [300, 660], needs: ['feed', 'diaper', 'cold'], stars: [140, 260, 380],
@@ -13602,6 +13620,13 @@
       map: ['cFWWcBcccLcDcTc', 'c.............c', 'c.Ii..Ii..Ii..c', 'c.ii..ii..ii..c', 'c.............c', 'G...Ii...Ii...c', 'c...ii...ii...c', 'ccccccSSccccccc'],
       how: [['CRYING BABIES', ['CRYING: pick the baby up (tap Z), carry them to the GLIDER and hold Z to rock them, then put them back in their OWN isolette.', 'The TWINS want the same thing at the same time. Always.', 'And Dot is doing her rounds. Don\'t run into Dot.']]],
     },
+    {
+      id: 'shift4', name: 'SHIFT 4', title: 'SHIFT CHANGE', secs: 180, patience: 36, every: [340, 720], needs: ['feed', 'diaper', 'cold', 'swaddle', 'leads', 'cry', 'meds'], stars: [200, 360, 520], twins: true,
+      report: { first: 720, every: [1320, 1920], patience: 1080, hold: 150 },
+      blurb: 'Six babies (with twins), meds to match, and the next shift wants report. The big one.',
+      map: ['cFWWcBc123cLcDc', 'c.............c', 'c.Ii..Ii..Ii..c', 'c.ii..ii..ii..c', 'c.............T', 'G.Ii..Ii..Ii..c', 'c.ii..ii..ii..c', 'ccccSSccRRccccc'],
+      how: [['MEDS AND REPORT', ['MEDS: the bubble shows a syringe in a color. Take the SAME color from the MED DRAWERS (1 red, 2 blue, 3 gold), then hold Z at the baby. The wrong one won\'t go in.', 'REPORT: the next shift\'s nurses come to the DOOR. Hold Z there to give report before they give up and leave.', 'Six babies. Twins. Good luck, Hannah.']]],
+    },
   ];
 
   // ---- drawing: the NICU background (menus and HOW TO cards), the need icons, items, a bar
@@ -13621,11 +13646,14 @@
     swaddle: ['...........', 'kkkkkkkkkkk', 'klllllllllk', 'kpppppppppk', 'klllllllllk', 'klllllllllk', 'kpppppppppk', 'klllllllllk', 'kkkkkkkkkkk', '...........', '...........'],
     leads: ['kkkkkkkkkkk', 'kdddddddddk', 'kdddddrdddk', 'kddddrdrddk', 'krrrrdddrrk', 'kdddddddddk', 'kkkkkkkkkkk', '....kkk....', '...........', '...........', '...........'],
     cry: ['..kkkkkkk..', '.ksssssssk.', 'kskkssskksk', 'ktssssssstk', 'ktssrrrsstk', 'ktsrrrrrstk', '.ksssssssk.', '..kkkkkkk..', '...........', '...........', '...........'],
+    meds: ['...........', '...........', '..kkkkkkk..', 'k.kwxxxxk..', 'kkkwxxxxkgg', 'k.kwxxxxk..', '..kkkkkkk..', '...........', '...........', '...........', '...........'],
+    report: ['...kkkkk...', '.kkkgggkkk.', '.koooooook.', '.kowwwwwok.', '.kokkkkwok.', '.kowwwwwok.', '.kokkkwwok.', '.kowwwwwok.', '.kokkkkwok.', '.koooooook.', '.kkkkkkkkk.'],
   };
-  const NEED_PAL = { k: '#2a3440', w: '#f8f8f4', b: '#8ac8f8', p: '#f4a8c8', m: '#f8e0a0', c: '#3a88d8', l: '#a8c8f0', d: '#1c2a24', r: '#f84848', s: '#f6d2bc', t: '#5ab8f0' };
-  function needIcon(ctx, kind, x, y) {
-    const art = NEED_ART[kind], dy = kind === 'leads' || kind === 'cry' ? 2 : kind === 'cold' || kind === 'swaddle' ? 1 : 0;
-    art.forEach((row, j) => [...row].forEach((c, i) => { if (c !== '.') { ctx.fillStyle = NEED_PAL[c]; ctx.fillRect(x + i, y + j + dy, 1, 1); } }));
+  const NEED_PAL = { k: '#2a3440', w: '#f8f8f4', b: '#8ac8f8', p: '#f4a8c8', m: '#f8e0a0', c: '#3a88d8', l: '#a8c8f0', d: '#1c2a24', r: '#f84848', s: '#f6d2bc', t: '#5ab8f0', g: '#b8c0c8', o: '#b07a40' };
+  // (x in the art is the med's color)
+  function needIcon(ctx, kind, x, y, med) {
+    const art = NEED_ART[kind], dy = kind === 'leads' || kind === 'cry' ? 2 : kind === 'cold' || kind === 'swaddle' || kind === 'meds' ? 1 : 0;
+    art.forEach((row, j) => [...row].forEach((c, i) => { if (c !== '.') { ctx.fillStyle = c === 'x' ? MED_COLORS[med || 0] : NEED_PAL[c]; ctx.fillRect(x + i, y + j + dy, 1, 1); } }));
   }
   // the things Hannah carries (10x10)
   function nicuItem(ctx, it, x, y, t) {
@@ -13640,6 +13668,7 @@
       if (d) { R('#a87838', 3, 5, 3, 2); const k = (t >> 3) & 1; R('#78b048', 2, -2 - k, 1, 2); R('#78b048', 7, -3 + k, 1, 2); }
     } else if (it.kind === 'blanket') { R('#7a8696', 0, 2, 10, 8); R('#a8c8f0', 1, 3, 8, 6); R('#f4a8c8', 1, 5, 8, 1); R('#f8f8f4', 1, 3, 8, 1); }
     else if (it.kind === 'leads') { R('#7a8696', 0, 2, 10, 7); R('#f4f4f0', 1, 3, 8, 5); R('#c8c8c8', 2, 4, 2, 2); R('#2a2a30', 4, 4, 2, 2); R('#d83838', 6, 4, 2, 2); }
+    else if (it.kind === 'med') { R('#2a3440', 0, 3, 10, 5); R('#f8f8f4', 2, 4, 2, 3); R(MED_COLORS[it.med], 4, 4, 4, 3); R('#2a3440', 0, 4, 1, 3); R('#b8c0c8', 9, 5, 2, 1); }
     else if (it.kind === 'baby') {
       const b = it.baby;
       R('#7a8696', 0, 1, 10, 10); R('#a8c8f0', 1, 2, 8, 8); R('#f6d2bc', 3, 2, 4, 4); R(b.cap, 3, 1, 4, 2); R('#2a1c24', 3, 4, 1, 1); R('#2a1c24', 6, 4, 1, 1);
@@ -13677,9 +13706,13 @@
             st, twin, name: twin ? (i === isos.length - 2 ? 'TWIN A' : 'TWIN B') : NICU_NAMES[i],
             iso: twin ? 'mint' : ['blue', 'pink', 'mint'][i % 3], cap: twin ? '#a8e0c8' : ['#8ab8e8', '#f4a8c8', '#a8e0c8'][i % 3],
             need: null, next: 90 + i * 140 + Math.round(Math.random() * 100), prog: 0,
+            pitch: twin ? 1.12 : 0.85 + ((i * 0.37) % 0.35), cryT: 30,
           };
           this.babies.push(st.baby);
         });
+        // (the next shift's nurses, coming for report)
+        if (S0.report) { this.nurse = null; this.nurseNext = S0.report.first; this.nurseI = 0; }
+        this.cryGap = 0; this.wails = [];
         Object.assign(this, { hx: 7 * NT + 8, hy: NOY + 4 * NT + 12, dir: 'up', anim: 0, moving: false, dashT: 0, dashCD: 0, held: null, dirty: false, wash: 0 });
         Object.assign(this, { t: 0, left: S0.secs * 60, score: 0, done: 0, missed: 0, phase: 'ready', pops: [], msg: null, msgT: 0, focus: null, working: null });
         if (S0.dot) { const [x, y] = S0.dot[0]; this.dot = { x: x * NT + 8, y: NOY + y * NT + 12, i: 1, step: 1, dir: 'right', anim: 0, wait: 0 }; }
@@ -13716,6 +13749,26 @@
           if (h) return no(h.kind === 'dirty' ? 'Diaper in the pail first. Then wash.' : 'Put that down first.');
           if (!this.dirty) return no('Your hands are already clean.');
           return { what: 'Hold Z: wash your hands', hold: 'wash', dur: 60, prog: () => this.wash, set: (v) => (this.wash = v), done: () => { this.dirty = false; this.wash = 0; G.audio.sfx('select'); this.say('Squeaky clean.'); } };
+        }
+        if (k in MED_DRAWERS) {
+          const m = MED_DRAWERS[k];
+          if (h && h.kind === 'med' && h.med === m) return { what: 'Z: put it back', tap: () => { this.held = null; G.audio.sfx('menu'); } };
+          if (h) return no('Your hands are full.');
+          if (this.dirty) return no(DIRTY);
+          return { what: 'Z: take a ' + MED_NAMES[m] + ' syringe', tap: () => { this.held = { kind: 'med', med: m }; G.audio.sfx('pop'); } };
+        }
+        if (k === 'R') {
+          const n = this.nurse;
+          if (!n) return no('The door to the hall. The next shift\'s nurses come here for report.');
+          if (h) return no('Put that down to give ' + n.name + ' report.');
+          return { what: 'Hold Z: give ' + n.name + ' report', hold: 'report', dur: S0.report.hold, prog: () => n.prog, set: (v) => (n.prog = v), done: () => {
+            const pts = 30 + Math.round((10 * n.left) / n.max);
+            this.score += pts; this.done++;
+            this.pop(st, '+' + G.sayable(pts), '#38a858');
+            G.audio.sfx('select');
+            this.say(n.name + ': Got it. Thanks, Hannah!');
+            this.nurse = null; this.nurseNext = this.nextNurse();
+          } };
         }
         if (NICU_SUPPLY[k]) {
           const it = NICU_SUPPLY[k];
@@ -13758,7 +13811,7 @@
         const h = this.held, N = b.need && NICU_NEEDS[b.need], no = (why) => ({ no: why });
         if (h && h.kind === 'baby') {
           if (h.baby !== b) return no('That\'s not Baby ' + h.baby.name + '\'s isolette.');
-          return { what: 'Z: put Baby ' + b.name + ' back to bed', tap: () => { this.held = null; b.out = false; if (b.rocked) this.complete(b); else { G.audio.sfx('wah'); this.say('Baby ' + b.name + ' is still crying.'); } } };
+          return { what: 'Z: put Baby ' + b.name + ' back to bed', tap: () => { this.held = null; b.out = false; if (b.rocked) this.complete(b); else { G.audio.cry(b.pitch, 1.4); this.say('Baby ' + b.name + ' is still crying.'); } } };
         }
         if (this.dirty) return no(DIRTY);
         if (!b.need) return no('Baby ' + b.name + ' is sound asleep.');
@@ -13768,8 +13821,10 @@
           return { what: 'Z: pick up Baby ' + b.name, tap: () => { this.held = { kind: 'baby', baby: b }; b.out = true; b.rocked = false; b.prog = 0; G.audio.sfx('pop'); } };
         }
         if (h && h.kind === 'bottle' && b.need === 'feed' && (h.heat < WARM || h.heat >= HOT)) return no(h.heat < WARM ? 'Too cold! Warm it up in the bottle warmer.' : 'Way too hot! Bin it and start over.');
+        if (b.need === 'meds' && h && h.kind === 'med' && h.med !== b.med) return no('WRONG MED! Baby ' + b.name + ' needs the ' + MED_NAMES[b.med] + ' one.');
+        if (b.need === 'meds' && (!h || h.kind !== 'med')) return no('Baby ' + b.name + ' is due for meds: the ' + MED_NAMES[b.med] + ' syringe.');
         if (!h || h.kind !== N.item) return no('Baby ' + b.name + ' ' + N.ask);
-        return { what: b.need === 'leads' ? 'Hold Z: stick Baby ' + b.name + '\'s leads back on' : 'Hold Z: ' + { feed: 'feed', diaper: 'change', swaddle: 'swaddle' }[b.need] + ' Baby ' + b.name, hold: b.need, dur: N.hold, baby: b, prog: () => b.prog, set: (v) => (b.prog = v), done: () => {
+        return { what: b.need === 'leads' ? 'Hold Z: stick Baby ' + b.name + '\'s leads back on' : b.need === 'meds' ? 'Hold Z: give Baby ' + b.name + ' the ' + MED_NAMES[b.med] + ' med' : 'Hold Z: ' + { feed: 'feed', diaper: 'change', swaddle: 'swaddle' }[b.need] + ' Baby ' + b.name, hold: b.need, dur: N.hold, baby: b, prog: () => b.prog, set: (v) => (b.prog = v), done: () => {
           if (b.need === 'diaper') { this.held = { kind: 'dirty' }; this.dirty = true; } else this.held = null;
           this.complete(b);
         } };
@@ -13784,10 +13839,12 @@
       newNeed(b) {
         const pool = S0.needs.flatMap((k) => Array(NICU_NEEDS[k].w).fill(k)), k = pool[Math.floor(Math.random() * pool.length)];
         // (the twins want the same thing at the same time)
-        const who = b.twin ? this.babies.filter((o) => o.twin && !o.need && !o.out) : [b];
-        for (const o of who) Object.assign(o, { need: k, left: S0.patience * 60, max: S0.patience * 60, prog: 0, overT: 0 });
-        G.audio.sfx(k === 'leads' ? 'buzz' : k === 'cry' ? 'wah' : 'blip');
+        const who = b.twin ? this.babies.filter((o) => o.twin && !o.need && !o.out) : [b], med = Math.floor(Math.random() * 3);
+        for (const o of who) Object.assign(o, { need: k, med, left: S0.patience * 60, max: S0.patience * 60, prog: 0, overT: 0, cryT: k === 'cry' ? 1 : 30 });
+        G.audio.sfx(k === 'leads' ? 'buzz' : 'blip');
       },
+      // the next nurse, 22-32 seconds from now (a different one each time)
+      nextNurse() { const [a, b] = S0.report.every; return a + Math.round(Math.random() * (b - a)); },
       update() {
         if (quitHit()) { this.result = 'quit'; return true; }
         this.t++;
@@ -13839,8 +13896,40 @@
           if (!b.need) { if (--b.next <= 0) this.newNeed(b); continue; }
           if (this.working === b) continue;
           b.left--;
-          if (b.left === 0) { this.score = Math.max(0, this.score - 10); this.missed++; this.pop(b.st, '-10', '#d83838'); G.audio.sfx('wah'); this.say('Baby ' + b.name + ' waited too long!'); }
-          else if (b.left < 0 && ++b.overT % 480 === 0) { this.score = Math.max(0, this.score - 5); this.pop(b.st, '-5', '#d83838'); G.audio.sfx('wah'); }
+          if (b.left === 0) { this.score = Math.max(0, this.score - 10); this.missed++; this.pop(b.st, '-10', '#d83838'); b.cryT = 1; this.say('Baby ' + b.name + ' waited too long!'); }
+          else if (b.left < 0 && ++b.overT % 480 === 0) { this.score = Math.max(0, this.score - 5); this.pop(b.st, '-5', '#d83838'); }
+        }
+        // the crying: a baby whose timer's half gone whimpers now and then; a crying baby (until
+        // they're rocked, even in Hannah's arms) or an overdue one SCREAMS, over and over. Each in their
+        // own voice, with a little gap between cries so it's a racket but not a wall of noise.
+        if (this.cryGap > 0) this.cryGap--;
+        for (const b of this.babies) {
+          const scream = b.need && ((b.need === 'cry' && !b.rocked) || b.left <= 0), whimper = b.need && !scream && !b.out && b.left < b.max * 0.5;
+          if (!scream && !whimper) { b.cryT = Math.max(b.cryT, 40); continue; }
+          if (--b.cryT > 0 || this.cryGap > 0) continue;
+          G.audio.cry(b.pitch, scream ? 1.15 + Math.random() * 0.45 : 0.5);
+          b.cryT = scream ? 66 + Math.round(Math.random() * 50) : 170 + Math.round(Math.random() * 120);
+          this.cryGap = 9;
+          if (scream) this.wails.push({ b, t: 26 });
+        }
+        for (const w of this.wails) w.t--;
+        this.wails = this.wails.filter((w) => w.t > 0);
+        // the next shift's nurses: one comes to the door, waits for report, and gives up if it takes too long
+        if (S0.report) {
+          if (!this.nurse) {
+            if (--this.nurseNext <= 0) {
+              const [sprite, name] = REPORT_NURSES[this.nurseI++ % REPORT_NURSES.length];
+              this.nurse = { sprite, name, left: S0.report.patience, max: S0.report.patience, prog: 0 };
+              G.audio.sfx('door'); this.say(name + ' is at the door for report!');
+            }
+          } else if (!(busy && a.hold === 'report')) {
+            if (--this.nurse.left <= 0) {
+              this.score = Math.max(0, this.score - 10); this.missed++;
+              this.pop(this.stations.find((st) => st.kind === 'R'), '-10', '#d83838');
+              G.audio.sfx('no'); this.say(this.nurse.name + ' gave up and left without report.');
+              this.nurse = null; this.nurseNext = this.nextNurse();
+            }
+          }
         }
         // the bottle warmers
         for (const st of this.stations) {
@@ -13899,7 +13988,7 @@
         for (const st of this.stations) {
           const x = st.x * NT, y = NOY + st.y * NT;
           if (st.kind === 'I' || st.kind === 'G') continue;
-          if (st.kind !== 'T') {
+          if (st.kind !== 'T' && st.kind !== 'R') {
             ctx.fillStyle = '#7a8696'; ctx.fillRect(x, y, NT, NT);
             ctx.fillStyle = '#e4e9ef'; ctx.fillRect(x, y, NT, 12);
             ctx.fillStyle = '#f6f8fa'; ctx.fillRect(x, y, NT, 1);
@@ -13917,6 +14006,10 @@
           if (st.kind === 'G') list.push({ y: NOY + st.y * NT + 4, draw: () => this.drawGlider(ctx, st, T) });
         }
         list.push({ y: this.hy, draw: () => this.drawHannah(ctx, T) });
+        if (this.nurse) {
+          const door = this.stations.find((st) => st.kind === 'R'), S = G.sprites[this.nurse.sprite];
+          list.push({ y: NOY + (door.y + 1) * NT, draw: () => ctx.drawImage(S.up[0], (door.x + 1) * NT - 8, NOY + door.y * NT + 14 - S.h + 2) });
+        }
         if (this.dot) {
           const d = this.dot, S = G.sprites.dot;
           list.push({ y: d.y, draw: () => ctx.drawImage(S[d.dir][walkFrameOf(d.anim, d.wait === 0)], Math.round(d.x - 8), Math.round(d.y - S.h + 2)) });
@@ -13931,6 +14024,11 @@
         }
         // the bubbles over babies who need something, and the scores floating up
         for (const b of this.babies) if (b.need && !b.out) this.drawBubble(ctx, b, T);
+        if (this.nurse) this.drawReport(ctx, T);
+        for (const w of this.wails) {
+          const j = (T >> 1) & 1, x = w.b.out ? this.hx - 30 : w.b.st.x * NT - 10, y = w.b.out ? this.hy - 34 : NOY + w.b.st.y * NT + 6;
+          FT().draw(ctx, 'WAAH!', Math.round(x + j), Math.round(y - (26 - w.t) / 4), '#d83838', { shadow: '#f8f8f0' });
+        }
         for (const p of this.pops) FT().draw(ctx, p.txt, Math.round(p.x - FT().width(p.txt) / 2), Math.round(p.y), p.col, { shadow: '#f8f8f0' });
       },
       drawStation(ctx, st, x, y, T) {
@@ -13961,6 +14059,17 @@
         } else if (st.kind === 'S') {
           R('#7a8696', 1, 2, 14, 10); R('#c8d4e0', 2, 3, 12, 8); R('#9aa8b8', 3, 5, 10, 5); R('#5a6676', 7, 0, 2, 4); R('#5a6676', 7, 4, 1, 1);
           if (this.wash > 0 && this.focus === st) for (let k = 0; k < 4; k++) R('#f8f8f8', 4 + ((k * 3 + (T >> 2)) % 9), 4 + ((k * 5 + (T >> 3)) % 5), 2, 2);
+        } else if (st.kind in MED_DRAWERS) {
+          // a med drawer: its color across the front, and its number
+          const m = MED_DRAWERS[st.kind];
+          R('#5a6676', 1, 1, 14, 12); R('#e8ecf0', 2, 2, 12, 10); R(MED_COLORS[m], 3, 4, 10, 6); R('#f8f8f4', 6, 6, 4, 2);
+          FT().draw(ctx, st.kind, x + 6, y + 4, '#1c2a3a');
+        } else if (st.kind === 'R') {
+          // the door to the hall (the left tile has the left post, the right tile the right one)
+          const left = this.map[st.y][st.x - 1] !== 'R';
+          R('#b8c8d8', 0, 0, NT, NT); R('#a8b8c8', 0, 0, NT, 3);
+          R('#5a6676', left ? 0 : 14, 0, 2, NT);
+          if (!left) FT().draw(ctx, 'DOOR', x - Math.round(FT().width('DOOR') / 2), y + 5, '#5a6676');
         } else if (st.kind === 'T') {
           // the diaper pail
           ctx.fillStyle = (st.x + st.y) % 2 ? '#e2eaf0' : '#eaf1f5'; ctx.fillRect(x, y, NT, NT);
@@ -13998,10 +14107,20 @@
         const st = b.st, x = st.x * NT + 8, y = NOY + st.y * NT - 9, late = b.left <= 0;
         ctx.fillStyle = late && (T >> 3) & 1 ? '#d83838' : '#1c2a3a'; ctx.fillRect(x, y, 16, 15); ctx.fillRect(x + 6, y + 15, 4, 2);
         ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x + 1, y + 1, 14, 13); ctx.fillRect(x + 7, y + 14, 2, 2);
-        needIcon(ctx, b.need, x + 3, y + 2);
+        needIcon(ctx, b.need, x + 3, y + 2, b.med);
         const k = Math.max(0, b.left / b.max);
         bar(ctx, x, y - 4, 16, 4, k, k > 0.5 ? '#78e070' : k > 0.25 ? '#f8d850' : '#f86858');
         if (b.prog > 0) bar(ctx, x, y + 17, 16, 3, b.prog, '#5a8ab0');
+      },
+      // the nurse waiting for report: a clipboard bubble over the door with her patience, and S B A R
+      // (Situation, Background, Assessment, Recommendation) lighting up as Hannah gives it
+      drawReport(ctx, T) {
+        const n = this.nurse, door = this.stations.find((st) => st.kind === 'R'), x = (door.x + 1) * NT - 8, y = NOY + door.y * NT - 30, k = Math.max(0, n.left / n.max);
+        ctx.fillStyle = k < 0.25 && (T >> 3) & 1 ? '#d83838' : '#1c2a3a'; ctx.fillRect(x, y, 16, 15); ctx.fillRect(x + 6, y + 15, 4, 2);
+        ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x + 1, y + 1, 14, 13); ctx.fillRect(x + 7, y + 14, 2, 2);
+        needIcon(ctx, 'report', x + 3, y + 2);
+        bar(ctx, x, y - 4, 16, 4, k, k > 0.5 ? '#78e070' : k > 0.25 ? '#f8d850' : '#f86858');
+        if (n.prog > 0) ['S', 'B', 'A', 'R'].forEach((c, i) => FT().draw(ctx, c, x - 8 + i * 9, y - 13, n.prog > i / 4 ? '#38a858' : '#b8c4d0', { shadow: '#f8f8f0' }));
       },
       drawResults(ctx) {
         ctx.fillStyle = 'rgba(28,42,58,0.55)'; ctx.fillRect(0, 0, G.W, G.H);
@@ -14042,13 +14161,13 @@
         const stars = NICU_SHIFTS.reduce((t, S0) => t + ((N[S0.id] && N[S0.id].stars) || 0), 0);
         nicuBack(ctx, 'HANNAH\'S SHIFT', '★ ' + G.sayable(stars) + '/' + G.sayable(NICU_SHIFTS.length * 3));
         rows.forEach((r, i) => {
-          const y = 18 + i * 28, on = i === this.sel, ok = open(i), best = N[r.id];
-          ctx.fillStyle = on ? '#f8d850' : '#9ab8d0'; ctx.fillRect(8, y, 150, 25); ctx.fillStyle = on ? '#fff8d8' : '#f8f8f0'; ctx.fillRect(9, y + 1, 148, 23);
-          if (r.id === 'how') { FT().draw(ctx, r.name, 14, y + 8, '#1c2a3a'); return; }
-          FT().draw(ctx, ok ? r.name + ': ' + r.title : r.name + ': ???', 14, y + 3, ok ? '#1c2a3a' : '#9a9aa8');
-          if (!ok) FT().draw(ctx, 'locked', 14, y + 13, '#b8b8c0');
-          else if (!best) FT().draw(ctx, 'NEW', 14, y + 13, '#38a858');
-          else { starRow(ctx, best.stars, 30, y + 13); FT().draw(ctx, 'BEST ' + G.sayable(best.best), 62, y + 13, '#5a6a7a'); }
+          const y = 16 + i * 25, on = i === this.sel, ok = open(i), best = N[r.id];
+          ctx.fillStyle = on ? '#f8d850' : '#9ab8d0'; ctx.fillRect(8, y, 150, 23); ctx.fillStyle = on ? '#fff8d8' : '#f8f8f0'; ctx.fillRect(9, y + 1, 148, 21);
+          if (r.id === 'how') { FT().draw(ctx, r.name, 14, y + 7, '#1c2a3a'); return; }
+          FT().draw(ctx, ok ? r.name + ': ' + r.title : r.name + ': ???', 14, y + 2, ok ? '#1c2a3a' : '#9a9aa8');
+          if (!ok) FT().draw(ctx, 'locked', 14, y + 12, '#b8b8c0');
+          else if (!best) FT().draw(ctx, 'NEW', 14, y + 12, '#38a858');
+          else { starRow(ctx, best.stars, 30, y + 12); FT().draw(ctx, 'BEST ' + G.sayable(best.best), 62, y + 12, '#5a6a7a'); }
         });
         const r = rows[this.sel];
         FT().wrap(open(this.sel) ? r.blurb : 'Get a star on ' + rows[this.sel - 1].name + ' first.', 70).forEach((l, k) => FT().draw(ctx, l, 166, 20 + k * 9, '#1c2a3a'));
@@ -14095,7 +14214,8 @@
         'Every baby happy. Every single one. That\'s my nurse.',
       ][res.stars]);
       if (!was.stars && res.stars && i < NICU_SHIFTS.length - 1) yield G.say(null, '{y}' + NICU_SHIFTS[i + 1].name + ': ' + NICU_SHIFTS[i + 1].title + '{/} is open!');
-      if (i === NICU_SHIFTS.length - 1 && res.stars === 3 && was.stars < 3) yield G.say('Charge Nurse Dot', 'The night shift. Twins. Three stars. Hannah, when I retire, this unit is yours.');
+      if (r.id === 'shift3' && res.stars === 3 && was.stars < 3) yield G.say('Charge Nurse Dot', 'The night shift. Twins. Three stars. Hannah, when I retire, this unit is yours.');
+      if (r.id === 'shift4' && res.stars === 3 && was.stars < 3) yield G.say('Charge Nurse Dot', 'Six babies, meds, AND report, and nobody waited. I\'m putting you up for Nurse of the Year. Don\'t argue.');
       G.play.autosave();
     }
   };
