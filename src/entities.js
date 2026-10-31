@@ -114,6 +114,17 @@
       if (G.script.busy) { if (!this.walking) this.moving = false; return; }
       const inp = G.input;
 
+      // cradled like a baby (possessed Hannah has him): every button mashed wiggles him a little closer to free
+      if (this.state === 'cradled') {
+        this.moving = false;
+        if (this.cradler && ['a', 'b', 'left', 'right', 'up', 'down'].some((k) => inp.hit(k))) {
+          this.cradler.st -= 7; this.wiggle = 6;
+          if (G.tick - (this.wigglePop || -99) > 40) { this.wigglePop = G.tick; w.pop(this.x, this.y - 54, 'wiggle!', '#f8f4ec'); }
+        }
+        if (this.wiggle > 0) this.wiggle--;
+        return;
+      }
+
       if (this.state === 'hurt') {
         w.move(this, this.kb.x, 0);
         w.move(this, 0, this.kb.y);
@@ -337,7 +348,7 @@
     }
 
     draw(ctx, cx, cy) {
-      if (this.hidden) return;
+      if (this.hidden || this.state === 'cradled') return;   // (cradled: Hannah draws him in her arms)
       const S = this.spr;
       // (fainting comes before the after-hit blink, which would otherwise freeze him invisible)
       if (this.state === 'dead') { this.drawFaint(ctx, cx, cy); return; }
@@ -1239,6 +1250,17 @@
     }
   }
   G.Shot = Shot;
+  // a syringe, flying needle-first (possessed Hannah)
+  class NeedleShot extends Shot {
+    draw(ctx, cx, cy) {
+      ctx.save();
+      ctx.translate(Math.round(this.x) - cx, Math.round(this.y - this.z) - cy);
+      ctx.rotate(Math.atan2(this.vy, this.vx));
+      ctx.drawImage(this.img, -Math.round(this.img.width / 2), -Math.round(this.img.height / 2));
+      ctx.restore();
+    }
+  }
+  G.NeedleShot = NeedleShot;
 
   // ============================================================== ROFO POP (the bay)
   // Blue raspberry 2-liters in the Chesapeake Channel Tunnel. Abe and Hannah bring
@@ -2458,7 +2480,7 @@
     lily: { name: 'LILY', hp: 9, sub: 'the little sister', speed: 0.6, cycle: ['no', 'balloons', 'no', 'bigNo'], cycle2: ['no', 'balloons', 'bigNo', 'no', 'bigNo'] },
     michelle: { name: 'MOM', hp: 10, sub: 'the flower farmer', speed: 0.55, cycle: ['pots', 'snap', 'water', 'hens', 'pots', 'water'], cycle2: ['pots', 'hens', 'snap', 'water', 'pots', 'water'] },
     abe: { name: 'ABE', hp: 10, sub: 'the master', speed: 0.6, cycle: ['beans', 'bush', 'question', 'beans', 'bush'], cycle2: ['beans', 'bush', 'beans', 'question', 'bush'] },
-    hannah: { name: 'HANNAH', hp: 10, sub: 'the nurse', speed: 0.6, cycle: ['ice', 'bandage', 'heal', 'code', 'ice', 'heal'], cycle2: ['ice', 'code', 'heal', 'bandage', 'ice', 'heal'] },
+    hannah: { name: 'HANNAH', hp: 10, sub: 'the nurse', speed: 0.6, cycle: ['needles', 'cradle', 'bandage', 'heal', 'code', 'needles', 'heal'], cycle2: ['needles', 'cradle', 'code', 'heal', 'bandage', 'needles', 'cradle', 'heal'] },
   };
   G.POSSESSED = POSSESSED;
   const LILY_INSIDE = ['...nate...?', 'i\'m scared...', 'make it stop...', 'nate, help...'];
@@ -2521,7 +2543,15 @@
           G.audio.sfx('bump'); w.pop(this.x, this.y - 58, bounceText, '#f8e070');
         } else { G.audio.sfx('boom'); G.play.shake(10, 3); this.open(100, 'DIZZY!'); }
       } else if (--this.st <= 0) this.open(60, 'DIZZY!');
-      if (this.state === 'charge' && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(2, this.x, this.y);
+      // (Hannah doesn't knock him down: she scoops him up)
+      if (this.state === 'charge' && G.overlap(this.hurtBox(), p.hurtBox())) { if (this.id === 'hannah') this.scoop(w, p); else p.hurt(2, this.x, this.y); }
+    }
+    // possessed Hannah catches Nate on the run: up he goes, cradled like a baby
+    scoop(w, p) {
+      if (p.inv > 0 || p.state === 'dead') return;
+      this.state = 'cradling'; this.st = 150; this.held = 0; this.vx = this.vy = 0;
+      p.state = 'cradled'; p.cradler = this; p.moving = false;
+      G.audio.sfx('giggle'); w.pop(this.x, this.y - 64, 'GOTCHA, BABY!', '#ff98d0');
     }
     windupCharge(text, speed, bounces) { this.state = 'windup'; this.st = 34; this.chargeSp = speed; this.chargeBounces = bounces; if (text) this.world.pop(this.x, this.y - 58, text, '#f8e070'); }
     windup(w, dx, dy, dist, popText) {
@@ -2556,7 +2586,8 @@
         case 'beans': this.state = 'beans'; this.st = 2; this.shotT = 10; w.pop(this.x, this.y - 58, 'THE BEAN INCIDENT!', '#f8a838'); break;
         case 'bush': this.state = 'dive'; this.st = 26; w.pop(this.x, this.y - 58, '*rustle rustle*', '#8ad868'); break;
         case 'question': this.state = 'asking'; G.script.run(G.SCRIPTS.finAbeQuestion(this)); break;
-        case 'ice': this.state = 'ice'; this.st = 2; this.shotT = 10; w.pop(this.x, this.y - 58, 'You need some ICE.', '#a8d8ff'); break;
+        case 'needles': this.state = 'needles'; this.st = 2; this.shotT = 10; w.pop(this.x, this.y - 58, 'Little pinch!', '#a8d8ff'); break;
+        case 'cradle': this.windupCharge('Who\'s a sleepy BABY?', this.angry ? 3.6 : 3.1, 0); break;
         case 'bandage': this.state = 'bandage'; this.st = 2; this.shotT = 10; w.pop(this.x, this.y - 58, 'Hold STILL.', '#a8d8ff'); break;
         case 'heal': this.state = 'heal'; this.st = 150; this.dmgHere = 0; w.pop(this.x, this.y - 58, '*patching herself up*', '#78e070'); break;
         case 'code': this.state = 'code'; this.st = 3; this.shotT = 12; w.pop(this.x, this.y - 58, 'CODE BLUE!', '#7ab8f8'); G.audio.sfx('bell'); break;
@@ -2747,19 +2778,40 @@
         case 'asking': break;   // (the question script is running)
       }
     }
-    // ---- Hannah: ice packs, bandage rolls that tangle Nate up, CODE BLUE, and she patches
-    // herself up (hit her while she does, or she gets 3 hp back).
+    // ---- Hannah: a fan of needles ("Little pinch!"), bandage rolls that tangle Nate up, CODE BLUE,
+    // and she patches herself up (hit her while she does, or she gets 3 hp back). And she RUNS at
+    // Nate, scoops him up and cradles him like a baby: rocking him, shushing him, until he wiggles
+    // free (mash any button) or she puts him down for his nap (a heart), and then she's open.
     hannah(w, p, dx, dy, dist) {
+      if (p.state === 'cradled' && this.state !== 'cradling') { p.state = 'walk'; p.cradler = null; }
       switch (this.state) {
         case 'walk': this.stroll(w, dx, dy, dist, 85); if (--this.st <= 0) this.next(); break;
-        case 'ice':
+        case 'needles':
           if (--this.shotT <= 0) {
             this.shotT = 32; G.audio.sfx('swing');
             const a = Math.atan2(dy, dx), n = this.angry ? 7 : 5;
-            for (let i = 0; i < n; i++) { const b = a + (i - (n - 1) / 2) * 0.24; w.add(new Shot(this.x, this.y - 8, Math.cos(b) * 1.6, Math.sin(b) * 1.6, G.spr.icePack, { life: 120, z: 8 })); }
+            for (let i = 0; i < n; i++) { const b = a + (i - (n - 1) / 2) * 0.22; w.add(new NeedleShot(this.x, this.y - 8, Math.cos(b) * 2, Math.sin(b) * 2, G.spr.syringe, { life: 110, z: 8 })); }
             if (--this.st <= 0) this.toWalk(70);
           }
           break;
+        case 'windup': this.windup(w, dx, dy, dist, 'COME HERE, BABY!'); break;
+        case 'charge':
+          this.charge(w, p, dx, dy, dist, 'Come back, baby!');
+          break;
+        case 'cradling': {
+          // rock-a-bye: Nate rides along in her arms
+          p.x = this.x; p.y = this.y + 1; this.held++;
+          if (this.st % 45 === 0) w.pop(this.x, this.y - 66, ['Shhh... shhh...', 'Who\'s a sleepy baby?', 'Rock-a-bye, Nate...', 'There, there...'][(this.st / 45) % 4], '#ff98d0');
+          if (--this.st <= 0) {
+            // down he goes: wiggled free in time (no harm done), or nap time (a heart)
+            p.state = 'walk'; p.cradler = null;
+            p.y = G.clamp(this.y + 14, this.bounds.y0, this.bounds.y1);
+            if (this.held < 110) { p.inv = 30; G.audio.sfx('dash'); w.pop(p.x, p.y - 34, 'Wiggled free!', '#78e070'); }
+            else { p.hurt(2, this.x, this.y - 20); w.pop(this.x, this.y - 58, 'Nap time!', '#ff98d0'); }
+            this.open(90, '*rocking her empty arms*');
+          }
+          break;
+        }
         case 'bandage':
           if (--this.shotT <= 0) {
             this.shotT = 22; G.audio.sfx('swing');
@@ -2815,7 +2867,7 @@
       const B = bigOf(this.sprite);
       const moving = this.state === 'walk' || this.state === 'charge' || this.state === 'dive';
       let img = this.state === 'defeated' ? B.down[0] : B[this.dir][moving ? walkFrame(this.anim, true) : 0];
-      if (this.state === 'flex' || this.state === 'bigNo' || this.state === 'yell' || this.state === 'heal') img = B.hold;
+      if (this.state === 'flex' || this.state === 'bigNo' || this.state === 'yell' || this.state === 'heal' || this.state === 'cradling') img = B.hold;
       if ((this.hurtT && (this.hurtT >> 1) & 1) || (this.state === 'windup' && (this.st >> 2) & 1)) img = G.art.flash(img);
       ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 12) - cx, Math.round(this.y - 4) - cy, 24, 6);
       const jx = this.state === 'windup' || this.state === 'bigNo' || this.state === 'dig' ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
@@ -2828,6 +2880,15 @@
         ctx.restore();
       }
       ctx.drawImage(img, sx, sy);
+      // Hannah, cradling Nate like a baby: he lies across her arms, rocking side to side (and wiggling)
+      if (this.state === 'cradling') {
+        const N = G.nateSprites(), ni = N.down[0], p = G.play.player, rock = Math.sin(this.t * 0.12) * 0.35;
+        ctx.save();
+        ctx.translate(Math.round(this.x + (p.wiggle ? ((p.wiggle >> 1) & 1 ? 1 : -1) : 0)) - cx, sy + Math.round(B.h * 0.5));
+        ctx.rotate(-Math.PI / 2 + rock);
+        ctx.drawImage(ni, -Math.round(ni.width / 2), -Math.round(ni.height / 2));
+        ctx.restore();
+      }
       // Mom's watering can
       if (this.state === 'watering' || (this.state === 'open' && this.id === 'michelle' && this.st > 50)) ctx.drawImage(G.spr.wateringCan, sx + 22, sy + 30);
       // Hannah's heal: a green glow

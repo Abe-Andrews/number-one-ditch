@@ -682,7 +682,7 @@
     if (f.mobileBeaten && s.party.includes('hannah')) {
       const N = s.nicu || {}, ns = ['shift1', 'shift2', 'shift3', 'shift4'].reduce((t, k) => t + ((N[k] && N[k].stars) || 0), 0);
       if (!f.nicuMet) side.push({ name: 'Charge Nurse Dot', status: 'Hannah is late!', kind: 'rumor', where: 'CHKD - the NICU', hint: 'Hannah\'s charge nurse is back on the floor in the NICU, and she\'s looking for Hannah.' });
-      else add('Hannah\'s shift', ns >= 12 && 'Every star!', G.sayable(ns) + '/' + G.sayable(12) + ' stars', 'CHKD - the NICU', 'Talk to Charge Nurse Dot in the NICU with Hannah along, and run the NICU as Hannah. Four shifts, three stars each.', [ns, 12]);
+      else add('Hannah\'s shift', ns >= 12 && 'Every star!', G.sayable(ns) + '/' + G.sayable(12) + ' stars', 'CHKD - the NICU', 'Talk to Charge Nurse Dot in the NICU with Hannah along, and run the NICU as Hannah. Four shifts, three stars each. Every star gets Nate a heart container.', [ns, 12]);
     }
     if (G.homeDone() && !f.pipeBench) side.push({ name: 'Dad\'s workshop', status: 'Dad has something to show you', kind: 'rumor', where: 'Home', hint: 'Things are finally quiet at home. Dad wants you in his workshop.' });
     if (f.pipeBench) {
@@ -9157,6 +9157,8 @@
     if (!f.fightMet) yield* S.lockerEnter();
     else yield G.say('Doron', 'Back for more? Let\'s GO.');
     const FS = fightState();
+    // (a save that beat Nani before her heart was a thing: Doron passes it along)
+    if (FS.nani && !f.naniHeart) yield* S.naniHeart(true);
     let losses = 0;
     for (;;) {
       const F = yield fightSelectCmd();
@@ -9201,8 +9203,25 @@
           yield G.say('Doron', 'Nate. NATE. Two belts.');
         }
       } else if (first && i < FIGHTERS.length - 2) yield G.say(null, '{y}A new challenger!{/} ' + FIGHTERS[i + 1].full + ' wants a piece of Doron.');
+      if (F.id === 'nani' && !f.naniHeart) yield* S.naniHeart();
       if (first) G.play.autosave();
     }
+  };
+
+  // Beating Nani gets Nate a heart container: she knitted it for her favorite cornerman.
+  // (fromDoron: she left it with Doron for a save that beat her before this existed)
+  S.naniHeart = function* (fromDoron) {
+    const f = flags(), s = G.state;
+    f.naniHeart = true;
+    if (fromDoron) {
+      yield G.say('Doron', 'Oh. Nate. Nani left this for you. She said you were a wonderful cornerman.');
+    } else {
+      yield G.say('Nani', 'And Nate, honey. You were a wonderful cornerman. Nani knitted you something.');
+      yield G.say('Nate', 'Thanks, Nani.');
+    }
+    s.maxHp += 2; s.hp = s.maxHp;
+    yield G.itemGet(G.spr.heartBig, 'A little red heart, knitted by Nani. You got a {r}Heart Container{/}! Max hearts +1.');
+    G.play.autosave();
   };
 
   // The Expo Hall locker room (through the door at the back of the Expo Hall, once El EEENGLISH is
@@ -14677,6 +14696,20 @@
   }
 
   // Charge Nurse Dot, back on the floor once MECHA-BABY is parked. With Hannah along, it's her shift.
+  // Every shift, three stars: Charge Nurse Dot gives Nate a heart container (he stood by the door the
+  // whole time and never touched a thing)
+  G.nicuAllStars = () => { const N = nicuState(); return NICU_SHIFTS.every((S0) => N[S0.id] && N[S0.id].stars >= 3); };
+  S.nicuHeart = function* () {
+    const f = flags(), s = G.state;
+    f.nicuHeart = true;
+    yield G.say('Charge Nurse Dot', 'Every shift. Every star. Hannah, that\'s the best this unit has ever run.');
+    yield G.say('Charge Nurse Dot', 'And you. By the door. You never touched a single thing. Do you know how rare that is?');
+    yield G.say('Charge Nurse Dot', 'Here. Every nurse on the unit signed it.');
+    s.maxHp += 2; s.hp = s.maxHp;
+    yield G.itemGet(G.spr.heartBig, 'A heart-shaped pillow from the gift shop, signed by the whole NICU. You got a {r}Heart Container{/}! Max hearts +1.');
+    if (G.with('hannah')) yield G.say('Hannah', 'She doesn\'t give ANYBODY anything. Nate. She likes you.');
+    G.play.autosave();
+  };
   S.chargeNurse = function* () {
     const f = flags(), N = nicuState();
     if (!(yield* S.callIn('hannah', 'Oh no. That\'s my charge nurse.'))) {
@@ -14690,6 +14723,8 @@
       yield G.say('Charge Nurse Dot', 'Save it after your shift. Babies first. Always.');
       yield G.say('Hannah', 'Nate, want to see what I actually do all day? Stand by the door. Don\'t touch anything. I have to RUN.');
     } else yield G.say('Charge Nurse Dot', 'Back on the floor, Hannah? Good. They missed you.');
+    // (a save that already had every star before the heart was a thing)
+    if (!f.nicuHeart && G.nicuAllStars()) yield* S.nicuHeart();
     for (;;) {
       const r = yield nicuMenuCmd();
       if (!r) { G.play.overlay = null; yield G.say('Charge Nurse Dot', 'Good work today. Go home and sleep, Hannah.'); return; }
@@ -14713,6 +14748,7 @@
       if (!was.stars && res.stars && i < NICU_SHIFTS.length - 1) yield G.say(null, '{y}' + NICU_SHIFTS[i + 1].name + ': ' + NICU_SHIFTS[i + 1].title + '{/} is open!');
       if (r.id === 'shift3' && res.stars === 3 && was.stars < 3) yield G.say('Charge Nurse Dot', 'The night shift. Twins. Three stars. Hannah, when I retire, this unit is yours.');
       if (r.id === 'shift4' && res.stars === 3 && was.stars < 3) yield G.say('Charge Nurse Dot', 'Six babies, meds, AND report, and nobody waited. I\'m putting you up for Nurse of the Year. Don\'t argue.');
+      if (!f.nicuHeart && G.nicuAllStars()) yield* S.nicuHeart();
       G.play.autosave();
     }
   };

@@ -8883,6 +8883,14 @@
     p.outline();
     return p.canvas();
   }
+  // a syringe, pointing right: blue plunger, a clear barrel with markings, and the needle
+  function syringe() {
+    const p = new Pix(15, 5);
+    p.rect(0, 1, 2, 3, '#3a6ac8'); p.vline(2, 0, 4, '#c8ccd4');
+    p.rect(3, 1, 7, 3, '#e8f4fc'); p.rect(6, 2, 4, 1, '#78c8f0'); for (const x of [4, 6, 8]) p.set(x, 1, '#8a9aa8');
+    p.vline(10, 1, 3, '#c8ccd4'); p.hline(11, 14, 2, '#d8dce4'); p.set(14, 2, '#ffffff');
+    return finish(p);
+  }
   function icePack() {
     const p = new Pix(12, 9);
     p.rect(0, 0, 12, 9, '#7ac8f0'); p.rect(1, 1, 10, 7, '#a8e0f8'); p.hline(2, 9, 2, '#e8f8ff'); p.rect(4, 3, 4, 3, '#f8f8f8'); p.set(5, 4, '#d83030'); p.set(6, 4, '#d83030');
@@ -9888,7 +9896,7 @@
     // the finale (the Number One Ditch)
     S.eggThrone = eggThrone(); S.culvert = culvert(); S.ditchSign = ditchSign(); S.cattails = cattails(); S.bean = bean();
     S.goldenEgg = [goldenEgg(false), goldenEgg(true)]; S.egglet = { right: [egglet(0), egglet(1)] }; S.egglet.left = S.egglet.right.map(mirror);
-    S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
+    S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.syringe = syringe(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
     S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon(); S.bmfIcon = bmfIcon();
     S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe(); S.bongos = bongos(); S.steelPan = steelPan(); S.drumKit = drumKit();
