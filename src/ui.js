@@ -206,6 +206,31 @@
       ctx.globalAlpha = 1;
     },
   };
+  // ------------------------------------------------------------ the menu lesson
+  // The first time Nate has gear for X, a card at the bottom of the screen says to open the menu.
+  // The menu then opens on ITEMS with that gear picked, an arrow over it and "Press Z to set it
+  // to X" (PauseMenu.lesson). Setting it to X finishes the lesson for good (flags.menuTaught).
+  G.menuLesson = () => {
+    const s = G.state;
+    if (!s || s.flags.menuTaught) return null;
+    return G.GEAR_SLOTS.find((id) => id && G.ITEMS[id].equip && G.itemHas(id)) || null;
+  };
+  G.menuLessonCard = (ctx) => {
+    const id = G.menuLesson();
+    if (!id || G.script.busy || G.toasts.list.length) return;
+    const def = G.ITEMS[id], ic = def.icon(), col = C.gold;
+    const label = fit('NEW GEAR: ' + (def.short || def.name), 170), tail = 'open the menu';
+    const kw = F().width('ENTER') + 6, w = Math.max(F().width(label), kw + 4 + F().width(tail)) + 32, h = 26;
+    const x = Math.round((G.W - w) / 2), y = G.H - 36 + Math.round(Math.sin(G.tick * 0.08) * 1.5);
+    ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.fillRect(x + 2, y + 2, w, h);
+    ctx.fillStyle = col; ctx.fillRect(x + 1, y, w - 2, h); ctx.fillRect(x, y + 1, w, h - 2);
+    ctx.fillStyle = '#1e1830'; ctx.fillRect(x + 1, y + 1, w - 2, h - 2);
+    ctx.fillStyle = '#2a2240'; ctx.fillRect(x + 1, y + 1, w - 2, 1);
+    if (ic) ctx.drawImage(ic, x + 13 - Math.floor(ic.width / 2), y + 13 - Math.floor(ic.height / 2));
+    F().draw(ctx, label, x + 26, y + 3, col, { shadow: SH });
+    keycap(ctx, x + 26, y + 13, 'ENTER');
+    F().draw(ctx, tail, x + 26 + kw + 4, y + 15, '#f8f8f0', { shadow: SH });
+  };
   G.questWatch = () => {
     const s = G.state, side = G.journal().side;
     // the first look (old saves, new games, admin runs) just takes notes
@@ -503,6 +528,9 @@
       this.msgT = 0;
       this.openT = 0;
       this.fresh = Object.assign({}, G.state.questNew);
+      // the menu lesson: straight to ITEMS, with the new gear picked
+      this.lesson = G.menuLesson();
+      if (this.lesson) { this.tab = lastTab = ITEM_TAB; this.sel = Math.max(0, this.slots().indexOf(this.lesson)); }
       G.audio.sfx('select');
     }
 
@@ -696,6 +724,7 @@
         G.state.xItem = id;
         G.audio.sfx('select');
         this.flash(def.name + ' set to X!');
+        if (this.lesson) { this.lesson = null; G.state.flags.menuTaught = true; this.flash((def.short || def.name) + ' is on X! Close the menu, press X.'); this.msgT = 240; }
         return false;
       }
       if (def.use) {
@@ -746,6 +775,13 @@
       const y = 147;
       if (this.confirm) { TXT(ctx, '{r}Save over File ' + this.confirm + '?', 6, y + 2); let x = 110; x += keycap(ctx, x, y, 'Z') + 3; TXT(ctx, 'yes', x, y + 2, C.soft); x += 22; x += keycap(ctx, x, y, 'X') + 3; TXT(ctx, 'no', x, y + 2, C.soft); return; }
       if (this.msgT > 0) { TXT(ctx, '{g}' + this.msg, 6, y + 2); return; }
+      if (this.lesson && this.tab === ITEM_TAB) {
+        let x = 6;
+        TXT(ctx, '{y}Press', x, y + 2); x += F().width('Press') + 4;
+        x += keycap(ctx, x, y, 'Z') + 4;
+        TXT(ctx, '{y}to set it to X', x, y + 2);
+        return;
+      }
       const admin = G.state.admin, act = {
         [QUEST_TAB]: QMODES[(this.qmode + 1) % QMODES.length] === 'ACTIVE' ? 'quests' : QMODES[(this.qmode + 1) % QMODES.length] === '100%' ? '100% list' : 'rules',
         [MAP_TAB]: null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
@@ -1022,6 +1058,11 @@
           if (s.xItem === id || id === 'hammer') { const b = id === 'hammer' ? 'Z' : 'X'; ctx.fillStyle = '#0c0814'; ctx.fillRect(x + 1, y + 1, 7, 9); ctx.fillStyle = C.gold; ctx.fillRect(x + 1, y + 1, 6, 8); F().draw(ctx, b, x + 2, y + 2, '#282030'); }
         } else if (id) TXT(ctx, '?', x + 9, y + 7, C.faint);
         if (sel) brackets(ctx, x - 1, y - 1, 24, 24);
+        if (sel && this.lesson === id) {
+          const ay = y - 8 + Math.round(Math.abs(Math.sin(G.tick * 0.12)) * -3), ax = x + 11;
+          ctx.fillStyle = '#0c0814'; ctx.fillRect(ax - 4, ay - 1, 9, 2); ctx.fillRect(ax - 3, ay + 1, 7, 2); ctx.fillRect(ax - 2, ay + 3, 5, 2); ctx.fillRect(ax - 1, ay + 5, 3, 2);
+          ctx.fillStyle = C.gold; ctx.fillRect(ax - 3, ay, 7, 1); ctx.fillRect(ax - 2, ay + 1, 5, 2); ctx.fillRect(ax - 1, ay + 3, 3, 2); ctx.fillRect(ax, ay + 5, 1, 1);
+        }
       });
       // what's on the buttons
       if (!keys) {

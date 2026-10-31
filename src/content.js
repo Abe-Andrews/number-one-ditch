@@ -65,6 +65,13 @@
       skin: '#e0ac84', hair: '#d0d0d4', hairStyle: 'cap', hat: '#c8b890', hatStyle: 'ball', beard: '#d8d8dc',
       shirt: '#3a6a8a', coat: '#b89a68', pants: '#5a5a48', shoes: '#3a3028', torso: 7, legs: 4,
     },
+    // Matt Oliver, a family friend and professor of marine science at the University of Delaware (from
+    // the user's photo): short dark hair going gray at the temples, a tan, a big smile, a navy blazer
+    // over a light blue checked shirt, open collar. Out on the bay doing a fish survey in his boat.
+    matt: {
+      skin: '#dca07a', hair: '#34261e', hairStyle: 'short', temples: '#a09a94', smile: '#ffffff',
+      coat: '#26304a', shirt: '#b4c8e4', collar: '#dce6f4', pants: '#b8a888', shoes: '#5a4030', torso: 7, legs: 3,
+    },
     // The toll-taker in the Chesapeake Channel Tunnel: a deep hood, no face, two glowing eyes.
     hooded: {
       skin: '#141018', hair: '#2a2438', hairStyle: 'short', eyes: '#f8e070',
@@ -608,6 +615,7 @@
     else if (!f.mikeyBeaten) goal = 'Mikey is waiting at the end of the driveway. Lily has something to tell him.';
     else if (!f.cbbtArrived) goal = 'The road to Chesapeake is open! Leave from either end of Rattlesnake Bridge Rd.';
     else if (!f.tollPaid && f.hoodedNotReady && !s.items.rod) goal = 'The hooded figure says you\'re not ready. Find the old man fishing on the rocks of the island.';
+    else if (!f.tollPaid && f.fishQuest && s.teeth < 500) goal = (f.mattMet ? 'Go fishing with Matt Oliver off Island 2. He pays in shark teeth.' : 'The hooded figure wants 500 shark teeth. Head back out to Island 2. Maybe somebody can help.') + ' (' + G.sayable(s.teeth) + '/500)';
     else if (!f.tollPaid) goal = f.hoodedMet ? 'A hooded figure in the tunnel wants 500 shark teeth to let you through. (' + G.sayable(s.teeth) + '/500)' : 'Cross the Chesapeake Bay Bridge-Tunnel. Chesapeake is on the other side of the tunnel.';
     else if (!f.tylerBeaten) goal = 'The hooded figure is Tyler, hypnotized by Father Eggmas! Snap him out of it.';
     else if (!f.condoArrived) goal = 'Tyler says Father Eggmas is at the Number One Ditch. Chesapeake is through the tunnel!';
@@ -648,6 +656,7 @@
     if (f.mobileBeaten && !f.rubyMet) side.push({ name: 'The rock doctor', status: 'Someone needs one', kind: 'rumor', where: 'CHKD - the ward', hint: 'The nurse on the ward says the girl behind the green door keeps asking for a "rock doctor."' });
     if (f.rubyMet) add('Ruby, the rock kid', f.rubyHeart, !f.rubyQuiz ? G.sayable(f.rubyQ || 0) + '/3 named' : 'Trade her a rock', 'CHKD - the ward', !f.rubyQuiz ? 'Ruby has three rocks with no names. Tell her what they are, rock doctor.' : 'Ruby will trade one of her two fairy stones for a rock she doesn\'t have yet, from somewhere she\'s never been.', !f.rubyQuiz ? [f.rubyQ || 0, 3] : null);
     if (s.party.includes('abe')) add('Abe\'s reach', G.abeReachCount() >= G.ABE_REACH_TOTAL && 'All found!', G.sayable(G.abeReachCount()) + '/' + G.sayable(G.ABE_REACH_TOTAL) + ' found', 'Anywhere', 'Abe is 6\'5". With him along, check things that are way up high (press Z under them): around Abe and Hannah\'s, at CHKD, the tall hedge up by Anette\'s... and maybe places you\'ve already been.', [G.abeReachCount(), G.ABE_REACH_TOTAL]);
+    if (f.mattMet) add('Fishing with Matt Oliver', f.tollPaid && 'Toll paid!', G.sayable(Math.min(s.teeth, 500)) + '/500 teeth', 'The Bay - Island 2', 'Matt Oliver\'s boat is tied up on Island 2. Catch fish for his survey and he pays you in shark teeth.', [Math.min(s.teeth, 500), 500]);
     if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
     if (f.snackQuest) {
@@ -3468,6 +3477,7 @@
     { name: 'Dad\'s pipe bench (workshop)', map: 'garage', at: [10, 10, 'up'] },
     { name: 'Bay Bridge-Tunnel: the toll plaza', map: 'cbbtToll', at: [17, 13, 'left'], teeth: 520 },
     { name: 'The Two-Liter (Chesapeake Channel Tunnel)', map: 'chesTunnel', at: [7, 26, 'up'], flags: { cbbtArrived: true, tollMet: true, chesSeen: true }, items: { rod: true } },
+    { name: 'Island 2: Matt Oliver\'s boat (fishing)', map: 'cbbtMid', at: [14, 7, 'down'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, rodQuest: true, fishQuest: true }, items: { rod: true }, teeth: 120 },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
     { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [55, 1, 'down'], flags: { tylerBeaten: true } },
     { name: 'Romulus: hide and seek outside', map: 'condo', at: [24, 20, 'down'], flags: { condoArrived: true, condoScare: true, romulusMet: true, romHide: 4 }, items: { bidet: true } },
@@ -9841,6 +9851,12 @@
     }
     if (s.teeth < TOLL) {
       yield G.say('Hooded Figure', 'You have ' + G.sayable(s.teeth) + '. The toll is five hundred. The bay is patient. So am I.');
+      // (the first time: Nate goes looking for a way to earn them, and finds Matt Oliver on Island 2)
+      if (!f.fishQuest) {
+        f.fishQuest = true;
+        yield G.say('Nate', 'Five hundred shark teeth. In the middle of the bay. Where am I supposed to get five hundred shark teeth out here?');
+        yield G.say('Nate', '...Maybe somebody back out on the island can help.');
+      }
       yield G.walkTo(p, p.x, p.y + 20, 1.2);
       return;
     }
@@ -9988,6 +10004,371 @@
     G.audio.play('tunnel');
     G.play.autosave();
   };
+  // ================================================================ FISHING WITH MATT OLIVER
+  // Matt Oliver (a family friend; he teaches marine science at the University of Delaware) is out on
+  // the bay doing a fish survey. The first time the hooded figure asks Nate for teeth he doesn't have
+  // (flags.fishQuest), Matt's boat ties up off the east side of Island 2 when Nate comes back out of
+  // the tunnel (S.mattArrive, flags.mattMet), and Matt takes him out fishing (fishCmd): every fish gets
+  // measured, tagged and let go, and Matt pays for it in fossil shark teeth from the bucket he keeps out
+  // of his mud samples. As many trips as Nate likes (flags.fishTrips counts them).
+  const MATT_DOCK = 25 * 16 + 8, MATT_SPOT = [24 * 16 + 8, 11 * 16 + 14];
+  S.mattSetup = function (w) {
+    const f = flags();
+    if (!f.fishQuest) return;
+    const b = w.mattBoat = { x: f.mattMet ? MATT_DOCK : 31 * 16, y: 10 * 16 + 6, aboard: !f.mattMet };
+    w.props.push({
+      base: 12 * 16,
+      draw(ctx, cx, cy) {
+        const bob = Math.round(Math.sin(G.tick * 0.05)), x = Math.round(b.x) - cx, y = b.y + bob - cy;
+        if (b.moving) { ctx.fillStyle = 'rgba(255,255,255,0.7)'; for (let i = 1; i <= 4; i++) ctx.fillRect(x + 48 + i * 6, y + 16 + (i & 1), 4, 1); }
+        ctx.drawImage(G.spr.mattBoatL, x, y);
+        if (b.aboard) { const m = G.sprites.matt.left[0]; ctx.drawImage(m, x + 30, y + 13 - m.height); ctx.drawImage(G.spr.mattHullL, x, y); }
+      },
+    });
+    if (f.mattMet) w.matt = w.add(new G.NPC({ sprite: 'matt', name: 'Matt Oliver', x: MATT_SPOT[0], y: MATT_SPOT[1], dir: 'left', talk: S.matt }));
+  };
+  // Nate comes back out of the tunnel short on teeth, and a boat horn goes off
+  S.mattArrive = function* () {
+    const f = flags(), w = G.play.world, p = P(), b = w.mattBoat;
+    f.mattMet = true;
+    yield G.wait(30);
+    G.audio.sfx('horn');
+    yield G.emote(p, 'bang', 30);
+    p.dir = 'right';
+    yield G.camFocus(22 * 16, 11 * 16, 40);
+    b.moving = true;
+    yield { update() { b.x = Math.max(MATT_DOCK, b.x - 1.2); return b.x === MATT_DOCK; } };
+    b.moving = false;
+    yield G.say('Matt', 'NATE! Nate Andrews! Is that you?!');
+    yield G.say('Nate', 'Matt?! Matt Oliver?!');
+    // he ties up and hops off onto the island
+    b.aboard = false;
+    const m = w.matt = w.add(new G.NPC({ sprite: 'matt', name: 'Matt Oliver', x: MATT_DOCK + 38, y: 11 * 16 + 4, dir: 'left', talk: S.matt }));
+    G.audio.sfx('bump');
+    yield G.walkTo(m, MATT_SPOT[0], MATT_SPOT[1], 1.2);
+    yield G.walkTo(p, 21 * 16 + 8, 11 * 16 + 14, 1.2);
+    p.dir = 'right'; m.dir = 'left';
+    yield G.say('Matt', 'What are you doing all the way out on Island 2?');
+    yield G.say('Nate', 'I\'m headed to the Number One Ditch, in Chesapeake. But there\'s a guy in a hood down in that tunnel, and he won\'t let me through unless I pay him five hundred shark teeth.');
+    yield G.say('Matt', '...Five hundred shark teeth.');
+    yield G.say('Matt', 'Well, today\'s your lucky day. I\'m out here doing a fish survey for the University of Delaware. We catch them, measure them, tag them and let them go.');
+    yield G.say('Matt', 'And every mud sample we pull up off the bottom of this bay has fossil shark teeth in it. I keep them all in a bucket on the boat.');
+    yield G.say('Nate', 'You have a BUCKET of shark teeth?!');
+    yield G.say('Matt', 'Scientists keep everything, Nate. Tell you what: I\'m short a deckhand. Catch fish for my survey, and I\'ll pay you in shark teeth.');
+    yield G.say('Nate', 'DEAL.');
+    if (G.with('doron')) yield G.say('Doron', 'I\'ll stay here and guard the island.');
+    else if (G.with('lily')) yield G.say('Lily', 'I\'ll wait here. With the pelican.');
+    yield G.camFocus(null, null, 30);
+    G.play.autosave();
+  };
+  S.matt = function* () {
+    const f = flags(), s = G.state;
+    const c = yield G.ask('Matt', f.fishTrips ? 'Back out on the water? Same deal: you catch them, I pay in shark teeth.' : 'Ready to head out? We fish until the tide turns.', ['Let\'s go fishing', 'Not now']);
+    if (c !== 0) { yield G.say('Matt', 'I\'ll be right here. So will the fish. Probably.'); return; }
+    yield G.fadeOut(20);
+    G.play.overlay = { draw: (ctx) => bayScene(ctx, G.tick) };
+    yield G.fadeIn(20);
+    if (!f.fishHow) { f.fishHow = true; yield howToCmd('FISHING WITH MATT', FISH_HOW, bayBack); }
+    const r = yield fishCmd(dadTalk(MATT_TALK, 'matt', []));
+    yield G.fadeOut(20);
+    G.play.overlay = null;
+    yield G.fadeIn(20);
+    f.fishTrips = (f.fishTrips || 0) + 1;
+    const n = Object.keys(r.caught).reduce((a, k) => a + (k === 'boot' ? 0 : r.caught[k]), 0);
+    if (!r.teeth) yield G.say('Matt', r.caught.boot ? 'One boot, zero fish. That\'s fishing. That is literally what fishing is.' : 'Nothing today? That\'s fishing. That is literally what fishing is.');
+    else {
+      yield G.say('Matt', G.sayable(n) + ' fish measured, tagged and back in the bay. Good work, deckhand.');
+      G.play.addTeeth(r.teeth);
+      yield G.itemGet(G.spr.toothGold, 'Matt pays you {y}' + G.sayable(r.teeth) + ' shark teeth{/} out of his bucket!');
+    }
+    if (r.caught.cobia && !f.cobiaCaught) { f.cobiaCaught = true; yield G.say('Matt', 'And a COBIA. Wait till your family hears about this.'); }
+    if (!f.tollPaid && s.teeth >= 500) {
+      yield G.say('Nate', G.sayable(s.teeth) + ' shark teeth! That\'s enough for the toll!');
+      yield G.say('Matt', 'Then go get through that tunnel. And Nate? Tell your family I said hi.');
+    } else if (!f.tollPaid) yield G.say('Matt', 'Want to go back out? You\'re up to ' + G.sayable(s.teeth) + '. Five hundred teeth is a lot of fish.');
+    G.play.autosave();
+  };
+
+  const FISH_SURF = 52, FISH_BOTTOM = 124, FISH_TRIP = 75 * 60, ROD_TIP = [146, 14], BOAT_X = 44;
+  const FISH_HOW = [
+    '←→↑↓ move the hook. A fish that spots the bait swims over for a bite.',
+    'When one bites (!), press Z, quick, to set the hook.',
+    'HOLD Z to reel it in. Watch the LINE bar: when the fish RUNS, let go, or the line snaps.',
+    'Bigger fish pay more teeth. Flounder and crabs stay on the bottom. Keep away from the jellyfish.',
+  ];
+  // what Matt talks about out on the water
+  const MATT_TALK = [
+    'The Chesapeake is the biggest estuary in the country. Salt water and fresh water, mixed.',
+    'Most of the striped bass on the whole East Coast were born right here in this bay.',
+    'Croakers croak with their swim bladders. Like a little drum, inside a fish.',
+    'Every flounder starts out with an eye on each side. Then one eye moves over. Weird!',
+    'Blue crab: Callinectes sapidus. "Beautiful savory swimmer." Scientists get hungry.',
+    'Those jellyfish are sea nettles. Do not touch them. Ask me how I know.',
+    'Cobia come up into the bay in the summer. They\'re curious. They follow boats around.',
+    'The ground under this bay is full of fossils. Shark teeth, whale bones, millions of years old.',
+    'Measure it, tag it, let it go. That\'s the survey. That\'s science.',
+  ];
+  // depth: the band it swims in; speed; pull (how hard it fights); runs (the chance it runs, each frame);
+  // weight (how often it shows up); bottom: it stays down on the bottom
+  const BAY_FISH = {
+    spot: { teeth: 8, depth: [58, 100], speed: 0.6, pull: 0.6, runs: 0.004, weight: 5, line: 'A spot! See the dark spot behind its gills? That\'s the spot.' },
+    croaker: { teeth: 12, depth: [70, 114], speed: 0.5, pull: 0.8, runs: 0.006, weight: 4, line: 'Atlantic croaker! Hold it up to your ear. ...Hear that? It croaks.' },
+    bluefish: { teeth: 20, depth: [58, 88], speed: 1.1, pull: 1.2, runs: 0.012, weight: 2, line: 'Bluefish! Watch the teeth. WATCH THE TEETH.' },
+    striper: { teeth: 30, depth: [70, 110], speed: 0.8, pull: 1.4, runs: 0.012, weight: 2, line: 'A STRIPER! Around here they call them rockfish. Beautiful fish.' },
+    flounder: { teeth: 25, depth: [FISH_BOTTOM - 3, FISH_BOTTOM - 3], speed: 0.25, pull: 1, runs: 0.008, weight: 1.5, bottom: true, line: 'Summer flounder! Both eyes on one side. It\'s been through a lot.' },
+    crab: { teeth: 10, depth: [FISH_BOTTOM - 4, FISH_BOTTOM - 4], speed: 0.35, pull: 0.5, runs: 0.004, weight: 1.5, bottom: true, line: 'A blue crab! It grabbed the bait and would NOT let go. Classic crab.' },
+    cobia: { teeth: 75, depth: [84, 112], speed: 0.9, pull: 1.8, runs: 0.016, weight: 0.5, line: 'COBIA!! Nate, that\'s a COBIA! I need a picture of this!' },
+    boot: { teeth: 0, pull: 0.3, runs: 0, line: 'A boot. Not a fish. I\'ll take it anyway. It doesn\'t belong in the bay.' },
+  };
+
+  // The bay, side on: sky, the bridge-tunnel out on the horizon, the water down to the muddy bottom,
+  // and Matt's boat with Matt at the console and Nate up at the bow, rod out over the water.
+  // Returns how far the boat is bobbing (the rod tip bobs with it).
+  function bayScene(ctx, t) {
+    ctx.fillStyle = '#7ab8e8'; ctx.fillRect(0, 0, G.W, 22);
+    ctx.fillStyle = '#9ccce8'; ctx.fillRect(0, 22, G.W, 14);
+    ctx.fillStyle = '#bcdcec'; ctx.fillRect(0, 36, G.W, FISH_SURF - 36);
+    ctx.fillStyle = '#f4f8fc';
+    for (const [x0, y, w] of [[30, 8, 22], [150, 15, 30]]) { const x = Math.round((x0 + t * 0.05) % 290) - 30; ctx.fillRect(x, y, w, 3); ctx.fillRect(x + 4, y - 2, w - 10, 2); }
+    ctx.fillStyle = '#9aa6b2'; ctx.fillRect(186, 38, 14, 4); ctx.fillRect(190, 34, 6, 4);
+    ctx.fillStyle = '#8a98a6'; ctx.fillRect(0, 42, G.W, 1);
+    for (let x = 2; x < G.W; x += 8) ctx.fillRect(x, 43, 1, FISH_SURF - 43);
+    // the water: lighter up top, darker down deep; then the bottom, with oyster shells and seagrass
+    ctx.fillStyle = '#3c8cbc'; ctx.fillRect(0, FISH_SURF, G.W, 22);
+    ctx.fillStyle = '#2e74a2'; ctx.fillRect(0, FISH_SURF + 22, G.W, 26);
+    ctx.fillStyle = '#245e88'; ctx.fillRect(0, FISH_SURF + 48, G.W, FISH_BOTTOM - FISH_SURF - 48);
+    ctx.fillStyle = 'rgba(255,255,255,0.07)';
+    for (let i = 0; i < 4; i++) {
+      const x = Math.round((i * 70 + t * 0.15) % 300) - 30;
+      ctx.beginPath(); ctx.moveTo(x, FISH_SURF); ctx.lineTo(x + 14, FISH_SURF); ctx.lineTo(x - 10, FISH_SURF + 50); ctx.lineTo(x - 24, FISH_SURF + 50); ctx.fill();
+    }
+    ctx.fillStyle = '#7a6a4c'; ctx.fillRect(0, FISH_BOTTOM, G.W, G.H - FISH_BOTTOM);
+    ctx.fillStyle = '#8c7c5a'; ctx.fillRect(0, FISH_BOTTOM, G.W, 1);
+    ctx.fillStyle = '#5e5038'; for (let x = 3; x < G.W; x += 11) ctx.fillRect(x, FISH_BOTTOM + 3 + (x % 3), 2, 1);
+    ctx.fillStyle = '#a8a8a0'; for (const x of [60, 65, 158, 222]) ctx.fillRect(x, FISH_BOTTOM - 1, 4, 2);
+    ctx.fillStyle = '#4a8a3a';
+    for (const [x, n] of [[22, 3], [96, 2], [132, 3], [176, 2], [204, 3]]) for (let i = 0; i < n; i++) {
+      const hgt = 8 + ((x + i * 5) % 7), sway = Math.sin(t * 0.04 + x + i) * 2;
+      for (let k = 0; k < hgt; k++) ctx.fillRect(Math.round(x + i * 3 + sway * (k / hgt)), FISH_BOTTOM - k, 1, 1);
+    }
+    const bob = Math.round(Math.sin(t * 0.05)), by = FISH_SURF - 14 + bob, m = G.sprites.matt.right[0], n = G.sprites.nate.right[0];
+    ctx.drawImage(G.spr.mattBoat, BOAT_X, by);
+    ctx.drawImage(m, BOAT_X + 13, by + 13 - m.height);
+    ctx.drawImage(n, BOAT_X + 32, by + 13 - n.height);
+    ctx.drawImage(G.spr.mattHull, BOAT_X, by);
+    const hx = BOAT_X + 45, hy = by + 13 - n.height + 15;
+    ctx.strokeStyle = '#3a2a1c'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(hx + 0.5, hy + 0.5); ctx.lineTo(ROD_TIP[0] + 0.5, ROD_TIP[1] + bob + 0.5); ctx.stroke();
+    // the waterline over the bottom of the hull, and little waves along the surface
+    ctx.fillStyle = 'rgba(60,140,188,0.75)'; ctx.fillRect(0, FISH_SURF, G.W, 3);
+    ctx.fillStyle = '#d8eef8';
+    for (let x = -12; x < G.W; x += 12) ctx.fillRect(x + Math.round((t * 0.3) % 12), FISH_SURF + ((x / 12) & 1), 5, 1);
+    return bob;
+  }
+  function bayBack(ctx, title) {
+    bayScene(ctx, G.tick);
+    ctx.fillStyle = 'rgba(12,8,20,0.75)'; ctx.fillRect(0, 0, G.W, 12);
+    FT().draw(ctx, title, 4, 2, '#f8d850', { shadow: '#000' });
+  }
+  // a sea nettle: a pale pulsing bell, and stinging tentacles trailing under it
+  function drawNettle(ctx, n, t) {
+    const x = Math.round(n.x), y = Math.round(n.y), sq = Math.round(Math.sin(t * 0.12 + n.ph));
+    ctx.fillStyle = 'rgba(244,236,248,0.85)';
+    ctx.fillRect(x - 2, y, 5, 1); ctx.fillRect(x - 3 - sq, y + 1, 7 + sq * 2, 2); ctx.fillRect(x - 4 - sq, y + 3, 9 + sq * 2, 1);
+    ctx.fillStyle = 'rgba(232,170,196,0.75)';
+    for (let i = -3; i <= 3; i += 2) for (let k = 0; k < 9; k++) ctx.fillRect(x + i + Math.round(Math.sin(t * 0.08 + k * 0.6 + i)), y + 4 + k, 1, 1);
+  }
+
+  // ---- THE TRIP: off the side of Matt's boat. ←→↑↓ move the hook; a fish that spots the bait swims
+  // over and bites (!), and Z sets the hook if it's quick. Then HOLD Z to reel it up to the boat: the
+  // line takes strain while Z is down, and a lot of it when the fish RUNS (it flashes !! first), so let
+  // go on a run or it SNAPS; let go too long and it spits the hook. Sea nettles sting the bait off;
+  // a boot on the bottom snags. The trip lasts until the tide turns (whatever's on the line still gets
+  // landed). Result: { teeth, caught: { kind: n } } (quit: true if Nate stopped early; he's still paid).
+  function fishCmd(talk) {
+    const pick = () => {
+      const ks = Object.keys(BAY_FISH).filter((k) => BAY_FISH[k].weight);
+      let r = Math.random() * ks.reduce((a, k) => a + BAY_FISH[k].weight, 0);
+      for (const k of ks) if ((r -= BAY_FISH[k].weight) <= 0) return k;
+      return 'spot';
+    };
+    return {
+      start() {
+        Object.assign(this, { t: 0, state: 'fish', st: 0, hx: 172, hy: FISH_SURF + 26, fish: [], nettles: [], spawnT: 30, earned: 0, caught: {}, on: null, msg: null, msgT: 0, pops: [], zReady: false, warn: 0, run: 0, tension: 0 });
+        for (let i = 0; i < 4; i++) this.spawn(20 + Math.random() * 200);
+        for (let i = 0; i < 2; i++) this.nettles.push({ x: 20 + i * 70 + Math.random() * 40, y: FISH_SURF + 10 + Math.random() * 28, vx: (Math.random() < 0.5 ? -1 : 1) * 0.15, ph: Math.random() * 6 });
+        if (Math.random() < 0.6) this.fish.push({ kind: 'boot', x: 30 + Math.random() * 190, y: FISH_BOTTOM - 4, dir: Math.random() < 0.5 ? 1 : -1, state: 'still' });
+        talk.nowT = 0;
+        G.play.overlay = this;
+      },
+      // a fish swims in from one side (or, at the start, is already somewhere out there)
+      spawn(x) {
+        const kind = pick(), K = BAY_FISH[kind], dir = Math.random() < 0.5 ? 1 : -1;
+        this.fish.push({ kind, x: x != null ? x : dir > 0 ? -34 : G.W + 34, y: K.depth[0] + Math.random() * (K.depth[1] - K.depth[0]), dir, state: 'swim', ph: Math.random() * 6, sp: K.speed * (0.8 + Math.random() * 0.4) });
+      },
+      pop(m) { this.msg = m; this.msgT = 60; },
+      mouth(f) { const w = G.spr.bayFish[f.kind].r.width; return [f.x + f.dir * (w / 2 - 1), f.y]; },
+      // the bait's gone: whatever had it swims off (the boot sinks back down), and up comes the hook for more
+      lose(line, sound) {
+        const f = this.on;
+        if (f && f.kind === 'boot') { f.state = 'still'; f.y = FISH_BOTTOM - 4; }
+        else if (f) { f.state = 'flee'; f.dir = f.x < ROD_TIP[0] ? -1 : 1; }
+        this.on = null; this.state = 'rebait'; this.st = 70; this.run = 0; this.warn = 0;
+        if (sound) G.audio.sfx(sound);
+        talk.say(line);
+      },
+      hookUp(f) {
+        this.on = f; f.state = 'hooked'; this.state = 'reel';
+        this.x0 = f.x; this.y0 = f.y; this.dist0 = this.dist = 25 + (f.y - FISH_SURF) * 0.35 + Math.abs(f.x - ROD_TIP[0]) * 0.1;
+        this.tension = 15; this.run = 0; this.warn = 0; this.zReady = false;
+        G.audio.sfx('select');
+        this.pop(f.kind === 'boot' ? 'SNAGGED!' : 'FISH ON!');
+      },
+      land() {
+        const f = this.on, K = BAY_FISH[f.kind];
+        this.state = 'landed'; this.st = 70; f.state = 'landed';
+        this.earned += K.teeth; this.caught[f.kind] = (this.caught[f.kind] || 0) + 1;
+        G.audio.sfx(K.teeth ? 'tooth' : 'bump');
+        this.pops.push({ text: K.teeth ? '+' + G.sayable(K.teeth) + ' TEETH' : '+0', x: ROD_TIP[0], y: 30, t: 70 });
+        talk.say(K.line);
+      },
+      update() {
+        const inp = G.input;
+        this.t++; talk.update();
+        if (this.msgT > 0) this.msgT--;
+        this.pops = this.pops.filter((q) => --q.t > 0);
+        if (quitHit()) { this.result = { teeth: this.earned, caught: this.caught, quit: true }; return true; }
+        // the fish swim across, a new one now and then; the nettles drift
+        if (--this.spawnT <= 0) { this.spawnT = 50 + Math.random() * 60; if (this.fish.filter((f) => f.state === 'swim' || f.state === 'chase').length < 7) this.spawn(); }
+        for (const f of this.fish) {
+          if (f.state === 'swim') { f.x += f.dir * f.sp; f.ph += 0.05; if (!BAY_FISH[f.kind].bottom) f.y += Math.sin(f.ph) * 0.15; }
+          else if (f.state === 'flee') f.x += f.dir * 2.4;
+          if (f.x < -50 || f.x > G.W + 50) f.dead = true;
+        }
+        this.fish = this.fish.filter((f) => !f.dead);
+        for (const n of this.nettles) { n.x += n.vx; n.ph += 0.05; n.y += Math.sin(n.ph) * 0.1; if (n.x < -12) n.x = G.W + 12; if (n.x > G.W + 12) n.x = -12; }
+        // the tide turns: once nothing's on the line, that's the trip
+        if (this.state === 'end') { if (--this.st <= 0) { this.result = { teeth: this.earned, caught: this.caught }; return true; } return false; }
+        if (this.t >= FISH_TRIP && (this.state === 'fish' || this.state === 'rebait')) { this.state = 'end'; this.st = 110; talk.say('The tide\'s turning. Let\'s head in.'); return false; }
+        if (this.state === 'fish') this.fishing(inp);
+        else if (this.state === 'bite') this.biting(inp);
+        else if (this.state === 'reel') this.reeling();
+        else if (this.state === 'landed') {
+          // up it comes, swinging off the rod tip; then it's measured, tagged and let go
+          if (--this.st <= 0) {
+            const f = this.on;
+            if (f.kind === 'boot') f.dead = true;
+            else Object.assign(f, { state: 'flee', x: ROD_TIP[0], y: FISH_SURF + 8, dir: Math.random() < 0.5 ? 1 : -1 });
+            G.audio.sfx('splash');
+            this.on = null; this.state = 'fish'; this.hx = ROD_TIP[0] + 6; this.hy = FISH_SURF + 14;
+          }
+        } else if (this.state === 'rebait') {
+          this.hy = Math.max(FISH_SURF + 2, this.hy - 1.2);
+          if (--this.st <= 0) this.state = 'fish';
+        }
+        return false;
+      },
+      fishing(inp) {
+        if (inp.down('left')) this.hx -= 1.1; if (inp.down('right')) this.hx += 1.1;
+        if (inp.down('up')) this.hy -= 1.1; if (inp.down('down')) this.hy += 1.1;
+        this.hx = Math.max(12, Math.min(G.W - 8, this.hx)); this.hy = Math.max(FISH_SURF + 6, Math.min(FISH_BOTTOM - 3, this.hy));
+        for (const n of this.nettles) if (Math.abs(n.x - this.hx) < 6 && this.hy > n.y - 1 && this.hy < n.y + 13) { this.pop('STUNG!'); this.lose('Sea nettle! It stung the bait right off. Hang on, fresh bait.', 'buzz'); return; }
+        for (const f of this.fish) if (f.kind === 'boot' && Math.abs(f.x - this.hx) < 7 && Math.abs(f.y - this.hy) < 6) { this.hookUp(f); return; }
+        // a fish that sees the bait comes over for a look (one at a time)...
+        let ch = this.fish.find((f) => f.state === 'chase');
+        if (!ch) for (const f of this.fish) {
+          if (f.state !== 'swim') continue;
+          const K = BAY_FISH[f.kind], dx = this.hx - this.mouth(f)[0], dy = this.hy - f.y;
+          const sees = K.bottom ? this.hy > FISH_BOTTOM - 14 && Math.abs(dx) < 40 : Math.abs(dy) < 22 && Math.abs(dx) < 50 && Math.sign(dx) === f.dir;
+          if (sees && Math.random() < 0.04) { f.state = 'chase'; ch = f; break; }
+        }
+        // ...and bites
+        if (!ch) return;
+        const K = BAY_FISH[ch.kind], [mx, my] = this.mouth(ch), dx = this.hx - mx, dy = this.hy - my, d = Math.hypot(dx, dy);
+        ch.dir = dx >= 0 ? 1 : -1;
+        if (d > 70) { ch.state = 'swim'; return; }
+        const v = Math.min(d, ch.sp * 1.4 + 0.2);
+        ch.x += (dx / (d || 1)) * v;
+        ch.y = K.bottom ? Math.max(FISH_BOTTOM - 14, Math.min(K.depth[0], ch.y + (dy / (d || 1)) * v)) : ch.y + (dy / (d || 1)) * v;
+        if (d < 3) { this.state = 'bite'; this.on = ch; ch.state = 'bite'; this.st = K.speed > 1 ? 28 : 38; G.audio.sfx('blip'); }
+      },
+      // the bait jiggles: Z, quick!
+      biting(inp) {
+        if (inp.hit('a')) { inp.eat('a'); this.hookUp(this.on); return; }
+        if (--this.st <= 0) { this.pop('MISSED'); this.lose('Too slow! It stole the bait.', 'bump'); }
+      },
+      reeling() {
+        const f = this.on, K = BAY_FISH[f.kind], reel = zHeld(this);
+        if (this.warn > 0) { if (--this.warn === 0) this.run = 30 + Math.floor(Math.random() * 25); }
+        else if (this.run > 0) this.run--;
+        else if (Math.random() < K.runs) this.warn = 14;
+        const run = this.run > 0;
+        if (reel) {
+          this.dist -= run ? 0.08 : 0.7;
+          this.tension += run ? 3 * K.pull : 0.45 * K.pull + 0.15;
+          if (this.t % 5 === 0) G.audio.sfx('reel');
+        } else {
+          this.tension = Math.max(0, this.tension - 2.2);
+          this.dist += run ? 0.3 * K.pull : 0.05 * K.pull;
+        }
+        if (this.tension >= 100) { this.pop('SNAP!'); this.lose('SNAP! Ease off when it runs, or it breaks the line.', 'crack'); return; }
+        if (this.dist >= this.dist0 + 45) { this.pop('IT GOT AWAY'); this.lose('It spit the hook. Happens to everybody.', 'bump'); return; }
+        // it comes up toward the boat as it's reeled in, fighting the whole way (thrashing on a run)
+        const k = 1 - this.dist / this.dist0, tx = ROD_TIP[0] - 4, ty = FISH_SURF + 6;
+        f.x = Math.max(-10, Math.min(G.W + 10, this.x0 + (tx - this.x0) * k + (run ? Math.sin(this.t * 0.6) * 3 : Math.sin(this.t * 0.15))));
+        f.y = Math.max(FISH_SURF + 4, Math.min(FISH_BOTTOM - 3, this.y0 + (ty - this.y0) * k));
+        if (f.kind !== 'boot') f.dir = run ? (this.x0 >= tx ? 1 : -1) : (tx >= f.x ? 1 : -1);
+        if (this.dist <= 0) this.land();
+      },
+      draw(ctx) {
+        const t = this.t, bob = bayScene(ctx, t), tip = [ROD_TIP[0], ROD_TIP[1] + bob];
+        for (const n of this.nettles) drawNettle(ctx, n, t);
+        for (const f of this.fish) {
+          if (f.state === 'landed') continue;
+          const img = G.spr.bayFish[f.kind][f.dir > 0 ? 'r' : 'l'];
+          ctx.drawImage(img, Math.round(f.x - img.width / 2), Math.round(f.y - img.height / 2));
+          const mark = f.state === 'bite' ? '!' : f === this.on && this.warn > 0 ? '!!' : null;
+          if (mark) FT().draw(ctx, mark, Math.round(f.x) - 2, Math.round(f.y) - 14 - ((t >> 2) % 2), mark === '!' ? '#f8d850' : '#f86858', { shadow: '#000' });
+        }
+        // the line, and the hook (with a worm on it, when there's bait)
+        let lx = this.hx, ly = this.hy;
+        if (this.state === 'landed') { lx = tip[0]; ly = tip[1] + 18; }
+        else if (this.on && this.state !== 'bite') [lx, ly] = this.mouth(this.on);
+        ctx.strokeStyle = 'rgba(240,240,248,0.85)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(tip[0] + 0.5, tip[1] + 0.5); ctx.lineTo(Math.round(lx) + 0.5, Math.round(ly) + 0.5); ctx.stroke();
+        if (!this.on || this.state === 'bite') {
+          const x = Math.round(lx) + (this.state === 'bite' ? (t >> 1) % 2 : 0), y = Math.round(ly);
+          ctx.fillStyle = '#c8c8d0'; ctx.fillRect(x, y, 1, 3); ctx.fillRect(x + 1, y + 3, 2, 1); ctx.fillRect(x + 3, y + 1, 1, 2);
+          if (this.state !== 'rebait') { ctx.fillStyle = '#e88a9a'; ctx.fillRect(x + 1, y + 1, 2, 2); ctx.fillRect(x, y + 4, 2, 1); }
+        }
+        if (this.state === 'landed') { const img = G.spr.bayFish[this.on.kind].r; ctx.drawImage(img, tip[0] - Math.round(img.width / 2) + Math.round(Math.sin(t * 0.3) * 2), tip[1] + 18); }
+        // the tide, the pay so far, and (with a fish on) how much strain the line can take
+        const left = Math.max(0, FISH_TRIP - t), tt = G.sayable(this.earned), tw = FT().width(tt);
+        FT().draw(ctx, 'TIDE', 4, 2, '#f8f8f0', { shadow: '#0c0814' });
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(26, 3, 52, 7);
+        ctx.fillStyle = '#2a4a6a'; ctx.fillRect(27, 4, 50, 5);
+        ctx.fillStyle = left < 600 ? '#f86858' : '#78e8e8'; ctx.fillRect(27, 4, Math.round((50 * left) / FISH_TRIP), 5);
+        ctx.drawImage(G.spr.tooth, G.W - 16 - tw, 1);
+        FT().draw(ctx, tt, G.W - 4 - tw, 2, '#f8d850', { shadow: '#0c0814' });
+        const mid = (s, y, col) => FT().draw(ctx, s, 120 - Math.round(FT().width(s) / 2), y, col, { shadow: '#000' });
+        if (this.state === 'reel') {
+          const bx = 224, by = 62, bh = 56;
+          FT().draw(ctx, 'LINE', bx + 5 - Math.round(FT().width('LINE') / 2), by - 10, '#f8f8f0', { shadow: '#0c0814' });
+          ctx.fillStyle = '#0c0814'; ctx.fillRect(bx, by, 10, bh);
+          ctx.fillStyle = '#5a2020'; ctx.fillRect(bx + 1, by + 1, 8, Math.round(bh * 0.2));
+          const fill = Math.round(Math.min(1, this.tension / 100) * (bh - 2));
+          ctx.fillStyle = this.tension > 80 ? '#f86858' : this.tension > 55 ? '#f8d850' : '#78e070'; ctx.fillRect(bx + 2, by + bh - 1 - fill, 6, fill);
+          if (this.run > 0) mid('IT\'S RUNNING! LET GO!', 14, '#f86858');
+          else if ((t >> 4) % 2) mid('HOLD Z TO REEL', 14, '#f8f8f0');
+        } else if (this.state === 'bite') mid('Z!', 14, '#f8d850');
+        if (this.msgT > 0) mid(this.msg, 26, /SNAP|STUNG|AWAY|MISSED/.test(this.msg) ? '#f86858' : '#78e070');
+        for (const q of this.pops) FT().draw(ctx, q.text, q.x - Math.round(FT().width(q.text) / 2), q.y - Math.round((70 - q.t) / 4), '#f8d850', { shadow: '#000' });
+        if (this.state === 'end') mid('THE TIDE IS TURNING', 64, '#f8f8f0');
+        talk.draw(ctx);
+      },
+    };
+  }
+
   // ================================================================ THE BAY, HEADING SOUTH
   // Real-world order across the Chesapeake Bay Bridge-Tunnel: the toll plaza at the
   // Eastern Shore end, the first island (the old fisherman), the Chesapeake Channel
@@ -10268,10 +10649,12 @@
         w.addProp({ img: flip ? sp.pelicanL : sp.pelican, tx: x, ty: y, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: look(line) });
       }
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [6 * 16, 9 * 16, 9 * 16, 12 * 16], talk: S.megalodonSift });
+      S.mattSetup(w);
     },
     onEnter() {
       return (function* () {
         const f = flags();
+        if (f.fishQuest && !f.mattMet) { yield* S.mattArrive(); return; }
         if (f.midSeen) return;
         f.midSeen = true;
         yield G.wait(20);

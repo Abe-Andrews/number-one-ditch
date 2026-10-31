@@ -604,6 +604,7 @@
       const boss = this.world.ents.find((e) => e.boss && e.state !== 'defeated' && !e.noBar && !e.hidden);
       if (boss) G.hud.bossBar(ctx, boss);
       if (!this.menu) G.toasts.draw(ctx, !!boss);
+      if (!this.menu && !boss && !this.overlay) G.menuLessonCard(ctx);
       G.areaBanner.draw(ctx);
       // a full-screen minigame (Dad's pipe bench) stays up between its steps, under the dialogue
       if (this.overlay) this.overlay.draw(ctx);
@@ -699,6 +700,8 @@
     s.hp = s.maxHp;
     G.script.reset();
     G.state = s;
+    // (a checkpoint that starts out with gear already knows the menu: no menu lesson)
+    if (G.menuLesson && G.menuLesson()) s.flags.menuTaught = true;
     G.play.menu = null;
     G.play.warping = false;
     G.play.enter(!!c.fresh);

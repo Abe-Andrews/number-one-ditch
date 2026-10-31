@@ -279,6 +279,9 @@
       for (const [x, d] of [[4, 0], [6, 1], [8, 0], [10, 1], [11, 0]]) p.set(x, y0 - 1 + d, d ? D : H);
       p.set(3, y0 + 1, H); p.set(12, y0 + 1, D);
     }
+    // going gray at the temples (Matt Oliver)
+    if (c.temples && view === 'front') for (const x of [3, 12]) { p.set(x, y0 + 4, c.temples); p.set(x, y0 + 5, c.temples); }
+    if (c.temples && view === 'side') { p.set(6, y0 + 4, c.temples); p.set(6, y0 + 5, c.temples); }
     if (c.shades) {
       const g = c.shades;
       if (view === 'back') { p.hline(3, 12, y0 + 3, g); return; }
@@ -4953,6 +4956,79 @@
     p.vline(21, 0, 9, '#5a5a60'); p.hline(21, 28, 2, '#5a5a60'); p.vline(28, 3, 9, '#8a8a90');
     return finish(p);
   }
+  // Matt Oliver's survey boat, side on with the bow to the right: a white center-console skiff in
+  // University of Delaware blue and gold, a navy bimini top, an outboard and a rod in the holder.
+  // (hullOnly: just the hull, drawn back over whoever is standing in the boat)
+  function mattBoat(hullOnly) {
+    const p = new Pix(52, 20), W = '#f4f4f0', WD = '#dcdce2', NAVY = '#1a4a9a', GOLD = '#f0c830', RED = '#b83434';
+    if (!hullOnly) {
+      p.hline(16, 34, 0, NAVY); p.hline(17, 33, 1, '#123a7a');
+      p.vline(17, 2, 10, '#9a9aa4'); p.vline(33, 2, 10, '#9a9aa4');
+      p.rect(23, 3, 6, 2, '#a8d0e8'); p.hline(22, 29, 2, '#5a5a64'); p.set(22, 3, '#5a5a64'); p.set(22, 4, '#5a5a64');
+      p.rect(22, 5, 8, 6, '#d8dce0'); p.hline(22, 29, 5, '#f0f2f4'); p.set(25, 7, '#2a2a30'); p.set(27, 7, '#c83838');
+      p.vline(44, 1, 10, '#5a5a64'); p.set(45, 7, '#8a8a94'); p.set(45, 8, '#2a2a30');
+      p.rect(0, 6, 5, 5, '#2a2a30'); p.hline(0, 4, 7, '#8a8a94'); p.vline(2, 11, 17, '#3a3a40'); p.set(1, 17, '#3a3a40'); p.set(3, 17, '#3a3a40');
+    }
+    p.hline(48, 51, 9, GOLD); p.hline(45, 51, 10, W);
+    p.hline(5, 50, 11, GOLD);
+    p.hline(5, 50, 12, W);
+    p.hline(5, 49, 13, NAVY); p.hline(5, 48, 14, NAVY);
+    p.hline(5, 47, 15, W); p.hline(6, 45, 16, WD);
+    p.hline(7, 43, 17, RED); p.hline(9, 40, 18, RED);
+    return finish(p);
+  }
+  // The fish in Matt's survey, facing right. A tapered body (dark back, side, pale belly), a forked
+  // tail and a fin on top; then each one's own markings. Flounder lie flat on the bottom, crabs scuttle.
+  function bayFish(kind) {
+    if (kind === 'flounder') {
+      const p = new Pix(17, 6);
+      p.hline(3, 13, 1, '#8a7050'); p.rect(1, 2, 15, 2, '#9a8060'); p.hline(2, 14, 4, '#7a6044'); p.rect(0, 2, 1, 2, '#7a6044');
+      for (const [x, y] of [[4, 2], [8, 3], [11, 2], [6, 4], [13, 3]]) p.set(x, y, '#5a4630');
+      p.set(12, 1, '#101418'); p.set(14, 1, '#101418'); p.set(15, 3, '#5a4630');
+      return finish(p);
+    }
+    if (kind === 'crab') {
+      const p = new Pix(15, 9);
+      p.hline(4, 10, 2, '#5a7a6a'); p.rect(3, 3, 9, 2, '#4a6a62'); p.hline(0, 14, 3, '#4a6a62'); p.hline(4, 10, 5, '#e8e4d8');
+      for (const x of [3, 5, 9, 11]) { p.set(x, 6, '#3a7ac8'); p.set(x + (x < 7 ? -1 : 1), 7, '#3a7ac8'); }
+      p.rect(12, 1, 2, 2, '#3a7ac8'); p.set(14, 1, '#f0f0f0'); p.set(13, 0, '#3a7ac8');
+      p.set(6, 1, '#101418'); p.set(8, 1, '#101418');
+      return finish(p);
+    }
+    if (kind === 'boot') {
+      const p = new Pix(11, 11);
+      p.rect(1, 0, 5, 7, '#6a4a30'); p.rect(1, 6, 9, 3, '#6a4a30'); p.hline(1, 10, 9, '#3a2a1c'); p.hline(1, 5, 0, '#8a6a48');
+      p.set(3, 2, '#3a2a1c'); p.set(3, 4, '#3a2a1c'); p.set(8, 7, '#7a8a5a'); p.set(2, 8, '#7a8a5a');
+      return finish(p);
+    }
+    const [w, h, back, side, belly, fin] = {
+      spot: [13, 7, '#5a6a7a', '#b0bcc6', '#eef0f2', '#e8c050'],
+      croaker: [15, 7, '#7a6448', '#c4ac84', '#f0e8d8', '#b08858'],
+      bluefish: [18, 7, '#2a6a8a', '#7ab0c0', '#e8f0f0', '#3a7a94'],
+      striper: [22, 8, '#4a5a6a', '#c0c8d0', '#f2f4f6', '#7a8898'],
+      cobia: [30, 8, '#3a2e26', '#6a5a48', '#d8d0c0', '#3a2e26'],
+    }[kind];
+    const p = new Pix(w, h + 2), cy = Math.floor(h / 2) + 1, bx0 = 3, bx1 = w - 1, mid = (bx0 + bx1) / 2, half = (bx1 - bx0) / 2;
+    const top = [];
+    for (let x = bx0; x <= bx1; x++) {
+      const hh = Math.max(1, Math.round((h / 2) * Math.sqrt(Math.max(0, 1 - ((x - mid) / (half + 0.5)) ** 2))));
+      top[x] = cy - hh;
+      for (let y = cy - hh; y <= cy + hh - 1; y++) {
+        const r = (y - (cy - hh)) / (2 * hh);
+        p.set(x, y, r < 0.34 ? back : r < 0.7 ? side : belly);
+      }
+    }
+    for (const [x, ys] of [[0, [-3, -2, 1, 2]], [1, [-2, -1, 0, 1]], [2, [-1, 0]]]) for (const dy of ys) p.set(x, cy + dy, fin);
+    for (let x = Math.round(mid) - 2; x <= Math.round(mid) + 1; x++) p.set(x, top[x] - 1, fin);
+    p.set(Math.round(mid) - 2, top[Math.round(mid) - 2] - 2, fin);
+    p.set(w - 3, cy - 1, '#101418'); p.set(w - 1, cy + 1, back);
+    if (kind === 'spot') { p.set(w - 6, cy - 1, '#1c2028'); p.set(w - 6, cy - 2, '#1c2028'); for (const x of [5, 7, 9]) p.set(x, cy - 2, '#8a96a2'); }
+    if (kind === 'croaker') { for (const [x, y] of [[5, -2], [7, -1], [9, -2], [11, -1], [6, 0]]) p.set(x, cy + y, '#6a5438'); p.set(w - 2, cy + 2, '#c4ac84'); }
+    if (kind === 'striper') for (const dy of [-2, 0, 2]) for (let x = 6; x <= w - 5; x++) if (p.get(x, cy + dy)) p.set(x, cy + dy, '#2a3440');
+    if (kind === 'bluefish') { p.hline(w - 4, w - 1, cy + 1, '#1c2a34'); p.set(w - 2, cy, '#ffffff'); p.set(w - 4, cy, '#ffffff'); }
+    if (kind === 'cobia') { for (let x = 5; x <= w - 4; x++) { if (p.get(x, cy)) p.set(x, cy, '#e8e0d0'); if (p.get(x, cy - 1)) p.set(x, cy - 1, '#1c1814'); } }
+    return finish(p);
+  }
   // a brown pelican on the rocks
   function pelican() {
     const p = new Pix(16, 16);
@@ -9174,7 +9250,9 @@
     S.mikeyNote = mikeyNotePages(); S.noteIcon = noteIcon();
     S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);
     S.gull = [false, true].map((l) => ({ sit: gullFrame(l, 'sit'), up: gullFrame(l, 'up'), down: gullFrame(l, 'down') }));
-    S.tunnelPortal = tunnelPortal(); S.tunnelPortalTS = tunnelPortal('THIMBLE SHOAL CHANNEL TUNNEL'); S.containerShip = containerShip(); S.fishingBoat = fishingBoat(); S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
+    S.tunnelPortal = tunnelPortal(); S.tunnelPortalTS = tunnelPortal('THIMBLE SHOAL CHANNEL TUNNEL'); S.containerShip = containerShip(); S.fishingBoat = fishingBoat(); S.mattBoat = mattBoat(); S.mattHull = mattBoat(true); S.mattBoatL = mirror(S.mattBoat); S.mattHullL = mirror(S.mattHull);
+    S.bayFish = {}; for (const k of ['spot', 'croaker', 'bluefish', 'striper', 'cobia', 'flounder', 'crab', 'boot']) { const r = bayFish(k); S.bayFish[k] = { r, l: mirror(r) }; }
+    S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
     S.bayViewer = bayViewer(); S.tunnelLight = tunnelLight(); S.tunnelSign = tunnelSign();
     S.gateKey = gateKey(); S.rodIcon = rodIcon(); S.rodHeld = rodHeld(); S.lure = lure(); S.bobber = bobber();
     S.mosasaur = [mosasaurSkull(true), mosasaurSkull(false)]; S.pebble = pebble(); S.sifter = sifter();
