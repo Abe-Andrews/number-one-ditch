@@ -254,7 +254,7 @@
     organizer: { skin: '#e0b088', hair: '#2a1a14', hairStyle: 'shoulder', glasses: '#202020', shirt: '#6a3a8a', pants: '#2a2a30', shoes: '#c8c8c8', torso: 6, legs: 3 },
   });
 
-  // Badlands Chugs: bald, full beard, black "Don't Touch Dat" tee, white sneakers.
+  // Badlands Chugs: bald, full beard, a black tee with a gray logo, white sneakers.
   G.CAST.badlands = {
     skin: '#6a4232', eyes: '#140c0a', hair: '#6a4232', hairStyle: 'bald', beard: '#24201e',
     shirt: '#1c1c20', logo: '#a8a8b0', pants: '#2a2c34', shoes: '#f0f0f0', wide: true, big: true, torso: 9, legs: 4,
@@ -2195,8 +2195,8 @@
     yield G.say('Badlands Chugs', 'Who\'s gonna stop me? Ain\'t nobody ever out-chugged Badlands.');
     if (G.with('doron')) {
       yield G.say('Doron', 'I could suplex him.');
-      yield G.say('Badlands Chugs', 'Don\'t touch dat.');
-      yield G.say('Doron', '...He said not to touch that.');
+      yield G.say('Badlands Chugs', 'You can try, big man.');
+      yield G.say('Doron', '...He\'s bigger than he looks. And he looks BIG.');
     }
     yield G.say('Nate', '...Then I challenge you. To the {y}refrigerator game{/}.');
     yield G.emote(b, 'bang', 40);
@@ -2204,7 +2204,7 @@
     yield G.say('Badlands Chugs', '...The refrigerator game. Oh, you know the rules?');
     yield G.say('Badlands Chugs', 'I make you a drink. You chug it, and you guess what\'s in it. Then you make me one, and I chug yours.');
     yield G.say('Badlands Chugs', 'I finish yours, she goes in the blender. I CAN\'T finish yours... she\'s all yours.');
-    yield G.say('Badlands Chugs', 'Go find the nastiest stuff you can. I\'ll be right here. And don\'t touch dat fridge.');
+    yield G.say('Badlands Chugs', 'Go find the nastiest stuff you can. I\'ll be right here. Me and the blender.');
     yield G.say('Nate', 'Okay. Think like a chemist. Things that should never, ever be in the same glass.');
     yield G.say('Nate', '{y}Milk{/}: Dad keeps some in the garage fridge. {y}Liquid smoke{/}: with the grill stuff out on the patio.');
     yield G.say('Nate', '{y}Blue food coloring{/}: my old chemistry set, upstairs. And {y}vodka shooters{/}...');
@@ -2221,7 +2221,7 @@
       'Clock\'s ticking. The blender\'s warming up.',
       'Nastiest stuff in the house. Don\'t come back here with no lemonade.',
       'You got ' + G.sayable(n) + ' out of 4. I can count, young man.',
-      'Don\'t touch dat fridge.',
+      'Your sister\'s fine. Cold. But fine.',
     ];
     f.badTalk = ((f.badTalk || 0) + 1) % lines.length;
     yield G.say('Badlands Chugs', lines[f.badTalk]);
@@ -2245,7 +2245,7 @@
       return;
     }
     yield* fridgeThump();
-    if (G.play.world.badlands) yield G.say('Badlands Chugs', 'Ah-ah-ah. Don\'t touch dat.');
+    if (G.play.world.badlands) yield G.say('Badlands Chugs', 'Ah-ah-ah. She stays in there till we play.');
   };
 
   // The first photo for the collection: Nate's school picture, on the side of the fridge.
@@ -3942,7 +3942,7 @@
     yield G.say('Nate', 'Milk, blue food coloring, liquid smoke and vodka. Chemically speaking, this should not exist.');
     yield G.emote(b, 'huh', 40);
     yield G.say('Badlands Chugs', 'It\'s blue. Why is it blue? And why is it... SMOKING?');
-    yield G.say('Badlands Chugs', '...Ain\'t nothing Badlands can\'t chug. Don\'t touch dat.');
+    yield G.say('Badlands Chugs', '...Ain\'t nothing Badlands can\'t chug. Watch this.');
     // the chug, in glorious close-up (Nate and whoever's with him step aside so nobody blocks the shot)
     G.audio.play('chug');
     w.boot.img = null;
