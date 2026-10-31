@@ -15296,7 +15296,7 @@
   // Abe teaches him Nice Crack on Dad's pipe; Hannah patches him all the way up. Then the
   // relay: every one of them takes a turn against Father Eggmas with their own move (Doron
   // throws rocks, Dad shouts EEENGLISH, Lily says "No.", Mom fires Henrietta's eggs, Abe
-  // reaches up and bonks him (and Lily: "Nice crack, Abe!"), Hannah throws ice packs), and
+  // reaches up and bonks him (and Lily: "Nice crack, Abe!"), Hannah throws needles), and
   // Nate goes last: egg tennis, then Nice Crack.
   // Flags: fin_intro, fin_freed (0-7), fin_relay (whose turn, 0-7), fin_done, signal_crack.
   // (Romulus came with Abe and Hannah: he's fought between them, and takes a turn in the relay)

@@ -2917,7 +2917,7 @@
     lily: { weapon: 'no', need: 5, h: 16, every: 85, attacks: ['spirals', 'spirals', 'lob', 'egglets'], tip: 'Hold Z to wind up a "No." Let go to say it. Only a full "No." counts!' },
     michelle: { weapon: 'egg', need: 12, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'rain'], tip: 'Z: Henrietta fires an egg.' },
     abe: { weapon: 'reach', need: 6, h: 50, every: 80, attacks: ['lights', 'lob', 'spirals', 'lights'], tip: 'He\'s floating too high for anybody else. Z: Abe reaches up and bonks him!' },
-    hannah: { weapon: 'ice', need: 9, h: 22, every: 72, attacks: ['spirals', 'rain', 'lights', 'egglets'], tip: 'Z: throw an ice pack.' },
+    hannah: { weapon: 'needle', need: 9, h: 22, every: 72, attacks: ['spirals', 'rain', 'lights', 'egglets'], tip: 'Z: throw a needle. Little pinch!' },
     romulus: { weapon: 'bark', need: 6, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'egglets'], tip: 'Z: BARK! Woof right at Father Eggmas. (Egglets too.)' },
     nate: { weapon: 'crack', need: 3, h: 22, every: 70, attacks: ['golden', 'lob', 'spirals', 'golden', 'lights', 'egglets'], tip: 'Bat the golden egg back with your hammer until it knocks him down. Then puff NICE CRACK (X: down, down, left)!' },
   };
@@ -3230,7 +3230,11 @@
         ctx.save(); ctx.strokeStyle = '#f8f8f0'; ctx.lineWidth = 2;
         for (const k of [0, 6]) { const r = 3 + ((age + k) % 12) * 0.6; ctx.globalAlpha = 0.9 - ((age + k) % 12) / 16; ctx.beginPath(); ctx.ellipse(Math.round(this.x) - cx, Math.round(this.y - 10) - cy, r, r * 0.8, 0, 0, Math.PI * 2); ctx.stroke(); }
         ctx.restore();
-      } else ctx.drawImage(G.spr.icePack, Math.round(this.x - 6) - cx, Math.round(this.y - 14) - cy);
+      } else {
+        // Hannah's needle, flying needle-first
+        ctx.save(); ctx.translate(Math.round(this.x) - cx, Math.round(this.y - 10) - cy); ctx.rotate(Math.atan2(this.vy, this.vx));
+        ctx.drawImage(G.spr.syringe, -Math.round(G.spr.syringe.width / 2), -Math.round(G.spr.syringe.height / 2)); ctx.restore();
+      }
     }
   }
   G.RelayShot = RelayShot;
@@ -3242,7 +3246,7 @@
   G.LiftRock = LiftRock;
 
   // what Z does for each of the family on their turn (Lily's is her "No.", built in)
-  G.RELAY_LABEL = { doron: 'ROCK', dad: 'ENG', lily: 'NO.', michelle: 'EGG', abe: 'BONK', romulus: 'WOOF', hannah: 'ICE' };
+  G.RELAY_LABEL = { doron: 'ROCK', dad: 'ENG', lily: 'NO.', michelle: 'EGG', abe: 'BONK', romulus: 'WOOF', hannah: 'SHOT' };
   const eggmasIn = (w) => w.ents.find((e) => e instanceof EggmasBoss && !e.dead);
   G.RELAY_MOVE = {
     // Doron: pick up a rock (Z), throw it at Father Eggmas (Z)
@@ -3295,12 +3299,12 @@
       const sh = w.add(new RelayShot(p.x, p.y - 4, Math.cos(a) * 2.4, Math.sin(a) * 2.4, 'bark')); sh.life = 90;
       G.audio.sfx('woof'); w.pop(p.x, p.y - 30, 'WOOF!', '#f8f8f0');
     },
-    // Hannah: an ice pack
+    // Hannah: a needle
     hannah(p, w) {
       if (p.relayCd > 0) return;
       p.relayCd = 26;
       const boss = eggmasIn(w), a = boss ? Math.atan2(boss.y - p.y, boss.x - p.x) : Math.atan2(G.DIRS[p.dir][1], G.DIRS[p.dir][0]);
-      w.add(new RelayShot(p.x, p.y - 2, Math.cos(a) * 2.2, Math.sin(a) * 2.2, 'ice'));
+      w.add(new RelayShot(p.x, p.y - 2, Math.cos(a) * 2.4, Math.sin(a) * 2.4, 'needle'));
       G.audio.sfx('swing');
     },
   };
