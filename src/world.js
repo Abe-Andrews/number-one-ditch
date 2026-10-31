@@ -127,6 +127,7 @@
     '\u00e2': { k: 'rugDen', edge: true },
     // the 2 AM Taco Bell run: a floorboard that creaks
     '\u00ee': { k: 'creakFloor' },
+    '\u00f2': { k: 'creakStairs' },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 

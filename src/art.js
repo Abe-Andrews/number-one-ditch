@@ -1302,6 +1302,11 @@
         for (let i = 0; i < 2; i++) p.set(r() * 16, y + 1 + Math.floor(r() * 2), r() < 0.5 ? '#b87a40' : '#dca064');
       }
     },
+    // a creaky stair (the 2 AM run): the stairs, with a crack across the tread
+    creakStairs(p, r, v, mask) {
+      TILE_DRAW.stairsDown(p, r, v, mask);
+      for (const [x, y] of [[4, 6], [5, 7], [6, 6], [7, 7], [8, 6], [9, 7], [10, 6]]) p.set(x, y, '#5a3418');
+    },
     // a creaky floorboard (the 2 AM Taco Bell run): the same honey oak, a shade darker, with a crack
     creakFloor(p, r, v) {
       TILE_DRAW.oakFloor(p, r, v);
@@ -3988,6 +3993,12 @@
     const p = new Pix(16, 14);
     for (let i = 0; i < 14; i++) { const x = 1 + ((i * 5) % 13), y = (i * 3) % 5; p.rect(x, y, 3, 2, ['#5aa83a', '#f08020', '#c82020', '#4a1e5a'][i % 4]); p.set(x, y, '#ffffff'); }
     p.rect(0, 5, 16, 9, '#e8e4dc'); p.hline(0, 15, 5, '#f8f6f0'); p.hline(0, 15, 9, '#c8c0b0'); p.rect(5, 7, 6, 2, '#f8f8f0'); p.hline(6, 9, 7, '#8a8a90');
+    return finish(p);
+  }
+  // Lily's sneakers, left on the mudroom bench
+  function lilyShoes() {
+    const p = new Pix(14, 6);
+    for (const x0 of [0, 7]) { p.rect(x0, 1, 6, 4, '#f4f4f0'); p.rect(x0 + 3, 0, 3, 2, '#f4f4f0'); p.hline(x0, x0 + 5, 5, '#b8b8c0'); p.set(x0 + 4, 1, '#c8a0e8'); p.set(x0 + 2, 2, '#d8d8e0'); }
     return finish(p);
   }
   function tacoBag() {
@@ -9832,7 +9843,7 @@
     S.bedMission = homeBed({ w: 16, h: 48, quilt: '#2a3a5a', pattern: 'plaid', patC: '#4a6a4a', pillows: ['#f4f4f0'], head: '#4a2a1a', slats: true });
     S.posterCollage = posterCollage(); S.lilyShelves = lilyShelves(); S.chickenArt = chickenArt(); S.nightWhite = nightWhite(); S.victrola = victrola();
     S.dresserWhite = dresserWhite(); S.wickerShelf = wickerShelf(); S.clothesRack = clothesRack(); S.clothesPile = clothesPile(); S.discoBall = discoBall();
-    S.sauceBox = sauceBox(); S.tacoBag = tacoBag(); S.menuIcon = {}; for (const k of ['crunchwrap', 'baja', 'gordita', 'doritos', 'burrito', 'nachos', 'twists', 'pizza']) S.menuIcon[k] = menuIcon(k);
+    S.lilyShoes = lilyShoes(); S.sauceBox = sauceBox(); S.tacoBag = tacoBag(); S.menuIcon = {}; for (const k of ['crunchwrap', 'baja', 'gordita', 'doritos', 'burrito', 'nachos', 'twists', 'pizza']) S.menuIcon[k] = menuIcon(k);
     S.readingChair = readingChair(); S.tbrStack = tbrStack(); S.nookTable = nookTable(); S.openBook = openBook(); S.tentBook = tentBook();
     S.bedLilyWhite = homeBed({ w: 32, h: 50, quilt: '#26305a', pillows: ['#f0ece0', '#e8907a'], head: '#f4f0e6', skirt: '#e8e4d8' });
     // yard

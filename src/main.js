@@ -254,8 +254,10 @@
       // mid-fight), and anything else in front of Nate comes first.
       const fighting = this.world.ents.some((e) => e.enemy && !e.dead && Math.hypot(e.x - p.x, e.y - p.y) < 128);
       let partner = null;
+      // (Lily sneaking out at 2 AM: only the night's own people and things answer)
+      const night = !!G.state.night;
       for (const e of this.world.ents) {
-        if (!e.talk || e === p) continue;
+        if (!e.talk || e === p || (night && !e.night)) continue;
         const b = e.box();
         if (!G.overlap([b[0] - 2, b[1] - 6, b[2] + 2, b[3] + 2], pt)) continue;
         if (e instanceof G.Follower) { if (!fighting && !partner) partner = e; continue; }
@@ -265,11 +267,14 @@
         G.script.run(offer || e.talk.call(e, e));
         return true;
       }
+      let notNow = false;
       for (const pr of this.world.props) {
         if (!pr.talk || !pr.hit || !G.overlap(pr.hit, pt)) continue;
+        if (night && !pr.night) { notNow = true; continue; }
         G.script.run(pr.talk());
         return true;
       }
+      if (notNow) { this.world.pop(p.x, p.y - 30, ['*not now*', '*focus, Lily*', '*Taco Bell first*'][G.tick % 3], '#c8a0f0'); return true; }
       if (partner) { G.script.run(partner.talk()); return true; }
       return false;
     },

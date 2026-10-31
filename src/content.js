@@ -733,6 +733,24 @@
   };
   // (Father Christmas's theme speeds up as he gets angrier: fc2, fc3 are set below)
   G.SONGS = {
+    // Lily sneaking out at 2 AM: tiptoeing staccato in A minor over a creeping bass
+    sneak: {
+      bpm: 84,
+      tracks: [
+        { wave: 'square', vol: 0.035, notes: 'A4:2 R:2 C5:2 R:2 E5:2 R:6 | D5:2 R:2 C5:2 R:2 B4:2 R:6 | A4:2 R:2 C5:2 R:2 E5:2 R:2 A5:2 R:2 | G#5:8 R:8 | F5:2 R:2 E5:2 R:2 D5:2 R:6 | E5:2 R:2 D5:2 R:2 C5:2 R:6 | B4:2 R:2 C5:2 R:2 D5:2 R:2 B4:2 R:2 | A4:8 R:8' },
+        { wave: 'triangle', vol: 0.12, notes: 'A2:4 R:4 E2:4 R:4 | F2:4 R:4 E2:4 R:4 | A2:4 R:4 C3:4 R:4 | E2:4 R:4 E2:4 G#2:4 | D2:4 R:4 A2:4 R:4 | C2:4 R:4 G2:4 R:4 | G2:4 R:4 E2:4 R:4 | A2:4 E2:4 A2:8' },
+        { wave: 'noise', vol: 0.018, notes: 'h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4 | h:4 h:4 h:4 h:4' },
+      ],
+    },
+    // "2 AM": the radio in Freya's car, a lazy late-night groove (Fmaj7, Em7, Dm7, G)
+    twoAM: {
+      bpm: 88,
+      tracks: [
+        { wave: 'square', vol: 0.038, notes: 'E5:4 C5:2 A4:2 C5:4 E5:4 | D5:6 B4:2 G4:8 | C5:4 A4:2 F4:2 A4:4 C5:4 | B4:6 G4:2 E4:8 | E5:2 F5:2 G5:4 E5:2 C5:2 A4:4 | D5:2 E5:2 F5:4 D5:4 B4:4 | C5:2 D5:2 E5:4 C5:2 A4:2 F4:4 | G4:8 R:8' },
+        { wave: 'triangle', vol: 0.14, notes: 'F2:4 F2:4 C3:4 F2:4 | E2:4 E2:4 B2:4 E2:4 | D2:4 D2:4 A2:4 D2:4 | C2:4 C2:4 G2:4 C2:4 | F2:4 F2:4 C3:4 F2:4 | E2:4 E2:4 B2:4 E2:4 | D2:4 D2:4 A2:4 D2:4 | G2:4 G2:4 D3:4 G2:4' },
+        { wave: 'noise', vol: 0.04, notes: 'k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 k:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 h:2 s:4 h:4 | k:4 h:2 k:2 s:2 s:2 h:4' },
+      ],
+    },
     title: {
       bpm: 92,
       tracks: [
@@ -4923,7 +4941,11 @@
 
   G.MAPS.homeDown = {
     name: 'Home: Downstairs',
-    music: 'house',
+    // (2 AM, Lily sneaking out: the sneaking music, Z does nothing, the dark and the sleepers: G.night())
+    get music() { return G.night() ? 'sneak' : 'house'; },
+    get quiet() { return G.night(); },
+    tick(w) { if (G.night()) G.nightTick(w, 'down'); },
+    tint(ctx) { if (G.night()) G.nightTint(ctx, 'down'); },
     tiles() {
       const W = 50, H = 18;
       const g = Array.from({ length: H }, () => Array(W).fill('w'));
@@ -4964,6 +4986,8 @@
       // kitchen counters
       fill(26, 3, 10, 1, 'Q');
       fill(26, 16, 9, 1, 'Q');
+      // (2 AM: creaky boards in the front hall, across the kitchen and in the mudroom)
+      if (G.night()) for (const [x, y] of [[19, 9], [20, 9], [18, 11], [21, 12], [24, 12], [25, 13], [33, 12], [33, 13], [34, 13], [34, 14], [35, 12], [38, 14], [40, 15], [40, 16]]) set(x, y, '\u00ee');
       return g.map((r) => r.join(''));
     },
     setup(w) {
@@ -5064,7 +5088,7 @@
       F.stand(sp.firewoodCrate, 39, 4, 1, look('A crate of split firewood and kindling. Dad keeps it full all winter.'));
       F.stand(sp.windsorPine, 40, 5, 1, look('Another Windsor chair, pulled right up to the fire.'));
       F.stand(sp.twigRocker, 42, 5, 1, look('A rocking chair made of bent branches, by the fire. Dad\'s chair. Nobody else sits in Dad\'s chair.'));
-      w.addTrigger(37, 3, 12, 7, () => { if (!flags().denSeen && !G.script.busy) G.script.run(S.denFirst()); });
+      w.addTrigger(37, 3, 12, 7, () => { if (!flags().denSeen && !G.script.busy && !G.night()) G.script.run(S.denFirst()); });
       // ---- mudroom
       F.hang(sp.coatHooks, 37, 12, 2, look('Coat hooks, overloaded with coats from every season.'), 2);
       F.stand(sp.bootBench, 37, 13, 2, () => S.clueMudroom());
@@ -5082,14 +5106,15 @@
         const id = 'gone_' + w.id + '_' + x + '_' + y;
         if (!flags()[id]) w.add(new Kind(x * 16 + 8, y * 16 + 14)).goneFlag = id;
       };
-      at(G.Corncob, 12, 8); at(G.Corncob, 9, 15);
-      at(G.CerealBox, 41, 8); at(G.CerealBox, 47, 13);
-      at(G.Firework, 18, 12);
-      // ---- ways out
+      if (!G.night()) { at(G.Corncob, 12, 8); at(G.Corncob, 9, 15); at(G.CerealBox, 41, 8); at(G.CerealBox, 47, 13); at(G.Firework, 18, 12); }
+      // ---- ways out (at 2 AM: Lily's way out, S.nightSetup)
       w.addTrigger(17, 3, 2, 1, () => G.play.warp('homeUp', 13, 13, 'up'));
-      w.addWarp(4, 17, 1, 1, 'home', 14, 34, 'down');
-      w.addWarp(20, 17, 1, 1, 'home', 17, 34, 'down');
-      w.addWarp(39, 17, 1, 1, 'home', 23, 34, 'down');
+      if (G.night()) S.nightSetup(w, 'down');
+      else {
+        w.addWarp(4, 17, 1, 1, 'home', 14, 34, 'down');
+        w.addWarp(20, 17, 1, 1, 'home', 17, 34, 'down');
+        w.addWarp(39, 17, 1, 1, 'home', 23, 34, 'down');
+      }
     },
     onEnter() {
       return (function* () {
@@ -5105,7 +5130,10 @@
 
   G.MAPS.homeUp = {
     name: 'Home: Upstairs',
-    music: 'house',
+    get music() { return G.night() ? 'sneak' : 'house'; },
+    get quiet() { return G.night(); },
+    tick(w) { if (G.night()) G.nightTick(w, 'up'); },
+    tint(ctx) { if (G.night()) G.nightTint(ctx, 'up'); },
     tiles() {
       const W = 40, H = 21;
       const g = Array.from({ length: H }, () => Array(W).fill('w'));
@@ -5128,6 +5156,8 @@
       fill(3, 18, 6, 2, 'q');
       fill(2, 11, 10, 2, 'R'); fill(16, 11, 18, 2, 'R');
       fill(18, 18, 6, 2, 'R');
+      // (2 AM: the bare boards by the stairs creak, except the two Lily knows; so do two of the stairs)
+      if (G.night()) { for (const [x, y] of [[12, 11], [13, 11], [14, 11], [15, 11], [12, 12], [13, 12]]) set(x, y, '\u00ee'); set(13, 15, '\u00f2'); set(14, 17, '\u00f2'); }
       return g.map((r) => r.join(''));
     },
     setup(w) {
@@ -5207,79 +5237,9 @@
         const id = 'gone_' + w.id + '_' + x + '_' + y;
         if (!flags()[id]) w.add(new Kind(x * 16 + 8, y * 16 + 14)).goneFlag = id;
       };
-      at(G.Corncob, 23, 6); at(G.Corncob, 25, 5); at(G.Corncob, 8, 11);
-      at(G.Firework, 22, 5);
-      at(G.CerealBox, 23, 18);
+      if (G.night()) S.nightSetup(w, 'up');
+      else { at(G.Corncob, 23, 6); at(G.Corncob, 25, 5); at(G.Corncob, 8, 11); at(G.Firework, 22, 5); at(G.CerealBox, 23, 18); }
       w.addTrigger(13, 19, 2, 1, () => G.play.warp('homeDown', 17, 8, 'down'));
-    },
-  };
-
-  // ---- 2:00 AM at home: Lily sneaking out (G.state.playAs = 'lily'). The upstairs hall (her door, Nate's,
-  // Mom and Dad's), the stairs, and the front hall down to the front door, all in the dark. The darker
-  // floorboards creak (tile '\u00ee'): three creaks and somebody wakes up (S.tacoCaught). Dad fell asleep
-  // in his den again: stay out of the light spilling from the doorway. (quiet: Z does nothing tonight.)
-  const CREAKS = [[3, 3], [3, 4], [5, 4], [5, 5], [7, 3], [7, 4], [7, 5], [8, 4], [9, 3], [10, 5], [5, 16], [6, 16], [7, 16], [8, 16], [3, 18], [4, 18], [5, 18], [6, 18], [7, 18], [8, 18]];
-  const DEN_LIGHT = [13 * 16, 17 * 16];
-  G.MAPS.nightSneak = {
-    name: 'Home: 2:00 AM',
-    quiet: true, noFollower: true,
-    tiles() {
-      const W = 14, H = 22, g = Array.from({ length: H }, () => Array(W).fill('w'));
-      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
-      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
-      const room = (x, y, w, h, face, floor) => { fill(x, y, w, 2, face); fill(x, y + 2, w, h - 2, floor); };
-      room(1, 1, 12, 5, '5', 'o');      // the upstairs hall
-      room(1, 12, 12, 9, '5', 'o');     // the front hall
-      fill(6, 6, 2, 8, 'D');            // the stairs, down through the front hall's wall
-      fill(13, 16, 1, 2, 'o');          // the den doorway (Dad's in there, asleep)
-      fill(1, 21, 12, 1, 'G'); set(6, 21, 'x');
-      for (const [x, y] of CREAKS) set(x, y, '\u00ee');
-      return g.map((r) => r.join(''));
-    },
-    setup(w) {
-      const F = furnish(w), sp = G.spr;
-      F.hang(sp.louverDoor, 2, 2, 1, look('Lily\'s door. Behind it: a pile of pillows under her blanket, shaped exactly like a Lily.'), 1);
-      F.hang(sp.louverDoor, 5, 2, 1, look('Nate\'s door. Lamplight under it. He\'s up reading about rocks. He won\'t tell.'), 1);
-      F.hang(sp.familyPhotos, 7, 2, 2, look('Family photos. Everybody in them is asleep right now. Keep it that way.'), 5);
-      F.hang(sp.louverDoor, 10, 2, 1, look('Mom and Dad\'s door. Snoring. ...Only one of them is snoring.'), 1);
-      F.hang(sp.louverDoor, 3, 13, 1, look('The coat closet.'), 1);
-      F.hang(sp.houseBlessing, 9, 13, 1, look('The house blessing. Lily whispers "sorry" to it on the way past.'), 6);
-      w.blockTiles(13, 16, 1, 2);
-      w.addTrigger(6, 21, 1, 1, () => G.script.run(S.tacoDrive()));
-    },
-    tick(w) {
-      const p = G.play.player;
-      if (G.script.busy || !p || G.play.overlay) return;
-      const S0 = w.sneak = w.sneak || { noise: 0, decay: 0, lit: 0, tile: null };
-      const tx = Math.floor(p.x / 16), ty = Math.floor((p.y - 3) / 16), key = tx + ',' + ty;
-      // a creaky board under her feet
-      if (key !== S0.tile) {
-        S0.tile = key;
-        if (w.tileAt(tx, ty) === '\u00ee') {
-          S0.noise++; S0.decay = 0;
-          G.audio.sfx('creak'); w.pop(p.x, p.y - 30, '*creeeak*', '#d8c8a8');
-          if (S0.noise >= 3) { G.script.run(S.tacoCaught(ty < 12 ? 'mom' : 'dad')); return; }
-          if (S0.noise === 2) w.pop(ty < 12 ? 10 * 16 + 8 : 12 * 16, ty < 12 ? 2 * 16 : 15 * 16, ty < 12 ? '*Mom rolls over*' : '*Dad stirs*', '#f8d850');
-        }
-      }
-      if (S0.noise > 0 && ++S0.decay > 300) { S0.noise--; S0.decay = 0; }
-      // the light from Dad's den
-      if (Math.hypot(p.x - DEN_LIGHT[0], p.y - DEN_LIGHT[1]) < 62) {
-        if (++S0.lit === 1) w.pop(p.x, p.y - 30, '!', '#f8d850');
-        if (S0.lit > 45) { G.script.run(S.tacoCaught('dad')); return; }
-      } else S0.lit = Math.max(0, S0.lit - 2);
-      if (G.tick % 150 === 0) w.pop(10 * 16 + 8, 2 * 16, 'Zzz...', '#a8b8e8');
-      if (G.tick % 170 === 85) w.pop(12 * 16, 16 * 16, '*snort* zzz', '#f8d8a8');
-    },
-    tint(ctx) {
-      const cam = G.play.cam, x = DEN_LIGHT[0] - cam.x, y = DEN_LIGHT[1] - cam.y;
-      ctx.fillStyle = 'rgba(8,10,34,0.62)'; ctx.fillRect(0, 0, G.W, G.H);
-      const gr = ctx.createRadialGradient(x, y, 4, x, y, 70);
-      gr.addColorStop(0, 'rgba(255,196,120,0.5)'); gr.addColorStop(1, 'rgba(255,196,120,0)');
-      ctx.fillStyle = gr; ctx.fillRect(x - 72, y - 72, 72, 144);
-      const n = (G.play.world.sneak || {}).noise || 0;
-      FT().draw(ctx, 'NOISE', 92, 4, '#c8c0d8', { shadow: '#000' });
-      for (let i = 0; i < 3; i++) { ctx.fillStyle = i < n ? '#f86858' : '#3a3450'; ctx.fillRect(124 + i * 9, 5, 7, 6); }
     },
   };
 
@@ -13962,11 +13922,20 @@
   };
   // talking to her: a checkup (all hearts back, when nothing's attacking)
   // ================================================================ LILY'S 2 AM TACO BELL RUN
-  // Lily loves Taco Bell, and she and her friend Freya go at 2 AM. From Lily's bed (her phone won't stop
-  // buzzing): play as Lily, sneak out of the house without waking Mom (upstairs) or Dad (asleep in his den
-  // again) in G.MAPS.nightSneak, then order for the whole car at the drive-thru (driveThruCmd). The first
-  // run gets Nate the Fourthmeal bag (items.tacoBag, every heart back on X, holds 2), and every run after
-  // restocks it. Flags: tacoRunMet, tacoRunDone, tacoSneakHow, tacoHow, tacoCaughtN.
+  // Lily loves Taco Bell, and she and her friend Freya go at 2 AM. It starts at Lily's bed (her phone won't
+  // stop buzzing) and plays out in four parts:
+  //  1. SNEAKING OUT, as Lily, through the real house at night (G.state.night; homeUp and homeDown check it
+  //     with G.night()): dark except for her phone, Nate's lamp and Dad's fire. The runner rug is quiet; the
+  //     bare boards by the stairs, two of the stairs and some of the kitchen floor creak (three creaks and
+  //     somebody wakes up). Mom gets up for the bathroom now and then: her door creaks first, so be out of the
+  //     hall when she comes. Dad fell asleep in his den rocker: when he stops snoring, FREEZE. The front door's
+  //     deadbolt is too loud, so: shoes off the mudroom bench, out the side door. Nate's up, and whispers his order.
+  //  2. THE RIDE (rideCmd): Freya's car, the radio on ("2 AM", an original tune).
+  //  3. THE DRIVE-THRU (driveThruCmd): three rounds of orders (Freya out loud, the group chat on Lily's phone)
+  //     ordered from memory, the speaker reading it back WRONG (catch the mistakes), then the window (catch the bags).
+  //  4. THE PARKING LOT (hangoutCmd), and the morning after (S.tacoMorning): a Taco Bell bag in the recycling.
+  // The first run gets Nate the Fourthmeal bag (items.tacoBag); every run after restocks it. Best stars:
+  // flags.tacoStars. Flags: tacoRunMet, tacoRunDone, tacoSneakHow, tacoHow, nateOrder.
   const TACO_MAX = 2;
   const TACO_MENU = [
     { id: 'crunchwrap', short: 'Crunchwrap' }, { id: 'baja', short: 'Baja Blast' },
@@ -13975,12 +13944,16 @@
     { id: 'twists', short: 'Cinnamon Twists' }, { id: 'pizza', short: 'Mexican Pizza' },
   ];
   const LILY_USUAL = ['crunchwrap', 'baja'];   // Lily's usual
+  const tacoShort = (id) => TACO_MENU.find((m) => m.id === id).short;
   const TACO_HOW = [
     'Freya freezes up at drive-thrus. Lily orders for the whole car.',
-    'First, LISTEN: everybody says what they want. (Z skips ahead.)',
-    'Then ORDER it all off the menu board: ↑↓ to pick, Z to order. Order something nobody asked for and the line gets mad.',
-    'X: "Wait, what did everybody want?" They say it again, but the car behind you honks. Don\'t let the HONK bar fill up.',
+    'LISTEN as everybody says what they want (Z skips ahead), then ORDER it all from memory: ↑↓ and Z. X asks again, but the car behind you honks.',
+    'The speaker reads the order back. It gets something WRONG. Z marks a wrong line, X says "Yep, that\'s it."',
+    'Don\'t let the HONK bar fill up. Then catch the bags at the window!',
   ];
+  G.night = () => !!(G.state && G.state.night);
+  const DAD_CHAIR = [42 * 16 + 8, 5 * 16 + 14];
+
   S.lilyBed = function* () {
     const f = flags();
     if (!f.lilySaved || !G.state.party.includes('lily')) { yield G.say(null, 'Lily\'s bed: a white frame, navy sheets, and a pile of blankets she swears is organized.'); return; }
@@ -13988,13 +13961,13 @@
     G.audio.sfx('buzz');
     yield G.say(null, 'Lily\'s phone buzzes on the bed. And buzzes. And buzzes.');
     yield G.text('Freya', 'taco bell run??');
-    yield G.text('Freya', '2am. ill be outside. lights off');
+    yield G.text('Freya', '2am. ill be at the end of the driveway. lights off');
     if (!f.tacoRunMet) {
       f.tacoRunMet = true;
       yield G.say('Lily', 'Freya. Every night. Every NIGHT.');
       yield G.say('Lily', '...I\'m going. Mom can\'t know. Dad can\'t know. Nobody can know.');
       yield G.say('Nate', 'I know.');
-      yield G.say('Lily', 'You don\'t count. Text me your order.');
+      yield G.say('Lily', 'You don\'t count. You\'re furniture.');
     } else yield G.say('Lily', f.tacoRunDone ? 'Freya again. Same plan. Same order.' : 'Freya is not going to stop until I go.');
     const c = yield G.ask('Lily', 'Sneak out at 2 AM?', ['Let\'s go', 'Not tonight']);
     if (c !== 0) { yield G.say('Lily', 'Fine. But Freya is going to be SO dramatic about it.'); return; }
@@ -14006,25 +13979,95 @@
     yield G.say(null, 'Taped to the lid: a receipt. 2:07 AM.');
     if (G.with('lily')) yield G.say('Lily', 'That\'s my collection. Don\'t organize it. It\'s organized.');
   };
+
+  // ---- 1. SNEAKING OUT
   S.tacoRunStart = function* () {
     const f = flags();
     yield G.fadeOut(30);
+    G.state.night = { shoes: false, noise: 0, decay: 0, tries: 0 };
     G.state.playAs = 'lily';
-    G.play.loadMap('nightSneak', 2 * 16 + 8, 3 * 16 + 14, 'down', true);
-    yield G.fadeIn(30);
+    f.nateOrder = false;
+    G.play.loadMap('homeUp', 31 * 16 + 8, 5 * 16 + 14, 'down', true);
+    yield G.fadeIn(40);
     yield G.banner('2:00 AM', 'the Taco Bell run', 150);
     if (!f.tacoSneakHow) {
       f.tacoSneakHow = true;
-      yield G.say(null, 'You\'re playing as {p}Lily{/}. Get down the stairs and out the front door without waking anybody up.');
-      yield G.say(null, 'The {y}darker floorboards{/} creak. Three creaks and somebody wakes up. And stay out of the light from Dad\'s den.');
-      yield G.say('Lily', '*whispering* Dad fell asleep in the den again. Classic.');
+      yield G.say(null, 'You\'re playing as {p}Lily{/}. Get out of the house without waking anybody up.');
+      yield G.say(null, 'Stay on the {y}rug{/}. Bare boards creak, and so do two of the stairs. Three creaks and somebody wakes up.');
+      yield G.say(null, 'Mom gets up for the bathroom at night. When her door creaks, get out of the hall.');
+      yield G.say(null, 'And Dad fell asleep in his den again. When he stops snoring: {y}FREEZE{/}.');
     }
+    yield G.say('Lily', '*whispering* Shoes are on the bench in the mudroom. The front door\'s too loud. Side door.');
+  };
+  // the night's people and things, in the real house (from homeUp/homeDown's setup)
+  S.nightSetup = function (w, floor) {
+    const N = G.state.night;
+    if (floor === 'up') {
+      // Mom, asleep... for now (she walks the hall to the bathroom now and then: G.nightTick)
+      w.nightMom = w.add(new G.NPC({ sprite: 'michelle', name: 'Mom', x: 6 * 16 + 8, y: 10 * 16 + 14, dir: 'down' }));
+      w.nightMom.hidden = true; w.nightMom.solid = false;
+      // Nate's up late in his room, reading about rocks
+      const n = w.add(new G.NPC({ sprite: 'nate', name: 'Nate', x: 25 * 16 + 8, y: 6 * 16 + 14, dir: 'left', talk: S.tacoNate }));
+      n.night = true;
+      return;
+    }
+    // Dad, asleep in his rocker by the fire with a book on his chest
+    const dad = w.addProp({ img: null, tx: 42, ty: 5, hit: [42, 5, 1, 1], talk: S.tacoDadLook });
+    dad.night = true; dad.base = 5 * 16 + 15;
+    dad.draw = function (ctx, cx, cy) {
+      const d = G.sprites.dad.down[0], x = DAD_CHAIR[0] - 8 - cx, y = DAD_CHAIR[1] - 26 - cy, nod = (G.tick >> 5) % 2;
+      ctx.drawImage(d, 0, 0, d.width, 15, x, y + nod, d.width, 15);
+      ctx.drawImage(G.spr.openBook, x + 3, y + 11 + nod);
+    };
+    // Lily's shoes, on the mudroom bench
+    const shoes = w.addProp({ img: null, tx: 37, ty: 13, hit: [37, 13, 2, 1], talk: S.tacoShoes });
+    shoes.night = true; shoes.base = 13 * 16 + 17;
+    shoes.draw = function (ctx, cx, cy) {
+      if (G.state.night && G.state.night.shoes) return;
+      ctx.drawImage(G.spr.lilyShoes, 37 * 16 + 9 - cx, 13 * 16 + 2 - cy);
+      if ((G.tick >> 3) % 4 === 0) { ctx.fillStyle = '#ffffff'; ctx.fillRect(37 * 16 + 22 - cx, 13 * 16 - cy, 1, 1); }
+    };
+    // the ways out: the side door, or not
+    w.addTrigger(20, 17, 1, 1, () => G.script.run(S.tacoDoor('front')));
+    w.addTrigger(4, 17, 1, 1, () => G.script.run(S.tacoDoor('porch')));
+    w.addTrigger(39, 17, 1, 1, () => G.script.run(S.tacoDoor('side')));
+  };
+  S.tacoNate = function* () {
+    const f = flags();
+    yield G.say('Nate', '*whispering* I didn\'t see anything.');
+    if (!f.nateOrder) {
+      f.nateOrder = true;
+      yield G.say('Nate', '...Two bean burritos. Please. I\'ll owe you.');
+      yield G.say('Lily', 'You already owe me.');
+    } else yield G.say('Nate', 'Two bean burritos. Go. GO.');
+  };
+  S.tacoDadLook = function* () {
+    yield G.say(null, 'Dad, asleep in his rocker by the fire, a book open on his chest.');
+    yield G.say('Lily', '*whispering* Don\'t. Wake. Up.');
+  };
+  S.tacoShoes = function* () {
+    const N = G.state.night;
+    if (N.shoes) { yield G.say('Lily', '*whispering* Got them. Side door.'); return; }
+    N.shoes = true;
+    G.audio.sfx('select');
+    yield G.say(null, 'Lily grabs her shoes off the bench. She\'ll put them on outside. Socks are quieter.');
+  };
+  S.tacoDoor = function* (which) {
+    if (which === 'front') { yield G.say('Lily', '*whispering* The front door deadbolt sounds like a GUNSHOT. Side door. Through the mudroom.'); return; }
+    if (which === 'porch') { yield G.say('Lily', '*whispering* That door sticks. It would wake up the whole street.'); return; }
+    if (!G.state.night.shoes) { yield G.say('Lily', '*whispering* Shoes. They\'re on the bench right here.'); return; }
+    yield* S.tacoOut();
   };
   // caught: back to bed (for five minutes)
   S.tacoCaught = function* (who) {
-    const f = flags();
-    f.tacoCaughtN = (f.tacoCaughtN || 0) + 1;
-    if (who === 'mom') {
+    const N = G.state.night;
+    N.tries = (N.tries || 0) + 1;
+    G.audio.stop();
+    if (who === 'momSaw') {
+      yield G.say('Michelle', 'Lily? Honey? What are you doing in the hall?');
+      yield G.say('Lily', '...Sleepwalking.');
+      yield G.say('Michelle', 'Sleepwalk back to bed.');
+    } else if (who === 'mom') {
       yield G.say('Michelle', '...Lily? Is that you?');
       yield G.say('Lily', '*whispering* ...No.');
       yield G.say('Michelle', 'Go back to bed, honey.');
@@ -14034,122 +14077,330 @@
       yield G.say('Dad', 'The water\'s in the kitchen.');
       yield G.say('Lily', '...Right.');
     }
-    yield G.fadeOut(20);
-    G.play.loadMap('nightSneak', 2 * 16 + 8, 3 * 16 + 14, 'down', true);
-    yield G.fadeIn(20);
-    if (f.tacoCaughtN === 2) yield G.say(null, '(The darker floorboards are the creaky ones. Lily knows every single one.)');
-    else yield G.say('Lily', ['Okay. Again. Quieter.', 'Freya is going to leave without me.', 'Third time\'s the charm. Or the fourth.'][f.tacoCaughtN % 3]);
+    yield G.fadeOut(24);
+    Object.assign(N, { shoes: false, noise: 0, decay: 0 });
+    G.play.loadMap('homeUp', 31 * 16 + 8, 5 * 16 + 14, 'down', true);
+    yield G.fadeIn(24);
+    yield G.say('Lily', N.tries === 2 ? '*whispering* Rug good. Bare boards bad. Stairs: skip the cracked ones.' : ['Okay. Again. Quieter.', 'Freya is going to leave without me.', 'Third time\'s the charm. Or the fourth. Or the ninth.'][N.tries % 3]);
   };
-  // out the front door, into Freya's car, and to the drive-thru
-  S.tacoDrive = function* () {
+  // each frame in the house at night: creaks, Mom's bathroom trips, Dad's snoring
+  G.nightTick = (w, floor) => {
+    const p = G.play.player, N = G.state.night;
+    if (!N || G.script.busy || !p || G.play.overlay) { if (p) w.lastP = { x: p.x, y: p.y }; return; }
+    const tx = Math.floor(p.x / 16), ty = Math.floor((p.y - 3) / 16), key = tx + ',' + ty;
+    if (key !== w.nightTile) {
+      const first = w.nightTile == null;
+      w.nightTile = key;
+      const ch = w.tileAt(tx, ty);
+      if (!first && (ch === 'î' || ch === 'ò')) {
+        N.noise++; N.decay = 0;
+        G.audio.sfx('creak'); w.pop(p.x, p.y - 30, '*creeeak*', '#d8c8a8');
+        if (N.noise >= 3) { G.script.run(S.tacoCaught(floor === 'up' ? 'mom' : 'dad')); return; }
+      }
+    }
+    if (N.noise > 0 && ++N.decay > 360) { N.noise--; N.decay = 0; }
+    if (floor === 'up') nightMom(w, p); else nightDad(w, p);
+    w.lastP = { x: p.x, y: p.y };
+  };
+  // Mom: her door creaks (and a light comes on under it), then she walks the hall to the bathroom and back,
+  // seeing anybody in the hall ahead of her. Duck into a room (or a doorway) until she's gone.
+  function nightMom(w, p) {
+    const m = w.nightMom, c = w.momCtl = w.momCtl || { st: 'asleep', t: 520 }, HALL = 11 * 16 + 14;
+    const inHall = p.y >= 11 * 16 && p.y <= 13 * 16 + 2 && p.x < 35 * 16;
+    const go = (path, next) => { c.st = 'walk'; c.path = path; c.next = next; m.hidden = false; };
+    if (c.st === 'asleep') {
+      if (--c.t === 110) { c.light = true; G.audio.sfx('creak'); w.pop(6 * 16 + 8, 9 * 16 - 2, '*Mom\'s door creaks*', '#f8d850'); }
+      if (c.t <= 0) { m.x = 6 * 16 + 8; m.y = 9 * 16 + 14; go([[6 * 16 + 8, HALL], [16 * 16 + 8, HALL], [16 * 16 + 8, 9 * 16 + 14]], 'bath'); }
+    } else if (c.st === 'bath') {
+      if (--c.t <= 0) { m.x = 16 * 16 + 8; m.y = 9 * 16 + 14; go([[16 * 16 + 8, HALL], [6 * 16 + 8, HALL], [6 * 16 + 8, 9 * 16 + 14]], 'asleep'); }
+    } else if (c.st === 'walk') {
+      const [wx, wy] = c.path[0], dx = wx - m.x, dy = wy - m.y, d = Math.hypot(dx, dy);
+      if (d < 0.8) {
+        m.x = wx; m.y = wy; c.path.shift();
+        if (!c.path.length) {
+          m.hidden = true; m.moving = false; c.st = c.next;
+          if (c.st === 'bath') { c.t = 230; c.light = false; w.pop(16 * 16 + 8, 8 * 16, '*flush*', '#a8d8ff'); }
+          else c.t = 1300 + Math.floor(Math.random() * 600);
+        }
+      } else { m.x += (dx / d) * 0.6; m.y += (dy / d) * 0.6; m.dir = G.dirToward(dx, dy); m.moving = true; m.anim++; }
+      // she sees whoever's in the hall in front of her (or right next to her)
+      if (!m.hidden && inHall) {
+        const ahead = m.dir === 'right' ? p.x - m.x : m.dir === 'left' ? m.x - p.x : -1;
+        if (Math.hypot(p.x - m.x, p.y - m.y) < 26 || (ahead > -6 && ahead < 7 * 16 && Math.abs(p.y - m.y) < 24)) { m.dir = G.dirToward(p.x - m.x, p.y - m.y); G.script.run(S.tacoCaught('momSaw')); }
+      }
+    }
+  }
+  // Dad: snoring away (Zzz)... then a big SNORT, and quiet. Move while he's quiet and close enough to hear
+  // you, and he wakes up.
+  function nightDad(w, p) {
+    const c = w.dadCtl = w.dadCtl || { st: 'snore', t: 200 }, near = Math.hypot(p.x - DAD_CHAIR[0], p.y - DAD_CHAIR[1]) < 190;
+    const lp = w.lastP || p, moved = Math.hypot(p.x - lp.x, p.y - lp.y) > 0.25;
+    if (c.st === 'snore') {
+      if (c.t % 46 === 0) { w.pop(DAD_CHAIR[0] + 6, DAD_CHAIR[1] - 30, 'Zzz...', '#f8d8a8'); G.audio.sfx('snore'); }
+      if (c.t === 34) w.pop(DAD_CHAIR[0], DAD_CHAIR[1] - 42, '*SNORT*', '#f8d850');
+      if (--c.t <= 0) { c.st = 'quiet'; c.t = 100 + Math.floor(Math.random() * 50); c.q = 0; }
+    } else {
+      // (a moment after the snort to stop walking, then he's listening)
+      c.q = (c.q || 0) + 1;
+      if (near && moved && c.q > 10) { G.script.run(S.tacoCaught('dad')); return; }
+      if (--c.t <= 0) { c.st = 'snore'; c.t = 170 + Math.floor(Math.random() * 190); }
+    }
+  }
+  // the dark, with holes in it for the lights (Lily's phone, Nate's lamp, Mom's bathroom, Dad's fire), and
+  // the NOISE meter, the goal and FREEZE! up top
+  let nightCanvas = null;
+  const rgba = (hex, a) => 'rgba(' + parseInt(hex.slice(1, 3), 16) + ',' + parseInt(hex.slice(3, 5), 16) + ',' + parseInt(hex.slice(5, 7), 16) + ',' + a + ')';
+  G.nightTint = (ctx, floor) => {
+    const cam = G.play.cam, w = G.play.world, p = G.play.player, N = G.state.night;
+    if (!N || !p) return;
+    if (!nightCanvas) nightCanvas = G.canvas(G.W, G.H);
+    const c = nightCanvas.getContext('2d');
+    c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, G.W, G.H);
+    c.fillStyle = 'rgba(6,8,30,0.8)'; c.fillRect(0, 0, G.W, G.H);
+    const lights = [[p.x, p.y - 10, 34, '#c8d8ff']];
+    if (floor === 'up') {
+      lights.push([25 * 16, 5 * 16, 46, '#ffd890'], [24 * 16 + 8, 10 * 16 + 6, 22, '#ffd890']);
+      const mc = w.momCtl, m = w.nightMom;
+      if (mc && mc.light) lights.push([6 * 16 + 8, 10 * 16 + 6, 24, '#ffd890']);
+      if (mc && mc.st === 'bath') lights.push([16 * 16 + 8, 9 * 16 + 4, 44, '#fff0c8']);
+      if (mc && mc.st === 'walk') lights.push([m.x, m.y - 12, 32, '#fff0c8']);
+    } else lights.push([40 * 16 + 16, 3 * 16 + 8, 92, '#ffb070'], [29 * 16 + 16, 16 * 16, 36, '#a8c0f0'], [19 * 16 + 8, 2 * 16, 30, '#a8c0f0']);
+    c.globalCompositeOperation = 'destination-out';
+    for (const [x, y, r] of lights) {
+      const sx = x - cam.x, sy = y - cam.y, g = c.createRadialGradient(sx, sy, 2, sx, sy, r);
+      g.addColorStop(0, 'rgba(0,0,0,0.95)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = g; c.fillRect(sx - r, sy - r, r * 2, r * 2);
+    }
+    ctx.drawImage(nightCanvas, 0, 0);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const [x, y, r, col] of lights.slice(1)) {
+      const sx = x - cam.x, sy = y - cam.y, g = ctx.createRadialGradient(sx, sy, 2, sx, sy, r);
+      g.addColorStop(0, rgba(col, 0.2)); g.addColorStop(1, rgba(col, 0));
+      ctx.fillStyle = g; ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+    }
+    ctx.restore();
+    const sh = { shadow: '#000' }, dc = w.dadCtl, freeze = floor === 'down' && dc && dc.st === 'quiet' && Math.hypot(p.x - DAD_CHAIR[0], p.y - DAD_CHAIR[1]) < 190;
+    ctx.fillStyle = 'rgba(6,8,30,0.7)'; ctx.fillRect(62, 1, 116, freeze ? 34 : 23);
+    FT().draw(ctx, 'NOISE', 86, 4, '#c8c0d8', sh);
+    for (let i = 0; i < 3; i++) { ctx.fillStyle = i < N.noise ? '#f86858' : '#3a3450'; ctx.fillRect(118 + i * 9, 5, 7, 6); }
+    const goal = N.shoes ? 'Out the side door (mudroom)' : 'Get your shoes (mudroom)';
+    FT().draw(ctx, goal, 120 - Math.round(FT().width(goal) / 2), 14, '#f8d850', sh);
+    if (freeze && (G.tick >> 3) % 2) {
+      FT().draw(ctx, 'FREEZE!', 120 - Math.round(FT().width('FREEZE!') / 2), 26, '#f86858', sh);
+    }
+  };
+
+  // ---- 2. THE RIDE
+  S.tacoOut = function* () {
     const f = flags(), s = G.state;
-    yield G.say(null, 'The front door clicks shut behind her. Freya\'s car is idling at the end of the driveway, headlights off.');
+    yield G.say(null, 'Lily eases the side door shut behind her. Freya\'s car is idling at the end of the driveway, headlights off.');
     yield G.say('Freya', '*whisper-yelling* GET IN.');
-    yield G.say('Lily', 'Go go go go go.');
-    yield G.fadeOut(20);
-    G.play.overlay = { draw: (ctx) => driveBack(ctx, G.tick) };
-    yield G.fadeIn(20);
+    s.night = null;
+    yield G.fadeOut(24);
+    G.audio.play('twoAM');
+    yield rideCmd();
     if (!f.tacoHow) { f.tacoHow = true; yield howToCmd('THE DRIVE-THRU', TACO_HOW, (ctx, title) => { driveBack(ctx, G.tick); ctx.fillStyle = 'rgba(12,8,20,0.75)'; ctx.fillRect(0, 0, G.W, 12); FT().draw(ctx, title, 4, 2, '#f8d850', { shadow: '#000' }); }); }
     const r = yield driveThruCmd();
-    yield G.fadeOut(20);
+    if (!r.quit) yield hangoutCmd(r);
+    yield G.fadeOut(30);
     G.play.overlay = null;
     s.playAs = null;
-    G.play.loadMap('homeUp', 31 * 16 + 8, 6 * 16 + 14, 'down', true);
-    G.play.setFollower('lily');
-    yield G.fadeIn(20);
-    if (r.quit) { yield G.say('Lily', 'Freya panicked and drove us home. We\'ll try again tomorrow. I mean tonight.'); return; }
-    yield G.say(null, 'Lily slips back into bed at 3:12 AM. Nobody ever knew.');
-    const first = !f.tacoRunDone;
-    f.tacoRunDone = true;
-    s.items.tacoBag = TACO_MAX;
-    if (first) {
-      yield G.say('Lily', 'Here. I got you something. Don\'t say I never do anything for you.');
-      yield G.itemGet(G.spr.tacoBag, 'Lily brought Nate a bag: {y}Fourthmeal{/}! Set it to X and eat it to get every heart back. (Holds 2. Lily can always do another run.)');
-      yield G.say('Lily', 'Yours is the bean burritos. The Crunchwrap is MINE.');
-    } else yield G.itemGet(G.spr.tacoBag, 'Lily restocked Nate\'s {y}Fourthmeal{/} bag. (2 of 2.)');
-    G.play.autosave();
+    if (r.quit) {
+      G.play.loadMap('homeUp', 31 * 16 + 8, 6 * 16 + 14, 'down', true);
+      G.play.setFollower('lily');
+      yield G.fadeIn(24);
+      yield G.say('Lily', 'Freya panicked and drove us home. We\'ll try again tomorrow. I mean tonight.');
+      return;
+    }
+    yield* S.tacoMorning(r);
   };
-  // the drive-thru at night: the restaurant glowing purple, the speaker post, the car behind waiting with its
-  // headlights on, and Freya's car: Freya frozen at the wheel, Lily leaning across her out the window
-  function driveBack(ctx, t) {
-    ctx.fillStyle = '#16102a'; ctx.fillRect(0, 0, G.W, G.H);
-    ctx.fillStyle = '#e8e0ff'; for (let i = 0; i < 18; i++) if ((t >> 5) % 9 !== i % 9) ctx.fillRect((i * 53) % 118, 2 + (i * 7) % 9, 1, 1);
+  // a talk strip (face, name, line) along the bottom of the ride and the parking lot
+  function talkStrip(ctx, who, line) {
+    G.box(ctx, 2, 128, 236, 30);
+    const face = { Freya: 'freya', Lily: 'lily' }[who], img = face && G.sprites[face] && G.sprites[face].down[0];
+    if (img) ctx.drawImage(img, 0, 0, img.width, 14, 6, 135, img.width, 14);
+    FT().draw(ctx, who, 26, 131, G.NAME_COLORS[who] || '#f8f8f0', { shadow: '#000' });
+    FT().wrap(line, 206).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 26, 140 + k * 9, '#f8f8f0', { shadow: '#0c0814' }));
+  }
+  // lines one after another (Z for the next one, or they move along on their own)
+  function chat(lines) {
+    return { lines, i: 0, t: 0, update(inp) { this.t++; if ((this.t > 16 && inp.hit('a')) || this.t > 260) { inp.eat('a'); this.t = 0; this.i++; G.audio.sfx('blip'); } return this.i >= this.lines.length; }, draw(ctx) { const l = this.lines[Math.min(this.i, this.lines.length - 1)]; talkStrip(ctx, l[0], l[1]); } };
+  }
+  function nightSky(ctx, t) {
+    const g = ctx.createLinearGradient(0, 0, 0, 90); g.addColorStop(0, '#0c0a24'); g.addColorStop(1, '#2a1a48');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, G.W, 90);
+    ctx.fillStyle = '#e8e0ff'; for (let i = 0; i < 26; i++) if ((t >> 5) % 11 !== i % 11) ctx.fillRect((i * 97) % G.W, 3 + (i * 37) % 50, 1, 1);
+    ctx.fillStyle = '#f4ecd0'; ctx.beginPath(); ctx.arc(200, 20, 8, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#0c0a24'; ctx.beginPath(); ctx.arc(204, 17, 7, 0, Math.PI * 2); ctx.fill();
+  }
+  // Freya's car (side on, facing right): Freya at the wheel, Lily riding shotgun, windows down
+  function freyaCar(ctx, x, y, t, lean) {
+    const bob = (t >> 3) % 2;
+    ctx.fillStyle = '#6a90b0'; ctx.fillRect(x, y + 12 + bob, 72, 14); ctx.fillStyle = '#86aac8'; ctx.fillRect(x, y + 12 + bob, 72, 2);
+    ctx.fillStyle = '#5a7a98'; ctx.fillRect(x + 14, y + bob, 44, 13);
+    ctx.fillStyle = '#2a3448'; ctx.fillRect(x + 17, y + 2 + bob, 17, 10); ctx.fillRect(x + 37, y + 2 + bob, 18, 10);
+    const fr = G.sprites.freya.right[0], li = G.sprites.lily.right[0];
+    // (lean: Lily leaning across Freya and out the window, to yell her order into the speaker)
+    if (!lean) ctx.drawImage(li, 0, 0, li.width, 10, x + 19, y + 2 + bob, li.width, 10);
+    ctx.drawImage(fr, 0, 0, fr.width, 10, x + 39, y + 2 + bob, fr.width, 10);
+    if (lean) ctx.drawImage(li, 0, 0, li.width, 11, x + 54, y - 3 + bob, li.width, 11);
+    ctx.fillStyle = '#f8f0c0'; ctx.fillRect(x + 70, y + 15 + bob, 3, 3); ctx.fillStyle = '#c83030'; ctx.fillRect(x, y + 15 + bob, 2, 3);
+    for (const wx of [x + 12, x + 58]) { ctx.fillStyle = '#1c1c22'; ctx.beginPath(); ctx.arc(wx, y + 26, 6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#8a8a94'; ctx.fillRect(wx - 1, y + 25, 3, 3); }
+  }
+  function rideCmd() {
+    const f = flags(), lines = [
+      ['Freya', 'You made it! I thought your mom got you again.'],
+      ['Lily', 'She almost did. She has the ears of a bat. A bat that never sleeps.'],
+      ['Freya', 'Okay. Music. Your pick.'],
+      ['Lily', '...You know my pick.'],
+      ['Freya', 'Same order as always?'],
+      ['Lily', f.nateOrder ? 'Same order as always. And Nate wants two bean burritos. Don\'t ask how he knows.' : 'Same order as always. And the group chat\'s going to want stuff. It always wants stuff.'],
+      ['Freya', 'Your family is SO weird.'],
+      ['Lily', 'The best kind of weird. Don\'t tell them I said that.'],
+    ];
+    return {
+      start() { this.t = 0; this.c = chat(lines); G.play.overlay = this; },
+      update() { this.t++; if (G.fade > 0) G.fade = Math.max(0, G.fade - 0.05); if (quitHit()) return true; return this.c.update(G.input) && this.t > 60; },
+      draw(ctx) {
+        const t = this.t;
+        nightSky(ctx, t);
+        // trees, then streetlights going by, then the road
+        ctx.fillStyle = '#141028';
+        for (let i = 0; i < 9; i++) { const x = Math.round((i * 40 - t * 0.4) % 360 + 360) % 360 - 40; ctx.beginPath(); ctx.moveTo(x, 90); ctx.lineTo(x + 14, 52 + (i % 3) * 8); ctx.lineTo(x + 28, 90); ctx.fill(); }
+        ctx.fillStyle = '#1e1a2e'; ctx.fillRect(0, 90, G.W, 38);
+        for (let i = 0; i < 4; i++) {
+          const x = Math.round(((i * 90 - t * 2.2) % 360 + 360) % 360) - 60;
+          ctx.fillStyle = '#3a3a44'; ctx.fillRect(x, 50, 2, 44); ctx.fillRect(x, 50, 12, 2);
+          const g = ctx.createRadialGradient(x + 11, 54, 1, x + 11, 70, 30); g.addColorStop(0, 'rgba(255,214,140,0.45)'); g.addColorStop(1, 'rgba(255,214,140,0)');
+          ctx.fillStyle = g; ctx.fillRect(x - 20, 50, 62, 50);
+        }
+        ctx.fillStyle = '#f0d040'; for (let i = 0; i < 9; i++) ctx.fillRect(Math.round(((i * 32 - t * 3.2) % 288 + 288) % 288) - 24, 112, 14, 2);
+        freyaCar(ctx, 76, 74, t);
+        // the radio's on
+        for (let i = 0; i < 3; i++) { const k = ((t + i * 40) % 120) / 120; ctx.globalAlpha = 1 - k; FT().draw(ctx, i % 2 ? '♪' : '♫', 122 + i * 6 + Math.round(Math.sin(k * 6) * 3), 70 - Math.round(k * 34), '#c8a0f0'); }
+        ctx.globalAlpha = 1;
+        this.c.draw(ctx);
+      },
+    };
+  }
+
+  // ---- 3. THE DRIVE-THRU
+  // the restaurant at night, glowing purple, the speaker post, the car behind waiting with its headlights on,
+  // and Freya's car at the speaker (Lily leaning across Freya out the window to order)
+  function driveBack(ctx, t, atWindow) {
+    nightSky(ctx, t);
     ctx.fillStyle = '#2a1840'; ctx.fillRect(0, 12, 118, 50);
     ctx.fillStyle = '#3a2258'; ctx.fillRect(0, 12, 118, 3);
     ctx.fillStyle = '#7a3aa8'; ctx.fillRect(10, 18, 66, 12); ctx.fillStyle = '#c878f0'; ctx.fillRect(10, 18, 66, 1);
     FT().draw(ctx, 'TACO BELL', 43 - Math.round(FT().width('TACO BELL') / 2), 20, '#ffffff', { shadow: '#3a1058' });
-    ctx.fillStyle = '#f8d8a0'; ctx.fillRect(84, 20, 22, 14); ctx.fillStyle = '#c8a070'; ctx.fillRect(84, 27, 22, 1);
+    ctx.fillStyle = atWindow ? '#fff0c8' : '#f8d8a0'; ctx.fillRect(84, 20, 22, 14); ctx.fillStyle = '#c8a070'; ctx.fillRect(84, 27, 22, 1);
     ctx.fillStyle = '#2a2a30'; ctx.fillRect(0, 62, 118, 8); ctx.fillStyle = '#f0d040'; for (let x = 4; x < 118; x += 14) ctx.fillRect(x, 66, 7, 1);
-    ctx.fillStyle = '#3a3a44'; ctx.fillRect(99, 40, 3, 24); ctx.fillStyle = '#1c1c22'; ctx.fillRect(95, 32, 11, 10); ctx.fillStyle = '#5a5a64'; for (let y = 34; y < 41; y += 2) ctx.fillRect(97, y, 7, 1);
+    if (!atWindow) { ctx.fillStyle = '#3a3a44'; ctx.fillRect(99, 40, 3, 24); ctx.fillStyle = '#1c1c22'; ctx.fillRect(95, 32, 11, 10); ctx.fillStyle = '#5a5a64'; for (let y = 34; y < 41; y += 2) ctx.fillRect(97, y, 7, 1); }
     ctx.fillStyle = 'rgba(248,240,160,0.22)'; ctx.fillRect(0, 48, 16, 12); ctx.fillStyle = '#f8f0a0'; ctx.fillRect(0, 52, 3, 3);
-    const bob = (t >> 4) % 2;
-    ctx.fillStyle = '#6a90b0'; ctx.fillRect(16, 46 + bob, 72, 14); ctx.fillStyle = '#86aac8'; ctx.fillRect(16, 46 + bob, 72, 2);
-    ctx.fillStyle = '#5a7a98'; ctx.fillRect(30, 34 + bob, 44, 13); ctx.fillStyle = '#2a3448'; ctx.fillRect(33, 36 + bob, 17, 10); ctx.fillRect(53, 36 + bob, 18, 10);
-    ctx.fillStyle = '#f8f0c0'; ctx.fillRect(86, 49 + bob, 3, 3); ctx.fillStyle = '#c83030'; ctx.fillRect(16, 49 + bob, 2, 3);
-    for (const x of [28, 74]) { ctx.fillStyle = '#1c1c22'; ctx.beginPath(); ctx.arc(x, 60, 6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#8a8a94'; ctx.fillRect(x - 1, 59, 3, 3); }
-    const fr = G.sprites.freya.right[0], li = G.sprites.lily.right[0];
-    ctx.drawImage(fr, 0, 0, fr.width, 11, 55, 35 + bob, fr.width, 11);
-    ctx.drawImage(li, 0, 0, li.width, 11, 70, 31 + bob, li.width, 11);
+    freyaCar(ctx, atWindow ? 22 : 16, 34, t, true);
   }
-  // ---- THE DRIVE-THRU: three rounds. LISTEN as everybody says what they want (Freya in the car; Nate and
-  // Doron by text; and Lily's usual), then ORDER it all off the menu board from memory (↑↓, Z). Ordering
-  // something nobody asked for honks; X asks again (more honking). The HONK bar fills while she thinks:
-  // full, and they go around and try that round again. Result: { won } or { quit }.
+  // Three rounds. LISTEN as everybody says what they want (Freya out loud; Nate, Doron and Abe in the group
+  // chat on Lily's phone), ORDER it all from memory off the menu board (↑↓, Z; X asks again), then the speaker
+  // READS IT BACK with something wrong: mark the wrong lines (Z) and say "Yep" (X). Wrong orders, asking
+  // again and missed mistakes all honk; a full HONK bar and they go around and try that round again. After
+  // the last round, the WINDOW: catch each bag as it comes out (Z when it's over the hand).
+  // Result: { won, stars, dropped } or { quit }.
   function driveThruCmd() {
+    const f = flags();
     const pick = (n) => { const out = []; while (out.length < n) { const id = TACO_MENU[Math.floor(Math.random() * TACO_MENU.length)].id; if (!out.includes(id)) out.push(id); } return out; };
     const ROUNDS = [
       () => [['Freya', 'Okay. Okay. I want...', pick(2)]],
-      () => [['Freya', 'Wait, I changed my mind. I want...', pick(2)], ['Nate', '(text) i know you\'re out. get me...', pick(2)]],
-      () => [['Freya', 'And also...', pick(2)], ['Nate', '(text) and...', pick(1)], ['Doron', '(text) TACO BELL??? GET ME...', pick(2)], ['Lily', 'And my usual.', LILY_USUAL.slice()]],
+      () => [['Freya', 'Wait. I changed my mind. Make mine...', pick(2)], ['Nate', f.nateOrder ? 'you know what i want' : 'i know you\'re out. get me...', f.nateOrder ? ['burrito', 'burrito'] : pick(2)]],
+      () => [['Freya', 'And also...', pick(2)], ['Doron', 'TACO BELL??? GET ME...', pick(2)], ['Abe', 'is this the group chat? ...', pick(1)], ['Lily', 'And my usual.', LILY_USUAL.slice()]],
     ];
-    const HONK = [0.09, 0.075, 0.06], short = (id) => TACO_MENU.find((m) => m.id === id).short;
+    const TEXTERS = { Nate: 1, Doron: 1, Abe: 1 };
+    const HONK = [0.085, 0.07, 0.055];
     return {
-      start() { Object.assign(this, { t: 0, round: 0, sel: 0, msg: null, msgT: 0 }); this.newRound(); G.play.overlay = this; },
+      start() { Object.assign(this, { t: 0, round: 0, sel: 0, msg: null, msgT: 0, fails: 0, misses: 0, dropped: 0 }); this.newRound(); G.play.overlay = this; },
       newRound() {
         this.orders = ROUNDS[this.round]();
         this.need = {}; for (const o of this.orders) for (const id of o[2]) this.need[id] = (this.need[id] || 0) + 1;
         this.total = this.orders.reduce((a, o) => a + o[2].length, 0);
         this.got = []; this.honk = 0; this.phase = 'listen'; this.li = 0; this.lt = 0;
       },
-      say(who, m) { this.msg = [who, m]; this.msgT = 150; },
+      say(who, m) { this.msg = [who, m]; this.msgT = 160; },
+      // the speaker reads the order back, getting some of it wrong
+      readBack() {
+        this.lines = this.got.map((id) => ({ id, wrong: false, mark: false }));
+        const n = this.round === 2 ? 2 : 1, idx = [...this.lines.keys()].sort(() => Math.random() - 0.5).slice(0, n);
+        for (const i of idx) { const L = this.lines[i]; let id; do { id = TACO_MENU[Math.floor(Math.random() * TACO_MENU.length)].id; } while (id === L.id); L.id = id; L.wrong = true; }
+        // (read back in a jumbled order: check it against what she ordered, down in the bottom bar)
+        this.lines.sort(() => Math.random() - 0.5);
+        this.phase = 'readback'; this.sel2 = 0; G.audio.sfx('buzz');
+      },
       update() {
         const inp = G.input;
         this.t++; if (this.msgT > 0) this.msgT--;
+        if (G.fade > 0) G.fade = Math.max(0, G.fade - 0.05);
         if (quitHit()) { this.result = { quit: true }; return true; }
         if (this.phase === 'listen') {
           this.lt++;
-          if (this.lt > 170 || (this.lt > 20 && inp.hit('a'))) { inp.eat('a'); this.lt = 0; if (++this.li >= this.orders.length) this.phase = 'order'; }
+          if (this.lt > 190 || (this.lt > 20 && inp.hit('a'))) { inp.eat('a'); this.lt = 0; if (++this.li >= this.orders.length) this.phase = 'order'; }
           return false;
         }
         if (this.phase === 'between' || this.phase === 'fail') {
-          if (--this.endT <= 0) { if (this.phase === 'between' && this.round >= ROUNDS.length) { this.result = { won: true }; return true; } this.newRound(); }
+          if (--this.endT <= 0) { if (this.phase === 'between' && this.round >= ROUNDS.length) this.startWindow(); else this.newRound(); }
           return false;
         }
-        if (inp.hit('up') && this.sel > 0) { this.sel--; G.audio.sfx('menu'); }
-        if (inp.hit('down') && this.sel < TACO_MENU.length - 1) { this.sel++; G.audio.sfx('menu'); }
+        if (this.phase === 'window') return this.windowUpdate(inp);
+        if (this.phase === 'done') return --this.endT <= 0 && (this.result = { won: true, stars: this.stars(), dropped: this.dropped }, true);
         this.honk += HONK[this.round];
-        if (inp.hit('b')) {
-          inp.eat('b'); this.phase = 'listen'; this.li = 0; this.lt = 0; this.honk += 15;
-          G.audio.sfx('honk'); this.say('Lily', '...Wait. What did everybody want?');
-        } else if (inp.hit('a')) {
-          inp.eat('a');
-          const id = TACO_MENU[this.sel].id, have = this.got.filter((g) => g === id).length;
-          if (have < (this.need[id] || 0)) {
-            this.got.push(id); G.audio.sfx('select');
-            if (this.got.length >= this.total) {
-              this.round++; this.phase = 'between'; this.endT = 140; G.audio.sfx('secret');
-              this.say('Freya', ['Wait. The group chat wants stuff.', 'Okay, now EVERYBODY wants stuff.', 'Lily. You\'re a LEGEND.'][this.round - 1]);
+        if (this.phase === 'order') {
+          if (inp.hit('up') && this.sel > 0) { this.sel--; G.audio.sfx('menu'); }
+          if (inp.hit('down') && this.sel < TACO_MENU.length - 1) { this.sel++; G.audio.sfx('menu'); }
+          if (inp.hit('b')) {
+            inp.eat('b'); this.phase = 'listen'; this.li = 0; this.lt = 0; this.honk += 15;
+            G.audio.sfx('honk'); this.say('Lily', '...Wait. What did everybody want?');
+          } else if (inp.hit('a')) {
+            inp.eat('a');
+            const id = TACO_MENU[this.sel].id, have = this.got.filter((g) => g === id).length;
+            if (have < (this.need[id] || 0)) { this.got.push(id); G.audio.sfx('select'); if (this.got.length >= this.total) this.readBack(); }
+            else { this.honk += 18; this.misses++; G.audio.sfx('bump'); this.say('Freya', ['Nobody said that!', 'Lily. NO.', 'That\'s not on anybody\'s list!'][this.t % 3]); }
+          }
+        } else if (this.phase === 'readback') {
+          if (inp.hit('up') && this.sel2 > 0) { this.sel2--; G.audio.sfx('menu'); }
+          if (inp.hit('down') && this.sel2 < this.lines.length - 1) { this.sel2++; G.audio.sfx('menu'); }
+          if (inp.hit('a')) { inp.eat('a'); const L = this.lines[this.sel2]; L.mark = !L.mark; G.audio.sfx(L.mark ? 'no' : 'menu'); }
+          if (inp.hit('b')) {
+            inp.eat('b');
+            if (this.lines.every((L) => L.mark === L.wrong)) {
+              this.round++; this.phase = 'between'; this.endT = 150; G.audio.sfx('secret');
+              this.say('Freya', ['You CAUGHT that? Okay. Wait. The group chat wants stuff.', 'Okay, now EVERYBODY wants stuff.', 'Lily. You\'re a LEGEND. Pull up!'][this.round - 1]);
+            } else {
+              this.honk += 22; this.misses++; G.audio.sfx('bump');
+              this.say('Freya', this.lines.some((L) => L.wrong && !L.mark) ? 'That\'s NOT what we ordered! Fix it!' : 'No, that one was RIGHT. Lily!');
+              this.readBack();
             }
-          } else { this.honk += 18; G.audio.sfx('bump'); this.say('Freya', ['Nobody said that!', 'Lily. NO.', 'That\'s not on anybody\'s list!'][this.t % 3]); }
+          }
         }
         if (this.honk >= 100) {
-          this.phase = 'fail'; this.endT = 170; G.audio.sfx('honk');
+          this.phase = 'fail'; this.endT = 170; this.fails++; G.audio.sfx('honk');
           this.say(null, 'HOOOONK! Lily panics and orders forty Cinnamon Twists. They go around and try again.');
         }
         return false;
       },
+      // the window: four things come out one at a time; Z when it's over Lily's hand
+      startWindow() { this.phase = 'window'; this.wi = 0; this.wx = 0; this.wv = 1.5; this.catchT = 0; this.handed = []; this.say('Employee', 'That\'ll be twenty-four fifteen. Here you go...'); },
+      windowUpdate(inp) {
+        const ITEMS = ['bag', 'bag', 'baja', 'baja'];
+        if (this.catchT > 0) { if (--this.catchT === 0) { this.wi++; this.wx = 0; this.wv += 0.35; if (this.wi >= ITEMS.length) { this.phase = 'done'; this.endT = 120; G.audio.sfx('fanfare'); } } return false; }
+        this.wx += this.wv; if (this.wx > 100) this.wv = -Math.abs(this.wv); if (this.wx < 0) this.wv = Math.abs(this.wv);
+        if (inp.hit('a')) {
+          inp.eat('a');
+          const ok = Math.abs(this.wx - 50) < 11;
+          this.handed.push(ok); this.catchT = 40;
+          if (ok) { G.audio.sfx('select'); this.say('Lily', ['Got it.', 'Got it!', 'Baja Blast. Secured.', 'Both Baja Blasts. Nobody panic.'][this.wi]); }
+          else { this.dropped++; G.audio.sfx('bump'); this.say('Freya', this.wi >= 2 ? 'NOT THE BAJA BLAST!' : 'NOOO, the BAG!'); }
+        }
+        return false;
+      },
+      stars() { return Math.max(1, 3 - (this.fails > 0 ? 1 : 0) - (this.misses >= 3 ? 1 : 0) - (this.dropped >= 2 ? 1 : 0)); },
       draw(ctx) {
-        driveBack(ctx, this.t);
+        driveBack(ctx, this.t, this.phase === 'window' || this.phase === 'done');
         const sh = { shadow: '#000' };
         // the menu board
         ctx.fillStyle = '#120a20'; ctx.fillRect(120, 4, 118, 118); ctx.fillStyle = '#7a3aa8'; ctx.fillRect(120, 4, 118, 12);
@@ -14160,36 +14411,147 @@
           ctx.drawImage(G.spr.menuIcon[m.id], 124, y);
           FT().draw(ctx, m.short, 139, y + 3, on ? '#f8d850' : '#f0e8ff', sh);
         });
-        // what everybody wants (listening), or how to order
-        ctx.fillStyle = 'rgba(12,8,20,0.88)'; ctx.fillRect(2, 72, 116, 50);
+        ctx.fillStyle = 'rgba(12,8,20,0.9)'; ctx.fillRect(2, 72, 116, 50);
         if (this.phase === 'listen') {
           const [who, line, items] = this.orders[this.li];
-          FT().draw(ctx, who, 6, 75, G.NAME_COLORS[who] || '#f8f8f0', sh);
-          FT().draw(ctx, G.sayable(this.li + 1) + '/' + G.sayable(this.orders.length), 114 - FT().width(G.sayable(this.li + 1) + '/' + G.sayable(this.orders.length)), 75, '#9890a8', sh);
-          FT().draw(ctx, FT().wrap(line, 110)[0], 6, 84, '#f8f8f0', sh);
-          items.forEach((id, k) => { ctx.drawImage(G.spr.menuIcon[id], 6, 94 + k * 13); FT().draw(ctx, short(id), 21, 97 + k * 13, '#f8d850', sh); });
+          if (TEXTERS[who]) {
+            // the group chat, on Lily's phone
+            ctx.fillStyle = '#1c1c24'; ctx.fillRect(18, 66, 84, 58); ctx.fillStyle = '#e8eef4'; ctx.fillRect(21, 70, 78, 50);
+            FT().draw(ctx, 'group chat', 60 - Math.round(FT().width('group chat') / 2), 71, '#6a6a80');
+            ctx.fillStyle = '#d8e4f8'; ctx.fillRect(23, 80, 74, 38);
+            FT().draw(ctx, who.toLowerCase(), 25, 81, '#3a5aa8');
+            items.forEach((id, k) => { ctx.drawImage(G.spr.menuIcon[id], 25, 91 + k * 13); FT().draw(ctx, tacoShort(id).toLowerCase().replace('cinnamon ', '').replace('mexican', 'mex'), 39, 94 + k * 13, '#1c1c24'); });
+          } else {
+            FT().draw(ctx, who, 6, 75, G.NAME_COLORS[who] || '#f8f8f0', sh);
+            FT().draw(ctx, FT().wrap(line, 110)[0], 6, 84, '#f8f8f0', sh);
+            items.forEach((id, k) => { ctx.drawImage(G.spr.menuIcon[id], 6, 94 + k * 13); FT().draw(ctx, tacoShort(id), 21, 97 + k * 13, '#f8d850', sh); });
+          }
+          const n = G.sayable(this.li + 1) + '/' + G.sayable(this.orders.length);
+          FT().draw(ctx, n, 114 - FT().width(n), 75, '#9890a8', sh);
         } else if (this.phase === 'order') {
           FT().draw(ctx, 'ORDER IT ALL!', 6, 76, '#f8d850', sh);
           FT().draw(ctx, '↑↓ pick   Z order', 6, 88, '#c8c0d8', sh);
           FT().draw(ctx, 'X  say it again', 6, 99, '#c8c0d8', sh);
           FT().draw(ctx, 'ENTER  give up', 6, 110, '#9890a8', sh);
+        } else if (this.phase === 'readback') {
+          // the speaker, reading it back (with mistakes)
+          ctx.fillStyle = 'rgba(12,8,20,0.94)'; ctx.fillRect(2, 2, 116, 120);
+          FT().draw(ctx, '*kshh* SO THAT\'S...', 6, 5, '#a8e8a8', sh);
+          this.lines.forEach((L, k) => {
+            const y = 17 + k * 12, on = k === this.sel2;
+            if (on) { ctx.fillStyle = '#3a2a5a'; ctx.fillRect(4, y - 1, 112, 12); }
+            ctx.drawImage(G.spr.menuIcon[L.id], 6, y - 1);
+            FT().draw(ctx, tacoShort(L.id), 21, y + 2, L.mark ? '#f86858' : '#f0e8ff', sh);
+            if (L.mark) { ctx.fillStyle = '#f86858'; ctx.fillRect(20, y + 5, FT().width(tacoShort(L.id)) + 2, 1); FT().draw(ctx, 'X', 108, y + 2, '#f86858', sh); }
+          });
+          FT().draw(ctx, 'Z wrong!   X yep', 6, 112, '#f8d850', sh);
+        } else if (this.phase === 'window' || this.phase === 'done') {
+          // catch the bags: the marker swings over a hand
+          FT().draw(ctx, this.phase === 'done' ? 'GOT EVERYTHING!' : 'CATCH IT! (Z)', 6, 76, '#f8d850', sh);
+          ctx.fillStyle = '#2a2240'; ctx.fillRect(8, 92, 104, 10); ctx.fillStyle = '#3a8a4a'; ctx.fillRect(8 + 39, 92, 26, 10);
+          if (this.phase === 'window') {
+            const img = ['bag', 'bag', 'baja', 'baja'][this.wi] === 'bag' ? G.spr.tacoBag : G.spr.menuIcon.baja;
+            ctx.drawImage(img, 8 + Math.round(this.wx) - Math.round(img.width / 2), 86 - (this.catchT > 0 ? 40 - this.catchT : 0));
+          }
+          this.handed.forEach((ok, k) => FT().draw(ctx, ok ? '✓' : 'x', 10 + k * 10, 108, ok ? '#78e070' : '#f86858', sh));
+          if (this.phase === 'done') { const st = this.stars(); for (let k = 0; k < 3; k++) FT().draw(ctx, '★', 70 + k * 12, 106, k < st ? '#f8d850' : '#3a3450', sh); }
         }
         if (this.msgT > 0 && this.msg) {
           const [who, m] = this.msg, rows = FT().wrap((who ? who + ': ' : '') + m, 112).slice(0, 2);
           ctx.fillStyle = 'rgba(12,8,20,0.85)'; ctx.fillRect(2, 0, 116, 4 + rows.length * 10);
           rows.forEach((r, k) => FT().draw(ctx, r, 5, 2 + k * 10, who === 'Freya' ? '#a8e878' : who === 'Lily' ? '#ff98d0' : '#f8f8f0', sh));
         }
-        // the bottom bar: what Lily's ordered, and the honk meter
+        // the bottom bar: what Lily's ordered so far, and the honk meter
         ctx.fillStyle = '#0c0814'; ctx.fillRect(0, 124, G.W, 36);
-        FT().draw(ctx, 'ROUND ' + G.sayable(Math.min(this.round + 1, 3)) + '/3', 4, 127, '#c8c0d8', sh);
-        this.got.forEach((id, k) => ctx.drawImage(G.spr.menuIcon[id], 4 + k * 13, 141));
-        for (let k = this.got.length; k < this.total; k++) { ctx.fillStyle = '#2a2240'; ctx.fillRect(4 + k * 13, 141, 12, 12); }
-        FT().draw(ctx, 'HONK', 168, 127, '#f86858', sh);
-        ctx.fillStyle = '#2a2240'; ctx.fillRect(168, 142, 68, 8);
-        ctx.fillStyle = this.honk > 70 ? '#f86858' : '#f8d850'; ctx.fillRect(168, 142, Math.round(68 * Math.min(1, this.honk / 100)), 8);
+        FT().draw(ctx, this.phase === 'window' || this.phase === 'done' ? 'THE WINDOW' : 'ROUND ' + G.sayable(Math.min(this.round + 1, 3)) + '/3', 4, 127, '#c8c0d8', sh);
+        if (this.phase !== 'window' && this.phase !== 'done') {
+          this.got.forEach((id, k) => ctx.drawImage(G.spr.menuIcon[id], 4 + k * 13, 141));
+          for (let k = this.got.length; k < this.total; k++) { ctx.fillStyle = '#2a2240'; ctx.fillRect(4 + k * 13, 141, 12, 12); }
+          FT().draw(ctx, 'HONK', 168, 127, '#f86858', sh);
+          ctx.fillStyle = '#2a2240'; ctx.fillRect(168, 142, 68, 8);
+          ctx.fillStyle = this.honk > 70 ? '#f86858' : '#f8d850'; ctx.fillRect(168, 142, Math.round(68 * Math.min(1, this.honk / 100)), 8);
+        }
       },
     };
   }
+
+  // ---- 4. THE PARKING LOT: parked under the sign, eating, the radio on
+  function hangoutCmd(r) {
+    const f = flags(), lines = [
+      ['Freya', 'Okay. Real question.'],
+      ['Lily', 'No.'],
+      ['Freya', 'I didn\'t even ASK yet.'],
+      ['Lily', 'It\'s 2:40 in the morning. The answer to every question is no.'],
+      ['Freya', 'Is it weird that this is my favorite part of the whole week?'],
+      ['Lily', '...No. That one\'s a no too. Same.'],
+      f.mikeyBeaten ? ['Freya', 'So your family\'s fighting an egg now? Like, a whole egg?'] : ['Freya', 'Did Mikey REALLY show up with heart balloons?'],
+      f.mikeyBeaten ? ['Lily', 'Father Eggmas. Yeah. Nate\'s handling it. Mostly. With help.'] : ['Lily', 'Heart-SHAPED ones. I said no. I\'ll say it again.'],
+      ['Lily', 'But this part? 2 AM, a Crunchwrap, you? This part\'s mine.'],
+      ['Freya', 'Same time tomorrow?'],
+      ['Lily', '...Obviously.'],
+    ];
+    if (r.dropped >= 2) lines.splice(2, 0, ['Freya', 'RIP to the Baja Blast. It had a family.']);
+    return {
+      start() { this.t = 0; this.c = chat(lines); G.play.overlay = this; },
+      update() { this.t++; if (quitHit()) return true; return this.c.update(G.input) && this.t > 60; },
+      draw(ctx) {
+        const t = this.t;
+        nightSky(ctx, t);
+        // the parking lot: the sign glowing, a lamp overhead, the car parked, steam off the food
+        ctx.fillStyle = '#2a1840'; ctx.fillRect(130, 30, 110, 60); ctx.fillStyle = '#7a3aa8'; ctx.fillRect(146, 38, 70, 12);
+        FT().draw(ctx, 'TACO BELL', 181 - Math.round(FT().width('TACO BELL') / 2), 40, '#ffffff', { shadow: '#3a1058' });
+        ctx.fillStyle = '#1e1a2e'; ctx.fillRect(0, 90, G.W, 38); ctx.fillStyle = '#c8c0d0'; for (let x = 10; x < G.W; x += 50) ctx.fillRect(x, 104, 2, 20);
+        ctx.fillStyle = '#3a3a44'; ctx.fillRect(40, 24, 2, 70); ctx.fillRect(40, 24, 14, 2);
+        const g = ctx.createRadialGradient(52, 30, 2, 60, 90, 70); g.addColorStop(0, 'rgba(255,214,140,0.4)'); g.addColorStop(1, 'rgba(255,214,140,0)');
+        ctx.fillStyle = g; ctx.fillRect(0, 24, 130, 100);
+        freyaCar(ctx, 34, 70, t >> 2);
+        for (let i = 0; i < 3; i++) { const k = ((t + i * 30) % 90) / 90; ctx.globalAlpha = 0.6 * (1 - k); ctx.fillStyle = '#f0f0f8'; ctx.fillRect(62 + i * 5 + Math.round(Math.sin(k * 7 + i) * 2), 70 - Math.round(k * 20), 1, 3); }
+        ctx.globalAlpha = 1;
+        for (let i = 0; i < 2; i++) { const k = ((t + i * 60) % 120) / 120; ctx.globalAlpha = 1 - k; FT().draw(ctx, '♪', 104 + i * 8, 68 - Math.round(k * 30), '#c8a0f0'); }
+        ctx.globalAlpha = 1;
+        if (r.stars) for (let k = 0; k < 3; k++) FT().draw(ctx, '★', 6 + k * 12, 6, k < r.stars ? '#f8d850' : '#3a3450', { shadow: '#000' });
+        this.c.draw(ctx);
+      },
+    };
+  }
+
+  // ---- the morning after: breakfast, and a Taco Bell bag in the recycling
+  S.tacoMorning = function* (r) {
+    const f = flags(), s = G.state, w0 = () => G.play.world;
+    G.play.loadMap('homeDown', 30 * 16 + 8, 13 * 16 + 14, 'up', true);
+    G.play.setFollower(null);
+    const w = w0(), cast = [];
+    const put = (sprite, name, tx, ty, dir) => { const n = w.add(new G.NPC({ sprite, name, x: tx * 16 + 8, y: ty * 16 + 14, dir })); cast.push(n); return n; };
+    const mom = put('michelle', 'Mom', 27, 12, 'right'), dad = put('dad', 'Dad', 33, 12, 'left'), lily = put('lily', 'Lily', 29, 13, 'up');
+    G.audio.play('home');
+    yield G.fadeIn(30);
+    yield G.banner('8:30 AM', 'the morning after', 120);
+    yield G.say('Michelle', 'Good morning! ...Who left a Taco Bell bag in the recycling?');
+    yield G.emote(dad, 'bang', 24);
+    lily.dir = 'right';
+    yield G.say('Lily', '...Nate.');
+    yield G.emote(G.play.player, 'bang', 30);
+    yield G.say('Nate', 'WHAT?');
+    yield G.say('Dad', '*yawning* I had the strangest dream. Somebody was creeping around the mudroom at two in the morning.');
+    yield G.say('Lily', 'Weird.');
+    yield G.say('Michelle', 'And why does the whole kitchen smell like Baja Blast?');
+    yield G.say('Lily', 'Nate.');
+    yield G.say('Nate', f.nateOrder ? 'I want it on the record that I got two bean burritos, and that is ALL I did.' : 'I was ASLEEP.');
+    yield G.say('Michelle', '...Mm-hm.');
+    const first = !f.tacoRunDone;
+    f.tacoRunDone = true;
+    f.tacoStars = Math.max(f.tacoStars || 0, r.stars || 1);
+    s.items.tacoBag = TACO_MAX;
+    lily.dir = 'down';
+    if (first) {
+      yield G.say('Lily', '*whispering* Here. I saved you some. Don\'t say I never do anything for you.');
+      yield G.itemGet(G.spr.tacoBag, 'Lily slips Nate a bag: {y}Fourthmeal{/}! Set it to X and eat it to get every heart back. (Holds 2. Lily can always do another run.)');
+      yield G.say('Lily', '*whispering* Yours is the bean burritos. The Crunchwrap is MINE.');
+    } else yield G.itemGet(G.spr.tacoBag, 'Lily slips Nate a bag. {y}Fourthmeal{/} restocked (2 of 2).');
+    for (const n of cast) n.dead = true;
+    G.play.setFollower('lily', true);
+    G.play.autosave();
+  };
 
   // ---- Hannah's reading nook (the condo's big front window). She loves fantasy, Sarah J. Maas most of all.
   // She's in the chair whenever she's in the party but not the one with Nate (flags.nookTalks counts visits).
