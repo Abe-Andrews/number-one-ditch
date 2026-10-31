@@ -65,11 +65,15 @@
       skin: '#e0ac84', hair: '#d0d0d4', hairStyle: 'cap', hat: '#c8b890', hatStyle: 'ball', beard: '#d8d8dc',
       shirt: '#3a6a8a', coat: '#b89a68', pants: '#5a5a48', shoes: '#3a3028', torso: 7, legs: 4,
     },
-    // Freya, Lily's friend: the 2 AM Taco Bell runs, every single night. (No photo yet: a placeholder look,
-    // long dark hair, a sage green hoodie, jeans, white sneakers.)
+    // Freya, Lily's friend: the 2 AM Taco Bell runs, every single night. From the user's photo (Refe Photos,
+    // "Lily and Freya"): light brown hair with golden ends pulled back into a ponytail, loose strands framing
+    // her face, freckles, green-hazel eyes, a big smile, little gold hoops, and an oversized cream sweatshirt
+    // with a colorful print on the front.
     freya: {
-      skin: '#f2cdb4', hair: '#3e2a1e', hairStyle: 'long', smile: '#ffffff', blush: true,
-      shirt: '#7a9a7a', pants: '#3a4a6a', shoes: '#f0f0ea', torso: 5, legs: 3,
+      skin: '#f4d2bc', hair: '#9a7048', hairStyle: 'pony', blush: true, freckles: true, smile: '#ffffff', eyes: '#4a5a3a',
+      earring: '#e0b858', earrings2: true,
+      shirt: '#f0e8d4', sleeves: 'long', graphic: [[6, 2, '#2a2228'], [7, 2, '#c8845a'], [7, 3, '#e8c040'], [8, 2, '#3a9a8a'], [9, 3, '#5aa86a'], [8, 4, '#c83a3a']],
+      pants: '#4a5468', shoes: '#f0f0ea', torso: 6, legs: 3,
     },
     // Matt Oliver, a family friend and professor of marine science at the University of Delaware (from
     // the user's photo): short dark hair going gray at the temples, a tan, a big smile, a navy blazer

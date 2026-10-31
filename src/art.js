@@ -192,6 +192,8 @@
       else { p.rect(5, ty, 2, 2, c.headphones); p.rect(9, ty, 2, 2, c.headphones); p.set(5, ty, shade(c.headphones, 0.4)); p.set(10, ty, shade(c.headphones, 0.4)); }
     }
     if (c.logo && !back) p.set(bx1 - 1, ty + 2, c.logo);
+    // (graphic: a little print on the front, as [x, y below the collar, color])
+    if (c.graphic && !back) for (const [gx, gy, gc] of c.graphic) p.set(gx, ty + gy, gc);
     if (c.belt) {
       p.hline(bx0, bx1, ly - 1, c.belt);
       if (!back) p.set(7, ly - 1, '#c8c8d0');
@@ -261,6 +263,8 @@
       p.hline(7, 8, y0 + 5, g);
     }
     if (c.earring) p.set(13, y0 + 7, c.earring);
+    if (c.earring && c.earrings2) p.set(2, y0 + 7, c.earring);
+    if (c.freckles) for (const [x, y] of [[5, 6], [6, 7], [9, 7], [10, 6], [7, 7]]) p.set(x, y0 + y, shade(c.skin, -0.14));
     headExtras(p, c, y0, 'front');
     hatFront(p, c, y0, ty);
   }
@@ -485,6 +489,13 @@
       for (let y = y0 + 3; y <= y0 + 6; y++) { p.set(3, y, H); p.set(12, y, H); }
       p.set(2, y0 + 4, H); p.set(13, y0 + 4, H); p.set(2, y0 + 5, D); p.set(13, y0 + 5, D);
       p.hline(4, 6, y0 + 3, H);
+    } else if (s === 'pony') {
+      // pulled back into a ponytail, with loose strands framing the face (Freya)
+      top(3);
+      p.hline(3, 5, y0 + 3, H); p.hline(10, 12, y0 + 3, H);
+      p.set(7, y0 + 1, D);
+      for (let y = y0 + 4; y <= y0 + 8; y++) { p.set(3, y, y % 2 ? H : D); p.set(12, y, y % 2 ? H : D); }
+      p.hline(4, 6, y0 + 1, L); p.set(9, y0, L);
     } else {
       // long / wavy / shoulder
       top(3);
@@ -517,6 +528,11 @@
     }
     if (s === 'locs') {
       for (let y = y0 + 3; y <= ty + 2; y++) for (let x = 2; x <= 13; x++) p.set(x, y, x % 2 ? D : H);
+    }
+    if (s === 'pony') {
+      p.hline(6, 9, y0 + 8, D);
+      for (let y = y0 + 9; y <= ty + 4; y++) { p.set(6, y, D); p.hline(7, 8, y, H); p.set(9, y, D); }
+      p.set(7, ty + 5, D); p.set(8, ty + 5, D);
     }
     if (s === 'long' || s === 'wavy' || s === 'shoulder') {
       p.hline(5, 10, y0 + 9, H);
@@ -573,6 +589,11 @@
     const longHair = s === 'long' || s === 'wavy' || s === 'shoulder' || s === 'locs';
     const hairEnd = c.hairEnd != null ? ty + c.hairEnd : s === 'shoulder' ? ty + 1 : s === 'locs' ? ty + 2 : ty + 5;
 
+    // a ponytail swinging off the back of the head
+    if (s === 'pony') {
+      for (let y = y0 + 5; y <= ty + 3; y++) { const k = y - y0 - 5; p.set(2 - (k > 4 ? 1 : 0), y, D); p.set(3 - (k > 4 ? 1 : 0), y, H); }
+      p.set(3, y0 + 4, D); p.set(4, y0 + 4, D);
+    }
     // long hair / hood behind the body
     if (longHair) {
       for (let y = y0 + 3; y <= hairEnd; y++) {
