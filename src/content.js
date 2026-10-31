@@ -3866,6 +3866,12 @@
   };
   const CHANTS = ['GIVE BACK THE QUAD!', 'SAVE THE GRASS!', 'WHO APPROVED THIS?!', 'RESPECT LITTLE PEOPLE!', 'WHERE\'S THE MONEY?!'];
 
+  // Nate's bed, pushed up against the wall he shares with Lily
+  S.nateBed = function* () {
+    yield G.say(null, 'Nate\'s bed: dark Mission-style wood and a navy and green plaid comforter, pushed right up against the wall. It matches his shirt. It always has.');
+    if (G.with('lily')) yield G.say('Lily', 'My room is right on the other side of that wall. Every time you drop a rock, I hear it.');
+    else yield G.say('Nate', 'Lily\'s room is right on the other side of this wall.');
+  };
   // Dad's den: his favorite room in the house
   S.denFirst = function* () {
     flags().denSeen = true;
@@ -5062,7 +5068,7 @@
     name: 'Home: Upstairs',
     music: 'house',
     tiles() {
-      const W = 36, H = 21;
+      const W = 40, H = 21;
       const g = Array.from({ length: H }, () => Array(W).fill('w'));
       const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
       const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
@@ -5070,9 +5076,9 @@
       room(1, 1, 12, 7, '6', 'o');   // Dad and Michelle's room
       room(14, 1, 6, 7, '8', 'z');   // bathroom
       room(21, 1, 7, 7, '9', '(');   // Nate's room (carpet)
-      room(29, 1, 6, 7, '7', 'o');   // the giraffe room
+      room(29, 1, 10, 7, '0', 'o');  // Lily's room (it shares a wall with Nate's, like the real house)
       room(1, 9, 34, 4, '5', 'o');   // hallway
-      room(1, 14, 10, 6, '0', 'o');  // Lily's room
+      room(1, 14, 10, 6, '7', 'o');  // the giraffe room
       room(17, 14, 10, 6, '6', 'o'); // guest room
       room(28, 14, 7, 6, '5', 'o');  // linen nook
       fill(13, 13, 2, 7, 'D');       // stairs down
@@ -5080,7 +5086,7 @@
       door(6, 8, 1, 3); door(16, 8, 1, 3); door(24, 8, 1, 3); door(31, 8, 1, 3);
       door(9, 13, 1, 3); door(25, 13, 1, 3); door(31, 13, 1, 3);
       fill(3, 6, 8, 2, 'R');
-      fill(30, 6, 4, 2, 'q');
+      fill(3, 18, 6, 2, 'q');
       fill(2, 11, 10, 2, 'R'); fill(16, 11, 18, 2, 'R');
       fill(18, 18, 6, 2, 'R');
       return g.map((r) => r.join(''));
@@ -5102,46 +5108,48 @@
       F.stand(sp.toilet, 19, 3, 1, () => S.alligatorToilet());
       F.stand(sp.tub, 18, 6, 2, look('A bathtub. Rubber duck not included.'), { ht: 2 });
       // ---- Nate's room (from the photos): cream walls, wood blinds (rocks on one sill, an air conditioner in
-      // the other window), a deer skull, a Mission bed with a plaid comforter, a dark dresser lined with
-      // rocks, a green armchair and books stacked on the carpet. (The chem desk stays: blue food coloring.)
+      // the other window), a dark dresser lined with rocks, the Mission bed with a plaid comforter pushed
+      // against the wall he shares with Lily (the deer skull over it, the amber lamp beside it), a green
+      // armchair and books stacked on the carpet. (The chem desk stays: blue food coloring.)
       F.hang(sp.blinds.rocks, 21, 2, 1, look('Rocks lined up along the windowsill, sorted by... something. Nate knows.'), 1);
       w.chemDesk = F.stand(f.badlandsBeaten || G.state.items.dye ? sp.chemDeskEmpty : sp.chemDesk, 21, 3, 2, () => S.chemDesk());
-      F.hang(sp.deerSkull, 23, 2, 1, look('A deer skull mounted on a wooden plaque. It keeps an eye on things.'), 6);
-      F.stand(sp.amberLampTable, 23, 3, 1, look('A little table with an amber glass lamp, a couple of rocks and a phone charger.'));
-      F.stand(sp.bedMission, 24, 3, 1, look('Nate\'s bed: dark Mission-style wood and a navy and green plaid comforter. It matches his shirt. It always has.'), { ht: 3 });
+      F.hang(sp.blinds.ac, 23, 2, 1, look('A window air conditioner. It rattles all night. Nate sleeps right through it.'), 1);
+      F.stand(sp.bookStacks, 23, 3, 1, look('Stacks of books on the floor: geology, chemistry, and a few with no covers left.'));
+      F.stand(sp.dresserRocks, 24, 3, 2, look('Nate\'s first rock collection, lined up along the dresser. Mostly gravel from the driveway. Labeled anyway.'));
       F.hang(sp.artTiles, 25, 2, 1, look('Two little art tiles on the wall.'), 10);
-      F.hang(sp.blinds.ac, 26, 2, 1, look('A window air conditioner. It rattles all night. Nate sleeps right through it.'), 1);
-      F.stand(sp.dresserRocks, 26, 3, 2, look('Nate\'s first rock collection, lined up along the dresser. Mostly gravel from the driveway. Labeled anyway.'));
-      F.stand(sp.chairGreen, 27, 6, 1, look('A green armchair. Mostly it\'s a place to put books.'));
-      F.stand(sp.bookStacks, 21, 6, 1, look('Stacks of books on the floor: geology, chemistry, and a few with no covers left.'));
-      // ---- the giraffe room
-      F.hang(sp.wallWindow.curtains, 31, 2, 1, null, 3);
-      F.stand(sp.glider, 29, 3, 1, look('A gray glider chair. It glides.'));
-      F.stand(sp.settee, 31, 3, 2, look('A floral settee under the window.'));
-      F.stand(sp.giraffe, 34, 3, 1, look('A giant stuffed giraffe. Nobody knows where it came from. Nobody dares move it.'), { ht: 2 });
+      F.stand(sp.amberLampTable, 26, 3, 1, look('A little table by the bed with an amber glass lamp, a couple of rocks and a phone charger.'));
+      F.hang(sp.deerSkull, 27, 2, 1, look('A deer skull mounted on a wooden plaque over the bed. It keeps an eye on things.'), 6);
+      F.stand(sp.bedMission, 27, 3, 1, () => S.nateBed(), { ht: 3 });
+      F.stand(sp.chairGreen, 21, 6, 1, look('A green armchair. Mostly it\'s a place to put books.'));
+      // ---- Lily's room (from the photos), right next door: posters, drawings and polaroids all over the
+      // wall, a disco ball, a white bed with navy sheets, a teal record player, a wicker bookshelf with a
+      // rubber chicken on top, a clothes rack, and clothes on the floor
+      F.hang(sp.blinds.plain, 29, 2, 1, null, 1);
+      F.stand(sp.hamper, 29, 3, 1, look('A wicker hamper. Full. Always full. The rest of the clothes are on the floor.'));
+      F.hang(sp.posterCollage, 30, 2, 2, look('Posters, drawings and polaroids, all the way up the wall.'), 6);
+      F.stand(sp.bedLilyWhite, 30, 3, 2, look('Lily\'s bed: a white frame, navy sheets, and a pile of blankets she swears is organized.'), { ht: 3 });
+      F.hang(sp.lilyShelves, 32, 2, 1, look('Little wall shelves: a plant, a few records, a painted plate.'), 8);
+      F.stand(sp.nightWhite, 32, 3, 1, () => S.clueLily());
+      F.hang(sp.blinds.plate, 33, 2, 1, look('An old New Jersey license plate, hung up over the window.'), 1);
+      F.stand(sp.victrola, 33, 3, 1, look('A teal suitcase record player, on a little stand stuffed with records.'));
+      F.stand(sp.dresserWhite, 34, 3, 2, () => S.lilyDresser());
+      F.hang(sp.chickenArt, 35, 2, 1, look('A drawing of a chicken, with polaroids taped up around it.'), 8);
+      F.stand(sp.wickerShelf, 36, 3, 1, look('A white wicker bookshelf. On top: a rubber chicken. Nobody asks about the rubber chicken.'));
+      F.hang(sp.blinds.plain, 37, 2, 1, null, 1);
+      F.stand(sp.catalogBin, 38, 3, 1, () => S.lilyCatalogs());
+      F.stand(sp.clothesRack, 38, 5, 1, look('A clothes rack, so full it bends in the middle.'));
+      w.props.push({ img: sp.clothesPile, x: 34 * 16, y: 5 * 16 + 4, flat: true, base: 0 });
+      w.props.push({ img: sp.discoBall, x: 33 * 16 + 11, y: 3 * 16 + 10, base: 7 * 16 });
+      // ---- the giraffe room (the Zillow furniture, until there are photos of it)
+      F.hang(sp.wallWindow.curtains, 4, 15, 1, null, 3);
+      F.stand(sp.glider, 2, 16, 1, look('A gray glider chair. It glides.'));
+      F.stand(sp.settee, 4, 16, 2, look('A floral settee under the window.'));
+      F.stand(sp.giraffe, 8, 16, 1, look('A giant stuffed giraffe. Nobody knows where it came from. Nobody dares move it.'), { ht: 2 });
       // ---- hallway
       F.hang(sp.familyPhotos, 3, 10, 2, look('Family photos all the way down the hall. School pictures, beach trips, one very bad haircut.'), 5);
       F.hang(sp.familyPhotos, 19, 10, 2, look('More family photos. Somebody is always blinking.'), 5);
       F.hang(sp.homeAtticHatch, 11, 10, 2, () => S.abeReach('attic'), 17);
       F.hang(sp.paintSmall, 28, 10, 1, look('A little painting of a flower pot.'), 8);
-      // ---- Lily's room (from the photos): posters, drawings and polaroids all over the wall, a disco ball,
-      // a white bed with navy sheets, a teal record player, a wicker bookshelf with a rubber chicken on top,
-      // a clothes rack, and clothes on the floor
-      F.hang(sp.blinds.plain, 1, 15, 1, null, 1);
-      F.stand(sp.hamper, 1, 16, 1, look('A wicker hamper. Full. Always full. The rest of the clothes are on the floor.'));
-      F.hang(sp.posterCollage, 2, 15, 2, look('Posters, drawings and polaroids, all the way up the wall.'), 6);
-      F.stand(sp.bedLilyWhite, 2, 16, 2, look('Lily\'s bed: a white frame, navy sheets, and a pile of blankets she swears is organized.'), { ht: 3 });
-      F.hang(sp.lilyShelves, 4, 15, 1, look('Little wall shelves: a plant, a few records, a painted plate.'), 8);
-      F.stand(sp.nightWhite, 4, 16, 1, () => S.clueLily());
-      F.hang(sp.blinds.plate, 5, 15, 1, look('An old New Jersey license plate, hung up over the window.'), 1);
-      F.stand(sp.victrola, 5, 16, 1, look('A teal suitcase record player, on a little stand stuffed with records.'));
-      F.stand(sp.dresserWhite, 6, 16, 2, () => S.lilyDresser());
-      F.hang(sp.chickenArt, 7, 15, 1, look('A drawing of a chicken, with polaroids taped up around it.'), 8);
-      F.stand(sp.wickerShelf, 8, 16, 1, look('A white wicker bookshelf. On top: a rubber chicken. Nobody asks about the rubber chicken.'));
-      F.stand(sp.catalogBin, 10, 16, 1, () => S.lilyCatalogs());
-      F.stand(sp.clothesRack, 10, 18, 1, look('A clothes rack, so full it bends in the middle.'));
-      w.props.push({ img: sp.clothesPile, x: 6 * 16, y: 18 * 16 + 4, flat: true, base: 0 });
-      w.props.push({ img: sp.discoBall, x: 5 * 16 + 11, y: 16 * 16 + 10, base: 19 * 16 });
       // ---- guest room
       F.hang(sp.paintSea, 18, 15, 2, look('A painting of a sailboat out on the bay.'), 8);
       F.hang(sp.wallWindow.shade, 23, 15, 1, null, 3);
