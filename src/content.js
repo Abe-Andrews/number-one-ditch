@@ -992,7 +992,6 @@
     'Every ditch is the number one ditch to somebody. Love, Nani',
     'You are braver than you believe and smarter than you think!',
     'Today is a gift. That is why they call it the present. (Not the exploding kind, Nate.)',
-    'Did you eat? Nani loves you!',
     'Be the light you wish to see in the world. Also wear a jacket.',
   ];
   S.naniMessage = function* () {
@@ -8358,7 +8357,7 @@
       style: 'The reigning BMF. Loves you very much. Hits VERY hard.',
       hp: 190, speed: 1.45, dmg: 1.5, aggro: 0.95, block: 0.5, grab: 0.1, jump: 0.08, combo: 0.7,
       special: 'flurry', also: 'haymaker', every: 90,
-      intro: 'Doron, sweetheart. Did you eat? ...You\'re going to need your strength.', rage: 'NANI IS VERY DISAPPOINTED.',
+      intro: 'Doron, sweetheart. Stretch first. ...You\'re going to need it.', rage: 'NANI IS VERY DISAPPOINTED.',
       win: 'I beat Nani. I feel terrible. I feel AMAZING. I feel terrible.',
     },
   ];
@@ -8823,7 +8822,7 @@
           }[sp];
           if (ok) {
             E.cool = Math.round(F.every * (0.7 + R() * 0.6));
-            const shout = { powerbomb: 'POWERBOMB!', doubleLeg: 'DOUBLE LEG!', suplexArmbar: 'SUPLEX...', spinKick: 'HYAH!', haymaker: 'NANI LOVES YOU!' }[sp];
+            const shout = { powerbomb: 'POWERBOMB!', doubleLeg: 'DOUBLE LEG!', suplexArmbar: 'SUPLEX...', spinKick: 'HYAH!', haymaker: 'OH, HONEY!' }[sp];
             if (shout) this.say(E, shout);
             this.begin(E, sp);
             return;
@@ -9281,7 +9280,7 @@
       G.play.overlay = null;
       if (r === 'quit') { yield G.say('Doron', 'Tapping out? ...Fine. We\'ll run it back.'); continue; }
       if (!r.won) {
-        if (F.id === 'nani') yield G.say('Nani', ['Oh, honey. Did you eat today?', 'Nani loves you. Nani is also undefeated.', 'Get up, sweetheart. Again.'][losses++ % 3]);
+        if (F.id === 'nani') yield G.say('Nani', ['Hands up, honey. Hands UP.', 'Nani is still undefeated, sweetheart.', 'Get up, sweetheart. Again.'][losses++ % 3]);
         else yield G.say('Doron', ['He got lucky. Run it back.', 'I was feeling him out. NOW I\'m ready.', 'That didn\'t count. Nobody saw that.'][losses++ % 3]);
         continue;
       }
