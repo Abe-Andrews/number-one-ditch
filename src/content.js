@@ -1928,7 +1928,7 @@
       return;
     }
     yield G.say('Dad', 'The nachos here are excellent. Very EEENGLISH.');
-    yield G.say('Dad', 'If your mother asks, I was at a book club.');
+    yield G.say('Dad', 'I already sent your mother a picture of the nachos. She says hi.');
     // (a clue for the grocery store on College Hill, which is a surprise)
     if (G.with('doron') && !f.runningMan) {
       f.runningMan = true;
