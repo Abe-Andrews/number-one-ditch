@@ -3274,6 +3274,11 @@
       how: 'In a shoebox in the attic. You\'d need somebody really tall to get up there.',
       caption: 'A selfie in the backyard, taken mid-spin. The trees are a blur. One face says "I am cool." The other says "I did not agree to this picture."',
     },
+    {
+      id: 'dadGrill', name: 'Cedar Plank Salmon', place: 'Home', file: 'assets/photos/dad-grill.png',
+      how: 'Dad\'s grill, out on the patio. Check under the lid.',
+      caption: 'The cedar plank was supposed to make the salmon a little smoky. It made EVERYTHING smoky. Dad\'s fix: blow it out like a birthday candle, inches from a tower of plastic chairs. Nobody remembers how the salmon tasted.',
+    },
   ];
   for (const ph of G.PHOTOS) { ph.img = new Image(); ph.img.src = ph.file; }
   const photoState = () => (G.state.photos = G.state.photos || {});
@@ -3948,7 +3953,16 @@
       return;
     }
     if (needKey() && !f.key_grill) { yield* S.keyHuntMiss('grill')(); return; }
-    yield* S.homePatio();
+    // the cedar plank incident (a photo, taped inside the lid)
+    if (!G.photoHas('dadGrill')) {
+      yield G.say(null, 'Dad\'s grill. Something is taped to the inside of the lid: a photo, and a sticky note in Mom\'s handwriting that says "NEVER AGAIN."');
+      yield* S.photoGive('dadGrill');
+      yield G.say('Nate', 'The cedar plank incident. He was so CALM about it.');
+      if (G.with('lily')) yield G.say('Lily', 'He blew on it. Like a birthday candle. It was ON FIRE, Nate.');
+      else if (G.with('doron')) yield G.say('Doron', 'I would have suplexed the fire.');
+      return;
+    }
+    yield G.say(null, 'Dad\'s grill. A brand-new cedar plank is leaning against it. He\'s going to try again.');
   };
 
   // ---- the refrigerator game itself
