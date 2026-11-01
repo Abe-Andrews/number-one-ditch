@@ -253,6 +253,11 @@
     skin: '#f2c2a8', hair: '#c8c4c0', hairStyle: 'shoulder', bangs: true, blush: true, smile: '#ffffff', earring: '#c8803a',
     shirt: '#3a3e52', sleeves: 4, pants: '#5a5a68', shoes: '#6a4a38', torso: 6, legs: 3,
   };
+  // ...and her fight night look: a blue old-lady cardigan, buttoned all the way up, with a round
+  // white collar, white cuffs, pearl buttons and little pink flowers stitched on
+  G.CAST.naniFight = Object.assign({}, G.CAST.nani, {
+    coat: '#6a8ee0', collar: '#fcfaf4', cuffs: '#fcfaf4', cardigan: { buttons: '#fff8e8', flower: '#e8789a' },
+  });
 
   // Ice JJ Fish: short dark hair, thin silver glasses, a big gap-toothed grin,
   // white tee with navy stars, a chain, a mic.
@@ -3606,6 +3611,24 @@
     s.instruments = {}; for (const it of G.INSTRUMENTS) s.instruments[it.id] = true;
     s.fights = {}; for (const F of G.FIGHTERS) s.fights[F.id] = true;
     s.nicu = { shift1: { stars: 3, best: 400 }, shift2: { stars: 3, best: 600 }, shift3: { stars: 3, best: 800 }, shift4: { stars: 3, best: 800 } };
+  };
+
+  // ADMIN: open every minigame's content without beating anything. Abe's jam: every song passed (one star,
+  // so the stars are still there to earn) and every guitar and drum his, plus the bass and the metronome (so
+  // Studio B has everything). Hannah's shift: all four shifts open. Doron's fight night: every fighter open,
+  // Nani too. (Their first-time intros are skipped; getting to each one still follows the story.)
+  G.adminAllMinigames = () => {
+    const s = G.state, f = s.flags;
+    s.jams = s.jams || {}; for (const sg of G.JAM_SONGS) s.jams[sg.id] = Math.max(s.jams[sg.id] || 0, 1);
+    s.instruments = s.instruments || {}; for (const it of G.INSTRUMENTS) s.instruments[it.id] = true;
+    s.items.bass = true; s.items.metronome = true;
+    f.jamMet = true; f.studioTold = true;
+    for (const sg of G.JAM_SONGS) if (sg.drums) f['jamDrum_' + sg.id] = true;
+    s.nicu = s.nicu || {};
+    for (const id of ['shift1', 'shift2', 'shift3']) if (!(s.nicu[id] && s.nicu[id].stars)) s.nicu[id] = { stars: 1, best: 0 };
+    f.nicuMet = true;
+    s.fights = s.fights || {}; for (const F of G.FIGHTERS) if (!F.secret) s.fights[F.id] = true;
+    f.fightMet = true;
   };
 
   // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)
@@ -8287,6 +8310,7 @@
   // meter; full, C is GROUND AND POUND. Hitting him while he winds up is a COUNTER.
   // Attack heights: high (ducked by crouching), mid, low (block crouching), air (block standing).
   // The fighters fight like themselves (real styles; the trash talk is made up for the game).
+  // A fighter's body is G.CAST[sprite || id] (Nani dresses up for it: naniFight).
   // State: s.fights ({ id: true }). Flags: fightMet, fightHow.
   const FIGHTERS = [
     {
@@ -8330,7 +8354,7 @@
       win: 'I beat BONES! Nate, where\'s my BELT?!',
     },
     {
-      id: 'nani', name: 'NANI', full: 'NANI', secret: true,
+      id: 'nani', name: 'NANI', full: 'NANI', secret: true, sprite: 'naniFight',
       style: 'The reigning BMF. Loves you very much. Hits VERY hard.',
       hp: 190, speed: 1.45, dmg: 1.5, aggro: 0.95, block: 0.5, grab: 0.1, jump: 0.08, combo: 0.7,
       special: 'flurry', also: 'haymaker', every: 90,
@@ -8445,6 +8469,8 @@
     };
     const arm = (x, X, Y, [a1, a2], dark) => {
       const k = dark ? -0.28 : 0, [ex, ey] = seg(x, X, Y, a1, Lu, thick, sh(armUp, k)), [hx, hy] = seg(x, ex, ey, a2, Lf, thick, sh(armLo, k));
+      // (white cuffs, on Nani's cardigan)
+      if (c.cuffs) seg(x, hx - Math.sin(rad(a2)) * 2, hy - Math.cos(rad(a2)) * 2, a2, 1, thick, sh(c.cuffs, k));
       x.fillStyle = sh(fist, k); x.fillRect(Math.round(hx - 1), Math.round(hy - 1), 2, 2);
     };
     const leg = (x, X, Y, [a1, a2], dark) => {
@@ -8576,7 +8602,7 @@
         if (this.moves != null) { this.drawMoves(ctx); return; }
         ctx.imageSmoothingEnabled = false;
         // Doron and the pick, in their walkout looks
-        const F = L[this.sel], open = fightOpen(FIGHTERS.indexOf(F)), D = fighterPoses('doron').idle1, O = fighterPoses(F.id).walkout;
+        const F = L[this.sel], open = fightOpen(FIGHTERS.indexOf(F)), D = fighterPoses('doron').idle1, O = fighterPoses(F.sprite || F.id).walkout;
         ctx.drawImage(D, 40 - (ROX + 8) * 3, 124 - D.height * 3, D.width * 3, D.height * 3);
         FT().draw(ctx, 'DORON', 10, 116, '#f8f8f0', { shadow: '#000' });
         if (G.state.items.belt) FT().draw(ctx, G.state.items.bmf ? 'CHAMPION + BMF' : 'CHAMPION', 6, 24, '#f8d850', { shadow: '#000' });
@@ -8594,7 +8620,7 @@
         // the faces
         const x0 = 120 - L.length * 16 + 1;
         L.forEach((G2, i) => {
-          const x = x0 + i * 32, yy = 128, on = i === this.sel, ok = fightOpen(FIGHTERS.indexOf(G2)), S2 = G.sprites[G2.id].down[0];
+          const x = x0 + i * 32, yy = 128, on = i === this.sel, ok = fightOpen(FIGHTERS.indexOf(G2)), S2 = G.sprites[G2.sprite || G2.id].down[0];
           ctx.fillStyle = on ? ((this.t >> 3) & 1 ? '#f8d850' : '#f8a040') : '#3e3460'; ctx.fillRect(x - 1, yy - 1, 32, 30);
           ctx.fillStyle = ok ? (G2.secret ? '#3a1420' : '#2a2040') : '#1a1428'; ctx.fillRect(x, yy, 30, 28);
           ctx.drawImage(ok ? S2 : G.silhouette(S2), 0, 0, 16, 13, x - 1, yy + 1, 32, 26);
@@ -8633,7 +8659,7 @@
       reset() {
         // (the FIGHT meter carries over from round to round)
         this.p = this.fighter('doron', 80, 1, 100, 1.5);
-        this.e = this.fighter(F.id, 160, -1, F.hp, F.speed);
+        this.e = this.fighter(F.sprite || F.id, 160, -1, F.hp, F.speed);
         this.e.cool = Math.round(F.every * 0.6);
         this.timer = ROUND_T; this.shots = []; this.combo = 0; this.comboT = 0;
       },
@@ -9182,7 +9208,7 @@
         ctx.fillStyle = '#5a1418'; ctx.fillRect(0, 0, G.W, G.H);
         ctx.fillStyle = '#14205a'; ctx.beginPath(); ctx.moveTo(136, 0); ctx.lineTo(G.W, 0); ctx.lineTo(G.W, G.H); ctx.lineTo(104, G.H); ctx.closePath(); ctx.fill();
         ctx.fillStyle = '#f8d850'; ctx.beginPath(); ctx.moveTo(133, 0); ctx.lineTo(139, 0); ctx.lineTo(107, G.H); ctx.lineTo(101, G.H); ctx.closePath(); ctx.fill();
-        const D = fighterPoses('doron').idle1, O = fighterPoses(F.id).walkout;
+        const D = fighterPoses('doron').idle1, O = fighterPoses(F.sprite || F.id).walkout;
         ctx.imageSmoothingEnabled = false;
         ctx.drawImage(D, Math.round(-120 + e * 104), 140 - D.height * 5, D.width * 5, D.height * 5);
         ctx.save(); ctx.translate(Math.round(G.W + 120 - e * 104), 0); ctx.scale(-1, 1);

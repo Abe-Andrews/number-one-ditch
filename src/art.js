@@ -205,14 +205,23 @@
 
     // outer layers
     if (c.coat) {
+      // (a cardigan is buttoned all the way up, so it closes over the middle too)
+      const open = !back && !c.cardigan;
       for (let y = ty; y < ly; y++) {
         for (let x = bx0; x <= bx1; x++) {
-          if (!back && (x === 7 || x === 8)) continue;
+          if (open && (x === 7 || x === 8)) continue;
           p.set(x, y, x === bx1 ? c.coatD : c.coat);
         }
       }
-      if (!back) { p.set(6, ty, c.coatD); p.set(9, ty, c.coatD); p.set(6, ty + 1, c.coatD); p.set(9, ty + 1, c.coatD); }
-      for (let x = bx0; x <= bx1; x++) if (back || x < 7 || x > 8) p.set(x, ly, c.coatD);
+      if (open) { p.set(6, ty, c.coatD); p.set(9, ty, c.coatD); p.set(6, ty + 1, c.coatD); p.set(9, ty + 1, c.coatD); }
+      for (let x = bx0; x <= bx1; x++) if (!open || x < 7 || x > 8) p.set(x, ly, c.coatD);
+      // the cardigan (Nani's): a round white collar, pearl buttons down the middle, and little
+      // flowers stitched on
+      if (c.cardigan && !back) {
+        p.hline(6, 9, ty, c.collar); p.set(6, ty + 1, c.collar); p.set(9, ty + 1, c.collar);
+        for (let y = ty + 3; y < ly; y += 2) p.set(7, y, c.cardigan.buttons);
+        p.set(9, ty + 3, c.cardigan.flower); p.set(5, ty + 4, c.cardigan.flower);
+      }
     }
 
     // arms
@@ -661,8 +670,14 @@
     if (c.headphones) { p.rect(sx1 - 2, ty, 2, 2, c.headphones); p.set(sx1 - 2, ty, shade(c.headphones, 0.4)); }
     if (c.belt) p.hline(sx0, sx1, ly - 1, c.belt);
     if (c.coat) {
-      for (let y = ty; y < ly; y++) p.hline(sx0, sx1 - 1, y, c.coat);
-      p.hline(sx0 - 1, sx1 - 1, ly, c.coatD);
+      const fx = c.cardigan ? sx1 : sx1 - 1;
+      for (let y = ty; y < ly; y++) p.hline(sx0, fx, y, c.coat);
+      p.hline(sx0 - 1, fx, ly, c.coatD);
+      if (c.cardigan) {
+        p.hline(sx1 - 1, sx1, ty, c.collar); p.set(sx1, ty + 1, c.collar);
+        for (let y = ty + 3; y < ly; y += 2) p.set(sx1, y, c.cardigan.buttons);
+        p.set(sx1 - 1, ty + 3, c.cardigan.flower); p.set(sx0 + 1, ty + 5, c.cardigan.flower);
+      }
     }
     if (c.straps) { p.rect(sx0 - 2, ty, 2, 5, c.straps); p.vline(sx0 + 1, ty, ty + 2, shade(c.straps, -0.2)); }
     if (c.dress && c.beltStrap) p.vline(sx1, ly, sy - 2, c.belt);

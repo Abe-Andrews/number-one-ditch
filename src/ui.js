@@ -1340,7 +1340,7 @@
     // ---- ADMIN (testing): replaces the SAVE tab in admin runs
     adminMain() {
       const s = G.state;
-      return ['Jump to a checkpoint...', 'Go to a place...', 'Heal fully', '+100 shark teeth', 'Give every item and song', 'One of every rock', 'Invincible: ' + (s.god ? '{g}ON' : '{r}OFF'), 'Quit to title'];
+      return ['Jump to a checkpoint...', 'Go to a place...', 'Heal fully', '+100 shark teeth', 'Give every item and song', 'Unlock all minigame content', 'One of every rock', 'Invincible: ' + (s.god ? '{g}ON' : '{r}OFF'), 'Quit to title'];
     }
     adminRows() {
       if (this.admList === 'cp') return G.ADMIN_CHECKPOINTS.map((c, i) => G.sayable(i + 1) + '. ' + c.name);
@@ -1367,9 +1367,10 @@
         case 2: s.hp = s.maxHp; this.flash('Hearts refilled.'); break;
         case 3: G.play.addTeeth(100); this.flash('+100 shark teeth.'); break;
         case 4: G.adminAllItems(); this.flash('Every item, song and collectable.'); break;
-        case 5: G.adminAllRocks(); this.flash('One of every rock added.'); break;
-        case 6: s.god = !s.god; this.flash(s.god ? 'Invincible.' : 'Mortal again.'); break;
-        case 7: G.play.menu = null; G.title.enter(); return true;
+        case 5: G.adminAllMinigames(); this.flash('All minigame content unlocked.'); break;
+        case 6: G.adminAllRocks(); this.flash('One of every rock added.'); break;
+        case 7: s.god = !s.god; this.flash(s.god ? 'Invincible.' : 'Mortal again.'); break;
+        case 8: G.play.menu = null; G.title.enter(); return true;
       }
       return false;
     }
