@@ -4260,7 +4260,7 @@
     }
     update() { if (this.shakeT > 0) this.shakeT--; }
     draw(ctx, cx, cy) {
-      const img = this.kind === 'basalt' ? G.spr.bigBasalt : G.spr.bigDolomite;
+      const img = this.kind === 'basalt' ? G.spr.bigBasalt : this.kind === 'mine' ? G.spr.bigMine : G.spr.bigDolomite;
       const jx = this.shakeT > 0 ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
       if (this.lift) ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 18) - cx, Math.round(this.y - 4) - cy, 36, 5);
       const x0 = Math.round(this.x - 18 + jx) - cx, y0 = Math.round(this.y - 24 - this.lift) - cy;
@@ -4563,9 +4563,14 @@
   G.FatherChristmas = FatherChristmas;
 
   // A brown bat: hangs still until Nate's lantern gets close, then flutters at him.
+  // (tier: how deep in the Andover mines it lives, 1-4. The deeper, the meaner.)
+  const tierOf = (t, list) => list[Math.max(0, Math.min(list.length - 1, (t || 1) - 1))];
   class Bat extends Critter {
-    constructor(x, y) {
-      super(x, y, 1);
+    constructor(x, y, tier = 1) {
+      super(x, y, tierOf(tier, [1, 1, 2, 3]));
+      this.tier = tier;
+      this.dmg = tierOf(tier, [1, 1, 2, 2]);
+      this.sp = tierOf(tier, [1.15, 1.3, 1.5, 1.7]);
       this.dropChance = 0.35;
       this.bits = ['#4a3440', '#6a4a5a'];
       this.awake = false;
@@ -4577,9 +4582,16 @@
       // erratic little loops toward Nate
       this.wob += 0.2;
       const a = Math.atan2(dy, dx) + Math.sin(this.wob) * 1.1;
-      this.x += Math.cos(a) * 1.15; this.y += Math.sin(a) * 1.15;
+      this.x += Math.cos(a) * this.sp; this.y += Math.sin(a) * this.sp;
     }
     draw(ctx, cx, cy) {
+      if (this.tier >= 3) {
+        let img = G.spr.batRed[this.awake ? (this.t >> 2) & 1 : 1];
+        if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+        ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - 19 - (this.awake ? Math.sin(this.t / 5) * 2 : 0)) - cy);
+        this.world.glows.push({ x: Math.round(this.x), y: Math.round(this.y - 15), color: '#ff4030' });
+        return;
+      }
       let img = G.spr.bat[this.awake ? (this.t >> 2) & 1 : 1];
       if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
       ctx.drawImage(img, Math.round(this.x - 7) - cx, Math.round(this.y - 18 - (this.awake ? Math.sin(this.t / 5) * 2 : 0)) - cy);
@@ -4587,12 +4599,319 @@
   }
   G.Bat = Bat;
 
+  // Fool's Gold: it looks exactly like a mineral vein, right up until Nate gets close (or hits it).
+  // Then it pops up on six little legs and scuttles at him in bursts. Sometimes it was sitting on a geode.
+  class Mimic extends Critter {
+    constructor(x, y, tier = 1) {
+      super(x, y, tierOf(tier, [2, 3, 4, 6]));
+      this.tier = tier;
+      this.dmg = tierOf(tier, [1, 2, 2, 3]);
+      this.sp = tierOf(tier, [1.1, 1.3, 1.5, 1.7]);
+      this.bits = ['#d8b848', '#a88a28', '#6e5a4e'];
+      this.dropChance = 0.5;
+      this.awake = false;
+      this.touch = false;
+      this.heavy = true;
+    }
+    hurtBox() { return [this.x - 8, this.y - 13, this.x + 8, this.y]; }
+    wake(w) {
+      if (this.awake) return;
+      this.awake = true; this.touch = true; this.wt = 20;
+      G.audio.sfx('clank');
+      w.pop(this.x, this.y - 28, 'IT\'S ALIVE!', '#f8d850');
+      w.burst(this.x, this.y - 6, ['#8a7466', '#d8b848'], 6, { speed: 1, up: 0.8, g: 0.1, life: 16, size: 2 });
+    }
+    think(w, p, dx, dy, dist) {
+      if (!this.awake) { if (dist < 30) this.wake(w); return; }
+      // a burst of scuttling, then a beat to look around
+      if (--this.wt <= 0) {
+        const a = Math.atan2(dy, dx) + (Math.random() - 0.5) * 1.1;
+        this.vx = Math.cos(a) * this.sp; this.vy = Math.sin(a) * this.sp;
+        this.wt = 34 + Math.random() * 24;
+      }
+      if (this.wt > 12) this.step(w);
+    }
+    hit(dmg, sx, sy) { this.wake(this.world); super.hit(dmg, sx, sy); }
+    die() {
+      super.die();
+      if (Math.random() < 0.4 && this.geode && G.geodeGain) G.geodeGain(this.geode, this.x, this.y);
+    }
+    draw(ctx, cx, cy) {
+      if (!this.awake) {
+        ctx.drawImage(G.spr.oreVein[0], Math.round(this.x - 9) - cx, Math.round(this.y - 15) - cy);
+        this.world.glows.push({ x: Math.round(this.x + 3), y: Math.round(this.y - 10 + Math.sin(this.t / 20)), color: '#f8e8a0' });
+        return;
+      }
+      this.drawSprite(ctx, cx, cy, G.spr.mimic[this.wt > 12 ? (this.t >> 2) & 1 : 0]);
+    }
+  }
+  G.Mimic = Mimic;
+
+  // A tommyknocker: one of the little miner spirits from the old Cornish stories, the ones you hear
+  // knocking in the walls. They keep their distance and throw rocks. Deeper down, a lot of rocks.
+  class Tommyknocker extends Critter {
+    constructor(x, y, tier = 3) {
+      super(x, y, tierOf(tier, [2, 3, 4, 6]));
+      this.tier = tier;
+      this.dmg = tierOf(tier, [1, 1, 2, 3]);
+      this.sp = tierOf(tier, [0.6, 0.7, 0.85, 1]);
+      this.fire = tierOf(tier, [120, 110, 92, 72]);
+      this.spread = tierOf(tier, [1, 1, 2, 3]);
+      this.shotT = 50 + Math.random() * 70;
+      this.side = Math.random() < 0.5 ? 1 : -1;
+      this.throwT = 0;
+      this.bits = ['#ecece4', '#3a4a6a', '#f8d040'];
+      this.dropChance = 0.7;
+    }
+    hurtBox() { return [this.x - 6, this.y - 18, this.x + 6, this.y]; }
+    think(w, p, dx, dy, dist) {
+      if (this.throwT > 0) this.throwT--;
+      if (dist > 170) return;
+      // keep about four tiles away, circling
+      const want = dist < 52 ? -1 : dist > 86 ? 1 : 0;
+      if (Math.random() < 0.006) this.side = -this.side;
+      this.vx = ((dx / dist) * want - (dy / dist) * this.side * 0.6) * this.sp;
+      this.vy = ((dy / dist) * want + (dx / dist) * this.side * 0.6) * this.sp;
+      const h1 = w.move(this, this.vx, 0), h2 = w.move(this, 0, this.vy);
+      if (h1.hitX || h2.hitY) this.side = -this.side;
+      if (--this.shotT <= 0 && dist < 140) {
+        this.shotT = this.fire + Math.random() * 30;
+        this.throwT = 14;
+        const a = Math.atan2(dy - 4, dx), n = this.spread;
+        for (let i = 0; i < n; i++) w.add(new Shot(this.x, this.y - 6, Math.cos(a + (i - (n - 1) / 2) * 0.32) * 1.7, Math.sin(a + (i - (n - 1) / 2) * 0.32) * 1.7, G.spr.pebble, { dmg: this.dmg, life: 120, z: 8 }));
+        G.audio.sfx('swing');
+      }
+      if (this.t % 170 === 0) { G.audio.sfx('clank'); w.pop(this.x, this.y - 30, '*knock knock*', '#c8c0b0'); }
+    }
+    draw(ctx, cx, cy) {
+      this.drawSprite(ctx, cx, cy, G.spr.knocker[this.throwT > 0 ? 2 : (this.t >> 3) & 1]);
+      // the candle on his hat
+      this.world.glows.push({ x: Math.round(this.x), y: Math.round(this.y - 20), color: '#f8c060' });
+    }
+  }
+  G.Tommyknocker = Tommyknocker;
+
+  // A cracked bit of tunnel wall across a passage: a Booby-Trapped Package opens it up for good.
+  class CrackedWall extends Ent {
+    constructor(tx, ty, flag) {
+      super(tx * 16 + 16, ty * 16 + 31);
+      this.flag = flag;
+      this.solid = true;
+      this.hb = { w: 32, h: 30 };
+      this.shakeT = 0;
+    }
+    onHammer() {
+      this.shakeT = 6;
+      G.audio.sfx('clank');
+      this.world.pop(this.x, this.y - 36, 'CLINK! There\'s a big crack in it...', '#e0e0e8');
+    }
+    bomb() {
+      if (this.dead) return;
+      this.dead = true;
+      G.state.flags[this.flag] = true;
+      const w = this.world;
+      w.burst(this.x, this.y - 14, ['#4a3a34', '#6a5a50', '#8a7466', '#3a2c28'], 30, { speed: 2.2, up: 1.3, g: 0.1, life: 40, size: 3 });
+      G.play.shake(20, 4);
+      G.audio.sfx('chest');
+      w.pop(this.x, this.y - 40, 'THE WALL CAVED IN!', '#f8d850');
+    }
+    update() { if (this.shakeT > 0) this.shakeT--; }
+    draw(ctx, cx, cy) {
+      const jx = this.shakeT > 0 ? ((this.shakeT >> 1) & 1 ? 1 : -1) : 0;
+      ctx.drawImage(G.spr.crackedWall, Math.round(this.x - 16 + jx) - cx, Math.round(this.y - 31) - cy);
+    }
+  }
+  G.CrackedWall = CrackedWall;
+
+  // One of the four crystals on the old miners' door. Hammer them softest to hardest.
+  class MohsPillar extends Ent {
+    constructor(tx, ty, kind, door) {
+      super(tx * 16 + 8, ty * 16 + 15);
+      this.kind = kind;
+      this.door = door;
+      this.solid = true;
+      this.hb = { w: 12, h: 8 };
+      this.shakeT = 0;
+    }
+    get lit() { return this.door.lit.includes(this.kind) || G.state.flags[this.door.flag]; }
+    onHammer() {
+      if (this.door.ring) this.door.ring(this);
+    }
+    update() { if (this.shakeT > 0) this.shakeT--; }
+    draw(ctx, cx, cy) {
+      const jx = this.shakeT > 0 ? ((this.shakeT >> 1) & 1 ? 1 : -1) : 0;
+      ctx.drawImage(G.spr.mohs[this.kind][this.lit ? 1 : 0], Math.round(this.x - 7 + jx) - cx, Math.round(this.y - 23) - cy);
+      if (this.lit) this.world.glows.push({ x: Math.round(this.x), y: Math.round(this.y - 6), color: '#78e070' });
+    }
+  }
+  G.MohsPillar = MohsPillar;
+
+  // A chest sitting on a ledge across the water. Hook it with the surf rod and reel it in.
+  class ReelChest extends Ent {
+    constructor(x, y, id, contents) {
+      super(x, y);
+      this.id = id;
+      this.contents = contents;
+      this.hookable = true;
+      this.reelable = true;
+      this.hb = { w: 14, h: 8 };
+    }
+    get opened() { return !!G.state.flags['chest_' + this.id]; }
+    hurtBox() { return [this.x - 8, this.y - 14, this.x + 8, this.y]; }
+    onHook() { if (this.opened || this.landed) return false; }
+    // it lands on dry ground next to Nate (never in the water, never on top of him)
+    onReeled(p) {
+      const w = this.world;
+      this.landed = true;
+      for (const [x, y] of [[p.x + 20, p.y], [p.x - 20, p.y], [p.x, p.y - 18], [p.x + 20, p.y - 16], [p.x - 20, p.y - 16]]) {
+        if (!w.blocked(this.boxAt(x, y), this) && !G.overlap(this.boxAt(x, y), p.box())) { this.x = x; this.y = y; break; }
+      }
+      this.solid = true;
+      w.pop(this.x, this.y - 24, 'Got it!', '#f8f8f0');
+    }
+    talk() {
+      const self = this;
+      return (function* () {
+        if (self.opened) { yield G.say(null, 'It\'s empty.'); return; }
+        if (!self.landed) { yield G.say(null, 'An old chest on a ledge across the water. Way too far to reach.'); return; }
+        G.state.flags['chest_' + self.id] = true;
+        G.audio.sfx('chest');
+        yield G.wait(20);
+        yield* self.contents();
+      })();
+    }
+    draw(ctx, cx, cy) {
+      const img = this.opened ? G.spr.chest.open : G.spr.chest.closed;
+      ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - 13) - cy);
+    }
+  }
+  G.ReelChest = ReelChest;
+
+  // ============================================================== OLD IRON (the bottom of the Andover mines)
+  // A hulk of magnetite that's been down here since the Revolution. It lumbers after Nate, slams the
+  // ground (a shockwave ring), hurls iron chunks, and (it's a lodestone, after all) turns its core
+  // red-hot and PULLS Nate in. Past half health it shakes Fool's Gold loose from the walls.
+  class OldIron extends Ent {
+    constructor(x, y) {
+      super(x, y);
+      this.enemy = true;
+      this.boss = true;
+      this.name = 'OLD IRON';
+      this.hp = this.maxHp = 40;
+      this.hb = { w: 24, h: 10 };
+      this.state = 'wait';
+      this.t = 60;
+      this.hurtT = 0;
+      this.kb = { x: 0, y: 0 };
+      this.cycle = 0;
+      this.anim = 0;
+      this.summoned = false;
+    }
+    get angry() { return this.hp <= this.maxHp / 2; }
+    hurtBox() { return [this.x - 13, this.y - 34, this.x + 13, this.y]; }
+    update(w) {
+      if (G.script.busy || this.state === 'defeated' || this.state === 'wait') return;
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      if (this.hurtT > 0) { this.hurtT--; w.move(this, this.kb.x, 0); w.move(this, 0, this.kb.y); this.kb.x *= 0.8; this.kb.y *= 0.8; }
+      if (G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(3, this.x, this.y);
+      this.anim++;
+      this.t--;
+      if (this.state === 'walk') {
+        const sp = this.angry ? 0.75 : 0.55;
+        w.move(this, (dx / dist) * sp, 0); w.move(this, 0, (dy / dist) * sp);
+        if (this.anim % 24 === 0) { G.audio.sfx('bump'); G.play.shake(3, 1); }
+        if (this.t <= 0) {
+          const moves = this.angry ? ['slam', 'throw', 'pull', 'slam', 'throw'] : ['slam', 'throw', 'pull'];
+          this.state = moves[this.cycle++ % moves.length];
+          this.t = { slam: 54, throw: 70, pull: 110 }[this.state];
+          if (this.angry && !this.summoned) { this.summoned = true; this.state = 'quake'; this.t = 60; }
+        }
+      } else if (this.state === 'slam') {
+        // arms up... and DOWN: a ring of force rolls out across the floor
+        if (this.t === 53) w.pop(this.x, this.y - 48, 'GRRRNNN...', '#c8c0b0');
+        if (this.t === 20) {
+          G.audio.sfx('boom'); G.play.shake(18, 3);
+          w.add(new IronRing(this.x, this.y - 4, this.angry ? 92 : 78));
+          w.burst(this.x, this.y - 2, ['#5a4a42', '#8a7466', '#2a2a30'], 16, { speed: 2, up: 0.8, g: 0.1, life: 26, size: 3 });
+        }
+        if (this.t <= 0) this.rest();
+      } else if (this.state === 'throw') {
+        // tears chunks of itself off and lobs them where Nate is standing (and where he's going)
+        if (this.t % 18 === 0 && this.t > 0) {
+          const lead = this.t % 36 === 0 ? 18 : 0, [fx, fy] = G.DIRS[p.dir];
+          w.add(new Lob(this.x, this.y - 30, p.x + fx * lead, p.y + fy * lead, G.spr.ironChunk, { n: 46, h: 46, z0: 10, dmg: 2, color: '#f86858' }));
+          G.audio.sfx('swing');
+        }
+        if (this.t <= 0) this.rest();
+      } else if (this.state === 'pull') {
+        // the core goes red-hot: a lodestone the size of a car. Walk AWAY.
+        if (this.t === 108) { w.pop(this.x, this.y - 48, '*VMMMMMMM*', '#ff6050'); G.audio.sfx('bell'); }
+        if (this.t < 100 && this.t > 10) {
+          const k = (this.angry ? 0.95 : 0.75) * Math.min(1, 120 / dist);
+          w.move(p, (-dx / dist) * k, 0); w.move(p, 0, (-dy / dist) * k);
+          if (this.t % 6 === 0) w.fx.push({ x: p.x + (Math.random() - 0.5) * 30, y: p.y - 10 + (Math.random() - 0.5) * 20, vx: -dx / dist * 1.5, vy: -dy / dist * 1.5, life: 16, color: '#9a9aa8', size: 1 });
+        }
+        if (this.t <= 0) this.rest();
+      } else if (this.state === 'quake') {
+        // half health: it pounds the floor and Fool's Gold drops out of the walls
+        G.play.shake(4, 2);
+        if (this.t === 59) w.pop(this.x, this.y - 48, 'RRRRRRRUMBLE', '#c8c0b0');
+        if (this.t === 30) for (const [ox, oy] of [[-60, -20], [60, -20], [0, 40]]) { const m = w.add(new Mimic(this.x + ox, this.y + oy, 4)); m.wake(w); }
+        if (this.t <= 0) this.rest();
+      } else if (this.state === 'tired') {
+        if (this.t <= 0) { this.state = 'walk'; this.t = this.angry ? 70 : 100; }
+      }
+    }
+    rest() { this.state = 'tired'; this.t = this.angry ? 26 : 40; }
+    hit(dmg, sx, sy) {
+      if (this.state === 'defeated' || this.state === 'wait') return;
+      this.hp = Math.max(0, this.hp - dmg);
+      this.hurtT = 12;
+      const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
+      this.kb = { x: (dx / m) * 1.2, y: (dy / m) * 1.2 };
+      G.audio.sfx('clank');
+      this.world.burst(this.x, this.y - 22, ['#2a2a30', '#8a3a2a', '#f89a30'], 5, { speed: 1.2, life: 14, size: 2 });
+      if (this.hp <= 0) { this.state = 'defeated'; G.script.run(G.SCRIPTS.oldIronDefeated(this)); }
+    }
+    bomb(sx, sy) { this.hit(4, sx, sy); }
+    draw(ctx, cx, cy) {
+      const S = G.spr.oldIron;
+      let img = this.state === 'slam' && this.t > 20 ? S.up : this.state === 'pull' && this.t < 100 ? S.pull : (this.anim >> 4) & 1 ? S.b : S.a;
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      drawShadow(ctx, this.x, this.y, cx, cy, true);
+      const jx = this.state === 'pull' && this.t < 100 ? ((G.tick >> 1) & 1) : 0;
+      ctx.drawImage(img, Math.round(this.x - 18 + jx) - cx, Math.round(this.y - 39) - cy);
+      this.world.glows.push({ x: Math.round(this.x), y: Math.round(this.y - 22), color: this.state === 'pull' ? '#ff5030' : '#f89a30' });
+    }
+  }
+  G.OldIron = OldIron;
+  // the slam's shockwave: a ring rolling outward. Getting caught by its edge hurts.
+  class IronRing extends Ent {
+    constructor(x, y, max) { super(x, y); this.r = 6; this.max = max; this.hitDone = false; }
+    update() {
+      if (G.script.busy) return;
+      this.r += 2.2;
+      if (this.r >= this.max) { this.dead = true; return; }
+      const p = G.play.player, d = Math.hypot((p.x - this.x) / 1, (p.y - 4 - this.y) / 0.6);
+      if (!this.hitDone && Math.abs(d - this.r) < 7) { this.hitDone = true; p.hurt(2, this.x, this.y); }
+    }
+    draw(ctx, cx, cy) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0.15, 1 - this.r / this.max);
+      ctx.strokeStyle = '#c8a888'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.ellipse(Math.round(this.x) - cx, Math.round(this.y) - cy, this.r, this.r * 0.6, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.restore();
+    }
+  }
+  G.IronRing = IronRing;
+
   // ============================================================== SURF ROD (cast + reel)
   // X casts a lure in the direction Nate faces. It flies out over land or
   // water; anything it hooks gets reeled back toward Nate: enemies take a
   // hit and get yanked closer (gulls come right out of the sky), pickups get
   // dragged in, and some things (Tyler) have their own idea of what happens.
-  const isWater = (w, x, y) => { const d = G.TILE_DEFS[w.tileAt(Math.floor(x / 16), Math.floor(y / 16))]; return !!(d && (d.k === 'bay' || d.k === 'water')); };
+  const isWater = (w, x, y) => { const d = G.TILE_DEFS[w.tileAt(Math.floor(x / 16), Math.floor(y / 16))]; return !!(d && (d.k === 'bay' || d.k === 'water' || d.k === 'mineWater')); };
   class Lure extends Ent {
     constructor(p) {
       super(p.x, p.y);

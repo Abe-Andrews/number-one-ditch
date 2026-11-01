@@ -404,7 +404,7 @@
     { id: 'fair', name: 'EASTON FAIR', x: 98, y: 32, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
     { id: 'home', name: 'HOME', x: 44, y: 72, icon: 'house', key: 'Home',
       maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['north', 'The Frozen Pond']] },
-    { id: 'andover', name: 'ANDOVER', x: 112, y: 64, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverDeep', 'The Deep Stope']] },
+    { id: 'andover', name: 'ANDOVER', x: 112, y: 64, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
     { id: 'bay', name: 'THE BAY', x: 74, y: 98, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel']] },
     { id: 'ditch', name: 'THE DITCH', x: 118, y: 94, icon: 'trophy', key: '-', maps: [] },
   ];
@@ -415,7 +415,7 @@
     lab: () => true, campus: () => true, science: (f) => f.chemMet, pardee: (f) => f.engMet, geology: (f) => f.profTalk,
     fair: (f) => f.doronChat || f.doronDeal, arena: (f) => f.dadBeaten, fairCave: (f) => f.caveSeen, home: (f) => f.homeArrived, homeDown: (f) => f.badlandsMet,
     garage: (f) => f.snackQuest, basement: (f) => f.globMet, north: (f) => f.jjSeen, andover: (f) => f.andover || f.andoverMine,
-    andoverMine: (f) => f.andoverMine, andoverDeep: (f) => f.fcAwake, cbbt: (f) => f.cbbtArrived, cbbtTunnel: (f) => f.tunnelSeen, cbbtToll: (f) => f.tollMet, chesTunnel: (f) => f.chesSeen, cbbtMid: (f) => f.midSeen,
+    andoverMine: (f) => f.andoverMine, andoverFlood: (f) => f.mineFlood, andoverOld: (f) => f.mineOld, andoverVault: (f) => f.mineVault, andoverDeep: (f) => f.fcAwake, cbbt: (f) => f.cbbtArrived, cbbtTunnel: (f) => f.tunnelSeen, cbbtToll: (f) => f.tollMet, chesTunnel: (f) => f.chesSeen, cbbtMid: (f) => f.midSeen,
   };
   const beenTo = (id) => !!((G.state.visited && G.state.visited[id]) || (SEEN_IF[id] && SEEN_IF[id](G.state.flags)));
   const placeVisited = (pl) => pl.maps.some(([id]) => beenTo(id));
@@ -1306,10 +1306,16 @@
       const ty = 39 + Math.ceil(rocks.length / RCOLS) * 21 + 3;
       TXT(ctx, 'Here', 10, ty, C.soft); bar(ctx, 34, ty + 1, 50, 5, here / rocks.length, C.cyan); TXT(ctx, G.sayable(here) + '/' + rocks.length, 88, ty, C.gold);
       TXT(ctx, 'All', 10, ty + 10, C.soft); bar(ctx, 34, ty + 11, 50, 5, G.rocksFound() / G.ROCKS.length, C.gold); TXT(ctx, G.sayable(G.rocksFound()) + '/' + G.ROCKS.length, 88, ty + 10, C.gold);
-      // outside Andover, a rock you've found shows how to get another
-      const cur = rocks[this.sel], room = Math.floor((140 - (ty + 23)) / 9);
-      if (room > 0) {
-        const tip = area.id !== 'andover' && cur && found(cur) && cur.how ? cur.how : 'Crush them at Van Wickle.';
+      // the Andover pages: the geodes waiting to be cracked; elsewhere, a rock you've found shows how to get another
+      const cur = rocks[this.sel], room = Math.floor((140 - (ty + 23)) / 9), mine = area.id === 'andover' || area.id === 'andoverDeep';
+      if (mine) {
+        G.GEODES.forEach((g, i) => {
+          const gx = 10 + i * 26, gy = ty + 22, n = G.geodeCount(g.id);
+          ctx.globalAlpha = n ? 1 : 0.35; ctx.drawImage(G.spr.geodes[g.id], gx, gy); ctx.globalAlpha = 1;
+          TXT(ctx, G.sayable(n), gx + 15, gy + 3, n ? C.gold : C.faint);
+        });
+      } else if (room > 0) {
+        const tip = cur && found(cur) && cur.how ? cur.how : 'Crush them at Van Wickle.';
         F().wrap(tip, 102).slice(0, room).forEach((l, i) => TXT(ctx, l, 10, ty + 23 + i * 9, C.dim));
       }
       // details

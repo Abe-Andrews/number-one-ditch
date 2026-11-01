@@ -1480,6 +1480,18 @@
       for (let y = 1; y < 16; y += 5) p.hline(1, 14, y, '#6a4a2a');
       p.vline(4, 0, 15, '#9a9aa4'); p.vline(11, 0, 15, '#9a9aa4');
     },
+    // black, ice-cold water flooding the lower levels, with a wet rock rim
+    mineWater(p, r, v, mask, frame) {
+      p.rect(0, 0, 16, 16, '#14262c');
+      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) {
+        const w = Math.sin((x + frame) * 0.6 + y * 1.1) + Math.sin((y - frame * 0.5) * 0.8);
+        if (w > 1.6) p.set(x, y, '#2e5260'); else if (w < -1.7) p.set(x, y, '#0c181c');
+      }
+      if (mask & 1) { p.hline(0, 15, 0, '#3e342e'); p.hline(0, 15, 1, '#5a8a98'); }
+      if (mask & 4) p.hline(0, 15, 15, '#0a1418');
+      if (mask & 8) { p.vline(0, 0, 15, '#3e342e'); p.vline(1, 0, 15, '#3a6a78'); }
+      if (mask & 2) { p.vline(15, 0, 15, '#3e342e'); p.vline(14, 0, 15, '#3a6a78'); }
+    },
     hallTile(p, r) {
       p.rect(0, 0, 16, 16, '#e4dac4');
       p.hline(0, 15, 0, '#cbbfa6'); p.vline(0, 0, 15, '#cbbfa6'); p.hline(0, 15, 8, '#d4c8b0'); p.vline(8, 0, 15, '#d4c8b0');
@@ -5155,6 +5167,14 @@
         p.vline(8, 0, 11, '#4a2418'); p.hline(1, 12, 7, '#4a2418');
         p.set(6, 1, '#b08068'); p.set(2, 5, '#b08068'); p.set(10, 5, '#a07058'); p.set(6, 9, '#a07058');
         break;
+      case 'malachite': blob('#2e8a4e', '#4ab86a'); for (const y of [4, 6, 8, 10]) for (let x = 1; x < 13; x++) if (p.get(x, y)) p.set(x, y + Math.round(Math.sin(x * 0.8 + y) * 0.6), y % 4 ? '#1a5a32' : '#7ad898'); break;
+      case 'kidney': for (const [ox, oy, r] of [[4, 8, 3.4], [9, 7.5, 3.6], [6.5, 4.5, 3], [11, 4, 2.2]]) for (let y = 0; y < 12; y++) for (let x = 0; x < 14; x++) { const d = (x - ox) ** 2 + (y - oy) ** 2; if (d <= r * r) p.set(x, y, d <= 1.4 && x < ox ? '#c8c8d4' : x < ox && y < oy ? '#6a4a4a' : '#4a2e2e'); } break;
+      case 'magCrystal': for (let y = 0; y < 12; y++) { const h = 6 - Math.abs(y - 5.5) * 1.05; if (h > 0) for (let x = Math.round(7 - h); x <= Math.round(6 + h); x++) p.set(x, y, y < 6 ? (x < 7 ? '#5a5a66' : '#3a3a44') : (x < 7 ? '#2a2a32' : '#1c1c22')); } p.hline(2, 11, 6, '#7a7a88'); p.set(5, 3, '#d8d8e8'); p.set(4, 4, '#a8a8b8'); break;
+      case 'tommy': p.vline(2, 7, 10, '#5a5a64'); p.hline(2, 10, 7, '#5a5a64'); p.set(1, 11, '#5a5a64'); for (let y = 4; y < 8; y++) { p.set(9, y, '#6a6a74'); p.set(11, y, '#6a6a74'); } p.rect(10, 1, 1, 6, '#f0ead8'); p.set(10, 0, '#f8c040'); p.hline(5, 7, 6, '#3a3a42'); p.set(12, 8, '#3a3a42'); break;
+      case 'willemite': blob('#2a2a26', '#3e3e38'); for (const [x, y] of [[3, 5], [4, 5], [4, 6], [7, 4], [8, 4], [8, 5], [6, 8], [7, 8], [10, 7], [10, 8], [11, 7]]) p.set(x, y, '#58f070'); p.set(4, 4, '#d8ffd8'); p.set(8, 3, '#d8ffd8'); break;
+      case 'crystalGeode':
+        for (let y = 1; y < 12; y++) for (let x = 0; x < 14; x++) { const d = (x - 6.5) ** 2 / 44 + (y - 6.5) ** 2 / 28; if (d <= 1) p.set(x, y, d > 0.6 ? '#7a7066' : d > 0.42 ? '#c8c0d8' : G.hash(x, y, 73) < 0.35 ? '#ffffff' : '#b898e0'); }
+        p.set(5, 5, '#ffffff'); p.set(8, 7, '#ffffff'); break;
       case 'cannonball': for (let y = 1; y < 12; y++) for (let x = 1; x < 13; x++) if ((x - 6.5) ** 2 + (y - 6.5) ** 2 <= 27) p.set(x, y, '#2a2a2e'); p.set(4, 4, '#8a8a94'); p.set(5, 3, '#6a6a74'); p.set(8, 9, '#4a3a2a'); break;
     }
     return finish(p);
@@ -5200,6 +5220,179 @@
     else { p.hline(0, 4, 4, cl); p.hline(9, 13, 4, cl); p.set(0, 5, c); p.set(13, 5, c); }
     return finish(p);
   }
+  // ...and the big red-eyed ones that live further down
+  function batFrameRed(up) {
+    const p = new Pix(16, 9), c = '#3a1c2c', cl = '#5a2a40';
+    p.rect(6, 2, 4, 5, c); p.set(7, 3, '#ff4030'); p.set(9, 3, '#ff4030'); p.set(6, 1, c); p.set(9, 1, c); p.set(8, 6, '#f8f0e8');
+    if (up) { p.hline(0, 5, 1, cl); p.hline(10, 15, 1, cl); p.set(1, 2, c); p.set(14, 2, c); p.set(0, 0, cl); p.set(15, 0, cl); }
+    else { p.hline(0, 5, 5, cl); p.hline(10, 15, 5, cl); p.set(0, 6, c); p.set(15, 6, c); p.set(2, 6, c); p.set(13, 6, c); }
+    return finish(p);
+  }
+
+  // ---- the Andover depths
+  // A geode (14x12): a lumpy rock you can't see inside. One look per level of the mine.
+  function geodeIcon(kind) {
+    const p = new Pix(14, 12);
+    const c = { rough: ['#8a7a6a', '#a8988a', '#5e5044'], wet: ['#5a6a74', '#7e9098', '#3a4850'], rusty: ['#8a4a2a', '#b06a3e', '#5a2e1a'], dark: ['#36323e', '#504a5c', '#1e1c24'] }[kind];
+    for (let y = 1; y < 12; y++) for (let x = 0; x < 14; x++) {
+      const d = (x - 6.5) ** 2 / 42 + (y - 6.5) ** 2 / 28 + G.hash(x, y, 71) * 0.18;
+      if (d <= 1) p.set(x, y, y < 4 || (x < 4 && y < 7) ? c[1] : G.hash(x, y, 72) < 0.18 ? c[2] : c[0]);
+    }
+    if (kind === 'wet') { p.hline(3, 6, 3, '#b8d0d8'); p.set(9, 4, '#b8d0d8'); }
+    if (kind === 'rusty') for (const y of [6, 9]) for (let x = 2; x < 12; x++) if (p.get(x, y)) p.set(x, y, '#c88a50');
+    if (kind === 'dark') for (const [x, y] of [[4, 5], [9, 7], [6, 9]]) p.set(x, y, '#a878d8');
+    // a hairline crack, where it'll split
+    p.set(7, 2, c[2]); p.set(8, 3, c[2]); p.set(7, 4, c[2]);
+    return finish(p);
+  }
+  // The dormant Fool's Gold looks just like a vein. Awake (two frames): eyes, and legs.
+  function mimicFrame(f) {
+    const p = new Pix(18, 15);
+    for (let y = 2; y < 12; y++) for (let x = 0; x < 18; x++) if ((x - 8.5) ** 2 / 72 + (y - 8) ** 2 / 36 <= 1) p.set(x, y, y < 6 ? '#8a7466' : '#6e5a4e');
+    for (const [x, y] of [[3, 8], [12, 6], [8, 9], [13, 9]]) { p.set(x, y, '#d8b848'); p.set(x + 1, y, '#f8e898'); }
+    p.rect(5, 4, 2, 2, '#f8f070'); p.rect(10, 4, 2, 2, '#f8f070'); p.set(6, 5, '#1c1424'); p.set(11, 5, '#1c1424');
+    for (let i = 0; i < 3; i++) {
+      const up = (i + f) % 2;
+      p.vline(3 + i * 2, 11, 14 - up, '#3a2c28'); p.vline(14 - i * 2, 11, 13 + up, '#3a2c28');
+    }
+    return finish(p);
+  }
+  // A tommyknocker: a little old miner spirit from the stories, with a candle on his felt hat, a
+  // long white beard, eyes that glow, and a pick. Two walk frames, and a throw.
+  function knockerFrame(f) {
+    const p = new Pix(15, 20);
+    p.set(7, 0, '#f8d040'); p.set(7, 1, '#fff4c0'); p.vline(7, 2, 3, '#f0ead8');
+    p.rect(4, 4, 7, 2, '#5a4030'); p.hline(3, 11, 6, '#3e2c20');
+    p.rect(4, 7, 7, 3, '#b8b4a0'); p.set(5, 8, '#f8f8a0'); p.set(9, 8, '#f8f8a0'); p.set(7, 9, '#9a8e7a');
+    p.rect(4, 10, 7, 3, '#ecece4'); p.rect(5, 13, 5, 2, '#ecece4'); p.hline(6, 8, 15, '#ecece4');
+    p.vline(3, 10, 16, '#3a4a6a'); p.vline(11, 10, 16, '#3a4a6a'); p.hline(4, 10, 16, '#3a4a6a');
+    const step = f === 1 ? 1 : 0;
+    p.rect(4, 17, 2, 2 - step, '#2a1e18'); p.rect(9, 17, 2, 1 + step, '#2a1e18');
+    if (f === 2) { p.vline(12, 4, 9, '#7a5a34'); p.hline(10, 14, 4, '#8a8a94'); p.set(14, 5, '#8a8a94'); }
+    else { p.vline(13, 9, 15, '#7a5a34'); p.hline(11, 14, 9, '#8a8a94'); p.set(11, 10, '#8a8a94'); }
+    return finish(p);
+  }
+  // Old Iron: the thing at the bottom of the mine. A hulk of black magnetite with rust-red hematite
+  // running through it and a furnace glowing in its chest. Poses: stand (two bobs), arms up for a
+  // slam, and the red-hot pull.
+  function oldIronFrame(pose) {
+    const p = new Pix(36, 40);
+    const B = '#2a2a30', L = '#46464e', D = '#18181e', R = '#8a3a2a', bob = pose === 'b' ? 1 : 0;
+    const core = pose === 'pull' ? ['#ff5030', '#ffb090'] : ['#f89a30', '#fff0a0'];
+    p.rect(9, 30, 7, 10, B); p.rect(20, 30, 7, 10, B); p.hline(9, 15, 30, L); p.hline(20, 26, 30, L); p.hline(8, 16, 39, D); p.hline(19, 27, 39, D);
+    const ty = 13 + bob;
+    p.rect(6, ty, 24, 18, B); p.hline(6, 29, ty, L); p.hline(7, 28, ty + 1, L); p.vline(29, ty, ty + 17, D);
+    for (const [x0, y0, len] of [[8, ty + 4, 5], [22, ty + 9, 6], [10, ty + 12, 4], [24, ty + 3, 3]]) for (let i = 0; i < len; i++) p.set(x0 + i, y0 + (i >> 1), R);
+    p.rect(14, ty + 5, 8, 6, D); p.rect(15, ty + 6, 6, 4, core[0]); p.rect(16, ty + 7, 4, 2, core[1]);
+    p.rect(12, 3 + bob, 12, 10, B); p.hline(12, 23, 3 + bob, L); p.vline(23, 3 + bob, 12 + bob, D);
+    p.rect(14, 7 + bob, 2, 2, core[0]); p.rect(20, 7 + bob, 2, 2, core[0]); p.set(14, 7 + bob, core[1]); p.set(20, 7 + bob, core[1]);
+    p.hline(15, 20, 11 + bob, D);
+    if (pose === 'up') {
+      p.rect(1, ty - 12, 6, 14, B); p.rect(29, ty - 12, 6, 14, B); p.rect(0, ty - 16, 8, 6, L); p.rect(28, ty - 16, 8, 6, L);
+    } else {
+      const sw = pose === 'pull' ? -3 : 0;
+      p.rect(1 - sw, ty + 1, 6, 15, B); p.rect(29 + sw, ty + 1, 6, 15, B); p.rect(0 - sw, ty + 15, 8, 7, L); p.rect(28 + sw, ty + 15, 8, 7, L);
+      p.hline(0 - sw, 7 - sw, ty + 21, D); p.hline(28 + sw, 35 + sw, ty + 21, D);
+    }
+    return finish(p);
+  }
+  function ironChunk() {
+    const p = new Pix(9, 8);
+    p.rect(1, 1, 7, 6, '#2a2a30'); p.hline(1, 6, 1, '#5a5a64'); p.set(6, 4, '#8a3a2a'); p.set(3, 5, '#8a3a2a'); p.hline(2, 7, 6, '#18181e');
+    return finish(p);
+  }
+  // A cracked bit of the tunnel wall: a package would open it right up.
+  function crackedWall() {
+    const p = new Pix(32, 32);
+    p.rect(0, 0, 32, 32, '#4a3a34');
+    for (let y = 2; y < 32; y += 4) p.hline(0, 31, y + (y % 8 ? 1 : 0), '#3a2c28');
+    for (const [x, y] of [[4, 6], [22, 10], [9, 22], [27, 25]]) p.set(x, y, '#8a4a30');
+    for (const [x, y] of [[15, 0], [15, 1], [16, 2], [16, 3], [15, 4], [14, 5], [14, 6], [15, 7], [16, 8], [17, 9], [17, 10], [16, 11], [15, 12], [15, 13], [16, 14], [17, 15], [18, 16], [18, 17], [17, 18], [16, 19], [16, 20], [17, 21], [17, 22], [16, 23], [16, 24], [17, 25], [18, 26], [18, 27], [17, 28], [17, 29], [16, 30], [16, 31]]) { p.set(x, y, '#120c0a'); p.set(x + 1, y, '#2a1e1a'); }
+    for (const [x, y] of [[17, 9], [12, 6], [11, 6], [20, 17], [21, 18], [13, 22], [12, 23]]) p.set(x, y, '#120c0a');
+    p.rect(3, 29, 4, 3, '#6a5a50'); p.rect(24, 28, 5, 4, '#6a5a50'); p.hline(3, 6, 29, '#8a7466'); p.hline(24, 28, 28, '#8a7466');
+    return finish(p);
+  }
+  // A curtain of glass-thin crystals hanging across the passage (they ring when anyone talks).
+  function crystalCurtain(broken) {
+    const p = new Pix(32, 30);
+    for (let x = 1; x < 32; x += 2) {
+      const len = broken ? 3 + Math.floor(G.hash(x, 3, 81) * 4) : 18 + Math.floor(G.hash(x, 1, 81) * 11);
+      for (let y = 0; y < len; y++) p.set(x, y, y === len - 1 ? '#ffffff' : (x + y) % 5 === 0 ? '#f0faff' : x % 4 === 1 ? '#b8d8ec' : '#d8ecf8');
+    }
+    if (broken) for (let i = 0; i < 14; i++) p.set(2 + Math.floor(G.hash(i, 5, 82) * 28), 25 + Math.floor(G.hash(i, 6, 82) * 5), '#d8ecf8');
+    return finish(p);
+  }
+  // The four crystals of the old miners' door, each on a stone plinth (lit: rung in the right order).
+  function mohsPillar(kind, lit) {
+    const p = new Pix(14, 24);
+    p.rect(2, 13, 10, 11, '#6a6460'); p.hline(2, 11, 13, '#8a847e'); p.vline(11, 13, 23, '#4a4440'); p.hline(1, 12, 23, '#3a3430');
+    p.rect(5, 16, 4, 4, lit ? '#78e070' : '#4a4440'); p.set(6, 17, lit ? '#d8ffd0' : '#5a5450');
+    if (kind === 'calcite') { for (let y = 3; y < 13; y++) { const h = 5 - Math.abs(y - 8) * 0.6; p.hline(Math.round(7 - h + (y - 3) * 0.2), Math.round(7 + h - (12 - y) * 0.2), y, y < 8 ? '#ffffff' : '#e4e0d4'); } }
+    if (kind === 'sphalerite') { for (let y = 4; y < 13; y++) { const h = 4 - Math.abs(y - 8) * 0.5; p.hline(Math.round(7 - h), Math.round(7 + h), y, y < 7 ? '#a86a30' : '#5a3216'); } p.set(6, 6, '#e8b060'); }
+    if (kind === 'magnetite') { for (let y = 2; y < 13; y++) { const h = 5 - Math.abs(y - 7) ; if (h >= 0) p.hline(7 - h, 7 + h, y, y < 7 ? '#46464e' : '#24242a'); } p.set(6, 4, '#c8c8d8'); p.set(5, 6, '#9a9aa8'); }
+    if (kind === 'quartz') { p.rect(5, 4, 5, 9, '#e8f4fc'); p.vline(9, 4, 12, '#b8d0e0'); p.hline(6, 8, 3, '#ffffff'); p.set(7, 2, '#ffffff'); p.vline(6, 5, 11, '#ffffff'); }
+    if (lit) for (const [x, y] of [[1, 4], [12, 6], [2, 10], [12, 2]]) p.set(x, y, '#d8ffd0');
+    return finish(p);
+  }
+  // An iron gate across a two-tile passage, between timber posts (open: bars down in the floor).
+  function ironGate(open) {
+    const p = new Pix(32, 30);
+    p.rect(0, 0, 4, 30, '#7a5a34'); p.rect(28, 0, 4, 30, '#7a5a34'); p.vline(0, 0, 29, '#9a7444'); p.vline(28, 0, 29, '#9a7444');
+    p.rect(0, 0, 32, 4, '#6a4a2a'); p.hline(0, 31, 0, '#9a7444');
+    if (!open) {
+      for (let x = 6; x < 27; x += 4) { p.vline(x, 4, 29, '#5a5a64'); p.vline(x + 1, 4, 29, '#3a3a42'); }
+      for (const y of [9, 20]) p.hline(4, 27, y, '#46464e');
+      p.rect(14, 13, 4, 4, '#8a7a3a'); p.set(15, 14, '#1c1424'); p.set(16, 14, '#1c1424');
+    } else {
+      for (let x = 6; x < 27; x += 4) { p.set(x, 28, '#5a5a64'); p.set(x, 29, '#3a3a42'); }
+    }
+    return finish(p);
+  }
+  // A shelf bolted way up the rock wall, with an old carbide lamp on it (or not).
+  function highShelf(empty) {
+    const p = new Pix(24, 18);
+    p.rect(0, 10, 24, 3, '#7a5a34'); p.hline(0, 23, 10, '#9a7444'); p.set(3, 13, '#5a4024'); p.set(20, 13, '#5a4024');
+    for (const x of [3, 20]) { p.vline(x, 13, 16, '#5a4024'); p.set(x - 1, 16, '#5a4024'); }
+    if (!empty) {
+      p.rect(9, 3, 6, 7, '#b8903a'); p.hline(9, 14, 3, '#e8c870'); p.vline(14, 3, 9, '#8a6a28');
+      p.rect(7, 4, 3, 4, '#d8d8e0'); p.set(7, 5, '#ffffff'); p.vline(12, 0, 2, '#5a5a64');
+    } else {
+      p.set(10, 9, '#3a2c20'); p.set(14, 9, '#3a2c20');
+    }
+    return finish(p);
+  }
+  // The carbide lamp (key item icon): brass, with a big round reflector.
+  function carbideLamp() {
+    const p = new Pix(14, 14);
+    p.rect(4, 5, 6, 8, '#b8903a'); p.hline(4, 9, 5, '#e8c870'); p.vline(9, 5, 12, '#8a6a28'); p.hline(3, 10, 13, '#6a4a1a');
+    for (let y = 1; y < 10; y++) for (let x = 0; x < 5; x++) if ((x - 2) ** 2 + (y - 5) ** 2 <= 8) p.set(x, y, x < 2 ? '#ffffff' : '#d8d8e0');
+    p.set(1, 5, '#fff4a0'); p.vline(7, 1, 4, '#5a5a64'); p.hline(6, 11, 1, '#5a5a64');
+    return finish(p);
+  }
+  // The top of a winze (a shaft down to the next level): timbers around a black hole, a ladder.
+  function winzeHole() {
+    const p = new Pix(24, 20);
+    p.rect(2, 2, 20, 16, '#08060a');
+    p.rect(0, 0, 24, 3, '#7a5a34'); p.rect(0, 17, 24, 3, '#6a4a2a'); p.rect(0, 0, 3, 20, '#7a5a34'); p.rect(21, 0, 3, 20, '#6a4a2a');
+    p.hline(0, 23, 0, '#9a7444'); p.vline(0, 0, 19, '#9a7444');
+    p.vline(8, 3, 16, '#8a6a40'); p.vline(15, 3, 16, '#8a6a40');
+    for (let y = 4; y < 17; y += 3) p.hline(8, 15, y, y > 12 ? '#3a2a1a' : '#8a6a40');
+    return finish(p);
+  }
+  // The bottom of a ladder up to the level above, against the rock face.
+  function ladderUp() {
+    const p = new Pix(16, 34);
+    p.rect(2, 0, 12, 10, '#08060a');
+    p.vline(3, 0, 33, '#8a6a40'); p.vline(12, 0, 33, '#8a6a40'); p.vline(4, 0, 33, '#5a4024'); p.vline(13, 0, 33, '#5a4024');
+    for (let y = 2; y < 34; y += 4) p.hline(4, 11, y, '#9a7a4a');
+    return finish(p);
+  }
+  // A chest on a ledge across the water: reel it in.
+  function ledgeRock() {
+    const p = new Pix(30, 14);
+    for (let y = 2; y < 14; y++) for (let x = 0; x < 30; x++) if ((x - 14.5) ** 2 / 225 + (y - 9) ** 2 / 36 <= 1) p.set(x, y, y < 6 ? '#7a6458' : '#5a4a42');
+    return finish(p);
+  }
 
   // ---- area rocks: outcrops, quarry rubble, the big rocks only Doron can move, a gravel bar
   function outcrop(kind) {
@@ -5219,11 +5412,12 @@
   }
   function bigRock(kind) {
     const p = new Pix(36, 26);
-    const c = kind === 'basalt' ? ['#2e2e34', '#46464e', '#1e1e24', '#5a5a64'] : ['#8a8c90', '#a8aaae', '#6e7074', '#c0c2c6'];
+    const c = kind === 'basalt' ? ['#2e2e34', '#46464e', '#1e1e24', '#5a5a64'] : kind === 'mine' ? ['#5a4a42', '#7a6458', '#3e322c', '#8a7466'] : ['#8a8c90', '#a8aaae', '#6e7074', '#c0c2c6'];
     for (let y = 2; y < 26; y++) for (let x = 0; x < 36; x++) if ((x - 17.5) ** 2 / 300 + (y - 15) ** 2 / 150 <= 1) p.set(x, y, y < 9 ? c[1] : (x + y * 3) % 7 === 0 ? c[2] : c[0]);
     if (kind === 'basalt') for (const [x, y] of [[9, 12], [16, 9], [24, 14], [12, 18], [21, 20]]) { p.set(x, y, c[2]); p.set(x + 1, y, c[3]); }
     else for (let y = 10; y < 24; y += 3) for (let x = 4; x < 32; x++) if ((x - 17.5) ** 2 / 300 + (y - 15) ** 2 / 150 <= 1 && (x + y) % 4 < 2) p.set(x, y, c[3]);
-    p.rect(6, 22, 6, 3, '#4a7a34'); p.rect(26, 21, 5, 3, '#4a7a34');
+    if (kind === 'mine') for (const [x, y] of [[9, 12], [24, 15], [15, 19]]) { p.set(x, y, '#a8302a'); p.set(x + 1, y, '#c8c8d8'); }
+    else { p.rect(6, 22, 6, 3, '#4a7a34'); p.rect(26, 21, 5, 3, '#4a7a34'); }
     return finish(p);
   }
   // a sandy gravel bar in the brook, pebbles of every color washed down from upstream
@@ -9933,14 +10127,22 @@
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
     S.vanWickle = vanWickle();
-    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone']) S.rockIcons[k] = rockIcon(k);
+    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone', 'malachite', 'kidney', 'magCrystal', 'tommy', 'willemite', 'crystalGeode']) S.rockIcons[k] = rockIcon(k);
     S.oreVein = [oreVein(0), oreVein(1), oreVein(2)]; S.dumpPile = dumpPile(false); S.slagPile = dumpPile(true);
     S.furnaceRuin = furnaceRuin(); S.adit = adit(); S.bat = [batFrame(true), batFrame(false)];
+    S.batRed = [batFrameRed(true), batFrameRed(false)];
+    S.geodes = {}; for (const k of ['rough', 'wet', 'rusty', 'dark']) S.geodes[k] = geodeIcon(k);
+    S.mimic = [mimicFrame(0), mimicFrame(1)]; S.knocker = [knockerFrame(0), knockerFrame(1), knockerFrame(2)];
+    S.oldIron = { a: oldIronFrame('a'), b: oldIronFrame('b'), up: oldIronFrame('up'), pull: oldIronFrame('pull') }; S.ironChunk = ironChunk();
+    S.crackedWall = crackedWall(); S.crystalCurtain = crystalCurtain(false); S.crystalCurtainBroken = crystalCurtain(true);
+    S.mohs = {}; for (const k of ['calcite', 'sphalerite', 'magnetite', 'quartz']) S.mohs[k] = [mohsPillar(k, false), mohsPillar(k, true)];
+    S.ironGate = ironGate(false); S.ironGateOpen = ironGate(true); S.highShelf = highShelf(false); S.highShelfEmpty = highShelf(true);
+    S.carbideLamp = carbideLamp(); S.winzeHole = winzeHole(); S.ladderUp = ladderUp(); S.ledgeRock = ledgeRock();
     S.megaphone = megaphone(); S.megaphoneL = mirror(S.megaphone); S.cavePearls = cavePearls();
     // (and pointing down, for holding it by the handle at her side)
     { const m = S.megaphone, c = G.canvas(m.height, m.width), x = c.getContext('2d'); x.translate(m.height, 0); x.rotate(Math.PI / 2); x.drawImage(m, 0, 0); S.megaphoneDown = c; }
     S.outcrops = { laf: outcrop('laf'), eas: outcrop('eas'), bed: outcrop('bed') };
-    S.quarryRubble = quarryRubble(); S.bigBasalt = bigRock('basalt'); S.bigDolomite = bigRock('dolomite'); S.gravelBar = gravelBar();
+    S.quarryRubble = quarryRubble(); S.bigBasalt = bigRock('basalt'); S.bigDolomite = bigRock('dolomite'); S.bigMine = bigRock('mine'); S.gravelBar = gravelBar();
     S.fc = { idle: fatherChristmas(false, false), up: fatherChristmas(true, false), idleRage: fatherChristmas(false, true), upRage: fatherChristmas(true, true), sweater: fatherChristmas(false, false, true) };
     S.diploma = diploma(); S.eggNote = eggNote(); S.candyCorn = candyCorn(); S.doritos = doritos(); S.pawPrints = pawPrints();
     S.balloonBooth = balloonBooth(false); S.balloonBoothEmpty = balloonBooth(true); S.funnelCake = funnelCake(); S.rockTray = rockTray();

@@ -128,6 +128,8 @@
     // the 2 AM Taco Bell run: a floorboard that creaks
     '\u00ee': { k: 'creakFloor' },
     '\u00f2': { k: 'creakStairs' },
+    // the Andover depths: black, ice-cold water flooding the lower levels
+    '\u00f9': { k: 'mineWater', solid: true, edge: true, anim: true },
   };
   const group = (ch) => (TD[ch] && TD[ch].group) || ch;
 

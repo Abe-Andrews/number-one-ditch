@@ -371,7 +371,7 @@
       if (fixture) return { kind: fixture.img === G.spr.toilet ? 'toilet' : 'sink', x: fx, y: fy - 10 };
       // (a map can have water of its own that isn't a tile, like the trickle down the Number One Ditch)
       if (w.def.water && w.def.water(fx, fy)) return { kind: 'water', x: fx, y: fy };
-      return d && ['water', 'bay', 'iceHole'].includes(d.k) ? { kind: 'water', x: fx, y: fy } : null;
+      return d && ['water', 'bay', 'iceHole', 'mineWater'].includes(d.k) ? { kind: 'water', x: fx, y: fy } : null;
     },
     bidetStart() {
       const s = G.state, p = this.player, w = this.world, src = this.bidetSource();

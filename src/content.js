@@ -369,6 +369,10 @@
       desc: 'Folded into a very small square. Mikey gave it to Lily on his way out. Lily can\'t look at it. Press Z to read it.',
       use: () => G.SCRIPTS.readMikeyNote(),
     },
+    carbideLamp: {
+      kind: 'key', name: 'Carbide Lamp', icon: () => G.spr.carbideLamp, has: () => !!st().items.carbideLamp,
+      desc: 'An old miner\'s lamp from a shelf in the Continental workings. Burns bright white. Nate can see a lot farther in the Andover mines.',
+    },
     andoverKey: {
       kind: 'key', name: 'Andover Mines Key', icon: () => G.spr.gateKey, has: () => !!st().items.andoverKey,
       desc: 'Opens the gate at the old Andover iron mines. The tag says "FOR THE ROCK BOY" in Mom\'s church friend\'s handwriting.',
@@ -479,7 +483,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'carbideLamp'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -670,6 +674,15 @@
     const leadHint = { Michelle: 'Mom is out in the garden. Something is going on with her books.', Dad: 'Dad is in his workshop (the garage). He needs something.', Lily: 'Take the trail north, past the bridge over Brady Brook.', Doron: 'Pick "The Andover mines" when you leave home.' };
     if (f.mikeyBeaten) for (const [who, , where, hint] of homeLeads()) side.push({ name: where, status: hint, kind: 'rumor', where: 'Home', hint: leadHint[who] });
     if (f.andoverLocked) add('The Andover mines', s.items.andoverKey && 'Key in hand!', f.shopOpen ? 'Mom sells a key' : 'Need a key', 'Home - Andover', s.items.andoverKey ? 'Pick "The Andover mines" when you leave home.' : f.shopOpen ? 'Mom\'s flower stand sells the gate key. It isn\'t cheap.' : 'The mines are on private land. Mom knows everybody at church.');
+    if (f.andoverMine) {
+      const deep = f.mineVault ? 4 : f.mineOld ? 3 : f.mineFlood ? 2 : 1;
+      const hint = !f.mine_boulder ? 'Somebody rolled a boulder over the winze in the tunnels. Somebody strong could move it.'
+        : !f.mineOld ? 'The winze down from the flooded level is across a stope full of black water. If only it would freeze.'
+          : !f.mine_mohs ? 'The old miners\' door in the Continental workings: strike its four crystals, softest first.'
+            : !f.mine_ironBeaten ? 'Something guards the vault at the very bottom of the mine.'
+              : 'Crack geodes at the rock crusher in Van Wickle Hall. The deeper they came from, the better.';
+      add('The Andover depths', f.mine_ironBeaten && 'Old Iron beaten!', 'Deepest: level ' + G.sayable(deep) + ' of 4', 'Andover', hint, [deep, 4]);
+    }
     if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number, and Nate can\'t say it.');
     if (f.plantQuest) add('Anette\'s thirsty plants', f.plantsDone, f.plantsDone ? 'Done' : G.sayable(G.plantsWatered()) + '/5 watered', 'Chesapeake - the condo', G.plantsWatered() >= 5 ? 'All five are watered. Go tell Anette.' : 'Water Anette\'s five potted plants around the street with the Portable Bidet.', [G.plantsWatered(), 5]);
     if (f.hipHopMet) add('Dad\'s hip hop class', f.hipHopDone, G.sayable(f.hipHopRound || 0) + '/3 rounds', 'College Hill', 'It\'s REAL. Talk to Dad at the grocery store and copy his moves with the arrows.', [f.hipHopRound || 0, 3]);
@@ -1871,7 +1884,7 @@
     while (len < BEAM_LEN) {
       const tx = Math.floor((x0 + dx * (len + 4)) / 16), ty = Math.floor((p.y - 4 + dy * (len + 4)) / 16);
       const d = G.TILE_DEFS[w.tileAt(tx, ty)];
-      if (w.tileSolid(tx, ty) && !(d && (d.k === 'water' || d.k === 'bay'))) break;
+      if (w.tileSolid(tx, ty) && !(d && (d.k === 'water' || d.k === 'bay' || d.k === 'mineWater'))) break;
       len += 4;
     }
     const x1 = x0 + dx * len, y1 = y0 + dy * len;
@@ -3117,11 +3130,13 @@
     }
     const hasRocks = G.ROCKS.some((r) => G.rocksHave(r.id) > 0);
     const opts = [], acts = [];
+    if (G.geodeCount()) { opts.push('Crack open a geode (' + G.sayable(G.geodeCount()) + ')'); acts.push('geode'); }
     if (!w.crushed) { opts.push('A field sample'); acts.push('sample'); }
     if (hasRocks) { opts.push('A rock from my collection'); acts.push('mine'); }
     opts.push('Not right now'); acts.push(null);
     if (opts.length === 1) { yield G.say('Nate', 'The field samples are done for today. Next time, bring rocks from Andover.'); return; }
     const c = yield G.ask('Nate', 'What goes in the crusher?', opts);
+    if (acts[c] === 'geode') { yield* S.crackGeodes(); return; }
     if (acts[c] === 'mine') { yield* S.crushCollection(); return; }
     if (acts[c] !== 'sample') return;
     w.crushed = true;
@@ -3173,12 +3188,19 @@
     { id: 'garnet', name: 'Garnet', area: 'andover', r: 1, crush: { teeth: 15 }, fact: 'Little red-brown twelve-sided crystals. Garnet has been recorded at the Andover Iron Mine.' },
     { id: 'pyrite', name: 'Pyrite', area: 'andover', r: 1, crush: { package: 2 }, fact: 'Fool\'s gold. Strike it with steel and it sparks. Sulphur Hill next door was named for its sulfur-rich ore.' },
     { id: 'slag', name: 'Furnace Slag', area: 'andover', r: 1, crush: { teeth: 10 }, fact: 'Glassy blue-green waste from the old Andover iron furnace, first fired in the 1760s. Not a mineral, but a piece of history.' },
-    { id: 'sphalerite', name: 'Sphalerite', area: 'andover', r: 2, crush: { teeth: 20 }, fact: 'Dark, resinous zinc ore. Zinc sulfides turn up mixed with the iron in Andover\'s lower workings, including a vein with copper inclusions.' },
-    { id: 'galena', name: 'Galena', area: 'andover', r: 2, crush: { teeth: 20 }, fact: 'Silvery lead ore that breaks into perfect cubes, and it\'s HEAVY. Lead sulfides show up in the lower workings too.' },
-    { id: 'chalcopyrite', name: 'Chalcopyrite', area: 'andover', r: 2, crush: { teeth: 25 }, fact: 'Brassy copper ore that tarnishes peacock blue and purple. Early-1940s prospectors came to Andover looking for copper.' },
     { id: 'specular', name: 'Specular Hematite', area: 'andover', r: 3, crush: { teeth: 40 }, fact: 'Hematite in glittering mirror-bright plates. In the lantern light it sparkles like a night sky.' },
-    { id: 'lodestone', name: 'Lodestone', area: 'andover', r: 3, crush: { heart: 1 }, fact: 'Magnetite that\'s a natural magnet. Iron filings bristle off it. People used lodestones as the first compasses.' },
-    { id: 'cannonball', name: 'Continental Cannonball', area: 'andover', r: 4, crush: null, fact: 'An iron cannonball, maybe cast from Andover ore when the Continental Congress ran the mine for the American army. It belongs in a museum. Nate is the museum.' },
+    // the Andover depths (the flooded level, the Continental workings, the vault)
+    { id: 'sphalerite', how: 'Crack wet geodes, from the flooded level.', name: 'Sphalerite', area: 'andoverDeep', r: 2, crush: { teeth: 20 }, fact: 'Dark, resinous zinc ore. Zinc sulfides turn up mixed with the iron in Andover\'s lower workings, including a vein with copper inclusions.' },
+    { id: 'galena', how: 'Crack wet geodes, from the flooded level.', name: 'Galena', area: 'andoverDeep', r: 2, crush: { teeth: 20 }, fact: 'Silvery lead ore that breaks into perfect cubes, and it\'s HEAVY. Lead sulfides show up in the lower workings too.' },
+    { id: 'chalcopyrite', how: 'Crack wet geodes, from the flooded level.', name: 'Chalcopyrite', area: 'andoverDeep', r: 2, crush: { teeth: 25 }, fact: 'Brassy copper ore that tarnishes peacock blue and purple. Early-1940s prospectors came to Andover looking for copper.' },
+    { id: 'malachite', how: 'Crack wet geodes. The crystal grotto on the flooded level has the most.', name: 'Malachite', area: 'andoverDeep', r: 2, crush: { teeth: 25 }, fact: 'Green copper carbonate, banded light and dark like the inside of a tree. It forms where copper ore like chalcopyrite meets air and water and slowly weathers.' },
+    { id: 'kidney', how: 'Crack wet or rusty geodes, from the flooded level and below.', name: 'Kidney Ore', area: 'andoverDeep', r: 2, crush: { teeth: 25 }, fact: 'Hematite that grew in smooth, round bubbles, so it looks like a pile of kidneys. Polish it and it shines like steel.' },
+    { id: 'lodestone', how: 'Once in a while from a rough geode. The deeper the geode, the better the odds.', name: 'Lodestone', area: 'andoverDeep', r: 3, crush: { heart: 1 }, fact: 'Magnetite that\'s a natural magnet. Iron filings bristle off it. People used lodestones as the first compasses.' },
+    { id: 'magCrystal', how: 'Crack rusty or dark geodes, from the Continental workings and the vault.', name: 'Magnetite Crystal', area: 'andoverDeep', r: 3, crush: { teeth: 50 }, fact: 'A perfect magnetite octahedron: two four-sided pyramids stuck base to base. Magnetite grows in that shape when it has room to.' },
+    { id: 'tommy', how: 'Somebody worked the Continental workings by candlelight. Crack rusty or dark geodes.', name: 'Sticking Tommy', area: 'andoverDeep', r: 3, crush: null, fact: 'An iron candle holder with a spike, jammed into a crack in the rock or a timber so a miner could see to work. Miners called it a sticking tommy. Somebody worked down here by candlelight.' },
+    { id: 'crystalGeode', how: 'Crack dark geodes, from the vault. Once in a blue moon, a wet one from the grotto.', name: 'Crystal-Lined Geode', area: 'andoverDeep', r: 3, crush: { teeth: 60 }, fact: 'A real geode: hollow inside, lined with tiny sparkling quartz crystals that grew inward from the walls, one layer at a time.' },
+    { id: 'willemite', how: 'The rarest thing in the mine. Crack dark geodes, from the vault.', name: 'Willemite', area: 'andoverDeep', r: 4, crush: null, fact: 'Zinc silicate that glows bright green under a black light. It was recorded at Sulphur Hill, the mine right next door (the old reports lump the two mines together). Sussex County is famous for it.' },
+    { id: 'cannonball', how: 'At the very bottom of the mine, in the vault behind Old Iron.', name: 'Continental Cannonball', area: 'andoverDeep', r: 4, crush: null, fact: 'An iron cannonball, maybe cast from Andover ore when the Continental Congress ran the mine for the American army. It belongs in a museum. Nate is the museum.' },
     // Lafayette (College Hill, Easton PA)
     { id: 'dolomite', area: 'lafayette', name: 'Allentown Dolomite', r: 0, crush: { teeth: 5 }, how: 'Dr. Nataro left a tray of gray rocks in the Science Center. Only one of them is dolomite.', fact: 'The most common bedrock in the Lehigh Valley: dolostone from a warm, shallow sea about 500 million years ago.' },
     { id: 'gneiss', area: 'lafayette', name: 'The Nicest Gneiss', r: 1, crush: { teeth: 15 }, how: 'Prof. Sunderlin gives one out for a right answer.', fact: 'Banded Precambrian gneiss of the Reading Prong, over a billion years old. Easton\'s arts trail has a sign about it called "The Nicest Gneiss."' },
@@ -3199,6 +3221,7 @@
   G.rockById = (id) => G.ROCKS.find((r) => r.id === id);
   G.ROCK_AREAS = [
     { id: 'andover', name: 'ANDOVER MINES' },
+    { id: 'andoverDeep', name: 'ANDOVER DEPTHS' },
     { id: 'lafayette', name: 'LAFAYETTE' },
     { id: 'easton', name: 'EASTON FAIR' },
     { id: 'bedminster', name: 'BEDMINSTER' },
@@ -3209,24 +3232,67 @@
   G.rocksFound = () => G.ROCKS.filter((r) => rockState().rocksFound[r.id]).length;
   G.rocksHave = (id) => rockState().rocks[id] || 0;
 
-  // what each spot can hold (weights): dump piles and the slag heap outside,
-  // the tunnels, and the lower workings (where the sulfides are)
+  // what each spot can hold (weights): dump piles and the slag heap outside, the tunnels and the
+  // secret pocket off them, then the three levels below (the grotto is the flooded level's best room)
   const ROCK_ZONES = {
     dump: [['hematite', 30], ['magnetite', 24], ['calcite', 16], ['marble', 14], ['quartz', 12], ['jasper', 7], ['garnet', 3]],
     slag: [['slag', 60], ['hematite', 15], ['quartz', 10], ['jasper', 8], ['magnetite', 7]],
-    tunnel: [['hematite', 20], ['magnetite', 20], ['quartz', 10], ['calcite', 8], ['jasper', 11], ['garnet', 12], ['pyrite', 11], ['specular', 4], ['lodestone', 1]],
-    deep: [['pyrite', 12], ['sphalerite', 15], ['galena', 12], ['chalcopyrite', 10], ['garnet', 9], ['specular', 7], ['lodestone', 3], ['magnetite', 8], ['hematite', 8]],
+    tunnel: [['hematite', 20], ['magnetite', 20], ['quartz', 10], ['calcite', 8], ['marble', 6], ['jasper', 11], ['garnet', 12], ['pyrite', 11]],
+    pocket: [['garnet', 16], ['pyrite', 14], ['jasper', 12], ['quartz', 10], ['hematite', 10], ['magnetite', 10]],
+    flood: [['pyrite', 16], ['garnet', 10], ['magnetite', 10], ['hematite', 10], ['quartz', 8]],
+    grotto: [['quartz', 14], ['pyrite', 12], ['garnet', 12], ['jasper', 8]],
+    old: [['magnetite', 14], ['hematite', 12], ['garnet', 12], ['pyrite', 10], ['jasper', 8]],
+    vault: [['magnetite', 14], ['garnet', 12], ['pyrite', 12], ['hematite', 10]],
     cannon: [['cannonball', 1]],
     bed: [['shale', 1]],
   };
-  // Break a vein: roll a specimen, add it, and announce it.
-  G.rockFind = (zone, x, y) => {
-    const table = ROCK_ZONES[zone] || ROCK_ZONES.dump;
-    let roll = Math.random() * table.reduce((n, e) => n + e[1], 0), id = table[0][0];
-    for (const [k, wgt] of table) { roll -= wgt; if (roll < 0) { id = k; break; } }
-    if (zone === 'cannon') flags().cannonball = true;
-    G.rockGain(id, x, y);
+  // ---- geodes: most of what comes out of the Andover mines is a lumpy rock you can't see inside.
+  // Crack them open at the jaw crusher in Van Wickle to find out what they are. Each level of the
+  // mine has its own kind, and the deeper it came from, the better the odds.
+  G.GEODES = [
+    { id: 'rough', name: 'Rough Geode', from: 'the dumps and the tunnels' },
+    { id: 'wet', name: 'Wet Geode', from: 'the flooded level' },
+    { id: 'rusty', name: 'Rusty Geode', from: 'the Continental workings' },
+    { id: 'dark', name: 'Dark Geode', from: 'the Lodestone Vault' },
+  ];
+  const GEODE_INSIDE = {
+    rough: [['hematite', 16], ['magnetite', 16], ['quartz', 12], ['calcite', 10], ['marble', 6], ['jasper', 12], ['garnet', 12], ['pyrite', 10], ['specular', 5], ['lodestone', 1]],
+    wet: [['sphalerite', 15], ['galena', 13], ['chalcopyrite', 12], ['malachite', 9], ['kidney', 8], ['pyrite', 10], ['garnet', 8], ['specular', 6], ['jasper', 6], ['lodestone', 2], ['crystalGeode', 0.4]],
+    rusty: [['kidney', 12], ['specular', 12], ['magCrystal', 8], ['tommy', 6], ['lodestone', 5], ['chalcopyrite', 9], ['malachite', 8], ['galena', 9], ['sphalerite', 8], ['garnet', 8], ['willemite', 0.6]],
+    dark: [['magCrystal', 14], ['lodestone', 11], ['specular', 11], ['tommy', 9], ['crystalGeode', 7], ['willemite', 4], ['kidney', 9], ['malachite', 8], ['chalcopyrite', 8]],
   };
+  // where a vein's geodes come from, how often a find is a plain rock you can see right away (and
+  // the pocket and the grotto give two)
+  const ZONE_GEODE = { dump: ['rough', 0.5], slag: ['rough', 0.85], tunnel: ['rough', 0.3], pocket: ['rough', 0.15, 2], flood: ['wet', 0.25], grotto: ['wet', 0.15, 2], old: ['rusty', 0.2], vault: ['dark', 0.15] };
+  const roll = (table) => {
+    let r = Math.random() * table.reduce((n, e) => n + e[1], 0);
+    for (const [k, wgt] of table) { r -= wgt; if (r < 0) return k; }
+    return table[0][0];
+  };
+  const geodeState = () => (G.state.geodes = G.state.geodes || {});
+  G.geodeCount = (id) => (id ? geodeState()[id] || 0 : G.GEODES.reduce((n, g) => n + (geodeState()[g.id] || 0), 0));
+  G.geodeById = (id) => G.GEODES.find((g) => g.id === id);
+  // Pick one up: the first one ever gets an explanation, the rest a pop.
+  G.geodeGain = (id, x, y) => {
+    const st2 = geodeState(), first = !flags().geodeTip;
+    st2[id] = (st2[id] || 0) + 1;
+    const w = G.play.world, g = G.geodeById(id);
+    G.audio.sfx('tooth');
+    if (first) { flags().geodeTip = true; G.script.run(S.geodeFirst(id)); } else w.pop(x, y - 30, '+1 ' + g.name, '#c8b8a0');
+  };
+  S.geodeFirst = function* (id) {
+    yield G.itemGet(G.spr.geodes[id], 'You found a {y}' + G.geodeById(id).name + '{/}!');
+    yield G.say('Nate', 'A geode. Could be anything in there. Could be NOTHING in there. That\'s the beauty of it.');
+    yield G.say(null, 'Most rocks in the mine come out as geodes. Crack them open at the {y}rock crusher{/} in Van Wickle Hall to see what\'s inside. The deeper the mine, the better the geodes.');
+  };
+  // Break a vein: usually a geode, sometimes a plain rock you can see right away.
+  G.rockFind = (zone, x, y) => {
+    const table = ROCK_ZONES[zone] || ROCK_ZONES.dump, gz = ZONE_GEODE[zone];
+    if (zone === 'cannon') flags().cannonball = true;
+    if (!gz || Math.random() < gz[1]) { G.rockGain(roll(table), x, y); return; }
+    for (let i = 0; i < (gz[2] || 1); i++) G.geodeGain(gz[0], x, y);
+  };
+  G.geodeRoll = (id) => roll(GEODE_INSIDE[id]);
   // Add one specimen: new or rare finds get the fanfare, the rest just a pop.
   G.rockGain = (id, x, y) => {
     const s = rockState(), rock = G.rockById(id), isNew = !s.rocksFound[id];
@@ -3244,11 +3310,12 @@
     s.rocksFound[id] = (s.rocksFound[id] || 0) + 1;
     yield* S.rockNew(id, isNew);
   };
-  S.rockNew = function* (id, isNew) {
+  // (hush: skip Nate's big reaction, when a whole bag of geodes is cracking open at once)
+  S.rockNew = function* (id, isNew, hush) {
     const rock = G.rockById(id), rar = RARITY[rock.r];
     yield G.itemGet(G.spr.rockIcons[id], (isNew ? 'NEW! ' : '') + 'You found {y}' + rock.name + '{/}! (' + rar.name + ')');
     if (isNew) yield G.say(null, rock.fact);
-    if (isNew && rock.r >= 3) yield G.say('Nate', rock.r === 4 ? 'This is the greatest moment of my life. Again.' : 'I have READ about these. In MULTIPLE books.');
+    if (isNew && rock.r >= 3 && !hush) yield G.say('Nate', rock.r === 4 ? 'This is the greatest moment of my life. Again.' : 'I have READ about these. In MULTIPLE books.');
     if (isNew && G.rocksFound() === G.ROCKS.length && !flags().rockHound) {
       flags().rockHound = true;
       G.audio.sfx('fanfare');
@@ -3480,6 +3547,55 @@
     }
   };
 
+  // ---- cracking geodes: one at a time (with the full reveal), or a whole bag at once
+  S.crackGeodes = function* () {
+    const w = G.play.world, gs = geodeState();
+    const kinds = G.GEODES.filter((g) => gs[g.id] > 0);
+    let g = kinds[0];
+    if (kinds.length > 1) {
+      const k = yield G.ask('Nate', 'Which geodes?', kinds.map((x) => x.name + ' x' + G.sayable(gs[x.id])).concat('Never mind'));
+      if (k >= kinds.length) return;
+      g = kinds[k];
+    }
+    const n = gs[g.id];
+    let all = false;
+    if (n > 1) {
+      const c = yield G.ask('Nate', G.sayable(n) + ' ' + g.name.toLowerCase() + 's. Crack...', ['Just one', 'All ' + G.sayable(n), 'Never mind']);
+      if (c === 2) return;
+      all = c === 1;
+    }
+    const count = all ? n : 1;
+    gs[g.id] -= count;
+    yield G.say(null, all ? 'Nate lines up all ' + G.sayable(count) + ' ' + g.name.toLowerCase() + 's on the feed tray, puts on his safety glasses, and starts feeding them in.' : 'Nate sets the ' + g.name.toLowerCase() + ' between the jaws and pulls the lever.');
+    yield* crushAnim(w);
+    const s = rockState(), found = {};
+    const finds = [];
+    for (let i = 0; i < count; i++) finds.push(G.geodeRoll(g.id));
+    if (!all) {
+      const id = finds[0];
+      yield G.say(null, ['It splits clean in half...', 'CRACK. A puff of dust...', 'It pops open like an egg...'][Math.floor(Math.random() * 3)]);
+      yield* S.rockGive(id);
+      return;
+    }
+    // a whole bag: the new and the rare get their fanfare, then a tally of the rest
+    for (const id of finds) found[id] = (found[id] || 0) + 1;
+    const ids = Object.keys(found).sort((a, b) => G.rockById(b).r - G.rockById(a).r);
+    let wowed = false;
+    for (const id of ids) {
+      const isNew = !s.rocksFound[id];
+      s.rocks[id] = (s.rocks[id] || 0) + found[id];
+      s.rocksFound[id] = (s.rocksFound[id] || 0) + found[id];
+      if (isNew || G.rockById(id).r >= 3) yield* S.rockNew(id, isNew, wowed);
+      if (isNew && G.rockById(id).r >= 3) wowed = true;
+    }
+    const parts = ids.map((id) => G.rockById(id).name + (found[id] > 1 ? ' x' + G.sayable(found[id]) : ''));
+    for (let i = 0; i < parts.length; i += 4) {
+      const chunk = parts.slice(i, i + 4);
+      yield G.say(null, (i ? '...and ' : 'Inside: ') + (chunk.length > 1 ? chunk.slice(0, -1).join(', ') + ' and ' + chunk[chunk.length - 1] : chunk[0]) + '.');
+    }
+    if (ids.length >= 5) yield G.say('Nate', 'Best. Afternoon. Ever.');
+  };
+
   // ---- getting there: the "Where to?" menu at either end of the road
   S.driveAndover = function* () {
     const f = flags();
@@ -3542,7 +3658,7 @@
     { name: 'FINALE: Eggmas, the relay', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_freed: 7, fin_relay: 0 } },
     { name: 'FINALE: Romulus\'s turn', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_relay: 5 } },
     { name: 'FINALE: Nate\'s turn', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_relay: 7 } },
-    { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [25, 15, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
+    { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [41, 21, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
   G.ADMIN_PLACES = [
@@ -3563,7 +3679,10 @@
     { name: 'The basement', map: 'basement', at: [18, 6, 'down'] },
     { name: 'The frozen pond', map: 'north', at: [10, 13, 'up'] },
     { name: 'Andover mines (outside)', map: 'andover', at: [27, 15, 'left'] },
-    { name: 'Andover mines (tunnels)', map: 'andoverMine', at: [13, 20, 'up'] },
+    { name: 'Andover mines (tunnels)', map: 'andoverMine', at: [20, 30, 'up'] },
+    { name: 'Andover: the flooded level', map: 'andoverFlood', at: [5, 5, 'down'] },
+    { name: 'Andover: the Continental workings', map: 'andoverOld', at: [19, 5, 'down'] },
+    { name: 'Andover: the Lodestone Vault', map: 'andoverVault', at: [5, 5, 'down'] },
     { name: 'Andover: the deep stope', map: 'andoverDeep', at: [2, 8, 'right'] },
     { name: 'Bay Bridge-Tunnel: the toll plaza', map: 'cbbtToll', at: [17, 13, 'left'] },
     { name: 'Bay Bridge-Tunnel: the island', map: 'cbbt', at: [14, 20, 'up'] },
@@ -3599,6 +3718,7 @@
     const s = G.state, f = s.flags;
     Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true, belt: true, bmf: true, metronome: true });
     s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40; s.items.firstAid = G.KIT_MAX;
+    s.items.carbideLamp = true; s.geodes = { rough: 5, wet: 5, rusty: 5, dark: 5 }; f.geodeTip = true;
     f.kitGot = true; f.bidetBig = true; f.bidetNozzle = true; s.items.bidetWater = G.BIDET_MAX;
     for (const sg of G.SIGNALS) f['signal_' + sg.id] = true;
     // the graded chem final and the EEENGLISH diploma
@@ -9726,7 +9846,7 @@
     },
     setup(w) {
       w.addProp({ img: G.spr.adit, tx: 5, ty: 4, dx: 2, base: 4 * 16, flat: true });
-      w.addTrigger(6, 4, 1, 1, () => G.play.warp('andoverMine', 13, 20, 'up'));
+      w.addTrigger(6, 4, 1, 1, () => G.play.warp('andoverMine', 20, 30, 'up'));
       w.addProp({ img: G.spr.furnaceRuin, tx: 19, ty: 16, dx: -2, solid: [19, 16, 2, 1], hit: [19, 16, 2, 1], talk: look('The ruins of the old Andover iron furnace, first fired in the 1760s.', 'During the Revolution, the Continental Congress took it over and made cannonballs and steel for the army here.') });
       w.addProp({ img: G.spr.suv, tx: 24, ty: 11, h: 3, dx: 3, solid: [24, 12, 2, 2], hit: [24, 12, 2, 2], talk: S.andoverCar });
       w.add(new G.Sign(21, 12, ['ANDOVER IRON MINE', 'The biggest hematite deposit in New Jersey. Worked before the Revolution, seized by the Continental Congress, reopened 1848, closed 1880.']));
@@ -9743,60 +9863,134 @@
         yield G.say('Nate', 'The Andover mines. Iron ore from before the Revolution. I have SO many books about this place.');
         if (G.with('doron')) yield G.say('Doron', 'You dragged me to a hole in the ground.');
         else if (G.with('lily')) yield G.say('Lily', 'If there are bats, I\'m going back to the car.');
-        yield G.say(null, 'Smash the {y}dump piles{/} and {y}mineral veins{/} with your hammer to collect rocks. The good stuff is deep in the tunnels.');
-        yield G.say(null, 'Crush them at the {y}rock crusher{/} in Van Wickle Hall, and see your collection in the {y}ROCKS{/} menu.');
+        yield G.say(null, 'Smash the {y}dump piles{/} and {y}mineral veins{/} with your hammer. Most of what comes out is {y}geodes{/}: crack them at the {y}rock crusher{/} in Van Wickle Hall to see what\'s inside.');
+        yield G.say(null, 'The good stuff is deep in the tunnels, four levels down. See your collection in the {y}ROCKS{/} menu.');
       })();
     },
   };
 
-  // Inside the Andover workings: dark drifts lit only by Nate's lantern, glinting
-  // veins, bats, and the lower workings where the zinc, lead and copper sulfides are.
+  // ================================================================ THE ANDOVER MINES, LEVEL BY LEVEL
+  // Four levels, like a dungeon: the tunnels, the flooded level, the Continental workings and the
+  // Lodestone Vault. Each one is darker than the last, with meaner things living in it (tier 1-4)
+  // and better geodes in the veins. A puzzle opens the way down from each: Doron moves the boulder
+  // off the winze, "I Pray to Jesus" freezes the flooded stope, and the old miners' door wants its
+  // crystals struck softest to hardest. Side rooms want a package, Lily's "No.", Abe's reach or the
+  // surf rod. Old Iron guards the vault at the bottom.
+  // Flags: mine_boulder, mine_crack, mine_curtain, mine_mohs, mine_ironBeaten (+ chest_mine*, reach_mine).
+  const mineGrid = (W, H, rects) => {
+    const g = Array.from({ length: H }, () => Array(W).fill('w'));
+    for (const [x, y, w, h, c] of rects) for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) if (g[y + j] && x + i < W) g[y + j][x + i] = c || '@';
+    // rock faces wherever a passage runs below solid rock
+    for (let y = 0; y < H - 1; y++) for (let x = 0; x < W; x++) if (g[y][x] === 'w' && g[y + 1][x] !== 'w' && g[y + 1][x] !== '&') g[y][x] = '&';
+    return g.map((r) => r.join(''));
+  };
+  const MINE_GLOW = ['#f8e8a0', '#a8e8f0', '#f8b070', '#c898ff'], MINE_GEODE = ['rough', 'wet', 'rusty', 'dark'];
+  const mineVeins = (w, zone, tier, spots) => {
+    for (const [x, y] of spots) { const v = w.add(new G.OreVein(x * 16 + 8, y * 16 + 14, zone)); v.glowColor = zone === 'cannon' ? '#f8d850' : MINE_GLOW[tier - 1]; }
+  };
+  const mineCritters = (w, tier, list) => {
+    const K = { bat: G.Bat, mimic: G.Mimic, knocker: G.Tommyknocker };
+    for (const [kind, x, y] of list) { const e = w.add(new K[kind](x * 16 + 8, y * 16 + 14, tier)); e.geode = MINE_GEODE[tier - 1]; }
+  };
+  // the top of a winze (walk into it to climb down), and the foot of a ladder up (Z to climb)
+  const mineWinze = (w, tx, ty, go, open = () => true) => {
+    w.addProp({ img: G.spr.winzeHole, tx, ty, h: 2, dx: 4, dy: -6, flat: true });
+    w.addTrigger(tx, ty, 2, 2, () => { if (open()) go(); });
+  };
+  const mineLadder = (w, tx, ty, go, line) => {
+    w.addProp({ img: G.spr.ladderUp, tx, ty: ty - 1, dy: 2, hit: [tx, ty - 1, 1, 1], talk: function* () { if (line) yield G.say('Nate', line); go(); } });
+  };
+  // Nate's lantern: everything past its glow is pitch black (smaller the deeper he goes; the
+  // carbide lamp from the Continental workings throws a lot more light)
+  const MINE_LAMP = [64, 58, 52, 46];
+  let mineDark = null;
+  const mineTint = (tier) => function (ctx) {
+    const p = G.play.player, cam = G.play.cam, w = G.play.world;
+    if (!p) return;
+    const x = Math.round(p.x - cam.x), y = Math.round(p.y - 10 - cam.y), fl = Math.sin(G.tick * 0.13) * 2, r = MINE_LAMP[tier - 1] + (G.state.items.carbideLamp ? 22 : 0) + fl;
+    const lit = (w.lights || []).filter(([lx, ly]) => Math.abs(lx - cam.x - G.W / 2) < G.W && Math.abs(ly - cam.y - G.H / 2) < G.H);
+    if (!lit.length) {
+      const grad = ctx.createRadialGradient(x, y, r * 0.3, x, y, r);
+      grad.addColorStop(0, 'rgba(10,6,4,0)');
+      grad.addColorStop(1, 'rgba(10,6,4,' + (0.93 + tier * 0.015) + ')');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, G.W, G.H);
+    } else {
+      // a lit chamber: dark everywhere except around its lanterns and Nate's lamp
+      if (!mineDark) { mineDark = document.createElement('canvas'); mineDark.width = G.W; mineDark.height = G.H; }
+      const d = mineDark.getContext('2d');
+      d.globalCompositeOperation = 'source-over';
+      d.clearRect(0, 0, G.W, G.H);
+      d.fillStyle = 'rgba(10,6,4,' + (0.93 + tier * 0.015) + ')';
+      d.fillRect(0, 0, G.W, G.H);
+      d.globalCompositeOperation = 'destination-out';
+      const hole = (hx, hy, hr) => {
+        const g = d.createRadialGradient(hx, hy, hr * 0.3, hx, hy, hr);
+        g.addColorStop(0, 'rgba(0,0,0,1)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+        d.fillStyle = g; d.fillRect(hx - hr, hy - hr, hr * 2, hr * 2);
+      };
+      for (const [lx, ly, lr] of lit) hole(lx - cam.x, ly - cam.y, (lr || 80) + fl);
+      hole(x, y, r);
+      ctx.drawImage(mineDark, 0, 0);
+    }
+    ctx.fillStyle = G.state.items.carbideLamp ? 'rgba(220,230,255,0.04)' : 'rgba(255,160,60,0.05)';
+    ctx.fillRect(0, 0, G.W, G.H);
+  };
+  // timber sets with lanterns hung on them, lighting up a chamber (spots in pixels; top: on the top wall)
+  const mineLanterns = (w, spots) => {
+    w.lights = w.lights || [];
+    for (const [lx, ly, top] of spots) {
+      w.lights.push([lx, ly + 10, 88]);
+      w.props.push({
+        base: top ? ly - 8 : ly + 10,
+        draw(ctx, cx, cy) {
+          ctx.drawImage(G.spr.timberSet, Math.round(lx - 17) - cx, Math.round(ly - (top ? 26 : 30)) - cy);
+          const f = (G.tick >> 3) % 5 === 0 ? 1 : 0;
+          ctx.drawImage(G.spr.mineLantern, Math.round(lx - 3) - cx, Math.round(ly - (top ? 10 : 14) + f) - cy);
+          w.glows.push({ x: Math.round(lx), y: Math.round(ly - (top ? 5 : 9)), color: '#f8c060' });
+        },
+      });
+    }
+  };
+  const mineChest = (w, tx, ty, id, teeth, geode, n) => w.add(new G.Chest(tx, ty, id, function* () {
+    yield* S.bossStash(teeth, 'Inside: {y}' + G.sayable(teeth) + ' shark teeth{/}, and ' + G.sayable(n) + ' ' + G.geodeById(geode).name.toLowerCase() + 's!');
+    geodeState()[geode] = (geodeState()[geode] || 0) + n;
+    flags().geodeTip = true;
+  }));
+
+  // ---- Level 1: the tunnels. The main drift up from the adit, the west and east stopes, the north
+  // crosscut, the winze room (a boulder on the winze), and a cracked wall off the crosscut's east
+  // end with a pocket of good veins behind it.
   G.MAPS.andoverMine = {
     name: 'Andover Mines: the Tunnels',
     music: 'mine',
     tiles() {
-      const W = 28, H = 22;
-      const g = Array.from({ length: H }, () => Array(W).fill('w'));
-      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
-      fill(13, 3, 2, 19, '@'); fill(13, 3, 1, 19, '|');   // the main drift, with rails
-      fill(3, 16, 10, 2, '@'); fill(2, 12, 6, 6, '@');      // west drift and stope
-      fill(15, 11, 11, 2, '@'); fill(20, 13, 7, 6, '@');    // east drift and stope
-      fill(4, 3, 9, 2, '@'); fill(15, 3, 12, 2, '@');       // the north crosscut
-      fill(26, 5, 1, 4, '@');                               // a narrow dead end
-      fill(4, 5, 2, 1, '@'); fill(3, 6, 7, 5, '@');         // the lower workings
-      if (flags().fcAwake) fill(27, 15, 1, 2, '@');         // (100%) the way to the deep stope
-      // rock faces wherever a passage runs below solid rock
-      for (let y = 0; y < H - 1; y++) for (let x = 0; x < W; x++) if (g[y][x] === 'w' && g[y + 1][x] !== 'w' && g[y + 1][x] !== '&') g[y][x] = '&';
-      return g.map((r) => r.join(''));
+      const R = [
+        [20, 5, 2, 27], [20, 5, 1, 27, '|'],                 // the main drift, with rails
+        [5, 5, 34, 2],                                      // the north crosscut
+        [6, 7, 2, 2], [3, 9, 10, 7],                        // the winze room
+        [8, 22, 12, 2], [3, 18, 9, 10],                     // west drift and stope
+        [22, 19, 7, 2], [28, 16, 11, 10],                   // east drift and stope
+        [37, 7, 2, 4], [31, 11, 12, 4],                     // past the cracked wall: the pocket
+      ];
+      if (flags().fcAwake) R.push([39, 21, 5, 2]);          // (100%) the way to the deep stope
+      return mineGrid(44, 32, R);
     },
     setup(w) {
-      const at = (x, y, zone) => {
-        const v = w.add(new G.OreVein(x * 16 + 8, y * 16 + 14, zone));
-        v.glowColor = zone === 'deep' ? '#a8c8ff' : zone === 'cannon' ? '#f8d850' : '#f8e8a0';
-      };
-      for (const [x, y] of [[2, 12], [6, 13], [3, 15], [21, 13], [25, 14], [23, 17], [20, 18], [24, 11], [9, 3], [18, 3], [22, 4]]) at(x, y, 'tunnel');
-      for (const [x, y] of [[3, 6], [8, 6], [4, 9], [9, 9], [6, 8]]) at(x, y, 'deep');
-      if (!flags().cannonball) {
-        at(26, 8, 'cannon');
-      }
-      w.add(new G.Sign(6, 5, ['THE LOWER WORKINGS', '"Zinc and lead sulfides occur mixed with iron ores in the lower workings." - U.S. Bureau of Mines, 1947']));
-      for (const [x, y] of [[8, 16], [22, 15], [5, 7], [19, 3]]) w.add(new G.Bat(x * 16 + 8, y * 16 + 14));
-      if (flags().fcAwake) w.addTrigger(27, 15, 1, 2, () => G.play.warp('andoverDeep', 1, 8, 'right'));
-      w.addTrigger(13, 21, 2, 1, () => G.play.warp('andover', 6, 5, 'down'));
+      const f = flags();
+      mineVeins(w, 'tunnel', 1, [[4, 19], [9, 20], [5, 25], [10, 26], [7, 23], [30, 17], [36, 18], [33, 23], [37, 24], [31, 21], [4, 14], [12, 10], [12, 5], [29, 6]]);
+      mineVeins(w, 'pocket', 1, [[32, 12], [35, 13], [39, 12], [42, 13]]);
+      mineChest(w, 40, 11, 'minePocket', 30, 'rough', 2);
+      if (!f.mine_crack) w.add(new G.CrackedWall(37, 9, 'mine_crack'));
+      // the winze, and the boulder somebody rolled over it
+      const rock = w.add(new G.BigRock(f.mine_boulder ? 5 * 16 + 8 : 8 * 16, 12 * 16 + 14, 'mine', (r) => G.script.run(S.winzeBoulder(r))));
+      mineWinze(w, 7, 11, () => G.play.warp('andoverFlood', 5, 5, 'down'), () => f.mine_boulder);
+      w.add(new G.Sign(4, 10, ['WINZE No. 2', 'To the lower levels. The deeper you go, the meaner it gets. (Somebody rolled a boulder over it. Somebody wanted it shut.)']));
+      mineCritters(w, 1, [['bat', 6, 23], ['bat', 34, 20], ['bat', 14, 5], ['bat', 21, 13], ['bat', 26, 6], ['mimic', 11, 13], ['mimic', 29, 24]]);
+      if (f.fcAwake) w.addTrigger(43, 21, 1, 2, () => G.play.warp('andoverDeep', 1, 8, 'right'));
+      w.addTrigger(20, 31, 2, 1, () => G.play.warp('andover', 6, 5, 'down'));
     },
-    // Nate's lantern: everything past its glow is pitch black
-    tint(ctx) {
-      const p = G.play.player, cam = G.play.cam;
-      if (!p) return;
-      const x = Math.round(p.x - cam.x), y = Math.round(p.y - 10 - cam.y), r = 64 + Math.sin(G.tick * 0.13) * 2;
-      const grad = ctx.createRadialGradient(x, y, r * 0.3, x, y, r);
-      grad.addColorStop(0, 'rgba(10,6,4,0)');
-      grad.addColorStop(1, 'rgba(10,6,4,0.95)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, G.W, G.H);
-      ctx.fillStyle = 'rgba(255,160,60,0.05)';
-      ctx.fillRect(0, 0, G.W, G.H);
-    },
+    tint: mineTint(1),
     onEnter() {
       return (function* () {
         const f = flags();
@@ -9809,10 +10003,343 @@
         if (f.andoverMine) return;
         f.andoverMine = true;
         yield G.wait(20);
-        yield G.say('Nate', 'Lantern on. The old workings run a couple hundred feet into the hill.');
-        yield G.say(null, 'Watch for {y}glints{/} in the dark: those are mineral veins. The {c}lower workings{/} up north are where the rare stuff is.');
+        yield G.say('Nate', 'Lantern on. The old workings run a couple hundred feet into the hill. And DOWN.');
+        yield G.say(null, 'Watch for {y}glints{/} in the dark: those are mineral veins. There are three more levels below this one, and they get {r}meaner{/} the deeper you go.');
       })();
     },
+  };
+  // Doron heaves the boulder off the winze.
+  S.winzeBoulder = function* (rock) {
+    const f = flags(), w = G.play.world, p = P();
+    if (f.mine_boulder) { yield G.say('Nate', 'Doron moved it off the winze. He says it was "light." It was not light.'); return; }
+    if (!G.state.party.includes('doron')) {
+      yield G.say('Nate', 'A boulder, rolled right over the winze: the shaft down to the lower levels.');
+      yield G.say('Nate', 'It doesn\'t budge. I need somebody who picks up heavy things for fun.');
+      return;
+    }
+    yield G.say('Nate', 'Somebody rolled a boulder right over the winze. That\'s the way down to the lower levels.');
+    yield* S.callIn('doron', 'You need a rock moved?');
+    const d = w.ents.find((e) => e instanceof G.Follower && e.id === 'doron' && !e.dead);
+    if (!d) return;
+    yield G.say('Nate', 'The books say it gets worse down there. Floods. Bats. Worse than bats.');
+    yield G.say('Doron', 'Say less.');
+    d.hold = true;
+    const [nx, ny] = openSpot(w, p, [[rock.x + 36, rock.y + 6], [rock.x + 28, rock.y + 20], [rock.x - 36, rock.y + 20]]);
+    yield G.walkTo(p, nx, ny, 1.2);
+    p.dir = 'left';
+    const [dx, dy] = openSpot(w, d, [[rock.x, rock.y + 16], [rock.x - 10, rock.y + 16], [rock.x + 10, rock.y + 18]]);
+    yield G.walkTo(d, dx, dy, 1.2);
+    d.dir = 'up';
+    yield { start() { G.audio.sfx('dash'); }, update() { rock.lift += 1; G.play.shake(2, 1); return rock.lift >= 30; } };
+    yield G.say('Doron', 'HUP!');
+    // carry it over to the wall and drop it
+    const to = 5 * 16 + 8;
+    yield { update() { rock.x = Math.max(to, rock.x - 1.2); return rock.x <= to; } };
+    yield { update() { rock.lift = Math.max(0, rock.lift - 6); return rock.lift <= 0; } };
+    G.audio.sfx('boom');
+    G.play.shake(24, 4);
+    w.burst(rock.x, rock.y - 10, ['#5a4a42', '#7a6458', '#3e322c'], 18, { speed: 2, up: 1.2, g: 0.1, life: 36, size: 3 });
+    f.mine_boulder = true;
+    d.hold = false;
+    yield G.wait(20);
+    yield G.say('Doron', 'Rock. Moved.');
+    yield G.say(null, 'The winze is open. A ladder goes straight down into the dark, and something down there is dripping.');
+  };
+
+  // ---- Level 2: the flooded level. A drift to the old pump room, a big stope that's all black
+  // water (freeze it to cross to the winze), and down the west passage, a curtain of crystals over
+  // the way into the crystal grotto.
+  const LAKE = [20, 17, 11, 11];
+  G.MAPS.andoverFlood = {
+    name: 'Andover Mines: the Flooded Level',
+    music: 'mine',
+    tiles() {
+      return mineGrid(40, 30, [
+        [2, 3, 8, 6],                                       // the ladder landing
+        [10, 5, 21, 2],                                     // the drowned drift
+        [30, 3, 8, 10], [33, 7, 3, 2, 'ù'],            // the pump room (and its sump)
+        [33, 13, 2, 4],
+        [16, 17, 22, 11], [...LAKE, 'ù'],              // the flooded stope
+        [4, 9, 2, 8], [2, 17, 11, 10],                      // the west passage and the crystal grotto
+      ]);
+    },
+    setup(w) {
+      const f = flags();
+      mineLadder(w, 5, 3, () => G.play.warp('andoverMine', 10, 12, 'left'));
+      mineWinze(w, 17, 21, () => G.play.warp('andoverOld', 19, 5, 'down'));
+      mineVeins(w, 'flood', 2, [[14, 5], [25, 6], [31, 4], [36, 5], [31, 11], [36, 11], [32, 18], [36, 22], [33, 26], [17, 18], [18, 26]]);
+      mineVeins(w, 'grotto', 2, [[3, 18], [7, 18], [11, 19], [3, 25], [8, 25], [11, 24]]);
+      mineChest(w, 7, 21, 'mineGrotto', 50, 'wet', 2);
+      // the crystal curtain over the west passage
+      const curtain = w.addProp({ img: f.mine_curtain ? G.spr.crystalCurtainBroken : G.spr.crystalCurtain, tx: 4, ty: 12, h: 2, hit: [4, 12, 2, 2], talk: () => S.mineCurtain() });
+      w.curtain = curtain;
+      if (!f.mine_curtain) w.blockTiles(4, 12, 2, 2);
+      // the water's edge, both sides: what's this black water?
+      for (const x of [LAKE[0], LAKE[0] + LAKE[2] - 1]) w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [x * 16, LAKE[1] * 16, (x + 1) * 16, (LAKE[1] + LAKE[3]) * 16], talk: () => S.mineLake() });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [33 * 16, 7 * 16, 36 * 16, 9 * 16], talk: function* () { yield G.say(null, 'The old pump sump, still full. The pumps quit in 1880 and the water came right back up.'); } });
+      w.add(new G.Sign(36, 15, ['THE FLOODED STOPE', '"When the pumps stopped, the lower workings flooded to within a few feet of the drift." Brr.']));
+      mineCritters(w, 2, [['bat', 15, 6], ['bat', 34, 9], ['bat', 35, 20], ['bat', 6, 22], ['mimic', 36, 8], ['mimic', 34, 25], ['mimic', 10, 21], ['knocker', 18, 24]]);
+    },
+    // "I Pray to Jesus": the whole flooded stope freezes over (for this visit)
+    onIcy(w, p, beam) {
+      if (w.lakeFrozen || !G.overlap(beam, [LAKE[0] * 16, LAKE[1] * 16, (LAKE[0] + LAKE[2]) * 16, (LAKE[1] + LAKE[3]) * 16])) return false;
+      w.lakeFrozen = true;
+      for (let y = LAKE[1]; y < LAKE[1] + LAKE[3]; y++) for (let x = LAKE[0]; x < LAKE[0] + LAKE[2]; x++) if (w.tileAt(x, y) === 'ù') w.setTile(x, y, 'I');
+      for (let i = 0; i < 5; i++) w.burst((LAKE[0] + 1 + i * 2) * 16, (LAKE[1] + 3 + (i % 3) * 3) * 16, ['#ffffff', '#d8f4ff', '#a8e0ff'], 14, { speed: 1.6, life: 30, size: 2 });
+      w.pop((LAKE[0] + 5) * 16, LAKE[1] * 16 + 20, 'THE WATER FROZE!', '#a8e0ff');
+      G.audio.sfx('bell');
+      if (!flags().mine_iced) { flags().mine_iced = true; G.script.run((function* () { yield G.say('Nate', 'Solid ice, all the way across. It\'s going to be slippery.'); })()); }
+      return true;
+    },
+    tint: mineTint(2),
+    onEnter() {
+      return (function* () {
+        if (flags().mineFlood) return;
+        flags().mineFlood = true;
+        yield G.wait(20);
+        yield G.say('Nate', 'The flooded level. The pumps quit in 1880 and the water came back up. It\'s been down here in the dark ever since.');
+        yield G.say(null, 'Things are {r}meaner{/} down here: they hit harder and take more hits. The veins are better, too.');
+        if (G.with('lily')) yield G.say('Lily', 'It smells like a basement that has a basement.');
+        else if (G.with('doron')) yield G.say('Doron', 'Good. I was getting bored.');
+      })();
+    },
+  };
+  S.mineLake = function* () {
+    const w = G.play.world;
+    if (w.lakeFrozen) { yield G.say(null, 'Solid ice, all the way across.'); return; }
+    yield G.say(null, 'Black water, ice cold and way too deep to wade. The winze down is on the far side.');
+    if (flags().signal_icy) yield G.say('Nate', 'If only it would freeze... Wait. I know a song for that.');
+    else yield G.say('Nate', 'If only it would freeze over. Somebody\'s got to know a song for that.');
+  };
+  // Lily's "No." shatters the crystal curtain.
+  S.mineCurtain = function* () {
+    const f = flags(), w = G.play.world;
+    if (f.mine_curtain) { yield G.say(null, 'Bits of crystal crunch underfoot. Lily says she\'s not sorry.'); return; }
+    yield G.say(null, 'A curtain of crystals hangs across the passage, thin as glass. They ring every time Nate says something.');
+    if (!G.state.party.includes('lily')) {
+      yield G.say('Nate', 'If I hammer them, I\'ll be picking glass out of my face for a week. They ring when anybody talks...');
+      yield G.say('Nate', 'Somebody with a REALLY sharp voice could shatter them.');
+      return;
+    }
+    yield* S.callIn('lily', 'What.');
+    yield G.say('Nate', 'Lily. Can you get these crystals out of the way for me?');
+    yield G.say('Lily', 'No.');
+    G.audio.sfx('no');
+    G.play.shake(14, 3);
+    f.mine_curtain = true;
+    w.curtain.img = G.spr.crystalCurtainBroken;
+    for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) w.block[(12 + j) * w.w + 4 + i] = 0;
+    w.burst(5 * 16, 13 * 16, ['#ffffff', '#d8ecf8', '#b8d8ec'], 30, { speed: 2, up: 1, g: 0.08, life: 34, size: 2 });
+    w.pop(5 * 16, 12 * 16 - 8, 'SHATTER!', '#ffffff');
+    yield G.wait(40);
+    yield G.say('Nate', '...Thank you?');
+    yield G.say('Lily', 'I wasn\'t trying to.');
+  };
+
+  // ---- Level 3: the Continental workings, from when the Continental Congress ran the mine. A
+  // long hall full of tommyknockers; the old miners' door (four crystals, softest to hardest); a
+  // shelf way up a wall (Abe); and a chest across a sump (the surf rod).
+  const MOHS = ['calcite', 'sphalerite', 'magnetite', 'quartz'];
+  const MOHS_NAME = { calcite: 'CALCITE', sphalerite: 'SPHALERITE', magnetite: 'MAGNETITE', quartz: 'QUARTZ' };
+  G.MAPS.andoverOld = {
+    name: 'Andover Mines: the Continental Workings',
+    music: 'mine',
+    tiles() {
+      return mineGrid(40, 32, [
+        [17, 3, 6, 5], [19, 8, 2, 2],                       // the ladder landing
+        [4, 10, 32, 6],                                     // the long hall
+        [19, 16, 2, 2], [14, 18, 12, 7],                    // the old miners' door
+        [19, 25, 2, 2], [16, 27, 8, 4],                     // behind it: the winze
+        [5, 16, 2, 1], [3, 17, 8, 7],                       // the shelf room
+        [32, 16, 2, 1], [28, 17, 10, 10], [28, 21, 10, 3, 'ù'], // the sump
+      ]);
+    },
+    setup(w) {
+      const f = flags();
+      mineLadder(w, 19, 3, () => G.play.warp('andoverFlood', 18, 24, 'up'));
+      mineWinze(w, 19, 28, () => G.play.warp('andoverVault', 5, 5, 'down'));
+      mineVeins(w, 'old', 3, [[6, 11], [12, 14], [17, 10], [24, 14], [30, 11], [34, 14], [4, 18], [4, 22], [9, 22], [16, 27], [23, 29]]);
+      // the old miners' door
+      const door = { flag: 'mine_mohs', lit: [], wrong: 0 };
+      door.ring = (pl) => S.mohsRing(door, pl);
+      [['quartz', 15], ['calcite', 18], ['magnetite', 21], ['sphalerite', 24]].forEach(([k, x]) => w.add(new G.MohsPillar(x, 21, k, door)));
+      w.gate = w.addProp({ img: f.mine_mohs ? G.spr.ironGateOpen : G.spr.ironGate, tx: 19, ty: 25, base: 25 * 16 + 15 });
+      if (!f.mine_mohs) w.blockTiles(19, 25, 2, 1);
+      w.add(new G.Sign(15, 23, ['THE OLD MINERS\' DOOR', 'Strike the four stones, softest first and hardest last. Strike them wrong and something wakes up.']));
+      // the shelf (Abe), and the chest across the sump (the surf rod)
+      w.shelf = w.addProp({ img: f.reach_mine ? G.spr.highShelfEmpty : G.spr.highShelf, tx: 8, ty: 16, dx: 4, dy: -8, hit: [8, 16, 2, 1], talk: () => S.abeReach('mine') });
+      w.addProp({ img: G.spr.ledgeRock, tx: 31, ty: 25, dx: 2, flat: true });
+      w.add(new G.ReelChest(33 * 16 + 8, 25 * 16 + 12, 'mineSump', function* () {
+        yield* S.bossStash(80, 'Inside: {y}80 shark teeth{/} and two {y}rusty geodes{/}, wrapped up in an old miner\'s handkerchief.');
+        geodeState().rusty = (geodeState().rusty || 0) + 2;
+        flags().geodeTip = true;
+      }));
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [28 * 16, 21 * 16, 38 * 16, 22 * 16], talk: function* () {
+        yield G.say(null, 'A sump of black water, moving fast. On a ledge across it: an old chest.');
+        if (G.itemHas('rod')) yield G.say('Nate', 'Too far to jump. Not too far to CAST.');
+        else yield G.say('Nate', 'Too far to jump, too fast to swim. If I had a fishing rod, I could hook it.');
+      } });
+      w.add(new G.Sign(18, 6, ['THE CONTINENTAL WORKINGS', 'Worked for the Continental Army, 1778. Iron for cannonballs. Mind the knocking: it isn\'t the timbers.']));
+      mineCritters(w, 3, [['knocker', 10, 12], ['knocker', 22, 13], ['knocker', 32, 11], ['knocker', 6, 20], ['knocker', 30, 18], ['bat', 8, 14], ['bat', 28, 11], ['bat', 24, 20], ['mimic', 14, 11], ['mimic', 29, 14], ['mimic', 9, 18]]);
+    },
+    // the sump is moving too fast to freeze
+    onIcy(w, p, beam) {
+      if (!G.overlap(beam, [28 * 16, 21 * 16, 38 * 16, 24 * 16])) return false;
+      w.pop(p.x, p.y - 34, 'Moving too fast to freeze!', '#a8e0ff');
+      return true;
+    },
+    tint: mineTint(3),
+    onEnter() {
+      return (function* () {
+        if (flags().mineOld) return;
+        flags().mineOld = true;
+        yield G.wait(20);
+        yield G.say('Nate', 'The Continental workings. They dug this level for the army during the Revolution. Iron for cannonballs.');
+        yield G.say(null, 'Somewhere in the dark, something is {r}knocking{/}.');
+        yield G.say('Nate', 'Tommyknockers. The old miners swore little spirits lived in the walls and knocked. I thought it was a STORY.');
+      })();
+    },
+  };
+  // Striking a crystal on the old miners' door: softest to hardest opens it; a wrong one wakes the bats.
+  S.mohsRing = function (door, pl) {
+    const w = G.play.world, f = flags();
+    pl.shakeT = 8;
+    w.pop(pl.x, pl.y - 30, MOHS_NAME[pl.kind], '#e8e8f0');
+    if (f.mine_mohs || door.lit.includes(pl.kind)) { G.audio.sfx('clank'); return; }
+    if (pl.kind === MOHS[door.lit.length]) {
+      door.lit.push(pl.kind);
+      G.audio.sfx('select');
+      w.burst(pl.x, pl.y - 16, ['#78e070', '#d8ffd0', '#ffffff'], 8, { speed: 1, life: 18, size: 2 });
+      if (door.lit.length === MOHS.length) G.script.run(S.mohsOpen());
+      return;
+    }
+    // wrong: the lit ones go dark, and something comes out of the walls
+    door.lit.length = 0;
+    door.wrong++;
+    G.audio.sfx('hurt');
+    G.play.shake(10, 2);
+    w.pop(pl.x, pl.y - 40, 'WRONG!', '#f86858');
+    for (const ox of [-40, 40]) { const b = w.add(new G.Bat(pl.x + ox, pl.y - 30, 3)); b.awake = true; }
+    if (door.wrong === 1) G.script.run((function* () { yield G.say('Nate', 'Softest first. It\'s a scratch test. Like Mohs hardness. I KNOW this.'); })());
+    else if (door.wrong === 2) G.script.run((function* () { yield G.say('Nate', 'Okay. Calcite is a 3. Sphalerite is a 4. Magnetite is a 6. Quartz is a 7. Softest first.'); })());
+  };
+  S.mohsOpen = function* () {
+    const w = G.play.world;
+    flags().mine_mohs = true;
+    yield G.wait(20);
+    G.audio.sfx('chest');
+    yield G.camFocus(20 * 16, 25 * 16, 40);
+    G.play.shake(14, 2);
+    w.gate.img = G.spr.ironGateOpen;
+    w.block[25 * w.w + 19] = 0; w.block[25 * w.w + 20] = 0;
+    w.burst(20 * 16, 25 * 16 + 8, ['#8a7466', '#5a5a64'], 14, { speed: 1.2, up: 0.6, g: 0.1, life: 24, size: 2 });
+    w.pop(20 * 16, 24 * 16, 'THE GATE OPENED!', '#78e070');
+    yield G.wait(40);
+    yield G.camFocus(null, null, 30);
+    yield G.say('Nate', 'Calcite, sphalerite, magnetite, quartz. Professor Sunderlin would be SO proud.');
+  };
+
+  // ---- Level 4: the Lodestone Vault. A drift into the dark, a room that's all teeth, Old Iron's
+  // chamber, and behind his gate, the vault: the best veins in the mine, the Continental
+  // cannonball, and a rope ladder straight back up to the tunnels.
+  G.MAPS.andoverVault = {
+    name: 'Andover Mines: the Lodestone Vault',
+    get music() { const w = G.play.world; return w && w.ironFight ? 'boss' : 'mine'; },
+    tiles() {
+      return mineGrid(36, 36, [
+        [3, 3, 6, 5], [9, 4, 15, 2],                        // the ladder landing and the drift
+        [24, 3, 10, 9], [28, 12, 2, 3],                     // the dark room
+        [10, 15, 22, 11],                                   // Old Iron's chamber
+        [20, 26, 2, 2], [14, 28, 14, 6],                    // his gate, and the vault
+      ]);
+    },
+    setup(w) {
+      const f = flags();
+      mineLadder(w, 5, 3, () => G.play.warp('andoverOld', 22, 29, 'left'));
+      mineVeins(w, 'vault', 4, [[25, 4], [32, 6], [26, 10], [33, 10], [15, 29], [19, 30], [24, 29], [26, 32], [16, 33]]);
+      if (!f.cannonball) mineVeins(w, 'cannon', 4, [[21, 32]]);
+      mineChest(w, 24, 31, 'mineVault', 100, 'dark', 3);
+      mineLadder(w, 16, 28, () => G.play.warp('andoverMine', 10, 12, 'left'), 'A rope ladder, straight up. All the way to the tunnels.');
+      w.gate = w.addProp({ img: f.mine_ironBeaten ? G.spr.ironGateOpen : G.spr.ironGate, tx: 20, ty: 26, base: 26 * 16 + 15 });
+      if (!f.mine_ironBeaten) {
+        w.blockTiles(20, 26, 2, 1);
+        w.iron = w.add(new G.OldIron(21 * 16, 21 * 16));
+        w.addTrigger(26, 15, 6, 4, () => { if (!w.ironFight && w.iron && w.iron.state === 'wait') G.script.run(S.oldIronWake()); });
+      } else {
+        // what's left of him: a heap of ore
+        mineVeins(w, 'vault', 4, [[20, 20], [22, 21]]);
+      }
+      mineCritters(w, 4, [['knocker', 27, 6], ['knocker', 31, 9], ['mimic', 29, 4], ['mimic', 25, 8], ['bat', 30, 7], ['bat', 15, 4], ['bat', 22, 5]]);
+      // Old Iron's chamber is lit: lanterns on timber sets along both walls
+      mineLanterns(w, [[14 * 16, 15 * 16 + 2, true], [21 * 16, 15 * 16 + 2, true], [28 * 16, 15 * 16 + 2, true], [14 * 16, 25 * 16 + 6, false], [27 * 16, 25 * 16 + 6, false]]);
+    },
+    tint: mineTint(4),
+    onEnter() {
+      return (function* () {
+        if (flags().mineVault) return;
+        flags().mineVault = true;
+        yield G.wait(20);
+        yield G.say('Nate', 'The bottom of the mine. The lantern barely reaches the walls down here.');
+        yield G.say(null, 'Everything down here hits {r}hard{/}. If you\'re not ready, there\'s no shame in climbing back up.');
+        yield G.say('Nate', 'There IS shame. But there\'s no shame.');
+      })();
+    },
+  };
+  S.oldIronWake = function* () {
+    const w = G.play.world, boss = w.iron, f = flags();
+    w.ironFight = true;
+    // the way back caves in behind Nate
+    w.blockTiles(28, 13, 2, 2);
+    w.rubble = w.addProp({ img: G.spr.bigMine, tx: 28, ty: 13, dx: -2, dy: 0, h: 2 });
+    G.audio.sfx('boom');
+    G.play.shake(20, 3);
+    yield G.wait(30);
+    yield G.camFocus(boss.x, boss.y - 20, 50);
+    w.pop(boss.x, boss.y - 50, '*grrrnnnnnk*', '#c8c0b0');
+    yield G.wait(30);
+    if (!f.ironMet) {
+      f.ironMet = true;
+      yield G.say('Nate', 'That\'s not a rock. That is NOT a rock.');
+      yield G.say('Nate', 'Magnetite. A whole... person of it. A lodestone the size of a car.');
+      if (G.with('doron')) yield G.say('Doron', 'I can take him.');
+      else if (G.with('lily')) yield G.say('Lily', 'I am going back up the ladder.');
+      else if (G.with('abe')) yield G.say('Abe', 'I\'m tall, but I\'m not THAT tall.');
+      else if (G.with('hannah')) yield G.say('Hannah', 'If it pulls you in, walk AWAY from it. I\'ll patch you up after.');
+    }
+    yield G.camFocus(null, null, 30);
+    yield G.banner('OLD IRON', 'the vault\'s guardian', 120);
+    G.audio.play('boss');
+    boss.state = 'walk';
+    boss.t = 80;
+  };
+  S.oldIronDefeated = function* (boss) {
+    const w = G.play.world, f = flags(), s = G.state;
+    G.audio.stop();
+    for (const e of w.ents) if (e.enemy && e !== boss && !e.dead) { e.dead = true; w.burst(e.x, e.y - 8, ['#ffffff', '#e8e0f0'], 8); }
+    for (const e of w.ents) if (e instanceof G.Lob || e instanceof G.IronRing) e.dead = true;
+    yield G.shakeCmd(40, 3);
+    w.burst(boss.x, boss.y - 20, ['#2a2a30', '#46464e', '#8a3a2a', '#f89a30'], 40, { speed: 2.4, up: 1.4, g: 0.1, life: 50, size: 3 });
+    G.audio.sfx('boom');
+    boss.dead = true;
+    mineVeins(w, 'vault', 4, [[Math.floor(boss.x / 16) - 1, Math.floor(boss.y / 16)], [Math.floor(boss.x / 16) + 1, Math.floor(boss.y / 16)]]);
+    yield G.wait(30);
+    yield G.banner('YOU WIN!', 'Old Iron crumbles', 150);
+    w.ironFight = false;
+    G.audio.play('mine');
+    const first = !f.mine_ironBeaten;
+    f.mine_ironBeaten = true;
+    // his gate swings open, and the cave-in clears
+    w.gate.img = G.spr.ironGateOpen;
+    w.block[26 * w.w + 20] = 0; w.block[26 * w.w + 21] = 0;
+    for (let j = 0; j < 2; j++) for (let i = 0; i < 2; i++) w.block[(13 + j) * w.w + 28 + i] = 0;
+    if (w.rubble) w.props = w.props.filter((pr) => pr !== w.rubble);
+    yield G.say('Nate', 'He crumbled into ORE. Good ore. Great ore.');
+    if (first) {
+      s.maxHp += 2; s.hp = s.maxHp;
+      G.audio.sfx('heart');
+      yield G.itemGet(G.spr.heartBig, 'Something glows in the rubble where his furnace was: a {r}Heart Container{/}! Max hearts +1.');
+    }
+    yield G.say(null, 'Behind him, the gate to the vault is open.');
   };
 
   // The deep stope: a big, timbered chamber at the very bottom of the old
@@ -9858,7 +10385,7 @@
         w.addProp({ img: G.spr.fcCrateOpen, tx: 11, ty: 4, dx: -1, solid: [11, 4, 2, 1], hit: [11, 4, 2, 1], talk: look('The DO NOT OPEN (LILY) box, empty. Somebody opened it. It was Nate.') });
       }
       w.add(new G.Sign(2, 7, ['THE DEEP STOPE', 'Worked out before the Revolution. Then sealed. Then, apparently, used for storage.']));
-      w.addTrigger(0, 8, 1, 2, () => { if (!w.fcFight) G.play.warp('andoverMine', 26, 15, 'left'); });
+      w.addTrigger(0, 8, 1, 2, () => { if (!w.fcFight) G.play.warp('andoverMine', 42, 21, 'left'); });
     },
     // the box rattles and hums now and then
     tick(w) {
@@ -11757,6 +12284,22 @@
         G.audio.sfx('heart');
         yield G.itemGet(G.spr.heartBig, 'The top prize: a heart-shaped pillow that says I RANG THE BELL. It\'s a {r}Heart Container{/}! Max hearts +1.');
         yield G.say('Abe', 'You keep it. I\'ve got plenty of heart.');
+      },
+    },
+    // the Andover mines: a shelf way up the wall in the Continental workings
+    mine: {
+      map: 'andoverOld', at: [9, 17.75],
+      look: 'A wooden shelf bolted way up the rock wall. Something brass is sitting on it.',
+      high: 'A wooden shelf bolted way up the rock wall, with an old brass lamp on it. Way too high.',
+      after: 'The shelf, way up the wall. Empty now: Nate has the lamp.',
+      reach: 'Abe reaches up and lifts the lamp down off the shelf. He blows the dust off it. A LOT of dust.',
+      lines: [['Nate', 'A carbide lamp! Water drips onto the carbide, it makes a gas, and the gas burns bright white. Miners wore them on their hats.'], ['Abe', 'So it\'s a little bomb you wear on your head.'], ['Nate', '...Basically, yes. I love it.']],
+      *reward() {
+        G.state.items.carbideLamp = true;
+        const w = G.play.world;
+        if (w.shelf) w.shelf.img = G.spr.highShelfEmpty;
+        G.audio.sfx('chest');
+        yield G.itemGet(G.spr.carbideLamp, 'You got the {y}Carbide Lamp{/}! Nate can see a lot farther in the mines now.');
       },
     },
     // back home: the attic hatch in the upstairs hallway
