@@ -5896,6 +5896,22 @@
       p.set(6, 1, '#101418'); p.set(8, 1, '#101418');
       return finish(p);
     }
+    if (kind === 'sturgeon') {
+      // an Atlantic sturgeon: long and olive-gray, rows of bony white plates, a shark-like tail
+      // (the top lobe longer), a pointed snout with whiskers under it
+      const p = new Pix(38, 11);
+      for (let x = 4; x <= 35; x++) {
+        const k = (x - 4) / 31, hh = Math.max(1, Math.round(3.6 * Math.sin(Math.min(1, k * 1.25) * Math.PI * 0.62 + 0.25)));
+        for (let y = 5 - hh; y <= 5 + hh - 1; y++) p.set(x, y, y < 5 - hh + 2 ? '#4a5444' : y < 5 + hh - 2 ? '#7a8470' : '#d8d8c8');
+      }
+      p.hline(35, 37, 5, '#6a7460'); p.set(37, 4, '#6a7460');
+      p.set(33, 7, '#4a5444'); p.set(31, 7, '#4a5444'); p.set(34, 8, '#4a5444'); p.set(32, 8, '#4a5444');
+      for (let x = 8; x <= 30; x += 3) { p.set(x, 2 + (x > 26 ? 1 : 0), '#f0f0e0'); p.set(x + 1, 5, '#e8e8d8'); }
+      for (let i = 0; i < 4; i++) { p.set(3 - i, 4 - i, '#4a5444'); p.set(3 - i, 5 - i, '#4a5444'); }
+      p.set(3, 6, '#4a5444'); p.set(2, 7, '#4a5444');
+      p.set(30, 4, '#101418');
+      return finish(p);
+    }
     if (kind === 'boot') {
       const p = new Pix(11, 11);
       p.rect(1, 0, 5, 7, '#6a4a30'); p.rect(1, 6, 9, 3, '#6a4a30'); p.hline(1, 10, 9, '#3a2a1c'); p.hline(1, 5, 0, '#8a6a48');
@@ -5928,6 +5944,15 @@
     if (kind === 'striper') for (const dy of [-2, 0, 2]) for (let x = 6; x <= w - 5; x++) if (p.get(x, cy + dy)) p.set(x, cy + dy, '#2a3440');
     if (kind === 'bluefish') { p.hline(w - 4, w - 1, cy + 1, '#1c2a34'); p.set(w - 2, cy, '#ffffff'); p.set(w - 4, cy, '#ffffff'); }
     if (kind === 'cobia') { for (let x = 5; x <= w - 4; x++) { if (p.get(x, cy)) p.set(x, cy, '#e8e0d0'); if (p.get(x, cy - 1)) p.set(x, cy - 1, '#1c1814'); } }
+    return finish(p);
+  }
+  // a bottlenose dolphin, arching out of the water
+  function dolphin() {
+    const p = new Pix(22, 9);
+    for (let x = 2; x < 19; x++) { const y = Math.round(4 - Math.sin(((x - 2) / 16) * Math.PI) * 3); p.vline(x, y, y + 3, '#7a8a98'); p.set(x, y + 3, '#c8d0d8'); }
+    p.hline(19, 21, 4, '#7a8a98'); p.set(10, 0, '#5a6a78'); p.set(9, 1, '#5a6a78'); p.set(11, 1, '#5a6a78');
+    p.set(0, 3, '#5a6a78'); p.set(1, 4, '#5a6a78'); p.set(0, 6, '#5a6a78'); p.set(1, 5, '#5a6a78');
+    p.set(17, 3, '#1c2028');
     return finish(p);
   }
   // a brown pelican on the rocks
@@ -10188,7 +10213,8 @@
     S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);
     S.gull = [false, true].map((l) => ({ sit: gullFrame(l, 'sit'), up: gullFrame(l, 'up'), down: gullFrame(l, 'down') }));
     S.tunnelPortal = tunnelPortal(); S.tunnelPortalTS = tunnelPortal('THIMBLE SHOAL CHANNEL TUNNEL'); S.containerShip = containerShip(); S.fishingBoat = fishingBoat(); S.mattBoat = mattBoat(); S.mattHull = mattBoat(true); S.mattBoatL = mirror(S.mattBoat); S.mattHullL = mirror(S.mattHull);
-    S.bayFish = {}; for (const k of ['spot', 'croaker', 'bluefish', 'striper', 'cobia', 'flounder', 'crab', 'boot']) { const r = bayFish(k); S.bayFish[k] = { r, l: mirror(r) }; }
+    S.bayFish = {}; for (const k of ['spot', 'croaker', 'bluefish', 'striper', 'cobia', 'flounder', 'crab', 'boot', 'sturgeon']) { const r = bayFish(k); S.bayFish[k] = { r, l: mirror(r) }; }
+    S.dolphin = dolphin();
     S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
     S.bayViewer = bayViewer(); S.tunnelLight = tunnelLight(); S.tunnelSign = tunnelSign();
     S.gateKey = gateKey(); S.rodIcon = rodIcon(); S.rodHeld = rodHeld(); S.lure = lure(); S.bobber = bobber();

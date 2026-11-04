@@ -259,6 +259,7 @@
     { id: 'photos', name: 'Photos', icon: 'photo', count: () => [G.photosFound(), G.PHOTOS.length], blurb: 'Old family photos, hidden all over. Some of them Mom would rather nobody saw.' },
     { id: 'pipes', name: 'Dad\'s Pipes', icon: 'pipe', count: () => [G.pipesMadeCount(), G.PIPES.length], blurb: 'Pipes you turned on Dad\'s lathe and finished with him in the workshop. Pick one and Dad\'s Pipe looks just like it.' },
     { id: 'tins', name: 'Tobacco', icon: 'tin', count: () => [G.tinsMadeCount(), G.TOBACCOS.length], blurb: 'The tobaccos from Dad\'s pipe journal, blended with him in the workshop. Pack one in Dad\'s Pipe and the smoke comes out its color.' },
+    { id: 'fish', name: 'Matt\'s Survey', icon: 'fish', count: () => [G.fishCaughtKinds(), G.FISH_ORDER.length], blurb: 'Every kind of fish Nate has caught for Matt Oliver\'s survey out on the bay, and the biggest one of each.' },
     { id: 'instruments', name: 'Instruments', icon: 'guitar', count: () => [G.instrumentsCount(), G.INSTRUMENTS.length], blurb: 'Nate\'s instruments: the ones he builds, and the ones he earns jamming with Abe. More to come.' },
   ];
   // the pipes page also has the one Dad gave Nate, first
@@ -295,6 +296,7 @@
     photo: ['kkkkkkkkk', 'kwwwwwwwk', 'kwllllwwk', 'kwlsslllk', 'kwlsslllk', 'kwlnnnllk', 'kwnnnnnwk', 'kwwwwwwwk', 'kkkkkkkkk'],
     pipe: ['.........', '....kkkkk', '....kbbbk', '....kbbbk', 'kkkkkbbbk', 'GGGGkbbbk', 'kkkkkbbbk', '.....kkk.', '.........'],
     tin: ['.........', '..kkkkk..', '.kyyyyyk.', 'kyrrrrryk', 'kyrwwwryk', 'kyrrrrryk', 'kkyyyyykk', 'kokkkkkok', '.kkkkkkk.'],
+    fish: ['.........', '.......k.', '..kkkkkk.', '.kllllllk', 'kllkllllk', '.kcccccck', '..kkkkkk.', '.......k.', '.........'],
     guitar: ['......kk.', '.....kbk.', '....kbk..', '...kbk...', '.kkvbk...', 'kvvwvk...', 'kvwvvk...', '.kvvk....', '..kk.....'],
   };
   const iconCache = {};
@@ -650,6 +652,12 @@
           const ph = G.PHOTOS[this.sel];
           if (ph && G.photoHas(ph.id)) { this.photoView = ph; G.audio.sfx('select'); } else G.audio.sfx('bump');
         }
+      } else if (this.tab === COLL_TAB && this.coll === 'fish') {
+        const n = G.FISH_ORDER.length, col = this.sel % 4, row = Math.floor(this.sel / 4);
+        if (inp.hit('left') && col > 0) this.move(-1, n);
+        if (inp.hit('right') && col < 3) this.move(1, n);
+        if (inp.hit('down') && this.sel + 4 < n) this.move(4, n);
+        if (inp.hit('up')) { if (row > 0) this.move(-4, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
       } else if (this.tab === COLL_TAB && this.coll === 'instruments') {
         const n = G.INSTRUMENTS.length, col = this.sel % 3, row = Math.floor(this.sel / 3);
         if (inp.hit('left') && col > 0) this.move(-1, n);
@@ -785,7 +793,7 @@
       const admin = G.state.admin, act = {
         [QUEST_TAB]: QMODES[(this.qmode + 1) % QMODES.length] === 'ACTIVE' ? 'quests' : QMODES[(this.qmode + 1) % QMODES.length] === '100%' ? '100% list' : 'rules',
         [MAP_TAB]: null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
-        [COLL_TAB]: this.instView && G.GUITARS.includes(this.instView) && G.guitarNow() !== this.instView ? 'play it' : this.photoView || this.instView ? 'put away' : !this.coll ? 'open' : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
+        [COLL_TAB]: this.instView && G.GUITARS.includes(this.instView) && G.guitarNow() !== this.instView ? 'play it' : this.photoView || this.instView ? 'put away' : !this.coll ? 'open' : this.coll === 'fish' ? null : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
         [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here',
       }[this.tab];
       const pairs = act ? [['Z', act]] : [['↑↓←→', 'look around']];
@@ -1151,6 +1159,7 @@
       else if (this.coll === 'photos') this.drawPhotos(ctx);
       else if (this.coll === 'pipes' || this.coll === 'tins') this.drawBench(ctx);
       else if (this.coll === 'instruments') this.drawInstruments(ctx);
+      else if (this.coll === 'fish') this.drawFish(ctx);
       else this.drawCollectList(ctx);
       if (this.photoView) ctx.drawImage(G.photoPage(this.photoView), 0, 0);
       if (this.instView) ctx.drawImage(G.instrumentPage(this.instView), 0, 0);
@@ -1255,6 +1264,38 @@
     }
 
     // ---- PHOTOS: thumbnails on the left, the one you're on at the right
+    // ---- MATT'S SURVEY: each kind of fish, how many, and the biggest
+    drawFish(ctx) {
+      const log = G.fishLog(), have = (k) => !!log[k];
+      card(ctx, 5, 21, 112, 121, 'MATT\'S SURVEY', C.gold, G.sayable(G.fishCaughtKinds()) + '/' + G.sayable(G.FISH_ORDER.length));
+      G.FISH_ORDER.forEach((k, i) => {
+        const x = 10 + (i % 4) * 26, y = 39 + Math.floor(i / 4) * 24, sel = i === this.sel && !this.onTabs;
+        slot(ctx, x, y, 24, 22, have(k) ? (k === 'sturgeon' || k === 'cobia' ? C.gold : C.cyan) : undefined);
+        if (have(k)) G.fishIcon(ctx, k, x + 2, y + 3, 20, 10);
+        else TXT(ctx, '?', x + 10, y + 7, C.faint);
+        if (have(k)) { const n = G.sayable(log[k].n); TXT(ctx, n, x + 23 - F().width(n), y + 13); }
+        if (sel) brackets(ctx, x - 1, y - 1, 26, 24);
+      });
+      const f = G.state.flags;
+      TXT(ctx, 'Trips', 10, 92, C.soft); TXT(ctx, G.sayable(f.fishTrips || 0), 60, 92, C.gold);
+      TXT(ctx, 'Survey cards', 10, 102, C.soft); TXT(ctx, G.sayable(f.surveyCards || 0), 80, 102, C.gold);
+      F().wrap('Fish with Matt Oliver off Island 2 on the bay bridge-tunnel.', 102).slice(0, 3).forEach((l, i) => TXT(ctx, l, 10, 114 + i * 9, C.dim));
+      const k = G.FISH_ORDER[this.sel], K = G.BAY_FISH[k];
+      card(ctx, 120, 21, 115, 121);
+      if (!K) return;
+      if (!have(k)) {
+        TXT(ctx, '???', 125, 27, C.cyan);
+        ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 40, 107, 1);
+        F().wrap(k === 'sturgeon' ? 'Something huge lives down on the bottom of the bay. Matt has only ever caught one.' : 'Not caught yet.', 104).slice(0, 6).forEach((l, i) => TXT(ctx, l, 125, 44 + i * 9, C.dim));
+        return;
+      }
+      slot(ctx, 124, 25, 44, 22, k === 'sturgeon' || k === 'cobia' ? C.gold : C.cyan);
+      G.fishIcon(ctx, k, 126, 27, 40, 18);
+      F().wrap(K.name, 62).slice(0, 2).forEach((l, i) => TXT(ctx, l, 171, 26 + i * 9, C.cyan));
+      ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 50, 107, 1);
+      TXT(ctx, 'Caught {y}' + G.sayable(log[k].n) + '{/}   Record {y}' + G.sayable(log[k].best) + ' in.', 125, 54);
+      F().wrap(K.line, 104).slice(0, 8).forEach((l, i) => TXT(ctx, l, 125, 66 + i * 9, C.soft));
+    }
     drawPhotos(ctx) {
       const has = (ph) => G.photoHas(ph.id);
       card(ctx, 5, 21, 112, 121, 'PHOTOS', C.gold, G.sayable(G.photosFound()) + '/' + G.sayable(G.PHOTOS.length));
