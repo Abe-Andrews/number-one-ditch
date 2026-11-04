@@ -9942,6 +9942,54 @@
   }
   // Abe's 1984 Stratocaster (from the user's photo): black, a white pickguard and three white
   // single-coils, white knobs, a maple neck with black dots, and the small vintage headstock
+  // a row of piano keys: white keys w wide (with the gaps between them), black keys in twos and threes
+  function pianoKeys(p, x0, x1, y, h, w = 2) {
+    p.rect(x0, y, x1 - x0 + 1, h, '#f4f0e4');
+    for (let x = x0 + w; x < x1; x += w) p.vline(x, y + 1, y + h - 1, '#c8c0b0');
+    let k = 0;
+    for (let x = x0 + w - 1; x < x1 - 1; x += w, k++) if ([0, 1, 3, 4, 5].includes(k % 7)) p.rect(x, y, Math.max(1, w - 1), Math.ceil(h * 0.6), '#1c1424');
+  }
+  // A brown upright piano: a tall wooden cabinet with two inset panels, a music shelf, the keys, the
+  // lower panel, brass pedals and toe blocks.
+  function uprightPiano() {
+    const p = new Pix(36, 34), W = '#7a4a2a', D = '#552f18', L = '#9a6a3a';
+    p.rect(1, 0, 34, 30, W); p.rect(0, 0, 36, 2, D); p.hline(0, 35, 0, L);
+    for (const x0 of [4, 19]) { p.rect(x0, 4, 13, 8, D); p.rect(x0 + 1, 5, 11, 6, L); p.rect(x0 + 2, 6, 9, 4, W); }
+    p.rect(2, 13, 32, 2, D); p.hline(2, 33, 13, L);
+    pianoKeys(p, 1, 34, 16, 4);
+    p.rect(1, 20, 34, 2, D);
+    p.rect(5, 23, 26, 6, D); p.rect(6, 24, 24, 4, L);
+    p.rect(1, 30, 4, 4, D); p.rect(31, 30, 4, 4, D);
+    p.rect(14, 30, 2, 2, '#d8b048'); p.rect(20, 30, 2, 2, '#d8b048');
+    return finish(p);
+  }
+  // A Casio keyboard on an X stand: black plastic, a speaker grille, a little green screen, colorful
+  // buttons (one of them is DEMO), and a lot of skinny keys.
+  function casioKeyboard() {
+    const p = new Pix(44, 24);
+    p.rect(0, 0, 44, 10, '#2a2a30'); p.hline(0, 43, 0, '#4a4a52');
+    for (let y = 2; y < 5; y++) for (let x = 2; x < 9; x += 2) p.set(x + (y % 2), y, '#5a5a64');
+    p.rect(11, 2, 9, 3, '#7ab88a'); p.hline(12, 18, 3, '#4a7a58');
+    [['#e83030', 23], ['#f8d040', 26], ['#3a78c8', 29], ['#f8f8f0', 32], ['#e83030', 35], ['#3aa858', 38]].forEach(([c, x]) => p.rect(x, 2, 2, 2, c));
+    pianoKeys(p, 2, 41, 5, 4, 2);
+    p.hline(1, 42, 9, '#18181e');
+    for (let k = 0; k < 14; k++) { p.set(8 + Math.round(k * 2), 10 + k, '#6a6a74'); p.set(35 - Math.round(k * 2), 10 + k, '#6a6a74'); }
+    p.hline(5, 11, 23, '#4a4a52'); p.hline(32, 38, 23, '#4a4a52');
+    return finish(p);
+  }
+  // A Fender Rhodes: a black lid, the name rail with its silver logo, the keys over a silver keybed,
+  // and four chrome legs.
+  function rhodesPiano() {
+    const p = new Pix(44, 28);
+    p.rect(1, 0, 42, 6, '#1c1c22'); p.hline(2, 41, 0, '#3a3a44'); p.set(0, 2, '#1c1c22'); p.set(43, 2, '#1c1c22'); p.rect(0, 2, 44, 4, '#1c1c22');
+    p.rect(0, 6, 44, 2, '#24242c'); p.hline(4, 15, 7, '#c8ccd4'); p.set(17, 7, '#e83030');
+    pianoKeys(p, 1, 42, 8, 4, 2);
+    p.rect(0, 12, 44, 2, '#b8bcc4'); p.hline(0, 43, 12, '#e8ecf4');
+    p.rect(0, 14, 44, 3, '#1c1c22');
+    for (const x of [3, 9, 33, 39]) { p.vline(x, 17, 27, '#c8ccd4'); p.vline(x + 1, 17, 26, '#8a8e98'); }
+    p.hline(2, 11, 27, '#6a6e78'); p.hline(32, 41, 27, '#6a6e78');
+    return finish(p);
+  }
   // The Happy Magic Flute (upright, mouth end at the top): a length of white PVC pipe Dad made into a
   // flute in college, with a blowing hole near the capped end, six finger holes, and its name
   // scrawled down the side in black Sharpie.
@@ -10332,6 +10380,7 @@
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
     S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon(); S.bmfIcon = bmfIcon();
     S.pvcFlute = pvcFlute(); S.silverFlute = silverFlute();
+    S.uprightPiano = uprightPiano(); S.casioKeyboard = casioKeyboard(); S.rhodesPiano = rhodesPiano();
     S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe(); S.bongos = bongos(); S.steelPan = steelPan(); S.drumKit = drumKit();
     S.williamsCenter = williamsCenter(); S.parkBench = parkBench(); S.arcSculpture = arcSculpture(); S.posterKiosk = posterKiosk(); S.mixingDesk = mixingDesk(); S.studioMonitor = studioMonitor(); S.acousticPanel = acousticPanel(); S.studioCouch = studioCouch(); S.metronomeIcon = metronomeIcon(); S.pedalsIcon = pedalsIcon();
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);

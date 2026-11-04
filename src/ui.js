@@ -482,12 +482,12 @@
     x.fillStyle = '#1c1424'; x.fillRect(0, 0, G.W, G.H);
     // a felt-lined case for it to lie in (a drum stands up on a little riser instead, no taller than
     // 48 so its write-up fits)
-    const dk = it.drum ? Math.max(1, Math.min(2, Math.floor(48 / img.height))) : 2;
-    const cw = (it.drum ? img.width : img.height) * dk + 10, ch = (it.drum ? img.height : img.width) * dk + 6, cx = Math.round((G.W - cw) / 2);
+    const up = it.drum || it.keys, dk = up ? Math.max(1, Math.min(2, Math.floor(48 / img.height))) : 2;
+    const cw = (up ? img.width : img.height) * dk + 10, ch = (up ? img.height : img.width) * dk + 6, cx = Math.round((G.W - cw) / 2);
     x.fillStyle = '#0c0814'; x.fillRect(cx + 2, 5, cw, ch);
     x.fillStyle = '#4a2a3a'; x.fillRect(cx, 3, cw, ch);
     x.fillStyle = '#5c3448'; x.fillRect(cx + 1, 4, cw - 2, 1);
-    if (it.drum) x.drawImage(img, cx + 5, 6, img.width * dk, img.height * dk);
+    if (up) x.drawImage(img, cx + 5, 6, img.width * dk, img.height * dk);
     else { x.save(); x.translate(cx + 5, 6 + img.width * 2); x.rotate(-Math.PI / 2); x.drawImage(img, 0, 0, img.width * 2, img.height * 2); x.restore(); }
     let y = ch + 9;
     TXT(x, it.name, 8, y, C.gold);
@@ -1232,8 +1232,8 @@
     drawInstruments(ctx) {
       const list = G.INSTRUMENTS, n = G.instrumentsCount();
       card(ctx, 5, 21, 112, 121, 'INSTRUMENTS', C.gold, G.sayable(n) + '/' + G.sayable(list.length));
-      // (the rows get shorter once there are more than two of them)
-      const rh = list.length > 6 ? 34 : 44;
+      // (the rows get shorter as there are more of them)
+      const rh = list.length > 9 ? 26 : list.length > 6 ? 34 : 44;
       list.forEach((it, i) => {
         const x = 9 + (i % 3) * 35, y = 37 + Math.floor(i / 3) * rh, sel = i === this.sel && !this.onTabs, img = it.art(), has = G.instrumentHas(it.id);
         slot(ctx, x, y, 34, rh - 2, has ? C.gold : undefined);
@@ -1248,7 +1248,7 @@
       if (!it) return;
       // the instrument, lying across the top of the card (a drum, standing up)
       const img = it.art(), has = G.instrumentHas(it.id);
-      if (it.drum) { const k = Math.min(1, 24 / img.height), w = Math.round(img.width * k); ctx.drawImage(has ? img : silhouette(img), 177 - Math.round(w / 2), 52 - Math.round(img.height * k), w, Math.round(img.height * k)); }
+      if (it.drum || it.keys) { const k = Math.min(1, 24 / img.height), w = Math.round(img.width * k); ctx.drawImage(has ? img : silhouette(img), 177 - Math.round(w / 2), 52 - Math.round(img.height * k), w, Math.round(img.height * k)); }
       else { ctx.save(); ctx.translate(120 + Math.round((115 - img.height) / 2), 28 + Math.round((24 - img.width) / 2)); ctx.rotate(-Math.PI / 2); ctx.drawImage(has ? img : silhouette(img), -img.width, 0); ctx.restore(); }
       if (!has) {
         TXT(ctx, '???', 125, 56, C.cyan);

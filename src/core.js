@@ -538,6 +538,61 @@ G.audio = (function () {
         noise(t, pvc ? 0.14 : 0.06, lv(pvc ? 0.08 : 0.035), rg, pvc ? 1800 : 2600);
         return letGo(rg, [o, o2]);
       },
+      // Pianos (all three can be held; letting go drops the damper): an upright (a felt hammer on
+      // strings: bright, then a quick drop and a long fade, even with the key down), a Casio (a cheap
+      // little synth: square and saw, steady while held), and a Fender Rhodes (a struck tine: an FM
+      // bark that mellows out, a bell on top, and the suitcase amp's gentle tremolo)
+      piano(midi, dur = 0.6, vol = 0.2, at) {
+        if (!ctx || muted) return;
+        const t = when(at), f = N(midi), len = Math.max(0.2, dur), rg = ctx.createGain(), flt = ctx.createBiquadFilter(), g = ctx.createGain(), srcs = [], peak = lv(vol);
+        rg.connect(bus());
+        flt.type = 'lowpass'; flt.frequency.setValueAtTime(Math.min(9000, f * 9), t); flt.frequency.exponentialRampToValueAtTime(Math.max(600, f * 2.5), t + Math.min(len, 1.5));
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.004);
+        g.gain.exponentialRampToValueAtTime(peak * 0.35, t + Math.min(0.5, len * 0.6));
+        // (held: a long, slow ring, the way a piano sings while the key's down)
+        if (len > 1.2) g.gain.exponentialRampToValueAtTime(peak * 0.15, t + len * 0.8);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.05);
+        for (const [type, mul, lvl] of [['triangle', 1, 1], ['triangle', 1.003, 0.6], ['sine', 2, 0.35], ['sine', 3.01, 0.15]]) {
+          const o = ctx.createOscillator(), og = ctx.createGain();
+          o.type = type; o.frequency.value = f * mul; og.gain.value = lvl; o.connect(og); og.connect(flt); o.start(t); o.stop(t + len + 0.1); srcs.push(o);
+        }
+        flt.connect(g); g.connect(rg);
+        noise(t, 0.03, lv(vol * 0.25), rg, 900);
+        return letGo(rg, srcs);
+      },
+      casio(midi, dur = 0.4, vol = 0.13, at) {
+        if (!ctx || muted) return;
+        const t = when(at), f = N(midi), len = Math.max(0.12, dur), rg = ctx.createGain(), flt = ctx.createBiquadFilter(), g = ctx.createGain(), srcs = [], peak = lv(vol);
+        rg.connect(bus());
+        flt.type = 'lowpass'; flt.frequency.value = Math.min(6000, f * 6); flt.Q.value = 3;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.01); g.gain.exponentialRampToValueAtTime(peak * 0.8, t + 0.08);
+        g.gain.setValueAtTime(peak * 0.8, t + Math.max(0.09, len)); g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.06);
+        for (const [type, mul, lvl] of [['square', 1, 0.6], ['sawtooth', 1.006, 0.35]]) {
+          const o = ctx.createOscillator(), og = ctx.createGain();
+          o.type = type; o.frequency.value = f * mul; og.gain.value = lvl; o.connect(og); og.connect(flt); o.start(t); o.stop(t + len + 0.1); srcs.push(o);
+        }
+        flt.connect(g); g.connect(rg);
+        return letGo(rg, srcs);
+      },
+      rhodes(midi, dur = 0.7, vol = 0.2, at) {
+        if (!ctx || muted) return;
+        const t = when(at), f = N(midi), len = Math.max(0.2, dur), rg = ctx.createGain(), g = ctx.createGain(), amp = ctx.createGain(), peak = lv(vol);
+        rg.connect(bus());
+        const car = ctx.createOscillator(), mod = ctx.createOscillator(), idx = ctx.createGain(), bell = ctx.createOscillator(), bg = ctx.createGain(), trem = ctx.createOscillator(), tg = ctx.createGain();
+        car.frequency.value = f; mod.frequency.value = f;
+        idx.gain.setValueAtTime(f * 1.4, t); idx.gain.exponentialRampToValueAtTime(f * 0.15, t + 0.6);
+        mod.connect(idx); idx.connect(car.frequency);
+        bell.frequency.value = f * 7.1; bg.gain.setValueAtTime(lv(vol * 0.12), t); bg.gain.exponentialRampToValueAtTime(0.0001, t + 0.25); bell.connect(bg); bg.connect(rg);
+        amp.gain.value = 0.85; trem.frequency.value = 4.5; tg.gain.value = 0.15; trem.connect(tg); tg.connect(amp.gain);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.006);
+        g.gain.exponentialRampToValueAtTime(peak * 0.5, t + Math.min(0.7, len * 0.7));
+        if (len > 1.2) g.gain.exponentialRampToValueAtTime(peak * 0.25, t + len * 0.8);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.1);
+        car.connect(g); g.connect(amp); amp.connect(rg);
+        const srcs = [car, mod, bell, trem];
+        for (const o of srcs) { o.start(t); o.stop(t + len + 0.15); }
+        return letGo(rg, srcs);
+      },
       // the metronome: a woodblock tick, higher on the one
       click(accent, at) { if (!ctx || muted) return; const t = when(at); tone(accent ? 1800 : 1250, t, 0.04, 'square', lv(accent ? 0.12 : 0.08), bus()); },
     },
