@@ -99,6 +99,8 @@ G.audio = (function () {
   let timer = null;
   let mix = null, mixPlayer = null; // Nate's own song, playing as the game's music
   let level = 1; // the studio's track volume (G.audio.withLevel)
+  let route = null; // where the instruments play into (a studio track's channel; G.audio.withRoute)
+  const bus = () => route || musicBus;
   const lv = (v) => v * level;
   // a note's start: an audio-clock time to schedule it for, or right now
   const when = (at) => Math.max(ctx.currentTime, at || 0) + 0.005;
@@ -126,6 +128,76 @@ G.audio = (function () {
     if (want) startSong(want);
   }
 
+  // ---- the studio's mixing board (G.audio.channel)
+  let verbNode = null;
+  function reverb() {
+    if (verbNode) return verbNode;
+    // a two-second room: decaying noise in both ears
+    const len = Math.floor(ctx.sampleRate * 2.2), ir = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let c = 0; c < 2; c++) { const d = ir.getChannelData(c); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3); }
+    verbNode = ctx.createConvolver(); verbNode.buffer = ir;
+    const out = ctx.createGain(); out.gain.value = 0.7; verbNode.connect(out); out.connect(musicBus);
+    return verbNode;
+  }
+  function makeChannel() {
+    const input = ctx.createGain(), post = ctx.createGain(), lo = ctx.createBiquadFilter(), hi = ctx.createBiquadFilter(), vol = ctx.createGain(), send = ctx.createGain();
+    const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : ctx.createGain();
+    lo.type = 'lowshelf'; lo.frequency.value = 250; hi.type = 'highshelf'; hi.frequency.value = 2500;
+    post.connect(lo); lo.connect(hi); hi.connect(pan); pan.connect(vol); vol.connect(musicBus); vol.connect(send); send.connect(reverb());
+    let fxNodes = [], fxKind = undefined;
+    // (the pedal sits between the input and the rest; rebuilt when it changes)
+    const pedal = (kind) => {
+      if (kind === fxKind) return;
+      fxKind = kind;
+      input.disconnect(); for (const n of fxNodes) { try { n.stop && n.stop(); } catch (e) { /* fine */ } n.disconnect(); }
+      fxNodes = [];
+      const keep = (...ns) => { fxNodes.push(...ns); return ns[0]; };
+      if (kind === 'drive') {
+        const pre = keep(ctx.createGain()), ws = keep(ctx.createWaveShaper()), tame = keep(ctx.createBiquadFilter()), out = keep(ctx.createGain());
+        pre.gain.value = 2.5; ws.curve = driveCurve(18); tame.type = 'lowpass'; tame.frequency.value = 3200; out.gain.value = 0.45;
+        input.connect(pre); pre.connect(ws); ws.connect(tame); tame.connect(out); out.connect(post);
+      } else if (kind === 'echo') {
+        const d = keep(ctx.createDelay(1)), fb = keep(ctx.createGain()), wet = keep(ctx.createGain());
+        d.delayTime.value = 0.33; fb.gain.value = 0.38; wet.gain.value = 0.5;
+        input.connect(post); input.connect(d); d.connect(fb); fb.connect(d); d.connect(wet); wet.connect(post);
+      } else if (kind === 'chorus') {
+        const d = keep(ctx.createDelay(0.1)), lfo = keep(ctx.createOscillator()), depth = keep(ctx.createGain()), wet = keep(ctx.createGain());
+        d.delayTime.value = 0.022; lfo.frequency.value = 1.1; depth.gain.value = 0.004; wet.gain.value = 0.7;
+        lfo.connect(depth); depth.connect(d.delayTime); lfo.start();
+        input.connect(post); input.connect(d); d.connect(wet); wet.connect(post);
+      } else if (kind === 'trem') {
+        const amp = keep(ctx.createGain()), lfo = keep(ctx.createOscillator()), depth = keep(ctx.createGain());
+        amp.gain.value = 0.6; lfo.frequency.value = 5.5; depth.gain.value = 0.4;
+        lfo.connect(depth); depth.connect(amp.gain); lfo.start();
+        input.connect(amp); amp.connect(post);
+      } else input.connect(post);
+    };
+    pedal(null);
+    return {
+      input,
+      set(o) {
+        const t = ctx.currentTime;
+        if (o.vol != null) vol.gain.setTargetAtTime(o.vol, t, 0.02);
+        if (o.pan != null && pan.pan) pan.pan.setTargetAtTime(o.pan / 4, t, 0.02);
+        if (o.tone != null) { hi.gain.setTargetAtTime(o.tone * 4, t, 0.02); lo.gain.setTargetAtTime(-o.tone * 3, t, 0.02); }
+        if (o.verb != null) send.gain.setTargetAtTime([0, 0.18, 0.36, 0.6][o.verb] || 0, t, 0.02);
+        if (o.fx !== undefined) pedal(o.fx || null);
+      },
+    };
+  }
+  // A held note's way out: the guitars, the steel drum and the flutes return this, a function that
+  // fades their last gain node out quickly (now, or at an audio time), for when a held key lets go.
+  // (srcs: its oscillators, stopped right after the fade, so a long held note doesn't keep running)
+  function letGo(node, srcs = []) {
+    let done = false;
+    return (at) => {
+      if (done || !ctx) return;
+      done = true;
+      const t = Math.max(ctx.currentTime, at || 0);
+      node.gain.setValueAtTime(1, t); node.gain.linearRampToValueAtTime(0.0001, t + 0.07);
+      for (const o of srcs) try { o.stop(t + 0.1); } catch (e) { /* already stopped */ }
+    };
+  }
   function tone(f, t, dur, type, vol, bus, slideTo) {
     const o = ctx.createOscillator();
     const g = ctx.createGain();
@@ -140,6 +212,7 @@ G.audio = (function () {
     g.connect(bus || sfxBus);
     o.start(t);
     o.stop(t + dur + 0.03);
+    return o;
   }
 
   function noise(t, dur, vol, bus, freq) {
@@ -387,8 +460,10 @@ G.audio = (function () {
         flt.type = 'lowpass'; flt.Q.value = T.q;
         flt.frequency.setValueAtTime(Math.min(8000, f * T.open), t); flt.frequency.exponentialRampToValueAtTime(Math.max(T.floor, f * T.close), t + len);
         g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(lv(vol * T.gain), t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        const srcs = [];
         for (const [type, mul, lvl] of T.osc) {
           const o = ctx.createOscillator(), og = ctx.createGain();
+          srcs.push(o);
           o.type = type; o.frequency.setValueAtTime(f * mul, t);
           // (the Jazzmaster's floating tremolo: the pitch drifts up, then sags)
           if (T.wobble) { o.frequency.setValueAtTime(f * mul, t + len * 0.3); o.frequency.linearRampToValueAtTime(f * mul * (1 + T.wobble), t + len * 0.6); o.frequency.linearRampToValueAtTime(f * mul * (1 - T.wobble / 2), t + len); }
@@ -398,50 +473,57 @@ G.audio = (function () {
         let out = flt;
         if (T.hp) { const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = T.hp; out.connect(hp); out = hp; }
         if (T.drive) { const ws = ctx.createWaveShaper(); ws.curve = driveCurve(T.drive); out.connect(ws); out = ws; }
-        out.connect(g); g.connect(musicBus);
+        const rg = ctx.createGain();
+        out.connect(g); g.connect(rg); rg.connect(bus());
         // the Jazzmaster gets a surf-style slapback echo
-        if (T.echo) { const d = ctx.createDelay(0.5), dg = ctx.createGain(); d.delayTime.value = T.echo; dg.gain.value = 0.35; g.connect(d); d.connect(dg); dg.connect(musicBus); }
+        if (T.echo) { const d = ctx.createDelay(0.5), dg = ctx.createGain(); d.delayTime.value = T.echo; dg.gain.value = 0.35; rg.connect(d); d.connect(dg); dg.connect(bus()); }
+        return letGo(rg, srcs);
       },
       bass(midi, dur = 0.35, at) {
         if (!ctx || muted) return;
         const t = when(at);
-        tone(N(midi), t, dur, 'triangle', lv(0.5), musicBus);
-        tone(N(midi), t, dur * 0.6, 'square', lv(0.06), musicBus);
+        tone(N(midi), t, dur, 'triangle', lv(0.5), bus());
+        tone(N(midi), t, dur * 0.6, 'square', lv(0.06), bus());
       },
-      kick(at) { if (!ctx || muted) return; const t = when(at); tone(130, t, 0.16, 'sine', lv(0.7), musicBus, 42); },
-      snare(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.14, lv(0.32), musicBus, 2200); tone(190, t, 0.07, 'triangle', lv(0.18), musicBus); },
-      hat(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.035, lv(0.12), musicBus, 8000); },
+      kick(at) { if (!ctx || muted) return; const t = when(at); tone(130, t, 0.16, 'sine', lv(0.7), bus(), 42); },
+      snare(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.14, lv(0.32), bus(), 2200); tone(190, t, 0.07, 'triangle', lv(0.18), bus()); },
+      hat(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.035, lv(0.12), bus(), 8000); },
       // Nate's drums: bongos (a pitched thump that drops, with a slap of skin), a steel pan (a sine
       // with its bright, slightly-off overtones), toms, and a crash
-      bongo(hi, at) { if (!ctx || muted) return; const t = when(at), f = hi ? 440 : 280; tone(f, t, hi ? 0.12 : 0.17, 'sine', lv(0.45), musicBus, f * 0.82); noise(t, 0.02, lv(0.12), musicBus, hi ? 3200 : 2200); },
+      bongo(hi, at) { if (!ctx || muted) return; const t = when(at), f = hi ? 440 : 280; tone(f, t, hi ? 0.12 : 0.17, 'sine', lv(0.45), bus(), f * 0.82); noise(t, 0.02, lv(0.12), bus(), hi ? 3200 : 2200); },
       pan(midi, dur = 0.6, at) {
         if (!ctx || muted) return;
-        const t = when(at), f = N(midi);
-        tone(f, t, dur, 'sine', lv(0.24), musicBus); tone(f * 2, t, dur * 0.7, 'sine', lv(0.09), musicBus); tone(f * 3.01, t, dur * 0.35, 'sine', lv(0.04), musicBus); tone(f * 4.07, t, 0.08, 'triangle', lv(0.03), musicBus);
+        const t = when(at), f = N(midi), rg = ctx.createGain();
+        rg.connect(bus());
+        const srcs = [tone(f, t, dur, 'sine', lv(0.24), rg), tone(f * 2, t, dur * 0.7, 'sine', lv(0.09), rg), tone(f * 3.01, t, dur * 0.35, 'sine', lv(0.04), rg)];
+        tone(f * 4.07, t, 0.08, 'triangle', lv(0.03), rg);
+        return letGo(rg, srcs);
       },
-      tom(hi, at) { if (!ctx || muted) return; const t = when(at), f = hi ? 190 : 120; tone(f, t, 0.28, 'sine', lv(0.55), musicBus, f * 0.7); noise(t, 0.05, lv(0.08), musicBus, 1200); },
-      crash(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.9, lv(0.2), musicBus, 6500); noise(t, 0.4, lv(0.12), musicBus, 4000); },
+      tom(hi, at) { if (!ctx || muted) return; const t = when(at), f = hi ? 190 : 120; tone(f, t, 0.28, 'sine', lv(0.55), bus(), f * 0.7); noise(t, 0.05, lv(0.08), bus(), 1200); },
+      crash(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.9, lv(0.2), bus(), 6500); noise(t, 0.4, lv(0.12), bus(), 4000); },
       // flutes: a breathy tone that swells in. The Happy Magic Flute (PVC pipe) is hollow and airy and a
       // hair flat, with no vibrato; a real flute is purer, and a gentle vibrato comes in as a note holds
       flute(midi, dur = 0.4, vol = 0.2, kind = 'flute', at) {
         if (!ctx || muted) return;
         const pvc = kind === 'pvc', t = when(at), f = N(midi) * (pvc ? 0.996 : 1), len = Math.max(0.12, dur);
-        const o = ctx.createOscillator(), g = ctx.createGain();
+        const o = ctx.createOscillator(), g = ctx.createGain(), rg = ctx.createGain();
+        rg.connect(bus());
         o.type = pvc ? 'triangle' : 'sine'; o.frequency.setValueAtTime(f, t);
         if (!pvc) {
           const v = ctx.createOscillator(), vg = ctx.createGain();
-          v.frequency.value = 5.2; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * 0.012, t + len);
+          v.frequency.value = 5.2; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * 0.012, t + Math.min(len, 0.9));
           v.connect(vg); vg.connect(o.frequency); v.start(t); v.stop(t + len + 0.12);
         }
         g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(lv(vol), t + 0.035);
         g.gain.setValueAtTime(lv(vol), t + len * 0.75); g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.08);
-        o.connect(g); g.connect(musicBus); o.start(t); o.stop(t + len + 0.1);
+        o.connect(g); g.connect(rg); o.start(t); o.stop(t + len + 0.1);
         // the octave above, quietly, and a puff of breath at the start (a lot more of it through a pipe)
-        tone(f * 2, t, len * 0.8, 'sine', lv(pvc ? 0.02 : 0.035), musicBus);
-        noise(t, pvc ? 0.14 : 0.06, lv(pvc ? 0.08 : 0.035), musicBus, pvc ? 1800 : 2600);
+        const o2 = tone(f * 2, t, len * 0.8, 'sine', lv(pvc ? 0.02 : 0.035), rg);
+        noise(t, pvc ? 0.14 : 0.06, lv(pvc ? 0.08 : 0.035), rg, pvc ? 1800 : 2600);
+        return letGo(rg, [o, o2]);
       },
       // the metronome: a woodblock tick, higher on the one
-      click(accent, at) { if (!ctx || muted) return; const t = when(at); tone(accent ? 1800 : 1250, t, 0.04, 'square', lv(accent ? 0.12 : 0.08), musicBus); },
+      click(accent, at) { if (!ctx || muted) return; const t = when(at); tone(accent ? 1800 : 1250, t, 0.04, 'square', lv(accent ? 0.12 : 0.08), bus()); },
     },
     // A baby crying (Hannah's shift): a sawtooth wail that swoops up and falls ("WAAAH"), with a quick
     // vibrato, through two vowel formants. pitch: each baby's own (about 0.8-1.2); loud: 0.5 a
@@ -468,7 +550,13 @@ G.audio = (function () {
     now() { return ctx ? ctx.currentTime : 0; },
     get running() { return !!ctx && ctx.state === 'running'; },
     // play whatever fn plays at a level (0-1+) (a studio track's volume)
-    withLevel(v, fn) { const o = level; level = v; try { fn(); } finally { level = o; } },
+    withLevel(v, fn) { const o = level; level = v; try { return fn(); } finally { level = o; } },
+    withRoute(node, fn) { const o = route; route = node; try { return fn(); } finally { route = o; } },
+    // A mixing-board channel for a studio track: what's played into `input` goes through its pedal
+    // (fx: null, 'drive', 'echo', 'chorus', 'trem'), a tone knob (a tilt: -2 dark to +2 bright), the
+    // pan (-4 left to +4 right) and its volume, out to the music, with a send to the shared reverb
+    // (verb 0-3). set({ vol, pan, tone, verb, fx }) changes it on the fly. Null before the audio runs.
+    channel() { return ctx ? makeChannel() : null; },
     // A player for a recorded song: events [{ t (seconds), play(at) }] in order, len seconds long,
     // starting at audio time startAt; loop goes around forever. Returns { stop(), at0 }.
     player(events, len, loop, startAt) { return makePlayer(events, len, loop, startAt); },

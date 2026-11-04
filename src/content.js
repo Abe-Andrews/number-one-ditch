@@ -356,6 +356,10 @@
       kind: 'key', name: 'Diploma in EEENGLISH', icon: () => G.spr.diploma, has: () => !!fl().engPerfect,
       desc: 'Certifies that Nate speaks EEENGLISH. Three Es. Signed by Professor Pembrook and, in crayon, El EEENGLISH.',
     },
+    pedals: {
+      kind: 'key', name: 'Abe\'s Guitar Pedals', short: 'Pedals', icon: () => G.spr.pedalsIcon, has: () => !!st().items.pedals,
+      desc: 'Abe\'s old pedalboard: overdrive, echo, chorus and tremolo. In Studio B, press B at the console for the mixer: every track gets a PEDAL knob.',
+    },
     metronome: {
       kind: 'key', name: 'Abe\'s Metronome', short: 'Metronome', icon: () => G.spr.metronomeIcon, has: () => !!st().items.metronome,
       desc: 'A little wooden metronome from Abe, for keeping time in Studio B at the Williams Center. "Not your foot. Your foot lies."',
@@ -492,7 +496,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'carbideLamp'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -3731,7 +3735,7 @@
   // corn, the sloth, Mom's books...): having those early would jump their quests.
   G.adminAllItems = () => {
     const s = G.state, f = s.flags;
-    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true, belt: true, bmf: true, metronome: true });
+    Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true, belt: true, bmf: true, metronome: true, pedals: true });
     s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40; s.items.firstAid = G.KIT_MAX;
     s.items.carbideLamp = true; s.geodes = { rough: 5, wet: 5, rusty: 5, dark: 5 }; f.geodeTip = true;
     f.kitGot = true; f.bidetBig = true; f.bidetNozzle = true; s.items.bidetWater = G.BIDET_MAX;
@@ -3755,7 +3759,7 @@
     const s = G.state, f = s.flags;
     s.jams = s.jams || {}; for (const sg of G.JAM_SONGS) s.jams[sg.id] = Math.max(s.jams[sg.id] || 0, 1);
     s.instruments = s.instruments || {}; for (const it of G.INSTRUMENTS) s.instruments[it.id] = true;
-    s.items.bass = true; s.items.metronome = true;
+    s.items.bass = true; s.items.metronome = true; s.items.pedals = true;
     f.jamMet = true; f.studioTold = true;
     for (const sg of G.JAM_SONGS) if (sg.drums) f['jamDrum_' + sg.id] = true;
     s.nicu = s.nicu || {};
@@ -5858,15 +5862,15 @@
     blend: ['Pick a jar with the arrows. Z adds a scoop. X puts the last one back.', 'A blend is four scoops. Dad tells you what goes in it.', 'With four in, he sniffs it and tells you how many are right.'],
     pack: ['The needle goes up and down. Press Z when it\'s inside the green box.', 'Three pinches: gently, then a little firmer, then firm.'],
     fight: ['← → walk (tap twice to dash). ↑ jump. ↓ crouch: it ducks high punches. Z punch, X kick; ↓+Z a low jab, ↓+X a sweep.', 'In the air, Z or X plus a direction: nothing = spin kick, toward him = flying knee, away = back kick, ↑ = up swipe, ↓ = a stomp that SPIKES him.', 'Hold away from him (or hold V) to block; add ↓ for low kicks. Tap V as a hit lands to PARRY. C grabs: the ARMY SUPLEX. ↓ then → then Z: TAKEDOWN. Full FIGHT meter: C is GROUND AND POUND. Win two rounds.'],
-    jam: ['Notes slide down the strings. Hit each one with its arrow (← ↓ ↑ →) right as it crosses the pickup at the bottom.', 'Two notes at once? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
+    jam: ['Notes slide down the strings. Hit each one with its arrow (← ↓ ↑ →) right as it crosses the pickup at the bottom.', 'Two notes at once? Press both arrows. A note with a long tail is a HOLD: keep the arrow down till the tail runs out.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     studio: [
       ['Eight tracks. ↑↓ picks a track, ←→ its instrument: anything you\'ve won from Abe.', 'Z records. You play it LIVE on the keyboard: the home row (A S D F...) and the row above it. There\'s no editing and no moving notes. You play it, it\'s on the record.', 'Not recording? The letter keys let you try the instrument out.'],
       ['Z gets you ready: play along as long as you like (nothing records yet), then ENTER starts the take. ENTER stops it; BACKSPACE scraps it.', 'The first track you record sets how long the song is. Record the rest on top of it. C plays the song. V mutes a track; - and + set its volume.', 'ENTER opens the menu: the song\'s key, SAVE SONG, LOAD SONG, and PLAY IN GAME, which makes your song the game\'s music.'],
     ],
     metronome: ['Abe\'s metronome is on the desk now. It starts clicking as soon as you get ready, so you can warm up on the beat. Press ENTER and it counts four more, then you\'re recording.', 'ENTER > TEMPO sets how fast. ENTER > CLICK turns it off. And with it on, the first track rounds up to a whole bar.'],
     jam_bongos: ['← hits the little drum (the macho), → the big one (the hembra). Hit each note right as it lands on its drum.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
-    jam_pan: ['Every dent in the steel drum is a note: ← ↓ ↑ → from low to high. Hit each note right as it lands on its dent.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
-    jam_flute: ['Notes slide down onto the finger holes: low notes on the left, high on the right. Cover each hole with its arrow (← ↓ ↑ →) right as its note lands.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
+    jam_pan: ['Every dent in the steel drum is a note: ← ↓ ↑ → from low to high. Hit each note right as it lands on its dent. A long tail means HOLD it.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
+    jam_flute: ['Notes slide down onto the finger holes: low notes on the left, high on the right. Cover each hole with its arrow (← ↓ ↑ →) right as its note lands. A long tail means HOLD it till the tail runs out.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     jam_kit: ['← hi-hat, ↓ kick drum, ↑ snare, → crash and toms. Hit each note right as it lands on its drum.', 'Two at once (like kick and hi-hat)? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
   };
 
@@ -7413,7 +7417,9 @@
   G.JAM_SONGS = JAM_SONGS;
   const jamState = () => (G.state.jams = G.state.jams || {});
   const NOTE_MIDI = (n) => { const m = /^([A-G])(#?)(\d)$/.exec(n); return 12 * (+m[3] + 1) + { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1]] + (m[2] ? 1 : 0); };
-  // a song's notes ({ beat, midi, lane, dur }), its bass roots bar by bar, and how many beats long
+  // a song's notes ({ beat, midi, lane, dur, hold }), its bass roots bar by bar, and how many beats long.
+  // hold: a note two beats or longer (not on a drum) is a HOLD, Guitar Hero style: hit it, then keep
+  // the arrow down until its tail runs out (hold is how many beats, a half beat short of its length)
   function buildSong(song) {
     const notes = [], bars = [];
     let beat = 0;
@@ -7421,7 +7427,7 @@
       const riff = song.riffs[rid];
       for (const tok of riff.notes.split(/\s+/)) {
         const [n, len] = tok.split('/');
-        if (n !== 'r') for (const one of n.split('+')) notes.push(song.pads ? { beat, lane: song.pads[one][0], hit: song.pads[one][1] } : { beat, midi: NOTE_MIDI(one) });
+        if (n !== 'r') for (const one of n.split('+')) notes.push(song.pads ? { beat, lane: song.pads[one][0], hit: song.pads[one][1] } : { beat, midi: NOTE_MIDI(one), len: +len });
         beat += +len;
       }
       bars.push(...riff.bass);
@@ -7431,6 +7437,7 @@
     if (!song.pads) for (const x of notes) x.lane = Math.min(3, Math.floor((pitches.indexOf(x.midi) * 4) / pitches.length));
     const out = notes.filter((x, i) => !notes.slice(0, i).some((y) => y.beat === x.beat && y.lane === x.lane));
     for (const x of out) { const next = out.find((y) => y.beat > x.beat); x.dur = Math.min(0.7, ((next ? next.beat : x.beat + 1) - x.beat) * (60 / song.bpm) * 0.95); }
+    for (const x of out) x.hold = !song.pads && x.len >= 2 ? x.len - 0.5 : 0;
     return { notes: out, bars, beats: beat };
   }
 
@@ -7535,13 +7542,14 @@
     const KEYS = ['left', 'down', 'up', 'right'], ARROWS = ['←', '↓', '↑', '→'];
     const GEM = { bongos: ['#f8d890', 0, 0, '#e09048'], pan: ['#b8d8f8', '#b8f0c8', '#f8e8a0', '#f8c0d8'], kit: ['#f8d850', '#c050a0', '#f0f0f0', '#78c8f8'], pvc: ['#78e8e8', '#78e070', '#f8d850', '#f898c8'], flute: ['#c8d8f8', '#a8e8f0', '#f0f0ff', '#f8e0a8'] }[drums || wind] || ['#c050a0', '#e08030', '#f0e6c0', '#78c8f8'];
     // what a hit sounds like (a drum still sounds when you hit it with no note there)
-    const sound = (n) => (n.hit ? n.hit() : drums === 'pan' ? G.audio.inst.pan(n.midi, 0.7) : wind ? G.audio.inst.flute(n.midi, n.dur, 0.2, wind) : G.audio.inst.guitar(n.midi, n.dur, undefined, gt.id));
+    // (long: a hold's length in seconds; then it returns the note's let-go)
+    const sound = (n, long) => (n.hit ? n.hit() : drums === 'pan' ? G.audio.inst.pan(n.midi, long || 0.7) : wind ? G.audio.inst.flute(n.midi, long || n.dur, 0.2, wind) : G.audio.inst.guitar(n.midi, long || n.dur, undefined, gt.id));
     const abeGuitar = G.guitarNow();
-    const notes = S0.notes.map((n) => Object.assign({}, n, { t: COUNT + n.beat * fpb, done: null }));
+    const notes = S0.notes.map((n) => Object.assign({}, n, { t: COUNT + n.beat * fpb, done: null, holdF: n.hold * fpb }));
     const END = notes[notes.length - 1].t + 2 * fpb, speed = (HIT_Y - TOP) / song.lead;
     return {
       start() {
-        Object.assign(this, { f: 0, groove: 0.6, combo: 0, maxCombo: 0, score: 0, perfect: 0, good: 0, miss: 0, half: -1, bob: 0, sparks: [], judge: null, judgeT: 0, judgeL: 0, failT: 0, doneT: 0, msg: null, notes, song, fpb, COUNT, hitT: [0, 0, 0, 0] });
+        Object.assign(this, { f: 0, groove: 0.6, combo: 0, maxCombo: 0, score: 0, perfect: 0, good: 0, miss: 0, half: -1, bob: 0, sparks: [], judge: null, judgeT: 0, judgeL: 0, failT: 0, doneT: 0, msg: null, notes, song, fpb, COUNT, hitT: [0, 0, 0, 0], holds: [null, null, null, null] });
         talk.nowT = 0; G.audio.stop(); G.play.overlay = this;
       },
       mult() { return Math.min(4, 1 + Math.floor(this.combo / 8)); },
@@ -7628,7 +7636,10 @@
           this[best.done]++; this.combo++; this.maxCombo = Math.max(this.maxCombo, this.combo);
           this.score += (perfect ? 100 : 60) * this.mult();
           this.groove = Math.min(1, this.groove + (perfect ? 0.03 : 0.015));
-          sound(best); if (solo) this.hitT[L] = 8;
+          // (a hold keeps sounding while the arrow's down)
+          const rel = sound(best, best.hold ? best.holdF / 60 + 0.2 : 0);
+          if (best.hold) this.holds[L] = { n: best, rel };
+          if (solo) this.hitT[L] = 8;
           for (let k = 0; k < 5; k++) this.sparks.push({ x: LANES[L], y: HIT_Y, vx: (Math.random() - 0.5) * 2.4, vy: -1 - Math.random() * 1.6, life: 16, c: GEM[L] });
           this.judge = perfect ? 'PERFECT' : 'GOOD'; this.judgeT = 22; this.judgeL = L;
           if (this.combo % 16 === 0) talk.say(['Nice!', 'Now you\'re playing!', 'YES. Yes. Keep it there.', 'You\'re a natural. Don\'t let it go to your head.'][(this.combo / 16 - 1) % 4]);
@@ -7648,9 +7659,10 @@
         this.checkFail();
         if (!this.failT && this.miss % 6 === 1) talk.say(['Stay with me!', 'Count it! One, two, three, four...', 'Listen to the bass. Lock in with me.'][Math.floor(this.miss / 6) % 3]);
       },
+      letGoHolds() { for (let L = 0; L < 4; L++) { const h = this.holds[L]; if (h && h.rel) h.rel(); this.holds[L] = null; } },
       checkFail() {
         if (this.groove > 0 || this.failT) return;
-        this.groove = 0; this.failT = 90; G.audio.sfx('no');
+        this.groove = 0; this.failT = 90; G.audio.sfx('no'); this.letGoHolds();
         talk.say('...Okay, stop, stop. You lost me.');
       },
       update() {
@@ -7663,11 +7675,26 @@
         this.sparks = this.sparks.filter((p) => p.life > 0);
         if (this.failT > 0) { if (--this.failT === 0) { this.result = this.res(false); return true; } return false; }
         if (this.doneT > 0) { if (--this.doneT === 0) { this.result = this.res(true); return true; } return false; }
-        if (quitHit()) { this.result = 'quit'; return true; }
+        if (quitHit()) { this.letGoHolds(); this.result = 'quit'; return true; }
         this.f++;
         const h = Math.floor(this.f / (fpb / 2));
         if (h !== this.half) { this.half = h; this.band(h); }
         for (const L of USED) if (inp.hit(KEYS[L])) this.strum(L);
+        // the holds: keep the arrow down until the tail runs out
+        for (let L = 0; L < 4; L++) {
+          const h = this.holds[L];
+          if (!h) continue;
+          const n = h.n;
+          if (!inp.down(KEYS[L])) { n.broken = true; if (h.rel) h.rel(); this.holds[L] = null; continue; }
+          if (this.f >= n.t + n.holdF) {
+            n.held = true; this.holds[L] = null; if (h.rel) h.rel();
+            this.score += 50 * this.mult(); this.groove = Math.min(1, this.groove + 0.02);
+            this.judge = 'HOLD!'; this.judgeT = 22; this.judgeL = L;
+            for (let k = 0; k < 8; k++) this.sparks.push({ x: LANES[L], y: HIT_Y, vx: (Math.random() - 0.5) * 3, vy: -1.5 - Math.random() * 2, life: 20, c: GEM[L] || '#f8f8f0' });
+            continue;
+          }
+          if (this.f % 4 === 0) { this.score += 4 * this.mult(); this.sparks.push({ x: LANES[L] + (Math.random() - 0.5) * 6, y: HIT_Y - 2, vx: (Math.random() - 0.5) * 0.8, vy: -1 - Math.random(), life: 12, c: GEM[L] || '#f8f8f0' }); }
+        }
         for (let L = 0; L < 4; L++) if (this.hitT[L] > 0) this.hitT[L]--;
         for (const n of notes) if (!n.done && this.f - n.t > song.good) { n.done = 'miss'; this.missed(); }
         if (!this.failT && this.f >= END) { this.doneT = 80; G.audio.sfx('fanfare'); this.msg = 'SONG CLEARED!'; talk.say(this.miss === 0 ? 'Not ONE miss?! Who taught you? ...Me. I taught you.' : 'That\'s the song! Nice.'); }
@@ -7679,7 +7706,20 @@
         if (drums) this.drawDrums(ctx, speed);
         else if (wind) this.drawFlute(ctx, speed);
         else this.drawFrets(ctx, speed);
-        // the notes coming down
+        // the holds' tails (bright while it's held; gray once it's missed or let go), then the notes coming down
+        for (const n of notes) {
+          if (!n.hold || n.held) continue;
+          const holding = this.holds[n.lane] && this.holds[n.lane].n === n;
+          if (n.done && n.done !== 'miss' && !holding && !n.broken) continue;
+          const endY = Math.round(HIT_Y - (n.t + n.holdF - this.f) * speed), top = Math.max(TOP, endY), bot = Math.min(132, holding ? HIT_Y : Math.round(HIT_Y - (n.t - this.f) * speed));
+          if (bot <= top || top > 132) continue;
+          const dead = n.done === 'miss' || n.broken, col = dead ? '#4a4a54' : GEM[n.lane] || '#f8f8f0', x = LANES[n.lane];
+          ctx.globalAlpha = holding ? 1 : 0.7;
+          ctx.fillStyle = col; ctx.fillRect(x - 2, top, 5, bot - top); ctx.fillRect(x - 3, top, 7, 2);
+          if (!dead) { ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(x - 1, top, 1, bot - top); }
+          if (holding) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 2, HIT_Y - 3 - ((this.f >> 1) % 3), 5, 1); }
+          ctx.globalAlpha = 1;
+        }
         for (const n of notes) {
           if (n.done && n.done !== 'miss') continue;
           const y = Math.round(HIT_Y - (n.t - this.f) * speed), x = LANES[n.lane];
@@ -7776,7 +7816,7 @@
         for (const p of this.sparks) { ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x), Math.round(p.y), 2, 2); }
         if (this.judgeT > 0) {
           const t = this.judge, w = FT().width(t), x = this.judge === 'MISS' ? 120 : LANES[this.judgeL];
-          FT().draw(ctx, t, Math.round(x - w / 2), HIT_Y - 22 - (22 - this.judgeT) / 3, t === 'PERFECT' ? '#f8d850' : t === 'GOOD' ? '#78e070' : '#f86858', { shadow: '#000' });
+          FT().draw(ctx, t, Math.round(x - w / 2), HIT_Y - 22 - (22 - this.judgeT) / 3, t === 'PERFECT' ? '#f8d850' : t === 'GOOD' || t === 'HOLD!' ? '#78e070' : '#f86858', { shadow: '#000' });
         }
         // Nate (with his guitar, or at his drum) on the left, the groove meter and the combo
         const nate = (G.nateSprites ? G.nateSprites() : G.sprites.nate).down[0], b = this.bob > 3 ? 1 : 0;
@@ -7916,9 +7956,11 @@
   // music, everywhere, until it's turned off (G.mixFor, G.audio.setMix).
   // A song: { name, key, bpm, click, len (ms), tracks: [8 x { inst, vol (0-4), mute, ev: [[ms, n]] }] }.
   // Flags: studioTold, studioMet, studioHow, metroHow.
-  const STUDIO_INST = ['strat', 'tele', 'jazzmaster', 'bongos', 'steelpan', 'drumkit'];
-  const STUDIO_SHORT = { strat: 'STRAT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONGOS', steelpan: 'STEEL', drumkit: 'KIT' };
-  const STUDIO_COL = { strat: '#f4f0e8', tele: '#f86858', jazzmaster: '#c878d8', bongos: '#e0a058', steelpan: '#b8d8f8', drumkit: '#5a88e8' };
+  const STUDIO_INST = ['strat', 'tele', 'jazzmaster', 'bongos', 'steelpan', 'drumkit', 'pvcFlute', 'flute'];
+  const STUDIO_SHORT = { strat: 'STRAT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONGOS', steelpan: 'STEEL', drumkit: 'KIT', pvcFlute: 'MAGIC', flute: 'FLUTE' };
+  const STUDIO_TINY = { strat: 'STRT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONG', steelpan: 'STEL', drumkit: 'KIT', pvcFlute: 'PVC', flute: 'FLUT' };
+  const STUDIO_COL = { strat: '#f4f0e8', tele: '#f86858', jazzmaster: '#c878d8', bongos: '#e0a058', steelpan: '#b8d8f8', drumkit: '#5a88e8', pvcFlute: '#a8f0d0', flute: '#d8e0f8' };
+  const isFlute = (inst) => inst === 'pvcFlute' || inst === 'flute';
   const SONG_KEYS = [
     { name: 'E MINOR', root: 40, scale: [0, 3, 5, 7, 10] },
     { name: 'A MINOR', root: 45, scale: [0, 3, 5, 7, 10] },
@@ -7946,25 +7988,60 @@
   const panBase = (K) => K.root + (K.root < 44 ? 24 : 12);
   const panStep = (n) => (n < 11 ? n : n - 6); // (its top row: the home row's notes, an octave up)
   const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  // (a flute plays two octaves above the key's root; its top row is the next octave up, like the steel drum)
+  const fluteBase = (K) => K.root + 24;
   // what key n plays on a melodic instrument, for the guide while recording: a note's letter, or a
   // power chord's root with a 5 (E5 = E and its fifth); and which octave, for its tint
   function studioLabel(inst, n, keyIdx) {
     const K = SONG_KEYS[keyIdx] || SONG_KEYS[0];
+    if (isFlute(inst)) return { txt: NOTE_NAMES[scaleNote(K, panStep(n), fluteBase(K)) % 12], oct: Math.floor(panStep(n) / 5) };
     if (inst === 'steelpan') return { txt: NOTE_NAMES[scaleNote(K, panStep(n), panBase(K)) % 12], oct: Math.floor(panStep(n) / 5) };
     if (n < 11) return { txt: NOTE_NAMES[scaleNote(K, n, K.root) % 12], oct: Math.floor(n / 5) };
     return { txt: NOTE_NAMES[scaleNote(K, n - 11, K.root) % 12] + '5', oct: Math.floor((n - 11) / 5) };
   }
-  // play sound n of an instrument in a key (now, or at an audio time)
-  function studioSound(inst, n, keyIdx, at) {
+  // Held notes: the guitars, the steel drum and the flutes keep sounding while their key is held (up
+  // to HOLD_MAX seconds), and a quick tap still rings for RING seconds. Drums are always just a hit.
+  // A recorded note is [ms, n] (a hit, or a note from before notes could be held) or [ms, n, held ms].
+  const RING = { strat: 0.8, tele: 0.8, jazzmaster: 0.8, steelpan: 0.7, pvcFlute: 0.4, flute: 0.4 }, HOLD_MAX = 6;
+  // play sound n of an instrument in a key (now, or at an audio time). hold: how many seconds a
+  // recorded note was held, or true for a key that's down right now; then it returns a function
+  // that lets the note go (never sooner than its ring)
+  function studioSound(inst, n, keyIdx, at, hold) {
     const K = SONG_KEYS[keyIdx] || SONG_KEYS[0], I = G.audio.inst;
-    if (inst === 'drumkit') return [() => I.kick(at), () => I.snare(at), () => I.hat(at), () => I.crash(at), () => I.tom(true, at), () => I.tom(false, at)][n]();
-    if (inst === 'bongos') return I.bongo(n === 0, at);
-    if (inst === 'steelpan') return I.pan(scaleNote(K, panStep(n), panBase(K)), 0.7, at);
+    if (inst === 'drumkit') { [() => I.kick(at), () => I.snare(at), () => I.hat(at), () => I.crash(at), () => I.tom(true, at), () => I.tom(false, at)][n](); return null; }
+    if (inst === 'bongos') { I.bongo(n === 0, at); return null; }
+    // (a held or recorded note sounds the same: full length, cut where the key came up)
+    const ring = RING[inst], long = hold == null ? ring : HOLD_MAX, outs = [];
+    if (inst === 'steelpan') outs.push(I.pan(scaleNote(K, panStep(n), panBase(K)), long, at));
+    else if (isFlute(inst)) outs.push(I.flute(scaleNote(K, panStep(n), fluteBase(K)), long, 0.2, inst === 'pvcFlute' ? 'pvc' : 'flute', at));
     // a guitar: single notes on the home row, power chords (root, fifth, octave) on the top row
-    if (n < 11) return I.guitar(scaleNote(K, n, K.root), 0.8, 0.16, inst, at);
-    const r = scaleNote(K, n - 11, K.root);
-    for (const m of [r, r + 7, r + 12]) I.guitar(m, 0.8, 0.07, inst, at);
+    else if (n < 11) outs.push(I.guitar(scaleNote(K, n, K.root), long, 0.16, inst, at));
+    else { const r = scaleNote(K, n - 11, K.root); for (const m of [r, r + 7, r + 12]) outs.push(I.guitar(m, long, 0.07, inst, at)); }
+    const t0 = at || (G.audio.running ? G.audio.now() : 0), go = (t) => { for (const f of outs) if (f) f(t); };
+    if (hold === true) return (t) => go(Math.max(t || 0, t0 + ring));
+    if (hold != null) go(t0 + Math.max(ring, hold));
+    return null;
   }
+  // ---- the mixing board: each track of a song gets its own channel (its pedal, tone, pan, volume
+  // and reverb; G.audio.channel), made the first time it plays and kept with the song
+  // Track mix settings: vol (0-4), pan (-4 to 4), tone (-2 to 2), verb (0-3), fx (a pedal, or null).
+  const PEDALS = [[null, 'NONE', '-'], ['drive', 'OVERDRIVE', 'DRV'], ['echo', 'ECHO', 'ECHO'], ['chorus', 'CHORUS', 'CHOR'], ['trem', 'TREMOLO', 'TREM']];
+  const songChans = new WeakMap();
+  function mixApply(song, i) {
+    const ch = (songChans.get(song) || [])[i], tr = song.tracks[i];
+    if (ch) ch.set({ vol: VOLS[tr.vol], pan: tr.pan || 0, tone: tr.tone || 0, verb: tr.verb || 0, fx: G.state.items.pedals ? tr.fx || null : null });
+  }
+  function chanFor(song, i) {
+    let arr = songChans.get(song);
+    if (!arr) songChans.set(song, (arr = []));
+    if (!arr[i]) { arr[i] = G.audio.channel(); mixApply(song, i); }
+    return arr[i];
+  }
+  // play a note on a track, through its channel
+  const trackSound = (song, i, n, at, hold, inst = song.tracks[i].inst) => {
+    const ch = chanFor(song, i), go = () => studioSound(inst, n, song.key, at, hold);
+    return ch ? G.audio.withRoute(ch.input, go) : go();
+  };
   const newSong = () => ({ name: 'UNTITLED', key: 0, bpm: 100, click: true, len: 0, tracks: Array.from({ length: 8 }, () => ({ inst: null, vol: 3, mute: false, ev: [] })) });
   const studioWork = () => (G.state.studio = G.state.studio || newSong());
   const songsSaved = () => (G.state.songs = G.state.songs || []);
@@ -7974,8 +8051,7 @@
     const ev = [];
     song.tracks.forEach((tr, i) => {
       if (!tr.inst || tr.mute || i === skip) return;
-      const v = VOLS[tr.vol];
-      for (const [ms, n] of tr.ev) ev.push({ t: ms / 1000, play: (at) => G.audio.withLevel(v, () => studioSound(tr.inst, n, song.key, at)) });
+      for (const [ms, n, held] of tr.ev) ev.push({ t: ms / 1000, play: (at) => trackSound(song, i, n, at, held ? held / 1000 : undefined) });
     });
     return ev.sort((a, b) => a.t - b.t);
   }
@@ -8005,16 +8081,35 @@
   function studioCmd() {
     return {
       start() {
-        Object.assign(this, { song: studioWork(), sel: 0, mode: 'nav', t: 0, msg: null, msgT: 0, lit: {}, take: [], players: [], bins: [], menuSel: 0, pickSel: 0, hitT: 0, floats: [] });
+        Object.assign(this, { song: studioWork(), sel: 0, mode: 'nav', t: 0, msg: null, msgT: 0, lit: {}, take: [], players: [], bins: [], menuSel: 0, pickSel: 0, hitT: 0, floats: [], voices: {}, mixRow: 0, mixPlay: false });
         G.audio.stop();
         this.onKey = (e) => this.key(e);
+        this.onKeyUp = (e) => this.keyUp(e);
         addEventListener('keydown', this.onKey, true);
+        addEventListener('keyup', this.onKeyUp, true);
         this.rebin();
         const tr = this.song.tracks[0];
         if (!tr.inst && !tr.ev.length) tr.inst = this.have()[0];
         G.play.overlay = this;
       },
-      done() { removeEventListener('keydown', this.onKey, true); this.stopPlayers(); this.result = true; },
+      done() { removeEventListener('keydown', this.onKey, true); removeEventListener('keyup', this.onKeyUp, true); this.letGoAll(); this.stopPlayers(); this.result = true; },
+      // ---- held notes: a key that's down keeps its note sounding (and, while recording, growing)
+      // until it comes back up
+      live(code, n, track, rec) {
+        const inst = this.song.tracks[track].inst || this.have()[0], prev = this.voices[code];
+        if (prev && prev.rel) prev.rel();
+        const rel = trackSound(this.song, track, n, undefined, true, inst);
+        let idx = null;
+        if (rec) { const t = this.clock() - this.start0; if (t >= -0.15) { const ev = [Math.max(0, Math.round(t * 1000)), n]; if (RING[inst]) ev.push(Math.round(RING[inst] * 1000)); idx = this.take.push(ev) - 1; } }
+        this.voices[code] = { rel, t0: this.clock(), idx, inst };
+      },
+      keyUp(e) { const v = this.voices[e.code]; if (!v) return; delete this.voices[e.code]; this.finish(v); },
+      finish(v) {
+        if (v.rel) v.rel();
+        const ev = v.idx != null && this.take[v.idx];
+        if (ev && RING[v.inst]) ev[2] = Math.round(Math.min(HOLD_MAX, Math.max(RING[v.inst], this.clock() - v.t0)) * 1000);
+      },
+      letGoAll() { for (const code in this.voices) this.finish(this.voices[code]); this.voices = {}; },
       have() { return STUDIO_INST.filter((id) => G.instrumentHas(id)); },
       metro() { return !!G.state.items.metronome; },
       // (the audio clock, so takes line up with playback; the system clock if audio isn't running)
@@ -8025,7 +8120,16 @@
       // the little marks along each track's timeline (150 bins)
       rebin() {
         const L = this.lenS() || 1;
-        this.bins = this.song.tracks.map((tr) => { const b = new Uint8Array(150); for (const [ms] of tr.ev) b[Math.min(149, Math.floor((ms / 1000 / L) * 150))] = 1; return b; });
+        // (a held note fills its whole length: 2 for the hold, 1 for where a note starts)
+        this.bins = this.song.tracks.map((tr) => {
+          const b = new Uint8Array(150);
+          for (const [ms, , held] of tr.ev) {
+            const a = Math.min(149, Math.floor((ms / 1000 / L) * 150)), z = held && held > 900 ? Math.min(149, Math.floor(((ms + held) / 1000 / L) * 150)) : a;
+            for (let x = a + 1; x <= z; x++) b[x] = Math.max(b[x], 2);
+            b[a] = 1;
+          }
+          return b;
+        });
       },
       // ---- the keyboard
       key(e) {
@@ -8044,7 +8148,7 @@
           if (c === 'Backspace' || c === 'Escape' || c === 'KeyX') { this.stopPlayers(); this.mode = 'nav'; G.audio.sfx('cancel'); return true; }
           const n = studioNote(this.recInst, c);
           if (n == null) return true;
-          G.audio.withLevel(VOLS[tr.vol], () => studioSound(this.recInst, n, this.song.key));
+          this.live(c, n, this.recTrack, false);
           this.lit[c] = 8; this.hitT = 7;
           this.floats.push({ x: 104 + Math.random() * 32, y: 54, vx: (Math.random() - 0.5) * 0.8, life: 46, col: ['#f8d850', '#78e070', '#78c8f8', '#f8a0c8'][Math.floor(Math.random() * 4)] });
           return true;
@@ -8054,13 +8158,12 @@
           if (c === 'Backspace' || c === 'Escape') return this.endTake(false);
           const n = studioNote(this.recInst, c);
           if (n == null) return true;
-          G.audio.withLevel(VOLS[tr.vol], () => studioSound(this.recInst, n, this.song.key));
+          this.live(c, n, this.recTrack, true);
           this.lit[c] = 8; this.hitT = 7;
           this.floats.push({ x: 104 + Math.random() * 32, y: 54, vx: (Math.random() - 0.5) * 0.8, life: 46, col: ['#f8d850', '#78e070', '#78c8f8', '#f8a0c8'][Math.floor(Math.random() * 4)] });
-          const t = this.clock() - this.start0;
-          if (t >= -0.15) this.take.push([Math.max(0, Math.round(t * 1000)), n]);
           return true;
         }
+        if (m === 'mix') return this.mixKey(c);
         if (m === 'play') { if (c === 'KeyC' || c === 'Enter' || c === 'Escape' || c === 'KeyX') { this.stopPlayers(); this.mode = 'nav'; } return true; }
         if (m === 'confirm') {
           if (c === 'KeyZ' || c === 'Enter') { const f = this.onYes; this.mode = 'nav'; f(); G.audio.sfx('select'); }
@@ -8078,12 +8181,43 @@
         else if (c === 'KeyV') { if (tr.inst) { tr.mute = !tr.mute; G.audio.sfx('menu'); } }
         else if (c === 'Minus' || c === 'Equal') { tr.vol = Math.max(0, Math.min(4, tr.vol + (c === 'Equal' ? 1 : -1))); G.audio.sfx('menu'); }
         else if (c === 'Enter') { this.mode = 'menu'; this.menuSel = 0; G.audio.sfx('select'); }
+        else if (c === 'KeyB') { this.mode = 'mix'; this.mixRow = 0; G.audio.sfx('select'); }
         else if (c === 'KeyX' || c === 'Escape') { G.audio.sfx('cancel'); this.done(); }
         else {
           // any other key: try the selected track's instrument (nothing's recorded)
           const inst = tr.inst || this.have()[0], n = studioNote(inst, c);
           if (n == null) return false;
-          G.audio.withLevel(VOLS[tr.vol], () => studioSound(inst, n, this.song.key));
+          this.live(c, n, this.sel, false);
+          this.lit[c] = 8;
+        }
+        return true;
+      },
+      // ---- the mixing board: ←→ a track, ↑↓ a knob, - + turns it; C plays the song while you mix,
+      // V mutes, B (or X) goes back to the console. The pedals row is there once Abe's given Nate his.
+      mixRows() { return ['VOL', 'PAN', 'TONE', 'VERB'].concat(G.state.items.pedals ? ['FX'] : []); },
+      mixKey(c) {
+        const rows = this.mixRows(), tr = this.song.tracks[this.sel], row = rows[Math.min(this.mixRow, rows.length - 1)];
+        if (c === 'ArrowLeft' && this.sel > 0) { this.sel--; G.audio.sfx('menu'); }
+        else if (c === 'ArrowRight' && this.sel < 7) { this.sel++; G.audio.sfx('menu'); }
+        else if (c === 'ArrowUp') { this.mixRow = (this.mixRow + rows.length - 1) % rows.length; G.audio.sfx('menu'); }
+        else if (c === 'ArrowDown') { this.mixRow = (this.mixRow + 1) % rows.length; G.audio.sfx('menu'); }
+        else if (c === 'Minus' || c === 'Equal' || c === 'KeyZ') {
+          const d = c === 'Minus' ? -1 : 1, clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+          if (row === 'VOL') tr.vol = clamp(tr.vol + d, 0, 4);
+          else if (row === 'PAN') tr.pan = clamp((tr.pan || 0) + d, -4, 4);
+          else if (row === 'TONE') tr.tone = clamp((tr.tone || 0) + d, -2, 2);
+          else if (row === 'VERB') tr.verb = clamp((tr.verb || 0) + d, 0, 3);
+          else { const i = PEDALS.findIndex(([id]) => id === (tr.fx || null)); tr.fx = PEDALS[(i + d + PEDALS.length) % PEDALS.length][0]; }
+          mixApply(this.song, this.sel);
+          G.audio.sfx('menu');
+        } else if (c === 'KeyC') { if (this.mixPlay) { this.stopPlayers(); this.mixPlay = false; } else this.playSong(true); }
+        else if (c === 'KeyV') { if (tr.inst) { tr.mute = !tr.mute; G.audio.sfx('menu'); if (this.mixPlay) { this.stopPlayers(); this.playSong(true); } } }
+        else if (c === 'KeyB' || c === 'KeyX' || c === 'Escape' || c === 'Enter') { this.stopPlayers(); this.mixPlay = false; this.mode = 'nav'; G.audio.sfx('cancel'); }
+        else {
+          // the letter keys still try the track's instrument, through its channel
+          const inst = tr.inst || this.have()[0], n = studioNote(inst, c);
+          if (n == null) return false;
+          this.live(c, n, this.sel, false);
           this.lit[c] = 8;
         }
         return true;
@@ -8139,6 +8273,7 @@
       },
       endTake(keep) {
         const sg = this.song, tr = sg.tracks[this.recTrack], firstLen = !sg.len;
+        this.letGoAll();
         this.stopPlayers();
         this.mode = 'nav';
         if (!keep) { this.say('Take scrapped.'); G.audio.sfx('cancel'); return true; }
@@ -8155,13 +8290,14 @@
         this.say('Track ' + G.sayable(this.recTrack + 1) + ': ' + G.sayable(tr.ev.length) + ' notes.' + (firstLen ? ' The song is ' + mmss(sg.len / 1000) + ' long now.' : ''));
         return true;
       },
-      playSong() {
+      // (stay: play it from the mixing board, without leaving it)
+      playSong(stay) {
         const ev = songEvents(this.song);
         if (!ev.length) { this.say('Nothing to play yet. Z records a track.'); G.audio.sfx('bump'); return; }
         this.stopPlayers();
         this.start0 = this.clock() + 0.1;
         this.players.push(G.audio.player(ev, this.lenS(), false, this.start0));
-        this.mode = 'play';
+        if (stay) this.mixPlay = true; else this.mode = 'play';
       },
       // ---- the menu
       menuItems() {
@@ -8257,6 +8393,7 @@
           if ((len && pos >= len) || pos >= MAX_LEN) this.endTake(true);
         }
         if (this.mode === 'play' && this.clock() - this.start0 >= this.lenS() + 0.3) { this.stopPlayers(); this.mode = 'nav'; }
+        if (this.mixPlay && this.clock() - this.start0 >= this.lenS() + 0.3) { this.stopPlayers(); this.mixPlay = false; }
         G.play.overlay = this;
         return !!this.result;
       },
@@ -8269,6 +8406,7 @@
         studioBack(ctx, 'STUDIO B: ' + sg.name, right);
         if (rec && (this.t >> 4) & 1) { ctx.fillStyle = '#f83838'; ctx.fillRect(G.W - 6 - FT().width(right) - 10, 3, 6, 6); }
         if (live) this.drawLive(ctx, pos);
+        else if (m === 'mix') this.drawMixer(ctx, pos);
         else this.drawConsole(ctx, pos);
         if (m === 'menu') this.drawMenu(ctx);
         if (m === 'name') this.drawName(ctx);
@@ -8289,6 +8427,7 @@
             // (a drum shrunk to fit; a little guitar, lying down, in its color)
             const it = G.INSTRUMENTS.find((x) => x.id === tr.inst), img = it.art();
             if (it.drum) { const k = Math.min(9 / img.height, 12 / img.width); ctx.drawImage(img, 22, y + 1, Math.round(img.width * k), Math.round(img.height * k)); }
+            else if (it.wind) { ctx.fillStyle = '#1c1424'; ctx.fillRect(21, y + 3, 13, 5); ctx.fillStyle = STUDIO_COL[tr.inst]; ctx.fillRect(22, y + 4, 11, 3); ctx.fillStyle = '#2a2a30'; for (const x of [24, 27, 29, 31]) ctx.fillRect(x, y + 5, 1, 1); }
             else {
               ctx.fillStyle = '#1c1424'; ctx.fillRect(21, y + 2, 7, 7); ctx.fillRect(27, y + 4, 7, 3);
               ctx.fillStyle = STUDIO_COL[tr.inst]; ctx.fillRect(22, y + 3, 5, 5); ctx.fillStyle = '#c8945a'; ctx.fillRect(27, y + 5, 6, 1); ctx.fillStyle = '#5a3a24'; ctx.fillRect(32, y + 4, 2, 3);
@@ -8300,7 +8439,8 @@
           // the timeline
           ctx.fillStyle = '#120e18'; ctx.fillRect(TX, y + 1, TW, 9);
           ctx.fillStyle = tr.mute ? '#4a4258' : STUDIO_COL[tr.inst] || '#9890a8';
-          if (sg.len) { const b = this.bins[i]; for (let x = 0; x < 150; x++) if (b[x]) ctx.fillRect(TX + x, y + 2, 1, 7); }
+          // (a note's start is a full tick; a held note trails a thinner bar)
+          if (sg.len) { const b = this.bins[i]; for (let x = 0; x < 150; x++) if (b[x] === 1) ctx.fillRect(TX + x, y + 2, 1, 7); else if (b[x]) ctx.fillRect(TX + x, y + 4, 1, 3); }
           if (tr.mute) FT().draw(ctx, 'MUTE', TX + TW - FT().width('MUTE') - 2, y + 2, '#f86858');
         });
         // the playhead
@@ -8314,7 +8454,7 @@
           const tr = sg.tracks[this.sel], inst = tr.inst && G.INSTRUMENTS.find((x) => x.id === tr.inst);
           const line = this.msgT > 0 ? this.msg : 'TRACK ' + G.sayable(this.sel + 1) + ': ' + (inst ? inst.name.replace('Abe\'s ', '') : 'no instrument') + (tr.ev.length ? '  (' + G.sayable(tr.ev.length) + ' notes)' : '  ←→ instrument');
           FT().wrap(line, 228).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 6, 115 + k * 9, this.msgT > 0 ? '#f8d850' : '#f8f8f0'));
-          FT().draw(ctx, 'Z record  C play  V mute  - + volume', 6, 136, '#9890a8');
+          FT().draw(ctx, 'Z record  C play  V mute  -+ vol  B mixer', 6, 136, '#9890a8');
           FT().draw(ctx, 'ENTER menu  X leave  (letter keys: try it)', 6, 146, '#9890a8');
         }
       },
@@ -8336,9 +8476,12 @@
         // Nate, three times size, with the instrument
         const nate = (G.nateSprites ? G.nateSprites() : G.sprites.nate).down[0], k = 3, bob = this.hitT > 3 ? 2 : 0, jolt = this.hitT > 4 ? 1 : 0;
         const nx = 120 - (nate.width * k) / 2, ny = FLOOR - nate.height * k - bob, img = it.art();
-        if (!it.drum) { const amp = G.spr.vibroAmp; ctx.drawImage(amp, 160, FLOOR - amp.height); }
+        if (!it.drum && !it.wind) { const amp = G.spr.vibroAmp; ctx.drawImage(amp, 160, FLOOR - amp.height); }
         ctx.drawImage(nate, Math.round(nx), Math.round(ny), nate.width * k, nate.height * k);
-        if (!it.drum) {
+        if (it.wind) {
+          // a flute, held out to his right at his mouth
+          ctx.save(); ctx.translate(nx + 22, ny + 26 + jolt); ctx.rotate(-Math.PI / 2 + 0.1); ctx.drawImage(img, -img.width * 1.3, 0, img.width * 1.3, img.height * 1.3); ctx.restore();
+        } else if (!it.drum) {
           // a guitar slung across him (and a little flash where he strums)
           ctx.save(); ctx.translate(nx + 24, ny + 54); ctx.rotate(-1.1 + jolt * 0.05); ctx.drawImage(img, -9, -27, 18, 55); ctx.restore();
           if (this.hitT > 3) { ctx.fillStyle = '#fff8c8'; ctx.fillRect(Math.round(nx + 30), Math.round(ny + 52), 3, 1); ctx.fillRect(Math.round(nx + 31), Math.round(ny + 51), 1, 3); }
@@ -8367,7 +8510,11 @@
         const L = len || Math.max(10, pos * 1.25);
         ctx.fillStyle = '#120e18'; ctx.fillRect(0, 104, G.W, 8);
         ctx.fillStyle = STUDIO_COL[inst];
-        for (const [ms] of this.take) ctx.fillRect(Math.min(G.W - 1, Math.floor((ms / 1000 / L) * G.W)), 105, 1, 6);
+        for (const [ms, , held] of this.take) {
+          const x = Math.min(G.W - 1, Math.floor((ms / 1000 / L) * G.W));
+          ctx.fillRect(x, 105, 1, 6);
+          if (held && held > 900) ctx.fillRect(x, 107, Math.max(1, Math.floor((held / 1000 / L) * G.W)), 2);
+        }
         if (this.mode === 'rec' && pos >= 0) { ctx.fillStyle = '#f86858'; ctx.fillRect(Math.min(G.W - 1, Math.floor((pos / L) * G.W)), 104, 1, 8); }
         if (this.mode === 'ready') { const t2 = len ? 'Song: ' + mmss(len) + '. The take starts at the top.' : 'This first take sets the song\'s length.'; FT().draw(ctx, t2, 120 - Math.round(FT().width(t2) / 2), 104, '#9890a8'); }
         ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 112, G.W, 48);
@@ -8379,6 +8526,47 @@
           ctx.fillStyle = 'rgba(12,10,18,0.6)'; ctx.fillRect(70, 36, 100, 34);
           FT().drawBig(ctx, txt, Math.round(120 - w / 2), 42, 3, '#f8d850', '#1c1424');
         }
+      },
+      // The mixing board: a channel strip for each track (its instrument up top, then the pedal, the
+      // reverb and tone knobs, the pan, and a volume fader), the knob you're on boxed in gold.
+      drawMixer(ctx, pos) {
+        const sg = this.song, rows = this.mixRows(), cur = rows[Math.min(this.mixRow, rows.length - 1)], pedals = !!G.state.items.pedals;
+        const CY = { FX: 36, VERB: 49, TONE: 62, PAN: 75, VOL: 85 };
+        ctx.fillStyle = '#211b2c'; ctx.fillRect(0, 13, G.W, 115);
+        const knob = (x, y, v, lo, hi, on) => {
+          ctx.fillStyle = '#0c0a12'; ctx.fillRect(x - 4, y - 4, 9, 9); ctx.fillStyle = on ? '#4a4258' : '#3a3448'; ctx.fillRect(x - 3, y - 3, 7, 7);
+          const a = -2.4 + ((v - lo) / (hi - lo)) * 4.8; ctx.fillStyle = '#f8f8f0'; ctx.fillRect(Math.round(x + Math.sin(a) * 2.5), Math.round(y - Math.cos(a) * 2.5), 1, 1); ctx.fillRect(x, y, 1, 1);
+        };
+        sg.tracks.forEach((tr, i) => {
+          const x0 = 2 + i * 29, cx = x0 + 14, on = i === this.sel, col = tr.inst ? STUDIO_COL[tr.inst] : '#5a4e70';
+          ctx.fillStyle = on ? '#3a3058' : i % 2 ? '#1e1828' : '#262034'; ctx.fillRect(x0, 13, 28, 115);
+          FT().draw(ctx, G.sayable(i + 1), cx - Math.round(FT().width(G.sayable(i + 1)) / 2), 14, on ? '#f8d850' : '#9890a8');
+          const nm = tr.inst ? STUDIO_TINY[tr.inst] : '-';
+          FT().draw(ctx, nm, cx - Math.round(FT().width(nm) / 2), 22, tr.mute ? '#5a4e70' : col);
+          if (pedals) { const pd = PEDALS.find(([id]) => id === (tr.fx || null)), t = pd[2]; ctx.fillStyle = tr.fx ? '#5a2a3a' : '#16121e'; ctx.fillRect(x0 + 3, CY.FX - 4, 22, 9); FT().draw(ctx, t, cx - Math.round(FT().width(t) / 2), CY.FX - 3, tr.fx ? '#f8a8b8' : '#5a4e70'); }
+          knob(cx, CY.VERB, tr.verb || 0, 0, 3, on); knob(cx, CY.TONE, tr.tone || 0, -2, 2, on);
+          ctx.fillStyle = '#0c0a12'; ctx.fillRect(x0 + 4, CY.PAN, 20, 3); ctx.fillStyle = '#5a4e70'; ctx.fillRect(cx, CY.PAN - 1, 1, 5);
+          ctx.fillStyle = '#f8d850'; ctx.fillRect(Math.round(cx + (tr.pan || 0) * 2.25) - 1, CY.PAN - 1, 3, 5);
+          // the fader
+          ctx.fillStyle = '#0c0a12'; ctx.fillRect(cx - 1, CY.VOL, 3, 36);
+          const fy = CY.VOL + 32 - tr.vol * 8;
+          ctx.fillStyle = tr.mute ? '#5a4e70' : '#c8c0d8'; ctx.fillRect(cx - 5, fy, 11, 4); ctx.fillStyle = tr.mute ? '#3a3448' : '#f8f8f0'; ctx.fillRect(cx - 5, fy + 1, 11, 1);
+          if (tr.mute) FT().draw(ctx, 'M', x0 + 2, 14, '#f86858');
+          // the knob you're on
+          if (on) { const y = cur === 'VOL' ? CY.VOL - 2 : CY[cur] - 6; ctx.strokeStyle = '#f8d850'; ctx.lineWidth = 1; ctx.strokeRect(x0 + 1.5, y + 0.5, 25, cur === 'VOL' ? 40 : 12); }
+        });
+        // the row names, down the gap between the strips (tiny, on the left edge of the selected one)
+        // and what the knob you're on is set to
+        const tr = sg.tracks[this.sel], val = {
+          VOL: G.sayable(tr.vol + 1) + ' of 5', PAN: !tr.pan ? 'CENTER' : (tr.pan < 0 ? 'LEFT ' : 'RIGHT ') + G.sayable(Math.abs(tr.pan)),
+          TONE: ['DARKEST', 'DARK', 'FLAT', 'BRIGHT', 'BRIGHTEST'][(tr.tone || 0) + 2], VERB: ['DRY', 'A LITTLE ROOM', 'A HALL', 'A CATHEDRAL'][tr.verb || 0],
+          FX: PEDALS.find(([id]) => id === (tr.fx || null))[1],
+        }[cur];
+        ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 128, G.W, 32);
+        FT().draw(ctx, 'TRACK ' + G.sayable(this.sel + 1) + '  ' + { VOL: 'VOLUME', PAN: 'PAN', TONE: 'TONE', VERB: 'REVERB', FX: 'PEDAL' }[cur] + ': ' + val, 6, 131, '#f8d850');
+        if (this.mixPlay) FT().draw(ctx, 'PLAYING ' + mmss(pos), G.W - 6 - FT().width('PLAYING ' + mmss(pos)), 131, '#78e070');
+        FT().draw(ctx, '←→ track  ↑↓ knob  - + turn  C play  V mute', 6, 141, '#9890a8');
+        FT().draw(ctx, (pedals ? '' : 'Pedals: Abe might have some. ') + 'B back', 6, 150, '#9890a8');
       },
       // while recording: the keys for the instrument (they light up when played), each with the note
       // or chord it plays under it (tinted by octave: dim, white, then gold the highest)
@@ -8401,7 +8589,7 @@
           };
           // (the top row spaced wider, so a chord's two characters fit under its key)
           TOP_ROW.forEach((code, k) => { cap(code, 6 + k * 15, 113); label(code, 6 + k * 15, 125); });
-          FT().draw(ctx, inst === 'steelpan' ? 'HIGH' : 'CHORDS', 160, 115, '#c8c0d8');
+          FT().draw(ctx, inst === 'steelpan' || isFlute(inst) ? 'HIGH' : 'CHORDS', 160, 115, '#c8c0d8');
           HOME_ROW.forEach((code, k) => { cap(code, 6 + k * 12, 135); label(code, 6 + k * 12, 147); });
           FT().draw(ctx, 'NOTES', 140, 137, '#c8c0d8');
           FT().draw(ctx, SONG_KEYS[this.song.key].name, 140, 147, '#9890a8');
@@ -8483,7 +8671,8 @@
     f.raeLine = ((f.raeLine || 0) + 1) % lines.length;
     yield G.say('Rae', lines[f.raeLine]);
   };
-  // Abe's news, at the amp: the studio (once Nate has an instrument of his) and the metronome (three)
+  // Abe's news, at the amp: the studio (once Nate has an instrument of his), the metronome (three) and
+  // his old guitar pedals (five; they unlock the PEDAL knob on the studio's mixer)
   function* abeStudioNews() {
     const f = flags(), s = G.state, n = G.abeInstruments();
     if (n >= 1 && !f.studioTold) {
@@ -8497,6 +8686,15 @@
       s.items.metronome = true;
       yield G.itemGet(G.spr.metronomeIcon, 'You got {y}Abe\'s Metronome{/}! It goes on the desk in {y}Studio B{/}, at the Williams Center.');
       yield G.say('Abe', 'Keep time with this. Not with your foot. Your foot lies.');
+      G.play.autosave();
+    }
+    if (n >= 5 && !s.items.pedals) {
+      yield G.say('Abe', 'Five instruments. FIVE. Okay. You\'re ready for these.');
+      yield G.say(null, 'Abe slides a beat-up pedalboard out from under the couch. Four little stompboxes, held down with a LOT of Velcro.');
+      yield G.say('Abe', 'My old pedals. Overdrive, echo, chorus, tremolo. Every one of them has been stepped on by a professional. Me.');
+      s.items.pedals = true;
+      yield G.itemGet(G.spr.pedalsIcon, 'You got {y}Abe\'s Guitar Pedals{/}! In {y}Studio B{/}, press {y}B{/} at the console for the mixer: every track gets a pedal.');
+      yield G.say('Abe', 'They work on anything, by the way. Echo on a flute. Overdrive on bongos. I\'m not going to stop you.');
       G.play.autosave();
     }
   }
