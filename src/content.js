@@ -5862,16 +5862,16 @@
     blend: ['Pick a jar with the arrows. Z adds a scoop. X puts the last one back.', 'A blend is four scoops. Dad tells you what goes in it.', 'With four in, he sniffs it and tells you how many are right.'],
     pack: ['The needle goes up and down. Press Z when it\'s inside the green box.', 'Three pinches: gently, then a little firmer, then firm.'],
     fight: ['← → walk (tap twice to dash). ↑ jump. ↓ crouch: it ducks high punches. Z punch, X kick; ↓+Z a low jab, ↓+X a sweep.', 'In the air, Z or X plus a direction: nothing = spin kick, toward him = flying knee, away = back kick, ↑ = up swipe, ↓ = a stomp that SPIKES him.', 'Hold away from him (or hold V) to block; add ↓ for low kicks. Tap V as a hit lands to PARRY. C grabs: the ARMY SUPLEX. ↓ then → then Z: TAKEDOWN. Full FIGHT meter: C is GROUND AND POUND. Win two rounds.'],
-    jam: ['Notes slide down the strings. Hit each one with its arrow (← ↓ ↑ →) right as it crosses the pickup at the bottom.', 'Two notes at once? Press both arrows. A note with a long tail is a HOLD: keep the arrow down till the tail runs out.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
+    jam: ['Notes slide down the strings. Hit each one with its arrow (← ↓ ↑ →) right as it crosses the pickup at the bottom.', 'Two notes at once? Press both arrows. A note with a long tail is a HOLD: keep the arrow down till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     studio: [
       ['Eight tracks. ↑↓ picks a track, ←→ its instrument: anything you\'ve won from Abe.', 'Z records. You play it LIVE on the keyboard: the home row (A S D F...) and the row above it. There\'s no editing and no moving notes. You play it, it\'s on the record.', 'Not recording? The letter keys let you try the instrument out.'],
       ['Z gets you ready: play along as long as you like (nothing records yet), then ENTER starts the take. ENTER stops it; BACKSPACE scraps it.', 'The first track you record sets how long the song is. Record the rest on top of it. C plays the song. V mutes a track; - and + set its volume.', 'ENTER opens the menu: the song\'s key, SAVE SONG, LOAD SONG, and PLAY IN GAME, which makes your song the game\'s music.'],
     ],
     metronome: ['Abe\'s metronome is on the desk now. It starts clicking as soon as you get ready, so you can warm up on the beat. Press ENTER and it counts four more, then you\'re recording.', 'ENTER > TEMPO sets how fast. ENTER > CLICK turns it off. And with it on, the first track rounds up to a whole bar.'],
     jam_bongos: ['← hits the little drum (the macho), → the big one (the hembra). Hit each note right as it lands on its drum.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
-    jam_pan: ['Every dent in the steel drum is a note: ← ↓ ↑ → from low to high. Hit each note right as it lands on its dent. A long tail means HOLD it.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
-    jam_flute: ['Notes slide down onto the finger holes: low notes on the left, high on the right. Cover each hole with its arrow (← ↓ ↑ →) right as its note lands. A long tail means HOLD it till the tail runs out.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
-    jam_piano: ['Notes slide down onto the keys: low notes on the left, high on the right. Press each one with its arrow (← ↓ ↑ →) right as it lands.', 'Two at once? Press both. A long tail means HOLD it till the tail runs out.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
+    jam_pan: ['Every dent in the steel drum is a note: ← ↓ ↑ → from low to high. Hit each note right as it lands on its dent. A long tail means HOLD it (let go early and it\'s DROPPED).', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
+    jam_flute: ['Notes slide down onto the finger holes: low notes on the left, high on the right. Cover each hole with its arrow (← ↓ ↑ →) right as its note lands. A long tail means HOLD it till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
+    jam_piano: ['Notes slide down onto the keys: low notes on the left, high on the right. Press each one with its arrow (← ↓ ↑ →) right as it lands.', 'Two at once? Press both. A long tail means HOLD it till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
     jam_kit: ['← hi-hat, ↓ kick drum, ↑ snare, → crash and toms. Hit each note right as it lands on its drum.', 'Two at once (like kick and hi-hat)? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
   };
 
@@ -7640,7 +7640,7 @@
     const END = notes[notes.length - 1].t + 2 * fpb, speed = (HIT_Y - TOP) / song.lead;
     return {
       start() {
-        Object.assign(this, { f: 0, groove: 0.6, combo: 0, maxCombo: 0, score: 0, perfect: 0, good: 0, miss: 0, half: -1, bob: 0, sparks: [], judge: null, judgeT: 0, judgeL: 0, failT: 0, doneT: 0, msg: null, notes, song, fpb, COUNT, hitT: [0, 0, 0, 0], holds: [null, null, null, null] });
+        Object.assign(this, { f: 0, groove: 0.6, combo: 0, maxCombo: 0, score: 0, perfect: 0, good: 0, miss: 0, half: -1, bob: 0, sparks: [], judge: null, judgeT: 0, judgeL: 0, failT: 0, doneT: 0, msg: null, notes, song, fpb, COUNT, hitT: [0, 0, 0, 0], holds: [null, null, null, null], drops: 0 });
         talk.nowT = 0; G.audio.stop(); G.play.overlay = this;
       },
       mult() { return Math.min(4, 1 + Math.floor(this.combo / 8)); },
@@ -7689,8 +7689,9 @@
           default: return pose(A.down[0]);
         }
       },
+      // (a dropped hold gives back half its hit)
       res(passed) {
-        const acc = (this.perfect + this.good * 0.6) / notes.length;
+        const acc = Math.max(0, (this.perfect + this.good * 0.6 - this.drops * 0.5) / notes.length);
         return { passed, acc, stars: acc >= 0.9 ? 3 : acc >= 0.75 ? 2 : 1, perfect: this.perfect, good: this.good, miss: this.miss, maxCombo: this.maxCombo, score: this.score };
       },
       // the band, every half beat: a count-in, then the drums and Abe's bass
@@ -7777,17 +7778,27 @@
         const h = Math.floor(this.f / (fpb / 2));
         if (h !== this.half) { this.half = h; this.band(h); }
         for (const L of USED) if (inp.hit(KEYS[L])) this.strum(L);
-        // the holds: keep the arrow down until the tail runs out
+        // the holds: keep the arrow down until the tail runs out. Letting go early DROPS it: the streak
+        // breaks, the groove drains, Abe winces, and it costs the song's accuracy. (Letting go in the
+        // last bit of the tail still counts.)
         for (let L = 0; L < 4; L++) {
           const h = this.holds[L];
           if (!h) continue;
-          const n = h.n;
-          if (!inp.down(KEYS[L])) { n.broken = true; if (h.rel) h.rel(); this.holds[L] = null; continue; }
-          if (this.f >= n.t + n.holdF) {
+          const n = h.n, end = n.t + n.holdF;
+          if (this.f >= end || (!inp.down(KEYS[L]) && this.f >= end - n.holdF * 0.15)) {
             n.held = true; this.holds[L] = null; if (h.rel) h.rel();
             this.score += 50 * this.mult(); this.groove = Math.min(1, this.groove + 0.02);
             this.judge = 'HOLD!'; this.judgeT = 22; this.judgeL = L;
             for (let k = 0; k < 8; k++) this.sparks.push({ x: LANES[L], y: HIT_Y, vx: (Math.random() - 0.5) * 3, vy: -1.5 - Math.random() * 2, life: 20, c: GEM[L] || '#f8f8f0' });
+            continue;
+          }
+          if (!inp.down(KEYS[L])) {
+            n.broken = true; if (h.rel) h.rel(); this.holds[L] = null;
+            this.drops++; this.combo = 0; this.groove -= song.drain; this.oofT = 20;
+            this.judge = 'DROPPED'; this.judgeT = 22; this.judgeL = L;
+            G.audio.sfx('bump');
+            if (this.drops === 1 || this.drops % 4 === 0) talk.say(['Hold it! The long ones, you HOLD.', 'All the way down the tail!', 'Don\'t let go! Ride it out!'][Math.floor(this.drops / 4) % 3]);
+            this.checkFail();
             continue;
           }
           if (this.f % 4 === 0) { this.score += 4 * this.mult(); this.sparks.push({ x: LANES[L] + (Math.random() - 0.5) * 6, y: HIT_Y - 2, vx: (Math.random() - 0.5) * 0.8, vy: -1 - Math.random(), life: 12, c: GEM[L] || '#f8f8f0' }); }
