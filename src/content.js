@@ -7307,6 +7307,8 @@
       won: [['Abe', 'It\'s yours. Do NOT ask me to help move it.']], gotLine: 'Moving it is your problem now.',
       talk: [
         'A rag! Ragtime! Your left hand goes oom, your right hand goes pah.',
+        'Not the AI kind of RAG. Retrieval-Augmented Generation. Totally different thing.',
+        'That RAG looks stuff up before it answers. You look at the notes. ...Same idea.',
         'This piano was free. Every piano on a curb is free. Remember that.',
         'Some of these keys stick. Play around them. Like a pro.',
         'You play. I dance. That\'s the deal.',
