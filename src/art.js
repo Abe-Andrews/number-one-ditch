@@ -261,6 +261,13 @@
       p.hline(3, 4, y0 + 7, b); p.hline(11, 12, y0 + 7, b);
       p.hline(4, 6, y0 + 8, b); p.hline(9, 11, y0 + 8, b);
       p.hline(5, 10, y0 + 9, b);
+      // (longBeard: a mustache, and a beard all the way down the chest: Dan Hurd's)
+      if (c.longBeard) {
+        const bd = shade(b, -0.16);
+        p.hline(6, 9, y0 + 7, b);
+        p.hline(4, 11, y0 + 10, b); p.hline(5, 10, y0 + 11, b); p.hline(5, 10, y0 + 12, b); p.hline(6, 9, y0 + 13, b); p.hline(6, 9, y0 + 14, b); p.hline(7, 8, y0 + 15, b);
+        for (const [x, y] of [[6, 10], [9, 11], [7, 12], [8, 14], [5, 11]]) p.set(x, y0 + y, bd);
+      }
     }
     if (c.glasses) {
       // round frames with a lens glint above each eye
@@ -564,6 +571,7 @@
       return;
     }
     if (!c.hat) return;
+    if (c.hatStyle === 'wide') { wideHat(p, c, y0); return; }
     if (c.hatStyle === 'flat') {
       for (let i = 0; i < 3; i++) p.hline(HEAD[i][0], HEAD[i][1], y0 + i, c.hat);
       for (let x = 4; x <= 11; x += 2) p.set(x, y0 + 1, c.hatL);
@@ -579,6 +587,17 @@
     }
   }
 
+  // a wide-brimmed straw hat: a tall crown with a band, and a brim out past both ears
+  function wideHat(p, c, y0, side) {
+    p.hline(5, 10, y0 - 1, c.hatL);
+    for (let i = 0; i < 3; i++) p.hline(HEAD[i][0], HEAD[i][1], y0 + i, c.hat);
+    p.hline(HEAD[2][0], HEAD[2][1], y0 + 2, c.hatBand || c.hatD);
+    for (const [x, y] of [[5, 0], [8, 1], [10, 0], [6, 1]]) p.set(x, y0 + y, c.hatD);
+    if (side) { p.hline(1, 15, y0 + 3, c.hat); p.hline(2, 14, y0 + 3, c.hat); p.set(15, y0 + 4, c.hatD); p.set(1, y0 + 4, c.hatD); return; }
+    p.hline(0, 15, y0 + 3, c.hat); p.hline(2, 13, y0 + 3, c.hatL);
+    p.set(0, y0 + 4, c.hatD); p.set(15, y0 + 4, c.hatD);
+  }
+
   function hatBack(p, c, y0, ty) {
     if (c.hood) {
       for (let i = 0; i < 10; i++) p.hline(HEAD[i][0], HEAD[i][1], y0 + i, i > 7 ? shade(c.hood, -0.25) : c.hood);
@@ -586,6 +605,7 @@
       return;
     }
     if (!c.hat) return;
+    if (c.hatStyle === 'wide') { wideHat(p, c, y0); return; }
     for (let i = 0; i < 4; i++) p.hline(HEAD[i][0], HEAD[i][1], y0 + i, i === 3 ? c.hatD : c.hat);
     if (c.hatStyle !== 'flat') { p.set(7, y0 + 3, c.hair); p.set(8, y0 + 3, c.hair); }
   }
@@ -749,6 +769,7 @@
       p.hline(8, 12, y0 + 7, b);
       p.hline(8, 12, y0 + 8, b); p.set(11, y0 + 8, c.smile || c.skinD);
       p.hline(7, 10, y0 + 9, b);
+      if (c.longBeard) { p.hline(8, 11, y0 + 10, b); p.hline(8, 11, y0 + 11, b); p.hline(9, 11, y0 + 12, b); p.hline(9, 10, y0 + 13, b); p.set(10, y0 + 14, b); p.set(9, y0 + 11, shade(b, -0.16)); }
     }
     if (c.goatee) p.hline(9, 11, y0 + 9, c.goatee);
     if (c.glasses) {
@@ -763,6 +784,8 @@
     if (c.hood) {
       for (let i = 0; i < 2; i++) p.hline(HEAD[i][0], HEAD[i][1], y0 + i, c.hood);
       for (let y = y0 + 2; y <= y0 + 10; y++) p.hline(2, 6, y, y > y0 + 7 ? shade(c.hood, -0.25) : c.hood);
+    } else if (c.hat && c.hatStyle === 'wide') {
+      wideHat(p, c, y0, true);
     } else if (c.hat) {
       for (let i = 0; i < 3; i++) p.hline(HEAD[i][0], HEAD[i][1], y0 + i, c.hat);
       p.hline(5, 8, y0, c.hatL);
@@ -5175,6 +5198,12 @@
       case 'crystalGeode':
         for (let y = 1; y < 12; y++) for (let x = 0; x < 14; x++) { const d = (x - 6.5) ** 2 / 44 + (y - 6.5) ** 2 / 28; if (d <= 1) p.set(x, y, d > 0.6 ? '#7a7066' : d > 0.42 ? '#c8c0d8' : G.hash(x, y, 73) < 0.35 ? '#ffffff' : '#b898e0'); }
         p.set(5, 5, '#ffffff'); p.set(8, 7, '#ffffff'); break;
+      case 'placerGold':
+        // a little glass vial of gold flakes with a cork in it
+        p.rect(4, 1, 6, 2, '#8a6a40'); p.hline(4, 9, 1, '#a8885a');
+        p.rect(3, 3, 8, 9, '#c8dce8'); p.vline(3, 3, 11, '#e8f4fc'); p.vline(10, 3, 11, '#9ab4c4'); p.hline(3, 10, 11, '#9ab4c4');
+        p.rect(4, 7, 6, 4, '#28323a'); for (const [x, y] of [[5, 8], [7, 9], [8, 7], [6, 10], [9, 9], [4, 9]]) p.set(x, y, '#f8d040'); p.set(7, 8, '#fff4a0');
+        break;
       case 'cannonball': for (let y = 1; y < 12; y++) for (let x = 1; x < 13; x++) if ((x - 6.5) ** 2 + (y - 6.5) ** 2 <= 27) p.set(x, y, '#2a2a2e'); p.set(4, 4, '#8a8a94'); p.set(5, 3, '#6a6a74'); p.set(8, 9, '#4a3a2a'); break;
     }
     return finish(p);
@@ -5385,6 +5414,14 @@
     p.rect(2, 0, 12, 10, '#08060a');
     p.vline(3, 0, 33, '#8a6a40'); p.vline(12, 0, 33, '#8a6a40'); p.vline(4, 0, 33, '#5a4024'); p.vline(13, 0, 33, '#5a4024');
     for (let y = 2; y < 34; y += 4) p.hline(4, 11, y, '#9a7a4a');
+    return finish(p);
+  }
+  // Dan Hurd's gold pan: green plastic, riffles on one side, a streak of black sand in the bottom.
+  function goldPan() {
+    const p = new Pix(13, 7);
+    for (let y = 0; y < 7; y++) for (let x = 0; x < 13; x++) if ((x - 6) ** 2 / 40 + (y - 3) ** 2 / 10 <= 1) p.set(x, y, y < 2 ? '#4a9a5a' : '#2e6a3a');
+    p.hline(3, 9, 3, '#1c3a24'); p.hline(2, 10, 1, '#5ab06a');
+    p.hline(5, 8, 4, '#1a1a1e'); p.set(6, 4, '#f8d040');
     return finish(p);
   }
   // A chest on a ledge across the water: reel it in.
@@ -10127,7 +10164,7 @@
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
     S.vanWickle = vanWickle();
-    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone', 'malachite', 'kidney', 'magCrystal', 'tommy', 'willemite', 'crystalGeode']) S.rockIcons[k] = rockIcon(k);
+    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone', 'malachite', 'kidney', 'magCrystal', 'tommy', 'willemite', 'crystalGeode', 'placerGold']) S.rockIcons[k] = rockIcon(k);
     S.oreVein = [oreVein(0), oreVein(1), oreVein(2)]; S.dumpPile = dumpPile(false); S.slagPile = dumpPile(true);
     S.furnaceRuin = furnaceRuin(); S.adit = adit(); S.bat = [batFrame(true), batFrame(false)];
     S.batRed = [batFrameRed(true), batFrameRed(false)];
@@ -10138,6 +10175,7 @@
     S.mohs = {}; for (const k of ['calcite', 'sphalerite', 'magnetite', 'quartz']) S.mohs[k] = [mohsPillar(k, false), mohsPillar(k, true)];
     S.ironGate = ironGate(false); S.ironGateOpen = ironGate(true); S.highShelf = highShelf(false); S.highShelfEmpty = highShelf(true);
     S.carbideLamp = carbideLamp(); S.winzeHole = winzeHole(); S.ladderUp = ladderUp(); S.ledgeRock = ledgeRock();
+    S.goldPan = goldPan();
     S.megaphone = megaphone(); S.megaphoneL = mirror(S.megaphone); S.cavePearls = cavePearls();
     // (and pointing down, for holding it by the handle at her side)
     { const m = S.megaphone, c = G.canvas(m.height, m.width), x = c.getContext('2d'); x.translate(m.height, 0); x.rotate(Math.PI / 2); x.drawImage(m, 0, 0); S.megaphoneDown = c; }

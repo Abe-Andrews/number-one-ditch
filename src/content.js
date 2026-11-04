@@ -82,6 +82,15 @@
       skin: '#dca07a', hair: '#34261e', hairStyle: 'short', temples: '#a09a94', smile: '#ffffff',
       coat: '#26304a', shirt: '#b4c8e4', collar: '#dce6f4', pants: '#b8a888', shoes: '#5a4030', torso: 7, legs: 3,
     },
+    // Dan Hurd, the gold prospector from British Columbia (Nate's hero; from the user's photo): a wide
+    // straw hat with a band, thin wire glasses, a long ginger beard down his chest, a white shirt with a
+    // blue and red check, and the blue straps of his pack. Panning black sand at the bottom of Andover.
+    danHurd: {
+      skin: '#f0b89c', hair: '#c88a50', hairStyle: 'short', beard: '#e0a45c', longBeard: true, beardLow: true, glasses: '#9a9aa4', smile: '#ffffff', blush: true,
+      hat: '#d8b878', hatStyle: 'wide', hatBand: '#7a5a34',
+      shirt: '#eeeef2', pattern: 'plaid', plaidL: '#8a96c8', plaidW: '#c06a6a', sleeves: 'long', straps: '#3a78c8',
+      pants: '#5a5a4c', shoes: '#5a4030', boots: true, torso: 7, legs: 4,
+    },
     // The toll-taker in the Chesapeake Channel Tunnel: a deep hood, no face, two glowing eyes.
     hooded: {
       skin: '#141018', hair: '#2a2438', hairStyle: 'short', eyes: '#f8e070',
@@ -568,6 +577,10 @@
         : fl().tollPaid
           ? 'Tyler, hypnotized by Father Eggmas. Thinks Nate stole his mosasaur tooth. Throws shark teeth. Hard.'
           : 'Hooded. No face, just glowing eyes. Blocks the Chesapeake Channel Tunnel. Toll: 500 shark teeth.'),
+    },
+    {
+      id: 'danHurd', name: 'Dan Hurd', tag: '{c}Prospector. Nate\'s hero', met: () => fl().danMet,
+      bio: 'A gold prospector from British Columbia, with a claim on the Fraser River and a gold pan that\'s seen everything. Nate has watched every video. Found panning black sand at the very bottom of the Andover mines.',
     },
     {
       id: 'fc', name: 'Father Christmas', met: () => fl().fcMet, img: () => (fl().fcBeaten ? G.spr.fc.sweater : G.spr.fc.idle),
@@ -3200,6 +3213,7 @@
     { id: 'tommy', how: 'Somebody worked the Continental workings by candlelight. Crack rusty or dark geodes.', name: 'Sticking Tommy', area: 'andoverDeep', r: 3, crush: null, fact: 'An iron candle holder with a spike, jammed into a crack in the rock or a timber so a miner could see to work. Miners called it a sticking tommy. Somebody worked down here by candlelight.' },
     { id: 'crystalGeode', how: 'Crack dark geodes, from the vault. Once in a blue moon, a wet one from the grotto.', name: 'Crystal-Lined Geode', area: 'andoverDeep', r: 3, crush: { teeth: 60 }, fact: 'A real geode: hollow inside, lined with tiny sparkling quartz crystals that grew inward from the walls, one layer at a time.' },
     { id: 'willemite', how: 'The rarest thing in the mine. Crack dark geodes, from the vault.', name: 'Willemite', area: 'andoverDeep', r: 4, crush: null, fact: 'Zinc silicate that glows bright green under a black light. It was recorded at Sulphur Hill, the mine right next door (the old reports lump the two mines together). Sussex County is famous for it.' },
+    { id: 'placerGold', how: 'Somebody is prospecting at the very bottom of the mine. He might share.', name: 'Fraser River Gold', area: 'andoverDeep', r: 4, crush: null, fact: 'Gold flakes panned from the Fraser River in British Columbia, a gift from Dan Hurd. Gold is about nineteen times heavier than water, so it sinks to the bottom of the pan while everything lighter washes away.' },
     { id: 'cannonball', how: 'At the very bottom of the mine, in the vault behind Old Iron.', name: 'Continental Cannonball', area: 'andoverDeep', r: 4, crush: null, fact: 'An iron cannonball, maybe cast from Andover ore when the Continental Congress ran the mine for the American army. It belongs in a museum. Nate is the museum.' },
     // Lafayette (College Hill, Easton PA)
     { id: 'dolomite', area: 'lafayette', name: 'Allentown Dolomite', r: 0, crush: { teeth: 5 }, how: 'Dr. Nataro left a tray of gray rocks in the Science Center. Only one of them is dolomite.', fact: 'The most common bedrock in the Lehigh Valley: dolostone from a warm, shallow sea about 500 million years ago.' },
@@ -3525,6 +3539,7 @@
     if (!rock.crush) {
       yield G.say('Nate', rock.id === 'cannonball' ? 'Crush a Continental Army cannonball?! Absolutely not. This goes on my shelf.'
         : rock.id === 'fairystone' ? 'Crush Ruby\'s fairy stone?! Absolutely not. She trusted me with this.'
+          : rock.id === 'placerGold' ? 'Crush gold from DAN HURD\'S CLAIM?! I would sooner crush myself.'
           : 'Crush my ' + rock.name.toLowerCase() + '?! Absolutely not. This goes on my shelf.');
       return;
     }
@@ -10251,14 +10266,18 @@
         [24, 3, 10, 9], [28, 12, 2, 3],                     // the dark room
         [10, 15, 22, 11],                                   // Old Iron's chamber
         [20, 26, 2, 2], [14, 28, 14, 6],                    // his gate, and the vault
+        [25, 29, 3, 3, '\u00f9'],                           // Dan Hurd's pool
       ]);
     },
     setup(w) {
       const f = flags();
       mineLadder(w, 5, 3, () => G.play.warp('andoverOld', 22, 29, 'left'));
-      mineVeins(w, 'vault', 4, [[25, 4], [32, 6], [26, 10], [33, 10], [15, 29], [19, 30], [24, 29], [26, 32], [16, 33]]);
-      if (!f.cannonball) mineVeins(w, 'cannon', 4, [[21, 32]]);
-      mineChest(w, 24, 31, 'mineVault', 100, 'dark', 3);
+      mineVeins(w, 'vault', 4, [[25, 4], [32, 6], [26, 10], [33, 10], [15, 30], [19, 29], [22, 32], [26, 33], [16, 33]]);
+      if (!f.cannonball) mineVeins(w, 'cannon', 4, [[20, 31]]);
+      mineChest(w, 18, 32, 'mineVault', 100, 'dark', 3);
+      // Dan Hurd, panning at the pool (he came down the rope ladder)
+      const dan = w.add(new G.NPC({ sprite: 'danHurd', name: 'Dan Hurd', x: 24 * 16 + 8, y: 30 * 16 + 14, dir: 'right', talk: S.danHurd }));
+      dan.held = G.spr.goldPan; dan.heldAt = [5, 5];
       mineLadder(w, 16, 28, () => G.play.warp('andoverMine', 10, 12, 'left'), 'A rope ladder, straight up. All the way to the tunnels.');
       w.gate = w.addProp({ img: f.mine_ironBeaten ? G.spr.ironGateOpen : G.spr.ironGate, tx: 20, ty: 26, base: 26 * 16 + 15 });
       if (!f.mine_ironBeaten) {
@@ -10340,6 +10359,66 @@
       yield G.itemGet(G.spr.heartBig, 'Something glows in the rubble where his furnace was: a {r}Heart Container{/}! Max hearts +1.');
     }
     yield G.say(null, 'Behind him, the gate to the vault is open.');
+  };
+  // Dan Hurd, prospecting at the bottom of the mine. Nate loves him. Once a visit, he'll run a pan with Nate.
+  const DAN_TIPS = [
+    'Gold is about nineteen times heavier than water. That\'s the whole secret of the pan.',
+    'Shake it side to side so the heavy stuff sinks, then tip it and let the water carry the light stuff off.',
+    'Never be in a hurry with the last little bit. That\'s where the good stuff hides.',
+    'Black sand, garnets, gold: the heavy ones all end up in the same place. Find one, look for the others.',
+  ];
+  S.danHurd = function* () {
+    const f = flags(), w = G.play.world, p = P();
+    const dan = w.ents.find((e) => e instanceof G.NPC && e.name === 'Dan Hurd');
+    if (dan) dan.dir = G.dirToward(p.x - dan.x, p.y - dan.y);
+    if (!f.danMet) {
+      f.danMet = true;
+      yield G.say('Nate', '...');
+      yield G.say('Nate', 'No. NO WAY. Is that... DAN HURD?! THE Dan Hurd?!');
+      yield G.say('Dan Hurd', 'Well, hey there! Didn\'t expect company this far down.');
+      yield G.say('Nate', 'I have watched every single one of your videos. Some of them TEN times. You\'re the reason I own three gold pans.');
+      if (G.with('doron')) yield G.say('Doron', 'He talks about you at dinner. A lot.');
+      else if (G.with('lily')) yield G.say('Lily', 'He made us all watch you pan for gold on Christmas.');
+      else if (G.with('abe')) yield G.say('Abe', 'He made me watch a whole video about one bucket of dirt. Honestly? Riveting.');
+      else if (G.with('hannah')) yield G.say('Hannah', 'Nate. Breathe.');
+      yield G.say('Nate', 'How did you even GET down here?');
+      yield G.say('Dan Hurd', 'Rope ladder, from the tunnels. Tied it off myself.');
+      yield G.say('Nate', 'There was a giant iron golem!');
+      yield G.say('Dan Hurd', 'Oh, I went around him.');
+      yield G.say('Dan Hurd', 'Now, there\'s no gold in an iron mine. But look at the bottom of this pan.');
+      yield G.say(null, 'Dan tilts the pan into the lantern light. A streak of heavy black sand trails along the bottom.');
+      yield G.say('Nate', 'Black sand! Magnetite! It\'s heavy, so it sinks to the bottom of the pan, right where the gold would be!');
+      yield G.say('Dan Hurd', 'Exactly right. Where I pan on the Fraser River, black sand means you\'re getting close.');
+      yield G.say('Dan Hurd', 'Here. A little something from my claim, for the road.');
+      yield* S.rockGive('placerGold');
+      yield G.say('Nate', 'I\'m keeping this forever. I\'m being buried with this.');
+      yield G.say('Dan Hurd', 'Want to run a pan with me? There\'s plenty of black sand in this pool.');
+    } else {
+      yield G.say('Dan Hurd', DAN_TIPS[Math.floor(Math.random() * DAN_TIPS.length)]);
+    }
+    if (w.danPanned) { yield G.say('Dan Hurd', 'That pool\'s panned out for today. Come back down and we\'ll run another.'); return; }
+    const c = yield G.ask('Dan Hurd', 'Run a pan?', ['Run a pan', 'Not right now']);
+    if (c) { yield G.say('Dan Hurd', 'Anytime. I\'ll be right here.'); return; }
+    w.danPanned = true;
+    yield G.say(null, 'Nate scoops a pan of gravel out of the pool and swirls it, side to side, while Dan watches.');
+    G.audio.sfx('slip');
+    if (dan) w.burst(dan.x + 18, dan.y - 6, ['#a8d0e0', '#ffffff', '#2e5260'], 8, { speed: 0.8, up: 0.6, g: 0.08, life: 18, size: 1 });
+    yield G.wait(40);
+    const r = Math.random();
+    if (r < 0.4) {
+      yield G.say(null, 'Something lumpy and heavy stays behind in the pan.');
+      geodeState().dark = (geodeState().dark || 0) + 1; flags().geodeTip = true;
+      G.audio.sfx('tooth');
+      yield G.itemGet(G.spr.geodes.dark, 'A {y}dark geode{/}!');
+      yield G.say('Dan Hurd', 'Can\'t tell what\'s in it till you crack it. That\'s half the fun.');
+    } else if (r < 0.7) {
+      yield* S.rockGive('garnet');
+      yield G.say('Dan Hurd', 'Garnets! They\'re heavy too, so they ride along with the black sand. Good eye.');
+    } else {
+      yield* S.rockGive('magnetite');
+      yield G.say('Dan Hurd', 'All black sand this time. Run a magnet under the pan and watch it jump.');
+    }
+    yield G.say('Nate', 'I just panned with DAN HURD.');
   };
 
   // The deep stope: a big, timbered chamber at the very bottom of the old
