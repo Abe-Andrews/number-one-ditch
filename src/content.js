@@ -10093,7 +10093,7 @@
       for (const x of [LAKE[0], LAKE[0] + LAKE[2] - 1]) w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [x * 16, LAKE[1] * 16, (x + 1) * 16, (LAKE[1] + LAKE[3]) * 16], talk: () => S.mineLake() });
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [33 * 16, 7 * 16, 36 * 16, 9 * 16], talk: function* () { yield G.say(null, 'The old pump sump, still full. The pumps quit in 1880 and the water came right back up.'); } });
       w.add(new G.Sign(36, 15, ['THE FLOODED STOPE', '"When the pumps stopped, the lower workings flooded to within a few feet of the drift." Brr.']));
-      mineCritters(w, 2, [['bat', 15, 6], ['bat', 34, 9], ['bat', 35, 20], ['bat', 6, 22], ['mimic', 36, 8], ['mimic', 34, 25], ['mimic', 10, 21], ['knocker', 18, 24]]);
+      mineCritters(w, 2, [['bat', 15, 6], ['bat', 6, 22], ['mimic', 36, 8], ['mimic', 34, 25], ['knocker', 18, 24]]);
     },
     // "I Pray to Jesus": the whole flooded stope freezes over (for this visit)
     onIcy(w, p, beam) {
@@ -10195,7 +10195,7 @@
         else yield G.say('Nate', 'Too far to jump, too fast to swim. If I had a fishing rod, I could hook it.');
       } });
       w.add(new G.Sign(18, 6, ['THE CONTINENTAL WORKINGS', 'Worked for the Continental Army, 1778. Iron for cannonballs. Mind the knocking: it isn\'t the timbers.']));
-      mineCritters(w, 3, [['knocker', 10, 12], ['knocker', 22, 13], ['knocker', 32, 11], ['knocker', 6, 20], ['knocker', 30, 18], ['bat', 8, 14], ['bat', 28, 11], ['bat', 24, 20], ['mimic', 14, 11], ['mimic', 29, 14], ['mimic', 9, 18]]);
+      mineCritters(w, 3, [['knocker', 22, 13], ['knocker', 30, 18], ['bat', 8, 14], ['bat', 28, 11], ['mimic', 14, 11], ['mimic', 9, 18]]);
     },
     // the sump is moving too fast to freeze
     onIcy(w, p, beam) {
@@ -10234,7 +10234,7 @@
     G.audio.sfx('hurt');
     G.play.shake(10, 2);
     w.pop(pl.x, pl.y - 40, 'WRONG!', '#f86858');
-    for (const ox of [-40, 40]) { const b = w.add(new G.Bat(pl.x + ox, pl.y - 30, 3)); b.awake = true; }
+    { const b = w.add(new G.Bat(pl.x + (pl.x < 20 * 16 ? 40 : -40), pl.y - 30, 3)); b.awake = true; }
     if (door.wrong === 1) G.script.run((function* () { yield G.say('Nate', 'Softest first. It\'s a scratch test. Like Mohs hardness. I KNOW this.'); })());
     else if (door.wrong === 2) G.script.run((function* () { yield G.say('Nate', 'Okay. Calcite is a 3. Sphalerite is a 4. Magnetite is a 6. Quartz is a 7. Softest first.'); })());
   };
@@ -10288,7 +10288,7 @@
         // what's left of him: a heap of ore
         mineVeins(w, 'vault', 4, [[20, 20], [22, 21]]);
       }
-      mineCritters(w, 4, [['knocker', 27, 6], ['knocker', 31, 9], ['mimic', 29, 4], ['mimic', 25, 8], ['bat', 30, 7], ['bat', 15, 4], ['bat', 22, 5]]);
+      mineCritters(w, 4, [['knocker', 31, 9], ['mimic', 25, 8], ['bat', 30, 7], ['bat', 15, 4]]);
       // Old Iron's chamber is lit: lanterns on timber sets along both walls
       mineLanterns(w, [[14 * 16, 15 * 16 + 2, true], [21 * 16, 15 * 16 + 2, true], [28 * 16, 15 * 16 + 2, true], [14 * 16, 25 * 16 + 6, false], [27 * 16, 25 * 16 + 6, false]]);
     },

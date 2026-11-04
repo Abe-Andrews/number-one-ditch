@@ -4666,7 +4666,7 @@
     hurtBox() { return [this.x - 6, this.y - 18, this.x + 6, this.y]; }
     think(w, p, dx, dy, dist) {
       if (this.throwT > 0) this.throwT--;
-      if (dist > 170) return;
+      if (dist > 140) return;
       // keep about four tiles away, circling
       const want = dist < 52 ? -1 : dist > 86 ? 1 : 0;
       if (Math.random() < 0.006) this.side = -this.side;
@@ -4856,7 +4856,7 @@
         // half health: it pounds the floor and Fool's Gold drops out of the walls
         G.play.shake(4, 2);
         if (this.t === 59) w.pop(this.x, this.y - 48, 'RRRRRRRUMBLE', '#c8c0b0');
-        if (this.t === 30) for (const [ox, oy] of [[-60, -20], [60, -20], [0, 40]]) { const m = w.add(new Mimic(this.x + ox, this.y + oy, 4)); m.wake(w); }
+        if (this.t === 30) for (const [ox, oy] of [[-60, -20], [60, -20]]) { const m = w.add(new Mimic(this.x + ox, this.y + oy, 4)); m.wake(w); }
         if (this.t <= 0) this.rest();
       } else if (this.state === 'tired') {
         if (this.t <= 0) { this.state = 'walk'; this.t = this.angry ? 70 : 100; }
