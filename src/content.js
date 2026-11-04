@@ -8147,6 +8147,14 @@
         if (m === 'ready') {
           if (c === 'Enter' || c === 'Space' || c === 'KeyZ') { this.record(); return true; }
           if (c === 'Backspace' || c === 'Escape' || c === 'KeyX') { this.stopPlayers(); this.mode = 'nav'; G.audio.sfx('cancel'); return true; }
+          // ←→ steps on a different pedal, so you hear what the take will sound like before it starts
+          if ((c === 'ArrowLeft' || c === 'ArrowRight') && G.state.items.pedals) {
+            const rt = this.song.tracks[this.recTrack], i = PEDALS.findIndex(([id]) => id === (rt.fx || null));
+            rt.fx = PEDALS[(i + (c === 'ArrowLeft' ? -1 : 1) + PEDALS.length) % PEDALS.length][0];
+            mixApply(this.song, this.recTrack);
+            G.audio.sfx('clank');
+            return true;
+          }
           const n = studioNote(this.recInst, c);
           if (n == null) return true;
           this.live(c, n, this.recTrack, false);
@@ -8499,6 +8507,19 @@
         const ready = this.mode === 'ready', tl = ready ? 'WARMING UP' : this.mode === 'count' ? 'GET READY' : 'REC ' + mmss(pos) + (len ? ' / ' + mmss(len) : '');
         FT().draw(ctx, tl, G.W - 6 - FT().width(tl), 15, ready ? '#78e070' : this.mode === 'count' ? '#f8d850' : '#f86858', { shadow: '#000' });
         FT().draw(ctx, ready ? 'ENTER record' : 'ENTER stop', 6, 25, '#f8f8f0', { shadow: '#000' }); FT().draw(ctx, ready ? 'BACKSPACE back' : 'BACKSPACE scrap', 6, 34, '#f8f8f0', { shadow: '#000' });
+        // the track's pedal, on the floor by his feet (←→ changes it while warming up)
+        if (G.state.items.pedals) {
+          const fx = sg.tracks[this.recTrack].fx || null, pd = PEDALS.find(([id]) => id === fx), PCOL = { drive: '#e07a28', echo: '#3a78c8', chorus: '#3aa858', trem: '#9a5ac8' };
+          const px = 188, py = FLOOR - 14;
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(px - 1, py - 1, 16, 15);
+          ctx.fillStyle = fx ? PCOL[fx] : '#4a4258'; ctx.fillRect(px, py, 14, 13);
+          ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(px, py, 14, 2);
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(px + 3, py + 3, 2, 2); ctx.fillRect(px + 9, py + 3, 2, 2);
+          ctx.fillStyle = fx ? '#ff4040' : '#3a1c1c'; ctx.fillRect(px + 6, py + 6, 2, 2);
+          ctx.fillStyle = '#c8ccd4'; ctx.fillRect(px + 5, py + 9, 4, 3);
+          FT().draw(ctx, pd[2], px + 7 - Math.round(FT().width(pd[2]) / 2), py - 10, fx ? PCOL[fx] : '#9890a8', { shadow: '#000' });
+          if (ready) FT().draw(ctx, '←→ pedal: ' + pd[1], 6, 43, '#f8d850', { shadow: '#000' });
+        }
         if (ready) {
           // play along until you're ready (and the metronome's beat, flashing)
           const msg = 'Play along. Nothing\'s recording yet.', w = FT().width(msg);
