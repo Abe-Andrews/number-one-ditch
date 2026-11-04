@@ -8090,6 +8090,7 @@
         this.rebin();
         const tr = this.song.tracks[0];
         if (!tr.inst && !tr.ev.length) tr.inst = this.have()[0];
+        if (G.state.items.pedals && !flags().pedalTip) { flags().pedalTip = true; this.say('Abe\'s pedals are hooked up! Press B for the mixer: the PEDAL row is on top. - + picks the track\'s pedal.'); }
         G.play.overlay = this;
       },
       done() { removeEventListener('keydown', this.onKey, true); removeEventListener('keyup', this.onKeyUp, true); this.letGoAll(); this.stopPlayers(); this.result = true; },
@@ -8181,7 +8182,7 @@
         else if (c === 'KeyV') { if (tr.inst) { tr.mute = !tr.mute; G.audio.sfx('menu'); } }
         else if (c === 'Minus' || c === 'Equal') { tr.vol = Math.max(0, Math.min(4, tr.vol + (c === 'Equal' ? 1 : -1))); G.audio.sfx('menu'); }
         else if (c === 'Enter') { this.mode = 'menu'; this.menuSel = 0; G.audio.sfx('select'); }
-        else if (c === 'KeyB') { this.mode = 'mix'; this.mixRow = 0; G.audio.sfx('select'); }
+        else if (c === 'KeyB') { this.mode = 'mix'; this.mixRow = this.mixRows().length - 1; G.audio.sfx('select'); }
         else if (c === 'KeyX' || c === 'Escape') { G.audio.sfx('cancel'); this.done(); }
         else {
           // any other key: try the selected track's instrument (nothing's recorded)
@@ -8194,7 +8195,8 @@
       },
       // ---- the mixing board: ←→ a track, ↑↓ a knob, - + turns it; C plays the song while you mix,
       // V mutes, B (or X) goes back to the console. The pedals row is there once Abe's given Nate his.
-      mixRows() { return ['VOL', 'PAN', 'TONE', 'VERB'].concat(G.state.items.pedals ? ['FX'] : []); },
+      // (top to bottom, the way they're drawn: the pedal up top once Nate has Abe's, the fader at the bottom)
+      mixRows() { return (G.state.items.pedals ? ['FX'] : []).concat(['VERB', 'TONE', 'PAN', 'VOL']); },
       mixKey(c) {
         const rows = this.mixRows(), tr = this.song.tracks[this.sel], row = rows[Math.min(this.mixRow, rows.length - 1)];
         if (c === 'ArrowLeft' && this.sel > 0) { this.sel--; G.audio.sfx('menu'); }
@@ -8527,36 +8529,40 @@
           FT().drawBig(ctx, txt, Math.round(120 - w / 2), 42, 3, '#f8d850', '#1c1424');
         }
       },
-      // The mixing board: a channel strip for each track (its instrument up top, then the pedal, the
-      // reverb and tone knobs, the pan, and a volume fader), the knob you're on boxed in gold.
+      // The mixing board: the knobs' names down the left, then a channel strip for each track (its
+      // instrument up top, then the pedal, the reverb and tone knobs, the pan, and a volume fader), the
+      // knob you're on boxed in gold.
       drawMixer(ctx, pos) {
         const sg = this.song, rows = this.mixRows(), cur = rows[Math.min(this.mixRow, rows.length - 1)], pedals = !!G.state.items.pedals;
-        const CY = { FX: 36, VERB: 49, TONE: 62, PAN: 75, VOL: 85 };
+        const CY = { FX: 36, VERB: 49, TONE: 62, PAN: 75, VOL: 85 }, NAME = { FX: 'PEDAL', VERB: 'VERB', TONE: 'TONE', PAN: 'PAN', VOL: 'VOL' };
         ctx.fillStyle = '#211b2c'; ctx.fillRect(0, 13, G.W, 115);
+        for (const r of ['FX', 'VERB', 'TONE', 'PAN', 'VOL']) {
+          if (r === 'FX' && !pedals) continue;
+          FT().draw(ctx, NAME[r], 2, r === 'VOL' ? CY.VOL + 14 : CY[r] - 3, r === cur ? '#f8d850' : '#9890a8');
+        }
         const knob = (x, y, v, lo, hi, on) => {
           ctx.fillStyle = '#0c0a12'; ctx.fillRect(x - 4, y - 4, 9, 9); ctx.fillStyle = on ? '#4a4258' : '#3a3448'; ctx.fillRect(x - 3, y - 3, 7, 7);
           const a = -2.4 + ((v - lo) / (hi - lo)) * 4.8; ctx.fillStyle = '#f8f8f0'; ctx.fillRect(Math.round(x + Math.sin(a) * 2.5), Math.round(y - Math.cos(a) * 2.5), 1, 1); ctx.fillRect(x, y, 1, 1);
         };
         sg.tracks.forEach((tr, i) => {
-          const x0 = 2 + i * 29, cx = x0 + 14, on = i === this.sel, col = tr.inst ? STUDIO_COL[tr.inst] : '#5a4e70';
-          ctx.fillStyle = on ? '#3a3058' : i % 2 ? '#1e1828' : '#262034'; ctx.fillRect(x0, 13, 28, 115);
+          const x0 = 33 + i * 25, cx = x0 + 12, on = i === this.sel, col = tr.inst ? STUDIO_COL[tr.inst] : '#5a4e70';
+          ctx.fillStyle = on ? '#3a3058' : i % 2 ? '#1e1828' : '#262034'; ctx.fillRect(x0, 13, 24, 115);
           FT().draw(ctx, G.sayable(i + 1), cx - Math.round(FT().width(G.sayable(i + 1)) / 2), 14, on ? '#f8d850' : '#9890a8');
+          if (tr.mute) FT().draw(ctx, 'M', x0 + 1, 14, '#f86858');
           const nm = tr.inst ? STUDIO_TINY[tr.inst] : '-';
           FT().draw(ctx, nm, cx - Math.round(FT().width(nm) / 2), 22, tr.mute ? '#5a4e70' : col);
-          if (pedals) { const pd = PEDALS.find(([id]) => id === (tr.fx || null)), t = pd[2]; ctx.fillStyle = tr.fx ? '#5a2a3a' : '#16121e'; ctx.fillRect(x0 + 3, CY.FX - 4, 22, 9); FT().draw(ctx, t, cx - Math.round(FT().width(t) / 2), CY.FX - 3, tr.fx ? '#f8a8b8' : '#5a4e70'); }
+          if (pedals) { const pd = PEDALS.find(([id]) => id === (tr.fx || null)), t = pd[2]; ctx.fillStyle = tr.fx ? '#5a2a3a' : '#16121e'; ctx.fillRect(x0 + 2, CY.FX - 4, 20, 9); FT().draw(ctx, t, cx - Math.round(FT().width(t) / 2), CY.FX - 3, tr.fx ? '#f8a8b8' : '#5a4e70'); }
           knob(cx, CY.VERB, tr.verb || 0, 0, 3, on); knob(cx, CY.TONE, tr.tone || 0, -2, 2, on);
-          ctx.fillStyle = '#0c0a12'; ctx.fillRect(x0 + 4, CY.PAN, 20, 3); ctx.fillStyle = '#5a4e70'; ctx.fillRect(cx, CY.PAN - 1, 1, 5);
-          ctx.fillStyle = '#f8d850'; ctx.fillRect(Math.round(cx + (tr.pan || 0) * 2.25) - 1, CY.PAN - 1, 3, 5);
+          ctx.fillStyle = '#0c0a12'; ctx.fillRect(x0 + 3, CY.PAN, 18, 3); ctx.fillStyle = '#5a4e70'; ctx.fillRect(cx, CY.PAN - 1, 1, 5);
+          ctx.fillStyle = '#f8d850'; ctx.fillRect(Math.round(cx + (tr.pan || 0) * 2) - 1, CY.PAN - 1, 3, 5);
           // the fader
           ctx.fillStyle = '#0c0a12'; ctx.fillRect(cx - 1, CY.VOL, 3, 36);
           const fy = CY.VOL + 32 - tr.vol * 8;
           ctx.fillStyle = tr.mute ? '#5a4e70' : '#c8c0d8'; ctx.fillRect(cx - 5, fy, 11, 4); ctx.fillStyle = tr.mute ? '#3a3448' : '#f8f8f0'; ctx.fillRect(cx - 5, fy + 1, 11, 1);
-          if (tr.mute) FT().draw(ctx, 'M', x0 + 2, 14, '#f86858');
           // the knob you're on
-          if (on) { const y = cur === 'VOL' ? CY.VOL - 2 : CY[cur] - 6; ctx.strokeStyle = '#f8d850'; ctx.lineWidth = 1; ctx.strokeRect(x0 + 1.5, y + 0.5, 25, cur === 'VOL' ? 40 : 12); }
+          if (on) { const y = cur === 'VOL' ? CY.VOL - 2 : CY[cur] - 6; ctx.strokeStyle = '#f8d850'; ctx.lineWidth = 1; ctx.strokeRect(x0 + 0.5, y + 0.5, 23, cur === 'VOL' ? 40 : 12); }
         });
-        // the row names, down the gap between the strips (tiny, on the left edge of the selected one)
-        // and what the knob you're on is set to
+        // what the knob you're on is set to
         const tr = sg.tracks[this.sel], val = {
           VOL: G.sayable(tr.vol + 1) + ' of 5', PAN: !tr.pan ? 'CENTER' : (tr.pan < 0 ? 'LEFT ' : 'RIGHT ') + G.sayable(Math.abs(tr.pan)),
           TONE: ['DARKEST', 'DARK', 'FLAT', 'BRIGHT', 'BRIGHTEST'][(tr.tone || 0) + 2], VERB: ['DRY', 'A LITTLE ROOM', 'A HALL', 'A CATHEDRAL'][tr.verb || 0],
@@ -8566,7 +8572,7 @@
         FT().draw(ctx, 'TRACK ' + G.sayable(this.sel + 1) + '  ' + { VOL: 'VOLUME', PAN: 'PAN', TONE: 'TONE', VERB: 'REVERB', FX: 'PEDAL' }[cur] + ': ' + val, 6, 131, '#f8d850');
         if (this.mixPlay) FT().draw(ctx, 'PLAYING ' + mmss(pos), G.W - 6 - FT().width('PLAYING ' + mmss(pos)), 131, '#78e070');
         FT().draw(ctx, '←→ track  ↑↓ knob  - + turn  C play  V mute', 6, 141, '#9890a8');
-        FT().draw(ctx, (pedals ? '' : 'Pedals: Abe might have some. ') + 'B back', 6, 150, '#9890a8');
+        FT().draw(ctx, (pedals ? 'PEDAL is the top row.  ' : 'Pedals: Abe has some, at 5 instruments.  ') + 'B back', 6, 150, '#9890a8');
       },
       // while recording: the keys for the instrument (they light up when played), each with the note
       // or chord it plays under it (tinted by octave: dim, white, then gold the highest)

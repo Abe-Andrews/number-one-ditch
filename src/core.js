@@ -455,18 +455,34 @@ G.audio = (function () {
       // mixtape schedule notes ahead), and plays at the current level (G.audio.withLevel)
       guitar(midi, dur = 0.45, vol = 0.16, tone = 'strat', at) {
         if (!ctx || muted) return;
-        const T = GUITAR_TONES[tone] || GUITAR_TONES.strat, t = when(at), f = N(midi), len = dur * T.sustain;
-        const flt = ctx.createBiquadFilter(), g = ctx.createGain();
+        // (held: a long note, from a held key. Instead of a pluck dying away, it settles to a sustain
+        // and stays there, with a little vibrato coming in, until it's let go)
+        const T = GUITAR_TONES[tone] || GUITAR_TONES.strat, t = when(at), f = N(midi), held = dur > 0.9, len = dur * (held ? 1 : T.sustain);
+        const flt = ctx.createBiquadFilter(), g = ctx.createGain(), peak = lv(vol * T.gain);
         flt.type = 'lowpass'; flt.Q.value = T.q;
-        flt.frequency.setValueAtTime(Math.min(8000, f * T.open), t); flt.frequency.exponentialRampToValueAtTime(Math.max(T.floor, f * T.close), t + len);
-        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(lv(vol * T.gain), t + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        flt.frequency.setValueAtTime(Math.min(8000, f * T.open), t);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.004);
+        if (held) {
+          flt.frequency.exponentialRampToValueAtTime(Math.min(8000, Math.max(T.floor * 1.6, f * T.close * 1.8)), t + 0.5);
+          g.gain.exponentialRampToValueAtTime(peak * 0.5, t + 0.4); g.gain.setValueAtTime(peak * 0.5, t + len - 0.25); g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        } else {
+          flt.frequency.exponentialRampToValueAtTime(Math.max(T.floor, f * T.close), t + len);
+          g.gain.exponentialRampToValueAtTime(0.0001, t + len);
+        }
         const srcs = [];
+        let vib = null;
+        if (held) {
+          const lfo = ctx.createOscillator(); vib = ctx.createGain();
+          lfo.frequency.value = 5.5; vib.gain.setValueAtTime(0, t); vib.gain.setValueAtTime(0, t + 0.5); vib.gain.linearRampToValueAtTime(14, t + 1.2);
+          lfo.connect(vib); lfo.start(t); lfo.stop(t + len + 0.03); srcs.push(lfo);
+        }
         for (const [type, mul, lvl] of T.osc) {
           const o = ctx.createOscillator(), og = ctx.createGain();
           srcs.push(o);
           o.type = type; o.frequency.setValueAtTime(f * mul, t);
+          if (vib) vib.connect(o.detune);
           // (the Jazzmaster's floating tremolo: the pitch drifts up, then sags)
-          if (T.wobble) { o.frequency.setValueAtTime(f * mul, t + len * 0.3); o.frequency.linearRampToValueAtTime(f * mul * (1 + T.wobble), t + len * 0.6); o.frequency.linearRampToValueAtTime(f * mul * (1 - T.wobble / 2), t + len); }
+          if (T.wobble && !held) { o.frequency.setValueAtTime(f * mul, t + len * 0.3); o.frequency.linearRampToValueAtTime(f * mul * (1 + T.wobble), t + len * 0.6); o.frequency.linearRampToValueAtTime(f * mul * (1 - T.wobble / 2), t + len); }
           og.gain.value = lvl; o.connect(og); og.connect(flt); o.start(t); o.stop(t + len + 0.03);
         }
         // the Strat's single coils are thin (a highpass); the Tele Deluxe's humbuckers push the amp (drive)
