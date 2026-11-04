@@ -9931,6 +9931,31 @@
   }
   // Abe's 1984 Stratocaster (from the user's photo): black, a white pickguard and three white
   // single-coils, white knobs, a maple neck with black dots, and the small vintage headstock
+  // The Happy Magic Flute (upright, mouth end at the top): a length of white PVC pipe Dad made into a
+  // flute in college, with a blowing hole near the capped end, six finger holes, and its name
+  // scrawled down the side in black Sharpie.
+  function pvcFlute() {
+    const p = new Pix(5, 44);
+    p.rect(0, 0, 5, 44, '#ecece4'); p.vline(1, 0, 43, '#ffffff'); p.vline(4, 0, 43, '#c4c4bc'); p.hline(0, 4, 0, '#d8d8d0');
+    p.rect(0, 0, 5, 2, '#e0e0d8'); p.hline(0, 4, 2, '#b8b8b0');
+    p.rect(2, 6, 2, 3, '#2a2a30');
+    for (const y of [17, 21, 25, 31, 35, 39]) { p.set(2, y, '#2a2a30'); p.set(3, y, '#2a2a30'); p.set(2, y + 1, '#4a4a52'); }
+    for (const [y0, y1] of [[10, 15], [27, 30]]) for (let y = y0; y <= y1; y++) p.set(1 + ((y * 3) % 5 > 2 ? 1 : 0), y, '#1c1c22');
+    return finish(p);
+  }
+  // Abe's silver flute (upright, the headjoint up top): a lip plate, a crown at the end, and keys
+  // all the way down.
+  function silverFlute() {
+    const p = new Pix(6, 48);
+    p.rect(1, 0, 4, 48, '#c8ccd8'); p.vline(2, 0, 47, '#f0f4fc'); p.vline(4, 0, 47, '#8a909c');
+    p.rect(1, 0, 4, 2, '#b8bcc8'); p.set(2, 0, '#ffffff');
+    p.rect(0, 5, 6, 3, '#d8dce4'); p.set(3, 6, '#2a2a30'); p.hline(0, 5, 7, '#9aa0ac');
+    p.hline(1, 4, 13, '#9aa0ac');
+    for (const y of [17, 21, 25, 29, 33, 37]) { p.rect(1, y, 4, 3, '#9aa0ac'); p.rect(2, y, 2, 2, '#f0f4fc'); }
+    p.vline(5, 18, 38, '#9aa0ac');
+    p.hline(1, 4, 41, '#9aa0ac'); p.set(4, 44, '#9aa0ac'); p.rect(2, 44, 2, 2, '#e8ecf4');
+    return finish(p);
+  }
   function stratocaster() {
     const W = 24, H = 74, p = new Pix(W, H), MAP = '#e8b058', MAPD = '#c08838', DOT = '#2a2018';
     const edge = (pts, y) => { if (y <= pts[0][0]) return pts[0][1]; for (let k = 1; k < pts.length; k++) if (y <= pts[k][0]) { const [y0, x0] = pts[k - 1], [y1, x1] = pts[k]; return x0 + ((x1 - x0) * (y - y0)) / (y1 - y0); } return pts[pts.length - 1][1]; };
@@ -10295,6 +10320,7 @@
     S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.syringe = syringe(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
     S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon(); S.bmfIcon = bmfIcon();
+    S.pvcFlute = pvcFlute(); S.silverFlute = silverFlute();
     S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe(); S.bongos = bongos(); S.steelPan = steelPan(); S.drumKit = drumKit();
     S.williamsCenter = williamsCenter(); S.parkBench = parkBench(); S.arcSculpture = arcSculpture(); S.posterKiosk = posterKiosk(); S.mixingDesk = mixingDesk(); S.studioMonitor = studioMonitor(); S.acousticPanel = acousticPanel(); S.studioCouch = studioCouch(); S.metronomeIcon = metronomeIcon();
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);

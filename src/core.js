@@ -421,6 +421,25 @@ G.audio = (function () {
       },
       tom(hi, at) { if (!ctx || muted) return; const t = when(at), f = hi ? 190 : 120; tone(f, t, 0.28, 'sine', lv(0.55), musicBus, f * 0.7); noise(t, 0.05, lv(0.08), musicBus, 1200); },
       crash(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.9, lv(0.2), musicBus, 6500); noise(t, 0.4, lv(0.12), musicBus, 4000); },
+      // flutes: a breathy tone that swells in. The Happy Magic Flute (PVC pipe) is hollow and airy and a
+      // hair flat, with no vibrato; a real flute is purer, and a gentle vibrato comes in as a note holds
+      flute(midi, dur = 0.4, vol = 0.2, kind = 'flute', at) {
+        if (!ctx || muted) return;
+        const pvc = kind === 'pvc', t = when(at), f = N(midi) * (pvc ? 0.996 : 1), len = Math.max(0.12, dur);
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = pvc ? 'triangle' : 'sine'; o.frequency.setValueAtTime(f, t);
+        if (!pvc) {
+          const v = ctx.createOscillator(), vg = ctx.createGain();
+          v.frequency.value = 5.2; vg.gain.setValueAtTime(0, t); vg.gain.linearRampToValueAtTime(f * 0.012, t + len);
+          v.connect(vg); vg.connect(o.frequency); v.start(t); v.stop(t + len + 0.12);
+        }
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(lv(vol), t + 0.035);
+        g.gain.setValueAtTime(lv(vol), t + len * 0.75); g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.08);
+        o.connect(g); g.connect(musicBus); o.start(t); o.stop(t + len + 0.1);
+        // the octave above, quietly, and a puff of breath at the start (a lot more of it through a pipe)
+        tone(f * 2, t, len * 0.8, 'sine', lv(pvc ? 0.02 : 0.035), musicBus);
+        noise(t, pvc ? 0.14 : 0.06, lv(pvc ? 0.08 : 0.035), musicBus, pvc ? 1800 : 2600);
+      },
       // the metronome: a woodblock tick, higher on the one
       click(accent, at) { if (!ctx || muted) return; const t = when(at); tone(accent ? 1800 : 1250, t, 0.04, 'square', lv(accent ? 0.12 : 0.08), musicBus); },
     },
