@@ -7541,6 +7541,14 @@
   const jamPrize = (sg) => G.INSTRUMENTS.find((it) => it.song === sg.id);
   // (Nate's own instruments count as his on the setlist even before he's brought them out)
   const jamHas = (it) => it.mine || G.instrumentHas(it.id);
+  // the all-perfect gold star (9x9, with a white glint and a twinkle that comes and goes)
+  const GOLD_STAR = ['....#....', '...###...', '#########', '.#######.', '..#####..', '..##.##..', '.##...##.', '.#.....#.'];
+  function goldStar(ctx, x, y, t) {
+    GOLD_STAR.forEach((row, j) => { for (let i = 0; i < 9; i++) if (row[i] === '#') { ctx.fillStyle = '#1c1424'; ctx.fillRect(x + i + 1, y + j + 1, 1, 1); } });
+    GOLD_STAR.forEach((row, j) => { for (let i = 0; i < 9; i++) if (row[i] === '#') { ctx.fillStyle = j < 3 ? '#fff0a0' : '#f8c838'; ctx.fillRect(x + i, y + j, 1, 1); } });
+    ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 4, y + 2, 1, 1);
+    if ((t >> 4) % 3 === 0) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x + 8, y - 1, 1, 3); ctx.fillRect(x + 7, y, 3, 1); }
+  }
   // an image scaled down to fit w x h (never up), drawn with its top-left at x, y
   const fitDraw = (ctx, img, x, y, w, h) => { const k = Math.min(1, w / img.width, h / img.height); ctx.drawImage(img, Math.round(x), Math.round(y), Math.round(img.width * k), Math.round(img.height * k)); return k; };
   // (it opens where you left off: the next song on the page you were on, if it's open)
@@ -7586,6 +7594,8 @@
           FT().draw(ctx, G.sayable(k + 1) + '. ' + (open ? sg.name : '???'), 16, y + 4, open ? (on ? '#f8d850' : '#f8f8f0') : '#5a4e70', { shadow: '#0c0814' });
           FT().draw(ctx, open ? G.sayable(sg.bpm) + ' BPM   Hard: ' + '★'.repeat(sg.d) : 'Finish the one before it.', 16, y + 15, '#9890a8', { shadow: '#0c0814' });
           if (best) FT().draw(ctx, '{y}' + '★'.repeat(best) + '{d}' + '★'.repeat(3 - best), 166 - FT().width('★★★'), y + 4, '#f8d850', { shadow: '#0c0814' });
+          // (all perfect: a big twinkling gold star in front of the three)
+          if ((G.state.jamPerfect || {})[sg.id]) goldStar(ctx, 166 - FT().width('★★★') - 12, y + 3, this.t);
           else if (open) FT().draw(ctx, 'NEW', 166 - FT().width('NEW'), y + 4, '#78e070', { shadow: '#0c0814' });
           // what it wins, in the corner (a silhouette until it's won): a guitar or flute lying down, or the drum
           const prize = jamPrize(sg);
@@ -7648,7 +7658,7 @@
       mult() { return Math.min(4, 1 + Math.floor(this.combo / 8)); },
       // Abe doesn't play: he DANCES. He nods along through the count-in (and while Nate's struggling)
       // and side-steps in the groove; once Nate's on a roll, every bar is a new move, and the hotter
-      // the streak, the sillier they get (the sprinkler, the robot, the noodle; then a spin, the limbo
+      // the streak, the sillier they get (the sprinkler, the robot, the noodle, the shopping cart; then a spin, the limbo
       // (he's 6'5"), headbanging; then the worm). A miss makes him wince ("OOF"). He stops cold when
       // the band stops, and jumps for joy at the end. Returns how to draw him: a frame, an offset, a
       // tilt (rot, around his feet or his middle), a stretch (sx, sy), and the move's name to show.
@@ -7669,7 +7679,7 @@
         // a new move every bar
         if (this.danceBar !== bar) {
           this.danceBar = bar;
-          const pool = ['sprinkler', 'robot', 'noodle'].concat(this.combo >= 16 ? ['spin', 'limbo', 'headbang'] : [], this.combo >= 32 ? ['worm', 'worm'] : []);
+          const pool = ['sprinkler', 'robot', 'noodle', 'shopping'].concat(this.combo >= 16 ? ['spin', 'limbo', 'headbang'] : [], this.combo >= 32 ? ['worm', 'worm'] : []);
           const choices = pool.filter((m) => m !== this.move);
           this.move = choices[Math.floor(Math.random() * choices.length)];
         }
@@ -7678,6 +7688,13 @@
           case 'sprinkler': { const k = Math.floor(p * 8); return pose(A.right[0], { rot: k < 7 ? -0.3 + k * 0.09 : -0.3, dy: k % 2 ? -1 : 0, name: 'THE SPRINKLER' }); }
           // stiff, jerky, a new direction every half beat
           case 'robot': { const k = Math.floor(beatF * 2); return pose(A[['down', 'left', 'down', 'right'][k % 4]][0], { dx: [0, -4, 0, 4][k % 4], dy: k % 2 ? -1 : 0, name: '*BEEP BOOP*' }); }
+          // the shopping cart: push it along, grab something off a high shelf, drop it in, keep pushing
+          // (the cart gets drawn in front of him: cart)
+          case 'shopping': {
+            if (p < 0.3 || p >= 0.8) { const k = p < 0.3 ? p / 0.3 : (p - 0.8) / 0.2; return pose(A.right[(Math.floor(beatF * 2) % 2) + 1], { rot: 0.12, dx: Math.round((p < 0.3 ? k : 1 - k) * 6) - 4, dy: hop, cart: true, name: 'SHOPPING CART' }); }
+            if (p < 0.55) return pose(A.hold, { dx: 2, dy: -3 - Math.round(Math.sin(((p - 0.3) / 0.25) * Math.PI) * 3), sy: 1.06, cart: true, name: 'SHOPPING CART' });
+            return pose(A.right[0], { dx: 2, rot: 0.25, sy: 0.92, cart: true, name: 'SHOPPING CART' });
+          }
           // all rubber: squash and stretch on every beat
           case 'noodle': { const w = Math.sin(ph * Math.PI * 2); return pose(A.down[(beat % 2) + 1], { sx: 1 + w * 0.22, sy: 1 - w * 0.18, rot: Math.sin(beatF * Math.PI) * 0.12, name: 'THE NOODLE' }); }
           // a big jump and a full spin
@@ -7694,7 +7711,8 @@
       // (a dropped hold gives back half its hit)
       res(passed) {
         const acc = Math.max(0, (this.perfect + this.good * 0.6 - this.drops * 0.5) / notes.length);
-        return { passed, acc, stars: acc >= 0.9 ? 3 : acc >= 0.75 ? 2 : 1, perfect: this.perfect, good: this.good, miss: this.miss, maxCombo: this.maxCombo, score: this.score };
+        // (allPerfect: every note PERFECT, and every hold held to the end)
+        return { passed, acc, stars: acc >= 0.9 ? 3 : acc >= 0.75 ? 2 : 1, perfect: this.perfect, good: this.good, miss: this.miss, maxCombo: this.maxCombo, score: this.score, allPerfect: passed && this.perfect === notes.length && !this.drops };
       },
       // the band, every half beat: a count-in, then the drums and Abe's bass
       band(h) {
@@ -7969,6 +7987,15 @@
         ctx.save(); ctx.translate(px, py); ctx.rotate(A.rot); ctx.scale(A.sx, A.sy);
         ctx.drawImage(A.img, -aw / 2, A.mid ? -ah / 2 : -ah, aw, ah);
         ctx.restore();
+        // (his imaginary shopping cart, made a little less imaginary)
+        if (A.cart) {
+          const cx = 214 + Math.max(0, A.dx), cy = 82;
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(cx - 1, cy - 1, 18, 11);
+          ctx.fillStyle = '#c8ccd4'; ctx.fillRect(cx, cy, 16, 9); ctx.fillStyle = '#5a5a64'; for (let x = cx + 2; x < cx + 16; x += 3) ctx.fillRect(x, cy + 1, 1, 7); ctx.fillRect(cx + 1, cy + 4, 14, 1);
+          ctx.fillStyle = '#c8ccd4'; ctx.fillRect(cx - 4, cy - 3, 5, 1); ctx.fillRect(cx - 1, cy - 3, 1, 4);
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(cx + 2, cy + 10, 3, 3); ctx.fillRect(cx + 12, cy + 10, 3, 3);
+          if (this.move === 'shopping' && (this.f / fpb) % 4 >= 2.2) { ctx.fillStyle = '#f86858'; ctx.fillRect(cx + 5, cy - 2, 3, 3); ctx.fillStyle = '#f8d850'; ctx.fillRect(cx + 9, cy - 1, 3, 2); }
+        }
         if (A.name) FT().draw(ctx, A.name, Math.max(172, Math.min(G.W - 2 - FT().width(A.name), 200 - Math.round(FT().width(A.name) / 2))), 112, A.name === 'OOF' ? '#f86858' : '#ff98d0', { shadow: '#000' });
         FT().draw(ctx, 'SCORE', 176, 18, '#c8c0d8', { shadow: '#000' });
         FT().draw(ctx, G.sayable(this.score), 176, 27, '#f8f8f0', { shadow: '#000' });
@@ -8030,6 +8057,15 @@
       J[song.id] = Math.max(J[song.id] || 0, r.stars);
       yield revealCmd(drum && !drum.wind ? gt.art() : guitarSmall(gt), song.name, r.stars);
       yield G.say('Abe', r.stars === 3 ? 'That was clean. Really clean.' : r.stars === 2 ? 'Good! A few clams. Everybody hits a few clams.' : 'We got through it! That counts.');
+      // every note PERFECT: a gold star next to the song on the setlist, for keeps
+      const GP = (s.jamPerfect = s.jamPerfect || {});
+      if (r.allPerfect && !GP[song.id]) {
+        GP[song.id] = true;
+        G.audio.sfx('fanfare');
+        yield G.banner('ALL PERFECT!', 'a gold star for ' + song.name, 140);
+        yield G.say('Abe', ['ALL PERFECT. Every single note. I\'m framing this.', 'Not one note off. Not ONE. Gold star. Go put it on the fridge.', 'That was perfect. I\'m going to tell Hannah. She\'s going to say "that\'s nice."'][Object.keys(GP).length % 3]);
+        G.play.autosave();
+      }
       // the first time through a song, its guitar is Nate's (on loan), and he plays it next; or
       // its drum is Nate's (for keeps)
       const prize = jamPrize(song);
