@@ -358,7 +358,11 @@
     },
     pedals: {
       kind: 'key', name: 'Abe\'s Guitar Pedals', short: 'Pedals', icon: () => G.spr.pedalsIcon, has: () => !!st().items.pedals,
-      desc: 'Abe\'s old pedalboard: overdrive, echo, chorus and tremolo. In Studio B, press B at the console for the mixer: every track gets a PEDAL knob.',
+      get desc() {
+        const names = { drive: 'overdrive', echo: 'delay', chorus: 'chorus', trem: 'tremolo' }, have = G.pedalsOwned ? G.pedalsOwned().map((id) => names[id]) : [];
+        const list = have.length > 1 ? have.slice(0, -1).join(', ') + ' and ' + have[have.length - 1] : have[0] || 'nothing yet';
+        return 'Abe\'s old pedalboard: ' + list + (have.length < 4 ? ' (Abe has more).' : '.') + ' In Studio B, B at the console opens the mixer; on the PEDAL row, Z opens one up.';
+      },
     },
     metronome: {
       kind: 'key', name: 'Abe\'s Metronome', short: 'Metronome', icon: () => G.spr.metronomeIcon, has: () => !!st().items.metronome,
@@ -3736,6 +3740,7 @@
   G.adminAllItems = () => {
     const s = G.state, f = s.flags;
     Object.assign(s.items, { hammer: true, cap: true, pipe: true, bass: true, chicken: true, rod: true, sifter: true, bidet: true, andoverKey: true, mikeyNote: true, badge: true, earplugs: true, pipeBook: true, belt: true, bmf: true, metronome: true, pedals: true });
+    G.giveAllPedals();
     s.items.package = 10; s.items.doosh = 3; s.items.eggs = 40; s.items.firstAid = G.KIT_MAX;
     s.items.carbideLamp = true; s.geodes = { rough: 5, wet: 5, rusty: 5, dark: 5 }; f.geodeTip = true;
     f.kitGot = true; f.bidetBig = true; f.bidetNozzle = true; s.items.bidetWater = G.BIDET_MAX;
@@ -3759,7 +3764,7 @@
     const s = G.state, f = s.flags;
     s.jams = s.jams || {}; for (const sg of G.JAM_SONGS) s.jams[sg.id] = Math.max(s.jams[sg.id] || 0, 1);
     s.instruments = s.instruments || {}; for (const it of G.INSTRUMENTS) s.instruments[it.id] = true;
-    s.items.bass = true; s.items.metronome = true; s.items.pedals = true;
+    s.items.bass = true; s.items.metronome = true; G.giveAllPedals();
     f.jamMet = true; f.studioTold = true;
     for (const sg of G.JAM_SONGS) if (sg.drums) f['jamDrum_' + sg.id] = true;
     s.nicu = s.nicu || {};
@@ -7266,7 +7271,7 @@
       how: 'Nate already has it. Bring it to a jam with Abe.',
       intro: [[null, 'Nate pulls a white plastic pipe with holes in it out of his backpack. Down the side, in black Sharpie: HAPPY MAGIC FLUTE.'], ['Abe', '...Is that the Happy Magic Flute?'], ['Nate', 'Dad made it in college. He gave it to me. I bring it everywhere.'], ['Abe', 'Of course you do. Okay: you play, I dance. Nice and slow.']],
       talk: [
-        'The Happy Magic Flute! Your dad made that in COLLEGE.',
+        'The Happy Magic Flute! Dad made this in college.',
         'It\'s plumbing. It\'s plumbing, and it sounds great.',
         'Blow softer. It\'s a happy flute, not an angry flute.',
         'Four notes. You\'ve got this.',
@@ -8203,11 +8208,37 @@
   // ---- the mixing board: each track of a song gets its own channel (its pedal, tone, pan, volume
   // and reverb; G.audio.channel), made the first time it plays and kept with the song
   // Track mix settings: vol (0-4), pan (-4 to 4), tone (-2 to 2), verb (0-3), fx (a pedal, or null).
-  const PEDALS = [[null, 'NONE', '-'], ['drive', 'OVERDRIVE', 'DRV'], ['echo', 'ECHO', 'ECHO'], ['chorus', 'CHORUS', 'CHOR'], ['trem', 'TREMOLO', 'TREM']];
+  // Abe's pedals, one at a time: after the metronome (three instruments), a new one every two more.
+  // Each has the knobs its real-world classic has, 0-10: an overdrive (DRIVE, TONE, LEVEL), a delay
+  // (E.LEVEL, F.BACK, D.TIME, like Boss's delays), a chorus (RATE, DEPTH, like the CE-2) and a
+  // tremolo (WAVE, RATE, DEPTH, like the TR-2). k: [label, what it does, its default].
+  const PEDAL_INFO = {
+    drive: { name: 'OVERDRIVE', short: 'DRV', col: '#3aa858', at: 5, knobs: [['DRIVE', 'How hard it breaks up. Low: a little grit. High: a lot of crunch.', 6], ['TONE', 'Dark to bright. Turn it up to cut through.', 5], ['LEVEL', 'How loud it comes out of the pedal.', 6]] },
+    echo: { name: 'DELAY', short: 'DLY', col: '#e0e0d8', at: 7, knobs: [['E.LEVEL', 'Effect level: how loud the echoes are, next to the dry sound.', 5], ['F.BACK', 'Feedback: how many times it repeats. All the way up, it goes on and on.', 4], ['D.TIME', 'Delay time: a quick slap up to a long, faraway echo.', 4]] },
+    chorus: { name: 'CHORUS', short: 'CHOR', col: '#5aa8e8', at: 9, knobs: [['RATE', 'How fast it swirls.', 3], ['DEPTH', 'How wide the wobble is. Up high, it goes seasick.', 5]] },
+    trem: { name: 'TREMOLO', short: 'TREM', col: '#2ab0a0', at: 11, knobs: [['WAVE', 'The shape of the pulse: smooth (a triangle) to choppy (a square).', 3], ['RATE', 'How fast it pulses.', 5], ['DEPTH', 'How deep the pulse goes. All the way up, it cuts in and out.', 8]] },
+  };
+  const PEDAL_ORDER = ['drive', 'echo', 'chorus', 'trem'];
+  // (s.pedals: the ones Nate has. Saves from when Abe handed over all four at once keep all four.)
+  const pedalsOwned = () => {
+    const s = G.state;
+    if (s.items.pedals && !s.pedals) s.pedals = { drive: true, echo: true, chorus: true, trem: true };
+    return PEDAL_ORDER.filter((id) => (s.pedals || {})[id]);
+  };
+  G.pedalsOwned = pedalsOwned;
+  G.giveAllPedals = () => { const s = G.state; s.pedals = { drive: true, echo: true, chorus: true, trem: true }; s.items.pedals = true; };
+  // the choices for a track: no pedal, then each one Nate has
+  const pedalChoices = () => [null].concat(pedalsOwned());
+  const pedalName = (id) => (id ? PEDAL_INFO[id].name : 'NONE');
+  const pedalShort = (id) => (id ? PEDAL_INFO[id].short : '-');
+  // a track's knob settings for a pedal (kept per pedal, so switching back remembers them)
+  const pedalKnobs = (tr, id) => { tr.fxk = tr.fxk || {}; return (tr.fxk[id] = tr.fxk[id] || PEDAL_INFO[id].knobs.map((k) => k[2])); };
+  const cyclePedal = (tr, d) => { const ch = pedalChoices(), i = Math.max(0, ch.indexOf(tr.fx || null)); tr.fx = ch[(i + d + ch.length) % ch.length]; };
   const songChans = new WeakMap();
   function mixApply(song, i) {
     const ch = (songChans.get(song) || [])[i], tr = song.tracks[i];
-    if (ch) ch.set({ vol: VOLS[tr.vol], pan: tr.pan || 0, tone: tr.tone || 0, verb: tr.verb || 0, fx: G.state.items.pedals ? tr.fx || null : null });
+    const fx = tr.fx && pedalsOwned().includes(tr.fx) ? tr.fx : null;
+    if (ch) ch.set({ vol: VOLS[tr.vol], pan: tr.pan || 0, tone: tr.tone || 0, verb: tr.verb || 0, fx, fxk: fx ? pedalKnobs(tr, fx) : null });
   }
   function chanFor(song, i) {
     let arr = songChans.get(song);
@@ -8268,7 +8299,7 @@
         this.rebin();
         const tr = this.song.tracks[0];
         if (!tr.inst && !tr.ev.length) tr.inst = this.have()[0];
-        if (G.state.items.pedals && !flags().pedalTip) { flags().pedalTip = true; this.say('Abe\'s pedals are hooked up! Press B for the mixer: the PEDAL row is on top. - + picks the track\'s pedal.'); }
+        if (G.state.items.pedals && !flags().pedalTip2) { flags().pedalTip = flags().pedalTip2 = true; this.say('Pedals! B: mixer. On PEDAL: - + picks, Z opens.'); }
         G.play.overlay = this;
       },
       done() { removeEventListener('keydown', this.onKey, true); removeEventListener('keyup', this.onKeyUp, true); this.letGoAll(); this.stopPlayers(); this.result = true; },
@@ -8327,12 +8358,13 @@
           if (c === 'Backspace' || c === 'Escape' || c === 'KeyX') { this.stopPlayers(); this.mode = 'nav'; G.audio.sfx('cancel'); return true; }
           // ←→ steps on a different pedal, so you hear what the take will sound like before it starts
           if ((c === 'ArrowLeft' || c === 'ArrowRight') && G.state.items.pedals) {
-            const rt = this.song.tracks[this.recTrack], i = PEDALS.findIndex(([id]) => id === (rt.fx || null));
-            rt.fx = PEDALS[(i + (c === 'ArrowLeft' ? -1 : 1) + PEDALS.length) % PEDALS.length][0];
+            cyclePedal(this.song.tracks[this.recTrack], c === 'ArrowLeft' ? -1 : 1);
             mixApply(this.song, this.recTrack);
             G.audio.sfx('clank');
             return true;
           }
+          // ↑ opens the pedal up, to turn its knobs (the warm-up keeps going underneath)
+          if (c === 'ArrowUp' && G.state.items.pedals) { this.openPedal(this.recTrack, 'ready'); return true; }
           const n = studioNote(this.recInst, c);
           if (n == null) return true;
           this.live(c, n, this.recTrack, false);
@@ -8351,6 +8383,7 @@
           return true;
         }
         if (m === 'mix') return this.mixKey(c);
+        if (m === 'pedal') return this.pedalKey(c);
         if (m === 'play') { if (c === 'KeyC' || c === 'Enter' || c === 'Escape' || c === 'KeyX') { this.stopPlayers(); this.mode = 'nav'; } return true; }
         if (m === 'confirm') {
           if (c === 'KeyZ' || c === 'Enter') { const f = this.onYes; this.mode = 'nav'; f(); G.audio.sfx('select'); }
@@ -8379,6 +8412,29 @@
         }
         return true;
       },
+      // ---- the pedal, up close: ↑↓ steps on a different pedal (or none), ←→ picks a knob, - + turns it,
+      // the letter keys try it out (from the warm-up, the loop and the click keep going), C plays the
+      // song (from the mixer), and X (or ENTER, B, BACKSPACE) puts it back on the floor
+      openPedal(track, back) { this.pedalTrack = track; this.pedalBack = back; this.knob = 0; this.mode = 'pedal'; G.audio.sfx('select'); },
+      pedalKey(c) {
+        const tr = this.song.tracks[this.pedalTrack], info = tr.fx && PEDAL_INFO[tr.fx];
+        if (c === 'ArrowUp' || c === 'ArrowDown') { cyclePedal(tr, c === 'ArrowUp' ? -1 : 1); this.knob = 0; mixApply(this.song, this.pedalTrack); G.audio.sfx('clank'); }
+        else if ((c === 'ArrowLeft' || c === 'ArrowRight') && info) { this.knob = (this.knob + (c === 'ArrowLeft' ? -1 : 1) + info.knobs.length) % info.knobs.length; G.audio.sfx('menu'); }
+        else if ((c === 'Minus' || c === 'Equal') && info) {
+          const k = pedalKnobs(tr, tr.fx);
+          k[this.knob] = Math.max(0, Math.min(10, k[this.knob] + (c === 'Equal' ? 1 : -1)));
+          mixApply(this.song, this.pedalTrack);
+          G.audio.sfx('blip');
+        } else if (c === 'KeyC' && this.pedalBack === 'mix') { if (this.mixPlay) { this.stopPlayers(); this.mixPlay = false; } else this.playSong(true); }
+        else if (c === 'KeyX' || c === 'Escape' || c === 'Enter' || c === 'KeyB' || c === 'Backspace') { this.mode = this.pedalBack; G.audio.sfx('cancel'); }
+        else {
+          const inst = tr.inst || this.have()[0], n = studioNote(inst, c);
+          if (n == null) return false;
+          this.live(c, n, this.pedalTrack, false);
+          this.lit[c] = 8;
+        }
+        return true;
+      },
       // ---- the mixing board: ←→ a track, ↑↓ a knob, - + turns it; C plays the song while you mix,
       // V mutes, B (or X) goes back to the console. The pedals row is there once Abe's given Nate his.
       // (top to bottom, the way they're drawn: the pedal up top once Nate has Abe's, the fader at the bottom)
@@ -8395,7 +8451,8 @@
           else if (row === 'PAN') tr.pan = clamp((tr.pan || 0) + d, -4, 4);
           else if (row === 'TONE') tr.tone = clamp((tr.tone || 0) + d, -2, 2);
           else if (row === 'VERB') tr.verb = clamp((tr.verb || 0) + d, 0, 3);
-          else { const i = PEDALS.findIndex(([id]) => id === (tr.fx || null)); tr.fx = PEDALS[(i + d + PEDALS.length) % PEDALS.length][0]; }
+          else if (c === 'KeyZ') { this.openPedal(this.sel, 'mix'); return true; }
+          else cyclePedal(tr, d);
           mixApply(this.song, this.sel);
           G.audio.sfx('menu');
         } else if (c === 'KeyC') { if (this.mixPlay) { this.stopPlayers(); this.mixPlay = false; } else this.playSong(true); }
@@ -8593,8 +8650,9 @@
         const right = SONG_KEYS[sg.key].name + (this.metro() ? '  ' + G.sayable(sg.bpm) + ' BPM' : '') + '  ' + (sg.len ? mmss(sg.len / 1000) : '-:--');
         studioBack(ctx, 'STUDIO B: ' + sg.name, right);
         if (rec && (this.t >> 4) & 1) { ctx.fillStyle = '#f83838'; ctx.fillRect(G.W - 6 - FT().width(right) - 10, 3, 6, 6); }
-        if (live) this.drawLive(ctx, pos);
+        if (live && m !== 'pedal') this.drawLive(ctx, pos);
         else if (m === 'mix') this.drawMixer(ctx, pos);
+        else if (m === 'pedal') this.drawPedal(ctx, pos);
         else this.drawConsole(ctx, pos);
         if (m === 'menu') this.drawMenu(ctx);
         if (m === 'name') this.drawName(ctx);
@@ -8688,7 +8746,7 @@
         FT().draw(ctx, ready ? 'ENTER record' : 'ENTER stop', 6, 25, '#f8f8f0', { shadow: '#000' }); FT().draw(ctx, ready ? 'BACKSPACE back' : 'BACKSPACE scrap', 6, 34, '#f8f8f0', { shadow: '#000' });
         // the track's pedal, on the floor by his feet (←→ changes it while warming up)
         if (G.state.items.pedals) {
-          const fx = sg.tracks[this.recTrack].fx || null, pd = PEDALS.find(([id]) => id === fx), PCOL = { drive: '#e07a28', echo: '#3a78c8', chorus: '#3aa858', trem: '#9a5ac8' };
+          const fx = sg.tracks[this.recTrack].fx || null, PCOL = { drive: PEDAL_INFO.drive.col, echo: PEDAL_INFO.echo.col, chorus: PEDAL_INFO.chorus.col, trem: PEDAL_INFO.trem.col }, pd = [fx, pedalName(fx), pedalShort(fx)];
           const px = 188, py = FLOOR - 14;
           ctx.fillStyle = '#1c1424'; ctx.fillRect(px - 1, py - 1, 16, 15);
           ctx.fillStyle = fx ? PCOL[fx] : '#4a4258'; ctx.fillRect(px, py, 14, 13);
@@ -8697,7 +8755,7 @@
           ctx.fillStyle = fx ? '#ff4040' : '#3a1c1c'; ctx.fillRect(px + 6, py + 6, 2, 2);
           ctx.fillStyle = '#c8ccd4'; ctx.fillRect(px + 5, py + 9, 4, 3);
           FT().draw(ctx, pd[2], px + 7 - Math.round(FT().width(pd[2]) / 2), py - 10, fx ? PCOL[fx] : '#9890a8', { shadow: '#000' });
-          if (ready) FT().draw(ctx, '←→ pedal: ' + pd[1], 6, 43, '#f8d850', { shadow: '#000' });
+          if (ready) FT().draw(ctx, '←→ pedal: ' + pd[1] + (fx ? '   ↑ knobs' : ''), 6, 43, '#f8d850', { shadow: '#000' });
         }
         if (ready) {
           // play along until you're ready (and the metronome's beat, flashing)
@@ -8732,6 +8790,80 @@
       // The mixing board: the knobs' names down the left, then a channel strip for each track (its
       // instrument up top, then the pedal, the reverb and tone knobs, the pan, and a volume fader), the
       // knob you're on boxed in gold.
+      // ---- the pedal up close, on the studio floor: a big stompbox in its color, its knobs (the one
+      // you're on ringed in gold; with three, the middle one's label sits a row lower so they all fit),
+      // the LED, its name, the footswitch, and Abe's yellow cables in and out.
+      // Left: the knob you're on, and what it does. Right: the pedals (the ones Abe still has are ???).
+      drawPedal(ctx, pos) {
+        const tr = this.song.tracks[this.pedalTrack], fx = tr.fx || null, info = fx && PEDAL_INFO[fx], have = pedalsOwned();
+        const disc = (cx, cy, r, c) => { ctx.fillStyle = c; for (let dy = -r; dy <= r; dy++) { const w = Math.floor(Math.sqrt(r * r - dy * dy + r * 0.8)); ctx.fillRect(cx - w, cy + dy, w * 2 + 1, 1); } };
+        // the floor, and the cables
+        ctx.fillStyle = '#2e2838'; ctx.fillRect(0, 13, G.W, 115);
+        ctx.fillStyle = '#342e40'; for (let y = 17; y < 128; y += 6) for (let x = (y % 12) / 2; x < G.W; x += 6) ctx.fillRect(x, y, 2, 1);
+        const cy = info ? 32 : 70;
+        ctx.fillStyle = '#b89820'; ctx.fillRect(info ? 168 : 66, cy + 1, info ? 6 : 108, 3); ctx.fillRect(info ? 66 : 66, cy + 1, info ? 6 : 108, 3);
+        ctx.fillStyle = '#f8d040'; ctx.fillRect(info ? 168 : 66, cy, info ? 6 : 108, 2); ctx.fillRect(info ? 66 : 66, cy, info ? 6 : 108, 2);
+        if (!info) {
+          FT().draw(ctx, 'NO PEDAL', 120 - Math.round(FT().width('NO PEDAL') / 2), 50, '#c8c0d8', { shadow: '#000' });
+          FT().wrap('Straight from the instrument into the board. ↑↓ steps on a pedal.', 84).forEach((l, k) => FT().draw(ctx, l, 120 - Math.round(FT().width(l) / 2), 80 + k * 9, '#9890a8'));
+        } else {
+          const col = info.col, light = fx === 'echo', ink = '#1c1424', X0 = 76, Y0 = 18, W = 88, H = 106;
+          // the box: a shadow, the body (a lighter top edge, a darker bottom and right), screws in the corners
+          ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(X0 + 3, Y0 + 4, W, H);
+          ctx.fillStyle = ink; ctx.fillRect(X0 - 1, Y0 + 1, W + 2, H - 2); ctx.fillRect(X0 + 1, Y0 - 1, W - 2, H + 2);
+          ctx.fillStyle = col; ctx.fillRect(X0, Y0 + 1, W, H - 2); ctx.fillRect(X0 + 1, Y0, W - 2, H);
+          ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(X0 + 1, Y0 + 1, W - 2, 2);
+          ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(X0 + W - 3, Y0 + 3, 2, H - 4); ctx.fillRect(X0 + 1, Y0 + H - 3, W - 2, 2);
+          for (const [sx, sy] of [[X0 + 3, Y0 + 3], [X0 + W - 5, Y0 + 3], [X0 + 3, Y0 + H - 5], [X0 + W - 5, Y0 + H - 5]]) { ctx.fillStyle = '#8a8e98'; ctx.fillRect(sx, sy, 2, 2); ctx.fillStyle = '#e8ecf4'; ctx.fillRect(sx, sy, 1, 1); }
+          // the jacks (the signal goes in on the right and out on the left, like a real one)
+          ctx.fillStyle = '#c8ccd4'; ctx.fillRect(X0 - 4, cy - 1, 4, 5); ctx.fillRect(X0 + W, cy - 1, 4, 5);
+          FT().draw(ctx, 'OUT', X0 - 3 - FT().width('OUT'), cy - 10, '#9890a8'); FT().draw(ctx, 'IN', X0 + W + 1, cy - 10, '#9890a8');
+          // the knobs: a dark skirt, ticks at 0, 5 and 10, a pointer from about 7 o'clock (0) to 5 o'clock (10)
+          const k = pedalKnobs(tr, fx), nk = info.knobs.length, gap = nk === 3 ? 24 : 30;
+          info.knobs.forEach(([lab], i) => {
+            const kx = 120 + Math.round((i - (nk - 1) / 2) * gap), ky = Y0 + 17, on = i === this.knob, a = -2.4 + (k[i] / 10) * 4.8, ly = ky + (nk === 3 && i === 1 ? 21 : 12);
+            for (const t of [0, 5, 10]) { const ta = -2.4 + (t / 10) * 4.8; ctx.fillStyle = ink; ctx.fillRect(Math.round(kx + Math.sin(ta) * 11), Math.round(ky - Math.cos(ta) * 11), 1, 1); }
+            if (on) { disc(kx, ky, 10, '#f8d850'); disc(kx, ky, 9, col); }
+            disc(kx, ky, 8, ink); disc(kx, ky, 7, '#2a2a30'); disc(kx, ky - 1, 5, '#3e3e48'); disc(kx, ky - 1, 4, '#4a4a56');
+            ctx.fillStyle = '#f8f8f0'; for (let r = 1; r <= 6; r++) ctx.fillRect(Math.round(kx + Math.sin(a) * r), Math.round(ky - Math.cos(a) * r), 1, 1);
+            FT().draw(ctx, lab, kx - Math.round(FT().width(lab) / 2), ly, on && !light ? '#fff8c8' : ink);
+            if (on) { ctx.fillStyle = ink; ctx.fillRect(kx - Math.round(FT().width(lab) / 2), ly + 8, FT().width(lab), 1); }
+          });
+          // the LED (on: the pedal's stepped on), the name band, and the footswitch
+          const L = Y0 + (nk === 3 ? 53 : 47);
+          disc(120, L, 5, 'rgba(255,64,64,0.3)');
+          disc(120, L, 3, '#3a1010'); disc(120, L, 2, '#ff4040'); ctx.fillStyle = '#ffc0c0'; ctx.fillRect(119, L - 1, 1, 1);
+          ctx.fillStyle = ink; ctx.fillRect(X0 + 6, L + 7, W - 12, 15);
+          FT().draw(ctx, info.name, 120 - Math.round(FT().width(info.name) / 2), L + 11, col);
+          FT().draw(ctx, 'ABE', X0 + W - 8 - FT().width('ABE'), Y0 + H - 12, ink);
+          ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(X0 + 12, L + 26, W - 24, 24);
+          disc(120, L + 38, 8, '#6a6e78'); disc(120, L + 37, 7, '#c8ccd4'); disc(119, L + 36, 4, '#e8ecf4'); disc(120, L + 38, 2, '#8a8e98');
+        }
+        // left: the knob you're on
+        if (info) {
+          const [lab, about] = info.knobs[this.knob], v = pedalKnobs(tr, fx)[this.knob];
+          FT().draw(ctx, lab, 6, 18, '#f8d850', { shadow: '#000' });
+          FT().draw(ctx, v + ' / 10', 6, 28, '#f8f8f0', { shadow: '#000' });
+          ctx.fillStyle = '#0c0a12'; ctx.fillRect(6, 38, 48, 4); ctx.fillStyle = info.col; ctx.fillRect(6, 38, Math.round(4.8 * v), 4);
+          FT().wrap(about, 60).slice(0, 8).forEach((l, i) => FT().draw(ctx, l, 6, 48 + i * 9, '#c8c0d8', { shadow: '#000' }));
+        }
+        // right: the pedals
+        FT().draw(ctx, 'PEDALS', 178, 18, '#9890a8', { shadow: '#000' });
+        [null].concat(PEDAL_ORDER).forEach((id, i) => {
+          const y = 30 + i * 16, own = !id || have.includes(id), on = id === fx;
+          if (on) { ctx.fillStyle = '#3a3058'; ctx.fillRect(174, y - 2, 65, 15); ctx.strokeStyle = '#f8d850'; ctx.strokeRect(174.5, y - 1.5, 64, 14); }
+          ctx.fillStyle = !id ? '#4a4258' : own ? PEDAL_INFO[id].col : '#2a2438'; ctx.fillRect(177, y + 1, 5, 9);
+          FT().draw(ctx, own ? pedalName(id) : '???', 185, y + 1, on ? '#f8d850' : own ? '#f8f8f0' : '#5a4e70');
+          if (!own) FT().draw(ctx, 'at ' + PEDAL_INFO[id].at, 210, y + 1, '#5a4e70');
+        });
+        // along the bottom
+        const inst = tr.inst || this.have()[0];
+        ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 128, G.W, 32);
+        FT().draw(ctx, this.msgT > 0 ? this.msg : 'TRACK ' + G.sayable(this.pedalTrack + 1) + '  ' + STUDIO_SHORT[inst] + '  PEDAL: ' + pedalName(fx), 6, 131, '#f8d850');
+        if (this.mixPlay) FT().draw(ctx, 'PLAYING ' + mmss(pos), G.W - 6 - FT().width('PLAYING ' + mmss(pos)), 131, '#78e070');
+        FT().draw(ctx, '↑↓ pedal  ←→ knob  - + turn it  letters: try it', 6, 141, '#9890a8');
+        FT().draw(ctx, this.pedalBack === 'mix' ? 'C play the song  X back to the mixer' : 'X back to the warm-up', 6, 150, '#9890a8');
+      },
       drawMixer(ctx, pos) {
         const sg = this.song, rows = this.mixRows(), cur = rows[Math.min(this.mixRow, rows.length - 1)], pedals = !!G.state.items.pedals;
         const CY = { FX: 36, VERB: 49, TONE: 62, PAN: 75, VOL: 85 }, NAME = { FX: 'PEDAL', VERB: 'VERB', TONE: 'TONE', PAN: 'PAN', VOL: 'VOL' };
@@ -8751,7 +8883,7 @@
           if (tr.mute) FT().draw(ctx, 'M', x0 + 1, 14, '#f86858');
           const nm = tr.inst ? STUDIO_TINY[tr.inst] : '-';
           FT().draw(ctx, nm, cx - Math.round(FT().width(nm) / 2), 22, tr.mute ? '#5a4e70' : col);
-          if (pedals) { const pd = PEDALS.find(([id]) => id === (tr.fx || null)), t = pd[2]; ctx.fillStyle = tr.fx ? '#5a2a3a' : '#16121e'; ctx.fillRect(x0 + 2, CY.FX - 4, 20, 9); FT().draw(ctx, t, cx - Math.round(FT().width(t) / 2), CY.FX - 3, tr.fx ? '#f8a8b8' : '#5a4e70'); }
+          if (pedals) { const t = pedalShort(tr.fx || null); ctx.fillStyle = tr.fx ? '#5a2a3a' : '#16121e'; ctx.fillRect(x0 + 2, CY.FX - 4, 20, 9); FT().draw(ctx, t, cx - Math.round(FT().width(t) / 2), CY.FX - 3, tr.fx ? '#f8a8b8' : '#5a4e70'); }
           knob(cx, CY.VERB, tr.verb || 0, 0, 3, on); knob(cx, CY.TONE, tr.tone || 0, -2, 2, on);
           ctx.fillStyle = '#0c0a12'; ctx.fillRect(x0 + 3, CY.PAN, 18, 3); ctx.fillStyle = '#5a4e70'; ctx.fillRect(cx, CY.PAN - 1, 1, 5);
           ctx.fillStyle = '#f8d850'; ctx.fillRect(Math.round(cx + (tr.pan || 0) * 2) - 1, CY.PAN - 1, 3, 5);
@@ -8766,13 +8898,13 @@
         const tr = sg.tracks[this.sel], val = {
           VOL: G.sayable(tr.vol + 1) + ' of 5', PAN: !tr.pan ? 'CENTER' : (tr.pan < 0 ? 'LEFT ' : 'RIGHT ') + G.sayable(Math.abs(tr.pan)),
           TONE: ['DARKEST', 'DARK', 'FLAT', 'BRIGHT', 'BRIGHTEST'][(tr.tone || 0) + 2], VERB: ['DRY', 'A LITTLE ROOM', 'A HALL', 'A CATHEDRAL'][tr.verb || 0],
-          FX: PEDALS.find(([id]) => id === (tr.fx || null))[1],
+          FX: pedalName(tr.fx || null) + (tr.fx ? '  (Z: knobs)' : ''),
         }[cur];
         ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 128, G.W, 32);
         FT().draw(ctx, 'TRACK ' + G.sayable(this.sel + 1) + '  ' + { VOL: 'VOLUME', PAN: 'PAN', TONE: 'TONE', VERB: 'REVERB', FX: 'PEDAL' }[cur] + ': ' + val, 6, 131, '#f8d850');
         if (this.mixPlay) FT().draw(ctx, 'PLAYING ' + mmss(pos), G.W - 6 - FT().width('PLAYING ' + mmss(pos)), 131, '#78e070');
         FT().draw(ctx, '←→ track  ↑↓ knob  - + turn  C play  V mute', 6, 141, '#9890a8');
-        FT().draw(ctx, (pedals ? 'PEDAL is the top row.  ' : 'Pedals: Abe has some, at 5 instruments.  ') + 'B back', 6, 150, '#9890a8');
+        FT().draw(ctx, (pedals ? 'PEDAL is the top row (Z opens it up).  ' : 'Pedals: Abe has some, at 5 instruments.  ') + 'B back', 6, 150, '#9890a8');
       },
       // while recording: the keys for the instrument (they light up when played), each with the note
       // or chord it plays under it (tinted by octave: dim, white, then gold the highest)
@@ -8877,8 +9009,21 @@
     f.raeLine = ((f.raeLine || 0) + 1) % lines.length;
     yield G.say('Rae', lines[f.raeLine]);
   };
+  // Abe's pedals, as he hands each one over (and after; a 'last' line only when no other one's due)
+  const PEDAL_GIVE = {
+    drive: [['Abe', 'Five instruments. FIVE. Okay. You\'re ready for this.'], [null, 'Abe slides a beat-up pedalboard out from under the couch. One green pedal on it, and a LOT of empty Velcro.'], ['Abe', 'My old overdrive. Three knobs: DRIVE is how dirty, TONE is how bright, LEVEL is how loud.']],
+    echo: [['Abe', 'Seven instruments! The pedalboard is getting company.'], [null, 'Abe digs a white pedal out of a box of yellow cables.'], ['Abe', 'My delay. E.LEVEL is how loud the echoes are, F.BACK is how many, and D.TIME is how far apart.']],
+    chorus: [['Abe', 'Nine. You\'re a one-man band. Here.'], [null, 'Abe hands over a blue pedal with just two knobs.'], ['Abe', 'Chorus. It makes one guitar sound like two. RATE is how fast it swirls, DEPTH is how much.']],
+    trem: [['Abe', 'Eleven. That\'s all of them. You won my whole collection.'], [null, 'Abe peels the last pedal off his own board. A teal one.'], ['Abe', 'Tremolo. Your volume, up and down, fast. WAVE goes from smooth to choppy.']],
+  };
+  const PEDAL_AFTER = {
+    drive: [['Abe', 'It works on anything, by the way. Overdrive on bongos. I\'m not going to stop you.'], ['Abe', 'Get two more instruments and I\'ll find you another one. The board\'s got room.', 'last']],
+    echo: [['Abe', '...Do you want some yellow cables, while you\'re here? No? Okay. Offer stands.']],
+    chorus: [['Abe', 'Put it on the Rhodes. Trust me.']],
+    trem: [['Abe', 'Surf rock, Nate. Turn up the RATE and go surf rock.']],
+  };
   // Abe's news, at the amp: the studio (once Nate has an instrument of his), the metronome (three) and
-  // his old guitar pedals (five; they unlock the PEDAL knob on the studio's mixer)
+  // his old guitar pedals (one every two more instruments; they go on the PEDAL row of the studio's mixer)
   function* abeStudioNews() {
     const f = flags(), s = G.state, n = G.abeInstruments();
     if (n >= 1 && !f.studioTold) {
@@ -8894,13 +9039,16 @@
       yield G.say('Abe', 'Keep time with this. Not with your foot. Your foot lies.');
       G.play.autosave();
     }
-    if (n >= 5 && !s.items.pedals) {
-      yield G.say('Abe', 'Five instruments. FIVE. Okay. You\'re ready for these.');
-      yield G.say(null, 'Abe slides a beat-up pedalboard out from under the couch. Four little stompboxes, held down with a LOT of Velcro.');
-      yield G.say('Abe', 'My old pedals. Overdrive, echo, chorus, tremolo. Every one of them has been stepped on by a professional. Me.');
-      s.items.pedals = true;
-      yield G.itemGet(G.spr.pedalsIcon, 'You got {y}Abe\'s Guitar Pedals{/}! In {y}Studio B{/}, press {y}B{/} at the console for the mixer: every track gets a pedal.');
-      yield G.say('Abe', 'They work on anything, by the way. Echo on a flute. Overdrive on bongos. I\'m not going to stop you.');
+    // a pedal every two instruments after the metronome: overdrive at five, delay at seven, chorus at
+    // nine, tremolo at eleven
+    for (const id of PEDAL_ORDER) {
+      if (n < PEDAL_INFO[id].at || pedalsOwned().includes(id)) continue;
+      const first = !s.items.pedals;
+      for (const [who, line] of PEDAL_GIVE[id]) yield G.say(who, line);
+      s.pedals = s.pedals || {}; s.pedals[id] = true; s.items.pedals = true;
+      yield G.itemGet(G.spr['pedal_' + id], 'You got Abe\'s {y}' + PEDAL_INFO[id].name[0] + PEDAL_INFO[id].name.slice(1).toLowerCase() + '{/} pedal! ' + (first ? 'In {y}Studio B{/}: {y}B{/} for the mixer, then {y}Z{/} on the PEDAL row.' : 'It\'s on the board in {y}Studio B{/}.'));
+      const more = PEDAL_ORDER.some((j) => n >= PEDAL_INFO[j].at && !pedalsOwned().includes(j));
+      for (const [who, line, last] of PEDAL_AFTER[id]) if (!last || !more) yield G.say(who, line);
       G.play.autosave();
     }
   }
@@ -8945,27 +9093,27 @@
   };
 
   // Studio B: the console in the middle of the back wall with a monitor on each side, foam on the
-  // walls, an ON AIR light, the instruments Nate has won (guitars on stands, the drums on the
-  // right), a couch, and Rae.
+  // walls, an ON AIR light, the instruments Nate has won (guitars on stands on the left, the drums,
+  // and the keys corner on the right: the pianos and a flute case), a couch, and Rae.
   G.MAPS.studioB = {
     name: 'Williams Center: Studio B',
     music: 'house',
     tiles: [
-      'wwwwwwwwwwwwwww',
-      'vvvvvvvvvvvvvvv',
-      '***************',
-      '***************',
-      '***************',
-      '****rrrrrrr****',
-      '****rrrrrrr****',
-      '****rrrrrrr****',
-      '***************',
-      '***************',
-      'wwwwwwwxwwwwwww',
+      'wwwwwwwwwwwwwwwwwww',
+      'vvvvvvvvvvvvvvvvvvv',
+      '*******************',
+      '*******************',
+      '*******************',
+      '****rrrrrrr********',
+      '****rrrrrrr********',
+      '****rrrrrrr********',
+      '*******************',
+      '*******************',
+      'wwwwwwwxwwwwwwwwwww',
     ],
     setup(w) {
       const F = furnish(w), sp = G.spr, s = G.state;
-      for (const x of [1, 2, 3, 13, 14]) F.hang(sp.acousticPanel, x, 1, 1, null, 2);
+      for (const x of [1, 2, 3, 13, 14, 18]) F.hang(sp.acousticPanel, x, 1, 1, null, 2);
       // the ON AIR light, over the drums (lit while the studio's recording)
       w.props.push({ img: null, x: 0, y: 0, base: 16, draw(ctx, cx, cy) {
         const x = 11 * 16 - cx, y = 18 - cy, on = G.script.cur && G.script.cur.cmd && G.script.cur.cmd.mode === 'rec';
@@ -8997,6 +9145,28 @@
       if (G.instrumentHas('drumkit')) F.stand(sp.drumKit, 11, 3, 3, look('Abe\'s drum kit, in blue sparkle. Rae says it\'s the loudest thing that\'s ever been in here.'));
       if (G.instrumentHas('steelpan')) F.stand(sp.steelPan, 12, 6, 2, look('Abe\'s steel drum. Still has never been to the beach.'));
       if (G.instrumentHas('bongos')) F.stand(sp.bongos, 12, 8, 2, look('Abe\'s bongos. Hannah does not miss them.'));
+      // the keys corner: the upright against the back wall, the Casio on its X stand, the Rhodes
+      if (G.instrumentHas('upright')) F.stand(sp.uprightPiano, 15, 2, 3, look('Abe\'s upright piano, against the wall. Rae swears it was in tune when it got here.'));
+      if (G.instrumentHas('casio')) F.stand(sp.casioKeyboard, 15, 4, 3, look('Abe\'s Casio, on its X stand. Somebody has pressed DEMO a LOT.'));
+      if (G.instrumentHas('rhodes')) F.stand(sp.rhodesPiano, 15, 7, 3, look('Abe\'s Rhodes. It weighs about as much as the couch, and Rae helped carry it in.'));
+      // the flute case, open on the floor: the Happy Magic Flute and the silver flute lying in red velvet
+      const pvc = G.instrumentHas('pvcFlute'), silver = G.instrumentHas('flute');
+      if (pvc || silver) {
+        w.props.push({ img: null, x: 0, y: 0, base: 9 * 16 + 15, hit: [15 * 16, 9 * 16, 18 * 16, 10 * 16], talk: look(
+          pvc && silver ? 'The flute case: Abe\'s silver flute, and the Happy Magic Flute, its name on it in Sharpie.' : pvc ? 'The Happy Magic Flute, in a flute case MUCH fancier than it is. Its name is on it in Sharpie.' : 'Abe\'s silver flute, in its case. There\'s room in there for another flute.',
+          ...(pvc ? ['Dad made it out of PVC pipe in college, and gave it to Nate.'] : [])), draw(ctx, cx, cy) {
+          const x = 15 * 16 - 1 - cx, y = 9 * 16 - cy;
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(x, y - 6, 50, 7); ctx.fillStyle = '#6a1c2a'; ctx.fillRect(x + 1, y - 5, 48, 5);
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(x, y + 1, 50, 15); ctx.fillStyle = '#2a2a30'; ctx.fillRect(x + 1, y + 2, 48, 13);
+          ctx.fillStyle = '#8a2a3a'; ctx.fillRect(x + 2, y + 3, 46, 11); ctx.fillStyle = '#a83a4a'; ctx.fillRect(x + 2, y + 3, 46, 1);
+          ctx.fillStyle = '#c8b048'; ctx.fillRect(x + 23, y + 14, 4, 2);
+          // (each lies on its side, mouth end to the left; ly is the row its far edge sits on)
+          const lie = (img, ly) => { ctx.save(); ctx.translate(x + 25 - img.height / 2, y + ly); ctx.rotate(-Math.PI / 2); ctx.drawImage(img, 0, 0); ctx.restore(); };
+          if (silver) lie(G.spr.silverFlute, pvc ? 8 : 11);
+          if (pvc) lie(G.spr.pvcFlute, silver ? 13 : 10);
+        } });
+        w.blockTiles(15, 9, 3, 1);
+      }
       F.stand(sp.studioCouch, 1, 9, 3, look('A beat-up purple couch. Every studio has one. Nobody knows where it came from.'));
       F.stand(sp.monstera, 4, 9, 1, look('A big plant. Rae says it likes jazz.'));
       w.add(new G.NPC({ sprite: 'rae', name: 'Rae', x: 10 * 16 + 8, y: 4 * 16 + 14, dir: 'left', talk: S.rae }));

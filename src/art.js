@@ -9816,16 +9816,27 @@
     return p.canvas();
   }
   // Abe's metronome: a little wooden pyramid with a pendulum (the icon, and on the studio desk)
-  // Abe's old guitar pedals, on a little board: overdrive (orange), echo (blue), chorus (green),
-  // tremolo (purple), each with knobs and a footswitch
+  // Abe's old guitar pedals, on a little board: overdrive (green), delay (white), chorus (blue),
+  // tremolo (teal), each with knobs and a footswitch
   function pedalsIcon() {
     const p = new Pix(16, 12);
     p.rect(0, 9, 16, 3, '#2a2a30'); p.hline(0, 15, 9, '#4a4a52');
-    [['#e07a28', 0], ['#3a78c8', 4], ['#3aa858', 8], ['#9a5ac8', 12]].forEach(([c, x]) => {
+    [['#3aa858', 0], ['#e0e0d8', 4], ['#5aa8e8', 8], ['#2ab0a0', 12]].forEach(([c, x]) => {
       p.rect(x, 2, 4, 7, c); p.hline(x, x + 3, 2, '#f8f8f0'); p.set(x + 1, 3, '#1c1424'); p.set(x + 2, 3, '#1c1424');
       p.rect(x + 1, 6, 2, 2, '#c8ccd4'); p.set(x + 1, 6, '#ffffff');
     });
     return finish(p);
+  }
+  // one of Abe's pedals on its own (the one he's just handed over): its knobs, the LED, a footswitch
+  function pedalIcon(c, knobs) {
+    const p = new Pix(12, 15), D = '#1c1424';
+    p.rect(0, 0, 12, 15, c); p.hline(1, 10, 0, '#f8f8f0'); p.vline(11, 1, 14, shade(c, -0.3)); p.hline(0, 11, 14, shade(c, -0.3));
+    (knobs === 2 ? [2, 7] : [1, 5, 9]).forEach((x) => { p.rect(x, 2, 2, 2, D); p.set(x, 2, '#4a4a56'); });
+    p.set(5, 6, '#ff4040'); p.set(6, 6, '#ff4040');
+    p.rect(1, 8, 10, 2, D);
+    p.rect(4, 11, 4, 2, '#c8ccd4'); p.set(4, 11, '#ffffff');
+    p.outline();
+    return p.canvas();
   }
   function metronomeIcon() {
     const p = new Pix(12, 15), wood = '#a8743c', woodD = '#7a5228', woodL = '#c8945a';
@@ -10383,6 +10394,7 @@
     S.uprightPiano = uprightPiano(); S.casioKeyboard = casioKeyboard(); S.rhodesPiano = rhodesPiano();
     S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe(); S.bongos = bongos(); S.steelPan = steelPan(); S.drumKit = drumKit();
     S.williamsCenter = williamsCenter(); S.parkBench = parkBench(); S.arcSculpture = arcSculpture(); S.posterKiosk = posterKiosk(); S.mixingDesk = mixingDesk(); S.studioMonitor = studioMonitor(); S.acousticPanel = acousticPanel(); S.studioCouch = studioCouch(); S.metronomeIcon = metronomeIcon(); S.pedalsIcon = pedalsIcon();
+    S.pedal_drive = pedalIcon('#3aa858', 3); S.pedal_echo = pedalIcon('#e0e0d8', 3); S.pedal_chorus = pedalIcon('#5aa8e8', 2); S.pedal_trem = pedalIcon('#2ab0a0', 3);
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
     S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();

@@ -144,33 +144,47 @@ G.audio = (function () {
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : ctx.createGain();
     lo.type = 'lowshelf'; lo.frequency.value = 250; hi.type = 'highshelf'; hi.frequency.value = 2500;
     post.connect(lo); lo.connect(hi); hi.connect(pan); pan.connect(vol); vol.connect(musicBus); vol.connect(send); send.connect(reverb());
-    let fxNodes = [], fxKind = undefined;
-    // (the pedal sits between the input and the rest; rebuilt when it changes)
-    const pedal = (kind) => {
-      if (kind === fxKind) return;
-      fxKind = kind;
+    let fxNodes = [], fxKind = undefined, fxTune = null;
+    // (the pedal sits between the input and the rest; rebuilt when it changes. k: its knobs, 0-10 each;
+    // fxTune turns them on the pedal that's already in)
+    const pedal = (kind, k) => {
+      fxKind = kind; fxTune = null;
       input.disconnect(); for (const n of fxNodes) { try { n.stop && n.stop(); } catch (e) { /* fine */ } n.disconnect(); }
       fxNodes = [];
-      const keep = (...ns) => { fxNodes.push(...ns); return ns[0]; };
+      const keep = (...ns) => { fxNodes.push(...ns); return ns[0]; }, t = () => ctx.currentTime;
       if (kind === 'drive') {
+        // DRIVE: how hard it clips; TONE: dark to bright; LEVEL: how loud it comes out
         const pre = keep(ctx.createGain()), ws = keep(ctx.createWaveShaper()), tame = keep(ctx.createBiquadFilter()), out = keep(ctx.createGain());
-        pre.gain.value = 2.5; ws.curve = driveCurve(18); tame.type = 'lowpass'; tame.frequency.value = 3200; out.gain.value = 0.45;
+        tame.type = 'lowpass';
         input.connect(pre); pre.connect(ws); ws.connect(tame); tame.connect(out); out.connect(post);
+        // (at Abe's settings, 6/5/6, it's the pedal from before it had knobs)
+        fxTune = ([drive, tone, level]) => { pre.gain.setTargetAtTime(1 + drive * 0.25, t(), 0.02); ws.curve = driveCurve(6 + drive * 2); tame.frequency.setTargetAtTime(1400 + tone * 360, t(), 0.02); out.gain.setTargetAtTime(0.15 + level * 0.05, t(), 0.02); };
       } else if (kind === 'echo') {
+        // E.LEVEL: how loud the echoes are; F.BACK: how many times they repeat; D.TIME: how long until they come back
         const d = keep(ctx.createDelay(1)), fb = keep(ctx.createGain()), wet = keep(ctx.createGain());
-        d.delayTime.value = 0.33; fb.gain.value = 0.38; wet.gain.value = 0.5;
         input.connect(post); input.connect(d); d.connect(fb); fb.connect(d); d.connect(wet); wet.connect(post);
+        // (5/4/4: the old echo. F.BACK all the way up nearly repeats forever; D.TIME runs 50 to 750 ms)
+        fxTune = ([lvl, back, time]) => { wet.gain.setTargetAtTime(lvl * 0.1, t(), 0.02); fb.gain.setTargetAtTime(back * 0.095, t(), 0.02); d.delayTime.setTargetAtTime(0.05 + time * 0.07, t(), 0.05); };
       } else if (kind === 'chorus') {
+        // RATE: how fast it swirls; DEPTH: how wide the wobble is
         const d = keep(ctx.createDelay(0.1)), lfo = keep(ctx.createOscillator()), depth = keep(ctx.createGain()), wet = keep(ctx.createGain());
-        d.delayTime.value = 0.022; lfo.frequency.value = 1.1; depth.gain.value = 0.004; wet.gain.value = 0.7;
+        d.delayTime.value = 0.022; wet.gain.value = 0.7;
         lfo.connect(depth); depth.connect(d.delayTime); lfo.start();
         input.connect(post); input.connect(d); d.connect(wet); wet.connect(post);
+        // (3/5: the old chorus)
+        fxTune = ([rate, dep]) => { lfo.frequency.setTargetAtTime(0.2 + rate * 0.3, t(), 0.05); depth.gain.setTargetAtTime(dep * 0.0008, t(), 0.05); };
       } else if (kind === 'trem') {
-        const amp = keep(ctx.createGain()), lfo = keep(ctx.createOscillator()), depth = keep(ctx.createGain());
-        amp.gain.value = 0.6; lfo.frequency.value = 5.5; depth.gain.value = 0.4;
-        lfo.connect(depth); depth.connect(amp.gain); lfo.start();
+        // WAVE: smooth (triangle) to choppy (square); RATE: how fast it pulses; DEPTH: how deep
+        // (the WAVE knob turns the triangle up into a clipper, so it squares off as it goes: a smooth
+        // pulse at 0, a trapezoid in the middle, nearly a square at 10. 3/5/8: the old tremolo. All
+        // the way down on DEPTH it's off; all the way up, the volume goes right down to nothing)
+        const amp = keep(ctx.createGain()), lfo = keep(ctx.createOscillator()), sq = keep(ctx.createGain()), clip = keep(ctx.createWaveShaper()), depth = keep(ctx.createGain());
+        lfo.type = 'triangle'; clip.curve = new Float32Array([-1, 1]);
+        lfo.connect(sq); sq.connect(clip); clip.connect(depth); depth.connect(amp.gain); lfo.start();
         input.connect(amp); amp.connect(post);
+        fxTune = ([wave, rate, dep]) => { sq.gain.setTargetAtTime(1 + wave * 0.6, t(), 0.02); lfo.frequency.setTargetAtTime(1 + rate * 0.9, t(), 0.05); const dd = dep * 0.05; amp.gain.setTargetAtTime(1 - dd, t(), 0.02); depth.gain.setTargetAtTime(dd, t(), 0.02); };
       } else input.connect(post);
+      if (fxTune && k) fxTune(k);
     };
     pedal(null);
     return {
@@ -181,7 +195,8 @@ G.audio = (function () {
         if (o.pan != null && pan.pan) pan.pan.setTargetAtTime(o.pan / 4, t, 0.02);
         if (o.tone != null) { hi.gain.setTargetAtTime(o.tone * 4, t, 0.02); lo.gain.setTargetAtTime(-o.tone * 3, t, 0.02); }
         if (o.verb != null) send.gain.setTargetAtTime([0, 0.18, 0.36, 0.6][o.verb] || 0, t, 0.02);
-        if (o.fx !== undefined) pedal(o.fx || null);
+        if (o.fx !== undefined && (o.fx || null) !== fxKind) pedal(o.fx || null, o.fxk);
+        else if (o.fxk && fxTune) fxTune(o.fxk);
       },
     };
   }
@@ -624,9 +639,10 @@ G.audio = (function () {
     withLevel(v, fn) { const o = level; level = v; try { return fn(); } finally { level = o; } },
     withRoute(node, fn) { const o = route; route = node; try { return fn(); } finally { route = o; } },
     // A mixing-board channel for a studio track: what's played into `input` goes through its pedal
-    // (fx: null, 'drive', 'echo', 'chorus', 'trem'), a tone knob (a tilt: -2 dark to +2 bright), the
-    // pan (-4 left to +4 right) and its volume, out to the music, with a send to the shared reverb
-    // (verb 0-3). set({ vol, pan, tone, verb, fx }) changes it on the fly. Null before the audio runs.
+    // (fx: null, 'drive', 'echo', 'chorus', 'trem'; fxk: its knobs, 0-10 each), a tone knob (a tilt:
+    // -2 dark to +2 bright), the pan (-4 left to +4 right) and its volume, out to the music, with a send
+    // to the shared reverb (verb 0-3). set({ vol, pan, tone, verb, fx, fxk }) changes it on the fly.
+    // Null before the audio runs.
     channel() { return ctx ? makeChannel() : null; },
     // A player for a recorded song: events [{ t (seconds), play(at) }] in order, len seconds long,
     // starting at audio time startAt; loop goes around forever. Returns { stop(), at0 }.
