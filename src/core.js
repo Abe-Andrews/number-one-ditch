@@ -553,6 +553,31 @@ G.audio = (function () {
         noise(t, pvc ? 0.14 : 0.06, lv(pvc ? 0.08 : 0.035), rg, pvc ? 1800 : 2600);
         return letGo(rg, [o, o2]);
       },
+      // A violin: a bowed string. Three slightly detuned sawtooths (the string, sawed by the bow) through
+      // a lowpass and two body resonances; the bow swells in, holds steady as long as it's drawn, and
+      // lifts off; a vibrato creeps in after a moment; and a little scratch of rosin as the bow catches
+      violin(midi, dur = 0.5, vol = 0.22, at) {
+        if (!ctx || muted) return;
+        const t = when(at), f = N(midi), len = Math.max(0.15, dur), rg = ctx.createGain(), srcs = [], peak = lv(vol);
+        rg.connect(bus());
+        const lp = ctx.createBiquadFilter(), b1 = ctx.createBiquadFilter(), b2 = ctx.createBiquadFilter(), g = ctx.createGain();
+        lp.type = 'lowpass'; lp.frequency.value = Math.min(7000, f * 8); lp.Q.value = 0.7;
+        b1.type = 'peaking'; b1.frequency.value = 480; b1.Q.value = 1.2; b1.gain.value = 6;
+        b2.type = 'peaking'; b2.frequency.value = 2900; b2.Q.value = 1.5; b2.gain.value = 5;
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.07);
+        g.gain.setValueAtTime(peak, t + Math.max(0.08, len * 0.85)); g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.12);
+        const v = ctx.createOscillator(), vg = ctx.createGain();
+        v.frequency.value = 5.6; vg.gain.value = 0; vg.gain.setValueAtTime(0, t + 0.15); vg.gain.linearRampToValueAtTime(f * 0.008, t + 0.45);
+        v.connect(vg); v.start(t); v.stop(t + len + 0.2); srcs.push(v);
+        for (const [mul, lvl] of [[1, 0.5], [1.004, 0.35], [0.997, 0.25]]) {
+          const o = ctx.createOscillator(), og = ctx.createGain();
+          o.type = 'sawtooth'; o.frequency.value = f * mul; vg.connect(o.frequency); og.gain.value = lvl;
+          o.connect(og); og.connect(lp); o.start(t); o.stop(t + len + 0.2); srcs.push(o);
+        }
+        lp.connect(b1); b1.connect(b2); b2.connect(g); g.connect(rg);
+        noise(t, 0.05, lv(vol * 0.18), rg, 3200);
+        return letGo(rg, srcs);
+      },
       // Pianos (all three can be held; letting go drops the damper): an upright (a felt hammer on
       // strings: bright, then a quick drop and a long fade, even with the key down), a Casio (a cheap
       // little synth: square and saw, steady while held), and a Fender Rhodes (a struck tine: an FM

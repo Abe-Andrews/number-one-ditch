@@ -5877,6 +5877,7 @@
     jam_pan: ['Every dent in the steel drum is a note: ← ↓ ↑ → from low to high. Hit each note right as it lands on its dent. A long tail means HOLD it (let go early and it\'s DROPPED).', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     jam_flute: ['Notes slide down onto the finger holes: low notes on the left, high on the right. Cover each hole with its arrow (← ↓ ↑ →) right as its note lands. A long tail means HOLD it till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     jam_piano: ['Notes slide down onto the keys: low notes on the left, high on the right. Press each one with its arrow (← ↓ ↑ →) right as it lands.', 'Two at once? Press both. A long tail means HOLD it till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
+    jam_violin: ['Notes slide down the four strings, G, D, A and E: low on the left, high on the right. Bow each one with its arrow (← ↓ ↑ →) right as it reaches the bridge.', 'A long tail is a long bow: HOLD the arrow till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
     jam_kit: ['← hi-hat, ↓ kick drum, ↑ snare, → crash and toms. Hit each note right as it lands on its drum.', 'Two at once (like kick and hi-hat)? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
   };
 
@@ -7355,6 +7356,27 @@
         'You play. I dance. Slowly. Smoothly.',
       ],
     },
+    // STRINGS (the setlist's fifth page, VIOLIN; just the one for now): Nate on violin, Abe dancing.
+    // Made up for the game like Abe's drums. bow: which bowed voice.
+    {
+      id: 'violin', name: 'Abe\'s Violin', kind: 'Violin', art: () => G.spr.violin, bow: 'violin', song: 'rosinRain',
+      blurb: 'A violin in orange-brown varnish, with its bow, in a case lined in blue velvet. Abe found it at a yard sale.',
+      about: [
+        'Four strings, tuned G, D, A and E, and no frets: the player has to find every note by ear.',
+        'The bow is strung with horsehair and rubbed with rosin, so it grips the strings and makes them sing.',
+        'Some of the oldest violins anyone knows of were made by Andrea Amati, in Cremona, Italy, in the 1500s.',
+      ],
+      how: 'Clear Rosin and Rain, jamming with Abe at the condo.',
+      intro: [[null, 'Abe opens a little case lined in blue velvet. Inside: a violin, and its bow.'], ['Abe', 'A violin. Yard sale. ...It\'s always a yard sale. Hannah has stopped asking.'], ['Abe', 'Four strings: G, D, A, E, low to high. Long notes, so draw the bow the whole way. I dance. Slowly.']],
+      won: [['Abe', 'Keep the violin. It likes you better anyway.']], gotLine: 'Bow, rosin and all.',
+      talk: [
+        'A slow air. Long notes. Draw the bow all the way across.',
+        'Hold it... hold it... HOLD it. Beautiful.',
+        'No frets on a violin. You just have to KNOW where the notes are.',
+        'That bow is horsehair. Real horsehair. Some horse is very proud of you.',
+        'You play. I dance. Slowly. Like a ballroom.',
+      ],
+    },
   ];
   const instState = () => (G.state.instruments = G.state.instruments || {});
   G.instrumentHas = (id) => {
@@ -7365,7 +7387,7 @@
   };
   // the electric guitars, and the one Nate plays (his pick if he has it; else the newest he has;
   // before any, the Strat Abe lends him for the first song)
-  G.GUITARS = G.INSTRUMENTS.filter((it) => it.song && !it.drum && !it.wind && !it.keys);
+  G.GUITARS = G.INSTRUMENTS.filter((it) => it.song && !it.drum && !it.wind && !it.keys && !it.bow);
   G.guitarsHad = () => G.GUITARS.filter((it) => G.instrumentHas(it.id));
   G.guitarNow = () => {
     const had = G.guitarsHad(), pick = had.find((it) => it.id === G.state.guitar);
@@ -7379,6 +7401,19 @@
     const src = it.art(), c = G.canvas(Math.ceil(src.width / 2), Math.ceil(src.height / 2));
     c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
     return (guitarSmallC[it.id] = c);
+  };
+  // Nate playing the violin: tucked under his chin (cx, cy: the chin rest), the scroll out to our right
+  // and a little up, at scale k; the bow crosses the strings by the bridge and runs down to our left,
+  // and saw (-1 to 1) slides it along as he bows
+  const violinHold = (ctx, cx, cy, k, saw) => {
+    const img = G.spr.violin, w = img.width * k, h = img.height * k, a = Math.PI / 2 - 0.25, ux = Math.sin(a), uy = -Math.cos(a);
+    ctx.save(); ctx.translate(cx, cy); ctx.rotate(a); ctx.drawImage(img, -w / 2, -h, w, h); ctx.restore();
+    const bx = cx + ux * h * 0.26, by = cy + uy * h * 0.26, L = 50 * k, off = saw * L * 0.22, n = Math.round(L);
+    for (let i = 0; i <= n; i++) {
+      const d = -0.2 * L + off + (i / n) * L, x = Math.round(bx - 0.87 * d), y = Math.round(by + 0.5 * d);
+      ctx.fillStyle = '#6a3a1a'; ctx.fillRect(x, y, 1, 1); ctx.fillStyle = '#f0e8d0'; ctx.fillRect(x, y + 1, 1, 1);
+      if (i === n) { ctx.fillStyle = '#1c1424'; ctx.fillRect(x - 1, y - 1, 2, 3); }
+    }
   };
   // The songs (all original). A riff is notes (or chords, joined with +) and how many beats each
   // gets, "r" a rest, eight beats a riff; bass: the root of each of its two bars. form: the riffs
@@ -7510,6 +7545,19 @@
       },
       form: 'AABACABCAE',
     },
+    // (the violin: a slow air, nearly all long bowed notes, so nearly all HOLDs)
+    {
+      id: 'rosinRain', name: 'Rosin and Rain', bpm: 80, d: 2, bow: 'violin', style: 'air', perfect: 4, good: 8, drain: 0.05, lead: 92,
+      blurb: 'On the violin. A slow air in D: long, bowed notes. Hold every one all the way out.',
+      riffs: {
+        A: { notes: 'D5/2 F#5/1 A5/1 G5/2 F#5/2', bass: [38, 43] },
+        B: { notes: 'E5/1 F#5/1 G5/1 B5/1 A5/3 r/1', bass: [40, 45] },
+        C: { notes: 'B5/2 A5/1 F#5/1 G5/1 E5/1 F#5/2', bass: [35, 43] },
+        D: { notes: 'A4/1 D5/1 E5/1 F#5/1 A5/1 B5/1 A5/1 F#5/1', bass: [38, 45] },
+        E: { notes: 'A5/1 F#5/1 E5/1 C#5/1 D5/4', bass: [45, 38] },
+      },
+      form: 'AABACDABE',
+    },
   ];
   G.JAM_SONGS = JAM_SONGS;
   const jamState = () => (G.state.jams = G.state.jams || {});
@@ -7538,11 +7586,11 @@
     return { notes: out, bars, beats: beat };
   }
 
-  // ---- the setlist: pick a song (the next one unlocks when you finish the one before it). Four
-  // pages, GUITAR, DRUMS, FLUTE and PIANO (←→ flips between them, ↑↓ picks a song), each its own unlock
-  // chain. On the guitar page, C switches which of Abe's guitars Nate plays.
-  const JAM_TRACKS = [['guitar', 'GUITAR'], ['drums', 'DRUMS'], ['flute', 'FLUTE'], ['piano', 'PIANO']];
-  const jamTrack = (sg) => (sg.drums ? 'drums' : sg.wind ? 'flute' : sg.keys ? 'piano' : 'guitar');
+  // ---- the setlist: pick a song (the next one unlocks when you finish the one before it). Five
+  // pages, GUITAR, DRUMS, FLUTE, PIANO and VIOLIN (←→ flips between them, ↑↓ picks a song), each its
+  // own unlock chain. On the guitar page, C switches which of Abe's guitars Nate plays.
+  const JAM_TRACKS = [['guitar', 'GUITAR'], ['drums', 'DRUMS'], ['flute', 'FLUTE'], ['piano', 'PIANO'], ['violin', 'VIOLIN']];
+  const jamTrack = (sg) => (sg.drums ? 'drums' : sg.wind ? 'flute' : sg.keys ? 'piano' : sg.bow ? 'violin' : 'guitar');
   const jamPrize = (sg) => G.INSTRUMENTS.find((it) => it.song === sg.id);
   // (Nate's own instruments count as his on the setlist even before he's brought them out)
   const jamHas = (it) => it.mine || G.instrumentHas(it.id);
@@ -7620,8 +7668,8 @@
           const it = jamPrize(cur), img = it.art(), won = G.instrumentHas(it.id), k = Math.min(2, 56 / img.width, 66 / img.height);
           ctx.drawImage(won ? img : G.silhouette(img), Math.round(208 - (img.width * k) / 2), Math.round(88 - img.height * k), Math.round(img.width * k), Math.round(img.height * k));
           FT().wrap(won ? it.name.replace('Abe\'s ', '') : '???', 56).slice(0, 2).forEach((l, k2) => FT().draw(ctx, l, 208 - Math.round(FT().width(l) / 2), 99 + k2 * 9, '#f8f8f0', { shadow: '#000' }));
-        } else if (track === 'flute') {
-          // the flute for the song you're on, standing up (a silhouette until it's won)
+        } else if (track === 'flute' || track === 'violin') {
+          // the flute (or violin) for the song you're on, standing up (a silhouette until it's won)
           const it = jamPrize(cur), img = it.art(), won = jamHas(it), k = 1.5;
           ctx.drawImage(won ? img : G.silhouette(img), Math.round(208 - (img.width * k) / 2), 22, Math.round(img.width * k), Math.round(img.height * k));
           FT().wrap(won ? it.name.replace('Abe\'s ', '') : '???', 56).slice(0, 2).forEach((l, k2) => FT().draw(ctx, l, 208 - Math.round(FT().width(l) / 2), 99 + k2 * 9, '#f8f8f0', { shadow: '#000' }));
@@ -7643,15 +7691,15 @@
   // A drum song: the notes land on drums instead of strings (gt is then the drum), Nate plays it
   // instead of a guitar, and a backing guitar plays instead of the band's drums.
   function jamCmd(song, gt, talk) {
-    // (wind: a flute song; keys: a piano song; solo: Nate on something other than guitar, with a backing guitar)
-    const S0 = buildSong(song), fpb = 3600 / song.bpm, COUNT = Math.round(4 * fpb), HIT_Y = 116, TOP = 14, drums = song.drums, wind = song.wind, keys = song.keys, solo = drums || wind || keys;
+    // (wind: a flute song; keys: a piano song; bow: a violin song; solo: Nate on something other than guitar, with a backing guitar)
+    const S0 = buildSong(song), fpb = 3600 / song.bpm, COUNT = Math.round(4 * fpb), HIT_Y = 116, TOP = 14, drums = song.drums, wind = song.wind, keys = song.keys, bow = song.bow, solo = drums || wind || keys || bow;
     const LANES = drums === 'bongos' ? [96, 0, 0, 144] : [87, 109, 131, 153], USED = [0, 1, 2, 3].filter((L) => S0.notes.some((n) => n.lane === L));
     const KEYS = ['left', 'down', 'up', 'right'], ARROWS = ['←', '↓', '↑', '→'];
-    const GEM = { bongos: ['#f8d890', 0, 0, '#e09048'], pan: ['#b8d8f8', '#b8f0c8', '#f8e8a0', '#f8c0d8'], kit: ['#f8d850', '#c050a0', '#f0f0f0', '#78c8f8'], pvc: ['#78e8e8', '#78e070', '#f8d850', '#f898c8'], flute: ['#c8d8f8', '#a8e8f0', '#f0f0ff', '#f8e0a8'], upright: ['#f8d8a8', '#f8f0c8', '#c8e8a8', '#a8d8f8'], casio: ['#ff6ad5', '#78e8e8', '#f8f070', '#9a7af8'], rhodes: ['#f8c070', '#e89858', '#f0e0c0', '#c8a8f8'] }[drums || wind || keys] || ['#c050a0', '#e08030', '#f0e6c0', '#78c8f8'];
+    const GEM = { bongos: ['#f8d890', 0, 0, '#e09048'], pan: ['#b8d8f8', '#b8f0c8', '#f8e8a0', '#f8c0d8'], kit: ['#f8d850', '#c050a0', '#f0f0f0', '#78c8f8'], pvc: ['#78e8e8', '#78e070', '#f8d850', '#f898c8'], flute: ['#c8d8f8', '#a8e8f0', '#f0f0ff', '#f8e0a8'], upright: ['#f8d8a8', '#f8f0c8', '#c8e8a8', '#a8d8f8'], casio: ['#ff6ad5', '#78e8e8', '#f8f070', '#9a7af8'], rhodes: ['#f8c070', '#e89858', '#f0e0c0', '#c8a8f8'], violin: ['#f8c870', '#f89858', '#f0e0c0', '#e8f0ff'] }[drums || wind || keys || bow] || ['#c050a0', '#e08030', '#f0e6c0', '#78c8f8'];
     // what a hit sounds like (a drum still sounds when you hit it with no note there)
     // (long: a hold's length in seconds; then it returns the note's let-go)
     const KEYV = { upright: 'piano', casio: 'casio', rhodes: 'rhodes' };
-    const sound = (n, long) => (n.hit ? n.hit() : drums === 'pan' ? G.audio.inst.pan(n.midi, long || 0.7) : wind ? G.audio.inst.flute(n.midi, long || n.dur, 0.2, wind) : keys ? G.audio.inst[KEYV[keys]](n.midi, long || n.dur) : G.audio.inst.guitar(n.midi, long || n.dur, undefined, gt.id));
+    const sound = (n, long) => (n.hit ? n.hit() : drums === 'pan' ? G.audio.inst.pan(n.midi, long || 0.7) : wind ? G.audio.inst.flute(n.midi, long || n.dur, 0.2, wind) : keys ? G.audio.inst[KEYV[keys]](n.midi, long || n.dur) : bow ? G.audio.inst.violin(n.midi, long || n.dur) : G.audio.inst.guitar(n.midi, long || n.dur, undefined, gt.id));
     const abeGuitar = G.guitarNow();
     const notes = S0.notes.map((n) => Object.assign({}, n, { t: COUNT + n.beat * fpb, done: null, holdF: n.hold * fpb }));
     const END = notes[notes.length - 1].t + 2 * fpb, speed = (HIT_Y - TOP) / song.lead;
@@ -7737,6 +7785,8 @@
           // kick and hat; soul: chords on two and four, a walking bass, a soft hat)
           else if (st === 'rag') { if (pos % 4 === 0) G.audio.inst.bass(pos === 4 ? root + 7 : root, 0.3); if (pos % 4 === 2) chord(0.2, 0.04); }
           else if (st === 'synthpop') { if (pos % 2) chord(0.14, 0.035); if (pos % 2 === 0) { G.audio.inst.bass(root, 0.16); G.audio.inst.hat(); } if (pos === 0 || pos === 4) G.audio.inst.kick(); }
+          // (air: Abe's guitar fingerpicked, one string at a time, and a bass on one and three)
+          else if (st === 'air') { G.audio.inst.guitar([root + 12, root + 19, root + 24, root + 19][pos % 4], 0.7, 0.035, abeGuitar.id); if (pos === 0 || pos === 4) G.audio.inst.bass(root, 0.6); }
           else if (st === 'soul') { if (pos === 2 || pos === 6) { chord(0.4, 0.035); G.audio.inst.snare(); } if (pos % 2 === 0) G.audio.inst.bass(root + [0, 3, 7, 10][pos / 2], 0.3); if (pos % 2) G.audio.inst.hat(); }
           else { chord(0.12, 0.04); if (pos % 2 === 0) G.audio.inst.bass(root, 0.16); }
           if (pos % 2 === 0) this.bob = 6;
@@ -7769,8 +7819,9 @@
           // a strum with nothing there: a dead clunk (a drum just sounds, off the beat)
           this.combo = 0; this.groove = Math.max(0, this.groove - 0.02);
           if (drums) { const n = S0.notes.find((x) => x.lane === L); if (n) sound(n); this.hitT[L] = 8; }
-          // (a flute squeaks; a piano clunks)
+          // (a flute squeaks; a piano clunks; a violin screeches)
           else if (wind) G.audio.inst.flute(92 + L * 2, 0.06, 0.05, wind);
+          else if (bow) G.audio.inst.violin(89 + L, 0.1, 0.05);
           else if (keys) G.audio.inst[KEYV[keys]](36 + L, 0.08, 0.06);
           else G.audio.inst.guitar(40 + L * 5, 0.05, 0.06, gt.id);
           this.checkFail();
@@ -7839,6 +7890,7 @@
         if (drums) this.drawDrums(ctx, speed);
         else if (wind) this.drawFlute(ctx, speed);
         else if (keys) this.drawPiano(ctx, speed);
+        else if (bow) this.drawViolin(ctx, speed);
         else this.drawFrets(ctx, speed);
         // the holds' tails (bright while it's held; gray once it's missed or let go), then the notes coming down
         for (const n of notes) {
@@ -7966,6 +8018,34 @@
           FT().draw(ctx, ARROWS[L], x - 2, HIT_Y + 11, on ? '#f8f8f0' : '#9890a8', { shadow: '#000' });
         }
       },
+      // a violin song: the four strings (G, D, A, E; the low three wound and thicker) down an ebony
+      // fingerboard onto the bridge, with the top of the violin below it; a string lights up and
+      // shivers while it's bowed
+      drawViolin(ctx, speed) {
+        ctx.fillStyle = '#3a2418'; ctx.fillRect(74, 14, 92, 118);
+        ctx.fillStyle = '#141018'; ctx.fillRect(76, 14, 88, 118);
+        const off = (this.f * speed) % 32;
+        for (let k = -1; k < 5; k++) { const y = Math.round(TOP + off + k * 32); if (y >= 14 && y <= 131) { ctx.fillStyle = '#221c28'; ctx.fillRect(76, y, 88, 1); } }
+        const y0 = HIT_Y - 3, SW = [2, 2, 1, 1], on = (L) => this.hitT[L] > 0 || G.input.down(KEYS[L]) || !!this.holds[L];
+        // the top of the violin, under the bridge (the ends of its f-holes peeking out)
+        ctx.fillStyle = '#8a3a12'; ctx.fillRect(70, y0 + 4, 100, 132 - y0 - 4);
+        ctx.fillStyle = '#b8561e'; ctx.fillRect(72, y0 + 4, 96, 132 - y0 - 4); ctx.fillStyle = '#d8782e'; ctx.fillRect(72, y0 + 5, 96, 1);
+        ctx.fillStyle = '#2a1408'; for (const [x, d] of [[78, 1], [161, -1]]) { ctx.fillRect(x, y0 + 7, 1, 7); ctx.fillRect(x + d, y0 + 6, 1, 1); ctx.fillRect(x - d, y0 + 14, 1, 1); }
+        // the strings, and their names up top
+        for (let L = 0; L < 4; L++) {
+          const x = LANES[L], lit = on(L), wig = lit ? ((this.f >> 1) % 2 ? 1 : -1) : 0;
+          ctx.fillStyle = lit ? GEM[L] : L < 3 ? '#b8a878' : '#d8d8e0'; ctx.fillRect(x - (SW[L] >> 1) + wig, 14, SW[L], y0 - 14); ctx.fillRect(x - (SW[L] >> 1), y0 + 4, SW[L], 132 - y0 - 4);
+          FT().draw(ctx, 'GDAE'[L], x - 2, 16, '#5a4e70');
+        }
+        // the bridge: light maple, and a glow where a string's being bowed
+        ctx.fillStyle = '#1c1424'; ctx.fillRect(72, y0 - 1, 96, 6);
+        ctx.fillStyle = '#e8d0a0'; ctx.fillRect(73, y0, 94, 4); ctx.fillStyle = '#f8e8c0'; ctx.fillRect(73, y0, 94, 1);
+        for (let L = 0; L < 4; L++) {
+          const x = LANES[L], lit = on(L);
+          ctx.fillStyle = lit ? GEM[L] : '#8a6a40'; if (lit) ctx.fillRect(x - 4, y0, 9, 4); else ctx.fillRect(x - 1, y0, 2, 1);
+          FT().draw(ctx, ARROWS[L], x - 2, HIT_Y + 11, lit ? '#f8f8f0' : '#f0d8b0', { shadow: '#000' });
+        }
+      },
       // the sparks, the judgment, Nate and Abe, the meters, the count-in
       drawRest(ctx) {
         for (const p of this.sparks) { ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x), Math.round(p.y), 2, 2); }
@@ -7980,6 +8060,8 @@
         // (a piano in front of him; a flute, held out to his right at his mouth)
         else if (keys) { const img = gt.art(), hit = this.hitT.some((h) => h > 4) ? 1 : 0; ctx.drawImage(img, Math.round(40 - img.width / 2), { upright: 64, casio: 72, rhodes: 70 }[keys] + hit); }
         else if (wind) { const img = guitarSmall(gt); ctx.save(); ctx.translate(35, 64 + b); ctx.rotate(-Math.PI / 2 + 0.12); ctx.drawImage(img, -img.width, 0); ctx.restore(); }
+        // (a violin under his chin, the bow sawing while a note sounds)
+        else if (bow) violinHold(ctx, 44, 66 + b, 0.55, this.hitT.some((h) => h > 0) || this.holds.some(Boolean) ? Math.sin(this.f * 0.2) : 0);
         else { ctx.save(); ctx.translate(40, 82 + b); ctx.rotate(-1.1); ctx.drawImage(guitarSmall(gt), -6, -18); ctx.restore(); }
         FT().draw(ctx, 'GROOVE', 4, 18, '#c8c0d8', { shadow: '#000' });
         ctx.fillStyle = '#0c0814'; ctx.fillRect(6, 28, 8, 90);
@@ -8035,24 +8117,25 @@
       yield G.say(null, 'Abe opens a tweed case lined with red fur like it\'s a museum exhibit. Inside: a black guitar with a white pickguard.');
       yield G.say('Abe', 'My \'84 Strat. Everybody starts on a Strat. Hold it like a baby bird. Carefully. CAREFULLY.');
       yield G.say('Abe', 'I\'ll play bass. You follow me. Three songs, three of my guitars. Get through a song and its guitar is yours. On loan.');
-      yield G.say('Abe', 'And there are more pages on the setlist: ←→. Drums. Flute. Piano. Don\'t tell Hannah.');
-      f.fluteTold = true; f.pianoTold = true;
+      yield G.say('Abe', 'And there are more pages on the setlist: ←→. Drums. Flute. Piano. Violin. Don\'t tell Hannah.');
+      f.fluteTold = true; f.pianoTold = true; f.violinTold = true;
     }
-    // (anybody who'd jammed before the flute or piano pages existed hears about them once)
-    if (!f.fluteTold) { f.fluteTold = true; f.pianoTold = true; yield G.say('Abe', 'New pages on the setlist, by the way: FLUTE and PIANO. ←→ to flip to them.'); }
-    if (!f.pianoTold) { f.pianoTold = true; yield G.say('Abe', 'New page on the setlist, by the way: PIANO. Three of them. ←→ to flip to it.'); }
+    // (anybody who'd jammed before the flute, piano or violin pages existed hears about them once)
+    if (!f.fluteTold) { f.fluteTold = true; f.pianoTold = true; f.violinTold = true; yield G.say('Abe', 'New pages on the setlist, by the way: FLUTE, PIANO and VIOLIN. ←→ to flip to them.'); }
+    if (!f.pianoTold) { f.pianoTold = true; f.violinTold = true; yield G.say('Abe', 'New pages on the setlist, by the way: PIANO and VIOLIN. ←→ to flip to them.'); }
+    if (!f.violinTold) { f.violinTold = true; yield G.say('Abe', 'New page on the setlist, by the way: VIOLIN. Just the one song, for now. ←→ to flip to it.'); }
     yield* abeStudioNews();
     for (;;) {
       const song = yield jamPickCmd();
       if (!song) { G.play.overlay = null; yield G.say('Abe', 'Good session.'); return; }
       // a drum or flute song: Abe brings the drum (or Nate the Happy Magic Flute) out the first time
-      const drum = (song.drums || song.wind || song.keys) && jamPrize(song);
+      const drum = (song.drums || song.wind || song.keys || song.bow) && jamPrize(song);
       if (drum && !f['jamDrum_' + song.id]) {
         f['jamDrum_' + song.id] = true; G.play.overlay = null;
         for (const [who, line] of drum.intro) yield G.say(who, line);
         if (drum.mine) instState()[drum.id] = true;
       }
-      yield howToCmd('JAMMING WITH ABE', song.wind ? HOW_TO.jam_flute : song.keys ? HOW_TO.jam_piano : drum ? HOW_TO['jam_' + song.drums] : HOW_TO.jam);
+      yield howToCmd('JAMMING WITH ABE', song.wind ? HOW_TO.jam_flute : song.keys ? HOW_TO.jam_piano : song.bow ? HOW_TO.jam_violin : drum ? HOW_TO['jam_' + song.drums] : HOW_TO.jam);
       const gt = drum || G.guitarNow(), r = yield jamCmd(song, gt, dadTalk(gt.talk, 'abe', []));
       G.play.overlay = null;
       G.audio.play(G.play.world.def.music);
@@ -8078,9 +8161,9 @@
         // (the Happy Magic Flute was already Nate's)
         yield G.say('Abe', 'The Happy Magic Flute. Still undefeated.');
         yield G.say('Nate', 'Dad is going to want a full report.');
-      } else if (first && prize && (prize.drum || prize.wind || prize.keys)) {
+      } else if (first && prize && (prize.drum || prize.wind || prize.keys || prize.bow)) {
         for (const [who, line] of prize.won) yield G.say(who, line);
-        yield G.itemGet(prize.wind ? guitarSmall(prize) : prize.art(), 'You got {y}' + prize.name + '{/}! ' + prize.gotLine + ' It\'s in {y}COLLECTABLES{/}.');
+        yield G.itemGet(prize.wind || prize.bow ? guitarSmall(prize) : prize.art(), 'You got {y}' + prize.name + '{/}! ' + prize.gotLine + ' It\'s in {y}COLLECTABLES{/}.');
         G.play.autosave();
       } else if (first && prize) {
         if (prize.id === 'strat') {
@@ -8103,7 +8186,7 @@
       const nextSong = JAM_SONGS[idx + 1];
       if (first && nextSong && jamTrack(nextSong) === jamTrack(song)) {
         const next = jamPrize(nextSong);
-        yield G.say('Abe', 'Next one: ' + nextSong.name + '. It\'s faster.' + (next ? ' Get through it and my ' + (next.drum || next.wind || next.keys ? next.name.replace('Abe\'s ', '').toLowerCase() : next.name.replace('Abe\'s ', '')) + (next.drum === 'bongos' ? ' are yours.' : ' is yours.') : ''));
+        yield G.say('Abe', 'Next one: ' + nextSong.name + '. It\'s faster.' + (next ? ' Get through it and my ' + (next.drum || next.wind || next.keys || next.bow ? next.name.replace('Abe\'s ', '').toLowerCase() : next.name.replace('Abe\'s ', '')) + (next.drum === 'bongos' ? ' are yours.' : ' is yours.') : ''));
       }
     }
   };
@@ -8131,13 +8214,15 @@
   // music, everywhere, until it's turned off (G.mixFor, G.audio.setMix).
   // A song: { name, key, bpm, click, len (ms), tracks: [8 x { inst, vol (0-4), mute, ev: [[ms, n]] }] }.
   // Flags: studioTold, studioMet, studioHow, metroHow.
-  const STUDIO_INST = ['strat', 'tele', 'jazzmaster', 'bongos', 'steelpan', 'drumkit', 'pvcFlute', 'flute', 'upright', 'casio', 'rhodes'];
-  const STUDIO_SHORT = { strat: 'STRAT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONGOS', steelpan: 'STEEL', drumkit: 'KIT', pvcFlute: 'MAGIC', flute: 'FLUTE', upright: 'PIANO', casio: 'CASIO', rhodes: 'RHODES' };
-  const STUDIO_TINY = { strat: 'STRT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONG', steelpan: 'STEL', drumkit: 'KIT', pvcFlute: 'PVC', flute: 'FLUT', upright: 'PNO', casio: 'CSIO', rhodes: 'RHDS' };
-  const STUDIO_COL = { strat: '#f4f0e8', tele: '#f86858', jazzmaster: '#c878d8', bongos: '#e0a058', steelpan: '#b8d8f8', drumkit: '#5a88e8', pvcFlute: '#a8f0d0', flute: '#d8e0f8', upright: '#d89a68', casio: '#ff7ad8', rhodes: '#f0c878' };
+  const STUDIO_INST = ['strat', 'tele', 'jazzmaster', 'bongos', 'steelpan', 'drumkit', 'pvcFlute', 'flute', 'upright', 'casio', 'rhodes', 'violin'];
+  const STUDIO_SHORT = { strat: 'STRAT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONGOS', steelpan: 'STEEL', drumkit: 'KIT', pvcFlute: 'MAGIC', flute: 'FLUTE', upright: 'PIANO', casio: 'CASIO', rhodes: 'RHODES', violin: 'VIOLIN' };
+  const STUDIO_TINY = { strat: 'STRT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONG', steelpan: 'STEL', drumkit: 'KIT', pvcFlute: 'PVC', flute: 'FLUT', upright: 'PNO', casio: 'CSIO', rhodes: 'RHDS', violin: 'VLN' };
+  const STUDIO_COL = { strat: '#f4f0e8', tele: '#f86858', jazzmaster: '#c878d8', bongos: '#e0a058', steelpan: '#b8d8f8', drumkit: '#5a88e8', pvcFlute: '#a8f0d0', flute: '#d8e0f8', upright: '#d89a68', casio: '#ff7ad8', rhodes: '#f0c878', violin: '#e0783a' };
   // (the pianos: which voice each one plays with)
   const PIANO_VOICE = { upright: 'piano', casio: 'casio', rhodes: 'rhodes' };
   const isFlute = (inst) => inst === 'pvcFlute' || inst === 'flute';
+  // (the flutes and the violin play single notes up high, on both rows)
+  const isHigh = (inst) => isFlute(inst) || inst === 'violin';
   const SONG_KEYS = [
     { name: 'E MINOR', root: 40, scale: [0, 3, 5, 7, 10] },
     { name: 'A MINOR', root: 45, scale: [0, 3, 5, 7, 10] },
@@ -8165,21 +8250,21 @@
   const panBase = (K) => K.root + (K.root < 44 ? 24 : 12);
   const panStep = (n) => (n < 11 ? n : n - 6); // (its top row: the home row's notes, an octave up)
   const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  // (a flute plays two octaves above the key's root; its top row is the next octave up, like the steel drum)
+  // (a flute or the violin plays two octaves above the key's root; its top row is the next octave up, like the steel drum)
   const fluteBase = (K) => K.root + 24;
   // what key n plays on a melodic instrument, for the guide while recording: a note's letter, or a
   // power chord's root with a 5 (E5 = E and its fifth); and which octave, for its tint
   function studioLabel(inst, n, keyIdx) {
     const K = SONG_KEYS[keyIdx] || SONG_KEYS[0];
-    if (isFlute(inst)) return { txt: NOTE_NAMES[scaleNote(K, panStep(n), fluteBase(K)) % 12], oct: Math.floor(panStep(n) / 5) };
+    if (isHigh(inst)) return { txt: NOTE_NAMES[scaleNote(K, panStep(n), fluteBase(K)) % 12], oct: Math.floor(panStep(n) / 5) };
     if (inst === 'steelpan') return { txt: NOTE_NAMES[scaleNote(K, panStep(n), panBase(K)) % 12], oct: Math.floor(panStep(n) / 5) };
     if (n < 11) return { txt: NOTE_NAMES[scaleNote(K, n, K.root) % 12], oct: Math.floor(n / 5) };
     return { txt: NOTE_NAMES[scaleNote(K, n - 11, K.root) % 12] + '5', oct: Math.floor((n - 11) / 5) };
   }
-  // Held notes: the guitars, the steel drum and the flutes keep sounding while their key is held (up
+  // Held notes: the guitars, the steel drum, the flutes, the pianos and the violin keep sounding while their key is held (up
   // to HOLD_MAX seconds), and a quick tap still rings for RING seconds. Drums are always just a hit.
   // A recorded note is [ms, n] (a hit, or a note from before notes could be held) or [ms, n, held ms].
-  const RING = { strat: 0.8, tele: 0.8, jazzmaster: 0.8, steelpan: 0.7, pvcFlute: 0.4, flute: 0.4, upright: 0.5, casio: 0.3, rhodes: 0.6 }, HOLD_MAX = 6;
+  const RING = { strat: 0.8, tele: 0.8, jazzmaster: 0.8, steelpan: 0.7, pvcFlute: 0.4, flute: 0.4, upright: 0.5, casio: 0.3, rhodes: 0.6, violin: 0.35 }, HOLD_MAX = 6;
   // play sound n of an instrument in a key (now, or at an audio time). hold: how many seconds a
   // recorded note was held, or true for a key that's down right now; then it returns a function
   // that lets the note go (never sooner than its ring)
@@ -8191,6 +8276,7 @@
     const ring = RING[inst], long = hold == null ? ring : HOLD_MAX, outs = [];
     if (inst === 'steelpan') outs.push(I.pan(scaleNote(K, panStep(n), panBase(K)), long, at));
     else if (isFlute(inst)) outs.push(I.flute(scaleNote(K, panStep(n), fluteBase(K)), long, 0.2, inst === 'pvcFlute' ? 'pvc' : 'flute', at));
+    else if (inst === 'violin') outs.push(I.violin(scaleNote(K, panStep(n), fluteBase(K)), long, 0.22, at));
     // a piano: single notes an octave above the guitar's on the home row, chords (root, fifth, octave) on the top row
     else if (PIANO_VOICE[inst]) {
       const v = I[PIANO_VOICE[inst]];
@@ -8674,6 +8760,7 @@
             const it = G.INSTRUMENTS.find((x) => x.id === tr.inst), img = it.art();
             if (it.drum) { const k = Math.min(9 / img.height, 12 / img.width); ctx.drawImage(img, 22, y + 1, Math.round(img.width * k), Math.round(img.height * k)); }
             else if (it.keys) { ctx.fillStyle = '#1c1424'; ctx.fillRect(21, y + 2, 13, 7); ctx.fillStyle = STUDIO_COL[tr.inst]; ctx.fillRect(22, y + 3, 11, 2); ctx.fillStyle = '#f4f0e4'; ctx.fillRect(22, y + 5, 11, 3); ctx.fillStyle = '#1c1424'; for (const x of [23, 25, 28, 30]) ctx.fillRect(x, y + 5, 1, 2); }
+            else if (it.bow) { ctx.fillStyle = '#1c1424'; ctx.fillRect(21, y + 2, 9, 7); ctx.fillRect(29, y + 4, 5, 3); ctx.fillStyle = STUDIO_COL[tr.inst]; ctx.fillRect(22, y + 3, 7, 5); ctx.fillStyle = '#1c1424'; ctx.fillRect(24, y + 5, 3, 1); ctx.fillStyle = '#6a3a1a'; ctx.fillRect(29, y + 5, 4, 1); }
             else if (it.wind) { ctx.fillStyle = '#1c1424'; ctx.fillRect(21, y + 3, 13, 5); ctx.fillStyle = STUDIO_COL[tr.inst]; ctx.fillRect(22, y + 4, 11, 3); ctx.fillStyle = '#2a2a30'; for (const x of [24, 27, 29, 31]) ctx.fillRect(x, y + 5, 1, 1); }
             else {
               ctx.fillStyle = '#1c1424'; ctx.fillRect(21, y + 2, 7, 7); ctx.fillRect(27, y + 4, 7, 3);
@@ -8723,11 +8810,14 @@
         // Nate, three times size, with the instrument
         const nate = (G.nateSprites ? G.nateSprites() : G.sprites.nate).down[0], k = 3, bob = this.hitT > 3 ? 2 : 0, jolt = this.hitT > 4 ? 1 : 0;
         const nx = 120 - (nate.width * k) / 2, ny = FLOOR - nate.height * k - bob, img = it.art();
-        if (!it.drum && !it.wind && it.id !== 'upright') { const amp = G.spr.vibroAmp; ctx.drawImage(amp, 160, FLOOR - amp.height); }
+        if (!it.drum && !it.wind && !it.bow && it.id !== 'upright') { const amp = G.spr.vibroAmp; ctx.drawImage(amp, 160, FLOOR - amp.height); }
         ctx.drawImage(nate, Math.round(nx), Math.round(ny), nate.width * k, nate.height * k);
         if (it.wind) {
           // a flute, held out to his right at his mouth
           ctx.save(); ctx.translate(nx + 22, ny + 26 + jolt); ctx.rotate(-Math.PI / 2 + 0.1); ctx.drawImage(img, -img.width * 1.3, 0, img.width * 1.3, img.height * 1.3); ctx.restore();
+        } else if (it.bow) {
+          // the violin under his chin (the bow saws while a note's sounding)
+          violinHold(ctx, nx + 33, ny + 37 + jolt, 0.75, this.hitT > 0 || Object.keys(this.voices).length ? Math.sin(this.t * 0.2) : 0);
         } else if (!it.drum && !it.keys) {
           // a guitar slung across him (and a little flash where he strums)
           ctx.save(); ctx.translate(nx + 24, ny + 54); ctx.rotate(-1.1 + jolt * 0.05); ctx.drawImage(img, -9, -27, 18, 55); ctx.restore();
@@ -8927,7 +9017,7 @@
           };
           // (the top row spaced wider, so a chord's two characters fit under its key)
           TOP_ROW.forEach((code, k) => { cap(code, 6 + k * 15, 113); label(code, 6 + k * 15, 125); });
-          FT().draw(ctx, inst === 'steelpan' || isFlute(inst) ? 'HIGH' : 'CHORDS', 160, 115, '#c8c0d8');
+          FT().draw(ctx, inst === 'steelpan' || isHigh(inst) ? 'HIGH' : 'CHORDS', 160, 115, '#c8c0d8');
           HOME_ROW.forEach((code, k) => { cap(code, 6 + k * 12, 135); label(code, 6 + k * 12, 147); });
           FT().draw(ctx, 'NOTES', 140, 137, '#c8c0d8');
           FT().draw(ctx, SONG_KEYS[this.song.key].name, 140, 147, '#9890a8');
@@ -9014,7 +9104,7 @@
     drive: [['Abe', 'Five instruments. FIVE. Okay. You\'re ready for this.'], [null, 'Abe slides a beat-up pedalboard out from under the couch. One green pedal on it, and a LOT of empty Velcro.'], ['Abe', 'My old overdrive. Three knobs: DRIVE is how dirty, TONE is how bright, LEVEL is how loud.']],
     echo: [['Abe', 'Seven instruments! The pedalboard is getting company.'], [null, 'Abe digs a white pedal out of a box of yellow cables.'], ['Abe', 'My delay. E.LEVEL is how loud the echoes are, F.BACK is how many, and D.TIME is how far apart.']],
     chorus: [['Abe', 'Nine. You\'re a one-man band. Here.'], [null, 'Abe hands over a blue pedal with just two knobs.'], ['Abe', 'Chorus. It makes one guitar sound like two. RATE is how fast it swirls, DEPTH is how much.']],
-    trem: [['Abe', 'Eleven. That\'s all of them. You won my whole collection.'], [null, 'Abe peels the last pedal off his own board. A teal one.'], ['Abe', 'Tremolo. Your volume, up and down, fast. WAVE goes from smooth to choppy.']],
+    trem: [['Abe', 'Eleven instruments. You\'re running out of room in that studio.'], [null, 'Abe peels the last pedal off his own board. A teal one.'], ['Abe', 'Tremolo. Your volume, up and down, fast. WAVE goes from smooth to choppy.']],
   };
   const PEDAL_AFTER = {
     drive: [['Abe', 'It works on anything, by the way. Overdrive on bongos. I\'m not going to stop you.'], ['Abe', 'Get two more instruments and I\'ll find you another one. The board\'s got room.', 'last']],
@@ -9094,7 +9184,7 @@
 
   // Studio B: the console in the middle of the back wall with a monitor on each side, foam on the
   // walls, an ON AIR light, the instruments Nate has won (guitars on stands on the left, the drums,
-  // and the keys corner on the right: the pianos and a flute case), a couch, and Rae.
+  // the violin on the wall, and the keys corner on the right: the pianos and a flute case), a couch, and Rae.
   G.MAPS.studioB = {
     name: 'Williams Center: Studio B',
     music: 'house',
@@ -9145,6 +9235,8 @@
       if (G.instrumentHas('drumkit')) F.stand(sp.drumKit, 11, 3, 3, look('Abe\'s drum kit, in blue sparkle. Rae says it\'s the loudest thing that\'s ever been in here.'));
       if (G.instrumentHas('steelpan')) F.stand(sp.steelPan, 12, 6, 2, look('Abe\'s steel drum. Still has never been to the beach.'));
       if (G.instrumentHas('bongos')) F.stand(sp.bongos, 12, 8, 2, look('Abe\'s bongos. Hannah does not miss them.'));
+      // the violin, on a wall hanger between the monitor and the ON AIR light
+      if (G.instrumentHas('violin')) F.hang(guitarSmall(G.INSTRUMENTS.find((it) => it.id === 'violin')), 10, 1, 1, look('Abe\'s violin, on a wall hanger. Rae dusts it. Nothing else in here gets dusted.'), 3);
       // the keys corner: the upright against the back wall, the Casio on its X stand, the Rhodes
       if (G.instrumentHas('upright')) F.stand(sp.uprightPiano, 15, 2, 3, look('Abe\'s upright piano, against the wall. Rae swears it was in tune when it got here.'));
       if (G.instrumentHas('casio')) F.stand(sp.casioKeyboard, 15, 4, 3, look('Abe\'s Casio, on its X stand. Somebody has pressed DEMO a LOT.'));

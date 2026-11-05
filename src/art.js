@@ -10026,6 +10026,32 @@
     p.hline(1, 4, 41, '#9aa0ac'); p.set(4, 44, '#9aa0ac'); p.rect(2, 44, 2, 2, '#e8ecf4');
     return finish(p);
   }
+  // Abe's violin (upright, the scroll up top): a curled scroll and pegbox with its pegs, a black
+  // fingerboard down the neck, an hourglass body in orange-brown varnish, two f-holes, the strings
+  // showing between the fingerboard and the bridge, a black tailpiece and a chin rest
+  function violin() {
+    const p = new Pix(14, 46), V = '#b8561e', VL = '#d8782e', VD = '#8a3a12', WOOD = '#8a4a1e', EB = '#1c1c22';
+    // (the body's half-width, row by row: the upper bout, the waist, the lower bout)
+    const HW = [3, 4, 5, 5, 6, 6, 6, 6, 5, 5, 4, 4, 4, 5, 5, 6, 6, 7, 7, 7, 7, 7, 7, 7, 7, 6, 6, 5, 4];
+    HW.forEach((h, j) => { const y = 17 + j; p.hline(7 - h, 6 + h, y, V); p.set(7 - h + 1, y, VL); p.set(6 + h, y, VD); });
+    // the scroll, the pegbox (and its pegs, two a side), the neck and the fingerboard
+    for (const [x, y] of [[6, 0], [7, 0], [5, 1], [8, 1], [5, 2], [8, 2], [6, 3], [7, 3]]) p.set(x, y, WOOD);
+    p.set(6, 1, '#5a2c10'); p.set(7, 2, '#5a2c10');
+    p.rect(5, 4, 4, 5, WOOD); p.rect(6, 5, 2, 3, '#2a1408');
+    for (const [x, y] of [[3, 5], [4, 5], [3, 7], [4, 7], [9, 4], [10, 4], [9, 6], [10, 6]]) p.set(x, y, EB);
+    p.rect(5, 9, 4, 8, '#c8843a'); p.rect(6, 9, 2, 8, EB);
+    p.rect(5, 17, 4, 12, EB); p.vline(5, 17, 28, '#2a2a34');
+    // the strings, between the fingerboard and the bridge; the f-holes; the bridge
+    p.vline(6, 29, 33, '#c8c8c0'); p.vline(7, 29, 33, '#c8c8c0');
+    for (const [x, y] of [[4, 27], [3, 28], [3, 29], [3, 30], [3, 31], [2, 32], [9, 27], [10, 28], [10, 29], [10, 30], [10, 31], [11, 32]]) p.set(x, y, '#2a1408');
+    p.hline(5, 8, 33, '#e8d0a0'); p.hline(4, 9, 34, '#e8d0a0');
+    // the tailpiece, the chin rest, the end button
+    p.rect(5, 36, 4, 3, EB); p.rect(6, 39, 2, 3, EB);
+    p.rect(2, 42, 4, 2, '#2a2a30'); p.set(2, 41, '#2a2a30');
+    p.rect(6, 45, 2, 1, EB);
+    p.outline();
+    return p.canvas();
+  }
   function stratocaster() {
     const W = 24, H = 74, p = new Pix(W, H), MAP = '#e8b058', MAPD = '#c08838', DOT = '#2a2018';
     const edge = (pts, y) => { if (y <= pts[0][0]) return pts[0][1]; for (let k = 1; k < pts.length; k++) if (y <= pts[k][0]) { const [y0, x0] = pts[k - 1], [y1, x1] = pts[k]; return x0 + ((x1 - x0) * (y - y0)) / (y1 - y0); } return pts[pts.length - 1][1]; };
@@ -10390,7 +10416,7 @@
     S.tossRock = tossRock(); S.clayPot = clayPot(); S.icePack = icePack(); S.syringe = syringe(); S.bandageRoll = bandageRoll(); S.smokeRing = smokeRing();
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
     S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon(); S.bmfIcon = bmfIcon();
-    S.pvcFlute = pvcFlute(); S.silverFlute = silverFlute();
+    S.pvcFlute = pvcFlute(); S.silverFlute = silverFlute(); S.violin = violin();
     S.uprightPiano = uprightPiano(); S.casioKeyboard = casioKeyboard(); S.rhodesPiano = rhodesPiano();
     S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe(); S.bongos = bongos(); S.steelPan = steelPan(); S.drumKit = drumKit();
     S.williamsCenter = williamsCenter(); S.parkBench = parkBench(); S.arcSculpture = arcSculpture(); S.posterKiosk = posterKiosk(); S.mixingDesk = mixingDesk(); S.studioMonitor = studioMonitor(); S.acousticPanel = acousticPanel(); S.studioCouch = studioCouch(); S.metronomeIcon = metronomeIcon(); S.pedalsIcon = pedalsIcon();

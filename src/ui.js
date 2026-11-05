@@ -475,6 +475,8 @@
     return c;
   };
   // An instrument, full screen: lying across the top at twice the size, its name, and its story.
+  // (the instruments grid: three to a row, four once there are more than twelve)
+  const instCols = () => (G.INSTRUMENTS.length > 12 ? 4 : 3);
   const instPages = new Map();
   G.instrumentPage = (it) => {
     if (instPages.has(it.id)) return instPages.get(it.id);
@@ -659,11 +661,11 @@
         if (inp.hit('down') && this.sel + 4 < n) this.move(4, n);
         if (inp.hit('up')) { if (row > 0) this.move(-4, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
       } else if (this.tab === COLL_TAB && this.coll === 'instruments') {
-        const n = G.INSTRUMENTS.length, col = this.sel % 3, row = Math.floor(this.sel / 3);
+        const n = G.INSTRUMENTS.length, cols = instCols(), col = this.sel % cols, row = Math.floor(this.sel / cols);
         if (inp.hit('left') && col > 0) this.move(-1, n);
-        if (inp.hit('right') && col < 2) this.move(1, n);
-        if (inp.hit('down') && this.sel + 3 < n) this.move(3, n);
-        if (inp.hit('up')) { if (row > 0) this.move(-3, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
+        if (inp.hit('right') && col < cols - 1) this.move(1, n);
+        if (inp.hit('down') && this.sel + cols < n) this.move(cols, n);
+        if (inp.hit('up')) { if (row > 0) this.move(-cols, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
         if (inp.hit('a')) {
           inp.eat('a');
           // a closer look (and a strum, if it has strings)
@@ -1232,16 +1234,16 @@
     drawInstruments(ctx) {
       const list = G.INSTRUMENTS, n = G.instrumentsCount();
       card(ctx, 5, 21, 112, 121, 'INSTRUMENTS', C.gold, G.sayable(n) + '/' + G.sayable(list.length));
-      // (the rows get shorter as there are more of them)
-      const rh = list.length > 9 ? 26 : list.length > 6 ? 34 : 44;
+      // (the rows get shorter as there are more of them; past twelve, four to a row)
+      const cols = instCols(), cw = cols === 4 ? 26 : 35, rh = list.length > 9 ? 26 : list.length > 6 ? 34 : 44;
       list.forEach((it, i) => {
-        const x = 9 + (i % 3) * 35, y = 37 + Math.floor(i / 3) * rh, sel = i === this.sel && !this.onTabs, img = it.art(), has = G.instrumentHas(it.id);
-        slot(ctx, x, y, 34, rh - 2, has ? C.gold : undefined);
-        const k = Math.min((rh - 6) / img.height, 30 / img.width), w = Math.round(img.width * k), h = Math.round(img.height * k);
-        ctx.drawImage(has ? img : silhouette(img), x + Math.round((34 - w) / 2), y + Math.round((rh - 2 - h) / 2), w, h);
+        const x = 9 + (i % cols) * cw, y = 37 + Math.floor(i / cols) * rh, sel = i === this.sel && !this.onTabs, img = it.art(), has = G.instrumentHas(it.id);
+        slot(ctx, x, y, cw - 1, rh - 2, has ? C.gold : undefined);
+        const k = Math.min((rh - 6) / img.height, (cw - 5) / img.width), w = Math.round(img.width * k), h = Math.round(img.height * k);
+        ctx.drawImage(has ? img : silhouette(img), x + Math.round((cw - 1 - w) / 2), y + Math.round((rh - 2 - h) / 2), w, h);
         // (a star on the guitar Nate's playing)
-        if (has && it.song && G.guitarNow() === it) TXT(ctx, '★', x + 26, y + 2, C.gold);
-        if (sel) brackets(ctx, x - 1, y - 1, 36, rh);
+        if (has && it.song && G.guitarNow() === it) TXT(ctx, '★', x + cw - 9, y + 2, C.gold);
+        if (sel) brackets(ctx, x - 1, y - 1, cw + 1, rh);
       });
       const it = list[this.sel];
       card(ctx, 120, 21, 115, 121);
