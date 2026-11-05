@@ -484,7 +484,7 @@
     x.fillStyle = '#1c1424'; x.fillRect(0, 0, G.W, G.H);
     // a felt-lined case for it to lie in (a drum stands up on a little riser instead, no taller than
     // 48 so its write-up fits)
-    const up = it.drum || it.keys, dk = up ? Math.max(1, Math.min(2, Math.floor(48 / img.height))) : 2;
+    const up = it.drum || it.keys || it.flat, dk = up ? Math.max(1, Math.min(2, Math.floor(48 / img.height), Math.floor((G.W - 20) / img.width))) : 2;
     const cw = (up ? img.width : img.height) * dk + 10, ch = (up ? img.height : img.width) * dk + 6, cx = Math.round((G.W - cw) / 2);
     x.fillStyle = '#0c0814'; x.fillRect(cx + 2, 5, cw, ch);
     x.fillStyle = '#4a2a3a'; x.fillRect(cx, 3, cw, ch);
@@ -1234,10 +1234,18 @@
     drawInstruments(ctx) {
       const list = G.INSTRUMENTS, n = G.instrumentsCount();
       card(ctx, 5, 21, 112, 121, 'INSTRUMENTS', C.gold, G.sayable(n) + '/' + G.sayable(list.length));
-      // (the rows get shorter as there are more of them; past twelve, four to a row)
-      const cols = instCols(), cw = cols === 4 ? 26 : 35, rh = list.length > 9 ? 26 : list.length > 6 ? 34 : 44;
+      // (the rows get shorter as there are more of them; past twelve, four to a row; past sixteen, it
+      // scrolls, four rows at a time)
+      const cols = instCols(), cw = cols === 4 ? 26 : 35, rh = list.length > 9 ? 26 : list.length > 6 ? 34 : 44, rowsAll = Math.ceil(list.length / cols), VIS = 4, sr = Math.floor(this.sel / cols);
+      this.instTop = Math.max(0, Math.min(rowsAll - VIS, Math.max(this.instTop || 0, sr - VIS + 1), sr));
+      // (little triangles: more rows above, more below)
+      const tri = (x, y, up) => { ctx.fillStyle = C.dim; for (let k = 0; k < 3; k++) { const w = up ? 2 * k + 1 : 5 - 2 * k; ctx.fillRect(x + (5 - w) / 2, y + k, w, 1); } };
+      if (this.instTop > 0) tri(106, 31, true);
+      if (this.instTop + VIS < rowsAll) tri(106, 140, false);
       list.forEach((it, i) => {
-        const x = 9 + (i % cols) * cw, y = 37 + Math.floor(i / cols) * rh, sel = i === this.sel && !this.onTabs, img = it.art(), has = G.instrumentHas(it.id);
+        const row = Math.floor(i / cols) - (rowsAll > VIS ? this.instTop : 0);
+        if (rowsAll > VIS && (row < 0 || row >= VIS)) return;
+        const x = 9 + (i % cols) * cw, y = 37 + row * rh, sel = i === this.sel && !this.onTabs, img = it.art(), has = G.instrumentHas(it.id);
         slot(ctx, x, y, cw - 1, rh - 2, has ? C.gold : undefined);
         const k = Math.min((rh - 6) / img.height, (cw - 5) / img.width), w = Math.round(img.width * k), h = Math.round(img.height * k);
         ctx.drawImage(has ? img : silhouette(img), x + Math.round((cw - 1 - w) / 2), y + Math.round((rh - 2 - h) / 2), w, h);
@@ -1250,7 +1258,7 @@
       if (!it) return;
       // the instrument, lying across the top of the card (a drum, standing up)
       const img = it.art(), has = G.instrumentHas(it.id);
-      if (it.drum || it.keys) { const k = Math.min(1, 24 / img.height), w = Math.round(img.width * k); ctx.drawImage(has ? img : silhouette(img), 177 - Math.round(w / 2), 52 - Math.round(img.height * k), w, Math.round(img.height * k)); }
+      if (it.drum || it.keys || it.flat) { const k = Math.min(1, 24 / img.height, 100 / img.width), w = Math.round(img.width * k); ctx.drawImage(has ? img : silhouette(img), 177 - Math.round(w / 2), 52 - Math.round(img.height * k), w, Math.round(img.height * k)); }
       else { ctx.save(); ctx.translate(120 + Math.round((115 - img.height) / 2), 28 + Math.round((24 - img.width) / 2)); ctx.rotate(-Math.PI / 2); ctx.drawImage(has ? img : silhouette(img), -img.width, 0); ctx.restore(); }
       if (!has) {
         TXT(ctx, '???', 125, 56, C.cyan);

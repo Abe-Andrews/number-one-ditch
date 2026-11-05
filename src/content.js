@@ -359,9 +359,9 @@
     pedals: {
       kind: 'key', name: 'Abe\'s Guitar Pedals', short: 'Pedals', icon: () => G.spr.pedalsIcon, has: () => !!st().items.pedals,
       get desc() {
-        const names = { drive: 'overdrive', echo: 'delay', chorus: 'chorus', trem: 'tremolo' }, have = G.pedalsOwned ? G.pedalsOwned().map((id) => names[id]) : [];
+        const names = { drive: 'overdrive', echo: 'delay', chorus: 'chorus', trem: 'tremolo', fuzz: 'fuzz', wah: 'auto-wah', octave: 'octave', phaser: 'phaser', comp: 'compressor', looper: 'looper' }, have = G.pedalsOwned ? G.pedalsOwned().map((id) => names[id]) : [];
         const list = have.length > 1 ? have.slice(0, -1).join(', ') + ' and ' + have[have.length - 1] : have[0] || 'nothing yet';
-        return 'Abe\'s old pedalboard: ' + list + (have.length < 4 ? ' (Abe has more).' : '.') + ' In Studio B, B at the console opens the mixer; on the PEDAL row, Z opens one up.';
+        return 'Abe\'s old pedalboard: ' + list + (have.length < 10 ? ' (Abe has more).' : '.') + ' In Studio B, B at the console opens the mixer; on the PEDAL row, Z opens one up.';
       },
     },
     metronome: {
@@ -5878,6 +5878,10 @@
     jam_flute: ['Notes slide down onto the finger holes: low notes on the left, high on the right. Cover each hole with its arrow (← ↓ ↑ →) right as its note lands. A long tail means HOLD it till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     jam_piano: ['Notes slide down onto the keys: low notes on the left, high on the right. Press each one with its arrow (← ↓ ↑ →) right as it lands.', 'Two at once? Press both. A long tail means HOLD it till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
     jam_violin: ['Notes slide down the four strings, G, D, A and E: low on the left, high on the right. Bow each one with its arrow (← ↓ ↑ →) right as it reaches the bridge.', 'A long tail is a long bow: HOLD the arrow till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
+    jam_strings: ['Notes slide down the four strings: low on the left, high on the right. Play each one with its arrow (← ↓ ↑ →) right as it reaches the bridge.', 'A long tail means HOLD the arrow till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
+    jam_horn: ['Notes slide down to the instrument: low on the left, high on the right. Play each one with its arrow (← ↓ ↑ →) right as it lands.', 'A long tail means HOLD it till the tail runs out, or it\'s DROPPED. (On the trombone, a held note slides right into the next one.)', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
+    jam_machine: ['← hi-hat, ↓ BOOM, ↑ snare, → CLAP. Hit each pad right as its note lands on it.', 'Two at once (like BOOM and hi-hat)? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
+    jam_cowbell: ['Two cowbells: ← the high one, → the low one. Hit each right as its note lands.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
     jam_kit: ['← hi-hat, ↓ kick drum, ↑ snare, → crash and toms. Hit each note right as it lands on its drum.', 'Two at once (like kick and hi-hat)? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
   };
 
@@ -7377,6 +7381,151 @@
         'You play. I dance. Slowly. Like a ballroom.',
       ],
     },
+    {
+      id: 'cello', name: 'Abe\'s Cello', kind: 'Cello', art: () => G.spr.cello, bow: 'cello', song: 'lowTide',
+      blurb: 'A cello: the violin\'s big sister, played sitting down, with a spike at the bottom that rests on the floor.',
+      about: [
+        'Four strings, tuned C, G, D and A: an octave below a viola. You sit down to play it, with its endpin resting on the floor.',
+        'Its full name is violoncello, which means "little violone." The violone was even bigger.',
+        'Abe got it at the church rummage sale. Nobody else bid. Nobody else could lift it.',
+      ],
+      how: 'Clear Low Tide, jamming with Abe at the condo.',
+      intro: [[null, 'Abe wheels in something the size of a small person, in a hard case.'], ['Abe', 'A cello. The church rummage sale. I was the only one who bid. I was the only one who could lift it.'], ['Abe', 'Long, low notes. Draw the bow slow. I\'m going to dance, but sitting down. Out of respect.']],
+      won: [['Abe', 'Take the cello. Honestly I was mostly using it as a coat rack.']], gotLine: 'It comes with a chair. Abe insists.',
+      talk: ['Low and slow. Let it ring.', 'I\'m dancing sitting down. It\'s called chair dancing. It\'s a whole thing.', 'Cellos sound like somebody humming in the next room. In a good way.', 'Draw the bow ALL the way. Don\'t chicken out halfway.'],
+    },
+    {
+      id: 'upbass', name: 'Abe\'s Upright Bass', kind: 'Double bass', art: () => G.spr.uprightBass, bow: 'upbass', song: 'walkingRomulus',
+      blurb: 'An upright bass, taller than Abe (almost). The biggest of the strings. In jazz, you pluck it.',
+      about: [
+        'The biggest of the bowed strings, also called a double bass. Its four strings are tuned E, A, D and G, in fourths, not fifths like the others.',
+        'In jazz it\'s usually plucked, "walking" a line of steady quarter notes under the band.',
+        'Abe traded his old bike for it. He walks everywhere now. It\'s fine.',
+      ],
+      how: 'Clear Walking Romulus, jamming with Abe at the condo.',
+      intro: [[null, 'Abe leans something enormous against the wall. It\'s an upright bass, and it\'s almost as tall as he is.'], ['Abe', 'I traded my bike for it. I walk everywhere now. Speaking of walking: this is a walking bass line.'], ['Abe', 'One note a beat, nice and steady. Like walking Romulus. Except Romulus never walks steady.']],
+      won: [['Abe', 'The bass is yours. Every band needs one. You\'re the band now.']], gotLine: 'Abe helped carry it. Twice.',
+      talk: ['Walk it. One, two, three, four. Like walking the dog.', 'That\'s it, that\'s the bass. Nobody notices until it stops.', 'Romulus would never walk this steady. Romulus stops at every tree.', 'Pluck it. Don\'t pet it. Pluck it.'],
+    },
+    // HORNS (the setlist's sixth page): the trumpet, the trombone, the sax
+    {
+      id: 'trumpet', name: 'Abe\'s Trumpet', kind: 'Trumpet', art: () => G.spr.trumpet, horn: 'trumpet', flat: true, song: 'morningFanfare',
+      blurb: 'A brass trumpet: three valves, a lot of tubing, and a bell that points right at whoever\'s still asleep.',
+      about: [
+        'Three valves, and a lot of lip: the valves give seven different lengths of tube, and your lips pick which note in each one rings.',
+        'You buzz your lips into the mouthpiece, and the tube does the rest.',
+        'Abe found it in the condo\'s storage closet, next to the Casio. That closet has some secrets.',
+      ],
+      how: 'Clear Morning Fanfare, jamming with Abe at the condo.',
+      intro: [[null, 'Abe holds up a shiny brass trumpet.'], ['Abe', 'The storage closet strikes again. Right next to the Casio.'], ['Abe', 'A fanfare: big, loud, triumphant. Wake up the whole building.']],
+      won: [['Abe', 'Keep the trumpet. Hannah says if she hears it at seven in the morning again, it\'s going in the bay.']], gotLine: 'Shiny, brassy, and very, very loud.',
+      talk: ['Buzz your lips. Like a raspberry. A musical raspberry.', 'LOUD. Trumpets are LOUD. That\'s the point.', 'Ta-da! Every note is a ta-da.', 'You play. I march. In place. It counts.'],
+    },
+    {
+      id: 'trombone', name: 'Abe\'s Trombone', kind: 'Trombone', art: () => G.spr.trombone, horn: 'trombone', flat: true, song: 'slideShow',
+      blurb: 'A trombone: no valves, just a slide. It goes WAAAAH. Nothing else in the band can slide from note to note like it.',
+      about: [
+        'No valves: a slide. Seven positions, each one a little farther out and a little lower.',
+        'Because it slides, it can glide smoothly from one note to the next, like nothing else in the band.',
+        'Abe got it at a garage sale. The slide sticks a little. That\'s called character.',
+      ],
+      how: 'Clear Slide Show, jamming with Abe at the condo.',
+      intro: [[null, 'Abe pulls out a trombone and slides the slide all the way out. It almost hits the lamp.'], ['Abe', 'Garage sale. The slide sticks a little. That\'s character.'], ['Abe', 'Long notes on this one: hold them, and it slides right into the next one. WAAAAH.']],
+      won: [['Abe', 'Take it. Mind the lamp.']], gotLine: 'Mind the lamp.',
+      talk: ['Slide into it. WAAAH.', 'Hold the long ones. Feel that? It slides into the next one.', 'It\'s basically a fancy slide whistle. Don\'t tell it I said that.', 'Watch the lamp. WATCH THE LAMP.'],
+    },
+    {
+      id: 'sax', name: 'Abe\'s Saxophone', kind: 'Alto saxophone', art: () => G.spr.sax, horn: 'sax', flat: true, song: 'afterHours',
+      blurb: 'An alto sax: curvy, brassy, and smoky. Made of brass, but it\'s a woodwind.',
+      about: [
+        'Made of brass, but it\'s a woodwind: you blow through a reed, like a clarinet.',
+        'Adolphe Sax, a Belgian instrument maker, invented it in the 1840s, and named it after himself.',
+        'Abe bought it from a man at the bus stop who said it was "lucky." Abe says it is.',
+      ],
+      how: 'Clear After Hours, jamming with Abe at the condo.',
+      intro: [[null, 'Abe opens a case lined in purple. Inside, a gold saxophone, all curves.'], ['Abe', 'A man at the bus stop sold me this. He said it was lucky. I believe him.'], ['Abe', 'After Hours. Smooth. Smoky. Late. Like the Rhodes, but it breathes.']],
+      won: [['Abe', 'Keep the sax. The luck goes with it. That was the deal.']], gotLine: 'Lucky, apparently.',
+      talk: ['Smooth. Breathe into it.', 'A little vibrato on the long ones. Like it\'s tired. In a cool way.', 'This is the part in the movie where it starts raining.', 'You play. I lean on things. That\'s sax dancing.'],
+    },
+    // SYNTHS (the seventh page): a synthesizer and a drum machine
+    {
+      id: 'synth', name: 'Abe\'s Synth', kind: 'Synthesizer', art: () => G.spr.synth, keys: 'synth', song: 'neonTurnpike',
+      blurb: 'A synthesizer: buzzy, bright and electric, with a FILTER knob that makes it dark and soft or loud and sharp.',
+      about: [
+        'A synthesizer builds its sound out of electricity: an oscillator makes a buzz, and a filter carves it into shape.',
+        'Turn the filter down and it goes dark and soft; open it up and it gets bright and buzzy. (In Studio B, - + turns the FILTER while you play.)',
+        'Abe got it from a music store that was closing. It was the last one. He says it chose him.',
+      ],
+      how: 'Clear Neon Turnpike, jamming with Abe at the condo.',
+      intro: [[null, 'Abe sets a sleek black keyboard covered in knobs on the table. It hums.'], ['Abe', 'A real synth. The music store was closing. It was the last one. It chose me.'], ['Abe', 'Neon Turnpike. Picture driving at night. Very fast. Very legally.']],
+      won: [['Abe', 'The synth is yours. Turn the FILTER knob in the studio. You\'ll lose an afternoon.']], gotLine: 'It hums when it\'s happy.',
+      talk: ['Night drive. Neon signs. Go.', 'That\'s a sawtooth wave. It saws.', 'Synths don\'t need breaks. You do. Don\'t take one.', 'You play. I do the robot. Obviously.'],
+    },
+    {
+      id: 'machine', name: 'Abe\'s Drum Machine', kind: 'Drum machine', art: () => G.spr.drumMachine, drum: 'machine', song: 'clapTrack',
+      blurb: 'A drum machine: a box of buttons that goes BOOM, CLAP, and TSS. It never rushes, and it never gets tired.',
+      about: [
+        'A box of drums with buttons. Early ones made their sounds out of circuits, not recordings: the deep BOOM, the snappy CLAP.',
+        'It keeps perfect time, forever. (In Studio B, the step sequencer was made for it.)',
+        'Abe found it with the synth. They came as a set. He wasn\'t going to split them up.',
+      ],
+      how: 'Clear Clap Track, jamming with Abe at the condo.',
+      intro: [[null, 'Abe puts a gray box covered in rubber pads next to the synth.'], ['Abe', 'The drum machine. It came with the synth. I wasn\'t going to split them up.'], ['Abe', '← the hi-hat, ↓ the BOOM, ↑ the snare, → the CLAP. It\'s the kit, but it never gets tired.']],
+      won: [['Abe', 'Take it. It keeps better time than I do. That hurts, but it\'s true.']], gotLine: 'BOOM. CLAP. Yours.',
+      talk: ['BOOM. Clap. BOOM BOOM. Clap.', 'It never rushes. Be the drum machine.', 'Clap on two and four. Always two and four.', 'I\'m dancing like it\'s a club. It\'s a condo. Same thing.'],
+    },
+    // NOVELTY (the eighth page): a kazoo, a cowbell, a theremin
+    {
+      id: 'kazoo', name: 'Abe\'s Kazoo', kind: 'Kazoo', art: () => G.spr.kazoo, horn: 'kazoo', flat: true, song: 'kazooTwoStep',
+      blurb: 'A red plastic kazoo. You don\'t blow it. You hum into it, and it buzzes.',
+      about: [
+        'You don\'t blow into a kazoo. You hum into it, and a little membrane inside buzzes along.',
+        'Whatever note you hum is the note it plays. So technically, you\'re singing.',
+        'Abe got it out of a birthday party goody bag. It was not his birthday party.',
+      ],
+      how: 'Clear the Kazoo Two-Step, jamming with Abe at the condo.',
+      intro: [[null, 'Abe holds up a tiny red kazoo like it\'s a priceless violin.'], ['Abe', 'From a birthday party goody bag. Don\'t ask whose birthday. It doesn\'t matter.'], ['Abe', 'Hum into it. Don\'t blow. HUM. This is serious music.']],
+      won: [['Abe', 'The kazoo is yours. Use it responsibly. No. Use it irresponsibly.']], gotLine: 'Bzzzzzz.',
+      talk: ['HUM. Don\'t blow. Hum.', 'This is the most serious song we\'ve ever played.', 'Bzzzz bzz bzz bzzzzz. Beautiful.', 'You play. I do the two-step. Two steps. That\'s all it is.'],
+    },
+    {
+      id: 'cowbell', name: 'Abe\'s Cowbell', kind: 'Cowbell', art: () => G.spr.cowbell, drum: 'cowbell', song: 'cowbellCountry',
+      blurb: 'A cowbell, with a stick to hit it. Two sounds: the high one and the low one. Both are loud.',
+      about: [
+        'A real cowbell hangs on a cow so farmers can find it. This one gets hit with a stick.',
+        'Hit it in the middle for a clank, near the open end for a deeper bonk.',
+        'Abe got it at the county fair. There was a cow attached at the time. Not anymore.',
+      ],
+      how: 'Clear Cowbell Country, jamming with Abe at the condo.',
+      intro: [[null, 'Abe clonks a cowbell with a drumstick. Romulus leaves the room.'], ['Abe', 'The county fair. Long story. The cow is fine.'], ['Abe', '← the high one, → the low one. Hoedown time.']],
+      won: [['Abe', 'Take the cowbell. Romulus has asked me to.']], gotLine: 'Clonk.',
+      talk: ['Clonk clonk. CLONK.', 'Hoedown! Grab a partner! I\'m my own partner!', 'Romulus left the room. That\'s how you know it\'s good.', 'High, low, high, low. Like a cow walking.'],
+    },
+    {
+      id: 'theremin', name: 'Abe\'s Theremin', kind: 'Theremin', art: () => G.spr.theremin, horn: 'theremin', flat: true, song: 'saucer',
+      blurb: 'A theremin: a wooden box with two antennas. You play it without touching it. It sounds like a flying saucer.',
+      about: [
+        'You play it without touching it: one antenna controls the pitch, the other the volume, and your hands float in the air between them.',
+        'Leon Theremin invented it around 1920, in Russia. Old science-fiction movies used it for every flying saucer.',
+        'Abe built it from a kit. It took him a year. He\'s very proud of it.',
+      ],
+      how: 'Clear Saucer Over Easton, jamming with Abe at the condo.',
+      intro: [[null, 'Abe sets down a wooden box with two metal antennas sticking out of it, very carefully.'], ['Abe', 'I built this. From a kit. It took a year. Don\'t touch it. Literally: you don\'t touch it.'], ['Abe', 'Wave your hand near the antenna and it sings. It slides from note to note. Flying saucer music.']],
+      won: [['Abe', 'Take the theremin. Every time it hums at night I think we\'re being invaded.']], gotLine: 'Ooo-weee-ooo.',
+      talk: ['Ooooo-weeeee-ooooo.', 'Don\'t touch it! Wave. Just wave.', 'The aliens are landing on the quad. Play them in.', 'Every note slides. That\'s the theremin. It can\'t help it.'],
+    },
+    // STUDIO B's mic: Nate's own voice (no song: it's in the studio, once the studio's open)
+    {
+      id: 'mic', name: 'Studio B Mic', kind: 'Nate\'s voice', art: () => G.spr.microphone, flat: true, mine: true, has: () => G.abeInstruments() > 0,
+      blurb: 'Studio B\'s microphone, on a stand with a pop filter. Pick it on a track and Nate sings: doo, bah, or la.',
+      about: [
+        'A microphone turns sound into electricity: your voice shakes a thin diaphragm, and the studio records the wiggle.',
+        'The round screen in front is a pop filter, so a "bah" doesn\'t go POP.',
+        'In Studio B, pick it on a track (←→). The keys sing notes in the song\'s key; - + picks doo, bah, or la.',
+      ],
+      how: 'It\'s in Studio B, once the studio\'s open.',
+      talk: [],
+    },
   ];
   const instState = () => (G.state.instruments = G.state.instruments || {});
   G.instrumentHas = (id) => {
@@ -7387,7 +7536,7 @@
   };
   // the electric guitars, and the one Nate plays (his pick if he has it; else the newest he has;
   // before any, the Strat Abe lends him for the first song)
-  G.GUITARS = G.INSTRUMENTS.filter((it) => it.song && !it.drum && !it.wind && !it.keys && !it.bow);
+  G.GUITARS = G.INSTRUMENTS.filter((it) => it.song && !it.drum && !it.wind && !it.keys && !it.bow && !it.horn);
   G.guitarsHad = () => G.GUITARS.filter((it) => G.instrumentHas(it.id));
   G.guitarNow = () => {
     const had = G.guitarsHad(), pick = had.find((it) => it.id === G.state.guitar);
@@ -7401,6 +7550,30 @@
     const src = it.art(), c = G.canvas(Math.ceil(src.width / 2), Math.ceil(src.height / 2));
     c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
     return (guitarSmallC[it.id] = c);
+  };
+  // Nate with a cello or an upright bass, standing it on the floor beside him (cx, by: the endpin), tilted
+  // in a little, at scale k; saw (-1 to 1) slides a bow across it (none for the plucked bass)
+  const standHold = (ctx, img, cx, by, k, saw) => {
+    const w = img.width * k, h = img.height * k;
+    ctx.save(); ctx.translate(cx, by); ctx.rotate(-0.12); ctx.drawImage(img, -w / 2, -h, w, h); ctx.restore();
+    if (saw == null) return;
+    const bx = cx - h * 0.38 * Math.sin(-0.12), by2 = by - h * 0.36, L = 40 * k, off = saw * L * 0.2;
+    for (let i = 0; i <= Math.round(L); i++) { const d = -0.75 * L + off + i, x = Math.round(bx + d), y = Math.round(by2 - d * 0.15); ctx.fillStyle = '#6a3a1a'; ctx.fillRect(x, y, 1, 1); ctx.fillStyle = '#f0e8d0'; ctx.fillRect(x, y + 1, 1, 1); }
+  };
+  // Nate with a horn (mx, my: his mouth; by: his feet; k: scale; lane: the note he's on, for the
+  // trombone's slide and the hand at the theremin): a trumpet, trombone or kazoo pointed out to our
+  // right, a sax hanging in front of him, a theremin standing in front with his hand over it
+  const hornHold = (ctx, horn, img, mx, my, by, k, lane) => {
+    const w = img.width * k, h = img.height * k;
+    if (horn === 'sax') ctx.drawImage(img, Math.round(mx - w * 0.35), Math.round(my - 2 * k), w, h);
+    else if (horn === 'theremin') {
+      ctx.drawImage(img, Math.round(mx - w / 2), Math.round(by - h), w, h);
+      ctx.fillStyle = '#f0c8a0'; ctx.fillRect(Math.round(mx + w * 0.2), Math.round(by - h - (4 + (lane || 0) * 3) * k), Math.max(2, Math.round(3 * k)), Math.max(2, Math.round(3 * k)));
+    } else {
+      ctx.drawImage(img, Math.round(mx - 1), Math.round(my - h / 2), w, h);
+      // (the trombone's slide goes out farther for the lower lanes)
+      if (horn === 'trombone') { const ex = Math.round((3 - (lane || 0)) * 3 * k); ctx.fillStyle = '#d8a838'; ctx.fillRect(Math.round(mx + w - 2), Math.round(my + h * 0.1), ex, Math.max(1, Math.round(k))); ctx.fillRect(Math.round(mx + w - 2), Math.round(my + h * 0.35), ex, Math.max(1, Math.round(k))); ctx.fillRect(Math.round(mx + w - 2 + ex), Math.round(my + h * 0.1), Math.max(1, Math.round(k)), Math.round(h * 0.3)); }
+    }
   };
   // Nate playing the violin: tucked under his chin (cx, cy: the chin rest), the scroll out to our right
   // and a little up, at scale k; the bow crosses the strings by the bridge and runs down to our left,
@@ -7558,6 +7731,122 @@
       },
       form: 'AABACDABE',
     },
+    // (the cello: a slow, low air, Abe dancing in a chair; the upright bass: a walking line, one note a beat)
+    {
+      id: 'lowTide', name: 'Low Tide', bpm: 72, d: 2, bow: 'cello', style: 'air', seat: true, perfect: 4, good: 9, drain: 0.05, lead: 96,
+      blurb: 'On the cello. Low and slow, in G: long bows. Abe dances sitting down.',
+      riffs: {
+        A: { notes: 'G3/2 B3/1 D4/1 C4/2 B3/2', bass: [43, 48] },
+        B: { notes: 'A3/1 B3/1 C4/1 E4/1 D4/3 r/1', bass: [45, 50] },
+        C: { notes: 'E4/2 D4/1 B3/1 C4/1 A3/1 B3/2', bass: [40, 43] },
+        E: { notes: 'D4/1 B3/1 A3/1 F#3/1 G3/4', bass: [50, 43] },
+      },
+      form: 'AABACABE',
+    },
+    {
+      id: 'walkingRomulus', name: 'Walking Romulus', bpm: 104, d: 2, bow: 'upbass', style: 'walk', perfect: 4, good: 8, drain: 0.06, lead: 88,
+      blurb: 'On the upright bass. A walking bass line: one note every beat, steady. Abe comps.',
+      riffs: {
+        A: { notes: 'C2/1 E2/1 G2/1 A2/1 F2/1 A2/1 C3/1 A2/1', bass: [36, 41] },
+        B: { notes: 'G2/1 B2/1 D3/1 B2/1 C2/1 E2/1 G2/1 E2/1', bass: [43, 36] },
+        C: { notes: 'A2/1 G2/1 F2/1 E2/1 D2/1 E2/1 F2/1 G2/1', bass: [45, 38] },
+        E: { notes: 'G2/1 F2/1 E2/1 D2/1 C2/4', bass: [43, 36] },
+      },
+      form: 'AABACABE',
+    },
+    // HORNS: a fanfare, a slide show (the trombone's holds glide into the next note), and a smoky sax
+    {
+      id: 'morningFanfare', name: 'Morning Fanfare', bpm: 112, d: 1, horn: 'trumpet', style: 'march', perfect: 4, good: 9, drain: 0.05, lead: 96,
+      blurb: 'On the trumpet. A fanfare in C: big, bright, and loud. Wake everybody up.',
+      riffs: {
+        A: { notes: 'C5/.5 C5/.5 C5/.5 E5/.5 G5/2 E5/1 G5/1 C6/2', bass: [36, 43] },
+        B: { notes: 'A5/1 G5/1 F5/1 E5/1 D5/2 G4/2', bass: [41, 43] },
+        C: { notes: 'E5/.5 F5/.5 G5/1 E5/.5 F5/.5 G5/1 A5/1 G5/1 E5/2', bass: [36, 45] },
+        E: { notes: 'G5/.5 G5/.5 G5/.5 G5/.5 C6/4 r/2', bass: [43, 36] },
+      },
+      form: 'AABACABE',
+    },
+    {
+      id: 'slideShow', name: 'Slide Show', bpm: 88, d: 2, horn: 'trombone', style: 'swing', perfect: 4, good: 8, drain: 0.06, lead: 92,
+      blurb: 'On the trombone. Hold the long ones, and the slide glides right into the next note. WAAAAH.',
+      riffs: {
+        A: { notes: 'F3/2 A3/2 C4/2 A3/2', bass: [41, 41] },
+        B: { notes: 'A#3/2 D4/2 C4/2 A3/2', bass: [46, 41] },
+        C: { notes: 'G3/1 A3/1 A#3/1 C4/1 D4/2 C4/2', bass: [43, 48] },
+        E: { notes: 'C4/1 A#3/1 A3/1 G3/1 F3/4', bass: [48, 41] },
+      },
+      form: 'AABACABE',
+    },
+    {
+      id: 'afterHours', name: 'After Hours', bpm: 92, d: 3, horn: 'sax', style: 'soul', perfect: 3, good: 7, drain: 0.08, lead: 80,
+      blurb: 'On the sax. Smooth and smoky, in D minor, with long notes to lean on.',
+      riffs: {
+        A: { notes: 'D4/.5 F4/.5 A4/1 G4/.5 F4/.5 D4/1 C4/1 D4/3', bass: [38, 36] },
+        B: { notes: 'F4/.5 G4/.5 A4/.5 C5/.5 D5/2 C5/1 A4/1 G4/2', bass: [43, 38] },
+        C: { notes: 'A4/1 G4/.5 F4/.5 G4/1 F4/.5 D4/.5 F4/2 D4/2', bass: [41, 45] },
+        E: { notes: 'D4/.5 F4/.5 A4/.5 C5/.5 D5/4 r/2', bass: [38, 38] },
+      },
+      form: 'AABACABCAE',
+    },
+    // SYNTHS: a night drive on the synth, and the drum machine (← hat, ↓ BOOM, ↑ snare, → CLAP)
+    {
+      id: 'neonTurnpike', name: 'Neon Turnpike', bpm: 120, d: 2, keys: 'synth', page: 'synths', style: 'electro', perfect: 3, good: 7, drain: 0.07, lead: 84,
+      blurb: 'On the synth. Fast and buzzy, in A minor. Picture driving at night.',
+      riffs: {
+        A: { notes: 'A4/.5 E5/.5 A5/.5 E5/.5 G5/1 E5/1 D5/1 C5/1 A4/2', bass: [45, 41] },
+        B: { notes: 'F5/.5 E5/.5 C5/.5 A4/.5 C5/1 E5/1 G5/2 E5/2', bass: [41, 43] },
+        C: { notes: 'A5/.5 A5/.5 G5/.5 E5/.5 D5/.5 E5/.5 G5/.5 A5/.5 C6/2 A5/2', bass: [45, 43] },
+        E: { notes: 'A4/.5 C5/.5 E5/.5 A5/.5 A5/4 r/2', bass: [45, 45] },
+      },
+      form: 'AABACABE',
+    },
+    {
+      id: 'clapTrack', name: 'Clap Track', bpm: 100, d: 2, drums: 'machine', page: 'synths', style: 'electro', perfect: 3, good: 7, drain: 0.07, lead: 84,
+      blurb: 'The drum machine: hi-hat, BOOM, snare, CLAP. It never gets tired. Neither should you.',
+      pads: { H: [0, () => I().hat()], O: [0, () => I().openhat()], B: [1, () => I().boom()], S: [2, () => I().snare()], C: [3, () => I().clap()] },
+      riffs: {
+        A: { notes: 'B+H/.5 H/.5 C+H/.5 H/.5 B+H/.5 B+H/.5 C+H/.5 H/.5 B+H/.5 H/.5 C+H/.5 H/.5 B+H/.5 H/.5 C+H/.5 O/.5', bass: [45, 43] },
+        B: { notes: 'B/1 S/1 B/1 C/1 B/.5 B/.5 S/1 B/1 C/1', bass: [41, 43] },
+        C: { notes: 'B+H/.5 H/.5 C+H/.5 H/.5 B+H/.5 H/.5 C+H/.5 H/.5 S/.25 S/.25 S/.25 S/.25 C/.25 C/.25 C/.25 C/.25 B+C/1 r/1', bass: [45, 45] },
+        E: { notes: 'B+C/1 r/1 S/.5 S/.5 C/.5 C/.5 B+C/2 r/2', bass: [45, 45] },
+      },
+      form: 'AABACABE',
+    },
+    // NOVELTY: a kazoo two-step, a cowbell hoedown (← high, → low), and a theremin's flying saucer (every note slides)
+    {
+      id: 'kazooTwoStep', name: 'The Kazoo Two-Step', bpm: 108, d: 1, horn: 'kazoo', page: 'novelty', style: 'polka', perfect: 5, good: 10, drain: 0.04, lead: 100,
+      blurb: 'On the kazoo. A bouncy two-step in C. Hum it. Don\'t blow.',
+      riffs: {
+        A: { notes: 'C5/1 E5/1 G5/1 E5/1 F5/1 D5/1 C5/2', bass: [36, 43] },
+        B: { notes: 'D5/1 F5/1 A5/1 F5/1 G5/1 E5/1 D5/2', bass: [43, 43] },
+        C: { notes: 'E5/.5 E5/.5 G5/1 E5/.5 E5/.5 G5/1 A5/1 G5/1 E5/2', bass: [36, 41] },
+        E: { notes: 'G5/1 E5/1 D5/1 B4/1 C5/2 r/2', bass: [43, 36] },
+      },
+      form: 'AABACABE',
+    },
+    {
+      id: 'cowbellCountry', name: 'Cowbell Country', bpm: 112, d: 1, drums: 'cowbell', page: 'novelty', style: 'hoedown', perfect: 4, good: 9, drain: 0.05, lead: 96,
+      blurb: 'On the cowbell. A hoedown: ← the high one, → the low one. Clonk.',
+      pads: { h: [0, () => I().cowbell(true)], l: [3, () => I().cowbell(false)] },
+      riffs: {
+        A: { notes: 'h/1 l/1 h/1 l/1 h/.5 h/.5 l/1 h/1 l/1', bass: [43, 38] },
+        B: { notes: 'h/.5 h/.5 l/1 h/.5 h/.5 l/1 h/1 h/1 l/2', bass: [36, 43] },
+        C: { notes: 'h/.5 l/.5 h/.5 l/.5 h/.5 l/.5 h/.5 l/.5 h/1 h/1 l/2', bass: [43, 38] },
+        E: { notes: 'h/.5 h/.5 h/.5 h/.5 l/2 r/4', bass: [43, 43] },
+      },
+      form: 'AABACABE',
+    },
+    {
+      id: 'saucer', name: 'Saucer Over Easton', bpm: 76, d: 2, horn: 'theremin', page: 'novelty', style: 'spooky', perfect: 4, good: 9, drain: 0.05, lead: 96,
+      blurb: 'On the theremin. Spooky, in E minor: every note slides into the next. Flying saucer music.',
+      riffs: {
+        A: { notes: 'E5/2 G5/2 F#5/2 D#5/2', bass: [40, 47] },
+        B: { notes: 'E5/1 F#5/1 G5/1 B5/1 A5/2 G5/2', bass: [45, 40] },
+        C: { notes: 'C6/2 B5/2 A5/1 G5/1 F#5/2', bass: [48, 47] },
+        E: { notes: 'G5/1 F#5/1 E5/1 D#5/1 E5/4', bass: [47, 40] },
+      },
+      form: 'AABACABE',
+    },
   ];
   G.JAM_SONGS = JAM_SONGS;
   const jamState = () => (G.state.jams = G.state.jams || {});
@@ -7586,11 +7875,12 @@
     return { notes: out, bars, beats: beat };
   }
 
-  // ---- the setlist: pick a song (the next one unlocks when you finish the one before it). Five
-  // pages, GUITAR, DRUMS, FLUTE, PIANO and VIOLIN (←→ flips between them, ↑↓ picks a song), each its
-  // own unlock chain. On the guitar page, C switches which of Abe's guitars Nate plays.
-  const JAM_TRACKS = [['guitar', 'GUITAR'], ['drums', 'DRUMS'], ['flute', 'FLUTE'], ['piano', 'PIANO'], ['violin', 'VIOLIN']];
-  const jamTrack = (sg) => (sg.drums ? 'drums' : sg.wind ? 'flute' : sg.keys ? 'piano' : sg.bow ? 'violin' : 'guitar');
+  // ---- the setlist: pick a song (the next one unlocks when you finish the one before it). Eight
+  // pages, GUITAR, DRUMS, FLUTE, PIANO, STRINGS, HORNS, SYNTHS and NOVELTY (←→ flips between them, ↑↓
+  // picks a song), each its own unlock chain (a song's page: page, or what it's played on). On the
+  // guitar page, C switches which of Abe's guitars Nate plays.
+  const JAM_TRACKS = [['guitar', 'GUITAR'], ['drums', 'DRUMS'], ['flute', 'FLUTE'], ['piano', 'PIANO'], ['strings', 'STRINGS'], ['horns', 'HORNS'], ['synths', 'SYNTHS'], ['novelty', 'NOVELTY']];
+  const jamTrack = (sg) => sg.page || (sg.drums ? 'drums' : sg.wind ? 'flute' : sg.keys ? 'piano' : sg.bow ? 'strings' : sg.horn ? 'horns' : 'guitar');
   const jamPrize = (sg) => G.INSTRUMENTS.find((it) => it.song === sg.id);
   // (Nate's own instruments count as his on the setlist even before he's brought them out)
   const jamHas = (it) => it.mine || G.instrumentHas(it.id);
@@ -7649,22 +7939,23 @@
           if (best) FT().draw(ctx, '{y}' + '★'.repeat(best) + '{d}' + '★'.repeat(3 - best), 166 - FT().width('★★★'), y + 4, '#f8d850', { shadow: '#0c0814' });
           // (all perfect: a big twinkling gold star in front of the three)
           if ((G.state.jamPerfect || {})[sg.id]) goldStar(ctx, 166 - FT().width('★★★') - 12, y + 3, this.t);
-          else if (open) FT().draw(ctx, 'NEW', 166 - FT().width('NEW'), y + 4, '#78e070', { shadow: '#0c0814' });
+          else if (open && !best) FT().draw(ctx, 'NEW', 166 - FT().width('NEW'), y + 4, '#78e070', { shadow: '#0c0814' });
           // what it wins, in the corner (a silhouette until it's won): a guitar or flute lying down, or the drum
           const prize = jamPrize(sg);
           if (prize) {
             const won = jamHas(prize);
-            if (prize.drum || prize.keys) { const img = prize.art(), k2 = Math.min(1, 14 / img.height); fitDraw(ctx, won ? img : G.silhouette(img), 168 - Math.round(img.width * k2), y + 13, 40, 14); }
+            if (prize.drum || prize.keys || prize.flat) { const img = prize.art(), k2 = Math.min(1, 14 / img.height, 40 / img.width); fitDraw(ctx, won ? img : G.silhouette(img), 168 - Math.round(img.width * k2), y + 13, 40, 14); }
             else { const img = guitarSmall(prize); ctx.save(); ctx.translate(167 - img.height, y + 27); ctx.rotate(-Math.PI / 2); ctx.drawImage(won ? img : G.silhouette(img), 0, 0); ctx.restore(); }
           }
         });
-        // the pages, along the bottom of the list (←→)
-        let tx = 12;
-        FT().draw(ctx, '←', 4, 111, '#f8d850', { shadow: '#000' });
-        JAM_TRACKS.forEach(([, name], k) => { FT().draw(ctx, name, tx, 111, k === pg ? '#f8d850' : '#5a4e70', { shadow: '#000' }); tx += FT().width(name) + 8; });
-        FT().draw(ctx, '→', tx - 4, 111, '#f8d850', { shadow: '#000' });
-        if (track === 'drums' || track === 'piano') {
-          // the drum (or piano) for the song you're on (a silhouette until it's won)
+        // the pages, along the bottom of the list (←→): the one before, this one, the one after, and a dot for each
+        const NP = JAM_TRACKS.length, prev = JAM_TRACKS[(pg + NP - 1) % NP][1], next = JAM_TRACKS[(pg + 1) % NP][1], here = JAM_TRACKS[pg][1];
+        FT().draw(ctx, '← ' + prev, 6, 111, '#5a4e70', { shadow: '#000' });
+        FT().draw(ctx, here, 91 - Math.round(FT().width(here) / 2), 111, '#f8d850', { shadow: '#000' });
+        FT().draw(ctx, next + ' →', 172 - FT().width(next + ' →'), 111, '#5a4e70', { shadow: '#000' });
+        for (let k = 0; k < NP; k++) { ctx.fillStyle = k === pg ? '#f8d850' : '#3e3460'; ctx.fillRect(91 - NP * 3 + k * 6, 120, 4, 2); }
+        if (track !== 'guitar' && track !== 'flute') {
+          // the instrument for the song you're on, fit to the corner (a silhouette until it's won)
           const it = jamPrize(cur), img = it.art(), won = G.instrumentHas(it.id), k = Math.min(2, 56 / img.width, 66 / img.height);
           ctx.drawImage(won ? img : G.silhouette(img), Math.round(208 - (img.width * k) / 2), Math.round(88 - img.height * k), Math.round(img.width * k), Math.round(img.height * k));
           FT().wrap(won ? it.name.replace('Abe\'s ', '') : '???', 56).slice(0, 2).forEach((l, k2) => FT().draw(ctx, l, 208 - Math.round(FT().width(l) / 2), 99 + k2 * 9, '#f8f8f0', { shadow: '#000' }));
@@ -7679,8 +7970,8 @@
           ctx.drawImage(gi, 208 - Math.round(gi.width / 2), 22);
           FT().wrap(gt.name.replace('Abe\'s ', ''), 56).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 208 - Math.round(FT().width(l) / 2), 99 + k * 9, '#f8f8f0', { shadow: '#000' }));
         }
-        FT().wrap(this.open(this.sel) ? cur.blurb : 'Locked.', 220).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 10, 122 + k * 9, '#c8c0d8', { shadow: '#000' }));
-        FT().draw(ctx, track === 'guitar' && G.guitarsHad().length > 1 ? 'Z: play   ←→: page   C: guitar   X: done' : 'Z: play   ←→: page   X: done', 10, 145, '#9890a8', { shadow: '#000' });
+        FT().wrap(this.open(this.sel) ? cur.blurb : 'Locked.', 220).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 10, 125 + k * 9, '#c8c0d8', { shadow: '#000' }));
+        FT().draw(ctx, track === 'guitar' && G.guitarsHad().length > 1 ? 'Z: play   ←→: page   C: guitar   X: done' : 'Z: play   ←→: page   X: done', 10, 147, '#9890a8', { shadow: '#000' });
       },
     };
   }
@@ -7692,16 +7983,30 @@
   // instead of a guitar, and a backing guitar plays instead of the band's drums.
   function jamCmd(song, gt, talk) {
     // (wind: a flute song; keys: a piano song; bow: a violin song; solo: Nate on something other than guitar, with a backing guitar)
-    const S0 = buildSong(song), fpb = 3600 / song.bpm, COUNT = Math.round(4 * fpb), HIT_Y = 116, TOP = 14, drums = song.drums, wind = song.wind, keys = song.keys, bow = song.bow, solo = drums || wind || keys || bow;
-    const LANES = drums === 'bongos' ? [96, 0, 0, 144] : [87, 109, 131, 153], USED = [0, 1, 2, 3].filter((L) => S0.notes.some((n) => n.lane === L));
+    // (horn: the horns, and the kazoo and the theremin)
+    const S0 = buildSong(song), fpb = 3600 / song.bpm, COUNT = Math.round(4 * fpb), HIT_Y = 116, TOP = 14, drums = song.drums, wind = song.wind, keys = song.keys, bow = song.bow, horn = song.horn, solo = drums || wind || keys || bow || horn;
+    const LANES = drums === 'bongos' || drums === 'cowbell' ? [96, 0, 0, 144] : [87, 109, 131, 153], USED = [0, 1, 2, 3].filter((L) => S0.notes.some((n) => n.lane === L));
     const KEYS = ['left', 'down', 'up', 'right'], ARROWS = ['←', '↓', '↑', '→'];
-    const GEM = { bongos: ['#f8d890', 0, 0, '#e09048'], pan: ['#b8d8f8', '#b8f0c8', '#f8e8a0', '#f8c0d8'], kit: ['#f8d850', '#c050a0', '#f0f0f0', '#78c8f8'], pvc: ['#78e8e8', '#78e070', '#f8d850', '#f898c8'], flute: ['#c8d8f8', '#a8e8f0', '#f0f0ff', '#f8e0a8'], upright: ['#f8d8a8', '#f8f0c8', '#c8e8a8', '#a8d8f8'], casio: ['#ff6ad5', '#78e8e8', '#f8f070', '#9a7af8'], rhodes: ['#f8c070', '#e89858', '#f0e0c0', '#c8a8f8'], violin: ['#f8c870', '#f89858', '#f0e0c0', '#e8f0ff'] }[drums || wind || keys || bow] || ['#c050a0', '#e08030', '#f0e6c0', '#78c8f8'];
+    const GEM = { bongos: ['#f8d890', 0, 0, '#e09048'], pan: ['#b8d8f8', '#b8f0c8', '#f8e8a0', '#f8c0d8'], kit: ['#f8d850', '#c050a0', '#f0f0f0', '#78c8f8'], pvc: ['#78e8e8', '#78e070', '#f8d850', '#f898c8'], flute: ['#c8d8f8', '#a8e8f0', '#f0f0ff', '#f8e0a8'], upright: ['#f8d8a8', '#f8f0c8', '#c8e8a8', '#a8d8f8'], casio: ['#ff6ad5', '#78e8e8', '#f8f070', '#9a7af8'], rhodes: ['#f8c070', '#e89858', '#f0e0c0', '#c8a8f8'], violin: ['#f8c870', '#f89858', '#f0e0c0', '#e8f0ff'], cello: ['#e8a060', '#f8c870', '#f0e0c0', '#d8b8f8'], upbass: ['#c87848', '#e8a060', '#f8d8a0', '#a8c8f8'],
+      trumpet: ['#f8e088', '#f8c848', '#fff4c8', '#f8a848'], trombone: ['#f8d070', '#e8b048', '#fff0b8', '#f89848'], sax: ['#f8d070', '#e8a048', '#c8a8f8', '#f878a8'], synth: ['#ff4ad8', '#4af0f8', '#f8f04a', '#9a6af8'],
+      machine: ['#f8f8f0', '#ff6a4a', '#f8d850', '#4af0a8'], kazoo: ['#ff6a6a', '#f8d850', '#78e070', '#78c8f8'], cowbell: ['#f8e8a0', 0, 0, '#d8b860'], theremin: ['#78f8a8', '#a8f878', '#f8f878', '#78f8f8'] }[drums || wind || keys || bow || horn] || ['#c050a0', '#e08030', '#f0e6c0', '#78c8f8'];
     // what a hit sounds like (a drum still sounds when you hit it with no note there)
     // (long: a hold's length in seconds; then it returns the note's let-go)
-    const KEYV = { upright: 'piano', casio: 'casio', rhodes: 'rhodes' };
-    const sound = (n, long) => (n.hit ? n.hit() : drums === 'pan' ? G.audio.inst.pan(n.midi, long || 0.7) : wind ? G.audio.inst.flute(n.midi, long || n.dur, 0.2, wind) : keys ? G.audio.inst[KEYV[keys]](n.midi, long || n.dur) : bow ? G.audio.inst.violin(n.midi, long || n.dur) : G.audio.inst.guitar(n.midi, long || n.dur, undefined, gt.id));
+    // (the trombone slides into its note from the one before, and a hold glides into the next note over
+    // its last third; the theremin slides between every note)
+    const KEYV = { upright: 'piano', casio: 'casio', rhodes: 'rhodes', synth: 'synth' };
+    let lastMidi = null;
+    const hornSound = (n, long) => {
+      const I = G.audio.inst, len = long || n.dur, prev = lastMidi;
+      lastMidi = n.midi;
+      if (horn === 'theremin') return I.theremin(n.midi, len, undefined, undefined, prev);
+      if (horn === 'trombone') return I.trombone(n.midi, len, undefined, undefined, null, n.hold && n.next ? { midi: n.next.midi, after: len * 0.6, dur: len * 0.3 } : null);
+      return I[horn](n.midi, len);
+    };
+    const sound = (n, long) => (n.hit ? n.hit() : drums === 'pan' ? G.audio.inst.pan(n.midi, long || 0.7) : wind ? G.audio.inst.flute(n.midi, long || n.dur, 0.2, wind) : keys ? G.audio.inst[KEYV[keys]](n.midi, long || n.dur) : bow ? G.audio.inst[bow](n.midi, long || n.dur) : horn ? hornSound(n, long) : G.audio.inst.guitar(n.midi, long || n.dur, undefined, gt.id));
     const abeGuitar = G.guitarNow();
     const notes = S0.notes.map((n) => Object.assign({}, n, { t: COUNT + n.beat * fpb, done: null, holdF: n.hold * fpb }));
+    notes.forEach((n, i) => { n.next = notes.slice(i + 1).find((m) => m.beat > n.beat) || null; });
     const END = notes[notes.length - 1].t + 2 * fpb, speed = (HIT_Y - TOP) / song.lead;
     return {
       start() {
@@ -7720,6 +8025,7 @@
         const pose = (img, o = {}) => Object.assign({ img, dx: 0, dy: 0, rot: 0, sx: 1, sy: 1, mid: false, name: null }, o);
         if (this.failT) return pose(A.down[0]);
         if (this.doneT) return pose(A.hold, { dy: -Math.round(Math.abs(Math.sin(this.doneT * 0.2)) * 8), rot: Math.sin(this.doneT * 0.3) * 0.15 });
+        if (song.seat) return this.chairDance();
         if (this.oofT > 0) return pose(A.down[0], { sx: 1.15, sy: 0.85, rot: Math.sin(this.oofT) * 0.1, name: 'OOF' });
         // (the count-in: a big stretch, warming up)
         if (this.f < COUNT) return pose(beat % 2 ? A.hold : A.down[0], { sy: 1 + Math.sin(ph * Math.PI) * 0.08 });
@@ -7761,6 +8067,23 @@
           default: return pose(A.down[0]);
         }
       },
+      // the cello: Abe dances sitting down, on a chair. Seated sways, then a new move every bar: the chair
+      // spin, raise the roof, the conductor, the seat bounce, the lean back
+      chairDance() {
+        const A = G.sprites.abe, beatF = this.f / fpb, beat = Math.floor(beatF), ph = beatF - beat, bar = Math.floor(beat / 4), p = (beatF % 4) / 4;
+        const pose = (img, o = {}) => Object.assign({ img, dx: 0, dy: 0, rot: 0, sx: 1, sy: 1, mid: false, name: null, seat: true }, o);
+        if (this.oofT > 0) return pose(A.down[0], { sx: 1.12, sy: 0.9, name: 'OOF' });
+        if (this.f < COUNT || this.groove < 0.35) return pose(A.down[0], { dy: this.f >= COUNT && ph < 0.25 ? 1 : 0 });
+        if (this.combo < 8) return pose(A.down[beat % 2 ? 1 : 2], { rot: Math.sin((beatF * Math.PI) / 2) * 0.08 });
+        if (this.danceBar !== bar) { this.danceBar = bar; const pool = ['chairspin', 'roof', 'conductor', 'bounce', 'leanback'].filter((m) => m !== this.move); this.move = pool[Math.floor(Math.random() * pool.length)]; }
+        switch (this.move) {
+          case 'chairspin': return pose(A[['down', 'right', 'down', 'left'][Math.floor(p * 8) % 4]][0], { sx: Math.max(0.2, Math.abs(Math.cos(p * Math.PI * 4))) * (Math.floor(p * 8) % 4 === 3 ? -1 : 1), name: 'CHAIR SPIN' });
+          case 'roof': return pose(A.hold, { dy: ph < 0.5 ? -2 : 0, name: 'RAISE THE ROOF' });
+          case 'conductor': { const k = Math.floor(beatF * 2); return pose(A[k % 2 ? 'left' : 'right'][0], { rot: k % 2 ? -0.1 : 0.1, name: 'THE CONDUCTOR' }); }
+          case 'bounce': return pose(A.down[(beat % 2) + 1], { dy: -Math.round(Math.abs(Math.sin(ph * Math.PI)) * 3), name: 'SEAT BOUNCE' });
+          default: return pose(A.hold, { rot: -Math.sin(p * Math.PI) * 0.3, name: 'LEAN BACK' });
+        }
+      },
       // (a dropped hold gives back half its hit)
       res(passed) {
         const acc = Math.max(0, (this.perfect + this.good * 0.6 - this.drops * 0.5) / notes.length);
@@ -7787,6 +8110,17 @@
           else if (st === 'synthpop') { if (pos % 2) chord(0.14, 0.035); if (pos % 2 === 0) { G.audio.inst.bass(root, 0.16); G.audio.inst.hat(); } if (pos === 0 || pos === 4) G.audio.inst.kick(); }
           // (air: Abe's guitar fingerpicked, one string at a time, and a bass on one and three)
           else if (st === 'air') { G.audio.inst.guitar([root + 12, root + 19, root + 24, root + 19][pos % 4], 0.7, 0.035, abeGuitar.id); if (pos === 0 || pos === 4) G.audio.inst.bass(root, 0.6); }
+          // (walk: Nate's the bass, so Abe's guitar comps on two and four with a soft hi-hat; march: a boom
+          // and a chord on the beat, the snare on the off-beats; swing: a walking bass and chords on two
+          // and four; electro: off-beat stabs and a pulsing bass (a kick too, unless Nate's the drum
+          // machine); polka: oom-pah; hoedown: boom-chick, quick; spooky: long low chords and a heartbeat)
+          else if (st === 'walk') { if (pos === 2 || pos === 6) { chord(0.25, 0.04); G.audio.inst.hat(); } }
+          else if (st === 'march') { if (pos % 4 === 0) { G.audio.inst.kick(); G.audio.inst.bass(root, 0.3); chord(0.2, 0.04); } if (pos % 2) G.audio.inst.snare(); }
+          else if (st === 'swing') { if (pos % 2 === 0) { G.audio.inst.hat(); G.audio.inst.bass(root + [0, 4, 7, 9][pos / 2], 0.35); } if (pos === 2 || pos === 6) chord(0.3, 0.035); }
+          else if (st === 'electro') { if (pos % 2) chord(0.1, 0.035); G.audio.inst.bass(root + (pos % 4 === 3 ? 12 : 0), 0.12); if (!drums && (pos === 0 || pos === 4)) G.audio.inst.kick(); if (!drums && pos % 2) G.audio.inst.hat(); }
+          else if (st === 'polka') { if (pos % 4 === 0) G.audio.inst.bass(pos === 4 ? root + 7 : root, 0.25); if (pos % 4 === 2) chord(0.15, 0.04); }
+          else if (st === 'hoedown') { if (pos % 4 === 0) G.audio.inst.bass(pos === 4 ? root + 7 : root, 0.2); if (pos % 2 === 1 || pos % 4 === 2) chord(0.1, 0.035); }
+          else if (st === 'spooky') { if (pos === 0) { chord(1.6, 0.03); G.audio.inst.bass(root, 1.2); } if (pos === 0 || pos === 1) G.audio.inst.kick(); }
           else if (st === 'soul') { if (pos === 2 || pos === 6) { chord(0.4, 0.035); G.audio.inst.snare(); } if (pos % 2 === 0) G.audio.inst.bass(root + [0, 3, 7, 10][pos / 2], 0.3); if (pos % 2) G.audio.inst.hat(); }
           else { chord(0.12, 0.04); if (pos % 2 === 0) G.audio.inst.bass(root, 0.16); }
           if (pos % 2 === 0) this.bob = 6;
@@ -7821,7 +8155,8 @@
           if (drums) { const n = S0.notes.find((x) => x.lane === L); if (n) sound(n); this.hitT[L] = 8; }
           // (a flute squeaks; a piano clunks; a violin screeches)
           else if (wind) G.audio.inst.flute(92 + L * 2, 0.06, 0.05, wind);
-          else if (bow) G.audio.inst.violin(89 + L, 0.1, 0.05);
+          else if (bow) G.audio.inst[bow]((bow === 'violin' ? 89 : bow === 'cello' ? 68 : 30) + L, 0.1, 0.05);
+          else if (horn) G.audio.inst[horn]((horn === 'trombone' ? 40 : 58) + L, 0.08, 0.04);
           else if (keys) G.audio.inst[KEYV[keys]](36 + L, 0.08, 0.06);
           else G.audio.inst.guitar(40 + L * 5, 0.05, 0.06, gt.id);
           this.checkFail();
@@ -7891,6 +8226,7 @@
         else if (wind) this.drawFlute(ctx, speed);
         else if (keys) this.drawPiano(ctx, speed);
         else if (bow) this.drawViolin(ctx, speed);
+        else if (horn) this.drawHorn(ctx, speed);
         else this.drawFrets(ctx, speed);
         // the holds' tails (bright while it's held; gray once it's missed or let go), then the notes coming down
         for (const n of notes) {
@@ -7901,6 +8237,13 @@
           if (bot <= top || top > 132) continue;
           const dead = n.done === 'miss' || n.broken, col = dead ? '#4a4a54' : GEM[n.lane] || '#f8f8f0', x = LANES[n.lane];
           ctx.globalAlpha = holding ? 1 : 0.7;
+          if (horn === 'trombone' && n.next) {
+            // (the slide: the tail bends over toward the next note as the hold runs out)
+            const nx = LANES[n.next.lane];
+            for (let y = top; y < bot; y++) { const fr = (this.f + (HIT_Y - y) / speed - n.t) / n.holdF, gx = Math.round(x + (nx - x) * Math.max(0, Math.min(1, (fr - 0.6) / 0.35))); ctx.fillStyle = col; ctx.fillRect(gx - 2, y, 5, 1); }
+            ctx.globalAlpha = 1;
+            continue;
+          }
           ctx.fillStyle = col; ctx.fillRect(x - 2, top, 5, bot - top); ctx.fillRect(x - 3, top, 7, 2);
           if (!dead) { ctx.fillStyle = 'rgba(255,255,255,0.4)'; ctx.fillRect(x - 1, top, 1, bot - top); }
           if (holding) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 2, HIT_Y - 3 - ((this.f >> 1) % 3), 5, 1); }
@@ -7952,9 +8295,18 @@
           E(120, HIT_Y + 3, 47, 11, '#5a606a'); E(120, HIT_Y + 1, 46, 10, '#8a909a'); E(120, HIT_Y, 44, 8, '#d8dce4');
           for (const L of USED) { E(LANES[L], HIT_Y, 8, 4, lit(L) ? '#f8f8ff' : '#aab0bc'); E(LANES[L] - 2, HIT_Y - 1, 3, 1, lit(L) ? GEM[L] : '#c8ccd4'); }
         }
+        if (drums === 'machine') { ctx.fillStyle = '#1c1c22'; ctx.fillRect(72, HIT_Y - 7, 96, 20); ctx.fillStyle = '#4a4a56'; ctx.fillRect(73, HIT_Y - 6, 94, 18); ctx.fillStyle = '#f84040'; ctx.fillRect(76, HIT_Y + 9, 2, 2); }
         for (const L of USED) {
           const x = LANES[L], on = lit(L), j = this.hitT[L] > 4 ? 1 : 0, y = HIT_Y + j;
-          if (drums === 'bongos') {
+          if (drums === 'machine') {
+            // a rubber pad (it lights up)
+            ctx.fillStyle = '#1c1c22'; ctx.fillRect(x - 9, y - 5, 19, 14); ctx.fillStyle = on ? GEM[L] : '#6a6a76'; ctx.fillRect(x - 8, y - 4, 17, 12); ctx.fillStyle = 'rgba(255,255,255,0.3)'; ctx.fillRect(x - 8, y - 4, 17, 2);
+          } else if (drums === 'cowbell') {
+            // a cowbell, mouth down (the high one's smaller), shaking when it's hit
+            const w = L === 0 ? 7 : 9, hh = L === 0 ? 11 : 14, wig = on ? ((this.f >> 1) % 2 ? 1 : -1) : 0;
+            for (let k = 0; k < hh; k++) { const ww = Math.round(w * 0.6 + (w * 0.4 * k) / hh); ctx.fillStyle = k === hh - 1 ? '#6a5020' : on ? '#fff0b0' : '#d8b860'; ctx.fillRect(x - ww + wig, y - 7 + k, ww * 2 + 1, 1); }
+            ctx.fillStyle = '#3a2a10'; ctx.fillRect(x - 2 + wig, y - 9, 5, 2);
+          } else if (drums === 'bongos') {
             // the macho (small) and the hembra (big): a wooden shell, a chrome hoop, a skin head
             const rx = L === 0 ? 10 : 13, ry = L === 0 ? 5 : 6;
             ctx.fillStyle = '#8a5424'; ctx.fillRect(x - rx, y, rx * 2 + 1, 10); ctx.fillStyle = '#c8823a'; ctx.fillRect(x - rx + 1, y, rx * 2 - 1, 9);
@@ -8005,7 +8357,7 @@
         for (const L of USED) { ctx.fillStyle = '#262034'; ctx.fillRect(LANES[L] - 8, 14, 17, 118); }
         const off = (this.f * speed) % 32;
         for (let k = -1; k < 5; k++) { const y = Math.round(TOP + off + k * 32); if (y >= 14 && y <= 131) { ctx.fillStyle = '#342a44'; ctx.fillRect(76, y, 88, 1); } }
-        const y0 = HIT_Y - 5, body = { upright: '#5a3420', casio: '#2a2a30', rhodes: '#1c1c22' }[keys];
+        const y0 = HIT_Y - 5, body = { upright: '#5a3420', casio: '#2a2a30', rhodes: '#1c1c22', synth: '#2a2440' }[keys];
         ctx.fillStyle = body; ctx.fillRect(70, y0 - 3, 100, 17);
         ctx.fillStyle = '#f4f0e4'; ctx.fillRect(72, y0, 96, 12);
         for (let x = 72; x < 168; x += 6) { ctx.fillStyle = '#c8c0b0'; ctx.fillRect(x, y0, 1, 12); }
@@ -8026,16 +8378,18 @@
         ctx.fillStyle = '#141018'; ctx.fillRect(76, 14, 88, 118);
         const off = (this.f * speed) % 32;
         for (let k = -1; k < 5; k++) { const y = Math.round(TOP + off + k * 32); if (y >= 14 && y <= 131) { ctx.fillStyle = '#221c28'; ctx.fillRect(76, y, 88, 1); } }
-        const y0 = HIT_Y - 3, SW = [2, 2, 1, 1], on = (L) => this.hitT[L] > 0 || G.input.down(KEYS[L]) || !!this.holds[L];
-        // the top of the violin, under the bridge (the ends of its f-holes peeking out)
-        ctx.fillStyle = '#8a3a12'; ctx.fillRect(70, y0 + 4, 100, 132 - y0 - 4);
-        ctx.fillStyle = '#b8561e'; ctx.fillRect(72, y0 + 4, 96, 132 - y0 - 4); ctx.fillStyle = '#d8782e'; ctx.fillRect(72, y0 + 5, 96, 1);
+        // (the cello's strings are C G D A, the upright bass's E A D G, and theirs are all thicker)
+        const y0 = HIT_Y - 3, SW = bow === 'violin' ? [2, 2, 1, 1] : [3, 2, 2, 2], NAMES = { violin: 'GDAE', cello: 'CGDA', upbass: 'EADG' }[bow], on = (L) => this.hitT[L] > 0 || G.input.down(KEYS[L]) || !!this.holds[L];
+        const V = bow === 'upbass' ? ['#5a2410', '#8a3a12', '#a8521e'] : ['#8a3a12', '#b8561e', '#d8782e'];
+        // the top of the instrument, under the bridge (the ends of its f-holes peeking out)
+        ctx.fillStyle = V[0]; ctx.fillRect(70, y0 + 4, 100, 132 - y0 - 4);
+        ctx.fillStyle = V[1]; ctx.fillRect(72, y0 + 4, 96, 132 - y0 - 4); ctx.fillStyle = V[2]; ctx.fillRect(72, y0 + 5, 96, 1);
         ctx.fillStyle = '#2a1408'; for (const [x, d] of [[78, 1], [161, -1]]) { ctx.fillRect(x, y0 + 7, 1, 7); ctx.fillRect(x + d, y0 + 6, 1, 1); ctx.fillRect(x - d, y0 + 14, 1, 1); }
         // the strings, and their names up top
         for (let L = 0; L < 4; L++) {
           const x = LANES[L], lit = on(L), wig = lit ? ((this.f >> 1) % 2 ? 1 : -1) : 0;
           ctx.fillStyle = lit ? GEM[L] : L < 3 ? '#b8a878' : '#d8d8e0'; ctx.fillRect(x - (SW[L] >> 1) + wig, 14, SW[L], y0 - 14); ctx.fillRect(x - (SW[L] >> 1), y0 + 4, SW[L], 132 - y0 - 4);
-          FT().draw(ctx, 'GDAE'[L], x - 2, 16, '#5a4e70');
+          FT().draw(ctx, NAMES[L], x - 2, 16, '#5a4e70');
         }
         // the bridge: light maple, and a glow where a string's being bowed
         ctx.fillStyle = '#1c1424'; ctx.fillRect(72, y0 - 1, 96, 6);
@@ -8044,6 +8398,44 @@
           const x = LANES[L], lit = on(L);
           ctx.fillStyle = lit ? GEM[L] : '#8a6a40'; if (lit) ctx.fillRect(x - 4, y0, 9, 4); else ctx.fillRect(x - 1, y0, 2, 1);
           FT().draw(ctx, ARROWS[L], x - 2, HIT_Y + 11, lit ? '#f8f8f0' : '#f0d8b0', { shadow: '#000' });
+        }
+      },
+      // a horn song (the trumpet, trombone and sax; the kazoo and the theremin too): a dark stage with a
+      // lane down to each valve (or slide position, or key, or hum, or hand), the instrument across the bottom
+      drawHorn(ctx, speed) {
+        const look = { trumpet: ['#4a3a18', '#1e1a10'], trombone: ['#4a3a18', '#1e1a10'], sax: ['#4a3018', '#1e1610'], kazoo: ['#4a1a1a', '#1e1012'], theremin: ['#1a3a2a', '#0e1a16'] }[horn];
+        ctx.fillStyle = look[0]; ctx.fillRect(74, 14, 92, 118);
+        ctx.fillStyle = look[1]; ctx.fillRect(76, 14, 88, 118);
+        for (const L of USED) { ctx.fillStyle = 'rgba(255,255,255,0.04)'; ctx.fillRect(LANES[L] - 8, 14, 17, 118); }
+        const off = (this.f * speed) % 32;
+        for (let k = -1; k < 5; k++) { const y = Math.round(TOP + off + k * 32); if (y >= 14 && y <= 131) { ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.fillRect(76, y, 88, 1); } }
+        const y0 = HIT_Y - 4, on = (L) => this.hitT[L] > 0 || G.input.down(KEYS[L]) || !!this.holds[L], B = ['#8a6418', '#d8a838', '#f8e088'];
+        if (horn === 'trumpet' || horn === 'sax') {
+          ctx.fillStyle = B[0]; ctx.fillRect(70, y0, 100, 10); ctx.fillStyle = B[1]; ctx.fillRect(70, y0, 100, 8); ctx.fillStyle = B[2]; ctx.fillRect(70, y0 + 1, 100, 2);
+          // (the trumpet's mouthpiece and bell; the sax's black neck and its bell flaring up)
+          if (horn === 'trumpet') { ctx.fillStyle = '#c8ccd4'; ctx.fillRect(66, y0 + 2, 5, 4); ctx.fillStyle = B[1]; ctx.fillRect(166, y0 - 5, 6, 20); ctx.fillStyle = B[2]; ctx.fillRect(166, y0 - 5, 2, 20); }
+          else { ctx.fillStyle = '#2a2a30'; ctx.fillRect(64, y0 + 2, 7, 4); ctx.fillStyle = B[1]; ctx.fillRect(164, y0 - 10, 8, 18); ctx.fillStyle = B[2]; ctx.fillRect(164, y0 - 10, 8, 2); }
+        } else if (horn === 'trombone') {
+          // the slide: two long tubes, and its crossbar out at the note that's playing
+          ctx.fillStyle = B[1]; ctx.fillRect(70, y0 + 1, 100, 3); ctx.fillRect(70, y0 + 7, 100, 3); ctx.fillStyle = B[2]; ctx.fillRect(70, y0 + 1, 100, 1); ctx.fillRect(70, y0 + 7, 100, 1);
+          ctx.fillStyle = B[1]; ctx.fillRect(167, y0 + 1, 4, 9);
+          const at = [0, 1, 2, 3].filter(on).pop(), sx = at != null ? LANES[at] : this.slideX || LANES[0];
+          this.slideX = sx; ctx.fillStyle = B[0]; ctx.fillRect(sx - 1, y0 - 1, 3, 13);
+        } else if (horn === 'kazoo') {
+          // red plastic, with its silver cap in the middle
+          ctx.fillStyle = '#8a1a1a'; ctx.fillRect(70, y0 + 1, 100, 9); ctx.fillStyle = '#d83a3a'; ctx.fillRect(70, y0 + 1, 100, 7); ctx.fillStyle = '#f87a7a'; ctx.fillRect(70, y0 + 2, 100, 1);
+          ctx.fillStyle = '#c8ccd4'; ctx.fillRect(114, y0 - 2, 12, 4); ctx.fillStyle = '#e8ecf4'; ctx.fillRect(115, y0 - 2, 10, 1);
+        } else {
+          // the theremin's wooden cabinet, its pitch antenna standing up on the right, its volume loop on the left
+          ctx.fillStyle = '#4a2a14'; ctx.fillRect(70, y0, 100, 12); ctx.fillStyle = '#8a5428'; ctx.fillRect(70, y0, 100, 10); ctx.fillStyle = '#a8703c'; ctx.fillRect(70, y0, 100, 1);
+          ctx.fillStyle = '#c8ccd4'; ctx.fillRect(167, 30, 2, y0 - 30); ctx.fillRect(62, y0 + 2, 8, 1); ctx.fillRect(62, y0 - 4, 1, 6); ctx.fillRect(62, y0 - 4, 6, 1);
+        }
+        for (const L of USED) {
+          const x = LANES[L], lit = on(L);
+          if (horn === 'trombone' || horn === 'kazoo') { ctx.fillStyle = lit ? GEM[L] : 'rgba(255,255,255,0.25)'; ctx.fillRect(x - 3, y0 + 4, 7, 3); }
+          else if (horn === 'theremin') { ctx.fillStyle = lit ? GEM[L] : 'rgba(120,248,168,0.18)'; for (let dy = -3; dy <= 3; dy++) { const w = Math.round(4 * Math.sqrt(1 - (dy / 3.6) ** 2)); ctx.fillRect(x - w, y0 - 6 + dy, w * 2 + 1, 1); } }
+          else { const d = lit ? 1 : 0; ctx.fillStyle = B[0]; ctx.fillRect(x - 2, y0 - 3 + d, 5, 4); ctx.fillStyle = lit ? GEM[L] : '#f4f0e4'; ctx.fillRect(x - 3, y0 - 5 + d, 7, 3); }
+          FT().draw(ctx, ARROWS[L], x - 2, HIT_Y + 11, lit ? '#f8f8f0' : '#9890a8', { shadow: '#000' });
         }
       },
       // the sparks, the judgment, Nate and Abe, the meters, the count-in
@@ -8056,9 +8448,12 @@
         // Nate (with his guitar, or at his drum) on the left, the groove meter and the combo
         const nate = (G.nateSprites ? G.nateSprites() : G.sprites.nate).down[0], b = this.bob > 3 ? 1 : 0;
         ctx.drawImage(nate, 24, 46 + b, nate.width * 2, nate.height * 2);
-        if (drums) { const img = gt.art(), hit = this.hitT.some((h) => h > 4) ? 1 : 0; ctx.drawImage(img, Math.round(40 - img.width / 2), { bongos: 80, pan: 74, kit: 66 }[drums] + hit); }
+        if (drums) { const img = gt.art(), hit = this.hitT.some((h) => h > 4) ? 1 : 0; ctx.drawImage(img, Math.round(40 - img.width / 2), { bongos: 80, pan: 74, kit: 66, machine: 78, cowbell: 72 }[drums] + hit); }
         // (a piano in front of him; a flute, held out to his right at his mouth)
-        else if (keys) { const img = gt.art(), hit = this.hitT.some((h) => h > 4) ? 1 : 0; ctx.drawImage(img, Math.round(40 - img.width / 2), { upright: 64, casio: 72, rhodes: 70 }[keys] + hit); }
+        else if (keys) { const img = gt.art(), hit = this.hitT.some((h) => h > 4) ? 1 : 0; ctx.drawImage(img, Math.round(40 - img.width / 2), { upright: 64, casio: 72, rhodes: 70, synth: 72 }[keys] + hit); }
+        // (a cello or an upright bass standing beside him; a horn at his mouth, or a theremin in front)
+        else if (bow && bow !== 'violin') standHold(ctx, gt.art(), 50, 95 + b, bow === 'cello' ? 0.7 : 0.68, bow === 'cello' ? (this.hitT.some((h) => h > 0) || this.holds.some(Boolean) ? Math.sin(this.f * 0.2) : 0) : null);
+        else if (horn) hornHold(ctx, horn, gt.art(), 43, 63 + b, 95 + b, horn === 'trombone' ? 0.6 : horn === 'kazoo' ? 1 : 0.8, [0, 1, 2, 3].filter((L) => this.hitT[L] > 0 || this.holds[L]).pop());
         else if (wind) { const img = guitarSmall(gt); ctx.save(); ctx.translate(35, 64 + b); ctx.rotate(-Math.PI / 2 + 0.12); ctx.drawImage(img, -img.width, 0); ctx.restore(); }
         // (a violin under his chin, the bow sawing while a note sounds)
         else if (bow) violinHold(ctx, 44, 66 + b, 0.55, this.hitT.some((h) => h > 0) || this.holds.some(Boolean) ? Math.sin(this.f * 0.2) : 0);
@@ -8071,9 +8466,21 @@
         // Abe on the right, dancing (tilted around his feet or his middle, stretched), the move's name
         // under him, and the score
         const A = this.abeDance(), aw = A.img.width * 2, ah = A.img.height * 2, px = 200 + A.dx, py = A.mid ? 40 + ah / 2 + A.dy : 40 + ah + A.dy;
-        ctx.save(); ctx.translate(px, py); ctx.rotate(A.rot); ctx.scale(A.sx, A.sy);
-        ctx.drawImage(A.img, -aw / 2, A.mid ? -ah / 2 : -ah, aw, ah);
-        ctx.restore();
+        if (A.seat) {
+          // sitting down on a chair: its back behind him, then him (cut off at the seat, lowered onto
+          // it), then the seat and its legs in front, and his shoes under it
+          const seatY = 40 + ah - 12;
+          ctx.fillStyle = '#5a3418'; ctx.fillRect(189, seatY - 28, 3, 30); ctx.fillRect(208, seatY - 28, 3, 30); ctx.fillRect(189, seatY - 28, 22, 3);
+          ctx.save(); ctx.beginPath(); ctx.rect(140, 0, 100, seatY + 1); ctx.clip();
+          ctx.translate(200, 40 + ah + 6 + A.dy); ctx.rotate(A.rot); ctx.scale(A.sx, A.sy); ctx.drawImage(A.img, -aw / 2, -ah, aw, ah);
+          ctx.restore();
+          ctx.fillStyle = '#7a4a24'; ctx.fillRect(186, seatY, 28, 4); ctx.fillStyle = '#5a3418'; ctx.fillRect(188, seatY + 4, 3, 10); ctx.fillRect(209, seatY + 4, 3, 10);
+          ctx.fillStyle = '#2a2a30'; ctx.fillRect(193, seatY + 9, 5, 3); ctx.fillRect(202, seatY + 9, 5, 3);
+        } else {
+          ctx.save(); ctx.translate(px, py); ctx.rotate(A.rot); ctx.scale(A.sx, A.sy);
+          ctx.drawImage(A.img, -aw / 2, A.mid ? -ah / 2 : -ah, aw, ah);
+          ctx.restore();
+        }
         // (his imaginary shopping cart, made a little less imaginary)
         if (A.cart) {
           const cx = 214 + Math.max(0, A.dx), cy = 82;
@@ -8117,25 +8524,27 @@
       yield G.say(null, 'Abe opens a tweed case lined with red fur like it\'s a museum exhibit. Inside: a black guitar with a white pickguard.');
       yield G.say('Abe', 'My \'84 Strat. Everybody starts on a Strat. Hold it like a baby bird. Carefully. CAREFULLY.');
       yield G.say('Abe', 'I\'ll play bass. You follow me. Three songs, three of my guitars. Get through a song and its guitar is yours. On loan.');
-      yield G.say('Abe', 'And there are more pages on the setlist: ←→. Drums. Flute. Piano. Violin. Don\'t tell Hannah.');
-      f.fluteTold = true; f.pianoTold = true; f.violinTold = true;
+      yield G.say('Abe', 'And there are more pages on the setlist: ←→. Drums. Flute. Piano. Strings. Horns. Synths. And one I can only call NOVELTY. Don\'t tell Hannah.');
+      f.fluteTold = true; f.pianoTold = true; f.violinTold = true; f.bandTold = true;
     }
-    // (anybody who'd jammed before the flute, piano or violin pages existed hears about them once)
-    if (!f.fluteTold) { f.fluteTold = true; f.pianoTold = true; f.violinTold = true; yield G.say('Abe', 'New pages on the setlist, by the way: FLUTE, PIANO and VIOLIN. ←→ to flip to them.'); }
-    if (!f.pianoTold) { f.pianoTold = true; f.violinTold = true; yield G.say('Abe', 'New pages on the setlist, by the way: PIANO and VIOLIN. ←→ to flip to them.'); }
-    if (!f.violinTold) { f.violinTold = true; yield G.say('Abe', 'New page on the setlist, by the way: VIOLIN. Just the one song, for now. ←→ to flip to it.'); }
+    // (anybody who'd jammed before the newer pages existed hears about them once)
+    const told = (line) => { f.fluteTold = f.pianoTold = f.violinTold = f.bandTold = true; return G.say('Abe', line); };
+    if (!f.fluteTold) yield told('New pages on the setlist, by the way: FLUTE, PIANO, STRINGS, HORNS, SYNTHS and NOVELTY. ←→ to flip through them.');
+    else if (!f.pianoTold) yield told('New pages on the setlist, by the way: PIANO, STRINGS, HORNS, SYNTHS and NOVELTY. ←→ to flip through them.');
+    else if (!f.violinTold) yield told('New pages on the setlist, by the way: STRINGS, HORNS, SYNTHS and NOVELTY. ←→ to flip through them.');
+    else if (!f.bandTold) yield told('Three new pages on the setlist: HORNS, SYNTHS and NOVELTY. And the cello and the bass are on STRINGS now, with the violin.');
     yield* abeStudioNews();
     for (;;) {
       const song = yield jamPickCmd();
       if (!song) { G.play.overlay = null; yield G.say('Abe', 'Good session.'); return; }
       // a drum or flute song: Abe brings the drum (or Nate the Happy Magic Flute) out the first time
-      const drum = (song.drums || song.wind || song.keys || song.bow) && jamPrize(song);
+      const drum = (song.drums || song.wind || song.keys || song.bow || song.horn) && jamPrize(song);
       if (drum && !f['jamDrum_' + song.id]) {
         f['jamDrum_' + song.id] = true; G.play.overlay = null;
         for (const [who, line] of drum.intro) yield G.say(who, line);
         if (drum.mine) instState()[drum.id] = true;
       }
-      yield howToCmd('JAMMING WITH ABE', song.wind ? HOW_TO.jam_flute : song.keys ? HOW_TO.jam_piano : song.bow ? HOW_TO.jam_violin : drum ? HOW_TO['jam_' + song.drums] : HOW_TO.jam);
+      yield howToCmd('JAMMING WITH ABE', song.wind ? HOW_TO.jam_flute : song.keys ? HOW_TO.jam_piano : song.bow ? (song.bow === 'violin' ? HOW_TO.jam_violin : HOW_TO.jam_strings) : song.horn ? HOW_TO.jam_horn : drum ? HOW_TO['jam_' + song.drums] : HOW_TO.jam);
       const gt = drum || G.guitarNow(), r = yield jamCmd(song, gt, dadTalk(gt.talk, 'abe', []));
       G.play.overlay = null;
       G.audio.play(G.play.world.def.music);
@@ -8161,7 +8570,7 @@
         // (the Happy Magic Flute was already Nate's)
         yield G.say('Abe', 'The Happy Magic Flute. Still undefeated.');
         yield G.say('Nate', 'Dad is going to want a full report.');
-      } else if (first && prize && (prize.drum || prize.wind || prize.keys || prize.bow)) {
+      } else if (first && prize && (prize.drum || prize.wind || prize.keys || prize.bow || prize.horn)) {
         for (const [who, line] of prize.won) yield G.say(who, line);
         yield G.itemGet(prize.wind || prize.bow ? guitarSmall(prize) : prize.art(), 'You got {y}' + prize.name + '{/}! ' + prize.gotLine + ' It\'s in {y}COLLECTABLES{/}.');
         G.play.autosave();
@@ -8186,7 +8595,7 @@
       const nextSong = JAM_SONGS[idx + 1];
       if (first && nextSong && jamTrack(nextSong) === jamTrack(song)) {
         const next = jamPrize(nextSong);
-        yield G.say('Abe', 'Next one: ' + nextSong.name + '. It\'s faster.' + (next ? ' Get through it and my ' + (next.drum || next.wind || next.keys || next.bow ? next.name.replace('Abe\'s ', '').toLowerCase() : next.name.replace('Abe\'s ', '')) + (next.drum === 'bongos' ? ' are yours.' : ' is yours.') : ''));
+        yield G.say('Abe', 'Next one: ' + nextSong.name + '. It\'s faster.' + (next ? ' Get through it and my ' + (next.drum || next.wind || next.keys || next.bow || next.horn ? next.name.replace('Abe\'s ', '').toLowerCase() : next.name.replace('Abe\'s ', '')) + (next.drum === 'bongos' ? ' are yours.' : ' is yours.') : ''));
       }
     }
   };
@@ -8214,78 +8623,147 @@
   // music, everywhere, until it's turned off (G.mixFor, G.audio.setMix).
   // A song: { name, key, bpm, click, len (ms), tracks: [8 x { inst, vol (0-4), mute, ev: [[ms, n]] }] }.
   // Flags: studioTold, studioMet, studioHow, metroHow.
-  const STUDIO_INST = ['strat', 'tele', 'jazzmaster', 'bongos', 'steelpan', 'drumkit', 'pvcFlute', 'flute', 'upright', 'casio', 'rhodes', 'violin'];
-  const STUDIO_SHORT = { strat: 'STRAT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONGOS', steelpan: 'STEEL', drumkit: 'KIT', pvcFlute: 'MAGIC', flute: 'FLUTE', upright: 'PIANO', casio: 'CASIO', rhodes: 'RHODES', violin: 'VIOLIN' };
-  const STUDIO_TINY = { strat: 'STRT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONG', steelpan: 'STEL', drumkit: 'KIT', pvcFlute: 'PVC', flute: 'FLUT', upright: 'PNO', casio: 'CSIO', rhodes: 'RHDS', violin: 'VLN' };
-  const STUDIO_COL = { strat: '#f4f0e8', tele: '#f86858', jazzmaster: '#c878d8', bongos: '#e0a058', steelpan: '#b8d8f8', drumkit: '#5a88e8', pvcFlute: '#a8f0d0', flute: '#d8e0f8', upright: '#d89a68', casio: '#ff7ad8', rhodes: '#f0c878', violin: '#e0783a' };
+  // (the mic is Studio B's own: Nate's voice, there from the start; it doesn't count toward Abe's gifts)
+  const STUDIO_INST = ['strat', 'tele', 'jazzmaster', 'bongos', 'steelpan', 'drumkit', 'pvcFlute', 'flute', 'upright', 'casio', 'rhodes', 'violin', 'cello', 'upbass', 'trumpet', 'trombone', 'sax', 'synth', 'machine', 'kazoo', 'cowbell', 'theremin', 'mic'];
+  const STUDIO_SHORT = { strat: 'STRAT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONGOS', steelpan: 'STEEL', drumkit: 'KIT', pvcFlute: 'MAGIC', flute: 'FLUTE', upright: 'PIANO', casio: 'CASIO', rhodes: 'RHODES', violin: 'VIOLIN', cello: 'CELLO', upbass: 'BASS', trumpet: 'TRUMPET', trombone: 'TROMB', sax: 'SAX', synth: 'SYNTH', machine: 'BEATS', kazoo: 'KAZOO', cowbell: 'COWBELL', theremin: 'THRMIN', mic: 'MIC' };
+  const STUDIO_TINY = { strat: 'STRT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONG', steelpan: 'STEL', drumkit: 'KIT', pvcFlute: 'PVC', flute: 'FLUT', upright: 'PNO', casio: 'CSIO', rhodes: 'RHDS', violin: 'VLN', cello: 'CELO', upbass: 'BASS', trumpet: 'TRPT', trombone: 'BONE', sax: 'SAX', synth: 'SYN', machine: 'BEAT', kazoo: 'KZOO', cowbell: 'COW', theremin: 'THRM', mic: 'MIC' };
+  const STUDIO_COL = { strat: '#f4f0e8', tele: '#f86858', jazzmaster: '#c878d8', bongos: '#e0a058', steelpan: '#b8d8f8', drumkit: '#5a88e8', pvcFlute: '#a8f0d0', flute: '#d8e0f8', upright: '#d89a68', casio: '#ff7ad8', rhodes: '#f0c878', violin: '#e0783a',
+    cello: '#c8703a', upbass: '#b86a40', trumpet: '#f8d048', trombone: '#e8b040', sax: '#f0a838', synth: '#ff4ad8', machine: '#f87a4a', kazoo: '#f85858', cowbell: '#d8c070', theremin: '#78f8a8', mic: '#c8c8e0' };
   // (the pianos: which voice each one plays with)
-  const PIANO_VOICE = { upright: 'piano', casio: 'casio', rhodes: 'rhodes' };
+  const PIANO_VOICE = { upright: 'piano', casio: 'casio', rhodes: 'rhodes', synth: 'synth' };
   const isFlute = (inst) => inst === 'pvcFlute' || inst === 'flute';
   // (the flutes and the violin play single notes up high, on both rows)
   const isHigh = (inst) => isFlute(inst) || inst === 'violin';
+  // the other single-note instruments (both rows; the top row an octave up): their voice, how far
+  // above the key's root they start, and how loud
+  const SOLO_VOICE = { cello: ['cello', 0, 0.26], upbass: ['upbass', -12, 0.34], trumpet: ['trumpet', 12, 0.17], trombone: ['trombone', 0, 0.22], sax: ['sax', 12, 0.18], kazoo: ['kazoo', 12, 0.1], theremin: ['theremin', 24, 0.22], mic: ['voice', 12, 0.32] };
+  // the drums (just hits, never held): the kit and the drum machine have six sounds on A S D F J K;
+  // the bongos and the cowbell, two (A-F the first, H-L the second)
+  const DRUM_INST = { drumkit: 1, machine: 1, bongos: 1, cowbell: 1 };
+  // the keys. mode: the scale its chords come from (for CHORDS); kind: what its scale is called
   const SONG_KEYS = [
-    { name: 'E MINOR', root: 40, scale: [0, 3, 5, 7, 10] },
-    { name: 'A MINOR', root: 45, scale: [0, 3, 5, 7, 10] },
-    { name: 'G MAJOR', root: 43, scale: [0, 2, 4, 7, 9] },
-    { name: 'C MAJOR', root: 48, scale: [0, 2, 4, 7, 9] },
+    { name: 'E MINOR', root: 40, scale: [0, 3, 5, 7, 10], mode: 'minor', kind: 'PENTATONIC' },
+    { name: 'A MINOR', root: 45, scale: [0, 3, 5, 7, 10], mode: 'minor', kind: 'PENTATONIC' },
+    { name: 'G MAJOR', root: 43, scale: [0, 2, 4, 7, 9], mode: 'major', kind: 'PENTATONIC' },
+    { name: 'C MAJOR', root: 48, scale: [0, 2, 4, 7, 9], mode: 'major', kind: 'PENTATONIC' },
+    { name: 'D MAJOR', root: 38, scale: [0, 2, 4, 7, 9], mode: 'major', kind: 'PENTATONIC' },
+    { name: 'D MINOR', root: 38, scale: [0, 3, 5, 7, 10], mode: 'minor', kind: 'PENTATONIC' },
+    { name: 'E BLUES', root: 40, scale: [0, 3, 5, 6, 7, 10], mode: 'minor', kind: 'SCALE' },
+    { name: 'A BLUES', root: 45, scale: [0, 3, 5, 6, 7, 10], mode: 'minor', kind: 'SCALE' },
+    { name: 'G BLUES', root: 43, scale: [0, 3, 5, 6, 7, 10], mode: 'minor', kind: 'SCALE' },
   ];
+  // CHORDS: a progression, one chord a bar, around and around. With one on, every key plays the
+  // pentatonic of the bar's chord instead of the song's scale, so whatever Nate plays fits (and
+  // Abe's band, if it's on, plays the chords). deg: the chords, as steps of the key's scale.
+  const MODES = { major: [0, 2, 4, 5, 7, 9, 11], minor: [0, 2, 3, 5, 7, 8, 10] }, PENT = { major: [0, 2, 4, 7, 9], minor: [0, 3, 5, 7, 10] };
+  const PROGS = [
+    { name: 'OFF' },
+    { name: 'I-V-vi-IV (POP)', deg: [0, 4, 5, 3] },
+    { name: 'I-vi-IV-V (DOO-WOP)', deg: [0, 5, 3, 4] },
+    { name: 'vi-IV-I-V (BIG CHORUS)', deg: [5, 3, 0, 4] },
+    { name: 'I-IV (TWO CHORDS)', deg: [0, 3] },
+    { name: 'ii-V-I (JAZZ)', deg: [1, 4, 0, 0] },
+    { name: '12-BAR BLUES', deg: [0, 0, 0, 0, 3, 3, 0, 0, 4, 3, 0, 4] },
+  ];
+  // time: beats in a bar (4, or 3 for a waltz), and the length of a beat and a bar in seconds
+  const bpbOf = (sg) => sg.bpb || 4;
+  const beatSec = (sg) => 60 / sg.bpm;
+  const barSec = (sg) => bpbOf(sg) * beatSec(sg);
+  // the chord at song time t: its root (semitones above the key's), its three notes, minor or not, its name
+  function chordAt(sg, t) {
+    const P = PROGS[sg.prog || 0];
+    if (!P.deg) return null;
+    const K = SONG_KEYS[sg.key] || SONG_KEYS[0], sc = MODES[K.mode], d = P.deg[Math.max(0, Math.floor(t / barSec(sg) + 1e-6)) % P.deg.length];
+    const tone = (i) => sc[(d + i) % 7] + 12 * Math.floor((d + i) / 7), minor = tone(2) - tone(0) === 3;
+    return { root: tone(0), notes: [tone(0), tone(2), tone(4)], minor, name: NOTE_NAMES[(K.root + tone(0)) % 12] + (minor ? 'm' : '') };
+  }
+  // how many bars before a progression comes back around (four, with none)
+  const progBars = (sg) => (PROGS[sg.prog || 0].deg || [0, 0, 0, 0]).length;
+  // the scale the keys play at song time t: the song's, or (with CHORDS) the pentatonic of that bar's chord
+  function keyScale(sg, t) {
+    const K = SONG_KEYS[sg.key] || SONG_KEYS[0], C = chordAt(sg, t || 0);
+    if (!C) return K;
+    const r = C.root % 12;
+    return { root: K.root + r - (r > 7 ? 12 : 0), scale: C.minor ? PENT.minor : PENT.major };
+  }
   const HOME_ROW = ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ', 'KeyK', 'KeyL', 'Semicolon', 'Quote'];
   const TOP_ROW = ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU', 'KeyI', 'KeyO', 'KeyP'];
   const KIT_KEYS = { KeyA: 0, KeyS: 1, KeyD: 2, KeyF: 3, KeyJ: 4, KeyK: 5 };
   const KIT_NAMES = ['KICK', 'SNARE', 'HI-HAT', 'CRASH', 'HIGH TOM', 'LOW TOM'];
+  const MACHINE_NAMES = ['BOOM', 'SNARE', 'CLAP', 'HI-HAT', 'OPEN HAT', 'RIMSHOT'];
+  // each drum's sounds, by row (for the guide, the step sequencer and the note editor)
+  const DRUM_ROWS = { drumkit: KIT_NAMES, machine: MACHINE_NAMES, bongos: ['LITTLE DRUM (MACHO)', 'BIG DRUM (HEMBRA)'], cowbell: ['HIGH COWBELL', 'LOW COWBELL'] };
+  // the instruments with a setting you change while you play (- +), saved with each note: the
+  // synth's FILTER (0 dark to 10 bright) and the mic's syllable
+  const PARAMS = { synth: { name: 'FILTER', max: 10, def: 6, show: (v) => v + ' / 10' }, mic: { name: 'SING', max: 2, def: 0, wrap: true, show: (v) => ['DOO', 'BAH', 'LA'][v] } };
+  const VOLS = [0.3, 0.55, 0.8, 1, 1.3], MASTERS = [0.4, 0.6, 0.8, 1, 1.2];
+  const FADES = ['NONE', 'FADE IN', 'FADE OUT', 'IN AND OUT'], QUANTS = [['OFF', 0], ['HALF WAY', 0.5], ['ALL THE WAY', 1]];
   const BONGO_KEYS = { KeyA: 0, KeyS: 0, KeyD: 0, KeyF: 0, KeyH: 1, KeyJ: 1, KeyK: 1, KeyL: 1 };
-  const VOLS = [0.3, 0.55, 0.8, 1, 1.3];
   const SONG_SLOTS = 4, MAX_LEN = 180;
+  const SECTION_NAMES = ['INTRO', 'VERSE', 'CHORUS', 'BRIDGE', 'SOLO', 'OUTRO'], SECTION_COL = { INTRO: '#78c8f8', VERSE: '#78e070', CHORUS: '#f8d850', BRIDGE: '#c878d8', SOLO: '#f86858', OUTRO: '#9890a8' };
+  const STEP_SHORT = { drumkit: ['KICK', 'SNARE', 'HI-HAT', 'CRASH', 'HI TOM', 'LO TOM'], machine: ['BOOM', 'SNARE', 'CLAP', 'HI-HAT', 'OPEN', 'RIM'], bongos: ['MACHO', 'HEMBRA'], cowbell: ['HIGH', 'LOW'] };
   const keyLabel = (code) => ({ Semicolon: ';', Quote: '\'' }[code] || code.slice(3));
   // which sound (n) a key plays on an instrument, or null
   function studioNote(inst, code) {
-    if (inst === 'drumkit') return code in KIT_KEYS ? KIT_KEYS[code] : null;
-    if (inst === 'bongos') return code in BONGO_KEYS ? BONGO_KEYS[code] : null;
+    if (inst === 'drumkit' || inst === 'machine') return code in KIT_KEYS ? KIT_KEYS[code] : null;
+    if (inst === 'bongos' || inst === 'cowbell') return code in BONGO_KEYS ? BONGO_KEYS[code] : null;
     const h = HOME_ROW.indexOf(code);
     if (h >= 0) return h;
     const t = TOP_ROW.indexOf(code);
     return t >= 0 ? 11 + t : null;
   }
-  const scaleNote = (K, i, base) => base + 12 * Math.floor(i / 5) + K.scale[i % 5];
+  const scaleNote = (K, i, base) => base + 12 * Math.floor(i / K.scale.length) + K.scale[i % K.scale.length];
   const panBase = (K) => K.root + (K.root < 44 ? 24 : 12);
-  const panStep = (n) => (n < 11 ? n : n - 6); // (its top row: the home row's notes, an octave up)
+  const panStep = (n, K) => (n < 11 ? n : n - 11 + K.scale.length); // (its top row: the home row's notes, an octave up)
   const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
   // (a flute or the violin plays two octaves above the key's root; its top row is the next octave up, like the steel drum)
   const fluteBase = (K) => K.root + 24;
   // what key n plays on a melodic instrument, for the guide while recording: a note's letter, or a
   // power chord's root with a 5 (E5 = E and its fifth); and which octave, for its tint
-  function studioLabel(inst, n, keyIdx) {
-    const K = SONG_KEYS[keyIdx] || SONG_KEYS[0];
-    if (isHigh(inst)) return { txt: NOTE_NAMES[scaleNote(K, panStep(n), fluteBase(K)) % 12], oct: Math.floor(panStep(n) / 5) };
-    if (inst === 'steelpan') return { txt: NOTE_NAMES[scaleNote(K, panStep(n), panBase(K)) % 12], oct: Math.floor(panStep(n) / 5) };
-    if (n < 11) return { txt: NOTE_NAMES[scaleNote(K, n, K.root) % 12], oct: Math.floor(n / 5) };
-    return { txt: NOTE_NAMES[scaleNote(K, n - 11, K.root) % 12] + '5', oct: Math.floor((n - 11) / 5) };
+  function studioLabel(inst, n, sg, t) {
+    const K = keyScale(sg, t), L = K.scale.length, ps = panStep(n, K);
+    if (isHigh(inst) || SOLO_VOICE[inst] || inst === 'steelpan') return { txt: NOTE_NAMES[scaleNote(K, ps, K.root) % 12], oct: Math.min(2, Math.floor(ps / L)) };
+    if (n < 11) return { txt: NOTE_NAMES[scaleNote(K, n, K.root) % 12], oct: Math.min(2, Math.floor(n / L)) };
+    return { txt: NOTE_NAMES[scaleNote(K, n - 11, K.root) % 12] + (PIANO_VOICE[inst] ? '' : '5'), oct: Math.min(2, Math.floor((n - 11) / L)) };
   }
   // Held notes: the guitars, the steel drum, the flutes, the pianos and the violin keep sounding while their key is held (up
   // to HOLD_MAX seconds), and a quick tap still rings for RING seconds. Drums are always just a hit.
   // A recorded note is [ms, n] (a hit, or a note from before notes could be held) or [ms, n, held ms].
-  const RING = { strat: 0.8, tele: 0.8, jazzmaster: 0.8, steelpan: 0.7, pvcFlute: 0.4, flute: 0.4, upright: 0.5, casio: 0.3, rhodes: 0.6, violin: 0.35 }, HOLD_MAX = 6;
+  const RING = { strat: 0.8, tele: 0.8, jazzmaster: 0.8, steelpan: 0.7, pvcFlute: 0.4, flute: 0.4, upright: 0.5, casio: 0.3, rhodes: 0.6, violin: 0.35, cello: 0.45, upbass: 0.6, trumpet: 0.3, trombone: 0.35, sax: 0.3, synth: 0.3, kazoo: 0.3, theremin: 0.4, mic: 0.3 }, HOLD_MAX = 6;
+  // (the trombone and the theremin slide from the note before, if it was only just played)
+  const lastPitch = {};
+  const slideFrom = (inst, m, at) => { const now = at || G.audio.now(), p = lastPitch[inst]; lastPitch[inst] = { m, t: now }; return p && now - p.t < 0.6 && p.m !== m ? p.m : null; };
   // play sound n of an instrument in a key (now, or at an audio time). hold: how many seconds a
   // recorded note was held, or true for a key that's down right now; then it returns a function
   // that lets the note go (never sooner than its ring)
-  function studioSound(inst, n, keyIdx, at, hold) {
-    const K = SONG_KEYS[keyIdx] || SONG_KEYS[0], I = G.audio.inst;
+  // opt: t, the note's place in the song (for CHORDS); p, its setting (the synth's FILTER, the mic's
+  // syllable); shift, semitones to move it (the octave pedal); gain, how loud (1 is normal)
+  function studioSound(inst, n, sg, at, hold, opt = {}) {
+    const K = keyScale(sg, opt.t), I = G.audio.inst, sh = opt.shift || 0, gk = opt.gain == null ? 1 : opt.gain;
     if (inst === 'drumkit') { [() => I.kick(at), () => I.snare(at), () => I.hat(at), () => I.crash(at), () => I.tom(true, at), () => I.tom(false, at)][n](); return null; }
+    if (inst === 'machine') { [() => I.boom(at), () => I.snare(at), () => I.clap(at), () => I.hat(at), () => I.openhat(at), () => I.rim(at)][n](); return null; }
     if (inst === 'bongos') { I.bongo(n === 0, at); return null; }
+    if (inst === 'cowbell') { I.cowbell(n === 0, at); return null; }
     // (a held or recorded note sounds the same: full length, cut where the key came up)
-    const ring = RING[inst], long = hold == null ? ring : HOLD_MAX, outs = [];
-    if (inst === 'steelpan') outs.push(I.pan(scaleNote(K, panStep(n), panBase(K)), long, at));
-    else if (isFlute(inst)) outs.push(I.flute(scaleNote(K, panStep(n), fluteBase(K)), long, 0.2, inst === 'pvcFlute' ? 'pvc' : 'flute', at));
-    else if (inst === 'violin') outs.push(I.violin(scaleNote(K, panStep(n), fluteBase(K)), long, 0.22, at));
-    // a piano: single notes an octave above the guitar's on the home row, chords (root, fifth, octave) on the top row
+    const ring = RING[inst], long = hold == null ? ring : HOLD_MAX, outs = [], one = (base) => scaleNote(K, panStep(n, K), base) + sh;
+    if (inst === 'steelpan') outs.push(I.pan(one(panBase(K)), long, at));
+    else if (isFlute(inst)) outs.push(I.flute(one(fluteBase(K)), long, 0.2 * gk, inst === 'pvcFlute' ? 'pvc' : 'flute', at));
+    else if (inst === 'violin') outs.push(I.violin(one(fluteBase(K)), long, 0.22 * gk, at));
+    else if (SOLO_VOICE[inst]) {
+      const [fn, up, vol] = SOLO_VOICE[inst], m = one(K.root + up);
+      if (fn === 'trombone' || fn === 'theremin') outs.push(I[fn](m, long, vol * gk, at, slideFrom(inst, m, at)));
+      else if (fn === 'voice') outs.push(I.voice(m, long, vol * gk, at, opt.p || 0));
+      else outs.push(I[fn](m, long, vol * gk, at));
+    }
+    // a piano (or the synth): single notes an octave above the guitar's on the home row, chords (root, fifth, octave) on the top row
     else if (PIANO_VOICE[inst]) {
-      const v = I[PIANO_VOICE[inst]];
-      if (n < 11) outs.push(v(scaleNote(K, n, K.root + 12), long, 0.2, at));
-      else { const r = scaleNote(K, n - 11, K.root + 12); for (const m of [r, r + 7, r + 12]) outs.push(v(m, long, 0.1, at)); }
+      const v = I[PIANO_VOICE[inst]], vol = inst === 'synth' ? 0.13 : 0.2, cut = inst === 'synth' ? (opt.p == null ? 6 : opt.p) : undefined;
+      if (n < 11) outs.push(v(scaleNote(K, n, K.root + 12) + sh, long, vol * gk, at, cut));
+      else { const r = scaleNote(K, n - 11, K.root + 12) + sh; for (const m of [r, r + 7, r + 12]) outs.push(v(m, long, vol * 0.5 * gk, at, cut)); }
     }
     // a guitar: single notes on the home row, power chords (root, fifth, octave) on the top row
-    else if (n < 11) outs.push(I.guitar(scaleNote(K, n, K.root), long, 0.16, inst, at));
-    else { const r = scaleNote(K, n - 11, K.root); for (const m of [r, r + 7, r + 12]) outs.push(I.guitar(m, long, 0.07, inst, at)); }
+    else if (n < 11) outs.push(I.guitar(scaleNote(K, n, K.root) + sh, long, 0.16 * gk, inst, at));
+    else { const r = scaleNote(K, n - 11, K.root) + sh; for (const m of [r, r + 7, r + 12]) outs.push(I.guitar(m, long, 0.07 * gk, inst, at)); }
     const t0 = at || (G.audio.running ? G.audio.now() : 0), go = (t) => { for (const f of outs) if (f) f(t); };
     if (hold === true) return (t) => go(Math.max(t || 0, t0 + ring));
     if (hold != null) go(t0 + Math.max(ring, hold));
@@ -8303,8 +8781,18 @@
     echo: { name: 'DELAY', short: 'DLY', col: '#e0e0d8', at: 7, knobs: [['E.LEVEL', 'Effect level: how loud the echoes are, next to the dry sound.', 5], ['F.BACK', 'Feedback: how many times it repeats. All the way up, it goes on and on.', 4], ['D.TIME', 'Delay time: a quick slap up to a long, faraway echo.', 4]] },
     chorus: { name: 'CHORUS', short: 'CHOR', col: '#5aa8e8', at: 9, knobs: [['RATE', 'How fast it swirls.', 3], ['DEPTH', 'How wide the wobble is. Up high, it goes seasick.', 5]] },
     trem: { name: 'TREMOLO', short: 'TREM', col: '#2ab0a0', at: 11, knobs: [['WAVE', 'The shape of the pulse: smooth (a triangle) to choppy (a square).', 3], ['RATE', 'How fast it pulses.', 5], ['DEPTH', 'How deep the pulse goes. All the way up, it cuts in and out.', 8]] },
+    // (then a fuzz like the big silver muff-style ones (VOLUME, TONE, SUSTAIN), an auto-wah (SENS,
+    // DECAY, MANUAL), an octave pedal like the OC-2 (OCT 1, OCT 2, DIRECT), a phaser with the one SPEED
+    // knob of the little orange classic, a compressor like the red Dyna Comp (OUTPUT, SENS), and a
+    // looper; the looper comes with the last instrument, since there's no twenty-third)
+    fuzz: { name: 'FUZZ', short: 'FUZZ', col: '#b8bcc8', at: 13, knobs: [['VOLUME', 'How loud it comes out. Fuzz gets LOUD.', 5], ['TONE', 'Thick and dark down low, sharp and buzzy up high.', 5], ['SUSTAIN', 'How much fuzz. All the way up, a note just keeps going.', 7]] },
+    wah: { name: 'AUTO-WAH', short: 'WAH', col: '#2a2a30', dark: true, at: 15, knobs: [['SENS', 'Sensitivity: how far your playing opens it up. Play hard and it says WAH.', 6], ['DECAY', 'How slowly it closes again after each note.', 4], ['MANUAL', 'Where the sweep sits: low and dark, or high and nasal.', 4]] },
+    octave: { name: 'OCTAVE', short: 'OCT', col: '#d8c040', at: 17, knobs: [['OCT 1', 'How loud a copy of your note one octave down is.', 6], ['OCT 2', 'How loud a copy two octaves down is. Huge.', 3], ['DIRECT', 'How loud your own note is. At 0, only the low copies.', 7]] },
+    phaser: { name: 'PHASER', short: 'PHAS', col: '#f08020', at: 19, knobs: [['SPEED', 'The only knob, like on the little orange classic: how fast it swooshes.', 3]] },
+    comp: { name: 'COMPRESSOR', short: 'COMP', col: '#d83838', at: 21, knobs: [['OUTPUT', 'How loud it comes out, once it\'s squeezed.', 5], ['SENS', 'Sensitivity: how hard it squeezes the loud parts down, so every note comes out even.', 5]] },
+    looper: { name: 'LOOPER', short: 'LOOP', col: '#7a5ac8', at: 22, knobs: [['LEVEL', 'How loud the loop plays back under you.', 6], ['BARS', 'How long the loop is: one bar, up to four.', 3, (v) => G.sayable(1 + Math.floor(v / 3.4)) + (v < 3.4 ? ' BAR' : ' BARS')]] },
   };
-  const PEDAL_ORDER = ['drive', 'echo', 'chorus', 'trem'];
+  const PEDAL_ORDER = ['drive', 'echo', 'chorus', 'trem', 'fuzz', 'wah', 'octave', 'phaser', 'comp', 'looper'];
   // (s.pedals: the ones Nate has. Saves from when Abe handed over all four at once keep all four.)
   const pedalsOwned = () => {
     const s = G.state;
@@ -8312,7 +8800,7 @@
     return PEDAL_ORDER.filter((id) => (s.pedals || {})[id]);
   };
   G.pedalsOwned = pedalsOwned;
-  G.giveAllPedals = () => { const s = G.state; s.pedals = { drive: true, echo: true, chorus: true, trem: true }; s.items.pedals = true; };
+  G.giveAllPedals = () => { const s = G.state; s.pedals = {}; for (const id of PEDAL_ORDER) s.pedals[id] = true; s.items.pedals = true; };
   // the choices for a track: no pedal, then each one Nate has
   const pedalChoices = () => [null].concat(pedalsOwned());
   const pedalName = (id) => (id ? PEDAL_INFO[id].name : 'NONE');
@@ -8321,34 +8809,84 @@
   const pedalKnobs = (tr, id) => { tr.fxk = tr.fxk || {}; return (tr.fxk[id] = tr.fxk[id] || PEDAL_INFO[id].knobs.map((k) => k[2])); };
   const cyclePedal = (tr, d) => { const ch = pedalChoices(), i = Math.max(0, ch.indexOf(tr.fx || null)); tr.fx = ch[(i + d + ch.length) % ch.length]; };
   const songChans = new WeakMap();
+  // (index 8 is Abe's band; MASTER turns every track up or down together)
   function mixApply(song, i) {
-    const ch = (songChans.get(song) || [])[i], tr = song.tracks[i];
+    const ch = (songChans.get(song) || [])[i], tr = song.tracks[i], mv = MASTERS[song.master == null ? 3 : song.master];
+    if (!ch) return;
+    if (i === 8) { ch.set({ vol: 0.8 * mv, pan: 0, tone: 0, verb: 1, fx: null }); return; }
     const fx = tr.fx && pedalsOwned().includes(tr.fx) ? tr.fx : null;
-    if (ch) ch.set({ vol: VOLS[tr.vol], pan: tr.pan || 0, tone: tr.tone || 0, verb: tr.verb || 0, fx, fxk: fx ? pedalKnobs(tr, fx) : null });
+    // (the looper's bars come out of the song's tempo; the octave pedal works on the notes themselves)
+    const fxk = fx ? (fx === 'looper' ? pedalKnobs(tr, fx).concat(barSec(song)) : pedalKnobs(tr, fx)) : null;
+    ch.set({ vol: VOLS[tr.vol] * mv, pan: tr.pan || 0, tone: tr.tone || 0, verb: tr.verb || 0, fx: fx === 'octave' ? null : fx, fxk });
   }
+  const mixAll = (song) => { for (let i = 0; i <= 8; i++) mixApply(song, i); };
   function chanFor(song, i) {
     let arr = songChans.get(song);
     if (!arr) songChans.set(song, (arr = []));
     if (!arr[i]) { arr[i] = G.audio.channel(); mixApply(song, i); }
     return arr[i];
   }
-  // play a note on a track, through its channel
-  const trackSound = (song, i, n, at, hold, inst = song.tracks[i].inst) => {
-    const ch = chanFor(song, i), go = () => studioSound(inst, n, song.key, at, hold);
+  // play a note on a track, through its channel (opt: see studioSound). The octave pedal plays the
+  // note at its DIRECT LEVEL, plus the octave below (OCT 1) and two below (OCT 2)
+  const trackSound = (song, i, n, at, hold, inst = song.tracks[i].inst, opt = {}) => {
+    const ch = chanFor(song, i), tr = song.tracks[i];
+    const go = () => {
+      if (tr.fx === 'octave' && !DRUM_INST[inst] && pedalsOwned().includes('octave')) {
+        const [o1, o2, dl] = pedalKnobs(tr, 'octave'), rs = [];
+        for (const [lv, shift, k] of [[dl, 0, 7], [o1, -12, 7], [o2, -24, 8]]) if (lv) rs.push(studioSound(inst, n, song, at, hold, Object.assign({}, opt, { shift, gain: lv / k })));
+        return (t) => { for (const r of rs) if (r) r(t); };
+      }
+      return studioSound(inst, n, song, at, hold, opt);
+    };
     return ch ? G.audio.withRoute(ch.input, go) : go();
   };
-  const newSong = () => ({ name: 'UNTITLED', key: 0, bpm: 100, click: true, len: 0, tracks: Array.from({ length: 8 }, () => ({ inst: null, vol: 3, mute: false, ev: [] })) });
+  const newSong = () => ({ name: 'UNTITLED', key: 0, bpm: 100, click: true, len: 0, bpb: 4, swing: false, quant: 0, prog: 0, band: false, master: 3, sections: [], tracks: Array.from({ length: 8 }, () => ({ inst: null, vol: 3, mute: false, ev: [] })) });
   const studioWork = () => (G.state.studio = G.state.studio || newSong());
   const songsSaved = () => (G.state.songs = G.state.songs || []);
   const cloneSong = (sg) => JSON.parse(JSON.stringify(sg));
-  // a song's notes, for the player: every unmuted track (but `skip`), in time order
+  // SWING: an eighth note on the off-beat waits until two thirds of the way through the beat
+  const swingT = (sg, t) => { if (!sg.swing) return t; const b = beatSec(sg), f = t / b - Math.floor(t / b); return Math.abs(f - 0.5) < 0.09 ? t + b / 6 : t; };
+  // QUANTIZE: pull a note toward the nearest eighth note (k: how far, 1 all the way)
+  const quantT = (sg, t, k) => { const h = beatSec(sg) / 2; return t + (Math.round(t / h) * h - t) * k; };
+  // fades take two bars (or a third of a short song)
+  const fadeLen = (sg) => Math.min(2 * barSec(sg), sg.len / 3000);
+  // one track's notes for the player (with its fade, if it has one)
+  function trackEvents(song, i) {
+    const tr = song.tracks[i], ev = [], len = song.len / 1000;
+    if (!tr.inst) return ev;
+    for (const [ms, n, held, p] of tr.ev) ev.push({ t: swingT(song, ms / 1000), play: (at) => trackSound(song, i, n, at, held ? held / 1000 : undefined, undefined, { t: ms / 1000, p }) });
+    if (tr.fade && len) {
+      const F = fadeLen(song), fade = (at, a, b, d) => { const c = chanFor(song, i); if (c) c.fadeTo(at, a, b, d); };
+      ev.push({ t: 0, play: (at) => fade(at, tr.fade & 1 ? 0 : 1, 1, tr.fade & 1 ? F : 0.01) });
+      if (tr.fade & 2) ev.push({ t: Math.max(0, len - F), play: (at) => fade(at, 1, 0, F) });
+    }
+    return ev;
+  }
+  // a song's notes, for the player: every unmuted track (but `skip`), and Abe's band if it's on, in time order
   function songEvents(song, skip) {
     const ev = [];
-    song.tracks.forEach((tr, i) => {
-      if (!tr.inst || tr.mute || i === skip) return;
-      for (const [ms, n, held] of tr.ev) ev.push({ t: ms / 1000, play: (at) => trackSound(song, i, n, at, held ? held / 1000 : undefined) });
-    });
+    song.tracks.forEach((tr, i) => { if (!tr.mute && i !== skip) ev.push(...trackEvents(song, i)); });
+    if (song.band && song.len) ev.push(...bandEvents(song, song.len / 1000));
     return ev.sort((a, b) => a.t - b.t);
+  }
+  // ABE'S BAND, playing along: drums, a bass on the chord roots, and his guitar on the off-beats,
+  // following CHORDS (or sitting on the key's home chord), in 4/4 or a 3/4 waltz, swung if SWING's on
+  function bandEvents(sg, len) {
+    const ev = [], I = G.audio.inst, b = beatSec(sg), bpb = bpbOf(sg), bar = barSec(sg), K = SONG_KEYS[sg.key] || SONG_KEYS[0];
+    const at = (t, fn) => { if (t < len - 0.01) ev.push({ t, play: (a) => { const c = chanFor(sg, 8); return c ? G.audio.withRoute(c.input, () => fn(a)) : fn(a); } }); };
+    for (let k = 0; k * bar < len - 0.01; k++) {
+      const t0 = k * bar, C = chordAt(sg, t0) || { root: 0, notes: [0, K.mode === 'minor' ? 3 : 4, 7] }, r = C.root % 12;
+      const bassM = 28 + ((K.root + r - 28) % 12), chord = C.notes.map((x) => K.root + 12 + x);
+      for (let j = 0; j < bpb; j++) {
+        const tb = t0 + j * b, back = bpb === 4 ? j % 2 === 1 : j > 0;
+        if (j === 0 || (bpb === 4 && j === 2)) at(tb, (a) => I.kick(a));
+        if (back) { at(tb, (a) => I.snare(a)); at(tb, (a) => { for (const m of chord) I.guitar(m, b * 0.6, 0.04, 'strat', a); }); }
+        at(tb, (a) => I.hat(a)); at(tb + b * (sg.swing ? 2 / 3 : 0.5), (a) => I.hat(a));
+        if (j === 0) at(tb, (a) => I.bass(bassM, b * 1.5, a));
+        else if (bpb === 4 && j === 2) at(tb, (a) => I.bass(bassM + 7, b * 1.5, a));
+      }
+    }
+    return ev;
   }
   // Nate's song as the game's music (main.js asks on every map change)
   let mixCache = { song: null, mix: null };
@@ -8359,7 +8897,7 @@
     return mixCache.mix;
   };
   // the studio opens with Nate's first instrument from Abe; the metronome comes with the third
-  G.abeInstruments = () => STUDIO_INST.filter((id) => G.instrumentHas(id)).length;
+  G.abeInstruments = () => STUDIO_INST.filter((id) => id !== 'mic' && G.instrumentHas(id)).length;
   G.studioOpen = () => G.abeInstruments() > 0;
   const mmss = (sec) => { const s2 = Math.max(0, Math.floor(sec)); return Math.floor(s2 / 60) + ':' + String(s2 % 60).padStart(2, '0'); };
   const studioBack = (ctx, title, sub) => {
@@ -8376,7 +8914,7 @@
   function studioCmd() {
     return {
       start() {
-        Object.assign(this, { song: studioWork(), sel: 0, mode: 'nav', t: 0, msg: null, msgT: 0, lit: {}, take: [], players: [], bins: [], menuSel: 0, pickSel: 0, hitT: 0, floats: [], voices: {}, mixRow: 0, mixPlay: false });
+        Object.assign(this, { song: studioWork(), sel: 0, mode: 'nav', t: 0, msg: null, msgT: 0, lit: {}, take: [], players: [], bins: [], menuSel: 0, menuTop: 0, pickSel: 0, hitT: 0, floats: [], voices: {}, mixRow: 0, mixPlay: false, undoSnap: null, recKind: 'take', punch: { in: null, out: null }, clip: null });
         G.audio.stop();
         this.onKey = (e) => this.key(e);
         this.onKeyUp = (e) => this.keyUp(e);
@@ -8391,13 +8929,46 @@
       done() { removeEventListener('keydown', this.onKey, true); removeEventListener('keyup', this.onKeyUp, true); this.letGoAll(); this.stopPlayers(); this.result = true; },
       // ---- held notes: a key that's down keeps its note sounding (and, while recording, growing)
       // until it comes back up
+      // (a recorded note is [ms, n], plus how long it was held for a held instrument, plus its setting
+      // for the synth or the mic; punching in, only what's played between the punches counts)
       live(code, n, track, rec) {
-        const inst = this.song.tracks[track].inst || this.have()[0], prev = this.voices[code];
+        const tr = this.song.tracks[track], inst = tr.inst || this.have()[0], prev = this.voices[code], P = PARAMS[inst], p = P ? this.paramOf(tr, inst) : undefined;
         if (prev && prev.rel) prev.rel();
-        const rel = trackSound(this.song, track, n, undefined, true, inst);
+        const rel = trackSound(this.song, track, n, undefined, true, inst, { t: this.songTime(), p });
         let idx = null;
-        if (rec) { const t = this.clock() - this.start0; if (t >= -0.15) { const ev = [Math.max(0, Math.round(t * 1000)), n]; if (RING[inst]) ev.push(Math.round(RING[inst] * 1000)); idx = this.take.push(ev) - 1; } }
+        if (rec && (this.recKind !== 'punch' || (this.punch.in != null && this.punch.out == null))) {
+          const t = this.takeTime();
+          if (t >= -0.15) { const ev = [Math.max(0, Math.round(t * 1000)), n]; if (RING[inst]) ev.push(Math.round(RING[inst] * 1000)); if (P) { while (ev.length < 3) ev.push(0); ev.push(p); } idx = this.take.push(ev) - 1; }
+        }
         this.voices[code] = { rel, t0: this.clock(), idx, inst };
+      },
+      // where in the song something played right now lands: in the take (around and around, overdubbing),
+      // the warm-up's loop, or the playback
+      takeTime() { const t = this.clock() - this.start0, L = this.lenS(); return this.recKind === 'over' && L && t >= 0 ? t % L : t; },
+      songTime() {
+        const m = this.mode, now = this.clock(), sg = this.song;
+        if (m === 'count' || m === 'rec') return Math.max(0, this.takeTime());
+        if (m === 'ready' || (m === 'pedal' && this.pedalBack === 'ready')) { const L = this.lenS() || progBars(sg) * barSec(sg); return (((now - this.readyT0) % L) + L) % L; }
+        if (m === 'play' || this.mixPlay) return Math.max(0, now - this.start0);
+        return 0;
+      },
+      // the synth's FILTER and the mic's syllable: - + while warming up or recording (kept on the track)
+      paramOf(tr, inst) { const P = PARAMS[inst]; return tr.prm == null || tr.prm > P.max ? P.def : tr.prm; },
+      bumpParam(track, d) {
+        const tr = this.song.tracks[track], inst = tr.inst, P = PARAMS[inst], v = this.paramOf(tr, inst) + d;
+        tr.prm = P.wrap ? (v + P.max + 1) % (P.max + 1) : Math.max(0, Math.min(P.max, v));
+        G.audio.sfx('blip');
+      },
+      // ---- UNDO: one step back (the last take, clear, pattern, edit or paste), and undo again to redo it
+      snap(label) { const sg = this.song; this.undoSnap = { label, data: this.snapData() }; },
+      snapData() { const sg = this.song; return JSON.stringify({ tracks: sg.tracks.map((tr) => ({ inst: tr.inst, ev: tr.ev, steps: tr.steps || null })), len: sg.len, sections: sg.sections || [] }); },
+      undo() {
+        if (!this.undoSnap) { this.say('Nothing to undo yet.'); G.audio.sfx('bump'); return; }
+        const sg = this.song, d = JSON.parse(this.undoSnap.data), label = this.undoSnap.label, now = this.snapData();
+        d.tracks.forEach((x, i) => Object.assign(sg.tracks[i], { inst: x.inst, ev: x.ev, steps: x.steps || undefined }));
+        sg.len = d.len; sg.sections = d.sections;
+        this.undoSnap = { label, data: now };
+        this.rebin(); this.say('Undid the ' + label.toLowerCase() + '. (Undo again to put it back.)'); G.audio.sfx('cancel');
       },
       keyUp(e) { const v = this.voices[e.code]; if (!v) return; delete this.voices[e.code]; this.finish(v); },
       finish(v) {
@@ -8411,7 +8982,7 @@
       // (the audio clock, so takes line up with playback; the system clock if audio isn't running)
       clock() { return G.audio.running ? G.audio.now() : performance.now() / 1000; },
       say(m) { this.msg = m; this.msgT = 180; },
-      stopPlayers() { for (const p of this.players) p.stop(); this.players = []; },
+      stopPlayers() { for (const p of this.players) p.stop(); this.players = []; for (const ch of songChans.get(this.song) || []) if (ch) ch.unfade(); },
       lenS() { return this.song.len / 1000; },
       // the little marks along each track's timeline (150 bins)
       rebin() {
@@ -8451,6 +9022,7 @@
           }
           // ↑ opens the pedal up, to turn its knobs (the warm-up keeps going underneath)
           if (c === 'ArrowUp' && G.state.items.pedals) { this.openPedal(this.recTrack, 'ready'); return true; }
+          if ((c === 'Minus' || c === 'Equal') && PARAMS[this.recInst]) { this.bumpParam(this.recTrack, c === 'Equal' ? 1 : -1); return true; }
           const n = studioNote(this.recInst, c);
           if (n == null) return true;
           this.live(c, n, this.recTrack, false);
@@ -8461,6 +9033,13 @@
         if (m === 'count' || m === 'rec') {
           if (c === 'Enter') return this.endTake(true);
           if (c === 'Backspace' || c === 'Escape') return this.endTake(false);
+          // punching: SPACE punches in, and SPACE again punches back out
+          if (c === 'Space' && this.recKind === 'punch' && m === 'rec') {
+            const P = this.punch, t = this.takeTime();
+            if (P.in == null) { P.in = Math.max(0, t); G.audio.sfx('select'); } else if (P.out == null) { P.out = Math.max(P.in, t); this.letGoAll(); G.audio.sfx('cancel'); }
+            return true;
+          }
+          if ((c === 'Minus' || c === 'Equal') && PARAMS[this.recInst]) { this.bumpParam(this.recTrack, c === 'Equal' ? 1 : -1); return true; }
           const n = studioNote(this.recInst, c);
           if (n == null) return true;
           this.live(c, n, this.recTrack, true);
@@ -8478,7 +9057,11 @@
         }
         if (m === 'menu') return this.menuKey(c);
         if (m === 'pick') return this.pickKey(c);
-        // nav
+        if (m === 'steps') return this.stepsKey(c);
+        if (m === 'edit') return this.editKey(c, e);
+        if (m === 'sections') return this.sectionsKey(c, e);
+        // nav (CTRL+Z, or CMD+Z, undoes)
+        if (c === 'KeyZ' && (e.ctrlKey || e.metaKey)) { this.undo(); return true; }
         if (c === 'ArrowUp' && this.sel > 0) { this.sel--; G.audio.sfx('menu'); }
         else if (c === 'ArrowDown' && this.sel < 7) { this.sel++; G.audio.sfx('menu'); }
         else if (c === 'ArrowLeft' || c === 'ArrowRight') this.cycleInst(c === 'ArrowLeft' ? -1 : 1);
@@ -8521,10 +9104,159 @@
         }
         return true;
       },
+      // ---- STEP SEQUENCER (drum tracks): a bar of sixteenth notes (twelve in 3/4) for each of the
+      // drum's sounds. ←→ a step, ↑↓ a sound, Z (or SPACE) puts a hit there or takes it away, C plays the
+      // bar around and around, BACKSPACE clears the sound's row, the letter keys still play the drum;
+      // X (or ENTER) writes the pattern across the whole song (four bars, if there's no song yet)
+      openSteps() {
+        const sg = this.song, tr = sg.tracks[this.sel], n = G.sayable(this.sel + 1);
+        this.mode = 'nav';
+        if (!tr.inst && !tr.ev.length) tr.inst = this.have()[0];
+        if (!DRUM_INST[tr.inst]) { this.say('The step sequencer is for drums: the kit, the bongos, the drum machine, the cowbell. Pick one on an empty track (←→).'); G.audio.sfx('bump'); return; }
+        const go = () => {
+          const S = bpbOf(sg) * 4, rows = DRUM_ROWS[tr.inst].length;
+          if (!tr.steps || tr.steps.n !== S || tr.steps.rows.length !== rows) tr.steps = { n: S, rows: Array.from({ length: rows }, () => Array(S).fill(0)) };
+          this.st = { track: this.sel, x: 0, y: 0, playing: false };
+          this.mode = 'steps'; this.msgT = 0;
+          G.audio.sfx('select');
+        };
+        if (tr.ev.length && !tr.steps) this.confirm('Turn track ' + n + ' into a step pattern? Its take gets replaced. (Undo brings it back.)', go, 'menu');
+        else go();
+      },
+      stepsKey(c) {
+        const st = this.st, tr = this.song.tracks[st.track], P = tr.steps;
+        if (c === 'ArrowLeft') st.x = (st.x + P.n - 1) % P.n;
+        else if (c === 'ArrowRight') st.x = (st.x + 1) % P.n;
+        else if (c === 'ArrowUp') st.y = (st.y + P.rows.length - 1) % P.rows.length;
+        else if (c === 'ArrowDown') st.y = (st.y + 1) % P.rows.length;
+        else if (c === 'KeyZ' || c === 'Space') { const r = P.rows[st.y]; r[st.x] = r[st.x] ? 0 : 1; if (r[st.x]) trackSound(this.song, st.track, st.y, undefined, undefined, tr.inst); else G.audio.sfx('blip'); return true; }
+        else if (c === 'Backspace' || c === 'Delete') { P.rows[st.y].fill(0); G.audio.sfx('cancel'); return true; }
+        else if (c === 'KeyC') { if (st.playing) { this.stopPlayers(); st.playing = false; } else this.playSteps(); return true; }
+        else if (c === 'KeyX' || c === 'Enter' || c === 'Escape') { this.stopPlayers(); st.playing = false; this.writeSteps(); return true; }
+        else { const n = studioNote(tr.inst, c); if (n == null) return false; this.live(c, n, st.track, false); this.lit[c] = 8; return true; }
+        G.audio.sfx('menu');
+        return true;
+      },
+      // (the loop reads the pattern as it plays, so a change is heard on the next time around)
+      playSteps() {
+        const st = this.st, sg = this.song, tr = sg.tracks[st.track], P = tr.steps, b = beatSec(sg), ev = [];
+        for (let x = 0; x < P.n; x++) for (let r = 0; r < P.rows.length; r++) ev.push({ t: swingT(sg, (x * b) / 4), play: (at) => { if (P.rows[r][x]) trackSound(sg, st.track, r, at, undefined, tr.inst); } });
+        this.stopPlayers();
+        this.stT0 = this.clock() + 0.1;
+        this.players.push(G.audio.player(ev.sort((p, q) => p.t - q.t), barSec(sg), true, this.stT0));
+        st.playing = true;
+      },
+      writeSteps() {
+        const st = this.st, sg = this.song, tr = sg.tracks[st.track], P = tr.steps, b = beatSec(sg), bar = barSec(sg), ev = [];
+        this.snap('STEP PATTERN');
+        if (!sg.len) sg.len = Math.round(4 * bar * 1000);
+        const bars = Math.ceil(sg.len / 1000 / bar - 1e-6);
+        for (let k = 0; k < bars; k++) for (let x = 0; x < P.n; x++) for (let r = 0; r < P.rows.length; r++) if (P.rows[r][x]) { const ms = Math.round((k * bar + (x * b) / 4) * 1000); if (ms < sg.len) ev.push([ms, r]); }
+        tr.ev = ev.sort((p, q) => p[0] - q[0]);
+        this.rebin(); this.mode = 'nav'; G.audio.sfx('fanfare');
+        this.say('Track ' + G.sayable(st.track + 1) + (ev.length ? ': the pattern, all the way through the song (' + G.sayable(ev.length) + ' hits).' : ': an empty pattern. Nothing on it.'));
+      },
+      // ---- EDIT NOTES: a track's notes on a grid, two bars at a time around the one you're on. ←→ picks
+      // a note, ↑↓ moves it a key up or down (on its own row of keys), [ ] (or SHIFT ←→) moves it an
+      // eighth note earlier or later, D doubles it an eighth later, BACKSPACE deletes it, Z plays it, C
+      // plays the song; X (or ENTER) is done. (Undo takes back everything from this visit.)
+      openEdit() {
+        const tr = this.song.tracks[this.sel];
+        this.mode = 'nav';
+        if (!tr.ev.length) { this.say('Nothing on track ' + G.sayable(this.sel + 1) + ' to edit yet.'); G.audio.sfx('bump'); return; }
+        this.snap('NOTE EDITS');
+        this.ed = { track: this.sel, i: 0 };
+        this.mode = 'edit'; this.msgT = 0;
+        G.audio.sfx('select');
+      },
+      editKey(c, e) {
+        const ed = this.ed, sg = this.song, tr = sg.tracks[ed.track], ev = tr.ev, h = (beatSec(sg) / 2) * 1000, cur = ev[ed.i];
+        const clamp = (v, a, b) => Math.max(a, Math.min(b, v)), drum = DRUM_INST[tr.inst];
+        const hear = (x) => trackSound(sg, ed.track, x[1], undefined, x[2] ? Math.min(1, x[2] / 1000) : undefined, tr.inst, { t: x[0] / 1000, p: x[3] });
+        const move = (x) => { ev.sort((p, q) => p[0] - q[0]); ed.i = ev.indexOf(x); hear(x); };
+        const sideways = (c === 'ArrowLeft' || c === 'ArrowRight') && e.shiftKey;
+        if ((c === 'ArrowLeft' || c === 'ArrowRight') && !sideways) { ed.i = clamp(ed.i + (c === 'ArrowLeft' ? -1 : 1), 0, ev.length - 1); hear(ev[ed.i]); }
+        else if (c === 'ArrowUp' || c === 'ArrowDown') {
+          const d = c === 'ArrowUp' ? 1 : -1;
+          cur[1] = drum ? clamp(cur[1] - d, 0, DRUM_ROWS[tr.inst].length - 1) : cur[1] < 11 ? clamp(cur[1] + d, 0, 10) : clamp(cur[1] + d, 11, 20);
+          hear(cur);
+        } else if (c === 'BracketLeft' || c === 'BracketRight' || sideways) { const d = c === 'BracketLeft' || c === 'ArrowLeft' ? -1 : 1; cur[0] = clamp(Math.round(cur[0] + d * h), 0, sg.len - 1); move(cur); }
+        else if (c === 'KeyD') { const x = cur.slice(); x[0] = Math.min(sg.len - 1, Math.round(cur[0] + h)); ev.push(x); move(x); }
+        else if (c === 'Backspace' || c === 'Delete') {
+          ev.splice(ed.i, 1); G.audio.sfx('cancel');
+          if (!ev.length) { this.stopPlayers(); this.mixPlay = false; this.rebin(); this.mode = 'nav'; this.say('Track ' + G.sayable(ed.track + 1) + ' is empty now.'); return true; }
+          ed.i = Math.min(ed.i, ev.length - 1);
+        } else if (c === 'KeyZ') hear(cur);
+        else if (c === 'KeyC') { if (this.mixPlay) { this.stopPlayers(); this.mixPlay = false; } else this.playSong(true); }
+        else if (c === 'KeyX' || c === 'Escape' || c === 'Enter') { this.stopPlayers(); this.mixPlay = false; this.mode = 'nav'; this.say('Edits kept. (Undo puts the track back the way it was.)'); G.audio.sfx('select'); }
+        else return true;
+        this.rebin();
+        return true;
+      },
+      // ---- SONG SECTIONS: the song in bars (and an empty one past the end, to paste onto and make the
+      // song longer). ←→ a bar (SHIFT ←→ stretches a selection), L labels the
+      // selection (INTRO, VERSE, CHORUS, BRIDGE, SOLO, OUTRO, or nothing), C copies its bars (every
+      // track), V pastes them at the bar you're on (over what's there; past the end, the song gets
+      // longer), BACKSPACE clears them, SPACE plays from there; X is done
+      openSections() {
+        const sg = this.song;
+        this.mode = 'nav';
+        if (!sg.len) { this.say('Record something first: sections are made of bars.'); G.audio.sfx('bump'); return; }
+        sg.sections = sg.sections || [];
+        this.sec = { cur: 0, anchor: 0, top: 0 };
+        this.mode = 'sections'; this.msgT = 0;
+        G.audio.sfx('select');
+      },
+      sectionsKey(c, e) {
+        const sg = this.song, S = this.sec, bar = barSec(sg) * 1000, bars = Math.max(1, Math.ceil(sg.len / bar - 1e-6)), a = Math.min(S.anchor, S.cur), b = Math.min(bars - 1, Math.max(S.anchor, S.cur));
+        if (c === 'ArrowLeft' || c === 'ArrowRight') { S.cur = Math.max(0, Math.min(bars, S.cur + (c === 'ArrowLeft' ? -1 : 1))); if (!e.shiftKey || S.cur === bars) S.anchor = S.cur; G.audio.sfx('menu'); }
+        else if (a >= bars && c !== 'KeyV' && c !== 'KeyX' && c !== 'Escape' && c !== 'Enter') { this.say('That\'s past the end of the song. V pastes there.'); G.audio.sfx('bump'); }
+        else if (c === 'KeyL') {
+          const same = sg.sections.find((x) => x.a === a && x.b === b), k = same ? SECTION_NAMES.indexOf(same.name) + 1 : 0;
+          sg.sections = sg.sections.filter((x) => x.b < a || x.a > b);
+          if (k < SECTION_NAMES.length) sg.sections.push({ a, b, name: SECTION_NAMES[k] });
+          sg.sections.sort((x, y) => x.a - y.a);
+          G.audio.sfx('blip');
+        } else if (c === 'KeyC') {
+          const from = a * bar, to = (b + 1) * bar, sec = sg.sections.find((x) => x.a === a && x.b === b);
+          this.clip = { bars: b - a + 1, name: sec ? sec.name : null, tracks: sg.tracks.map((tr) => ({ inst: tr.inst, ev: tr.ev.filter(([ms]) => ms >= from && ms < to).map((x) => { const y = x.slice(); y[0] -= from; return y; }) })) };
+          this.say('Copied ' + (b > a ? 'bars ' + G.sayable(a + 1) + '-' + G.sayable(b + 1) : 'bar ' + G.sayable(a + 1)) + '. V pastes them.'); G.audio.sfx('select');
+        } else if (c === 'KeyV') {
+          const C = this.clip;
+          if (!C) { this.say('Nothing copied yet: select some bars and press C.'); G.audio.sfx('bump'); return true; }
+          this.snap('PASTE');
+          const from = S.cur * bar, to = from + C.bars * bar;
+          if (to > sg.len) sg.len = Math.min(MAX_LEN * 1000, Math.round(to));
+          sg.tracks.forEach((tr, i) => {
+            const src = C.tracks[i];
+            if (!tr.inst && src.inst) tr.inst = src.inst;
+            tr.ev = tr.ev.filter(([ms]) => ms < from || ms >= to).concat(src.ev.map((x) => { const y = x.slice(); y[0] += from; return y; }).filter(([ms]) => ms < sg.len)).sort((p, q) => p[0] - q[0]);
+          });
+          if (C.name) { const na = S.cur, nb = S.cur + C.bars - 1; sg.sections = sg.sections.filter((x) => x.b < na || x.a > nb).concat([{ a: na, b: nb, name: C.name }]).sort((x, y) => x.a - y.a); }
+          this.rebin(); G.audio.sfx('fanfare'); this.say('Pasted ' + G.sayable(C.bars) + (C.bars > 1 ? ' bars' : ' bar') + ' at bar ' + G.sayable(S.cur + 1) + '.');
+        } else if (c === 'Backspace' || c === 'Delete') {
+          const from = a * bar, to = (b + 1) * bar;
+          this.snap('CLEARED BARS');
+          for (const tr of sg.tracks) tr.ev = tr.ev.filter(([ms]) => ms < from || ms >= to);
+          this.rebin(); G.audio.sfx('cancel'); this.say('Cleared ' + (b > a ? 'bars ' + G.sayable(a + 1) + '-' + G.sayable(b + 1) : 'bar ' + G.sayable(a + 1)) + '.');
+        } else if (c === 'Space' || c === 'KeyP') { if (this.mixPlay) { this.stopPlayers(); this.mixPlay = false; } else this.playFrom((a * bar) / 1000); }
+        else if (c === 'KeyX' || c === 'Escape' || c === 'Enter') { this.stopPlayers(); this.mixPlay = false; this.mode = 'nav'; G.audio.sfx('cancel'); }
+        return true;
+      },
+      // play the song from partway in (t seconds), staying on the screen you're on
+      playFrom(t) {
+        const ev = songEvents(this.song).filter((x) => x.t >= t - 0.001).map((x) => ({ t: x.t - t, play: x.play }));
+        if (!ev.length) { this.say('Nothing to play from there.'); G.audio.sfx('bump'); return; }
+        this.stopPlayers();
+        const at = this.clock() + 0.1;
+        this.start0 = at - t;
+        this.players.push(G.audio.player(ev, this.lenS() - t, false, at));
+        this.mixPlay = true;
+      },
       // ---- the mixing board: ←→ a track, ↑↓ a knob, - + turns it; C plays the song while you mix,
       // V mutes, B (or X) goes back to the console. The pedals row is there once Abe's given Nate his.
       // (top to bottom, the way they're drawn: the pedal up top once Nate has Abe's, the fader at the bottom)
-      mixRows() { return (G.state.items.pedals ? ['FX'] : []).concat(['VERB', 'TONE', 'PAN', 'VOL']); },
+      mixRows() { return (G.state.items.pedals ? ['FX'] : []).concat(['VERB', 'TONE', 'PAN', 'FADE', 'VOL']); },
       mixKey(c) {
         const rows = this.mixRows(), tr = this.song.tracks[this.sel], row = rows[Math.min(this.mixRow, rows.length - 1)];
         if (c === 'ArrowLeft' && this.sel > 0) { this.sel--; G.audio.sfx('menu'); }
@@ -8537,6 +9269,7 @@
           else if (row === 'PAN') tr.pan = clamp((tr.pan || 0) + d, -4, 4);
           else if (row === 'TONE') tr.tone = clamp((tr.tone || 0) + d, -2, 2);
           else if (row === 'VERB') tr.verb = clamp((tr.verb || 0) + d, 0, 3);
+          else if (row === 'FADE') tr.fade = ((tr.fade || 0) + d + 4) % 4;
           else if (c === 'KeyZ') { this.openPedal(this.sel, 'mix'); return true; }
           else cyclePedal(tr, d);
           mixApply(this.song, this.sel);
@@ -8564,20 +9297,40 @@
       askRecord() {
         const tr = this.song.tracks[this.sel];
         if (!tr.inst) tr.inst = this.have()[0];
-        if (tr.ev.length) this.confirm('Record over track ' + G.sayable(this.sel + 1) + '? The old take is gone for good.', () => this.ready());
+        if (tr.ev.length) this.confirm('Record over track ' + G.sayable(this.sel + 1) + '? (Undo brings the old take back.)', () => this.ready());
         else this.ready();
+      },
+      // PUNCH-IN: the track plays back as it is, until SPACE punches in; from then on (until SPACE
+      // punches back out, or the take ends) what's played replaces it
+      startPunch() {
+        const tr = this.song.tracks[this.sel];
+        this.mode = 'nav';
+        if (!tr.ev.length) { this.say('Nothing on track ' + G.sayable(this.sel + 1) + ' to punch into. Z records it first.'); G.audio.sfx('bump'); return; }
+        this.ready('punch');
+      },
+      // OVERDUB: the song goes around and around, and every time through, what's played gets added on
+      // top of the track (ENTER stops)
+      startOverdub() {
+        const tr = this.song.tracks[this.sel];
+        this.mode = 'nav';
+        if (!this.song.len) { this.say('Record a first take: it sets how long the loop is.'); G.audio.sfx('bump'); return; }
+        if (!tr.inst) tr.inst = this.have()[0];
+        this.ready('over');
       },
       // READY: warm up before a take. The metronome starts clicking (a bar, around and around) and
       // the tracks already recorded loop along; whatever's played sounds, but nothing's recorded.
       // ENTER (or SPACE, or Z) starts the take; BACKSPACE goes back to the console.
-      ready() {
-        const sg = this.song, tr = sg.tracks[this.sel], metro = this.metro() && sg.click, beat = 60 / sg.bpm, len = this.lenS();
-        this.recInst = tr.inst; this.recTrack = this.sel; this.take = []; this.metroOn = metro;
+      // (kind: 'take', 'punch' or 'over'; punching or overdubbing, the track itself plays along too)
+      ready(kind = 'take') {
+        const sg = this.song, tr = sg.tracks[this.sel], metro = this.metro() && sg.click, beat = beatSec(sg), bpb = bpbOf(sg), len = this.lenS();
+        this.recInst = tr.inst; this.recTrack = this.sel; this.take = []; this.metroOn = metro; this.recKind = kind;
         this.stopPlayers();
         this.readyT0 = this.clock() + 0.1;
-        const others = songEvents(sg, this.sel);
+        const others = songEvents(sg, kind === 'take' ? this.sel : -1);
         if (others.length && len) this.players.push(G.audio.player(others, len, true, this.readyT0));
-        if (metro) this.players.push(G.audio.player([0, 1, 2, 3].map((k) => ({ t: k * beat, play: (at) => G.audio.inst.click(k === 0, at) })), 4 * beat, true, this.readyT0));
+        // (no song yet: Abe's band goes around the chords while you warm up)
+        if (!len && sg.band) { const L = progBars(sg) * barSec(sg); this.players.push(G.audio.player(bandEvents(sg, L), L, true, this.readyT0)); }
+        if (metro) this.players.push(G.audio.player(Array.from({ length: bpb }, (_, k) => ({ t: k * beat, play: (at) => G.audio.inst.click(k === 0, at) })), bpb * beat, true, this.readyT0));
         this.mode = 'ready';
         G.audio.sfx('select');
       },
@@ -8585,41 +9338,73 @@
       // silent 3-2-1 without), then everything played is recorded, with the other tracks playing
       // back underneath from the top
       record() {
-        const sg = this.song, metro = this.metroOn, beat = 60 / sg.bpm, now = this.clock(), len = this.lenS();
+        const sg = this.song, metro = this.metroOn, beat = beatSec(sg), bpb = bpbOf(sg), now = this.clock(), len = this.lenS();
         this.stopPlayers();
-        this.take = [];
-        // (the count-in starts on the metronome's next beat, far enough off that its last scheduled
-        // click can't double up with the first new one)
+        this.take = []; this.punch = { in: null, out: null }; this.passes = 1;
+        // (the count-in, a bar, starts on the metronome's next beat, far enough off that its last
+        // scheduled click can't double up with the first new one)
         const c = metro ? this.readyT0 + Math.ceil((now + 0.25 - this.readyT0) / beat) * beat : now;
-        this.start0 = metro ? c + 4 * beat : now + 1.85;
-        const others = songEvents(sg, this.recTrack);
-        if (others.length) this.players.push(G.audio.player(others, len, false, this.start0));
+        this.start0 = metro ? c + bpb * beat : now + 1.85;
+        this.schedulePass(0);
         if (metro) {
-          const clicks = [], total = (len || MAX_LEN) + 4 * beat;
-          for (let k = 0; k * beat < total; k++) clicks.push({ t: k * beat, play: (at) => G.audio.inst.click(k % 4 === 0, at) });
+          const clicks = [], total = this.recKind === 'over' ? bpb * beat - 0.01 : (len || MAX_LEN) + bpb * beat;
+          for (let k = 0; k * beat < total; k++) clicks.push({ t: k * beat, play: (at) => G.audio.inst.click(k % bpb === 0, at) });
           this.players.push(G.audio.player(clicks, 0, false, c));
         }
         this.mode = 'count';
         G.audio.sfx('select');
       },
+      // one time through the song: the other tracks (and Abe's band); punching, the track itself, until
+      // it's punched; overdubbing, the track with everything added so far, and the clicks (each pass
+      // is scheduled just before the one before it ends)
+      schedulePass(k) {
+        const sg = this.song, len = this.lenS(), kind = this.recKind, rt = this.recTrack, t0 = this.start0 + k * len, beat = beatSec(sg), bpb = bpbOf(sg);
+        let ev = songEvents(sg, rt);
+        if (kind === 'punch') ev = ev.concat(trackEvents(sg, rt).map((e) => ({ t: e.t, play: (at) => { const P = this.punch, tt = at - this.start0; if (P.in != null && tt >= P.in - 0.03 && (P.out == null || tt < P.out)) return; e.play(at); } })));
+        if (kind === 'over') ev = ev.concat(sg.tracks[rt].ev.concat(this.take).map(([ms, n, held, p]) => ({ t: swingT(sg, ms / 1000), play: (at) => trackSound(sg, rt, n, at, held ? held / 1000 : undefined, this.recInst, { t: ms / 1000, p }) })));
+        if (ev.length && len) this.players.push(G.audio.player(ev.sort((a, b) => a.t - b.t), len, false, t0));
+        if (!len && sg.band) this.players.push(G.audio.player(bandEvents(sg, MAX_LEN), 0, false, t0));
+        if (kind === 'over' && this.metroOn) { const clicks = []; for (let j = 0; j * beat < len - 0.01; j++) clicks.push({ t: j * beat, play: (at) => G.audio.inst.click(j % bpb === 0, at) }); this.players.push(G.audio.player(clicks, 0, false, t0)); }
+      },
       endTake(keep) {
-        const sg = this.song, tr = sg.tracks[this.recTrack], firstLen = !sg.len;
+        const sg = this.song, tr = sg.tracks[this.recTrack], firstLen = !sg.len, kind = this.recKind;
         this.letGoAll();
         this.stopPlayers();
         this.mode = 'nav';
         if (!keep) { this.say('Take scrapped.'); G.audio.sfx('cancel'); return true; }
-        if (!this.take.length) { this.say('Nothing played. Nothing recorded.'); G.audio.sfx('bump'); return true; }
+        if (kind === 'punch' && this.punch.in == null) { this.say('You never punched in (SPACE). Nothing changed.'); G.audio.sfx('bump'); return true; }
+        if (!this.take.length && kind !== 'punch') { this.say('Nothing played. Nothing recorded.'); G.audio.sfx('bump'); return true; }
+        this.snap(kind === 'over' ? 'OVERDUB' : kind === 'punch' ? 'PUNCH-IN' : 'TAKE');
         if (firstLen) {
           let L = Math.max(1, Math.min(MAX_LEN, this.clock() - this.start0));
-          if (this.metroOn) { const bar = (4 * 60) / sg.bpm; L = Math.ceil(L / bar - 0.05) * bar; }
+          if (this.metroOn || sg.band) { const bar = barSec(sg); L = Math.ceil(L / bar - 0.05) * bar; }
           sg.len = Math.round(L * 1000);
         }
-        tr.ev = this.take.filter(([ms]) => ms < sg.len).sort((a, b) => a[0] - b[0]);
+        // (QUANTIZE pulls each note toward the nearest eighth; punched, only the punched part changes;
+        // overdubbed, the new notes go on top)
+        const q = QUANTS[sg.quant || 0][1];
+        let take = this.take.map((e) => { const x = e.slice(); if (q) x[0] = Math.max(0, Math.round(quantT(sg, x[0] / 1000, q) * 1000)); return x; }).filter(([ms]) => ms < sg.len);
+        if (kind === 'punch') {
+          const a = this.punch.in * 1000, b = this.punch.out == null ? Infinity : this.punch.out * 1000;
+          tr.ev = tr.ev.filter(([ms]) => ms < a || ms >= b).concat(take.filter(([ms]) => ms >= a - 40 && ms < b + 40));
+        } else tr.ev = kind === 'over' ? tr.ev.concat(take) : take;
+        tr.ev.sort((a, b) => a[0] - b[0]);
         tr.inst = this.recInst;
         this.rebin();
         G.audio.sfx('fanfare');
-        this.say('Track ' + G.sayable(this.recTrack + 1) + ': ' + G.sayable(tr.ev.length) + ' notes.' + (firstLen ? ' The song is ' + mmss(sg.len / 1000) + ' long now.' : ''));
+        const what = kind === 'over' ? G.sayable(take.length) + ' notes added (' + G.sayable(tr.ev.length) + ' in all).' : kind === 'punch' ? 'punched in. ' + G.sayable(tr.ev.length) + ' notes now.' : G.sayable(tr.ev.length) + ' notes.';
+        this.say('Track ' + G.sayable(this.recTrack + 1) + ': ' + what + (firstLen ? ' The song is ' + mmss(sg.len / 1000) + ' long now.' : '') + (q ? ' (Quantized.)' : ''));
         return true;
+      },
+      // QUANTIZE TRACK N NOW: pull the notes already on a track toward the beat (all the way, if QUANTIZE is off)
+      quantizeNow() {
+        const sg = this.song, tr = sg.tracks[this.sel], q = QUANTS[sg.quant || 0][1] || 1;
+        this.mode = 'nav';
+        if (!tr.ev.length) { this.say('Nothing on track ' + G.sayable(this.sel + 1) + ' to quantize.'); G.audio.sfx('bump'); return; }
+        this.snap('QUANTIZE');
+        for (const x of tr.ev) x[0] = Math.max(0, Math.min(sg.len - 1, Math.round(quantT(sg, x[0] / 1000, q) * 1000)));
+        tr.ev.sort((a, b) => a[0] - b[0]);
+        this.rebin(); G.audio.sfx('select'); this.say('Track ' + G.sayable(this.sel + 1) + ': quantized ' + QUANTS[q === 1 ? 2 : 1][0].toLowerCase() + '.');
       },
       // (stay: play it from the mixing board, without leaving it)
       playSong(stay) {
@@ -8631,16 +9416,32 @@
         if (stay) this.mixPlay = true; else this.mode = 'play';
       },
       // ---- the menu
+      // (the song's settings, then the tools, then the files; it scrolls)
       menuItems() {
         const sg = this.song, s = G.state, mixName = s.mixtape != null && s.songs && s.songs[s.mixtape] ? s.songs[s.mixtape].name : 'OFF';
+        const K = SONG_KEYS[sg.key] || SONG_KEYS[0], n = G.sayable(this.sel + 1), tr = sg.tracks[this.sel], drum = DRUM_INST[tr.inst || this.have()[0]], mv = sg.master == null ? 3 : sg.master;
+        const flip = (k) => () => { sg[k] = !sg[k]; };
         return [
-          { label: 'KEY: ' + SONG_KEYS[sg.key].name, adj: (d) => { sg.key = (sg.key + d + SONG_KEYS.length) % SONG_KEYS.length; } },
-          { label: this.metro() ? 'TEMPO: ' + G.sayable(sg.bpm) + ' BPM' : 'TEMPO: (needs a metronome)', adj: (d) => { if (this.metro()) sg.bpm = Math.max(60, Math.min(200, sg.bpm + d * 5)); } },
+          { label: 'KEY: ' + K.name + ' ' + K.kind, adj: (d) => { sg.key = (sg.key + d + SONG_KEYS.length) % SONG_KEYS.length; } },
+          { label: this.metro() ? 'TEMPO: ' + G.sayable(sg.bpm) + ' BPM' : 'TEMPO: (needs a metronome)', adj: (d) => { if (this.metro()) { sg.bpm = Math.max(60, Math.min(200, sg.bpm + d * 5)); mixAll(sg); } } },
+          { label: 'TIME: ' + (bpbOf(sg) === 3 ? '3/4 (A WALTZ)' : '4/4'), adj: () => { sg.bpb = bpbOf(sg) === 3 ? 4 : 3; mixAll(sg); }, act: () => { sg.bpb = bpbOf(sg) === 3 ? 4 : 3; mixAll(sg); } },
+          { label: 'SWING: ' + (sg.swing ? 'ON' : 'OFF'), adj: flip('swing'), act: flip('swing') },
           { label: this.metro() ? 'CLICK: ' + (sg.click ? 'ON' : 'OFF') : 'CLICK: (needs a metronome)', adj: () => { if (this.metro()) sg.click = !sg.click; }, act: () => { if (this.metro()) sg.click = !sg.click; } },
+          { label: 'QUANTIZE: ' + QUANTS[sg.quant || 0][0], adj: (d) => { sg.quant = ((sg.quant || 0) + d + 3) % 3; } },
+          { label: 'CHORDS: ' + PROGS[sg.prog || 0].name, adj: (d) => { sg.prog = ((sg.prog || 0) + d + PROGS.length) % PROGS.length; } },
+          { label: 'ABE\'S BAND: ' + (sg.band ? 'ON' : 'OFF'), adj: flip('band'), act: flip('band') },
+          { label: 'MASTER VOLUME: ' + G.sayable(mv + 1) + ' OF 5', adj: (d) => { sg.master = Math.max(0, Math.min(4, mv + d)); mixAll(sg); } },
+          { label: 'PUNCH-IN ON TRACK ' + n, act: () => this.startPunch() },
+          { label: 'OVERDUB ON TRACK ' + n, act: () => this.startOverdub() },
+          { label: drum ? 'STEP SEQUENCER ON TRACK ' + n : 'STEP SEQUENCER (DRUM TRACKS)', act: () => this.openSteps() },
+          { label: 'EDIT NOTES ON TRACK ' + n, act: () => this.openEdit() },
+          { label: 'SONG SECTIONS', act: () => this.openSections() },
+          { label: 'QUANTIZE TRACK ' + n + ' NOW', act: () => this.quantizeNow() },
+          { label: this.undoSnap ? 'UNDO THE ' + this.undoSnap.label : 'UNDO (NOTHING YET)', act: () => { this.mode = 'nav'; this.undo(); } },
           { label: 'SAVE SONG', act: () => { this.mode = 'name'; this.typed = sg.name === 'UNTITLED' ? 'SONG ' + (songsSaved().length + 1) : sg.name; } },
           { label: 'LOAD SONG', act: () => this.openPick('load') },
           { label: 'PLAY IN GAME: ' + mixName, act: () => this.openPick('mix') },
-          { label: 'CLEAR TRACK ' + G.sayable(this.sel + 1), act: () => { const tr = sg.tracks[this.sel]; if (!tr.ev.length) { this.mode = 'nav'; this.say('That track\'s already empty.'); return; } this.confirm('Clear track ' + G.sayable(this.sel + 1) + '? Every note on it goes.', () => { tr.ev = []; tr.mute = false; if (sg.tracks.every((x) => !x.ev.length)) sg.len = 0; this.rebin(); this.say('Track cleared.'); }, 'menu'); } },
+          { label: 'CLEAR TRACK ' + G.sayable(this.sel + 1), act: () => { const tr = sg.tracks[this.sel]; if (!tr.ev.length) { this.mode = 'nav'; this.say('That track\'s already empty.'); return; } this.confirm('Clear track ' + G.sayable(this.sel + 1) + '? Every note on it goes. (Undo brings it back.)', () => { this.snap('CLEAR'); tr.ev = []; tr.steps = undefined; tr.mute = false; if (sg.tracks.every((x) => !x.ev.length)) sg.len = 0; this.rebin(); this.say('Track cleared.'); }, 'menu'); } },
           { label: 'NEW SONG', act: () => this.confirm('Start a new song? (Save this one first if you want it.)', () => { G.state.studio = newSong(); this.song = G.state.studio; this.song.tracks[0].inst = this.have()[0]; this.sel = 0; this.rebin(); this.say('A blank song.'); }, 'menu') },
           { label: 'LEAVE THE STUDIO', act: () => this.done() },
         ];
@@ -8649,6 +9450,7 @@
         const items = this.menuItems(), it = items[this.menuSel];
         if (c === 'ArrowUp') this.menuSel = (this.menuSel + items.length - 1) % items.length;
         else if (c === 'ArrowDown') this.menuSel = (this.menuSel + 1) % items.length;
+        else if (c === 'Enter' && !it.act && it.adj) it.adj(1);
         else if ((c === 'ArrowLeft' || c === 'ArrowRight') && it.adj) it.adj(c === 'ArrowLeft' ? -1 : 1);
         else if ((c === 'KeyZ' || c === 'Enter') && it.act) { G.audio.sfx('select'); it.act(); return true; }
         else if (c === 'KeyX' || c === 'Escape' || c === 'Backspace') { this.mode = 'nav'; G.audio.sfx('cancel'); return true; }
@@ -8721,7 +9523,8 @@
         if (this.mode === 'count' && this.clock() >= this.start0) this.mode = 'rec';
         if (this.mode === 'rec') {
           const pos = this.clock() - this.start0, len = this.lenS();
-          if ((len && pos >= len) || pos >= MAX_LEN) this.endTake(true);
+          if (this.recKind === 'over') { if (pos >= this.passes * len - 0.35) { if (this.passes >= 30) this.endTake(true); else { this.schedulePass(this.passes); this.passes++; } } }
+          else if ((len && pos >= len) || pos >= MAX_LEN) this.endTake(true);
         }
         if (this.mode === 'play' && this.clock() - this.start0 >= this.lenS() + 0.3) { this.stopPlayers(); this.mode = 'nav'; }
         if (this.mixPlay && this.clock() - this.start0 >= this.lenS() + 0.3) { this.stopPlayers(); this.mixPlay = false; }
@@ -8733,12 +9536,15 @@
       draw(ctx) {
         const sg = this.song, m = this.mode, rec = m === 'rec' || m === 'count', pos = this.clock() - this.start0;
         const live = rec || m === 'ready';
-        const right = SONG_KEYS[sg.key].name + (this.metro() ? '  ' + G.sayable(sg.bpm) + ' BPM' : '') + '  ' + (sg.len ? mmss(sg.len / 1000) : '-:--');
+        const right = (SONG_KEYS[sg.key] || SONG_KEYS[0]).name + (bpbOf(sg) === 3 ? '  3/4' : '') + (this.metro() ? '  ' + G.sayable(sg.bpm) + ' BPM' : '') + '  ' + (sg.len ? mmss(sg.len / 1000) : '-:--');
         studioBack(ctx, 'STUDIO B: ' + sg.name, right);
         if (rec && (this.t >> 4) & 1) { ctx.fillStyle = '#f83838'; ctx.fillRect(G.W - 6 - FT().width(right) - 10, 3, 6, 6); }
         if (live && m !== 'pedal') this.drawLive(ctx, pos);
         else if (m === 'mix') this.drawMixer(ctx, pos);
         else if (m === 'pedal') this.drawPedal(ctx, pos);
+        else if (m === 'steps') this.drawSteps(ctx);
+        else if (m === 'edit') this.drawEdit(ctx, pos);
+        else if (m === 'sections') this.drawSections(ctx, pos);
         else this.drawConsole(ctx, pos);
         if (m === 'menu') this.drawMenu(ctx);
         if (m === 'name') this.drawName(ctx);
@@ -8758,7 +9564,7 @@
           if (tr.inst) {
             // (a drum shrunk to fit; a little guitar, lying down, in its color)
             const it = G.INSTRUMENTS.find((x) => x.id === tr.inst), img = it.art();
-            if (it.drum) { const k = Math.min(9 / img.height, 12 / img.width); ctx.drawImage(img, 22, y + 1, Math.round(img.width * k), Math.round(img.height * k)); }
+            if (it.drum || it.flat) { const k = Math.min(9 / img.height, 12 / img.width); ctx.drawImage(img, 22 + Math.round((12 - img.width * k) / 2), y + 1, Math.round(img.width * k), Math.round(img.height * k)); }
             else if (it.keys) { ctx.fillStyle = '#1c1424'; ctx.fillRect(21, y + 2, 13, 7); ctx.fillStyle = STUDIO_COL[tr.inst]; ctx.fillRect(22, y + 3, 11, 2); ctx.fillStyle = '#f4f0e4'; ctx.fillRect(22, y + 5, 11, 3); ctx.fillStyle = '#1c1424'; for (const x of [23, 25, 28, 30]) ctx.fillRect(x, y + 5, 1, 2); }
             else if (it.bow) { ctx.fillStyle = '#1c1424'; ctx.fillRect(21, y + 2, 9, 7); ctx.fillRect(29, y + 4, 5, 3); ctx.fillStyle = STUDIO_COL[tr.inst]; ctx.fillRect(22, y + 3, 7, 5); ctx.fillStyle = '#1c1424'; ctx.fillRect(24, y + 5, 3, 1); ctx.fillStyle = '#6a3a1a'; ctx.fillRect(29, y + 5, 4, 1); }
             else if (it.wind) { ctx.fillStyle = '#1c1424'; ctx.fillRect(21, y + 3, 13, 5); ctx.fillStyle = STUDIO_COL[tr.inst]; ctx.fillRect(22, y + 4, 11, 3); ctx.fillStyle = '#2a2a30'; for (const x of [24, 27, 29, 31]) ctx.fillRect(x, y + 5, 1, 1); }
@@ -8789,7 +9595,7 @@
           const line = this.msgT > 0 ? this.msg : 'TRACK ' + G.sayable(this.sel + 1) + ': ' + (inst ? inst.name.replace('Abe\'s ', '') : 'no instrument') + (tr.ev.length ? '  (' + G.sayable(tr.ev.length) + ' notes)' : '  ←→ instrument');
           FT().wrap(line, 228).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 6, 115 + k * 9, this.msgT > 0 ? '#f8d850' : '#f8f8f0'));
           FT().draw(ctx, 'Z record  C play  V mute  -+ vol  B mixer', 6, 136, '#9890a8');
-          FT().draw(ctx, 'ENTER menu  X leave  (letter keys: try it)', 6, 146, '#9890a8');
+          FT().draw(ctx, 'ENTER menu & tools  CTRL+Z undo  X leave', 6, 146, '#9890a8');
         }
       },
       // While a take records: Nate in the live room, playing it. Foam on the walls, a wood floor and a
@@ -8810,33 +9616,42 @@
         // Nate, three times size, with the instrument
         const nate = (G.nateSprites ? G.nateSprites() : G.sprites.nate).down[0], k = 3, bob = this.hitT > 3 ? 2 : 0, jolt = this.hitT > 4 ? 1 : 0;
         const nx = 120 - (nate.width * k) / 2, ny = FLOOR - nate.height * k - bob, img = it.art();
-        if (!it.drum && !it.wind && !it.bow && it.id !== 'upright') { const amp = G.spr.vibroAmp; ctx.drawImage(amp, 160, FLOOR - amp.height); }
+        if (!it.drum && !it.wind && !it.bow && !it.horn && !it.flat && it.id !== 'upright') { const amp = G.spr.vibroAmp; ctx.drawImage(amp, 160, FLOOR - amp.height); }
         ctx.drawImage(nate, Math.round(nx), Math.round(ny), nate.width * k, nate.height * k);
         if (it.wind) {
           // a flute, held out to his right at his mouth
           ctx.save(); ctx.translate(nx + 22, ny + 26 + jolt); ctx.rotate(-Math.PI / 2 + 0.1); ctx.drawImage(img, -img.width * 1.3, 0, img.width * 1.3, img.height * 1.3); ctx.restore();
         } else if (it.bow) {
-          // the violin under his chin (the bow saws while a note's sounding)
-          violinHold(ctx, nx + 33, ny + 37 + jolt, 0.75, this.hitT > 0 || Object.keys(this.voices).length ? Math.sin(this.t * 0.2) : 0);
+          // the violin under his chin (the bow saws while a note's sounding); a cello or the bass on the floor beside him
+          const saw = this.hitT > 0 || Object.keys(this.voices).length ? Math.sin(this.t * 0.2) : 0;
+          if (it.bow === 'violin') violinHold(ctx, nx + 33, ny + 37 + jolt, 0.75, saw);
+          else standHold(ctx, img, nx + 58, FLOOR + 1, it.bow === 'cello' ? 1.05 : 1, it.bow === 'cello' ? saw : null);
+        } else if (it.horn) {
+          // a horn at his mouth (or the theremin in front of him, his hand over it)
+          hornHold(ctx, it.horn, img, nx + 26, ny + 26 + jolt, FLOOR + 1, { trumpet: 1.2, trombone: 1, sax: 1.2, kazoo: 1.6, theremin: 1.3 }[it.horn], Object.keys(this.lit).length ? Math.floor(this.t / 6) % 4 : 0);
+        } else if (it.id === 'mic') {
+          // the mic on its stand, in front of him at mouth height
+          const k2 = (FLOOR - ny - 24) / img.height; ctx.drawImage(img, Math.round(nx + 36), Math.round(FLOOR - img.height * k2), Math.round(img.width * k2), Math.round(img.height * k2));
         } else if (!it.drum && !it.keys) {
           // a guitar slung across him (and a little flash where he strums)
           ctx.save(); ctx.translate(nx + 24, ny + 54); ctx.rotate(-1.1 + jolt * 0.05); ctx.drawImage(img, -9, -27, 18, 55); ctx.restore();
           if (this.hitT > 3) { ctx.fillStyle = '#fff8c8'; ctx.fillRect(Math.round(nx + 30), Math.round(ny + 52), 3, 1); ctx.fillRect(Math.round(nx + 31), Math.round(ny + 51), 1, 3); }
         } else {
           // the drum (or piano) in front of him (it jumps when he hits it)
-          const dk = it.keys ? 1.3 : { bongos: 2, pan: 2, kit: 1.5 }[it.drum], w = img.width * dk, h = img.height * dk;
+          const dk = it.keys ? 1.3 : { bongos: 2, pan: 2, kit: 1.5, machine: 2, cowbell: 2 }[it.drum], w = img.width * dk, h = img.height * dk;
           ctx.drawImage(img, Math.round(120 - w / 2), Math.round(FLOOR + 2 - h + jolt), Math.round(w), Math.round(h));
         }
         // the notes floating up
         for (const f of this.floats) { const x = Math.round(f.x), y = Math.round(f.y); ctx.fillStyle = f.col; ctx.fillRect(x, y + 4, 3, 2); ctx.fillRect(x + 2, y, 1, 5); ctx.fillRect(x + 3, y, 2, 1); }
         // what's going on: the track, the time, how to stop
         FT().draw(ctx, 'TRACK ' + G.sayable(this.recTrack + 1) + ': ' + STUDIO_SHORT[inst], 6, 15, STUDIO_COL[inst], { shadow: '#000' });
-        const ready = this.mode === 'ready', tl = ready ? 'WARMING UP' : this.mode === 'count' ? 'GET READY' : 'REC ' + mmss(pos) + (len ? ' / ' + mmss(len) : '');
+        const ready = this.mode === 'ready', kind = this.recKind, tl = ready ? (kind === 'punch' ? 'WARMING UP: PUNCH-IN' : kind === 'over' ? 'WARMING UP: OVERDUB' : 'WARMING UP') : this.mode === 'count' ? 'GET READY' : kind === 'over' ? 'OVERDUB ' + mmss(this.takeTime()) + '  PASS ' + G.sayable(Math.max(1, Math.floor(pos / len) + 1)) : 'REC ' + mmss(pos) + (len ? ' / ' + mmss(len) : '');
         FT().draw(ctx, tl, G.W - 6 - FT().width(tl), 15, ready ? '#78e070' : this.mode === 'count' ? '#f8d850' : '#f86858', { shadow: '#000' });
         FT().draw(ctx, ready ? 'ENTER record' : 'ENTER stop', 6, 25, '#f8f8f0', { shadow: '#000' }); FT().draw(ctx, ready ? 'BACKSPACE back' : 'BACKSPACE scrap', 6, 34, '#f8f8f0', { shadow: '#000' });
         // the track's pedal, on the floor by his feet (←→ changes it while warming up)
         if (G.state.items.pedals) {
-          const fx = sg.tracks[this.recTrack].fx || null, PCOL = { drive: PEDAL_INFO.drive.col, echo: PEDAL_INFO.echo.col, chorus: PEDAL_INFO.chorus.col, trem: PEDAL_INFO.trem.col }, pd = [fx, pedalName(fx), pedalShort(fx)];
+          const fx = sg.tracks[this.recTrack].fx || null, PCOL = {}, pd = [fx, pedalName(fx), pedalShort(fx)];
+          for (const id of PEDAL_ORDER) PCOL[id] = PEDAL_INFO[id].dark ? '#4a4a56' : PEDAL_INFO[id].col;
           const px = 188, py = FLOOR - 14;
           ctx.fillStyle = '#1c1424'; ctx.fillRect(px - 1, py - 1, 16, 15);
           ctx.fillStyle = fx ? PCOL[fx] : '#4a4258'; ctx.fillRect(px, py, 14, 13);
@@ -8847,13 +9662,25 @@
           FT().draw(ctx, pd[2], px + 7 - Math.round(FT().width(pd[2]) / 2), py - 10, fx ? PCOL[fx] : '#9890a8', { shadow: '#000' });
           if (ready) FT().draw(ctx, '←→ pedal: ' + pd[1] + (fx ? '   ↑ knobs' : ''), 6, 43, '#f8d850', { shadow: '#000' });
         }
+        // the synth's FILTER, or what the mic sings (- + changes it, even mid-take); the chord, with CHORDS on
+        const P = PARAMS[inst];
+        if (P) FT().draw(ctx, '- + ' + P.name + ': ' + P.show(this.paramOf(sg.tracks[this.recTrack], inst)), 6, 52, '#78c8f8', { shadow: '#000' });
+        const C = chordAt(sg, this.songTime());
+        if (C) { const ct = 'CHORD: ' + C.name; FT().draw(ctx, ct, G.W - 6 - FT().width(ct), 25, '#78e070', { shadow: '#000' }); }
+        // punching in: where it's at
+        if (kind === 'punch' && !ready) {
+          const Pn = this.punch, pt = Pn.in == null ? 'SPACE: PUNCH IN' : Pn.out == null ? 'PUNCHED IN!  SPACE: PUNCH OUT' : 'PUNCHED OUT';
+          FT().draw(ctx, pt, 120 - Math.round(FT().width(pt) / 2), 92, Pn.in == null ? '#f8d850' : Pn.out == null ? '#f86858' : '#9890a8', { shadow: '#000' });
+        }
+        if (kind === 'over' && this.mode === 'rec') { const ot = 'Every time around adds on top. ENTER stops.'; FT().draw(ctx, ot, 120 - Math.round(FT().width(ot) / 2), 92, '#f8f8f0', { shadow: '#000' }); }
         if (ready) {
           // play along until you're ready (and the metronome's beat, flashing)
-          const msg = 'Play along. Nothing\'s recording yet.', w = FT().width(msg);
+          const msg = kind === 'punch' ? 'Once the take starts, SPACE punches in.' : kind === 'over' ? 'Overdub: it loops, and every pass adds on.' : 'Play along. Nothing\'s recording yet.', w = FT().width(msg);
           FT().draw(ctx, msg, 120 - Math.round(w / 2), 92, '#f8f8f0', { shadow: '#000' });
           if (this.metroOn) {
-            const beat = 60 / sg.bpm, b = (this.clock() - this.readyT0) / beat, on = b >= 0 && b - Math.floor(b) < 0.25;
-            for (let k = 0; k < 4; k++) { ctx.fillStyle = on && Math.floor(b) % 4 === k ? (k ? '#f8d850' : '#f86858') : '#3e3460'; ctx.fillRect(G.W - 38 + k * 8, 40, 6, 6); }
+            const beat = beatSec(sg), b = (this.clock() - this.readyT0) / beat, on = b >= 0 && b - Math.floor(b) < 0.25;
+            const bpb = bpbOf(sg);
+            for (let k = 0; k < bpb; k++) { ctx.fillStyle = on && Math.floor(b) % bpb === k ? (k ? '#f8d850' : '#f86858') : '#3e3460'; ctx.fillRect(G.W - 6 - bpb * 8 + k * 8, 40, 6, 6); }
           }
         }
         // the take so far, along a timeline
@@ -8866,7 +9693,7 @@
           if (held && held > 900) ctx.fillRect(x, 107, Math.max(1, Math.floor((held / 1000 / L) * G.W)), 2);
         }
         if (this.mode === 'rec' && pos >= 0) { ctx.fillStyle = '#f86858'; ctx.fillRect(Math.min(G.W - 1, Math.floor((pos / L) * G.W)), 104, 1, 8); }
-        if (this.mode === 'ready') { const t2 = len ? 'Song: ' + mmss(len) + '. The take starts at the top.' : 'This first take sets the song\'s length.'; FT().draw(ctx, t2, 120 - Math.round(FT().width(t2) / 2), 104, '#9890a8'); }
+        if (this.mode === 'ready' && kind === 'take') { const t2 = len ? 'Song: ' + mmss(len) + '. The take starts at the top.' : 'This first take sets the song\'s length.'; FT().draw(ctx, t2, 120 - Math.round(FT().width(t2) / 2), 104, '#9890a8'); }
         ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 112, G.W, 48);
         this.drawKeys(ctx);
         // the count-in
@@ -8897,7 +9724,7 @@
           FT().draw(ctx, 'NO PEDAL', 120 - Math.round(FT().width('NO PEDAL') / 2), 50, '#c8c0d8', { shadow: '#000' });
           FT().wrap('Straight from the instrument into the board. ↑↓ steps on a pedal.', 84).forEach((l, k) => FT().draw(ctx, l, 120 - Math.round(FT().width(l) / 2), 80 + k * 9, '#9890a8'));
         } else {
-          const col = info.col, light = fx === 'echo', ink = '#1c1424', X0 = 76, Y0 = 18, W = 88, H = 106;
+          const col = info.col, light = fx === 'echo', ink = '#1c1424', lab2 = info.dark ? '#c8c0d8' : ink, X0 = 76, Y0 = 18, W = 88, H = 106;
           // the box: a shadow, the body (a lighter top edge, a darker bottom and right), screws in the corners
           ctx.fillStyle = 'rgba(0,0,0,0.35)'; ctx.fillRect(X0 + 3, Y0 + 4, W, H);
           ctx.fillStyle = ink; ctx.fillRect(X0 - 1, Y0 + 1, W + 2, H - 2); ctx.fillRect(X0 + 1, Y0 - 1, W - 2, H + 2);
@@ -8912,39 +9739,40 @@
           const k = pedalKnobs(tr, fx), nk = info.knobs.length, gap = nk === 3 ? 24 : 30;
           info.knobs.forEach(([lab], i) => {
             const kx = 120 + Math.round((i - (nk - 1) / 2) * gap), ky = Y0 + 17, on = i === this.knob, a = -2.4 + (k[i] / 10) * 4.8, ly = ky + (nk === 3 && i === 1 ? 21 : 12);
-            for (const t of [0, 5, 10]) { const ta = -2.4 + (t / 10) * 4.8; ctx.fillStyle = ink; ctx.fillRect(Math.round(kx + Math.sin(ta) * 11), Math.round(ky - Math.cos(ta) * 11), 1, 1); }
+            for (const t of [0, 5, 10]) { const ta = -2.4 + (t / 10) * 4.8; ctx.fillStyle = lab2; ctx.fillRect(Math.round(kx + Math.sin(ta) * 11), Math.round(ky - Math.cos(ta) * 11), 1, 1); }
             if (on) { disc(kx, ky, 10, '#f8d850'); disc(kx, ky, 9, col); }
             disc(kx, ky, 8, ink); disc(kx, ky, 7, '#2a2a30'); disc(kx, ky - 1, 5, '#3e3e48'); disc(kx, ky - 1, 4, '#4a4a56');
             ctx.fillStyle = '#f8f8f0'; for (let r = 1; r <= 6; r++) ctx.fillRect(Math.round(kx + Math.sin(a) * r), Math.round(ky - Math.cos(a) * r), 1, 1);
-            FT().draw(ctx, lab, kx - Math.round(FT().width(lab) / 2), ly, on && !light ? '#fff8c8' : ink);
-            if (on) { ctx.fillStyle = ink; ctx.fillRect(kx - Math.round(FT().width(lab) / 2), ly + 8, FT().width(lab), 1); }
+            FT().draw(ctx, lab, kx - Math.round(FT().width(lab) / 2), ly, on && !light ? '#fff8c8' : lab2);
+            if (on) { ctx.fillStyle = lab2; ctx.fillRect(kx - Math.round(FT().width(lab) / 2), ly + 8, FT().width(lab), 1); }
           });
           // the LED (on: the pedal's stepped on), the name band, and the footswitch
           const L = Y0 + (nk === 3 ? 53 : 47);
           disc(120, L, 5, 'rgba(255,64,64,0.3)');
           disc(120, L, 3, '#3a1010'); disc(120, L, 2, '#ff4040'); ctx.fillStyle = '#ffc0c0'; ctx.fillRect(119, L - 1, 1, 1);
           ctx.fillStyle = ink; ctx.fillRect(X0 + 6, L + 7, W - 12, 15);
-          FT().draw(ctx, info.name, 120 - Math.round(FT().width(info.name) / 2), L + 11, col);
-          FT().draw(ctx, 'ABE', X0 + W - 8 - FT().width('ABE'), Y0 + H - 12, ink);
+          FT().draw(ctx, info.name, 120 - Math.round(FT().width(info.name) / 2), L + 11, info.dark ? '#f8f8f0' : col);
+          FT().draw(ctx, 'ABE', X0 + W - 8 - FT().width('ABE'), Y0 + H - 12, lab2);
           ctx.fillStyle = 'rgba(0,0,0,0.2)'; ctx.fillRect(X0 + 12, L + 26, W - 24, 24);
           disc(120, L + 38, 8, '#6a6e78'); disc(120, L + 37, 7, '#c8ccd4'); disc(119, L + 36, 4, '#e8ecf4'); disc(120, L + 38, 2, '#8a8e98');
         }
         // left: the knob you're on
         if (info) {
-          const [lab, about] = info.knobs[this.knob], v = pedalKnobs(tr, fx)[this.knob];
+          const [lab, about, , fmt] = info.knobs[this.knob], v = pedalKnobs(tr, fx)[this.knob];
           FT().draw(ctx, lab, 6, 18, '#f8d850', { shadow: '#000' });
-          FT().draw(ctx, v + ' / 10', 6, 28, '#f8f8f0', { shadow: '#000' });
-          ctx.fillStyle = '#0c0a12'; ctx.fillRect(6, 38, 48, 4); ctx.fillStyle = info.col; ctx.fillRect(6, 38, Math.round(4.8 * v), 4);
+          FT().draw(ctx, fmt ? fmt(v) : v + ' / 10', 6, 28, '#f8f8f0', { shadow: '#000' });
+          ctx.fillStyle = '#0c0a12'; ctx.fillRect(6, 38, 48, 4); ctx.fillStyle = info.dark ? '#9890a8' : info.col; ctx.fillRect(6, 38, Math.round(4.8 * v), 4);
           FT().wrap(about, 60).slice(0, 8).forEach((l, i) => FT().draw(ctx, l, 6, 48 + i * 9, '#c8c0d8', { shadow: '#000' }));
         }
         // right: the pedals
-        FT().draw(ctx, 'PEDALS', 178, 18, '#9890a8', { shadow: '#000' });
+        FT().draw(ctx, 'PEDALS', 178, 15, '#9890a8', { shadow: '#000' });
         [null].concat(PEDAL_ORDER).forEach((id, i) => {
-          const y = 30 + i * 16, own = !id || have.includes(id), on = id === fx;
-          if (on) { ctx.fillStyle = '#3a3058'; ctx.fillRect(174, y - 2, 65, 15); ctx.strokeStyle = '#f8d850'; ctx.strokeRect(174.5, y - 1.5, 64, 14); }
-          ctx.fillStyle = !id ? '#4a4258' : own ? PEDAL_INFO[id].col : '#2a2438'; ctx.fillRect(177, y + 1, 5, 9);
-          FT().draw(ctx, own ? pedalName(id) : '???', 185, y + 1, on ? '#f8d850' : own ? '#f8f8f0' : '#5a4e70');
-          if (!own) FT().draw(ctx, 'at ' + PEDAL_INFO[id].at, 210, y + 1, '#5a4e70');
+          const y = 25 + i * 9, own = !id || have.includes(id), on = id === fx;
+          if (on) { ctx.fillStyle = '#3a3058'; ctx.fillRect(174, y - 1, 65, 9); ctx.strokeStyle = '#f8d850'; ctx.strokeRect(174.5, y - 0.5, 64, 8); }
+          ctx.fillStyle = !id ? '#4a4258' : own ? (PEDAL_INFO[id].dark ? '#5a5a66' : PEDAL_INFO[id].col) : '#2a2438'; ctx.fillRect(177, y + 1, 5, 6);
+          const nm = own ? (FT().width(pedalName(id)) > 52 ? pedalShort(id) : pedalName(id)) : '???';
+          FT().draw(ctx, nm, 185, y, on ? '#f8d850' : own ? '#f8f8f0' : '#5a4e70');
+          if (!own) FT().draw(ctx, 'at ' + PEDAL_INFO[id].at, 214, y, '#5a4e70');
         });
         // along the bottom
         const inst = tr.inst || this.have()[0];
@@ -8954,11 +9782,101 @@
         FT().draw(ctx, '↑↓ pedal  ←→ knob  - + turn it  letters: try it', 6, 141, '#9890a8');
         FT().draw(ctx, this.pedalBack === 'mix' ? 'C play the song  X back to the mixer' : 'X back to the warm-up', 6, 150, '#9890a8');
       },
+      // ---- the step sequencer: the drum's sounds down the side, the steps across (a beat is four, shaded
+      // in turn), the hits lit in the drum's color, the step you're on ringed, and the playhead
+      drawSteps(ctx) {
+        const st = this.st, sg = this.song, tr = sg.tracks[st.track], P = tr.steps, inst = tr.inst, names = STEP_SHORT[inst], col = STUDIO_COL[inst];
+        const X0 = 46, cw = Math.floor((G.W - 4 - X0) / P.n), rh = Math.min(14, Math.floor(96 / P.rows.length)), Y0 = 24;
+        ctx.fillStyle = '#211b2c'; ctx.fillRect(0, 13, G.W, 115);
+        FT().draw(ctx, 'STEP SEQUENCER', 4, 15, '#f8d850', { shadow: '#000' });
+        const head = (bpbOf(sg) === 3 ? '3/4' : '4/4') + (sg.swing ? '  SWUNG' : '');
+        FT().draw(ctx, head, G.W - 4 - FT().width(head), 15, '#9890a8');
+        const play = st.playing ? Math.floor((((this.clock() - this.stT0) % barSec(sg)) + barSec(sg)) % barSec(sg) / barSec(sg) * P.n) : -1;
+        P.rows.forEach((row, r) => {
+          const y = Y0 + r * rh;
+          FT().draw(ctx, names[r], 4, y + Math.max(0, (rh - 8) >> 1), r === st.y ? '#f8d850' : '#c8c0d8');
+          for (let x = 0; x < P.n; x++) {
+            const cx = X0 + x * cw, beat = Math.floor(x / 4);
+            ctx.fillStyle = x === play ? '#4a4068' : beat % 2 ? '#2a2238' : '#322a44'; ctx.fillRect(cx, y, cw - 1, rh - 1);
+            if (row[x]) { ctx.fillStyle = col; ctx.fillRect(cx + 1, y + 1, cw - 3, rh - 3); ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(cx + 1, y + 1, cw - 3, 1); }
+          }
+        });
+        ctx.strokeStyle = '#f8d850'; ctx.lineWidth = 1; ctx.strokeRect(X0 + st.x * cw - 0.5, Y0 + st.y * rh - 0.5, cw, rh);
+        for (let k = 0; k < P.n / 4; k++) FT().draw(ctx, G.sayable(k + 1), X0 + k * 4 * cw + 1, Y0 + P.rows.length * rh + 2, '#5a4e70');
+        ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 128, G.W, 32);
+        FT().draw(ctx, this.msgT > 0 ? this.msg : 'TRACK ' + G.sayable(st.track + 1) + ': ' + STUDIO_SHORT[inst] + '  ' + names[st.y] + ', STEP ' + G.sayable(st.x + 1) + (st.playing ? '   PLAYING' : ''), 6, 131, '#f8d850');
+        FT().draw(ctx, '←→ step  ↑↓ sound  Z hit  C play  BKSP clear row', 6, 141, '#9890a8');
+        FT().draw(ctx, 'X done: the pattern fills the whole song', 6, 150, '#9890a8');
+      },
+      // ---- the note editor: two bars (beats and bars marked), the track's notes as bars (high keys up
+      // top; a drum's sounds top to bottom), the one you're on in gold
+      drawEdit(ctx, pos) {
+        const ed = this.ed, sg = this.song, tr = sg.tracks[ed.track], ev = tr.ev, cur = ev[ed.i] || ev[0], bar = barSec(sg), b = beatSec(sg), drum = DRUM_INST[tr.inst];
+        const len = sg.len / 1000, W = 2 * bar, start = Math.max(0, Math.min(Math.max(0, len - W), cur[0] / 1000 - bar * 0.75)), X0 = 30, PW = G.W - 4 - X0, k = PW / W;
+        const rows = drum ? DRUM_ROWS[tr.inst].length : 21, Y0 = 18, RH = drum ? Math.min(14, Math.floor(100 / rows)) : 4;
+        const rowY = (n) => (drum ? Y0 + n * RH : Y0 + (20 - n) * RH + (n < 11 ? 4 : 0));
+        ctx.fillStyle = '#211b2c'; ctx.fillRect(0, 13, G.W, 115);
+        ctx.fillStyle = '#16121e'; ctx.fillRect(X0, Y0 - 2, PW, (drum ? rows * RH : 21 * RH + 4) + 4);
+        for (let t = Math.ceil(start / b - 1e-6) * b; t < start + W; t += b) { const x = Math.round(X0 + (t - start) * k), isBar = Math.abs(t / bar - Math.round(t / bar)) < 1e-4; ctx.fillStyle = isBar ? '#4a4068' : '#2a2238'; ctx.fillRect(x, Y0 - 2, 1, (drum ? rows * RH : 21 * RH + 4) + 4); if (isBar) FT().draw(ctx, G.sayable(Math.round(t / bar) + 1), x + 2, Y0 + (drum ? rows * RH : 21 * RH + 4) + 3, '#5a4e70'); }
+        if (drum) DRUM_ROWS[tr.inst].forEach((nm, r) => FT().draw(ctx, STEP_SHORT[tr.inst][r].slice(0, 5), 2, Y0 + r * RH + Math.max(0, (RH - 8) >> 1), '#9890a8'));
+        else { FT().draw(ctx, 'TOP', 4, rowY(16) - 2, '#9890a8'); FT().draw(ctx, 'HOME', 2, rowY(5) - 2, '#9890a8'); }
+        ev.forEach((x, i) => {
+          const t = x[0] / 1000; if (t < start - 0.5 || t > start + W) return;
+          const x0 = Math.round(X0 + (t - start) * k), w = Math.max(2, Math.round((x[2] && x[2] > 300 ? x[2] / 1000 : 0.12) * k)), y = rowY(x[1]), on = i === ed.i;
+          ctx.fillStyle = on ? '#f8d850' : STUDIO_COL[tr.inst]; ctx.fillRect(Math.max(X0, x0), y, Math.min(w, X0 + PW - x0), drum ? RH - 2 : RH - 1);
+          if (on) { ctx.strokeStyle = '#ffffff'; ctx.strokeRect(x0 - 1.5, y - 1.5, w + 3, (drum ? RH - 2 : RH - 1) + 3); }
+        });
+        if (this.mixPlay && pos >= start && pos <= start + W) { ctx.fillStyle = '#f86858'; ctx.fillRect(Math.round(X0 + (pos - start) * k), Y0 - 2, 1, (drum ? rows * RH : 21 * RH + 4) + 4); }
+        const ct = cur[0] / 1000, barN = Math.floor(ct / bar + 1e-6), beatN = Math.floor((ct - barN * bar) / b + 1e-6);
+        const what = drum ? DRUM_ROWS[tr.inst][cur[1]] : studioLabel(tr.inst, cur[1], sg, ct).txt;
+        ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 128, G.W, 32);
+        FT().draw(ctx, this.msgT > 0 ? this.msg : 'TRACK ' + G.sayable(ed.track + 1) + '  NOTE ' + G.sayable(ed.i + 1) + '/' + G.sayable(ev.length) + '  BAR ' + G.sayable(barN + 1) + ' BEAT ' + G.sayable(beatN + 1) + '  ' + what, 6, 131, '#f8d850');
+        FT().draw(ctx, '←→ note  ↑↓ key  [ ] move  D double  BKSP delete', 6, 141, '#9890a8');
+        FT().draw(ctx, 'Z hear it  C play  X done  (undo: ENTER > UNDO)', 6, 150, '#9890a8');
+      },
+      // ---- song sections: the sections along the top, the bar numbers, a row for each track (a bar
+      // lit where it has notes), the selection, the bar you're on, and the playhead
+      drawSections(ctx, pos) {
+        const sg = this.song, S = this.sec, bar = barSec(sg), bars = Math.max(1, Math.ceil(sg.len / 1000 / bar - 1e-6)), a = Math.min(S.anchor, S.cur), b = Math.max(S.anchor, S.cur);
+        const VIS = Math.min(bars + 1, 24), cw = Math.floor((G.W - 22) / VIS), X0 = 18;
+        S.top = Math.max(0, Math.min(bars + 1 - VIS, Math.max(S.top, S.cur - VIS + 1), S.cur));
+        ctx.fillStyle = '#211b2c'; ctx.fillRect(0, 13, G.W, 115);
+        FT().draw(ctx, 'SONG SECTIONS', 4, 15, '#f8d850', { shadow: '#000' });
+        const head = G.sayable(bars) + ' BARS' + (this.clip ? '  COPIED: ' + G.sayable(this.clip.bars) : '');
+        FT().draw(ctx, head, G.W - 4 - FT().width(head), 15, '#9890a8');
+        const xOf = (i) => X0 + (i - S.top) * cw, vis = (i) => i >= S.top && i < S.top + VIS;
+        for (let i = S.top; i < S.top + VIS; i++) {
+          const x = xOf(i), on = i >= a && i <= b;
+          ctx.fillStyle = on ? '#3a3058' : i >= bars ? '#1a1622' : i % 2 ? '#262034' : '#2c2540'; ctx.fillRect(x, 26, cw - 1, 98);
+          if (i >= bars) FT().draw(ctx, '+', x + Math.round(cw / 2) - 2, 70, '#5a4e70');
+        }
+        for (const sec of sg.sections || []) {
+          const x0 = xOf(Math.max(sec.a, S.top)), x1 = xOf(Math.min(sec.b, S.top + VIS - 1)) + cw - 1;
+          if (sec.b < S.top || sec.a >= S.top + VIS) continue;
+          ctx.fillStyle = SECTION_COL[sec.name]; ctx.fillRect(x0, 27, x1 - x0, 10);
+          const nm = x1 - x0 > FT().width(sec.name) + 2 ? sec.name : sec.name[0];
+          FT().draw(ctx, nm, x0 + 2, 28, '#1c1424');
+        }
+        for (let i = S.top; i < S.top + VIS; i++) if (i % 4 === 0 || VIS < 12) FT().draw(ctx, G.sayable(i + 1), xOf(i) + 1, 39, '#9890a8');
+        sg.tracks.forEach((tr, ti) => {
+          const y = 50 + ti * 9;
+          FT().draw(ctx, G.sayable(ti + 1), 4, y, '#5a4e70');
+          const hit = new Set(tr.ev.map(([ms]) => Math.floor(ms / 1000 / bar + 1e-6)));
+          for (let i = S.top; i < S.top + VIS; i++) if (hit.has(i)) { ctx.fillStyle = tr.mute ? '#4a4258' : STUDIO_COL[tr.inst] || '#9890a8'; ctx.fillRect(xOf(i) + 1, y + 1, cw - 3, 6); }
+        });
+        if (vis(S.cur)) { ctx.strokeStyle = '#f8d850'; ctx.strokeRect(xOf(S.cur) - 0.5, 25.5, cw, 99); }
+        if (this.mixPlay && pos >= 0) { const pb = pos / bar; if (vis(Math.floor(pb))) { ctx.fillStyle = '#f86858'; ctx.fillRect(Math.round(X0 + (pb - S.top) * cw), 26, 1, 98); } }
+        const sec = (sg.sections || []).find((x) => S.cur >= x.a && S.cur <= x.b);
+        ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 128, G.W, 32);
+        FT().draw(ctx, this.msgT > 0 ? this.msg : (b > a ? 'BARS ' + G.sayable(a + 1) + '-' + G.sayable(b + 1) : 'BAR ' + G.sayable(a + 1)) + (sec ? '  (' + sec.name + ')' : '') + (this.mixPlay ? '   PLAYING' : ''), 6, 131, '#f8d850');
+        FT().draw(ctx, '←→ bar  SHIFT ←→ select  L label  C copy  V paste', 6, 141, '#9890a8');
+        FT().draw(ctx, 'BACKSPACE clear  SPACE play  X done', 6, 150, '#9890a8');
+      },
       drawMixer(ctx, pos) {
         const sg = this.song, rows = this.mixRows(), cur = rows[Math.min(this.mixRow, rows.length - 1)], pedals = !!G.state.items.pedals;
-        const CY = { FX: 36, VERB: 49, TONE: 62, PAN: 75, VOL: 85 }, NAME = { FX: 'PEDAL', VERB: 'VERB', TONE: 'TONE', PAN: 'PAN', VOL: 'VOL' };
+        const CY = { FX: 34, VERB: 46, TONE: 58, PAN: 69, FADE: 79, VOL: 88 }, NAME = { FX: 'PEDAL', VERB: 'VERB', TONE: 'TONE', PAN: 'PAN', FADE: 'FADE', VOL: 'VOL' };
         ctx.fillStyle = '#211b2c'; ctx.fillRect(0, 13, G.W, 115);
-        for (const r of ['FX', 'VERB', 'TONE', 'PAN', 'VOL']) {
+        for (const r of ['FX', 'VERB', 'TONE', 'PAN', 'FADE', 'VOL']) {
           if (r === 'FX' && !pedals) continue;
           FT().draw(ctx, NAME[r], 2, r === 'VOL' ? CY.VOL + 14 : CY[r] - 3, r === cur ? '#f8d850' : '#9890a8');
         }
@@ -8977,6 +9895,11 @@
           knob(cx, CY.VERB, tr.verb || 0, 0, 3, on); knob(cx, CY.TONE, tr.tone || 0, -2, 2, on);
           ctx.fillStyle = '#0c0a12'; ctx.fillRect(x0 + 3, CY.PAN, 18, 3); ctx.fillStyle = '#5a4e70'; ctx.fillRect(cx, CY.PAN - 1, 1, 5);
           ctx.fillStyle = '#f8d850'; ctx.fillRect(Math.round(cx + (tr.pan || 0) * 2) - 1, CY.PAN - 1, 3, 5);
+          // (the fade: a ramp up, a ramp down, or both)
+          ctx.fillStyle = '#0c0a12'; ctx.fillRect(x0 + 3, CY.FADE - 3, 18, 7);
+          ctx.fillStyle = tr.fade ? '#78c8f8' : '#3a3448';
+          for (let k = 0; k < 6; k++) { if (tr.fade & 1) ctx.fillRect(x0 + 4 + k, CY.FADE + 2 - Math.floor(k * 0.8), 1, 1 + Math.floor(k * 0.8)); if (tr.fade & 2) ctx.fillRect(x0 + 19 - k, CY.FADE + 2 - Math.floor(k * 0.8), 1, 1 + Math.floor(k * 0.8)); }
+          if (!tr.fade) ctx.fillRect(x0 + 5, CY.FADE, 14, 1);
           // the fader
           ctx.fillStyle = '#0c0a12'; ctx.fillRect(cx - 1, CY.VOL, 3, 36);
           const fy = CY.VOL + 32 - tr.vol * 8;
@@ -8988,10 +9911,11 @@
         const tr = sg.tracks[this.sel], val = {
           VOL: G.sayable(tr.vol + 1) + ' of 5', PAN: !tr.pan ? 'CENTER' : (tr.pan < 0 ? 'LEFT ' : 'RIGHT ') + G.sayable(Math.abs(tr.pan)),
           TONE: ['DARKEST', 'DARK', 'FLAT', 'BRIGHT', 'BRIGHTEST'][(tr.tone || 0) + 2], VERB: ['DRY', 'A LITTLE ROOM', 'A HALL', 'A CATHEDRAL'][tr.verb || 0],
+          FADE: FADES[tr.fade || 0] + (tr.fade ? ' (2 BARS)' : ''),
           FX: pedalName(tr.fx || null) + (tr.fx ? '  (Z: knobs)' : ''),
         }[cur];
         ctx.fillStyle = '#0c0a12'; ctx.fillRect(0, 128, G.W, 32);
-        FT().draw(ctx, 'TRACK ' + G.sayable(this.sel + 1) + '  ' + { VOL: 'VOLUME', PAN: 'PAN', TONE: 'TONE', VERB: 'REVERB', FX: 'PEDAL' }[cur] + ': ' + val, 6, 131, '#f8d850');
+        FT().draw(ctx, 'TRACK ' + G.sayable(this.sel + 1) + '  ' + { VOL: 'VOLUME', PAN: 'PAN', TONE: 'TONE', VERB: 'REVERB', FX: 'PEDAL', FADE: 'FADE' }[cur] + ': ' + val, 6, 131, '#f8d850');
         if (this.mixPlay) FT().draw(ctx, 'PLAYING ' + mmss(pos), G.W - 6 - FT().width('PLAYING ' + mmss(pos)), 131, '#78e070');
         FT().draw(ctx, '←→ track  ↑↓ knob  - + turn  C play  V mute', 6, 141, '#9890a8');
         FT().draw(ctx, (pedals ? 'PEDAL is the top row (Z opens it up).  ' : 'Pedals: Abe has some, at 5 instruments.  ') + 'B back', 6, 150, '#9890a8');
@@ -9005,22 +9929,23 @@
           ctx.fillStyle = on ? '#fff4b0' : '#1e1828'; ctx.fillRect(x + 1, y + 1, 9, 9);
           FT().draw(ctx, lab, x + 6 - Math.round(FT().width(lab) / 2), y + 2, on ? '#1c1424' : '#c8c0d8');
         };
-        if (inst === 'drumkit') {
-          Object.keys(KIT_KEYS).forEach((code, k) => { const x = 6 + (k % 3) * 76, y = 115 + Math.floor(k / 3) * 13; cap(code, x, y); FT().draw(ctx, KIT_NAMES[KIT_KEYS[code]], x + 14, y + 2, '#c8c0d8'); });
-        } else if (inst === 'bongos') {
-          ['KeyA', 'KeyS', 'KeyD', 'KeyF'].forEach((code, k) => cap(code, 6 + k * 12, 115)); FT().draw(ctx, 'LITTLE DRUM (MACHO)', 56, 117, '#c8c0d8');
-          ['KeyH', 'KeyJ', 'KeyK', 'KeyL'].forEach((code, k) => cap(code, 6 + k * 12, 128)); FT().draw(ctx, 'BIG DRUM (HEMBRA)', 56, 130, '#c8c0d8');
+        if (inst === 'drumkit' || inst === 'machine') {
+          Object.keys(KIT_KEYS).forEach((code, k) => { const x = 6 + (k % 3) * 76, y = 115 + Math.floor(k / 3) * 13; cap(code, x, y); FT().draw(ctx, DRUM_ROWS[inst][KIT_KEYS[code]], x + 14, y + 2, '#c8c0d8'); });
+        } else if (inst === 'bongos' || inst === 'cowbell') {
+          ['KeyA', 'KeyS', 'KeyD', 'KeyF'].forEach((code, k) => cap(code, 6 + k * 12, 115)); FT().draw(ctx, DRUM_ROWS[inst][0], 56, 117, '#c8c0d8');
+          ['KeyH', 'KeyJ', 'KeyK', 'KeyL'].forEach((code, k) => cap(code, 6 + k * 12, 128)); FT().draw(ctx, DRUM_ROWS[inst][1], 56, 130, '#c8c0d8');
         } else {
           const TINT = ['#a8a0c0', '#f8f8f0', '#f8d850'], label = (code, x, y) => {
-            const L = studioLabel(inst, studioNote(inst, code), this.song.key);
+            const L = studioLabel(inst, studioNote(inst, code), this.song, this.songTime());
             FT().draw(ctx, L.txt, x + 6 - Math.round(FT().width(L.txt) / 2), y, this.lit[code] ? '#78e070' : TINT[L.oct]);
           };
           // (the top row spaced wider, so a chord's two characters fit under its key)
           TOP_ROW.forEach((code, k) => { cap(code, 6 + k * 15, 113); label(code, 6 + k * 15, 125); });
-          FT().draw(ctx, inst === 'steelpan' || isHigh(inst) ? 'HIGH' : 'CHORDS', 160, 115, '#c8c0d8');
+          FT().draw(ctx, inst === 'steelpan' || isHigh(inst) || SOLO_VOICE[inst] ? 'HIGH' : 'CHORDS', 160, 115, '#c8c0d8');
           HOME_ROW.forEach((code, k) => { cap(code, 6 + k * 12, 135); label(code, 6 + k * 12, 147); });
           FT().draw(ctx, 'NOTES', 140, 137, '#c8c0d8');
-          FT().draw(ctx, SONG_KEYS[this.song.key].name, 140, 147, '#9890a8');
+          const C = chordAt(this.song, this.songTime());
+          FT().draw(ctx, C ? 'ON ' + C.name : (SONG_KEYS[this.song.key] || SONG_KEYS[0]).name, 140, 147, C ? '#78e070' : '#9890a8');
         }
       },
       drawBox(ctx, x, y, w, h, title) {
@@ -9029,13 +9954,20 @@
         if (title) FT().draw(ctx, title, x + 8, y + 6, '#f8d850', { shadow: '#000' });
       },
       drawMenu(ctx) {
-        const items = this.menuItems();
-        this.drawBox(ctx, 40, 14, 160, 22 + items.length * 11, 'MENU');
-        items.forEach((it, k) => {
-          const y = 30 + k * 11, on = k === this.menuSel;
-          FT().draw(ctx, (on ? '> ' : '  ') + it.label, 48, y, on ? '#f8d850' : '#f8f8f0', { shadow: '#000' });
-          if (on && it.adj) FT().draw(ctx, '←→', 182, y, '#9890a8', { shadow: '#000' });
+        const items = this.menuItems(), VIS = 11;
+        this.menuTop = Math.max(0, Math.min(items.length - VIS, Math.max(this.menuTop || 0, this.menuSel - VIS + 1), this.menuSel));
+        this.drawBox(ctx, 16, 6, 208, 22 + VIS * 11 + 4, 'MENU');
+        items.slice(this.menuTop, this.menuTop + VIS).forEach((it, k) => {
+          const i = this.menuTop + k, y = 22 + k * 11, on = i === this.menuSel;
+          // (a line between the song's settings, the tools, and the files)
+          if (i === 9 || i === 16) { ctx.fillStyle = '#3e3460'; ctx.fillRect(24, y - 2, 192, 1); }
+          FT().draw(ctx, (on ? '> ' : '  ') + it.label, 22, y, on ? '#f8d850' : '#f8f8f0', { shadow: '#000' });
+          if (on && it.adj) FT().draw(ctx, '←→', 206, y, '#9890a8', { shadow: '#000' });
         });
+        // (little triangles: more above, more below)
+        const tri = (x, y, up) => { ctx.fillStyle = '#9890a8'; for (let k = 0; k < 3; k++) { const w = up ? 2 * k + 1 : 5 - 2 * k; ctx.fillRect(x + (5 - w) / 2, y + k, w, 1); } };
+        if (this.menuTop > 0) tri(208, 12, true);
+        if (this.menuTop + VIS < items.length) tri(208, 22 + VIS * 11, false);
       },
       drawName(ctx) {
         this.drawBox(ctx, 30, 44, 180, 60, 'NAME YOUR SONG');
@@ -9104,16 +10036,29 @@
     drive: [['Abe', 'Five instruments. FIVE. Okay. You\'re ready for this.'], [null, 'Abe slides a beat-up pedalboard out from under the couch. One green pedal on it, and a LOT of empty Velcro.'], ['Abe', 'My old overdrive. Three knobs: DRIVE is how dirty, TONE is how bright, LEVEL is how loud.']],
     echo: [['Abe', 'Seven instruments! The pedalboard is getting company.'], [null, 'Abe digs a white pedal out of a box of yellow cables.'], ['Abe', 'My delay. E.LEVEL is how loud the echoes are, F.BACK is how many, and D.TIME is how far apart.']],
     chorus: [['Abe', 'Nine. You\'re a one-man band. Here.'], [null, 'Abe hands over a blue pedal with just two knobs.'], ['Abe', 'Chorus. It makes one guitar sound like two. RATE is how fast it swirls, DEPTH is how much.']],
-    trem: [['Abe', 'Eleven instruments. You\'re running out of room in that studio.'], [null, 'Abe peels the last pedal off his own board. A teal one.'], ['Abe', 'Tremolo. Your volume, up and down, fast. WAVE goes from smooth to choppy.']],
+    trem: [['Abe', 'Eleven instruments. You\'re running out of room in that studio.'], [null, 'Abe peels a teal pedal off his own board.'], ['Abe', 'Tremolo. Your volume, up and down, fast. WAVE goes from smooth to choppy.']],
+    fuzz: [['Abe', 'Thirteen. Okay. This one is NOT for beginners.'], [null, 'Abe holds up a beat-up silver pedal like it might go off.'], ['Abe', 'Fuzz. VOLUME, TONE, SUSTAIN. Turn the SUSTAIN up and a note just won\'t quit.']],
+    wah: [['Abe', 'Fifteen instruments. Here. This one talks.'], [null, 'Abe hands over a black pedal.'], ['Abe', 'An auto-wah. Play hard and it goes WAH. SENS is how much, DECAY is how slowly it closes, MANUAL is where it sits.']],
+    octave: [['Abe', 'Seventeen. You\'re making me run out of pedals.'], [null, 'Abe digs a gold pedal out of the couch cushions.'], ['Abe', 'An octave pedal. It adds your note an octave down, and two octaves down. Instant bass player.']],
+    phaser: [['Abe', 'Nineteen! Here. One knob. Even you can\'t mess this one up.'], [null, 'Abe tosses over a little orange pedal with a single knob.'], ['Abe', 'A phaser. SPEED is the whole thing: slow for a big swoosh, fast for a wobble.']],
+    comp: [['Abe', 'Twenty-one. Okay: the boring one. Everybody needs the boring one.'], [null, 'Abe hands over a red pedal with two knobs.'], ['Abe', 'A compressor. It squeezes the loud parts down so every note comes out even. OUTPUT is how loud, SENS is how hard it squeezes.']],
+    looper: [['Abe', 'All twenty-two. You won every single instrument I have.'], [null, 'Abe takes the last pedal off his own board: a purple one.'], ['Abe', 'My looper. Whatever you play comes back around, bar after bar, and you play on top of it. LEVEL and BARS.']],
   };
   const PEDAL_AFTER = {
     drive: [['Abe', 'It works on anything, by the way. Overdrive on bongos. I\'m not going to stop you.'], ['Abe', 'Get two more instruments and I\'ll find you another one. The board\'s got room.', 'last']],
     echo: [['Abe', '...Do you want some yellow cables, while you\'re here? No? Okay. Offer stands.']],
     chorus: [['Abe', 'Put it on the Rhodes. Trust me.']],
     trem: [['Abe', 'Surf rock, Nate. Turn up the RATE and go surf rock.']],
+    fuzz: [['Abe', 'Fuzz on a kazoo would be a crime. Do it anyway.']],
+    wah: [['Abe', 'Wah. Wah. ...Sorry. I do that every time.']],
+    octave: [['Abe', 'Try it on something high. Like a flute. It gets WEIRD.']],
+    phaser: [['Abe', 'Swoooooosh. That\'s the technical term.']],
+    comp: [['Abe', 'You won\'t hear it. You\'ll just sound better. That\'s the trick.']],
+    looper: [['Abe', 'Now go make something. I want to hear it through the wall.']],
   };
   // Abe's news, at the amp: the studio (once Nate has an instrument of his), the metronome (three) and
-  // his old guitar pedals (one every two more instruments; they go on the PEDAL row of the studio's mixer)
+  // his old guitar pedals (one every two more instruments, the looper with the last; they go on the
+  // PEDAL row of the studio's mixer)
   function* abeStudioNews() {
     const f = flags(), s = G.state, n = G.abeInstruments();
     if (n >= 1 && !f.studioTold) {
@@ -9170,7 +10115,7 @@
       w.addProp({ img: sp.williamsCenter, tx: 9, ty: 3, h: 6 });
       w.blockTiles(9, 3, 11, 6);
       w.block[8 * w.w + 14] = 0;
-      w.addWarp(14, 8, 1, 1, 'studioB', 7, 9, 'up');
+      w.addWarp(14, 8, 1, 1, 'studioB', 7, 12, 'up');
       w.add(new G.Sign(12, 9, ['WILLIAMS CENTER FOR THE ARTS', 'Music. Theater. The art gallery. Opened 1983.', 'Downstairs: {y}STUDIO B{/}, the recording studio.']));
       for (const x of [7, 22]) w.addProp({ img: sp.lamppost, tx: x, ty: 9, dx: 2, solid: [x, 9, 1, 1] });
       w.addProp({ img: sp.parkBench, tx: 8, ty: 11, h: 1, solid: [8, 11, 2, 1], hit: [8, 11, 2, 1], talk: look('A bench. Somebody carved a treble clef into it.') });
@@ -9184,7 +10129,9 @@
 
   // Studio B: the console in the middle of the back wall with a monitor on each side, foam on the
   // walls, an ON AIR light, the instruments Nate has won (guitars on stands on the left, the drums,
-  // the violin on the wall, and the keys corner on the right: the pianos and a flute case), a couch, and Rae.
+  // the violin on the wall, the keys corner on the right: the pianos and a flute case; along the bottom,
+  // the cello and the upright bass, the horns on their stands, the synth, the drum machine, the
+  // theremin, a side table with the kazoo and the cowbell), the mic, a couch, and Rae.
   G.MAPS.studioB = {
     name: 'Williams Center: Studio B',
     music: 'house',
@@ -9197,6 +10144,9 @@
       '****rrrrrrr********',
       '****rrrrrrr********',
       '****rrrrrrr********',
+      '*******************',
+      '*******************',
+      '*******************',
       '*******************',
       '*******************',
       'wwwwwwwxwwwwwwwwwww',
@@ -9259,10 +10209,45 @@
         } });
         w.blockTiles(15, 9, 3, 1);
       }
-      F.stand(sp.studioCouch, 1, 9, 3, look('A beat-up purple couch. Every studio has one. Nobody knows where it came from.'));
-      F.stand(sp.monstera, 4, 9, 1, look('A big plant. Rae says it likes jazz.'));
+      // the mic, by the console (it's always here: Nate's voice)
+      F.stand(sp.microphone, 3, 3, 1, look('Studio B\'s mic, with a pop filter. Pick it on a track (←→) and sing: doo, bah, or la.'));
+      // along the bottom: an instrument on its stand (scale k; turned bell-up, for the trumpet and trombone)
+      const onStand = (id, tx, ty, k, rot, text) => {
+        if (!G.instrumentHas(id)) return;
+        const img = G.INSTRUMENTS.find((x) => x.id === id).art(), iw = (rot ? img.height : img.width) * k, ih = (rot ? img.width : img.height) * k;
+        w.props.push({ img: null, x: 0, y: 0, base: ty * 16 + 15, hit: [tx * 16, ty * 16, tx * 16 + 16, ty * 16 + 16], talk: look(text), draw(ctx, cx, cy) {
+          const x = tx * 16 + 8 - cx, y = ty * 16 + 15 - cy;
+          ctx.fillStyle = '#2a2a30'; ctx.fillRect(x - 6, y - 2, 12, 2); ctx.fillRect(x - 1, y - 8, 2, 6);
+          if (rot) { ctx.save(); ctx.translate(Math.round(x - iw / 2), y - 3); ctx.rotate(-Math.PI / 2); ctx.drawImage(img, 0, 0, img.width * k, img.height * k); ctx.restore(); }
+          else ctx.drawImage(img, Math.round(x - iw / 2), Math.round(y - 3 - ih), Math.round(iw), Math.round(ih));
+        } });
+        w.blockTiles(tx, ty, 1, 1);
+      };
+      onStand('cello', 1, 10, 0.5, false, 'Abe\'s cello, on its stand. It comes with a chair. Abe insisted.');
+      onStand('upbass', 3, 10, 0.5, false, 'Abe\'s upright bass. It\'s taller than Rae. Rae has asked people to stop pointing that out.');
+      onStand('trumpet', 9, 11, 1, true, 'Abe\'s trumpet, bell up. Polished. Rae can see her face in it.');
+      onStand('trombone', 10, 11, 1, true, 'Abe\'s trombone, standing on its end. The slide sticks a little. That\'s character.');
+      onStand('sax', 11, 11, 1, false, 'Abe\'s lucky saxophone. It does feel lucky.');
+      if (G.instrumentHas('synth')) F.stand(sp.synth, 12, 11, 3, look('Abe\'s synth. It hums when it\'s plugged in. Rae says that\'s normal. Probably.'));
+      if (G.instrumentHas('theremin')) F.stand(sp.theremin, 17, 11, 2, look('Abe\'s theremin. Nobody touches it. You\'re not supposed to touch it anyway.'));
+      // a little table for the drum machine, and a side table with the kazoo and the cowbell
+      const onTable = (tx, ty, wt, items, text) => {
+        w.props.push({ img: null, x: 0, y: 0, base: ty * 16 + 15, hit: [tx * 16, ty * 16, (tx + wt) * 16, ty * 16 + 16], talk: look(text), draw(ctx, cx, cy) {
+          const x = tx * 16 - cx, y = ty * 16 + 15 - cy, tw = wt * 16;
+          ctx.fillStyle = '#4a2a14'; ctx.fillRect(x + 2, y - 10, tw - 4, 3); ctx.fillRect(x + 3, y - 7, 2, 7); ctx.fillRect(x + tw - 5, y - 7, 2, 7);
+          ctx.fillStyle = '#8a5428'; ctx.fillRect(x + 1, y - 12, tw - 2, 3);
+          let ix = x + 3;
+          for (const img of items) { ctx.drawImage(img, ix, y - 12 - img.height); ix += img.width + 2; }
+        } });
+        w.blockTiles(tx, ty, wt, 1);
+      };
+      if (G.instrumentHas('machine')) onTable(15, 11, 2, [sp.drumMachine], 'Abe\'s drum machine. It never rushes, and it never gets tired.');
+      const odd = [['kazoo', sp.kazoo], ['cowbell', sp.cowbell]].filter(([id]) => G.instrumentHas(id)).map(([, img]) => img);
+      if (odd.length) onTable(9, 12, 2, odd, odd.length > 1 ? 'A side table: Abe\'s kazoo and Abe\'s cowbell. Serious instruments.' : 'A side table, for the serious instruments.');
+      F.stand(sp.studioCouch, 1, 12, 3, look('A beat-up purple couch. Every studio has one. Nobody knows where it came from.'));
+      F.stand(sp.monstera, 4, 12, 1, look('A big plant. Rae says it likes jazz.'));
       w.add(new G.NPC({ sprite: 'rae', name: 'Rae', x: 10 * 16 + 8, y: 4 * 16 + 14, dir: 'left', talk: S.rae }));
-      w.addWarp(7, 10, 1, 1, 'arts', 14, 9, 'down');
+      w.addWarp(7, 13, 1, 1, 'arts', 14, 9, 'down');
     },
   };
 

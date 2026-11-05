@@ -9831,7 +9831,7 @@
   function pedalIcon(c, knobs) {
     const p = new Pix(12, 15), D = '#1c1424';
     p.rect(0, 0, 12, 15, c); p.hline(1, 10, 0, '#f8f8f0'); p.vline(11, 1, 14, shade(c, -0.3)); p.hline(0, 11, 14, shade(c, -0.3));
-    (knobs === 2 ? [2, 7] : [1, 5, 9]).forEach((x) => { p.rect(x, 2, 2, 2, D); p.set(x, 2, '#4a4a56'); });
+    (knobs === 1 ? [5] : knobs === 2 ? [2, 7] : [1, 5, 9]).forEach((x) => { p.rect(x, 2, 2, 2, D); p.set(x, 2, '#4a4a56'); });
     p.set(5, 6, '#ff4040'); p.set(6, 6, '#ff4040');
     p.rect(1, 8, 10, 2, D);
     p.rect(4, 11, 4, 2, '#c8ccd4'); p.set(4, 11, '#ffffff');
@@ -10051,6 +10051,128 @@
     p.rect(6, 45, 2, 1, EB);
     p.outline();
     return p.canvas();
+  }
+  // The violin's bigger cousins (upright, the scroll up top), drawn the same way: a scroll and pegbox,
+  // a black fingerboard down the neck onto the body, the body row by row (HW: its half-width at each
+  // row, from the top), f-holes, the strings between the fingerboard and the bridge, a tailpiece, and
+  // the endpin it stands on
+  function bowedBig(o) {
+    const p = new Pix(o.w, o.h), cx = o.w >> 1, [V, VL, VD] = o.varnish, WOOD = '#8a4a1e', EB = '#1c1c22', b0 = o.body, b1 = b0 + o.HW.length;
+    o.HW.forEach((h, j) => { const y = b0 + j; p.hline(cx - h, cx - 1 + h, y, V); p.set(cx - h + 1, y, VL); p.set(cx - 1 + h, y, VD); });
+    for (const [x, y] of [[cx - 1, 0], [cx, 0], [cx - 2, 1], [cx + 1, 1], [cx - 2, 2], [cx + 1, 2], [cx - 1, 3], [cx, 3]]) p.set(x, y, WOOD);
+    p.rect(cx - 2, 4, 4, o.neck - 4, WOOD); p.rect(cx - 1, 5, 2, o.neck - 6, '#2a1408');
+    for (let k = 0; k < 2; k++) { const y = 5 + k * 3; p.set(cx - 3, y, o.pegs); p.set(cx - 4, y, o.pegs); p.set(cx + 2, y + 1, o.pegs); p.set(cx + 3, y + 1, o.pegs); }
+    p.rect(cx - 2, o.neck, 4, b0 - o.neck, '#c8843a'); p.rect(cx - 1, o.neck, 2, b0 - o.neck, EB);
+    const fbEnd = b0 + Math.round(o.HW.length * 0.42);
+    p.rect(cx - 2, b0, 4, fbEnd - b0, EB);
+    const br = b0 + Math.round(o.HW.length * 0.7), fh = b0 + Math.round(o.HW.length * 0.5);
+    p.vline(cx - 1, fbEnd, br, '#c8c8c0'); p.vline(cx, fbEnd, br, '#c8c8c0');
+    for (let k = 0; k < 6; k++) { p.set(cx - o.fx + (k === 0 ? 1 : k === 5 ? -1 : 0), fh + k, '#2a1408'); p.set(cx - 1 + o.fx - (k === 0 ? 1 : k === 5 ? -1 : 0), fh + k, '#2a1408'); }
+    p.hline(cx - 3, cx + 2, br, '#e8d0a0'); p.hline(cx - 4, cx + 3, br + 1, '#e8d0a0');
+    p.rect(cx - 2, br + 3, 4, 4, EB); p.rect(cx - 1, br + 7, 2, 2, EB);
+    p.rect(cx - 1, b1, 2, o.h - b1, '#8a8e98');
+    p.outline();
+    return p.canvas();
+  }
+  // a cello: sitting-down size
+  function cello() {
+    return bowedBig({ w: 18, h: 58, neck: 10, body: 20, pegs: '#1c1424', fx: 5, varnish: ['#a8481a', '#c86a2a', '#7a3010'], HW: [4, 5, 6, 7, 7, 8, 8, 8, 8, 7, 6, 6, 5, 5, 5, 6, 6, 7, 8, 8, 9, 9, 9, 9, 9, 9, 9, 9, 8, 8, 7, 6, 5, 4] });
+  }
+  // an upright bass: taller than Nate, with sloping shoulders and metal tuners
+  function uprightBass() {
+    return bowedBig({ w: 22, h: 74, neck: 12, body: 28, pegs: '#b8bcc4', fx: 6, varnish: ['#7a3412', '#9a4a1e', '#5a2410'], HW: [2, 3, 4, 5, 6, 7, 8, 8, 9, 9, 9, 9, 8, 7, 7, 7, 7, 8, 9, 10, 10, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 10, 10, 9, 8, 7, 6, 5, 4, 3] });
+  }
+  // The horns, in brass (lying sideways, the mouthpiece on the left): a trumpet (three valves with
+  // pearl tops, a loop of tubing, the bell), a trombone (the long slide and its brace, the bell up top),
+  // and an alto sax (standing: the black mouthpiece and neck, the body curving down and up into the
+  // bell, pearl keys down the front)
+  const HORN_BRASS = ['#d8a838', '#f8e088', '#8a6418'];
+  const flare = (p, x0, x1, cy, r0, r1) => { for (let x = x0; x <= x1; x++) { const r = r0 + ((r1 - r0) * (x - x0)) / Math.max(1, x1 - x0); p.vline(x, Math.round(cy - r), Math.round(cy + r), HORN_BRASS[0]); p.set(x, Math.round(cy - r), HORN_BRASS[1]); } };
+  function trumpet() {
+    const p = new Pix(32, 12), [B, BL, BD] = HORN_BRASS;
+    p.rect(0, 5, 3, 2, '#c8ccd4');
+    p.hline(3, 22, 5, B); p.hline(3, 22, 6, BL);
+    p.hline(8, 21, 9, B); p.vline(8, 6, 9, B); p.vline(21, 6, 9, B);
+    for (const x of [11, 14, 17]) { p.rect(x, 2, 2, 8, B); p.vline(x, 2, 9, BL); p.rect(x, 1, 2, 1, '#f4f0e4'); p.rect(x, 10, 2, 1, BD); }
+    flare(p, 22, 31, 5.5, 1, 5.5);
+    return finish(p);
+  }
+  function trombone() {
+    const p = new Pix(46, 14), [B, BL, BD] = HORN_BRASS;
+    p.rect(0, 8, 2, 1, '#c8ccd4');
+    p.hline(2, 44, 8, B); p.hline(2, 44, 11, B); p.hline(2, 44, 8, B); p.vline(45, 8, 11, B); p.hline(3, 43, 8, BL);
+    for (const x of [10, 30]) p.vline(x, 8, 11, BD);
+    p.rect(30, 7, 2, 6, BD);
+    p.hline(4, 21, 3, B); p.vline(4, 3, 8, B); p.hline(5, 21, 2, BL);
+    flare(p, 21, 30, 3, 1, 5);
+    return finish(p);
+  }
+  function sax() {
+    const p = new Pix(18, 36), [B, BL, BD] = HORN_BRASS;
+    p.rect(1, 0, 3, 3, '#1c1c22');
+    for (let k = 0; k < 5; k++) p.rect(3 + k, 2 + k, 2, 2, B);
+    for (let y = 7; y <= 27; y++) { const c = 8 + (y - 7) * 0.05, h = 1.5 + (y - 7) * 0.1; p.hline(Math.round(c - h), Math.round(c + h), y, B); p.set(Math.round(c - h), y, BL); p.set(Math.round(c + h), y, BD); }
+    p.rect(6, 28, 9, 3, B); p.hline(7, 13, 31, BD);
+    for (let y = 16; y <= 29; y++) { const h = 1 + (29 - y) * 0.12; p.hline(Math.round(14 - h), Math.round(14 + h), y, B); }
+    p.hline(10, 17, 15, BL); p.hline(10, 17, 16, B);
+    for (const y of [10, 13, 16, 19, 22, 25]) { p.set(8, y, '#f4f0e4'); p.set(9, y, '#f4f0e4'); }
+    return finish(p);
+  }
+  // A synthesizer: a dark body with colored knobs, a little green screen, a pitch wheel, the keys,
+  // on two thin legs; and a drum machine: a gray box, a red LED display, knobs, and rubber pads
+  function synth() {
+    const p = new Pix(44, 22);
+    p.rect(0, 0, 44, 13, '#2a2440'); p.hline(0, 43, 0, '#4a4060');
+    [['#ff4ad8', 4], ['#4af0f8', 9], ['#f8f04a', 14], ['#f8f8f0', 19]].forEach(([c, x]) => { p.rect(x, 2, 3, 3, c); p.set(x, 2, '#ffffff'); });
+    p.rect(25, 2, 11, 3, '#7ab88a'); p.hline(26, 34, 3, '#4a7a58');
+    p.rect(1, 7, 2, 5, '#8a8e98');
+    pianoKeys(p, 4, 42, 7, 5, 2);
+    p.vline(7, 13, 21, '#5a5a64'); p.vline(36, 13, 21, '#5a5a64'); p.hline(4, 10, 21, '#5a5a64'); p.hline(33, 39, 21, '#5a5a64');
+    return finish(p);
+  }
+  function drumMachine() {
+    const p = new Pix(30, 18);
+    p.rect(0, 2, 30, 16, '#5a5a66'); p.hline(0, 29, 2, '#7a7a86'); p.hline(0, 29, 17, '#3a3a44');
+    p.rect(2, 4, 11, 3, '#2a0c0c'); for (const x of [3, 5, 7, 9]) p.set(x, 5, '#ff4040');
+    for (const x of [17, 21, 25]) { p.rect(x, 4, 2, 2, '#1c1c22'); p.set(x, 4, '#c8ccd4'); }
+    ['#f8f8f0', '#ff6a4a', '#f8d850', '#4af0a8'].forEach((c, i) => { p.rect(2 + i * 7, 9, 5, 3, c); p.rect(2 + i * 7, 13, 5, 3, '#8a8a96'); });
+    return finish(p);
+  }
+  // The novelties: a red plastic kazoo (its silver cap on top), a cowbell (and the stick), and a
+  // theremin (a wooden cabinet on legs, its pitch antenna standing up, its volume loop out the side)
+  function kazoo() {
+    const p = new Pix(16, 6);
+    p.rect(1, 2, 12, 3, '#d83a3a'); p.rect(12, 1, 4, 5, '#d83a3a'); p.hline(1, 15, 2, '#f87a7a'); p.hline(1, 15, 4, '#8a1a1a');
+    p.rect(6, 0, 3, 2, '#c8ccd4'); p.set(6, 0, '#ffffff');
+    return finish(p);
+  }
+  function cowbell() {
+    const p = new Pix(14, 16);
+    for (let y = 2; y <= 13; y++) { const h = 2 + Math.round((y - 2) * 0.32); p.hline(7 - h, 6 + h, y, y === 13 ? '#6a5020' : '#c8a850'); p.set(7 - h, y, '#e8d080'); }
+    p.rect(5, 0, 4, 2, '#3a2a10');
+    for (let k = 0; k < 9; k++) p.set(13 - k, 15 - Math.round(k * 0.4), '#e8c890');
+    return finish(p);
+  }
+  function theremin() {
+    const p = new Pix(32, 30);
+    p.rect(2, 12, 24, 9, '#8a5428'); p.hline(2, 25, 12, '#a8703c'); p.hline(2, 25, 20, '#4a2a14');
+    p.rect(6, 15, 4, 2, '#1c1c22'); p.rect(14, 15, 4, 2, '#1c1c22');
+    p.vline(5, 21, 29, '#4a2a14'); p.vline(22, 21, 29, '#4a2a14');
+    p.vline(28, 0, 17, '#c8ccd4'); p.hline(25, 28, 17, '#c8ccd4');
+    p.vline(0, 9, 14, '#c8ccd4'); p.hline(0, 2, 9, '#c8ccd4'); p.hline(0, 2, 14, '#c8ccd4');
+    return finish(p);
+  }
+  // Studio B's mic: a round grille on a stand with a tripod foot, and a pop filter in front of it
+  function microphone() {
+    const p = new Pix(14, 36);
+    ell(p, 8, 4, 3, 4, '#b8bcc8'); for (const y of [2, 4, 6]) p.hline(6, 10, y, '#8a8e98');
+    p.rect(7, 8, 3, 3, '#2a2a30');
+    for (let y = 1; y <= 9; y++) { p.set(1, y, '#2a2a30'); p.set(4, y, '#2a2a30'); } p.hline(1, 4, 0, '#2a2a30'); p.hline(1, 4, 10, '#2a2a30');
+    for (let y = 1; y <= 9; y += 2) p.hline(2, 3, y, '#5a5a64');
+    p.vline(8, 11, 32, '#5a5a64'); p.vline(9, 11, 32, '#8a8e98');
+    for (let k = 0; k < 4; k++) { p.set(8 - k, 32 + k, '#5a5a64'); p.set(9 + k, 32 + k, '#5a5a64'); }
+    p.vline(8, 33, 35, '#5a5a64');
+    return finish(p);
   }
   function stratocaster() {
     const W = 24, H = 74, p = new Pix(W, H), MAP = '#e8b058', MAPD = '#c08838', DOT = '#2a2018';
@@ -10417,10 +10539,12 @@
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
     S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon(); S.bmfIcon = bmfIcon();
     S.pvcFlute = pvcFlute(); S.silverFlute = silverFlute(); S.violin = violin();
+    S.cello = cello(); S.uprightBass = uprightBass(); S.trumpet = trumpet(); S.trombone = trombone(); S.sax = sax(); S.synth = synth(); S.drumMachine = drumMachine(); S.kazoo = kazoo(); S.cowbell = cowbell(); S.theremin = theremin(); S.microphone = microphone();
     S.uprightPiano = uprightPiano(); S.casioKeyboard = casioKeyboard(); S.rhodesPiano = rhodesPiano();
     S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe(); S.bongos = bongos(); S.steelPan = steelPan(); S.drumKit = drumKit();
     S.williamsCenter = williamsCenter(); S.parkBench = parkBench(); S.arcSculpture = arcSculpture(); S.posterKiosk = posterKiosk(); S.mixingDesk = mixingDesk(); S.studioMonitor = studioMonitor(); S.acousticPanel = acousticPanel(); S.studioCouch = studioCouch(); S.metronomeIcon = metronomeIcon(); S.pedalsIcon = pedalsIcon();
     S.pedal_drive = pedalIcon('#3aa858', 3); S.pedal_echo = pedalIcon('#e0e0d8', 3); S.pedal_chorus = pedalIcon('#5aa8e8', 2); S.pedal_trem = pedalIcon('#2ab0a0', 3);
+    S.pedal_fuzz = pedalIcon('#b8bcc8', 3); S.pedal_wah = pedalIcon('#3a3a44', 3); S.pedal_octave = pedalIcon('#d8c040', 3); S.pedal_phaser = pedalIcon('#f08020', 1); S.pedal_comp = pedalIcon('#d83838', 2); S.pedal_looper = pedalIcon('#7a5ac8', 2);
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
     S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();

@@ -143,7 +143,9 @@ G.audio = (function () {
     const input = ctx.createGain(), post = ctx.createGain(), lo = ctx.createBiquadFilter(), hi = ctx.createBiquadFilter(), vol = ctx.createGain(), send = ctx.createGain();
     const pan = ctx.createStereoPanner ? ctx.createStereoPanner() : ctx.createGain();
     lo.type = 'lowshelf'; lo.frequency.value = 250; hi.type = 'highshelf'; hi.frequency.value = 2500;
-    post.connect(lo); lo.connect(hi); hi.connect(pan); pan.connect(vol); vol.connect(musicBus); vol.connect(send); send.connect(reverb());
+    // (fg: the fade stage, after the fader, so a fade in or out never fights the volume knob)
+    const fg = ctx.createGain();
+    post.connect(lo); lo.connect(hi); hi.connect(pan); pan.connect(vol); vol.connect(fg); fg.connect(musicBus); fg.connect(send); send.connect(reverb());
     let fxNodes = [], fxKind = undefined, fxTune = null;
     // (the pedal sits between the input and the rest; rebuilt when it changes. k: its knobs, 0-10 each;
     // fxTune turns them on the pedal that's already in)
@@ -183,6 +185,44 @@ G.audio = (function () {
         lfo.connect(sq); sq.connect(clip); clip.connect(depth); depth.connect(amp.gain); lfo.start();
         input.connect(amp); amp.connect(post);
         fxTune = ([wave, rate, dep]) => { sq.gain.setTargetAtTime(1 + wave * 0.6, t(), 0.02); lfo.frequency.setTargetAtTime(1 + rate * 0.9, t(), 0.05); const dd = dep * 0.05; amp.gain.setTargetAtTime(1 - dd, t(), 0.02); depth.gain.setTargetAtTime(dd, t(), 0.02); };
+      } else if (kind === 'fuzz') {
+        // VOLUME, TONE, SUSTAIN: a lot of gain into a hard clipper, then a tone control (5/5/7: about as loud as the overdrive)
+        const pre = keep(ctx.createGain()), ws = keep(ctx.createWaveShaper()), hp = keep(ctx.createBiquadFilter()), lp = keep(ctx.createBiquadFilter()), out = keep(ctx.createGain());
+        hp.type = 'highpass'; hp.frequency.value = 90; lp.type = 'lowpass';
+        input.connect(pre); pre.connect(ws); ws.connect(hp); hp.connect(lp); lp.connect(out); out.connect(post);
+        fxTune = ([volume, tone, sustain]) => { pre.gain.setTargetAtTime(3 + sustain * 2.5, t(), 0.02); ws.curve = driveCurve(40 + sustain * 8); lp.frequency.setTargetAtTime(500 + tone * 550, t(), 0.02); out.gain.setTargetAtTime(0.1 + volume * 0.05, t(), 0.02); };
+      } else if (kind === 'wah') {
+        // SENS, DECAY, MANUAL: an auto-wah. An envelope follower (rectify, then smooth) opens a resonant
+        // bandpass as you play; SENS is how far, DECAY how slowly it closes, MANUAL where it rests
+        const bp = keep(ctx.createBiquadFilter()), dry = keep(ctx.createGain()), wet = keep(ctx.createGain()), rect = keep(ctx.createWaveShaper()), sm = keep(ctx.createBiquadFilter()), sens = keep(ctx.createGain());
+        bp.type = 'bandpass'; bp.Q.value = 4; dry.gain.value = 0.25; wet.gain.value = 2.2;
+        const rc = new Float32Array(257); for (let i = 0; i < 257; i++) rc[i] = Math.abs((i / 128) - 1); rect.curve = rc;
+        sm.type = 'lowpass';
+        input.connect(dry); dry.connect(post); input.connect(bp); bp.connect(wet); wet.connect(post);
+        input.connect(rect); rect.connect(sm); sm.connect(sens); sens.connect(bp.frequency);
+        fxTune = ([sn, decay, manual]) => { sens.gain.setTargetAtTime(sn * 900, t(), 0.02); sm.frequency.setTargetAtTime(30 - decay * 2.6, t(), 0.02); bp.frequency.setTargetAtTime(250 + manual * 110, t(), 0.02); };
+      } else if (kind === 'phaser') {
+        // SPEED (its only knob, like the classic orange one): four allpass stages swept by a slow LFO,
+        // mixed back with the dry sound so the notches swoosh up and down
+        const lfo = keep(ctx.createOscillator()), depth = keep(ctx.createGain()), dry = keep(ctx.createGain()), wet = keep(ctx.createGain());
+        dry.gain.value = 0.6; wet.gain.value = 0.6; depth.gain.value = 500; lfo.connect(depth); lfo.start();
+        let last = input;
+        for (let i = 0; i < 4; i++) { const ap = keep(ctx.createBiquadFilter()); ap.type = 'allpass'; ap.frequency.value = 700; ap.Q.value = 0.7; depth.connect(ap.frequency); last.connect(ap); last = ap; }
+        input.connect(dry); dry.connect(post); last.connect(wet); wet.connect(post);
+        fxTune = ([speed]) => { lfo.frequency.setTargetAtTime(0.1 + speed * 0.55, t(), 0.05); };
+      } else if (kind === 'comp') {
+        // OUTPUT, SENSITIVITY: squeezes the loud parts down so everything sits even (and sustains)
+        const cp = keep(ctx.createDynamicsCompressor()), out = keep(ctx.createGain());
+        cp.knee.value = 10; cp.ratio.value = 6; cp.attack.value = 0.003; cp.release.value = 0.2;
+        input.connect(cp); cp.connect(out); out.connect(post);
+        fxTune = ([output, sn]) => { cp.threshold.setTargetAtTime(-8 - sn * 3.5, t(), 0.02); out.gain.setTargetAtTime(0.5 + output * 0.2, t(), 0.02); };
+      } else if (kind === 'looper') {
+        // LOOP LEVEL, BARS (one to four): whatever's played comes back around a whole number of bars
+        // later, again and again, fading slowly; the song's bar length comes in as a third value
+        const d = keep(ctx.createDelay(20)), fb = keep(ctx.createGain()), wet = keep(ctx.createGain());
+        fb.gain.value = 0.9;
+        input.connect(post); input.connect(d); d.connect(fb); fb.connect(d); d.connect(wet); wet.connect(post);
+        fxTune = ([lvl, bars, bar = 2.4]) => { wet.gain.setTargetAtTime(lvl * 0.1, t(), 0.02); d.delayTime.setValueAtTime(Math.min(19.9, (1 + Math.floor(bars / 3.4)) * bar), t()); };
       } else input.connect(post);
       if (fxTune && k) fxTune(k);
     };
@@ -198,11 +238,65 @@ G.audio = (function () {
         if (o.fx !== undefined && (o.fx || null) !== fxKind) pedal(o.fx || null, o.fxk);
         else if (o.fxk && fxTune) fxTune(o.fxk);
       },
+      // a fade on this channel, from one level to another (0-1) starting at audio time `at`; unfade
+      // puts it straight back to full (when the playback stops partway through one)
+      fadeTo(at, from, to, dur) { const g = fg.gain; g.cancelScheduledValues(at); g.setValueAtTime(from, at); g.linearRampToValueAtTime(to, at + Math.max(0.01, dur)); },
+      unfade() { const g = fg.gain, now = ctx.currentTime; g.cancelScheduledValues(now); g.setValueAtTime(1, now); },
     };
   }
   // A held note's way out: the guitars, the steel drum and the flutes return this, a function that
   // fades their last gain node out quickly (now, or at an audio time), for when a held key lets go.
   // (srcs: its oscillators, stopped right after the fade, so a long held note doesn't keep running)
+  // A sustained note (the cello, the horns, the sax, the synth, the kazoo, the theremin, Nate singing):
+  // oscillators (waves: [type, pitch multiple, level]) through a lowpass that can swell open as the
+  // note starts (lp: [start, top, settle], multiples of the pitch; or lpHz in Hz) and optional peaks
+  // (series EQ: [Hz, Q, dB]) or formants (parallel bandpasses: [Hz, Q, level], or [[from], [to]] to
+  // slide between them); an envelope that holds while the note's held; a vibrato that creeps in
+  // (vib: [rate, depth, delay]); a puff of noise at the start (puff: [seconds, level, Hz]); an optional
+  // distortion (drive); an optional slide in from another pitch (from, glide), or partway through to
+  // another (bend). Returns its let-go.
+  function voiceNote(o) {
+    const t = when(o.at), f = N(o.midi), len = Math.max(0.12, o.dur), rg = ctx.createGain(), srcs = [], peak = lv(o.vol);
+    rg.connect(bus());
+    const cap = (x) => Math.min(12000, Math.max(60, x)), lp = ctx.createBiquadFilter(), g = ctx.createGain(), sw = o.swell || 0.05;
+    lp.type = 'lowpass'; lp.Q.value = o.q || 0.7;
+    const [c0, c1, c2] = o.lpHz || o.lp.map((m) => m * f);
+    lp.frequency.setValueAtTime(cap(c0), t); lp.frequency.exponentialRampToValueAtTime(cap(c1), t + sw); lp.frequency.exponentialRampToValueAtTime(cap(c2), t + sw + 0.25);
+    const atk = o.attack || 0.03, rel = o.rel || 0.12, sus = o.sus || 1;
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + atk);
+    if (sus !== 1) g.gain.exponentialRampToValueAtTime(peak * sus, t + atk + 0.2);
+    g.gain.setValueAtTime(peak * sus, t + Math.max(atk + 0.21, len * 0.9)); g.gain.exponentialRampToValueAtTime(0.0001, t + Math.max(atk + 0.22, len) + rel);
+    const vg = ctx.createGain(); vg.gain.value = 0;
+    if (o.vib) {
+      const [rate, depth, delay] = o.vib, v = ctx.createOscillator();
+      v.frequency.value = rate; vg.gain.setValueAtTime(0, t + delay); vg.gain.linearRampToValueAtTime(f * depth, t + delay + 0.3);
+      v.connect(vg); v.start(t); v.stop(t + len + rel + 0.2); srcs.push(v);
+    }
+    for (const [type, mul, lvl] of o.waves) {
+      const osc = ctx.createOscillator(), og = ctx.createGain();
+      osc.type = type; og.gain.value = lvl;
+      if (o.from != null) { osc.frequency.setValueAtTime(N(o.from) * mul, t); osc.frequency.exponentialRampToValueAtTime(f * mul, t + (o.glide || 0.08)); }
+      else osc.frequency.value = f * mul;
+      // (bend: a slide partway through, to another pitch: { midi, after, dur } in seconds)
+      if (o.bend) { osc.frequency.setValueAtTime(f * mul, t + o.bend.after); osc.frequency.exponentialRampToValueAtTime(N(o.bend.midi) * mul, t + o.bend.after + o.bend.dur); }
+      vg.connect(osc.frequency); osc.connect(og); og.connect(lp); osc.start(t); osc.stop(t + len + rel + 0.2); srcs.push(osc);
+    }
+    let tail = lp;
+    if (o.drive) { const ws = ctx.createWaveShaper(); ws.curve = driveCurve(o.drive); tail.connect(ws); tail = ws; }
+    for (const [hz, q, db] of o.peaks || []) { const pk = ctx.createBiquadFilter(); pk.type = 'peaking'; pk.frequency.value = hz; pk.Q.value = q; pk.gain.value = db; tail.connect(pk); tail = pk; }
+    if (o.formants) {
+      const sum = ctx.createGain();
+      for (const fm of o.formants) {
+        const [a, b] = Array.isArray(fm[0]) ? fm : [fm, fm], bp = ctx.createBiquadFilter(), bg = ctx.createGain();
+        bp.type = 'bandpass'; bp.Q.value = a[1]; bp.frequency.setValueAtTime(a[0], t); if (b[0] !== a[0]) bp.frequency.exponentialRampToValueAtTime(b[0], t + 0.09);
+        bg.gain.value = a[2] * 4; tail.connect(bp); bp.connect(bg); bg.connect(sum);
+      }
+      tail = sum;
+    }
+    tail.connect(g); g.connect(rg);
+    if (o.puff) noise(t, o.puff[0], lv(o.puff[1]), rg, o.puff[2]);
+    return letGo(rg, srcs);
+  }
   function letGo(node, srcs = []) {
     let done = false;
     return (at) => {
@@ -577,6 +671,80 @@ G.audio = (function () {
         lp.connect(b1); b1.connect(b2); b2.connect(g); g.connect(rg);
         noise(t, 0.05, lv(vol * 0.18), rg, 3200);
         return letGo(rg, srcs);
+      },
+      // The cello: the violin's big sister, an octave and a fifth down; darker, a slower bow, a wider vibrato
+      cello(midi, dur = 0.6, vol = 0.26, at) {
+        if (!ctx || muted) return;
+        return voiceNote({ midi, dur, vol, at, waves: [['sawtooth', 1, 0.5], ['sawtooth', 1.003, 0.35], ['sawtooth', 0.997, 0.25]], lp: [6, 6, 6], peaks: [[230, 1.2, 6], [1400, 1.5, 3]], attack: 0.12, vib: [5, 0.009, 0.25], puff: [0.06, 0.04, 1800] });
+      },
+      // The upright bass, plucked: a round thump that blooms and fades (held, it rings on a while)
+      upbass(midi, dur = 0.5, vol = 0.34, at) {
+        if (!ctx || muted) return;
+        const t = when(at), f = N(midi), len = Math.max(0.2, dur), rg = ctx.createGain(), lp = ctx.createBiquadFilter(), g = ctx.createGain(), srcs = [], peak = lv(vol);
+        rg.connect(bus());
+        lp.type = 'lowpass'; lp.frequency.setValueAtTime(Math.min(4000, f * 7), t); lp.frequency.exponentialRampToValueAtTime(Math.max(150, f * 2), t + 0.3);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + 0.006); g.gain.exponentialRampToValueAtTime(peak * 0.4, t + 0.25);
+        g.gain.exponentialRampToValueAtTime(peak * (len > 0.9 ? 0.2 : 0.08), t + Math.max(0.3, len * 0.85)); g.gain.exponentialRampToValueAtTime(0.0001, t + len + 0.15);
+        for (const [type, mul, lvl] of [['triangle', 1, 1], ['sine', 2, 0.3], ['sine', 1, 0.6]]) { const o = ctx.createOscillator(), og = ctx.createGain(); o.type = type; o.frequency.value = f * mul; og.gain.value = lvl; o.connect(og); og.connect(lp); o.start(t); o.stop(t + len + 0.2); srcs.push(o); }
+        lp.connect(g); g.connect(rg);
+        noise(t, 0.03, lv(vol * 0.3), rg, 600);
+        return letGo(rg, srcs);
+      },
+      // The horns: a trumpet (a bright blat as the lips buzz), a trombone (darker, and it slides into its
+      // notes: from, a pitch to slide from, or a little scoop up from just under), a sax (a reed: hollow,
+      // breathy, a wide smoky vibrato)
+      trumpet(midi, dur = 0.4, vol = 0.17, at) {
+        if (!ctx || muted) return;
+        return voiceNote({ midi, dur, vol, at, waves: [['sawtooth', 1, 0.6], ['sawtooth', 1.002, 0.3]], lp: [1.5, 9, 5], swell: 0.05, q: 1.4, peaks: [[1300, 1, 4]], attack: 0.03, vib: [5.5, 0.006, 0.3], puff: [0.03, 0.03, 3000] });
+      },
+      trombone(midi, dur = 0.5, vol = 0.22, at, from, bend) {
+        if (!ctx || muted) return;
+        return voiceNote({ midi, dur, vol, at, waves: [['sawtooth', 1, 0.6], ['sawtooth', 1.003, 0.3]], lp: [1.2, 5, 3], swell: 0.08, q: 1.2, attack: 0.05, vib: bend ? null : [5, 0.005, 0.35], from: from != null ? from : midi - 1, glide: from != null ? 0.18 : 0.06, bend, puff: [0.03, 0.025, 1500] });
+      },
+      sax(midi, dur = 0.4, vol = 0.18, at) {
+        if (!ctx || muted) return;
+        const len = Math.max(0.12, dur), r = voiceNote({ midi, dur, vol, at, waves: [['square', 1, 0.35], ['sawtooth', 1, 0.3], ['sawtooth', 2.002, 0.08]], lp: [2, 5, 3.5], swell: 0.05, q: 2, peaks: [[700, 2, 5], [2500, 2, 4]], attack: 0.035, vib: [5, 0.011, 0.2] });
+        noise(when(at), len, lv(vol * 0.06), bus(), 4200);
+        return r;
+      },
+      // The synth: two buzzy saws and a square an octave down through a resonant lowpass; cut (0-10) is its FILTER knob
+      synth(midi, dur = 0.4, vol = 0.13, at, cut = 6) {
+        if (!ctx || muted) return;
+        const hz = 200 * Math.pow(2, cut * 0.55);
+        return voiceNote({ midi, dur, vol, at, waves: [['sawtooth', 1, 0.5], ['sawtooth', 1.006, 0.4], ['square', 0.5, 0.25]], lpHz: [hz * 2, hz * 1.4, hz], swell: 0.04, q: 6, attack: 0.008, rel: 0.1 });
+      },
+      // A kazoo (a hum through a buzzing paper membrane: nasal, fuzzy) and a theremin (a pure, eerie
+      // whistle with a big vibrato that slides from wherever it was: from)
+      kazoo(midi, dur = 0.4, vol = 0.1, at) {
+        if (!ctx || muted) return;
+        return voiceNote({ midi, dur, vol, at, waves: [['sawtooth', 1, 0.6], ['square', 1, 0.2]], lp: [9, 9, 9], drive: 6, peaks: [[1000, 3, 10], [2400, 4, 7]], attack: 0.02, vib: [6, 0.012, 0.1] });
+      },
+      theremin(midi, dur = 0.5, vol = 0.22, at, from) {
+        if (!ctx || muted) return;
+        return voiceNote({ midi, dur, vol, at, waves: [['sine', 1, 0.85], ['sine', 2, 0.05]], lp: [10, 10, 10], attack: 0.1, rel: 0.25, vib: [6.5, 0.018, 0.04], from: from != null ? from : null, glide: 0.16 });
+      },
+      // Nate, singing into Studio B's mic: a buzzy source through vowel formants (a boy's, a little high).
+      // syl: 0 "doo" (a little D click, then oo), 1 "bah" (the lips pop open into ah), 2 "la" (an L
+      // sliding into ah)
+      voice(midi, dur = 0.4, vol = 0.32, at, syl = 0) {
+        if (!ctx || muted) return;
+        const OO = [[340, 7, 1], [950, 9, 0.45], [2400, 12, 0.18]], AH = [[820, 6, 1], [1250, 8, 0.6], [2700, 10, 0.25]], LL = [[380, 7, 1], [1350, 9, 0.5], [2700, 12, 0.2]];
+        const formants = syl === 2 ? LL.map((a, i) => [a, AH[i]]) : syl === 1 ? AH : OO;
+        const r = voiceNote({ midi, dur, vol, at, waves: [['sawtooth', 1, 0.7], ['sawtooth', 1.002, 0.3]], lp: syl === 1 ? [0.6, 6, 6] : [6, 6, 6], swell: 0.03, formants, attack: syl === 2 ? 0.05 : 0.02, vib: [5.2, 0.01, 0.25] });
+        if (syl === 0) noise(when(at), 0.015, lv(vol * 0.25), bus(), 2600);
+        return r;
+      },
+      // the drum machine's own sounds (the boom: a deep kick that drops and rings; a clap; an open hi-hat;
+      // a rimshot) and a cowbell (two square waves through a bandpass; hi: the high one)
+      boom(at) { if (!ctx || muted) return; const t = when(at); tone(150, t, 0.7, 'sine', lv(0.8), bus(), 42); tone(60, t, 0.5, 'sine', lv(0.3), bus(), 40); },
+      clap(at) { if (!ctx || muted) return; const t = when(at); for (const d of [0, 0.011, 0.022]) noise(t + d, 0.02, lv(0.28), bus(), 1300); noise(t + 0.03, 0.16, lv(0.2), bus(), 1100); },
+      openhat(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.32, lv(0.1), bus(), 8000); },
+      rim(at) { if (!ctx || muted) return; const t = when(at); tone(1700, t, 0.03, 'square', lv(0.1), bus()); noise(t, 0.02, lv(0.15), bus(), 3000); },
+      cowbell(hi, at) {
+        if (!ctx || muted) return;
+        const t = when(at), k = hi ? 1.25 : 1, bp = ctx.createBiquadFilter(), g = ctx.createGain();
+        bp.type = 'bandpass'; bp.frequency.value = 2200 * k; bp.Q.value = 1.2; g.gain.value = 2.5; bp.connect(g); g.connect(bus());
+        tone(540 * k, t, 0.28, 'square', lv(0.12), bp); tone(800 * k, t, 0.28, 'square', lv(0.12), bp);
       },
       // Pianos (all three can be held; letting go drops the damper): an upright (a felt hammer on
       // strings: bright, then a quick drop and a long fade, even with the key down), a Casio (a cheap
