@@ -19614,7 +19614,7 @@
     G.audio.sfx('dash');
     yield G.wait(30);
     yield G.bigText('ARMY... SUPLEX!!!', 80, '#68c8ff');
-    G.audio.sfx('explode');
+    G.audio.sfx('boom');
     G.play.shake(24, 3);
     w.burst(9.5 * 16 + 8, 13 * 16, ['#c8c8d8', '#a85ae8', '#f8d850', '#2e8a48'], 40, { speed: 2.4, up: 1.4, g: 0.06, life: 44, size: 2 });
     w.gateDown();
@@ -21125,22 +21125,25 @@
   G.momBoughtAll = () => { const s = G.state, f = s.flags; return !!(s.items.chicken && s.items.andoverKey && f.momHeart); };
   G.eggCoolMax = () => ((G.state.flags.chickenUp || 0) >= 1 ? 24 : 40);
   const GARDEN_PLANTS = {
-    barrel: { name: 'Rain Barrel', cost: 30, cool: 300, hp: 8, art: () => G.spr.rainBarrel, about: 'More water' },
-    snap: { name: 'Snapdragon', cost: 50, cool: 240, hp: 8, art: (o) => G.spr.snapdragon[o ? 1 : 0], about: 'Spits pollen' },
-    rose: { name: 'Rose Bush', cost: 40, cool: 420, hp: 40, art: () => G.spr.roseBush, about: 'Thorns, tough' },
-    marigold: { name: 'Marigold', cost: 55, cool: 480, hp: 8, art: () => G.spr.marigold, about: 'Slows, stops jumps' },
-    hen: { name: 'Henrietta', cost: 100, cool: 480, hp: 8, art: (o) => G.spr.chickens.brown.right[o ? 1 : 0], about: 'Lobs eggs' },
+    barrel: { name: 'Rain Barrel', cost: 30, cool: 280, hp: 8, art: () => G.spr.rainBarrel },
+    snap: { name: 'Snapdragon', cost: 50, cool: 220, hp: 8, art: (o) => G.spr.snapdragon[o ? 1 : 0] },
+    rose: { name: 'Rose Bush', cost: 40, cool: 380, hp: 40, art: () => G.spr.roseBush },
+    pkg: { name: 'Nate\'s Package', cost: 70, cool: 420, hp: 99, art: () => G.spr.gift },
+    marigold: { name: 'Marigold', cost: 55, cool: 440, hp: 8, art: () => G.spr.marigold },
+    hen: { name: 'Henrietta', cost: 100, cool: 440, hp: 8, art: (o) => G.spr.chickens.brown.right[o ? 1 : 0] },
   };
   const GARDEN_ANIMALS = {
-    chicken: { hp: 4, speed: 0.17, bite: 1 },
-    deer: { hp: 7, speed: 0.3, bite: 1 },
-    bear: { hp: 28, speed: 0.11, bite: 3 },
+    chicken: { hp: 4, speed: 0.17, bite: 1, help: 0.11 },
+    deer: { hp: 7, speed: 0.3, bite: 1, help: 0.15 },
+    bear: { hp: 28, speed: 0.11, bite: 3, help: 0.34 },
   };
-  // each wave: [seconds in, who (c, d, b)], and the last one is the big one
+  // each wave: [seconds in, who (c, d, b)], and the last one is the big one. The Long Night makes its
+  // own waves, forever, until something reaches the dahlias
   const GARDEN_NIGHTS = [
-    { name: 'Night 1: Chickens', plants: ['barrel', 'snap', 'rose'], water: 80, waves: [[10, 'c'], [20, 'c'], [29, 'c'], [38, 'cc'], [48, 'cc'], [58, 'ccc'], [70, 'ccc'], [84, 'cccccc']] },
-    { name: 'Night 2: Deer', plants: ['barrel', 'snap', 'rose', 'marigold'], water: 90, waves: [[10, 'cc'], [22, 'd'], [32, 'ccd'], [44, 'dd'], [56, 'cccdd'], [70, 'cccddd'], [86, 'ccccdddd']] },
-    { name: 'Night 3: Bears', plants: ['barrel', 'snap', 'rose', 'marigold', 'hen'], water: 120, boss: true, waves: [[14, 'cc'], [28, 'cd'], [42, 'b'], [56, 'ccdd'], [72, 'bdd'], [88, 'ccbb'], [108, 'cccdddbb']] },
+    { name: 'Night 1: Chickens', plants: ['barrel', 'snap', 'rose', 'pkg'], water: 90, waves: [[6, 'c'], [14, 'c'], [22, 'cc'], [31, 'cc'], [40, 'ccc'], [50, 'ccc'], [60, 'cccc'], [72, 'cccccccc']] },
+    { name: 'Night 2: Deer', plants: ['barrel', 'snap', 'rose', 'pkg', 'marigold'], water: 100, waves: [[6, 'cc'], [16, 'd'], [26, 'ccd'], [36, 'dd'], [47, 'cccdd'], [59, 'ccddd'], [72, 'cccdddd'], [86, 'ccccddddd']] },
+    { name: 'Night 3: Bears', plants: ['barrel', 'snap', 'rose', 'pkg', 'marigold', 'hen'], water: 130, boss: true, waves: [[8, 'cc'], [20, 'cd'], [32, 'b'], [44, 'ccdd'], [58, 'bdd'], [72, 'ccbb'], [88, 'ccdddb'], [104, 'cccdddbb']] },
+    { name: 'The Long Night', plants: ['barrel', 'snap', 'rose', 'pkg', 'marigold', 'hen'], water: 150, endless: true, waves: [] },
   ];
   const GOX = 30, GOY = 27, GCW = 21, GCH = 21, GROWS = 5, GCOLS = 9, GRIGHT = GOX + GCOLS * GCW;
   const DAISY_LINES = [
@@ -21151,9 +21154,17 @@
     [null, 'Daisy chews, slowly, looking right at her. He thumps one back foot, and every chicken on the property hears it.'],
     ['Michelle', 'He is a lot bigger than he looks in that hutch.'],
   ];
+  const STREAKS = [null, null, 'DOUBLE SHOO!', 'TRIPLE SHOO!', 'SHOO-PER!', 'SHOO-NAMI!'];
+  const MOM_YELPS = ['NOT MY DAHLIAS!', 'SHOO! SHOO!', 'Those took me three YEARS!', 'I have a yell and I\'ll use it!', 'Get OUT of there!'];
+  // who turns up when the HELP meter fills, and what they say
+  const GARDEN_HELP = {
+    nate: { line: 'Heads up, Mom! Merry Christmas!' }, dad: { line: 'Do you speak EEENGLISH?!' }, doron: { line: 'ARMY... SUPLEX!' },
+    lily: { line: 'No.' }, abe: { line: 'Anybody want a cable?' }, hannah: { line: 'Everybody breathe.' },
+  };
   function gardenCmd(night) {
     const N = GARDEN_NIGHTS[night], FB = () => G.font, sh = { shadow: '#000' }, KINDS = { c: 'chicken', d: 'deer', b: 'bear' };
     const tileX = (c) => GOX + c * GCW + GCW / 2, rowFeet = (r) => GOY + (r + 1) * GCH - 2;
+    const crew = ['nate', 'dad'].concat(['doron', 'lily', 'abe', 'hannah'].filter((id) => G.state.party.includes(id)));
     return {
       start() {
         const queue = [];
@@ -21162,46 +21173,98 @@
           let row = Math.floor(Math.random() * GROWS);
           if (row === lastRow) row = (row + 2) % GROWS;
           lastRow = row;
-          queue.push({ f: sec * 60 + i * 34, kind: KINDS[ch], row, big: wi === N.waves.length - 1 });
+          queue.push({ f: sec * 60 + i * 30, kind: KINDS[ch], row, big: wi === N.waves.length - 1 });
         }));
         queue.sort((a, b) => a.f - b.f);
-        Object.assign(this, { t: 0, water: N.water, grid: Array.from({ length: GROWS }, () => Array(GCOLS).fill(null)), animals: [], shots: [], eggs: [], pops: [], r: 2, c: 2, sel: 0, cools: {}, yelled: false, yellT: 0, queue, total: queue.length, over: null, endT: 0, boss: null, lines: null, lineT: 0, bigT: 0, bigDone: false, shake: 0 });
+        Object.assign(this, { t: 0, water: N.water, grid: Array.from({ length: GROWS }, () => Array(GCOLS).fill(null)), animals: [], shots: [], eggs: [], pops: [], drops: [], sparks: [], r: 2, c: 2, sel: 1, cools: {}, yelled: false, yellT: 0, ring: 0, queue, total: queue.length || 1, over: null, endT: 0, panel: false, boss: null, lines: null, lineT: 0, bigT: 0, bigDone: false, shake: 0, help: 0, helpI: 0, cut: null, runner: null, streak: 0, streakT: 0, quipT: 200, quip: null, quipS: 0, teeth: 0, shooed: 0, lost: 0, wave: 0 });
         G.play.overlay = this;
         G.audio.play('dahlias');
       },
       pop(x, y, text, col) { this.pops.push({ x, y, text, col, t: 44 }); },
+      spark(x, y, cs, n) { for (let i = 0; i < n; i++) this.sparks.push({ x, y, vx: (Math.random() - 0.5) * 2.4, vy: -0.4 - Math.random() * 1.4, life: 16 + Math.random() * 12, c: cs[i % cs.length] }); },
       add(kind, row, x) {
         const a = GARDEN_ANIMALS[kind];
-        this.animals.push({ kind, row, x: x || GRIGHT + 14, hp: a.hp, max: a.hp, speed: a.speed, bite: a.bite, eat: 0, stun: 0, jump: 0, jumped: false, z: 0, run: false, t: Math.floor(Math.random() * 60), hurt: 0, color: Math.random() < 0.5 ? 'white' : 'brown' });
+        this.animals.push({ kind, row, x: x || GRIGHT + 14, hp: a.hp, max: a.hp, speed: a.speed, bite: a.bite, help: a.help, eat: 0, stun: 0, jump: 0, jumped: false, z: 0, run: false, t: Math.floor(Math.random() * 60), hurt: 0, color: Math.random() < 0.5 ? 'white' : 'brown' });
+      },
+      // a beaten animal runs for it, and leaves something behind to grab
+      shoo(a) {
+        a.run = true; a.jump = 0; a.z = 0;
+        this.shooed++;
+        G.audio.sfx(a.kind === 'chicken' ? 'bawk' : 'poof');
+        this.pop(a.x, rowFeet(a.row) - 22, { chicken: 'BAWK!', deer: 'NOPE!', bear: 'HMPH.' }[a.kind], '#f8f8f0');
+        this.spark(a.x, rowFeet(a.row) - 8, a.kind === 'chicken' ? ['#f8f8f0', '#e8d8b8'] : ['#c8a070', '#a8743c'], 8);
+        this.streak = this.streakT > 0 ? this.streak + 1 : 1; this.streakT = 150;
+        const name = STREAKS[Math.min(this.streak, STREAKS.length - 1)];
+        if (name) { this.pop(120, 58, name, '#f8d850'); this.shake = Math.max(this.shake, 4); G.audio.sfx('pop'); }
+        this.help = Math.min(1, this.help + a.help * (1 + Math.min(this.streak - 1, 3) * 0.4));
+        if (this.help >= 1 && !this.helpAt) { this.helpAt = true; G.audio.sfx('secret'); }
+        const col = Math.max(0, Math.min(GCOLS - 1, Math.floor((a.x - GOX) / GCW)));
+        const kind = a.kind === 'bear' || Math.random() < 0.45 ? 'tooth' : 'water';
+        this.drops.push({ r: a.row, c: col, kind, t: 460, big: a.kind === 'bear' });
       },
       hit(a, dmg) {
         a.hp -= dmg; a.hurt = 8;
-        if (a.hp <= 0 && !a.run) {
-          a.run = true; a.jump = 0; a.z = 0;
-          if (a.kind === 'chicken') G.audio.sfx('bawk'); else G.audio.sfx('poof');
-          this.pop(a.x, rowFeet(a.row) - 22, { chicken: 'BAWK!', deer: 'NOPE!', bear: 'HMPH.' }[a.kind], '#f8f8f0');
-        }
+        this.spark(a.x, rowFeet(a.row) - 10, ['#f8e070', '#fff4c0'], 2);
+        if (a.hp <= 0 && !a.run) this.shoo(a);
       },
       hitBoss(dmg) {
         const b = this.boss;
         if (!b || b.gone || b.intro) return;
         b.hp -= dmg; b.hurt = 8;
-        if (b.hp <= 0) { b.gone = true; this.lines = null; this.over = 'won'; this.endT = 110; G.audio.sfx('fanfare'); this.pop(b.x, rowFeet(b.row) - 44, '*thump*', '#f8f8f0'); }
+        this.spark(b.x, rowFeet(b.row) - 20, ['#f8e070', '#e8e8f0'], 3);
+        if (b.hp <= 0) { b.gone = true; this.lines = null; this.finish('won'); this.pop(b.x, rowFeet(b.row) - 44, '*thump*', '#f8f8f0'); }
+      },
+      finish(how) { if (this.over) return; this.over = how; this.endT = how === 'won' ? 100 : 80; this.shake = how === 'won' ? 0 : 20; G.audio.sfx(how === 'won' ? 'fanfare' : 'no'); },
+      stars() { return this.over !== 'won' ? 0 : 1 + (this.lost <= 3 ? 1 : 0) + (this.yelled ? 0 : 1); },
+      // Z: plant here, or (on something already growing) water it: a burst of everything it does
+      bloom(P, x, y) {
+        if (P.id === 'pkg') { P.t = 1; return; }
+        if (P.bloomT > 0 || P.bloomCool > 0 || this.water < 15) { G.audio.sfx('bump'); this.pop(x, y, P.bloomCool > 0 ? 'Not yet' : 'Not enough water', '#a8d8ff'); return; }
+        this.water -= 15; P.bloomT = 260; P.bloomCool = 620;
+        if (P.id === 'rose') P.hp = P.max;
+        if (P.id === 'barrel') { this.water = Math.min(300, this.water + 40); this.pop(x, y - 8, '+40', '#a8d8ff'); }
+        G.audio.sfx('spray');
+        this.spark(x, y, ['#68c8ff', '#a8e0f8', '#f8f8f0'], 10);
+        this.pop(x, y, 'BLOOM!', '#78e070');
       },
       plant() {
-        const id = N.plants[this.sel], P = GARDEN_PLANTS[id], inp = G.input;
-        if (this.grid[this.r][this.c]) { G.audio.sfx('bump'); return; }
+        const id = N.plants[this.sel], P = GARDEN_PLANTS[id], here = this.grid[this.r][this.c];
+        if (here) { this.bloom(here, tileX(this.c), rowFeet(this.r) - 18); return; }
         if (this.cools[id] > 0 || this.water < P.cost) { G.audio.sfx('bump'); this.pop(tileX(this.c), rowFeet(this.r) - 18, this.water < P.cost ? 'Not enough water' : 'Not ready', '#a8d8ff'); return; }
         this.water -= P.cost; this.cools[id] = P.cool;
-        this.grid[this.r][this.c] = { id, hp: P.hp, max: P.hp, t: 0, wet: 0, open: 0 };
+        this.grid[this.r][this.c] = { id, hp: P.hp, max: P.hp, t: id === 'pkg' ? 110 : 0, wet: 0, open: 0, born: 14, bloomT: 0, bloomCool: 0 };
         G.audio.sfx('select');
+        this.spark(tileX(this.c), rowFeet(this.r), ['#8a6a48', '#6a4e38'], 5);
+      },
+      bang(r, c, dmg) {
+        const x = tileX(c), y = rowFeet(r) - 10;
+        G.audio.sfx('boom'); this.shake = 16;
+        this.ring = 16; this.ringAt = [x, y];
+        this.spark(x, y, ['#f8d850', '#f86858', '#f8f8f0'], 24);
+        this.pop(x, y - 12, 'BANG!', '#f8d850');
+        for (const a of this.animals) if (!a.run && Math.abs(a.row - r) <= 1 && Math.abs(a.x - x) < GCW * 1.6) this.hit(a, dmg);
+        if (this.boss && !this.boss.gone && Math.abs(this.boss.row - r) <= 1 && Math.abs(this.boss.x - x) < GCW * 2) this.hitBoss(dmg);
       },
       yell() {
         if (this.yelled) { G.audio.sfx('bump'); return; }
-        this.yelled = true; this.yellT = 90; this.shake = 24;
+        this.yelled = true; this.yellT = 90; this.shake = 24; this.ring = 20; this.ringAt = [8, rowFeet(this.r) - 14];
         G.audio.sfx('yell');
         for (const a of this.animals) if (!a.run) { a.x = Math.min(GRIGHT + 10, a.x + 54); a.stun = 130; a.eat = 0; a.jump = 0; a.z = 0; }
         if (this.boss && !this.boss.gone) { this.boss.x = Math.min(GRIGHT - 6, this.boss.x + 40); this.boss.stun = 130; }
+      },
+      // C, once the HELP meter is full: the family, one at a time
+      callHelp() {
+        if (this.help < 1) { G.audio.sfx('bump'); return; }
+        const who = crew[this.helpI++ % crew.length], r = this.r, c = this.c;
+        this.help = 0; this.helpAt = false;
+        this.cut = { who, line: GARDEN_HELP[who].line, t: 80 };
+        G.audio.sfx('fanfare');
+        if (who === 'nate') this.bang(r, c, 18);
+        else if (who === 'doron') { this.runner = { who, r, x: -10, sp: 5 }; }
+        else if (who === 'dad') { for (const row of [r - 1, r, r + 1]) if (row >= 0 && row < GROWS) for (let i = 0; i < 9; i++) this.shots.push({ r: row, x: GOX - i * 9, y: rowFeet(row) - 12, letter: 'EEENGLISH'[8 - i], dmg: 3 }); }
+        else if (who === 'lily') { this.yellT = 0; for (const a of this.animals) if (!a.run) a.stun = 260; if (this.boss) this.boss.stun = 200; this.ring = 20; this.ringAt = [120, 80]; }
+        else if (who === 'abe') { for (const a of this.animals) if (!a.run && a.row === r) { a.stun = 240; a.x = Math.min(GRIGHT + 8, a.x + 34); this.pop(a.x, rowFeet(a.row) - 24, 'TRIP!', '#f8d850'); } this.cable = { r, t: 90 }; }
+        else if (who === 'hannah') { for (const row of this.grid) for (const P of row) if (P && P.id !== 'pkg') { P.hp = P.max; P.wet = 0; } for (const a of this.animals) if (!a.run) a.stun = 200; if (this.boss) this.boss.stun = 120; }
       },
       firstIn(row, x) {
         let best = null;
@@ -21214,20 +21277,25 @@
           const P = this.grid[r][c];
           if (!P) continue;
           if (P.open > 0) P.open--;
+          if (P.born > 0) P.born--;
+          if (P.bloomCool > 0) P.bloomCool--;
+          if (P.bloomT > 0) P.bloomT--;
           if (P.wet > 0) { P.wet--; continue; }
-          const x = tileX(c), y = rowFeet(r) - 12, target = this.firstIn(r, x) || this.bossIn(r, x);
+          const x = tileX(c), y = rowFeet(r) - 12, target = this.firstIn(r, x) || this.bossIn(r, x), fast = P.bloomT > 0;
+          if (P.id === 'pkg') { if (--P.t <= 0) { this.grid[r][c] = null; this.bang(r, c, 14); } else if (P.t % 20 === 0) G.audio.sfx('fuse'); continue; }
           if (P.id === 'barrel') { if (++P.t >= 260) { P.t = 0; this.water = Math.min(300, this.water + 15); this.pop(x, y - 8, '+15', '#a8d8ff'); } }
-          else if (P.id === 'snap' && target) { if (++P.t >= 80) { P.t = 0; P.open = 16; this.shots.push({ r, x: x + 8, y }); } }
-          else if (P.id === 'hen' && target) { if (++P.t >= 170) { P.t = 0; P.open = 20; G.audio.sfx('bawk'); this.eggs.push({ r, x0: x, x1: target.x, k: 0, dur: 42 }); } }
+          else if (P.id === 'snap' && target) { if (++P.t >= (fast ? 20 : 80)) { P.t = 0; P.open = 16; this.shots.push({ r, x: x + 8, y, big: fast }); } }
+          else if (P.id === 'hen' && target) { if (++P.t >= (fast ? 50 : 170)) { P.t = 0; P.open = 20; G.audio.sfx('bawk'); this.eggs.push({ r, x0: x, x1: target.x, k: 0, dur: 42 }); } }
         }
       },
       tickShots() {
         for (const s of this.shots) {
-          s.x += 2.2;
+          s.x += s.letter ? 2.8 : 2.2;
+          if (s.x < GOX) continue;
           const a = this.animals.find((q) => q.row === s.r && !q.run && Math.abs(q.x - s.x) < 8 && !(q.jump > 0));
-          if (a) { s.dead = true; this.hit(a, 1); continue; }
+          if (a) { s.dead = true; this.hit(a, s.dmg || (s.big ? 2 : 1)); continue; }
           const b = this.bossIn(s.r, s.x);
-          if (b && Math.abs(b.x - s.x) < 20) { s.dead = true; this.hitBoss(1); }
+          if (b && Math.abs(b.x - s.x) < 20) { s.dead = true; this.hitBoss(s.dmg || (s.big ? 2 : 1)); }
           if (s.x > GRIGHT + 8) s.dead = true;
         }
         this.shots = this.shots.filter((s) => !s.dead);
@@ -21235,6 +21303,7 @@
           if (++e.k < e.dur) continue;
           e.dead = true; G.audio.sfx('hit');
           this.pop(e.x1, rowFeet(e.r) - 16, 'SPLAT!', '#f8e070');
+          this.spark(e.x1, rowFeet(e.r) - 8, ['#f8f4e8', '#f8d040'], 8);
           for (const a of this.animals) if (a.row === e.r && !a.run && Math.abs(a.x - e.x1) < 18) this.hit(a, 3);
           const b = this.bossIn(e.r, 0);
           if (b && Math.abs(b.x - e.x1) < 26) this.hitBoss(3);
@@ -21244,22 +21313,24 @@
       tickAnimals() {
         for (const a of this.animals) {
           a.t++; if (a.hurt > 0) a.hurt--;
-          if (a.run) { a.x += 2.6; continue; }
+          if (a.run) { a.x += 2.6; a.z = Math.abs(Math.sin(a.t * 0.5)) * 5; continue; }
           if (a.stun > 0) { a.stun--; continue; }
-          const col = Math.floor((a.x - 8 - GOX) / GCW), P = col >= 0 && col < GCOLS ? this.grid[a.row][col] : null;
+          const col = Math.floor((a.x - 8 - GOX) / GCW), P = col >= 0 && col < GCOLS ? this.grid[a.row][col] : null, blocked = P && P.id !== 'pkg' ? P : null;
           // marigolds: nothing likes them, deer least of all
           const near = [col - 1, col, col + 1].some((c) => c >= 0 && c < GCOLS && this.grid[a.row][c] && this.grid[a.row][c].id === 'marigold');
+          const mari = near && [col - 1, col, col + 1].some((c) => c >= 0 && c < GCOLS && this.grid[a.row][c] && this.grid[a.row][c].id === 'marigold' && this.grid[a.row][c].bloomT > 0);
           if (a.jump > 0) { a.jump--; a.x -= 0.8; a.z = Math.sin((a.jump / 34) * Math.PI) * 16; if (!a.jump) a.z = 0; continue; }
-          if (a.kind === 'deer' && P && !a.jumped && !near) { a.jumped = true; a.jump = 34; this.pop(a.x, rowFeet(a.row) - 26, 'BOING', '#f8f8f0'); continue; }
-          if (P) {
+          if (a.kind === 'deer' && blocked && !a.jumped && !near) { a.jumped = true; a.jump = 34; this.pop(a.x, rowFeet(a.row) - 26, 'BOING', '#f8f8f0'); continue; }
+          if (blocked) {
             if (++a.eat >= 40) {
-              a.eat = 0; P.hp -= a.bite; P.open = 0;
+              a.eat = 0; blocked.hp -= a.bite; blocked.open = 0;
               G.audio.sfx('blip');
-              if (P.id === 'rose') { this.hit(a, 1); this.pop(a.x - 6, rowFeet(a.row) - 22, 'OW', '#f86858'); }
-              if (P.hp <= 0) { this.grid[a.row][col] = null; G.audio.sfx('poof'); }
+              if (blocked.id === 'rose') { this.hit(a, 1); this.pop(a.x - 6, rowFeet(a.row) - 22, 'OW', '#f86858'); }
+              if (blocked.hp <= 0) { this.grid[a.row][col] = null; this.lost++; G.audio.sfx('poof'); this.spark(tileX(col), rowFeet(a.row) - 8, ['#58b048', '#e858a0'], 8); }
             }
-          } else a.x -= a.speed * (near ? 0.5 : 1);
-          if (a.x < GOX - 4) { this.lose(); return; }
+          } else a.x -= a.speed * (mari ? 0.15 : near ? 0.5 : 1);
+          if (a.x < GOX + 30 && this.quipT <= 0) { this.quip = MOM_YELPS[Math.floor(Math.random() * MOM_YELPS.length)]; this.quipS = 80; this.quipT = 300; }
+          if (a.x < GOX - 4) { this.finish('lost'); return; }
         }
         this.animals = this.animals.filter((a) => a.x < 262);
       },
@@ -21275,13 +21346,14 @@
           b.z = Math.sin(k * Math.PI) * 22;
           if (!b.hop) {
             b.z = 0; this.shake = 8; G.audio.sfx('bump');
+            this.spark(b.x, rowFeet(b.row), ['#8a6a48', '#6e6e78'], 10);
             const col = Math.floor((b.x - GOX) / GCW);
-            for (const c of [col - 1, col, col + 1]) if (c >= 0 && c < GCOLS && this.grid[b.row][c]) { this.grid[b.row][c].hp -= 20; if (this.grid[b.row][c].hp <= 0) this.grid[b.row][c] = null; }
+            for (const c of [col - 1, col, col + 1]) if (c >= 0 && c < GCOLS && this.grid[b.row][c]) { this.grid[b.row][c].hp -= 20; if (this.grid[b.row][c].hp <= 0) { this.grid[b.row][c] = null; this.lost++; } }
           }
           return;
         }
-        b.x -= 0.075;
-        if (b.x < GOX + 4) { this.lose(); return; }
+        b.x -= 0.06;
+        if (b.x < GOX + 4) { this.finish('lost'); return; }
         if (++b.hopT >= 190) {
           b.hopT = 0; b.from = b.row; b.to = (b.row + 1 + Math.floor(Math.random() * (GROWS - 1))) % GROWS; b.hop = 30;
         }
@@ -21294,14 +21366,73 @@
           if (list.length) { list[Math.floor(Math.random() * list.length)].wet = 320; this.pop(b.x, rowFeet(b.row) - 44, 'The blanket!', '#a8c8f8'); G.audio.sfx('slip'); }
         }
       },
-      lose() { if (!this.over) { this.over = 'lost'; this.endT = 110; this.shake = 20; G.audio.sfx('no'); } },
+      // The Long Night: wave after wave, each a little worse
+      nextWave() {
+        const w = ++this.wave, n = 3 + Math.floor(w * 1.3);
+        for (let i = 0; i < n; i++) {
+          const k = Math.random(), kind = w >= 4 && k < 0.14 + w * 0.012 ? 'bear' : w >= 2 && k < 0.6 ? 'deer' : 'chicken';
+          this.queue.push({ f: this.t + 200 + i * 28, kind, row: Math.floor(Math.random() * GROWS) });
+        }
+        this.total = this.queue.length;
+        this.pop(120, 46, 'WAVE ' + G.sayable(w), '#78e8e8');
+      },
+      // one frame of the night (fast-forward runs a few of these)
+      sim() {
+        const inp = G.input;
+        this.t++;
+        if (this.t % 30 === 0) this.water = Math.min(300, this.water + 1);
+        for (const id of N.plants) if (this.cools[id] > 0) this.cools[id]--;
+        if (this.quipT > 0) this.quipT--;
+        if (this.streakT > 0) this.streakT--;
+        while (this.queue.length && this.queue[0].f <= this.t) {
+          const q = this.queue.shift();
+          if (q.big && !this.bigDone) { this.bigDone = true; this.bigT = 100; G.audio.sfx('yell'); }
+          this.add(q.kind, q.row);
+        }
+        if (this.bigT > 0) this.bigT--;
+        this.tickPlants(); this.tickShots(); this.tickAnimals(); this.tickBoss();
+        // Doron, running the length of a row
+        const R = this.runner;
+        if (R) {
+          R.x += R.sp;
+          for (const a of this.animals) if (a.row === R.r && !a.run && a.x < R.x + 8) { a.hp = 0; this.pop(a.x, rowFeet(a.row) - 30, 'SUPLEX!', '#68c8ff'); this.shoo(a); this.shake = 6; }
+          if (this.boss && !this.boss.gone && this.boss.row === R.r && this.boss.x < R.x && !R.hitBoss) { R.hitBoss = true; this.hitBoss(16); }
+          if (R.x > GRIGHT + 20) this.runner = null;
+        }
+        // what they drop: put the trowel on it to grab it
+        for (const d of this.drops) {
+          d.t--;
+          if (d.c === this.c && d.r === this.r) {
+            d.t = 0; G.audio.sfx('tooth');
+            if (d.kind === 'tooth') { const n = d.big ? 5 : 1; this.teeth += n; this.pop(tileX(d.c), rowFeet(d.r) - 20, '+' + G.sayable(n), '#f8f8f0'); }
+            else { this.water = Math.min(300, this.water + 12); this.pop(tileX(d.c), rowFeet(d.r) - 20, '+12', '#a8d8ff'); }
+          }
+        }
+        this.drops = this.drops.filter((d) => d.t > 0);
+        if (this.over) return;
+        // all clear
+        if (!this.queue.length && !this.animals.some((a) => !a.run)) {
+          if (N.endless) this.nextWave();
+          else if (N.boss && !this.boss) {
+            this.boss = { x: GRIGHT - 8, row: 2, hp: 100, max: 100, t: 0, z: 0, hop: 0, hopT: 0, callT: 0, wetT: 0, stun: 0, hurt: 0, intro: true, gone: false, from: 2, to: 2 };
+            this.lines = DAISY_LINES.slice(); this.lineT = 0; G.audio.sfx('slip');
+          } else if (!this.boss) this.finish('won');
+        }
+      },
       update() {
         const inp = G.input;
         if (this.shake > 0) this.shake--;
+        if (this.ring > 0) this.ring--;
+        if (this.quipS > 0) this.quipS--;
+        if (this.cable && --this.cable.t <= 0) this.cable = null;
+        if (this.cut && --this.cut.t <= 0) this.cut = null;
         for (const p of this.pops) p.t--;
         this.pops = this.pops.filter((p) => p.t > 0);
+        for (const s of this.sparks) { s.x += s.vx; s.y += s.vy; s.vy += 0.12; s.life--; }
+        this.sparks = this.sparks.filter((s) => s.life > 0);
         if (this.yellT > 0) this.yellT--;
-        if (this.over) { if (--this.endT <= 0) { this.result = { won: this.over === 'won' }; return true; } return false; }
+        if (this.panel) { if (++this.panelT > 30 && inp.hit('a')) { inp.eat('a'); G.audio.sfx('select'); this.result = { won: this.over === 'won', stars: this.stars(), teeth: this.teeth, shooed: this.shooed }; return true; } return false; }
+        if (this.over) { if (--this.endT <= 0) { this.panel = true; this.panelT = 0; } return false; }
         if (quitHit()) { this.result = 'quit'; return true; }
         // Daisy arrives: the talking stops the night
         if (this.lines) {
@@ -21311,8 +21442,7 @@
           }
           return false;
         }
-        this.t++;
-        // Michelle: move, pick, plant, yell
+        // Michelle: move, pick, plant or water, yell, call for help
         if (inp.hit('left') && this.c > 0) { this.c--; G.audio.sfx('menu'); }
         if (inp.hit('right') && this.c < GCOLS - 1) { this.c++; G.audio.sfx('menu'); }
         if (inp.hit('up') && this.r > 0) { this.r--; G.audio.sfx('menu'); }
@@ -21321,32 +21451,18 @@
         if (inp.hit('r')) { this.sel = (this.sel + 1) % N.plants.length; G.audio.sfx('menu'); }
         if (inp.hit('a')) { inp.eat('a'); this.plant(); }
         if (inp.hit('b')) { inp.eat('b'); this.yell(); }
-        // the can refills slowly by itself
-        if (this.t % 30 === 0) this.water = Math.min(300, this.water + 1);
-        for (const id of N.plants) if (this.cools[id] > 0) this.cools[id]--;
-        // the animals arrive
-        while (this.queue.length && this.queue[0].f <= this.t) {
-          const q = this.queue.shift();
-          if (q.big && !this.bigDone) { this.bigDone = true; this.bigT = 100; G.audio.sfx('yell'); }
-          this.add(q.kind, q.row);
-        }
-        if (this.bigT > 0) this.bigT--;
-        this.tickPlants(); this.tickShots(); this.tickAnimals(); this.tickBoss();
-        if (this.over) return false;
-        // all clear
-        if (!this.queue.length && !this.animals.some((a) => !a.run)) {
-          if (N.boss && !this.boss) {
-            this.boss = { x: GRIGHT - 8, row: 2, hp: 100, max: 100, t: 0, z: 0, hop: 0, hopT: 0, callT: 0, wetT: 0, stun: 0, hurt: 0, intro: true, gone: false, from: 2, to: 2 };
-            this.lines = DAISY_LINES.slice(); this.lineT = 0; G.audio.sfx('slip');
-          } else if (!this.boss) { this.over = 'won'; this.endT = 90; G.audio.sfx('fanfare'); }
-        }
+        if (inp.hit('c')) this.callHelp();
+        const n = inp.down('v') ? 3 : 1;
+        for (let i = 0; i < n && !this.over && !this.lines; i++) this.sim();
         return false;
       },
       drawPlant(ctx, P, x, feet, ghost) {
-        const G0 = GARDEN_PLANTS[P.id], img = G0.art(P.open > 0), k = Math.min(1, 20 / img.width, 21 / img.height), w = Math.round(img.width * k), h = Math.round(img.height * k);
+        const G0 = GARDEN_PLANTS[P.id], img = G0.art(P.open > 0 || P.bloomT > 0 && (this.t >> 3) & 1), grow = 1 - (P.born || 0) / 20, k = Math.min(1, 20 / img.width, 21 / img.height) * grow, w = Math.round(img.width * k), h = Math.round(img.height * k);
         if (ghost) ctx.globalAlpha = 0.5;
-        ctx.drawImage(img, Math.round(x - w / 2), feet - h, w, h);
+        const wob = P.id === 'pkg' && !ghost ? ((this.t >> 1) & 1 ? 1 : -1) : 0;
+        ctx.drawImage(img, Math.round(x - w / 2) + wob, feet - h, w, h);
         ctx.globalAlpha = 1;
+        if (P.bloomT > 0) { ctx.fillStyle = (this.t >> 2) & 1 ? '#a8e0f8' : '#f8f8f0'; ctx.fillRect(x - 8 + ((this.t >> 1) % 16), feet - 18 + ((this.t >> 2) % 14), 2, 2); ctx.fillRect(x + 7 - ((this.t >> 1) % 16), feet - 6 - ((this.t >> 2) % 14), 2, 2); }
         if (P.wet > 0) { ctx.drawImage(G.spr.wetBlanket, Math.round(x - 8), feet - 13); }
         if (P.hp < P.max && !ghost) { ctx.fillStyle = '#1c1424'; ctx.fillRect(x - 8, feet + 1, 16, 2); ctx.fillStyle = '#78e070'; ctx.fillRect(x - 8, feet + 1, Math.max(1, Math.round((16 * P.hp) / P.max)), 2); }
       },
@@ -21363,19 +21479,27 @@
         const ox = this.shake > 0 ? ((this.shake >> 1) & 1 ? 2 : -2) : 0, TXT2 = (t, x, y, c) => FB().draw(ctx, t, x, y, c || '#f8f8f0', sh);
         ctx.fillStyle = '#2a3a26'; ctx.fillRect(0, 0, G.W, G.H);
         ctx.save(); ctx.translate(ox, 0);
-        // the beds, and the prize dahlias along the left
+        // the beds, and the prize dahlias along the left (they shake when something's close)
         for (let r = 0; r < GROWS; r++) for (let c = 0; c < GCOLS; c++) { ctx.fillStyle = (r + c) % 2 ? '#5a4230' : '#6a4e38'; ctx.fillRect(GOX + c * GCW, GOY + r * GCH, GCW, GCH); }
         ctx.fillStyle = '#3a5a30'; ctx.fillRect(GRIGHT, GOY, 30, GROWS * GCH);
         for (let r = 0; r < GROWS; r++) {
-          const y = GOY + r * GCH + 4;
+          const y = GOY + r * GCH + 4, scared = this.animals.some((a) => a.row === r && !a.run && a.x < GOX + 50) ? ((this.t >> 1) & 1 ? 1 : -1) : 0;
           for (const [dx, dy] of [[0, 0], [8, 8]]) {
             ctx.fillStyle = '#3a7a34'; ctx.fillRect(15 + dx, y + dy + 4, 2, 8);
-            ctx.fillStyle = '#e84878'; ctx.fillRect(13 + dx, y + dy, 6, 6); ctx.fillStyle = '#f8a8c0'; ctx.fillRect(15 + dx, y + dy + 2, 2, 2);
+            ctx.fillStyle = '#e84878'; ctx.fillRect(13 + dx + scared, y + dy, 6, 6); ctx.fillStyle = '#f8a8c0'; ctx.fillRect(15 + dx + scared, y + dy + 2, 2, 2);
           }
+        }
+        // what's been dropped
+        for (const d of this.drops) {
+          const x = tileX(d.c), y = rowFeet(d.r) - 8 - Math.abs(Math.sin(d.t * 0.08)) * 3;
+          if (d.t < 90 && (d.t >> 2) & 1) continue;
+          if (d.kind === 'tooth') ctx.drawImage(d.big ? G.spr.toothGold : G.spr.tooth, Math.round(x - 6), Math.round(y - 6));
+          else { ctx.fillStyle = '#1c1424'; ctx.fillRect(x - 3, y - 4, 7, 8); ctx.fillStyle = '#68c8ff'; ctx.fillRect(x - 2, y - 2, 5, 5); ctx.fillRect(x - 1, y - 4, 3, 2); ctx.fillStyle = '#c8ecf8'; ctx.fillRect(x - 1, y - 1, 1, 2); }
         }
         // Michelle, by the row she's working, with her can
         const mi = G.sprites.michelle.right[0];
         ctx.drawImage(mi, 0, rowFeet(this.r) - mi.height);
+        if (this.cable) { const y = rowFeet(this.cable.r) - 3; ctx.fillStyle = '#f8d850'; for (let x = GOX; x < GRIGHT; x += 3) ctx.fillRect(x, y + Math.round(Math.sin(x * 0.3) * 2), 2, 2); }
         // the night, top to bottom
         for (let r = 0; r < GROWS; r++) {
           for (let c = 0; c < GCOLS; c++) if (this.grid[r][c]) this.drawPlant(ctx, this.grid[r][c], tileX(c), rowFeet(r));
@@ -21388,53 +21512,87 @@
             ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(Math.round(b.x - 16), feet - 1, 32, 3);
             ctx.drawImage(img, Math.round(b.x - w / 2), Math.round(feet - h - b.z), w, h);
           }
-          ctx.fillStyle = '#e8e070';
-          for (const s of this.shots) if (s.r === r) ctx.fillRect(Math.round(s.x), Math.round(s.y), 3, 3);
+          for (const s of this.shots) if (s.r === r && s.x >= GOX) {
+            if (s.letter) FB().draw(ctx, s.letter, Math.round(s.x), Math.round(s.y) - 3, '#f8d850', sh);
+            else { ctx.fillStyle = s.big ? '#f8f8c0' : '#e8e070'; const z = s.big ? 4 : 3; ctx.fillRect(Math.round(s.x), Math.round(s.y), z, z); ctx.fillStyle = 'rgba(232,224,112,0.4)'; ctx.fillRect(Math.round(s.x) - 3, Math.round(s.y) + 1, 3, 1); }
+          }
+          const R = this.runner;
+          if (R && R.r === r) { const set = G.sprites[R.who].right, img = set[1 + ((this.t >> 2) & 1)]; ctx.drawImage(img, Math.round(R.x - 8), rowFeet(r) - img.height); }
         }
         for (const e of this.eggs) { const k = e.k / e.dur, x = e.x0 + (e.x1 - e.x0) * k, y = rowFeet(e.r) - 12 - Math.sin(k * Math.PI) * 30; ctx.drawImage(G.spr.egg, Math.round(x - 3), Math.round(y - 3)); }
-        // the cursor, with what she's about to plant
-        const cx = GOX + this.c * GCW, cy = GOY + this.r * GCH, id = N.plants[this.sel];
-        if (!this.grid[this.r][this.c] && !this.over) this.drawPlant(ctx, { id, hp: 1, max: 1, open: 0 }, tileX(this.c), rowFeet(this.r), true);
+        // the sky: dusk, deep night, then morning, and fireflies in the dark part
+        const prog = N.endless ? (this.t % 7200) / 7200 : this.boss ? 0.92 : 1 - this.queue.length / this.total, tint = prog < 0.3 ? 'rgba(248,140,70,0.12)' : prog < 0.8 ? 'rgba(24,28,84,0.26)' : 'rgba(248,170,180,0.1)';
+        ctx.fillStyle = tint; ctx.fillRect(0, GOY, G.W, GROWS * GCH);
+        if (prog >= 0.3 && prog < 0.8) for (let i = 0; i < 14; i++) { if ((this.t + i * 23) % 120 > 70) continue; ctx.fillStyle = '#e8f8a0'; ctx.fillRect(GOX + Math.floor(G.hash(i, 1, 370) * 200 + Math.sin((this.t + i * 40) * 0.02) * 6), GOY + Math.floor(G.hash(i, 2, 370) * 100 + Math.cos((this.t + i * 30) * 0.02) * 5), 2, 2); }
+        for (const s of this.sparks) { ctx.fillStyle = s.c; ctx.fillRect(Math.round(s.x), Math.round(s.y), 2, 2); }
+        if (this.ring > 0) { ctx.strokeStyle = 'rgba(248,216,80,' + this.ring / 20 + ')'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(this.ringAt[0], this.ringAt[1], (20 - this.ring) * 7, 0, Math.PI * 2); ctx.stroke(); ctx.lineWidth = 1; }
+        // the trowel, with what she's about to plant (or a watering hint on something already growing)
+        const cx = GOX + this.c * GCW, cy = GOY + this.r * GCH, id = N.plants[this.sel], here = this.grid[this.r][this.c];
+        if (!here && !this.over) this.drawPlant(ctx, { id, hp: 1, max: 1, open: 0 }, tileX(this.c), rowFeet(this.r), true);
         ctx.strokeStyle = (this.t >> 4) & 1 ? '#f8d850' : '#f8f4c0'; ctx.lineWidth = 1; ctx.strokeRect(cx + 0.5, cy + 0.5, GCW - 1, GCH - 1);
-        for (const p of this.pops) FB().draw(ctx, p.text, Math.round(p.x - FB().width(p.text) / 2), Math.round(p.y - (44 - p.t) / 4), p.col, sh);
+        if (here && here.id !== 'pkg' && !here.bloomCool) { ctx.fillStyle = '#a8e0f8'; ctx.fillRect(cx + 2, cy + 2, 3, 3); }
+        for (const p of this.pops) FB().draw(ctx, p.text, Math.round(Math.max(2, Math.min(G.W - FB().width(p.text) - 2, p.x - FB().width(p.text) / 2))), Math.round(p.y - (44 - p.t) / 4), p.col, sh);
+        if (this.quipS > 0) TXT2(this.quip, 4, Math.max(27, rowFeet(this.r) - 42), '#ff98d0');
         ctx.restore();
-        // along the top: the night, and how far through it you are
+        // along the top: the night, the HELP meter, the teeth you've grabbed
         ctx.fillStyle = '#16100c'; ctx.fillRect(0, 0, G.W, 24);
         TXT2('NOT MY DAHLIAS', 4, 2, '#f8d850');
-        TXT2(N.name, 4, 12, '#c8c0d8');
-        const done = 1 - this.queue.length / this.total;
-        ctx.fillStyle = '#0c0814'; ctx.fillRect(122, 5, 70, 6); ctx.fillStyle = this.boss ? '#ff98d0' : '#78e070'; ctx.fillRect(123, 6, Math.round(68 * (this.boss ? this.boss.hp / this.boss.max : done)), 4);
-        TXT2(this.boss ? 'DAISY' : 'THE NIGHT', 122, 13, '#c8c0d8');
-        TXT2(this.yelled ? 'X: (yelled)' : 'X: YELL', 196, 13, this.yelled ? '#5a4e70' : '#f8d850');
+        TXT2(N.endless ? 'Shooed: ' + G.sayable(this.shooed) : N.name, 4, 12, '#c8c0d8');
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(98, 3, 60, 6); ctx.fillStyle = this.boss ? '#ff98d0' : '#78e070'; ctx.fillRect(99, 4, Math.round(58 * (this.boss ? Math.max(0, this.boss.hp / this.boss.max) : N.endless ? 1 : 1 - this.queue.length / this.total)), 4);
+        const full = this.help >= 1;
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(98, 12, 60, 6); ctx.fillStyle = full ? ((this.t >> 3) & 1 ? '#f8d850' : '#ff98d0') : '#c898ff'; ctx.fillRect(99, 13, Math.round(58 * this.help), 4);
+        TXT2(full ? 'C: HELP' : 'HELP', 161, 12, full ? '#f8d850' : '#9890a8');
+        TXT2(this.yelled ? 'yelled' : 'X: YELL', 204, 12, this.yelled ? '#5a4e70' : '#f8d850');
+        ctx.drawImage(G.spr.tooth, 162, 0); TXT2(G.sayable(this.teeth), 176, 2, '#f8f8f0');
+        if (G.input.down('v')) TXT2('>>>', 212, 2, '#78e070'); else TXT2('V: FAST', 202, 2, '#5a4e70');
         // along the bottom: the water, and what she can plant
         ctx.fillStyle = '#16100c'; ctx.fillRect(0, 133, G.W, 27);
-        ctx.drawImage(G.spr.wateringCan, 4, 137);
-        ctx.fillStyle = '#0c0814'; ctx.fillRect(24, 139, 30, 6); ctx.fillStyle = '#68c8ff'; ctx.fillRect(25, 140, Math.round((28 * this.water) / 300), 4);
-        TXT2(G.sayable(this.water), 26, 147, '#a8d8ff');
+        ctx.drawImage(G.spr.wateringCan, 2, 137);
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(22, 139, 30, 6); ctx.fillStyle = '#68c8ff'; ctx.fillRect(23, 140, Math.round((28 * this.water) / 300), 4);
+        TXT2(G.sayable(this.water), 24, 147, '#a8d8ff');
         N.plants.forEach((pid, i) => {
-          const P = GARDEN_PLANTS[pid], x = 58 + i * 36, on = i === this.sel, can = this.water >= P.cost && !(this.cools[pid] > 0);
-          G.box(ctx, x, 135, 34, 23, on ? { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' } : undefined);
-          const img = P.art(false), k = Math.min(1, 15 / img.width, 16 / img.height);
+          const P = GARDEN_PLANTS[pid], x = 56 + i * 30, on = i === this.sel, can = this.water >= P.cost && !(this.cools[pid] > 0);
+          G.box(ctx, x, 135, 29, 24, on ? { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' } : undefined);
+          const img = P.art(false), k = Math.min(1, 14 / img.width, 13 / img.height), w = Math.round(img.width * k);
           if (!can) ctx.globalAlpha = 0.4;
-          ctx.drawImage(img, x + 3, 138, Math.round(img.width * k), Math.round(img.height * k));
+          ctx.drawImage(img, x + 15 - Math.round(w / 2), 137, w, Math.round(img.height * k));
           ctx.globalAlpha = 1;
-          FB().draw(ctx, G.sayable(P.cost), x + 19, 141, can ? '#a8d8ff' : '#5a4e70', sh);
-          if (this.cools[pid] > 0) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; const h = Math.round((19 * this.cools[pid]) / P.cool); ctx.fillRect(x + 2, 137, 30, h); }
+          const label = G.sayable(P.cost);
+          FB().draw(ctx, label, x + 15 - Math.round(FB().width(label) / 2), 150, can ? '#a8d8ff' : '#5a4e70', sh);
+          if (this.cools[pid] > 0) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; ctx.fillRect(x + 2, 137, 25, Math.round((20 * this.cools[pid]) / P.cool)); }
         });
         // what's happening
         if (this.bigT > 0) { const t = 'HERE THEY COME!', w = FB().bigWidth(t, 2); FB().drawBig(ctx, t, Math.round(120 - w / 2), 62, 2, '#f86858', '#1c1424'); }
         if (this.yellT > 0) { const t = 'JAMIE LEE CURTIS!!!', w = FB().bigWidth(t, 1), j = this.yellT > 60 ? (this.yellT >> 1) & 1 : 0; FB().drawBig(ctx, t, Math.round(120 - w / 2) + j, 66, 1, '#f8d850', '#1c1424'); }
-        if (this.over) { const t = this.over === 'won' ? 'THE GARDEN IS SAFE' : 'THEY GOT THE DAHLIAS', w = FB().bigWidth(t, 1); FB().drawBig(ctx, t, Math.round(120 - w / 2), 66, 1, this.over === 'won' ? '#78e070' : '#f86858', '#1c1424'); }
+        if (this.cut) {
+          const C2 = this.cut, sl = Math.min(0, -24 + (80 - C2.t) * 6), face = G.sprites[C2.who].down[0];
+          G.box(ctx, 34, 28 + sl + 24, 172, 22);
+          ctx.drawImage(face, 0, 0, face.width, 14, 39, 32 + sl + 24, face.width, 14);
+          TXT2(C2.line, 58, 35 + sl + 24, '#f8d850');
+        }
         if (this.lines) {
           const [who, line] = this.lines[0];
           G.box(ctx, 14, 40, 212, 52);
           if (who) FB().draw(ctx, who, 22, 45, G.NAME_COLORS[who] || '#ff98d0', sh);
           FB().wrap(line, 196).slice(0, 3).forEach((l, i) => FB().draw(ctx, l, 22, (who ? 56 : 48) + i * 10, '#f8f8f0', sh));
         }
+        if (this.over && !this.panel) { const t = this.over === 'won' ? 'THE GARDEN IS SAFE' : 'THEY GOT THE DAHLIAS', w = FB().bigWidth(t, 1); FB().drawBig(ctx, t, Math.round(120 - w / 2), 66, 1, this.over === 'won' ? '#78e070' : '#f86858', '#1c1424'); }
+        // the morning report
+        if (this.panel) {
+          const won = this.over === 'won', st = this.stars();
+          G.box(ctx, 30, 34, 180, 92);
+          const head = won ? 'THE GARDEN IS SAFE' : N.endless ? 'THE LONG NIGHT IS OVER' : 'THEY GOT THE DAHLIAS';
+          TXT2(head, 120 - Math.round(FB().width(head) / 2), 40, won ? '#78e070' : '#f8d850');
+          if (!N.endless) TXT2('{y}' + '★'.repeat(st) + '{d}' + '★'.repeat(3 - st), 120 - Math.round(FB().width('★★★') / 2), 52);
+          const rows = [['Animals shooed', G.sayable(this.shooed)], ['Plants lost', G.sayable(this.lost)], ['Teeth found', G.sayable(this.teeth)]];
+          rows.forEach(([a, b], i) => { TXT2(a, 40, 64 + i * 10, '#c8c0d8'); TXT2(b, 200 - FB().width(b), 64 + i * 10, '#f8d850'); });
+          if (!N.endless) ['Stars: win the night, lose 3 plants', 'or fewer, and never yell.'].forEach((l, i) => TXT2(l, 120 - Math.round(FB().width(l) / 2), 94 + i * 9, '#9890a8'));
+          if (this.panelT > 30) TXT2('Z: back to the garden', 120 - Math.round(FB().width('Z: back to the garden') / 2), 114, '#f8f8f0');
+        }
       },
     };
   }
-  HOW_TO.garden = ['Animals come in from the right, and they want the dahlias on the left. If one gets there, the night is over.', 'Arrows move Mom\'s trowel. {y}Q/E{/} picks a plant. {y}Z{/} plants it. Plants cost water, and her can refills slowly. A {y}Rain Barrel{/} refills it faster.', 'Snapdragons spit pollen down their row. Rose Bushes hold the line and prick whatever bites them.', 'Once a night, {y}X{/} is her yell. It sends everything running back. Save it.'];
+  HOW_TO.garden = ['Animals come from the right. If one reaches the dahlias, the night is over. Arrows move Mom\'s trowel, {y}Q/E{/} picks a plant, {y}Z{/} plants it. Plants cost water.', '{y}Z on something already growing{/} waters it for a burst: Snapdragons fire like crazy, Roses heal, Barrels pay out. A Package goes BANG right away.', 'Beaten animals drop teeth and water. Run the trowel over them to grab them.', 'Shooing animals fills {y}HELP{/}. When it\'s full, {y}C{/} calls in the family. {y}X{/} is Mom\'s yell, once a night. Hold {y}V{/} to speed up.'];
   S.gardenStart = function* () {
     const f = flags();
     f.gardenMet = true;
@@ -21445,34 +21603,50 @@
     yield* S.gardenPick();
   };
   S.gardenPick = function* () {
-    const f = flags(), won = f.gardenWon || 0, nights = GARDEN_NIGHTS.slice(0, Math.min(GARDEN_NIGHTS.length, won + 1));
-    const c = yield G.ask('Michelle', 'Which night?', nights.map((n, i) => n.name + (won > i ? ' (done)' : '')).concat(['Not now']));
+    const f = flags(), s = G.state, won = f.gardenWon || 0, Stars = (s.gardenStars = s.gardenStars || {});
+    const nights = GARDEN_NIGHTS.slice(0, Math.min(GARDEN_NIGHTS.length, won + 1));
+    const label = (n, i) => (n.endless ? n.name + (f.gardenBest ? ' (best: ' + G.sayable(f.gardenBest) + ')' : '') : n.name + (Stars[i] ? ' ' + '★'.repeat(Stars[i]) : ''));
+    const c = yield G.ask('Michelle', 'Which night?', nights.map(label).concat(['Not now']));
     if (c >= nights.length) return;
-    if (!f.gardenHow) { f.gardenHow = true; yield howToCmd('NOT MY DAHLIAS', HOW_TO.garden); }
+    if (!f.gardenHow2) { f.gardenHow2 = true; yield howToCmd('NOT MY DAHLIAS', HOW_TO.garden); }
     const r = yield gardenCmd(c);
     G.play.overlay = null;
     G.audio.play(G.play.world.def.music);
     if (r === 'quit') { yield G.say('Michelle', 'Fine. I\'ll sit up with the flashlight.'); return; }
-    if (!r.won) { yield G.say('Michelle', ['MY DAHLIAS.', 'Those took me three YEARS.', 'We\'ll plant more. We\'ll plant more, and we\'ll try again.'][Math.floor(Math.random() * 3)]); return; }
+    if (r.teeth) { G.play.addTeeth(r.teeth); }
+    if (nights[c].endless) {
+      const best = r.shooed > (f.gardenBest || 0);
+      if (best) f.gardenBest = r.shooed;
+      yield G.say('Michelle', G.sayable(r.shooed) + ' animals.' + (best ? ' That\'s your best yet, hon.' : ' We\'ve done better.') + ' And we\'re going to need more dahlias.');
+      G.play.autosave();
+      return;
+    }
+    if (!r.won) { yield G.say('Michelle', ['MY DAHLIAS.', 'Those took me three YEARS.', 'We\'ll plant more. We\'ll plant more, and we\'ll try again.'][Math.floor(Math.random() * 3)]); G.play.autosave(); return; }
+    const newStars = Math.max(0, r.stars - (Stars[c] || 0));
+    Stars[c] = Math.max(Stars[c] || 0, r.stars);
     if (G.with('hannah') && !f.gardenHannah) {
       f.gardenHannah = true;
       yield G.say('Hannah', 'Nobody got hurt, right?');
       yield G.say('Michelle', 'They got discouraged.');
     }
-    if (c === 2) {
+    if (c === 2 && won <= c) {
       yield G.say(null, 'At sunrise, Daisy hops back into his hutch and sits down on his blue blanket, as if nothing happened.');
       yield G.say('Michelle', 'Daisy. We have TALKED about this.');
       yield G.say('Nate', 'I don\'t know how that thing is still alive.');
       yield G.say('Michelle', 'Neither do I. But now I know where my dahlias went.');
     }
-    if (won > c) { G.play.addTeeth(20); yield G.say('Michelle', 'Thanks, hon. Here: 20 teeth, out of the flower fund.'); G.play.autosave(); return; }
+    if (newStars) { G.play.addTeeth(newStars * 15); yield G.say('Michelle', 'That\'s ' + '★'.repeat(Stars[c]) + ' for that night. Here: ' + G.sayable(newStars * 15) + ' teeth, out of the flower fund.'); }
+    if (won > c) { G.play.autosave(); return; }
     f.gardenWon = c + 1;
     f.chickenUp = Math.max(f.chickenUp || 0, c + 1);
     yield G.say('Michelle', 'You saved my garden. And Henrietta was watching the whole time. She has been eating very well.');
     G.audio.sfx('fanfare');
     yield G.itemGet(G.spr.chickens.white.right[0], ['{y}The Chicken{/} got {y}Quick{/}! She fires a lot faster now.', '{y}The Chicken{/} got {y}Double Yolk{/}! Two eggs out of every shot.', '{y}The Chicken{/} got {y}Golden Eggs{/}! They hit three times as hard.'][c]);
-    if (c === 2) yield G.say('Nate', 'Mom. This chicken is a weapon.');
-    if (c === 2) yield G.say('Michelle', 'She\'s a small business.');
+    if (c === 2) {
+      yield G.say('Nate', 'Mom. This chicken is a weapon.');
+      yield G.say('Michelle', 'She\'s a small business.');
+      yield G.say('Michelle', 'And if you ever can\'t sleep, I\'ll be out there. There\'s always another night.');
+    }
     G.play.autosave();
   };
 
