@@ -272,7 +272,7 @@
   const SEL = { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' };
   const TXT = (ctx, str, x, y, col) => F().draw(ctx, str, x, y, col || '#f8f8f0', { shadow: SH });
   const C = { gold: '#f8d850', cyan: '#78e8e8', green: '#78e070', red: '#f86858', dim: '#9890a8', faint: '#5a4e70', soft: '#c8c0d8', pink: '#ff98d0' };
-  const QMODES = ['ACTIVE', '100%', 'RULES'];
+  const QMODES = ['ACTIVE', '100%', 'RULES'], GOAL_ROWS = 3, READ_ROWS = 12;
   let lastTab = QUEST_TAB;
 
   // ---- tiny 9x9 pixel icons for the tabs and stats (drawn once)
@@ -565,6 +565,7 @@
       this.tab = list[(list.indexOf(this.tab) + d + list.length) % list.length];
       lastTab = this.tab;
       this.rushSure = false;
+      this.qread = null;
       this.admList = null;
       this.coll = null;
       this.photoView = null;
@@ -582,10 +583,25 @@
       return true;
     }
 
+    // everything there is to read about the quest under the cursor (and the main quest, if it
+    // doesn't fit on its card), one wrapped line at a time
+    questText() {
+      const j = G.journal(), rows = this.questRows(), q = rows[this.qsel], W = 218, out = [], text = (t, col) => { for (const l of F().wrap(t, W)) out.push([l, col]); };
+      const goal = F().wrap(j.goal, 220);
+      if (goal.length > GOAL_ROWS || !q) { text('MAIN QUEST', C.gold); text(j.goal); if (q) out.push(['']); }
+      if (!q) return out;
+      const status = q.status || (q.prog ? G.sayable(q.prog[0]) + '/' + G.sayable(q.prog[1]) : q.ok ? 'Done' : 'Not yet');
+      text(q.name, C.gold);
+      text(status, q.kind === 'done' || q.ok ? C.green : C.cyan);
+      if (q.where) text(q.where, C.soft);
+      if (q.hint) { out.push(['']); text(q.hint); }
+      return out;
+    }
+
     // the rows the QUESTS list is showing right now
     questRows() {
       if (this.qmode === 0) return G.journal().side;
-      if (this.qmode === 1) return G.completion().map(([name, ok]) => ({ name, ok }));
+      if (this.qmode === 1) return G.completion();
       return [];
     }
 
@@ -604,8 +620,8 @@
       if (inp.hit('start')) { G.audio.sfx('cancel'); return true; }
       if (inp.hit('l')) this.switchTab(-1);
       if (inp.hit('r')) this.switchTab(1);
-      // (inside a COLLECTABLES section, X backs out instead)
-      if (inp.hit('b') && !G.state.admin && !G.state.rush && !(this.tab === COLL_TAB && this.coll)) this.saveTo(G.state.slot || 1);
+      // (inside a COLLECTABLES section, or reading a quest, X backs out instead)
+      if (inp.hit('b') && !G.state.admin && !G.state.rush && !(this.tab === COLL_TAB && this.coll) && !this.qread) this.saveTo(G.state.slot || 1);
 
       if (this.onTabs) {
         if (inp.hit('left')) this.switchTab(-1);
@@ -615,9 +631,18 @@
       }
 
       if (this.tab === QUEST_TAB) {
-        // Z flips between active quests, the 100% checklist and Abe's Rules; up/down picks a row
-        if (inp.hit('a')) { inp.eat('a'); this.qmode = (this.qmode + 1) % QMODES.length; this.qsel = 0; this.qscroll = 0; G.audio.sfx('menu'); }
+        // reading one in full: Z or X closes it, up/down scrolls if it's long
+        if (this.qread) {
+          if (inp.hit('a') || inp.hit('b')) { inp.eat('a'); inp.eat('b'); this.qread = null; G.audio.sfx('cancel'); }
+          if (inp.hit('down')) this.qread.top = Math.min(this.qread.top + 1, Math.max(0, this.qread.lines.length - READ_ROWS));
+          if (inp.hit('up')) this.qread.top = Math.max(0, this.qread.top - 1);
+          return false;
+        }
+        // left/right flips between active quests, the 100% checklist and Abe's Rules; up/down picks a
+        // row, and Z opens it to read all of it
+        for (const [d, by] of [['left', -1], ['right', 1]]) if (inp.hit(d)) { this.qmode = (this.qmode + by + QMODES.length) % QMODES.length; this.qsel = 0; this.qscroll = 0; G.audio.sfx('menu'); }
         const n = this.questRows().length;
+        if (inp.hit('a')) { inp.eat('a'); if (this.qmode < 2) { this.qread = { top: 0, lines: this.questText() }; G.audio.sfx('select'); } }
         if (inp.hit('down') && this.qsel < n - 1) { this.qsel++; G.audio.sfx('menu'); }
         if (inp.hit('up')) { if (this.qsel > 0) { this.qsel--; G.audio.sfx('menu'); } else { this.onTabs = true; G.audio.sfx('menu'); } }
       } else if (this.tab === MAP_TAB) {
@@ -802,7 +827,7 @@
       ctx.translate(0, Math.round((1 - ease) * -10));
       ctx.globalAlpha = ease;
       this.drawTabs(ctx);
-      if (this.tab === QUEST_TAB) this.drawQuests(ctx);
+      if (this.tab === QUEST_TAB) { if (this.qread) this.drawQuestRead(ctx); else this.drawQuests(ctx); }
       else if (this.tab === MAP_TAB) this.drawMap(ctx);
       else if (this.tab === ITEM_TAB || this.tab === KEY_TAB) this.drawGrid(ctx);
       else if (this.tab === PEOPLE_TAB) this.drawPeople(ctx);
@@ -827,15 +852,17 @@
         return;
       }
       const admin = G.state.admin, act = {
-        [QUEST_TAB]: QMODES[(this.qmode + 1) % QMODES.length] === 'ACTIVE' ? 'quests' : QMODES[(this.qmode + 1) % QMODES.length] === '100%' ? '100% list' : 'rules',
+        [QUEST_TAB]: this.qread ? 'close' : this.qmode < 2 ? 'read all' : null,
         [MAP_TAB]: placeOpen(PLACES[this.msel]) && G.canTravel(PLACES[this.msel].id) ? 'drive there' : null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
         [COLL_TAB]: this.instView && G.GUITARS.includes(this.instView) && G.guitarNow() !== this.instView ? 'play it' : this.photoView || this.instView ? 'put away' : !this.coll ? 'open' : this.coll === 'fish' ? null : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
         [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here', [RUSH_TAB]: G.state.rush ? (this.rushSure ? 'really give up' : 'give up') : 'start',
       }[this.tab];
       const pairs = act ? [['Z', act]] : [['↑↓←→', 'look around']];
+      if (this.tab === QUEST_TAB && !this.qread) pairs.splice(0, 1, ...(act ? [['Z', act]] : []), ['←→', 'lists']);
+      if (this.tab === QUEST_TAB && this.qread && this.qread.lines.length > READ_ROWS) pairs.push(['↑↓', 'more']);
       if (this.tab === COLL_TAB && this.coll && !this.photoView && !this.instView) pairs.push(['X', 'back']);
       else if (this.tab === COLL_TAB && this.instView && act === 'play it') pairs.push(['X', 'put away']);
-      else if (!admin && !G.state.rush && !(this.tab === COLL_TAB && (this.photoView || this.instView))) pairs.push(['X', 'quick save']);
+      else if (!admin && !G.state.rush && !this.qread && !(this.tab === COLL_TAB && (this.photoView || this.instView))) pairs.push(['X', 'quick save']);
       else if (this.tab === SAVE_TAB && this.admList) pairs.push(['X', 'back']);
       // (no room for the pages hint next to a guitar's play it / put away)
       if (!(this.tab === COLL_TAB && this.instView && act === 'play it')) pairs.push(['Q/E', 'pages']);
@@ -877,12 +904,23 @@
       keycap(ctx, x + 2, 5, 'E');
     }
 
+    // ---- QUESTS: one quest, opened up with nothing cut off
+    drawQuestRead(ctx) {
+      const { lines, top } = this.qread;
+      card(ctx, 5, 21, 230, 121);
+      lines.slice(top, top + READ_ROWS).forEach(([l, col], i) => TXT(ctx, l, 11, 26 + i * 9, col));
+      ctx.fillStyle = C.dim;
+      if (top > 0) { ctx.fillRect(226, 26, 5, 1); ctx.fillRect(227, 25, 3, 1); ctx.fillRect(228, 24, 1, 1); }
+      if (top + READ_ROWS < lines.length) { ctx.fillRect(226, 136, 5, 1); ctx.fillRect(227, 137, 3, 1); ctx.fillRect(228, 138, 1, 1); }
+    }
+
     // ---- QUESTS: how far along, the main quest, and everything on the go
     drawQuests(ctx) {
       const s = G.state, f = s.flags, j = G.journal();
       if (s.questNew && Object.keys(s.questNew).length) s.questNew = {};
       // across the top: the main quest
-      const goal = F().wrap(j.goal, 220).slice(0, 3), mh = 13 + goal.length * 9 + 2;
+      const whole = F().wrap(j.goal, 220), goal = whole.slice(0, GOAL_ROWS), mh = 13 + goal.length * 9 + 2;
+      if (whole.length > GOAL_ROWS) goal[GOAL_ROWS - 1] = fit(goal[GOAL_ROWS - 1], 210) + (goal[GOAL_ROWS - 1].endsWith('...') ? '' : '...');
       card(ctx, 5, 21, 230, mh);
       TXT(ctx, 'MAIN QUEST', 10, 24, C.gold);
       TXT(ctx, j.chapter, 230 - F().width(j.chapter), 24, C.cyan);
@@ -925,12 +963,12 @@
         cx += w + 2;
       });
       const count = this.qmode === 0 ? G.sayable(rows.filter((q) => q.kind === 'active').length) + ' active'
-        : this.qmode === 1 ? G.sayable(G.completion().filter((c) => c[1]).length) + '/' + G.completion().length : '';
+        : this.qmode === 1 ? G.sayable(rows.filter((c) => c.ok).length) + '/' + G.sayable(rows.length) : '';
       if (count) TXT(ctx, count, RX + RW - 5 - F().width(count), ly + 4, C.dim);
       ctx.fillStyle = '#3e3460'; ctx.fillRect(RX + 1, ly + 14, RW - 2, 1);
 
       if (this.qmode === 2) { this.drawRules(ctx, RX, ly, RW, lh); return; }
-      const detail = this.qmode === 0 && rows.length ? 21 : 0;
+      const detail = rows.length ? 21 : 0;
       const top = ly + 17, RH = 10, vis = Math.max(1, Math.floor((lh - 18 - detail) / RH));
       this.qsel = Math.min(this.qsel, Math.max(0, rows.length - 1));
       if (this.qsel < this.qscroll) this.qscroll = this.qsel;
@@ -946,8 +984,7 @@
           ctx.fillStyle = '#0c0814'; ctx.fillRect(bx, y - 1, 7, 7);
           ctx.fillStyle = q.ok ? '#2a5a28' : '#2a2240'; ctx.fillRect(bx + 1, y, 5, 5);
           if (q.ok) check(bx + 1, y - 1, C.green);
-          const extra = q.name === 'Every rock' ? G.sayable(G.rocksFound()) + '/' + G.ROCKS.length
-            : q.name === 'Every photo' ? G.sayable(G.photosFound()) + '/' + G.PHOTOS.length : q.ok ? 'Done' : '';
+          const extra = q.prog ? G.sayable(q.prog[0]) + '/' + G.sayable(q.prog[1]) : q.ok ? 'Done' : '';
           TXT(ctx, fit(q.name, RW - 30 - F().width(extra)), bx + 11, y - 1, q.ok ? C.dim : '#f8f8f0');
           if (extra) TXT(ctx, extra, RX + RW - 6 - F().width(extra), y - 1, q.ok ? C.green : C.gold);
           return;
@@ -974,7 +1011,8 @@
         const q = rows[this.qsel], dy = ly + lh - detail;
         ctx.fillStyle = '#3e3460'; ctx.fillRect(RX + 1, dy, RW - 2, 1);
         ctx.fillStyle = '#181228'; ctx.fillRect(RX + 1, dy + 1, RW - 2, detail - 2);
-        const hint = F().wrap((q.where ? '{c}' + q.where + ':{/} ' : '') + (q.hint || ''), RW - 10).slice(0, 2);
+        const said = F().wrap((q.where ? '{c}' + q.where + ':{/} ' : '') + (q.hint || ''), RW - 10), hint = said.slice(0, 2);
+        if (said.length > 2) hint[1] = hint[1].replace(/\s*\S*$/, '') + '...';
         hint.forEach((l, i) => TXT(ctx, l, RX + 5, dy + 3 + i * 8, C.soft));
         // and a NEW badge sitting on the box's top edge
         if (this.fresh[q.name] && q.kind !== 'done') {

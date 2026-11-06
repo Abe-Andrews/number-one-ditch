@@ -626,6 +626,7 @@
         ? 'Sang "I Pray to Jesus" on the frozen pond north of the bridge until Nate knocked the mic out of his hands. Taught Nate how to play it on the pipe.'
         : 'Singing "I Pray to Jesus" on a frozen pond north of the bridge. It snows there and nowhere else.'),
     },
+    { id: 'jack', name: 'Jack Braun', tag: '{y}Roommate', met: () => fl().jackTalk, bio: 'Nate\'s roommate. Always wants to know what time Nate will be back. Nate has stopped asking why.' },
     { id: 'gus', name: 'Gus', tag: '{y}Friend', met: () => fl().capQuest, bio: 'Lafayette\'s groundskeeper. Protector of petunias. Found Nate\'s hat.' },
     { id: 'nataro', name: 'Dr. Nataro', tag: '{y}Friend', met: () => fl().chemMet, bio: 'Chemistry professor. Nobody has ever gotten the last question on his final right.' },
     { id: 'pete', name: 'Pyro Pete', tag: '{y}Friend', met: () => fl().doronDeal, bio: 'Runs the pyro for Micro Mayhem. Thinks Nate\'s exploding present was beautiful.' },
@@ -641,6 +642,7 @@
     },
   ];
 
+  G.peopleMet = () => [CHARACTERS.filter((c) => c.met()).length + st().party.length, CHARACTERS.length + G.PARTY_ORDER.length];
   G.people = () => {
     const s = st();
     const list = G.PARTY_ORDER.map((id) => {
@@ -792,12 +794,12 @@
     return { goal, chapter, side };
   };
 
-  // How close to 100%: every item on the list, with rocks and photos counted one by one.
+  // How close to 100%: every row on the list, with the ones that count things counted one by one.
   G.completionPct = () => {
-    const c = G.completion(), n = c.length;
+    const c = G.completion();
     let done = 0;
-    for (const [name, ok] of c) done += name === 'Every rock' ? G.rocksFound() / G.ROCKS.length : name === 'Every photo' ? G.photosFound() / G.PHOTOS.length : ok ? 1 : 0;
-    return Math.floor((done / n) * 100);
+    for (const r of c) done += r.prog ? r.prog[0] / r.prog[1] : r.ok ? 1 : 0;
+    return Math.floor((done / c.length) * 100);
   };
 
   // ================================================================ MUSIC (original tunes)
@@ -2919,38 +2921,99 @@
   const FC_BOUNDS = [2 * 16 + 8, 5 * 16, 22 * 16 - 8, 13 * 16 + 8];
   const fcJunk = (e) => e instanceof G.FCOrnament || e instanceof G.FCGift || e instanceof G.FCCandyCane;
 
-  // 100%: the whole story, every sidequest, every rock and every photo. That's what wakes him.
+  // 100%: everything there is to do. The `core` rows are the story, the first side quests, every rock
+  // and every photo: finishing those wakes him. They can't be the whole list, because he and the Boss
+  // Rush he unlocks are on it too (and minigames never hold the story up). Add anything new here.
+  const CHESTS = ['campus_teeth', 'minePocket', 'mineGrotto', 'mineVault', 'mineSump', 'cbbt_teeth'], HEARTS = 13;
   G.completion = () => {
-    const f = flags(), s = G.state;
+    const f = flags(), s = G.state, FS = s.fights || {}, J = s.jams || {}, N = s.nicu || {};
+    const row = (name, ok, where, hint) => ({ name, ok: !!ok, where, hint });
+    const core = (name, ok, where, hint) => ({ name, ok: !!ok, where, hint, core: true });
+    const count = (name, n, of, where, hint) => ({ name, ok: n >= of, prog: [Math.min(n, of), of], where, hint });
+    const stars = ['shift1', 'shift2', 'shift3', 'shift4'].reduce((t, k) => t + ((N[k] && N[k].stars) || 0), 0);
+    const met = G.peopleMet();
     return [
-      ['Gus\'s lawn job', !!s.items.cap],
-      ['Ben\'s chem question', !!f.phDone],
-      ['The Chem Final (perfect)', !!f.chemPerfect],
-      ['The EEENGLISH exam (perfect)', !!f.engPerfect],
-      ['Doron\'s spare tickets', !!f.ticketsDone],
-      ['The main event', !!f.dadBeaten],
-      ['The boulder', !!f.boulderGone],
-      ['Badlands Chugs', !!f.badlandsBeaten],
-      ['Mikey', !!f.mikeyBeaten],
-      ['Mom\'s missing books', !!f.shopOpen],
-      ['The protesters', !!f.protestReward],
-      ['Ice JJ Fish', !!f.jjBeaten],
-      ['The old fisherman', !!s.items.rod],
-      ['Tyler', !!f.tylerBeaten],
-      ['The Number One Ditch', !!f.fin_done],
-      ['Ruby, the rock kid', !!f.rubyHeart],
-      ['Dad\'s hip hop class', !!f.hipHopDone],
-      ['Every rock', G.rocksFound() >= G.ROCKS.length],
-      ['Every photo', G.photosFound() >= G.PHOTOS.length],
+      core('Gus\'s lawn job', s.items.cap, 'Lafayette', 'Bonk ten sacred numbers on the quad and Gus gives your hat back.'),
+      core('Ben\'s chem question', f.phDone, 'Lafayette', 'Ben is on the quad with a question about rainwater. Think before you answer.'),
+      core('The Chem Final (perfect)', f.chemPerfect, 'Lafayette - Science Center', 'Get every question right without saying the sacred number.'),
+      core('The EEENGLISH exam (perfect)', f.engPerfect, 'Lafayette - Pardee Hall', 'Get all seven right without saying the sacred number.'),
+      row('The lab carboy', f.bidetBig, 'Lafayette - Science Center', 'With the Portable Bidet, check the safety station by the wall. Dr. Nataro has a spare jug.'),
+      core('Doron\'s spare tickets', f.ticketsDone, 'Lafayette + Easton Fair', 'Offer them to everybody you can find, then tell Doron how it went.'),
+      core('The main event', f.dadBeaten, 'Easton Fair - the Expo Hall', 'Beat El EEENGLISH in the ring.'),
+      core('The protesters', f.protestReward, 'Easton Fair', 'Hear out every protester at the fair. All of them. Nobody ever does.'),
+      row('Grandma Rose\'s funnel cake', f.roseTraded, 'Easton Fair', 'Grandma Rose is wandering the fair, and she\'ll trade for a funnel cake.'),
+      count('The fair games', [f.balloonWon, f.goldenDuck, f.raceWon].filter(Boolean).length, 3, 'Easton Fair', 'Bring Lily to the balloon booth, hook the golden duck with the Surf Rod, and win the water race with the bidet.'),
+      count('Doron\'s fight night', G.FIGHTERS.filter((F) => FS[F.id]).length, G.FIGHTERS.length, 'Easton Fair - the Expo Hall', 'Bring Doron to the locker room and beat all five fighters. Then see who shows up.'),
+      core('The boulder', f.boulderGone, 'Lafayette - the south road', 'Bring Doron to the boulder.'),
+      count('Studio B: a saved song', Math.min(1, (s.songs || []).length), 1, 'Lafayette - the Williams Center', 'Record a song at the console in Studio B and save it.'),
+      core('Dad\'s hip hop class', f.hipHopDone, 'College Hill - the grocery store', 'It\'s REAL. Find Dad at the grocery store and copy his moves.'),
+      core('Badlands Chugs', f.badlandsBeaten, 'Home - the kitchen', 'Win the refrigerator game.'),
+      core('Mikey', f.mikeyBeaten, 'Home - the driveway', 'Lily has something to tell him.'),
+      core('Mom\'s missing books', f.shopOpen, 'Home', 'Follow the chewed pages down to the basement and bring Mom her books.'),
+      row('Dad\'s snacks', f.snacksDone, 'Home', 'Candy corn and blue Doritos, for Dad in his workshop.'),
+      core('Ice JJ Fish', f.jjBeaten, 'Home - past the bridge', 'Book him for Dad\'s church by surviving his whole set.'),
+      count('Mom\'s garden', Math.min(3, f.gardenWon || 0), 3, 'Home - Mom\'s flower stand', 'Buy everything at Mom\'s stand, then win all three nights of Not My Dahlias.'),
+      count('Pipes made with Dad', G.pipesMadeCount(), G.PIPES.length, 'Home - the workshop', 'Turn every pipe on Dad\'s lathe, once everything at home is done.'),
+      count('Tobacco blended with Dad', G.tinsMadeCount(), G.TOBACCOS.length, 'Home - the workshop', 'Blend every tobacco in Dad\'s pipe journal.'),
+      row('Nate\'s bass', f.bassDone, 'Home + Chesapeake', 'Pass every jam song with Abe, and the half-finished bass gets its strings, finish and cable.'),
+      row('The Last One Up', f.lastUpDone, 'Home - the front hall', 'With Abe in the party, check the tape by the light switch.'),
+      row('The 2 AM Taco Bell run', f.tacoRunDone, 'Home - Lily\'s room', 'Lily\'s phone keeps buzzing on her bed. Sneak out, and don\'t wake anyone.'),
+      count('Hannah\'s book club', Object.keys(s.bookClub || {}).length, G.CLUB_BOOKS.length, 'Home - the basement', 'Bring Hannah to the little door and read every book with the Globglogabgalab.'),
+      row('Old Iron', f.mine_ironBeaten, 'Andover - the very bottom', 'Work down through all four levels of the mines and beat what guards the vault.'),
+      count('Every treasure chest', CHESTS.filter((id) => f['chest_' + id]).length, CHESTS.length, 'All over', 'Lafayette, the bay, and three down in the Andover mines. One of those needs the Surf Rod.'),
+      core('The old fisherman', s.items.rod, 'The Bay - the island', 'Bonk five gulls when they swoop down low, and he hands over his spare rod.'),
+      count('Matt\'s fish survey', G.fishCaughtKinds(), G.FISH_ORDER.length, 'The Bay - Island 2', 'Go fishing with Matt Oliver and catch one of everything out there.'),
+      row('The Two-Liter', f.popBeaten, 'The Bay - the Chesapeake Channel Tunnel', 'Beat it at the far end of the tunnel.'),
+      core('Tyler', f.tylerBeaten, 'The Bay - the Thimble Shoal tunnel', 'Snap him out of it.'),
+      row('Anette\'s thirsty plants', f.plantsDone, 'Chesapeake - the condo street', 'Water all five of her potted plants with the bidet, then tell her.'),
+      row('Romulus', f.romulusBeaten, 'Chesapeake - the golf course', 'He\'s huge, and he hates water.'),
+      count('Abe\'s reach', G.abeReachCount(), G.ABE_REACH_TOTAL, 'Anywhere', 'With Abe along, check everything way up high.'),
+      count('Jamming with Abe', G.JAM_SONGS.filter((sg) => J[sg.id]).length, G.JAM_SONGS.length, 'Chesapeake - Abe\'s office', 'Pass every song, on every page.'),
+      count('Every instrument', G.instrumentsCount(), G.INSTRUMENTS.length, 'Chesapeake - Abe\'s office', 'Clearing a song with Abe gets you its instrument.'),
+      count('Every guitar pedal', G.pedalsOwned().length, G.PEDAL_COUNT, 'Chesapeake - Abe\'s office', 'Abe hands them over as you win instruments.'),
+      row('Mecha-Baby', f.mobileBeaten, 'CHKD - the NICU', 'Break the robot. NOT the baby.'),
+      core('Ruby, the rock kid', f.rubyHeart, 'CHKD - the ward', 'Name her three rocks, then trade her one.'),
+      count('Hannah\'s shift', stars, 12, 'CHKD - the NICU', 'Talk to Charge Nurse Dot with Hannah along. Four shifts, three stars each.'),
+      count('Animal Friends', G.animalsFound(), G.ANIMALS.length, 'Anywhere', 'Bring Hannah along and press Z next to animals. They won\'t attack her.'),
+      core('The Number One Ditch', f.fin_done, 'Chesapeake', 'Finish the story.'),
+      row('Tyler\'s tooth', f.toothGiven || f.toothKept, 'The Ditch', 'Find Tyler at the Ditch and decide what to do about the mosasaur tooth.'),
+      count('The Tooth Book', G.fossilsFound(), G.FOSSILS.length, 'The Ditch', 'Sift the gravel with Tyler\'s Sifter until you have one of every fossil.'),
+      Object.assign(count('Every rock', G.rocksFound(), G.ROCKS.length, 'Everywhere', 'See the Rocks page in COLLECTABLES. Every rock has a hint.'), { core: true }),
+      Object.assign(count('Every photo', G.photosFound(), G.PHOTOS.length, 'Everywhere', 'See the Photos page in COLLECTABLES. Every photo has a hint.'), { core: true }),
+      count('Every pipe song', G.SIGNALS.filter((sg) => sg.known()).length, G.SIGNALS.length, 'Everywhere', 'People teach them along the way. Ask around, and don\'t skip the side quests.'),
+      count('Every heart container', Math.floor((s.maxHp - 6) / 2), HEARTS, 'Everywhere', 'Gus, the Chem Final, Mom\'s stand, the rock crusher, and most of the hardest things on this list.'),
+      count('Everyone you can meet', met[0], met[1], 'Everywhere', 'Talk to people. See the PEOPLE page.'),
+      f.fcAwake ? row('Father Christmas', f.fcBeaten, 'Andover - the deep stope', 'A cave-in opened up off the east stope of the tunnels.') : row('???', false, '???', 'Finish the story, every rock and every photo, and see what wakes up.'),
+      f.fcBeaten ? row('Boss Rush', s.items.rushTrophy, 'The BOSS RUSH page', 'Every boss, back to back, without fainting.') : row('???', false, '???', 'One more thing comes after that.'),
     ];
   };
-  G.allDone = () => G.completion().every((c) => c[1]);
+  // what wakes Father Christmas, and the real thing
+  G.fcReady = () => G.completion().every((c) => !c.core || c.ok);
+  G.allDone = () => G.completion().every((c) => c.ok);
   // checked every half second or so from the play loop
   G.postgameTick = () => {
     const f = flags();
     if (G.state.playAs || G.play.dying) return;
     if (f.ticketsGiven && !f.ticketsDone && f.dadBeaten) { G.script.run(S.ticketsText()); return; }
-    if (!f.fcAwake && G.allDone()) G.script.run(S.fcWakes());
+    if (!f.fcAwake && G.fcReady()) { G.script.run(S.fcWakes()); return; }
+    if (f.fcAwake && !f.hundred && G.allDone()) G.script.run(S.hundred());
+  };
+  // the real 100%: every row on the list
+  S.hundred = function* () {
+    flags().hundred = true;
+    yield G.wait(30);
+    G.audio.sfx('fanfare');
+    yield G.banner('100%!', 'every last thing in the game', 200);
+    G.audio.sfx('buzz');
+    yield G.say(null, '{c}~ FAMILY GROUP CHAT ~{/}');
+    yield G.text('Nate', 'i did it. every rock. every fish. every song. every star. all of it');
+    yield G.text('Hannah', 'NATE!! we are so proud of you!!');
+    yield G.text('Abe', 'that\'s the whole game. there is nothing left');
+    yield G.text('Lily', 'go outside');
+    G.audio.sfx('buzz');
+    yield G.say(null, 'Nate\'s phone buzzes one more time.');
+    yield G.text('Jack Braun', 'what time will you be back');
+    G.play.autosave();
   };
 
   S.fcWakes = function* () {
@@ -2958,7 +3021,7 @@
     if (f.fcAwake) return;
     yield G.wait(30);
     G.audio.sfx('fanfare');
-    yield G.banner('100%!', 'every quest, rock and photo', 170);
+    yield G.banner('THE WHOLE STORY!', 'every rock and every photo', 170);
     G.audio.sfx('buzz');
     yield G.say(null, 'Nate\'s phone buzzes. And buzzes. And buzzes.');
     yield G.say(null, '{c}~ FAMILY GROUP CHAT ~{/}');
@@ -8934,6 +8997,7 @@
     return PEDAL_ORDER.filter((id) => (s.pedals || {})[id]);
   };
   G.pedalsOwned = pedalsOwned;
+  G.PEDAL_COUNT = PEDAL_ORDER.length;
   G.giveAllPedals = () => { const s = G.state; s.pedals = {}; for (const id of PEDAL_ORDER) s.pedals[id] = true; s.items.pedals = true; };
   // the choices for a track: no pedal, then each one Nate has
   const pedalChoices = () => [null].concat(pedalsOwned());
