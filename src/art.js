@@ -10451,6 +10451,41 @@
     p.rect(12, 18, 2, 2, '#c8a048');
     return finish(p);
   }
+  // Mom's garden game: a deer, a rain barrel, a marigold, and Daisy's blue blanket
+  function gardenDeer(f) {
+    const p = new Pix(26, 24), B = '#a8743c', D = '#8a5a2c', L = '#e8d8b8';
+    p.rect(9, 10, 13, 7, B); p.hline(9, 21, 16, D); p.rect(9, 15, 12, 2, L);
+    p.rect(5, 6, 5, 8, B); p.rect(1, 4, 7, 5, B); p.rect(0, 7, 2, 2, '#3a2a20'); p.set(3, 5, '#1c1424');
+    p.set(7, 2, B); p.set(8, 3, B);
+    for (const [x, y] of [[4, 3], [4, 2], [3, 1], [5, 1], [6, 3], [6, 2], [7, 1], [8, 0], [2, 0]]) p.set(x, y, '#c8b088');
+    p.rect(21, 9, 3, 3, L);
+    const legs = f ? [[10, 17, 4], [13, 16, 3], [17, 16, 3], [20, 17, 4]] : [[11, 17, 6], [14, 17, 6], [17, 17, 6], [20, 17, 6]];
+    for (const [x, y, h] of legs) p.rect(x, y, 2, h, D);
+    return finish(p);
+  }
+  function rainBarrel() {
+    const p = new Pix(18, 20), W1 = '#8a5a30', W2 = '#6a4424';
+    p.rect(2, 3, 14, 16, W1);
+    for (const x of [5, 9, 13]) p.vline(x, 3, 18, W2);
+    for (const y of [6, 14]) p.hline(2, 15, y, '#4a4a54');
+    p.hline(3, 14, 2, '#6a4424'); p.rect(3, 2, 12, 2, '#5ab0e8'); p.hline(5, 11, 2, '#a8e0f8');
+    return finish(p);
+  }
+  function marigold() {
+    const p = new Pix(18, 20);
+    p.vline(9, 10, 19, '#3a8a30'); p.vline(8, 13, 19, '#4aa040');
+    for (const [cx, cy, r] of [[5, 7, 4], [13, 7, 4], [9, 4, 4], [9, 10, 4]]) for (let y = 0; y < 16; y++) for (let x = 0; x < 18; x++) {
+      const d = Math.hypot(x - cx, y - cy);
+      if (d <= r) p.set(x, y, (x + y) % 3 ? (d > r - 1.4 ? '#e87818' : '#f8a828') : '#f8c848');
+    }
+    return finish(p);
+  }
+  function wetBlanket() {
+    const p = new Pix(16, 12);
+    p.rect(0, 1, 16, 10, '#4a68b8'); p.hline(0, 15, 1, '#6a88d8'); p.rect(5, 4, 6, 5, '#2a4488');
+    for (let x = 1; x < 16; x += 3) p.set(x, 11, '#4a68b8');
+    return finish(p);
+  }
   function bookmarkIcon() {
     const p = new Pix(16, 16);
     p.rect(5, 1, 6, 12, '#c84848'); p.hline(5, 10, 2, '#e87070');
@@ -10867,5 +10902,6 @@
     S.fossils = {}; for (const id in FOSSIL_ROWS) S.fossils[id] = fossil(id);
     S.natesBassDone = natesBassDone(); S.switchPlate = switchPlate(); S.switchTape = switchTape();
     S.squirrel = squirrel(); S.goat = [goat(0), goat(1)]; S.turtle = turtle(); S.bookmarkIcon = bookmarkIcon(); S.clubDoor = clubDoor();
+    S.gardenDeer = { left: [gardenDeer(0), gardenDeer(1)] }; S.gardenDeer.right = S.gardenDeer.left.map(mirror); S.rainBarrel = rainBarrel(); S.marigold = marigold(); S.wetBlanket = wetBlanket();
   };
 })();

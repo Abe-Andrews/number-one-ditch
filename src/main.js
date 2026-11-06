@@ -325,8 +325,10 @@
         // eggs are sold separately (Mom's flower stand)
         if (!(s.items.eggs > 0)) { G.audio.sfx('bump'); this.world.pop(p.x, p.y - 30, 'OUT OF EGGS!', '#f8f8f0'); this.eggCool = 20; return; }
         s.items.eggs--;
-        this.world.add(new G.EggShot(p.x + dx * 8, p.y + dy * 6, p.dir));
-        this.eggCool = 40;
+        // (Mom's garden game upgrades her: Quick, then Double Yolk, then Golden Eggs: see G.EggShot)
+        if ((s.flags.chickenUp || 0) >= 2) for (const k of [-0.5, 0.5]) this.world.add(new G.EggShot(p.x + dx * 8, p.y + dy * 6, p.dir, k));
+        else this.world.add(new G.EggShot(p.x + dx * 8, p.y + dy * 6, p.dir));
+        this.eggCool = G.eggCoolMax();
         p.chickenT = 20;
         G.audio.sfx('bawk');
       } else if (s.xItem === 'bidet') {

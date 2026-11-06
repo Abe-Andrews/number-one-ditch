@@ -422,7 +422,10 @@
     chicken: {
       kind: 'gear', equip: true, name: 'The Chicken', short: 'Chicken', icon: () => G.spr.chickens.white.right[0], has: () => !!st().items.chicken,
       count: () => st().items.eggs || 0,
-      desc: 'Henrietta, from Mom\'s flower stand. Press X and she fires an egg. Eggs sold separately (Mom\'s stand, by the dozen).',
+      get desc() {
+        const up = fl().chickenUp || 0;
+        return 'Henrietta, from Mom\'s flower stand. Press X and she fires an egg. Eggs sold separately (Mom\'s stand, by the dozen).' + (up >= 3 ? ' She\'s Quick, Double Yolk and Golden now.' : up === 2 ? ' She\'s Quick and Double Yolk now.' : up === 1 ? ' She\'s Quick now.' : '');
+      },
     },
     books: {
       kind: 'key', name: 'Mom\'s Books', icon: () => G.spr.flyingBook[1], has: () => !!st().items.books && !fl().shopOpen,
@@ -734,6 +737,7 @@
     if (s.party.includes('hannah')) add('Animal Friends', G.animalsFound() >= G.ANIMALS.length && 'All of them!', G.sayable(G.animalsFound()) + '/' + G.sayable(G.ANIMALS.length) + ' friends', 'Anywhere', 'Bring Hannah along. Animals won\'t attack her, and Z says hello.', [G.animalsFound(), G.ANIMALS.length]);
     if (s.party.includes('hannah') && f.globBeaten && !f.clubMet) side.push({ name: 'The little door', status: 'Hannah might like this', kind: 'rumor', where: 'Home - the basement', hint: 'There\'s humming behind a little door in the basement. It wants a password. Hannah reads a lot.' });
     if (f.clubMet) add('Hannah\'s book club', f.clubDone, G.sayable(Object.keys(s.bookClub || {}).length) + '/' + G.sayable(G.CLUB_BOOKS.length) + ' books', 'Home - the basement', 'Bring Hannah to the little door in the basement.', [Object.keys(s.bookClub || {}).length, G.CLUB_BOOKS.length]);
+    if (f.gardenMet) add('Guard the garden', (f.gardenWon || 0) >= 3 && 'All three nights!', G.sayable(f.gardenWon || 0) + '/3 nights', 'Home - Mom\'s flower stand', 'Talk to Mom and take a night in the garden. Every night you win upgrades The Chicken.', [f.gardenWon || 0, 3]);
     if (f.bassQuest) add('Nate\'s bass', f.bassDone, ['', 'Needs strings', 'Needs a finish', 'Needs a cable'][f.bassQuest] || '', f.bassQuest === 1 ? 'Chesapeake - El Toro Loco' : f.bassQuest === 2 ? 'Home - Dad\'s workshop' : 'Chesapeake - Abe\'s office', ['', 'The Paul McCartney Lady keeps bass strings at El Toro Loco.', 'Dad can help Nate finish it, at his bench.', 'Ask Abe for a cable. Just one.'][f.bassQuest] || '');
     if (f.dayIntro) add('The Tooth Book', G.fossilsFound() >= G.FOSSILS.length && 'All found!', G.sayable(G.fossilsFound()) + '/' + G.sayable(G.FOSSILS.length) + ' fossils', 'The Ditch', 'Sift the gravel at the Number One Ditch with Tyler\'s Sifter.', [G.fossilsFound(), G.FOSSILS.length]);
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
@@ -2669,6 +2673,8 @@
     const f = flags(), s = G.state;
     if (f.snackQuest && !s.items.candyCorn && !f.snacksDone && !f.momDenied) { yield* S.momCandy(); return; }
     if (s.items.pipe && !f.signal_jlc && !standOpening) yield* S.momSong();
+    // (a save that already had everything: the garden quest starts here)
+    if (G.momBoughtAll() && !f.gardenMet) { yield* S.gardenStart(); return; }
     const menu = [];
     if (!s.items.chicken) menu.push(['The Chicken: 30', function* () {
       if (!(yield* momPay(30))) return;
@@ -2715,6 +2721,7 @@
       else yield G.say('Michelle', 'You\'re short? ...Just take them. They were a gift anyway.');
       yield* getIngredient('vodka');
     }]);
+    if (f.gardenMet) menu.push(['Guard the garden', S.gardenPick]);
     menu.push(['Doosh De Luche: 10', function* () {
       if ((s.items.doosh || 0) >= 3) { yield G.say('Michelle', 'Your pockets are already full of Doosh, hon.'); return; }
       if (!(yield* momPay(10))) return;
@@ -2740,6 +2747,8 @@
     const c = yield G.ask('Michelle', 'What can I get you? Prices are in shark teeth.', menu.map((x) => x[0]));
     if (menu[c][1]) yield* menu[c][1]();
     else yield G.say('Michelle', 'Come back anytime! Tell your friends whose stand it is.');
+    // that was the last thing she sells: the garden quest starts right away
+    if (G.momBoughtAll() && !f.gardenMet) yield* S.gardenStart();
   };
 
   // ================================================================ THE BASEMENT
@@ -3715,6 +3724,7 @@
     { name: 'The morning after (family photo)', map: 'ditchDay', at: [7, 13, 'up'], flags: { fin_done: true, fin_intro: true }, items: { mosasaurTooth: true } },
     { name: 'The Ditch by day', map: 'ditchDay', at: [7, 12, 'down'], flags: { photoDone: true, dayIntro: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [41, 21, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
+    { name: 'Mom\'s garden: Not My Dahlias', map: 'home', at: [35, 27, 'up'], flags: { shopOpen: true, momHeart: true }, items: { chicken: true, andoverKey: true, eggs: 40 } },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
   G.ADMIN_PLACES = [
@@ -3799,6 +3809,7 @@
     const s = G.state, f = s.flags;
     s.jams = s.jams || {}; for (const sg of G.JAM_SONGS) s.jams[sg.id] = Math.max(s.jams[sg.id] || 0, 1);
     s.flags.bassDone = true; s.flags.bassQuest = 4;
+    s.flags.gardenMet = true; s.flags.gardenWon = 3;
     s.instruments = s.instruments || {}; for (const it of G.INSTRUMENTS) s.instruments[it.id] = true;
     s.items.bass = true; s.items.metronome = true; G.giveAllPedals();
     f.jamMet = true; f.studioTold = true;
@@ -21102,7 +21113,378 @@
     },
   };
 
+  // ================================================================ NOT MY DAHLIAS
+  // Michelle's garden game. The moment Nate has bought everything she sells (The Chicken, the Andover
+  // key, the Heart Container), she tells him something's been getting into her garden (S.gardenStart).
+  // You play as Mom: five rows of beds, animals coming in from the right, and her prize dahlias on the
+  // left. Plant things to hold them off, paid for with water from her can. Nobody gets hurt: a beaten
+  // animal just runs off. Three nights: the chickens, the deer (who jump what's in front of them),
+  // and the bears, and then the one who's been eating her dahlias all along: Daisy.
+  // Each night's first win upgrades The Chicken (flags.chickenUp 1-3, see G.play.useItem).
+  // Flags: gardenMet, gardenHow, gardenWon (nights won), chickenUp.
+  G.momBoughtAll = () => { const s = G.state, f = s.flags; return !!(s.items.chicken && s.items.andoverKey && f.momHeart); };
+  G.eggCoolMax = () => ((G.state.flags.chickenUp || 0) >= 1 ? 24 : 40);
+  const GARDEN_PLANTS = {
+    barrel: { name: 'Rain Barrel', cost: 30, cool: 300, hp: 8, art: () => G.spr.rainBarrel, about: 'More water' },
+    snap: { name: 'Snapdragon', cost: 50, cool: 240, hp: 8, art: (o) => G.spr.snapdragon[o ? 1 : 0], about: 'Spits pollen' },
+    rose: { name: 'Rose Bush', cost: 40, cool: 420, hp: 40, art: () => G.spr.roseBush, about: 'Thorns, tough' },
+    marigold: { name: 'Marigold', cost: 55, cool: 480, hp: 8, art: () => G.spr.marigold, about: 'Slows, stops jumps' },
+    hen: { name: 'Henrietta', cost: 100, cool: 480, hp: 8, art: (o) => G.spr.chickens.brown.right[o ? 1 : 0], about: 'Lobs eggs' },
+  };
+  const GARDEN_ANIMALS = {
+    chicken: { hp: 4, speed: 0.17, bite: 1 },
+    deer: { hp: 7, speed: 0.3, bite: 1 },
+    bear: { hp: 28, speed: 0.11, bite: 3 },
+  };
+  // each wave: [seconds in, who (c, d, b)], and the last one is the big one
+  const GARDEN_NIGHTS = [
+    { name: 'Night 1: Chickens', plants: ['barrel', 'snap', 'rose'], water: 80, waves: [[10, 'c'], [20, 'c'], [29, 'c'], [38, 'cc'], [48, 'cc'], [58, 'ccc'], [70, 'ccc'], [84, 'cccccc']] },
+    { name: 'Night 2: Deer', plants: ['barrel', 'snap', 'rose', 'marigold'], water: 90, waves: [[10, 'cc'], [22, 'd'], [32, 'ccd'], [44, 'dd'], [56, 'cccdd'], [70, 'cccddd'], [86, 'ccccdddd']] },
+    { name: 'Night 3: Bears', plants: ['barrel', 'snap', 'rose', 'marigold', 'hen'], water: 120, boss: true, waves: [[14, 'cc'], [28, 'cd'], [42, 'b'], [56, 'ccdd'], [72, 'bdd'], [88, 'ccbb'], [108, 'cccdddbb']] },
+  ];
+  const GOX = 30, GOY = 27, GCW = 21, GCH = 21, GROWS = 5, GCOLS = 9, GRIGHT = GOX + GCOLS * GCW;
+  const DAISY_LINES = [
+    [null, 'Everything goes quiet. Something small comes through the fence.'],
+    ['Michelle', '...Daisy?'],
+    [null, 'Daisy sits up. There\'s a dahlia hanging out of his mouth. One of the good ones.'],
+    ['Michelle', 'DAISY. That was YOU? ALL SUMMER?'],
+    [null, 'Daisy chews, slowly, looking right at her. He thumps one back foot, and every chicken on the property hears it.'],
+    ['Michelle', 'He is a lot bigger than he looks in that hutch.'],
+  ];
+  function gardenCmd(night) {
+    const N = GARDEN_NIGHTS[night], FB = () => G.font, sh = { shadow: '#000' }, KINDS = { c: 'chicken', d: 'deer', b: 'bear' };
+    const tileX = (c) => GOX + c * GCW + GCW / 2, rowFeet = (r) => GOY + (r + 1) * GCH - 2;
+    return {
+      start() {
+        const queue = [];
+        let lastRow = -1;
+        N.waves.forEach(([sec, list], wi) => [...list].forEach((ch, i) => {
+          let row = Math.floor(Math.random() * GROWS);
+          if (row === lastRow) row = (row + 2) % GROWS;
+          lastRow = row;
+          queue.push({ f: sec * 60 + i * 34, kind: KINDS[ch], row, big: wi === N.waves.length - 1 });
+        }));
+        queue.sort((a, b) => a.f - b.f);
+        Object.assign(this, { t: 0, water: N.water, grid: Array.from({ length: GROWS }, () => Array(GCOLS).fill(null)), animals: [], shots: [], eggs: [], pops: [], r: 2, c: 2, sel: 0, cools: {}, yelled: false, yellT: 0, queue, total: queue.length, over: null, endT: 0, boss: null, lines: null, lineT: 0, bigT: 0, bigDone: false, shake: 0 });
+        G.play.overlay = this;
+        G.audio.play('dahlias');
+      },
+      pop(x, y, text, col) { this.pops.push({ x, y, text, col, t: 44 }); },
+      add(kind, row, x) {
+        const a = GARDEN_ANIMALS[kind];
+        this.animals.push({ kind, row, x: x || GRIGHT + 14, hp: a.hp, max: a.hp, speed: a.speed, bite: a.bite, eat: 0, stun: 0, jump: 0, jumped: false, z: 0, run: false, t: Math.floor(Math.random() * 60), hurt: 0, color: Math.random() < 0.5 ? 'white' : 'brown' });
+      },
+      hit(a, dmg) {
+        a.hp -= dmg; a.hurt = 8;
+        if (a.hp <= 0 && !a.run) {
+          a.run = true; a.jump = 0; a.z = 0;
+          if (a.kind === 'chicken') G.audio.sfx('bawk'); else G.audio.sfx('poof');
+          this.pop(a.x, rowFeet(a.row) - 22, { chicken: 'BAWK!', deer: 'NOPE!', bear: 'HMPH.' }[a.kind], '#f8f8f0');
+        }
+      },
+      hitBoss(dmg) {
+        const b = this.boss;
+        if (!b || b.gone || b.intro) return;
+        b.hp -= dmg; b.hurt = 8;
+        if (b.hp <= 0) { b.gone = true; this.lines = null; this.over = 'won'; this.endT = 110; G.audio.sfx('fanfare'); this.pop(b.x, rowFeet(b.row) - 44, '*thump*', '#f8f8f0'); }
+      },
+      plant() {
+        const id = N.plants[this.sel], P = GARDEN_PLANTS[id], inp = G.input;
+        if (this.grid[this.r][this.c]) { G.audio.sfx('bump'); return; }
+        if (this.cools[id] > 0 || this.water < P.cost) { G.audio.sfx('bump'); this.pop(tileX(this.c), rowFeet(this.r) - 18, this.water < P.cost ? 'Not enough water' : 'Not ready', '#a8d8ff'); return; }
+        this.water -= P.cost; this.cools[id] = P.cool;
+        this.grid[this.r][this.c] = { id, hp: P.hp, max: P.hp, t: 0, wet: 0, open: 0 };
+        G.audio.sfx('select');
+      },
+      yell() {
+        if (this.yelled) { G.audio.sfx('bump'); return; }
+        this.yelled = true; this.yellT = 90; this.shake = 24;
+        G.audio.sfx('yell');
+        for (const a of this.animals) if (!a.run) { a.x = Math.min(GRIGHT + 10, a.x + 54); a.stun = 130; a.eat = 0; a.jump = 0; a.z = 0; }
+        if (this.boss && !this.boss.gone) { this.boss.x = Math.min(GRIGHT - 6, this.boss.x + 40); this.boss.stun = 130; }
+      },
+      firstIn(row, x) {
+        let best = null;
+        for (const a of this.animals) if (a.row === row && !a.run && a.x > x - 4 && a.x < GRIGHT + 10 && (!best || a.x < best.x)) best = a;
+        return best;
+      },
+      bossIn(row, x) { const b = this.boss; return b && !b.gone && !b.intro && b.row === row && b.x > x - 4 ? b : null; },
+      tickPlants() {
+        for (let r = 0; r < GROWS; r++) for (let c = 0; c < GCOLS; c++) {
+          const P = this.grid[r][c];
+          if (!P) continue;
+          if (P.open > 0) P.open--;
+          if (P.wet > 0) { P.wet--; continue; }
+          const x = tileX(c), y = rowFeet(r) - 12, target = this.firstIn(r, x) || this.bossIn(r, x);
+          if (P.id === 'barrel') { if (++P.t >= 260) { P.t = 0; this.water = Math.min(300, this.water + 15); this.pop(x, y - 8, '+15', '#a8d8ff'); } }
+          else if (P.id === 'snap' && target) { if (++P.t >= 80) { P.t = 0; P.open = 16; this.shots.push({ r, x: x + 8, y }); } }
+          else if (P.id === 'hen' && target) { if (++P.t >= 170) { P.t = 0; P.open = 20; G.audio.sfx('bawk'); this.eggs.push({ r, x0: x, x1: target.x, k: 0, dur: 42 }); } }
+        }
+      },
+      tickShots() {
+        for (const s of this.shots) {
+          s.x += 2.2;
+          const a = this.animals.find((q) => q.row === s.r && !q.run && Math.abs(q.x - s.x) < 8 && !(q.jump > 0));
+          if (a) { s.dead = true; this.hit(a, 1); continue; }
+          const b = this.bossIn(s.r, s.x);
+          if (b && Math.abs(b.x - s.x) < 20) { s.dead = true; this.hitBoss(1); }
+          if (s.x > GRIGHT + 8) s.dead = true;
+        }
+        this.shots = this.shots.filter((s) => !s.dead);
+        for (const e of this.eggs) {
+          if (++e.k < e.dur) continue;
+          e.dead = true; G.audio.sfx('hit');
+          this.pop(e.x1, rowFeet(e.r) - 16, 'SPLAT!', '#f8e070');
+          for (const a of this.animals) if (a.row === e.r && !a.run && Math.abs(a.x - e.x1) < 18) this.hit(a, 3);
+          const b = this.bossIn(e.r, 0);
+          if (b && Math.abs(b.x - e.x1) < 26) this.hitBoss(3);
+        }
+        this.eggs = this.eggs.filter((e) => !e.dead);
+      },
+      tickAnimals() {
+        for (const a of this.animals) {
+          a.t++; if (a.hurt > 0) a.hurt--;
+          if (a.run) { a.x += 2.6; continue; }
+          if (a.stun > 0) { a.stun--; continue; }
+          const col = Math.floor((a.x - 8 - GOX) / GCW), P = col >= 0 && col < GCOLS ? this.grid[a.row][col] : null;
+          // marigolds: nothing likes them, deer least of all
+          const near = [col - 1, col, col + 1].some((c) => c >= 0 && c < GCOLS && this.grid[a.row][c] && this.grid[a.row][c].id === 'marigold');
+          if (a.jump > 0) { a.jump--; a.x -= 0.8; a.z = Math.sin((a.jump / 34) * Math.PI) * 16; if (!a.jump) a.z = 0; continue; }
+          if (a.kind === 'deer' && P && !a.jumped && !near) { a.jumped = true; a.jump = 34; this.pop(a.x, rowFeet(a.row) - 26, 'BOING', '#f8f8f0'); continue; }
+          if (P) {
+            if (++a.eat >= 40) {
+              a.eat = 0; P.hp -= a.bite; P.open = 0;
+              G.audio.sfx('blip');
+              if (P.id === 'rose') { this.hit(a, 1); this.pop(a.x - 6, rowFeet(a.row) - 22, 'OW', '#f86858'); }
+              if (P.hp <= 0) { this.grid[a.row][col] = null; G.audio.sfx('poof'); }
+            }
+          } else a.x -= a.speed * (near ? 0.5 : 1);
+          if (a.x < GOX - 4) { this.lose(); return; }
+        }
+        this.animals = this.animals.filter((a) => a.x < 262);
+      },
+      tickBoss() {
+        const b = this.boss;
+        if (!b || b.gone || b.intro) return;
+        b.t++; if (b.hurt > 0) b.hurt--;
+        if (b.stun > 0) { b.stun--; return; }
+        if (b.hop > 0) {
+          b.hop--;
+          const k = 1 - b.hop / 30;
+          b.row = k < 0.5 ? b.from : b.to;
+          b.z = Math.sin(k * Math.PI) * 22;
+          if (!b.hop) {
+            b.z = 0; this.shake = 8; G.audio.sfx('bump');
+            const col = Math.floor((b.x - GOX) / GCW);
+            for (const c of [col - 1, col, col + 1]) if (c >= 0 && c < GCOLS && this.grid[b.row][c]) { this.grid[b.row][c].hp -= 20; if (this.grid[b.row][c].hp <= 0) this.grid[b.row][c] = null; }
+          }
+          return;
+        }
+        b.x -= 0.075;
+        if (b.x < GOX + 4) { this.lose(); return; }
+        if (++b.hopT >= 190) {
+          b.hopT = 0; b.from = b.row; b.to = (b.row + 1 + Math.floor(Math.random() * (GROWS - 1))) % GROWS; b.hop = 30;
+        }
+        if (++b.callT >= 400) { b.callT = 0; G.audio.sfx('bawk'); this.pop(b.x, rowFeet(b.row) - 44, '*thump thump*', '#f8f8f0'); this.add('chicken', (b.row + 1) % GROWS); this.add('chicken', (b.row + 3) % GROWS); }
+        // past halfway: the blue blanket, with the wet spot on it. Anything under it stops working for a while
+        if (b.hp < b.max / 2 && ++b.wetT >= 340) {
+          b.wetT = 0;
+          const list = [];
+          for (let r = 0; r < GROWS; r++) for (let c = 0; c < GCOLS; c++) { const P = this.grid[r][c]; if (P && !P.wet && (P.id === 'snap' || P.id === 'hen')) list.push(P); }
+          if (list.length) { list[Math.floor(Math.random() * list.length)].wet = 320; this.pop(b.x, rowFeet(b.row) - 44, 'The blanket!', '#a8c8f8'); G.audio.sfx('slip'); }
+        }
+      },
+      lose() { if (!this.over) { this.over = 'lost'; this.endT = 110; this.shake = 20; G.audio.sfx('no'); } },
+      update() {
+        const inp = G.input;
+        if (this.shake > 0) this.shake--;
+        for (const p of this.pops) p.t--;
+        this.pops = this.pops.filter((p) => p.t > 0);
+        if (this.yellT > 0) this.yellT--;
+        if (this.over) { if (--this.endT <= 0) { this.result = { won: this.over === 'won' }; return true; } return false; }
+        if (quitHit()) { this.result = 'quit'; return true; }
+        // Daisy arrives: the talking stops the night
+        if (this.lines) {
+          if (++this.lineT > 14 && inp.hit('a')) {
+            inp.eat('a'); this.lineT = 0; this.lines.shift(); G.audio.sfx('blip');
+            if (!this.lines.length) { this.lines = null; this.boss.intro = false; G.audio.sfx('hurt'); }
+          }
+          return false;
+        }
+        this.t++;
+        // Michelle: move, pick, plant, yell
+        if (inp.hit('left') && this.c > 0) { this.c--; G.audio.sfx('menu'); }
+        if (inp.hit('right') && this.c < GCOLS - 1) { this.c++; G.audio.sfx('menu'); }
+        if (inp.hit('up') && this.r > 0) { this.r--; G.audio.sfx('menu'); }
+        if (inp.hit('down') && this.r < GROWS - 1) { this.r++; G.audio.sfx('menu'); }
+        if (inp.hit('l')) { this.sel = (this.sel + N.plants.length - 1) % N.plants.length; G.audio.sfx('menu'); }
+        if (inp.hit('r')) { this.sel = (this.sel + 1) % N.plants.length; G.audio.sfx('menu'); }
+        if (inp.hit('a')) { inp.eat('a'); this.plant(); }
+        if (inp.hit('b')) { inp.eat('b'); this.yell(); }
+        // the can refills slowly by itself
+        if (this.t % 30 === 0) this.water = Math.min(300, this.water + 1);
+        for (const id of N.plants) if (this.cools[id] > 0) this.cools[id]--;
+        // the animals arrive
+        while (this.queue.length && this.queue[0].f <= this.t) {
+          const q = this.queue.shift();
+          if (q.big && !this.bigDone) { this.bigDone = true; this.bigT = 100; G.audio.sfx('yell'); }
+          this.add(q.kind, q.row);
+        }
+        if (this.bigT > 0) this.bigT--;
+        this.tickPlants(); this.tickShots(); this.tickAnimals(); this.tickBoss();
+        if (this.over) return false;
+        // all clear
+        if (!this.queue.length && !this.animals.some((a) => !a.run)) {
+          if (N.boss && !this.boss) {
+            this.boss = { x: GRIGHT - 8, row: 2, hp: 100, max: 100, t: 0, z: 0, hop: 0, hopT: 0, callT: 0, wetT: 0, stun: 0, hurt: 0, intro: true, gone: false, from: 2, to: 2 };
+            this.lines = DAISY_LINES.slice(); this.lineT = 0; G.audio.sfx('slip');
+          } else if (!this.boss) { this.over = 'won'; this.endT = 90; G.audio.sfx('fanfare'); }
+        }
+        return false;
+      },
+      drawPlant(ctx, P, x, feet, ghost) {
+        const G0 = GARDEN_PLANTS[P.id], img = G0.art(P.open > 0), k = Math.min(1, 20 / img.width, 21 / img.height), w = Math.round(img.width * k), h = Math.round(img.height * k);
+        if (ghost) ctx.globalAlpha = 0.5;
+        ctx.drawImage(img, Math.round(x - w / 2), feet - h, w, h);
+        ctx.globalAlpha = 1;
+        if (P.wet > 0) { ctx.drawImage(G.spr.wetBlanket, Math.round(x - 8), feet - 13); }
+        if (P.hp < P.max && !ghost) { ctx.fillStyle = '#1c1424'; ctx.fillRect(x - 8, feet + 1, 16, 2); ctx.fillStyle = '#78e070'; ctx.fillRect(x - 8, feet + 1, Math.max(1, Math.round((16 * P.hp) / P.max)), 2); }
+      },
+      drawAnimal(ctx, a) {
+        const feet = rowFeet(a.row), left = !a.run, f = (a.t >> 4) & 1;
+        let img = a.kind === 'chicken' ? G.spr.chickens[a.color][left ? 'left' : 'right'][f] : a.kind === 'deer' ? G.spr.gardenDeer[left ? 'left' : 'right'][a.jump > 0 ? 1 : f] : (left ? G.spr.bearL : G.spr.bear)[f];
+        if (a.hurt > 0 && (a.hurt >> 1) & 1) img = G.art.flash(img);
+        const k = a.kind === 'bear' ? 0.9 : 1, w = Math.round(img.width * k), h = Math.round(img.height * k);
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(Math.round(a.x - w / 3), feet, Math.round((w * 2) / 3), 2);
+        ctx.drawImage(img, Math.round(a.x - w / 2), Math.round(feet - h - a.z), w, h);
+        if (a.stun > 0) FB().draw(ctx, '?!', Math.round(a.x - 4), feet - h - 9, '#f8d850', sh);
+      },
+      draw(ctx) {
+        const ox = this.shake > 0 ? ((this.shake >> 1) & 1 ? 2 : -2) : 0, TXT2 = (t, x, y, c) => FB().draw(ctx, t, x, y, c || '#f8f8f0', sh);
+        ctx.fillStyle = '#2a3a26'; ctx.fillRect(0, 0, G.W, G.H);
+        ctx.save(); ctx.translate(ox, 0);
+        // the beds, and the prize dahlias along the left
+        for (let r = 0; r < GROWS; r++) for (let c = 0; c < GCOLS; c++) { ctx.fillStyle = (r + c) % 2 ? '#5a4230' : '#6a4e38'; ctx.fillRect(GOX + c * GCW, GOY + r * GCH, GCW, GCH); }
+        ctx.fillStyle = '#3a5a30'; ctx.fillRect(GRIGHT, GOY, 30, GROWS * GCH);
+        for (let r = 0; r < GROWS; r++) {
+          const y = GOY + r * GCH + 4;
+          for (const [dx, dy] of [[0, 0], [8, 8]]) {
+            ctx.fillStyle = '#3a7a34'; ctx.fillRect(15 + dx, y + dy + 4, 2, 8);
+            ctx.fillStyle = '#e84878'; ctx.fillRect(13 + dx, y + dy, 6, 6); ctx.fillStyle = '#f8a8c0'; ctx.fillRect(15 + dx, y + dy + 2, 2, 2);
+          }
+        }
+        // Michelle, by the row she's working, with her can
+        const mi = G.sprites.michelle.right[0];
+        ctx.drawImage(mi, 0, rowFeet(this.r) - mi.height);
+        // the night, top to bottom
+        for (let r = 0; r < GROWS; r++) {
+          for (let c = 0; c < GCOLS; c++) if (this.grid[r][c]) this.drawPlant(ctx, this.grid[r][c], tileX(c), rowFeet(r));
+          for (const a of this.animals) if (a.row === r) this.drawAnimal(ctx, a);
+          const b = this.boss;
+          if (b && !b.gone && b.row === r) {
+            let img = b.hop > 0 ? G.spr.daisy.hopL : G.spr.daisy.sitL;
+            if (b.hurt > 0 && (b.hurt >> 1) & 1) img = G.art.flash(img);
+            const w = img.width * 4, h = img.height * 4, feet = rowFeet(r) + 2;
+            ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(Math.round(b.x - 16), feet - 1, 32, 3);
+            ctx.drawImage(img, Math.round(b.x - w / 2), Math.round(feet - h - b.z), w, h);
+          }
+          ctx.fillStyle = '#e8e070';
+          for (const s of this.shots) if (s.r === r) ctx.fillRect(Math.round(s.x), Math.round(s.y), 3, 3);
+        }
+        for (const e of this.eggs) { const k = e.k / e.dur, x = e.x0 + (e.x1 - e.x0) * k, y = rowFeet(e.r) - 12 - Math.sin(k * Math.PI) * 30; ctx.drawImage(G.spr.egg, Math.round(x - 3), Math.round(y - 3)); }
+        // the cursor, with what she's about to plant
+        const cx = GOX + this.c * GCW, cy = GOY + this.r * GCH, id = N.plants[this.sel];
+        if (!this.grid[this.r][this.c] && !this.over) this.drawPlant(ctx, { id, hp: 1, max: 1, open: 0 }, tileX(this.c), rowFeet(this.r), true);
+        ctx.strokeStyle = (this.t >> 4) & 1 ? '#f8d850' : '#f8f4c0'; ctx.lineWidth = 1; ctx.strokeRect(cx + 0.5, cy + 0.5, GCW - 1, GCH - 1);
+        for (const p of this.pops) FB().draw(ctx, p.text, Math.round(p.x - FB().width(p.text) / 2), Math.round(p.y - (44 - p.t) / 4), p.col, sh);
+        ctx.restore();
+        // along the top: the night, and how far through it you are
+        ctx.fillStyle = '#16100c'; ctx.fillRect(0, 0, G.W, 24);
+        TXT2('NOT MY DAHLIAS', 4, 2, '#f8d850');
+        TXT2(N.name, 4, 12, '#c8c0d8');
+        const done = 1 - this.queue.length / this.total;
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(122, 5, 70, 6); ctx.fillStyle = this.boss ? '#ff98d0' : '#78e070'; ctx.fillRect(123, 6, Math.round(68 * (this.boss ? this.boss.hp / this.boss.max : done)), 4);
+        TXT2(this.boss ? 'DAISY' : 'THE NIGHT', 122, 13, '#c8c0d8');
+        TXT2(this.yelled ? 'X: (yelled)' : 'X: YELL', 196, 13, this.yelled ? '#5a4e70' : '#f8d850');
+        // along the bottom: the water, and what she can plant
+        ctx.fillStyle = '#16100c'; ctx.fillRect(0, 133, G.W, 27);
+        ctx.drawImage(G.spr.wateringCan, 4, 137);
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(24, 139, 30, 6); ctx.fillStyle = '#68c8ff'; ctx.fillRect(25, 140, Math.round((28 * this.water) / 300), 4);
+        TXT2(G.sayable(this.water), 26, 147, '#a8d8ff');
+        N.plants.forEach((pid, i) => {
+          const P = GARDEN_PLANTS[pid], x = 58 + i * 36, on = i === this.sel, can = this.water >= P.cost && !(this.cools[pid] > 0);
+          G.box(ctx, x, 135, 34, 23, on ? { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' } : undefined);
+          const img = P.art(false), k = Math.min(1, 15 / img.width, 16 / img.height);
+          if (!can) ctx.globalAlpha = 0.4;
+          ctx.drawImage(img, x + 3, 138, Math.round(img.width * k), Math.round(img.height * k));
+          ctx.globalAlpha = 1;
+          FB().draw(ctx, G.sayable(P.cost), x + 19, 141, can ? '#a8d8ff' : '#5a4e70', sh);
+          if (this.cools[pid] > 0) { ctx.fillStyle = 'rgba(0,0,0,0.55)'; const h = Math.round((19 * this.cools[pid]) / P.cool); ctx.fillRect(x + 2, 137, 30, h); }
+        });
+        // what's happening
+        if (this.bigT > 0) { const t = 'HERE THEY COME!', w = FB().bigWidth(t, 2); FB().drawBig(ctx, t, Math.round(120 - w / 2), 62, 2, '#f86858', '#1c1424'); }
+        if (this.yellT > 0) { const t = 'JAMIE LEE CURTIS!!!', w = FB().bigWidth(t, 1), j = this.yellT > 60 ? (this.yellT >> 1) & 1 : 0; FB().drawBig(ctx, t, Math.round(120 - w / 2) + j, 66, 1, '#f8d850', '#1c1424'); }
+        if (this.over) { const t = this.over === 'won' ? 'THE GARDEN IS SAFE' : 'THEY GOT THE DAHLIAS', w = FB().bigWidth(t, 1); FB().drawBig(ctx, t, Math.round(120 - w / 2), 66, 1, this.over === 'won' ? '#78e070' : '#f86858', '#1c1424'); }
+        if (this.lines) {
+          const [who, line] = this.lines[0];
+          G.box(ctx, 14, 40, 212, 52);
+          if (who) FB().draw(ctx, who, 22, 45, G.NAME_COLORS[who] || '#ff98d0', sh);
+          FB().wrap(line, 196).slice(0, 3).forEach((l, i) => FB().draw(ctx, l, 22, (who ? 56 : 48) + i * 10, '#f8f8f0', sh));
+        }
+      },
+    };
+  }
+  HOW_TO.garden = ['Animals come in from the right, and they want the dahlias on the left. If one gets there, the night is over.', 'Arrows move Mom\'s trowel. {y}Q/E{/} picks a plant. {y}Z{/} plants it. Plants cost water, and her can refills slowly. A {y}Rain Barrel{/} refills it faster.', 'Snapdragons spit pollen down their row. Rose Bushes hold the line and prick whatever bites them.', 'Once a night, {y}X{/} is her yell. It sends everything running back. Save it.'];
+  S.gardenStart = function* () {
+    const f = flags();
+    f.gardenMet = true;
+    yield G.say('Michelle', 'That\'s the last of it, hon. You\'ve bought everything I sell.');
+    yield G.say('Michelle', 'Now I need a favor. Something has been getting into my garden at night. I\'ve lost three rows of dahlias.');
+    yield G.say('Nate', 'What kind of something?');
+    yield G.say('Michelle', 'I don\'t know yet. But I\'m sitting up tonight with my watering can, and you\'re sitting up with me. Henrietta will make it worth your while.');
+    yield* S.gardenPick();
+  };
+  S.gardenPick = function* () {
+    const f = flags(), won = f.gardenWon || 0, nights = GARDEN_NIGHTS.slice(0, Math.min(GARDEN_NIGHTS.length, won + 1));
+    const c = yield G.ask('Michelle', 'Which night?', nights.map((n, i) => n.name + (won > i ? ' (done)' : '')).concat(['Not now']));
+    if (c >= nights.length) return;
+    if (!f.gardenHow) { f.gardenHow = true; yield howToCmd('NOT MY DAHLIAS', HOW_TO.garden); }
+    const r = yield gardenCmd(c);
+    G.play.overlay = null;
+    G.audio.play(G.play.world.def.music);
+    if (r === 'quit') { yield G.say('Michelle', 'Fine. I\'ll sit up with the flashlight.'); return; }
+    if (!r.won) { yield G.say('Michelle', ['MY DAHLIAS.', 'Those took me three YEARS.', 'We\'ll plant more. We\'ll plant more, and we\'ll try again.'][Math.floor(Math.random() * 3)]); return; }
+    if (G.with('hannah') && !f.gardenHannah) {
+      f.gardenHannah = true;
+      yield G.say('Hannah', 'Nobody got hurt, right?');
+      yield G.say('Michelle', 'They got discouraged.');
+    }
+    if (c === 2) {
+      yield G.say(null, 'At sunrise, Daisy hops back into his hutch and sits down on his blue blanket, as if nothing happened.');
+      yield G.say('Michelle', 'Daisy. We have TALKED about this.');
+      yield G.say('Nate', 'I don\'t know how that thing is still alive.');
+      yield G.say('Michelle', 'Neither do I. But now I know where my dahlias went.');
+    }
+    if (won > c) { G.play.addTeeth(20); yield G.say('Michelle', 'Thanks, hon. Here: 20 teeth, out of the flower fund.'); G.play.autosave(); return; }
+    f.gardenWon = c + 1;
+    f.chickenUp = Math.max(f.chickenUp || 0, c + 1);
+    yield G.say('Michelle', 'You saved my garden. And Henrietta was watching the whole time. She has been eating very well.');
+    G.audio.sfx('fanfare');
+    yield G.itemGet(G.spr.chickens.white.right[0], ['{y}The Chicken{/} got {y}Quick{/}! She fires a lot faster now.', '{y}The Chicken{/} got {y}Double Yolk{/}! Two eggs out of every shot.', '{y}The Chicken{/} got {y}Golden Eggs{/}! They hit three times as hard.'][c]);
+    if (c === 2) yield G.say('Nate', 'Mom. This chicken is a weapon.');
+    if (c === 2) yield G.say('Michelle', 'She\'s a small business.');
+    G.play.autosave();
+  };
+
   // ---- music: the title tune in a minor key, marching; a sunny one for the Ditch; and the credits
+  G.SONGS.dahlias = {
+    bpm: 132,
+    tracks: [
+      { wave: 'square', vol: 0.045, notes: 'G4:2 B4:2 D5:2 B4:2 G4:2 R:2 A4:2 B4:2 | C5:2 E5:2 G5:2 E5:2 C5:2 R:2 B4:2 A4:2 | G4:2 B4:2 D5:2 G5:2 F#5:2 D5:2 B4:2 D5:2 | E5:4 D5:4 A4:4 R:4 | E5:2 G5:2 E5:2 C5:2 D5:2 F#5:2 D5:2 B4:2 | C5:2 E5:2 C5:2 A4:2 B4:2 D5:2 B4:2 G4:2 | A4:2 C5:2 F#5:2 A5:2 G5:2 F#5:2 E5:2 D5:2 | G5:4 D5:4 G4:4 R:4' },
+      { wave: 'triangle', vol: 0.14, notes: 'G2:4 D3:4 G2:4 D3:4 | C3:4 G3:4 C3:4 G3:4 | G2:4 D3:4 G2:4 D3:4 | D3:4 A3:4 D3:4 A2:4 | C3:4 G3:4 B2:4 F#3:4 | A2:4 E3:4 G2:4 D3:4 | D3:4 A3:4 D3:4 F#3:4 | G2:4 D3:4 G2:4 R:4' },
+      { wave: 'noise', vol: 0.014, notes: 'h:2 h:2 h:2 h:2 h:2 h:2 h:2 h:2 | h:2 h:2 h:2 h:2 h:2 h:2 h:2 h:2 | h:2 h:2 h:2 h:2 h:2 h:2 h:2 h:2 | h:2 h:2 h:2 h:2 h:2 h:2 h:2 h:2 | h:2 h:2 h:2 h:2 h:2 h:2 h:2 h:2 | h:2 h:2 h:2 h:2 h:2 h:2 h:2 h:2 | h:2 h:2 h:2 h:2 h:2 h:2 h:2 h:2 | h:2 h:2 h:2 h:2 h:2 h:2 h:2 h:2' },
+    ],
+  };
   G.SONGS.lastRoad = {
     bpm: 76,
     tracks: [

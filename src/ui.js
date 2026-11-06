@@ -58,7 +58,7 @@
       } else {
         itemBox(ctx, G.W - 52, 5, 'X', xi ? xi.icon() : null, xCount);
         // the chicken needs a moment between eggs
-        const cool = s.xItem === 'chicken' && G.play.eggCool > 0 ? G.play.eggCool / 40 : 0;
+        const cool = s.xItem === 'chicken' && G.play.eggCool > 0 ? Math.min(1, G.play.eggCool / G.eggCoolMax()) : 0;
         if (cool) { ctx.fillStyle = 'rgba(12,8,20,0.6)'; ctx.fillRect(G.W - 50, 7 + Math.round(18 * (1 - cool)), 18, Math.round(18 * cool)); }
         // the bidet's water level, down the right side of its box (red when it's nearly dry)
         if (s.xItem === 'bidet') {

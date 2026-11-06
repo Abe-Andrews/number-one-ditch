@@ -3812,11 +3812,13 @@
 
   // ============================================================== THE CHICKEN (egg launcher)
   class EggShot extends Ent {
-    constructor(x, y, dir) {
+    // (side: a little spread, for Double Yolk. Golden Eggs hit three times as hard)
+    constructor(x, y, dir, side = 0) {
       super(x, y);
       const [dx, dy] = DIRS[dir];
-      this.vx = dx * 3.2; this.vy = dy * 3.2;
+      this.vx = dx * 3.2 + (dy ? side : 0); this.vy = dy * 3.2 + (dx ? side : 0);
       this.life = 55;
+      this.gold = (G.state.flags.chickenUp || 0) >= 3;
     }
     splat(w) {
       this.dead = true;
@@ -3831,11 +3833,12 @@
       const r = [this.x - 4, this.y - 12, this.x + 4, this.y - 2];
       for (const t of w.ents) {
         if (t.dead || !t.enemy || !t.hurtBox) continue;
-        if (G.overlap(r, t.hurtBox())) { t.hit(1, this.x - this.vx * 4, this.y - this.vy * 4); this.splat(w); return; }
+        if (G.overlap(r, t.hurtBox())) { t.hit(this.gold ? 3 : 1, this.x - this.vx * 4, this.y - this.vy * 4); this.splat(w); return; }
       }
     }
     draw(ctx, cx, cy) {
-      ctx.drawImage(G.spr.egg, Math.round(this.x - 3) - cx, Math.round(this.y - 12) - cy);
+      if (this.gold) ctx.drawImage(G.spr.goldenEgg[0], Math.round(this.x - 4) - cx, Math.round(this.y - 13) - cy, 8, 9);
+      else ctx.drawImage(G.spr.egg, Math.round(this.x - 3) - cx, Math.round(this.y - 12) - cy);
     }
   }
   G.EggShot = EggShot;
