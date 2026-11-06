@@ -13408,12 +13408,10 @@
         const tx = side ? 11 : 4;
         w.addProp({ img: G.spr.tunnelSign, tx, ty, dx: -4, flat: true, hit: [tx, ty, 1, 1], talk: look(...text) });
       }
-      // a few old spills on the road, and the fizzers
+      // a few old spills on the road, and the fizzers (they're back every visit; the Two-Liter isn't)
       for (const [x, y] of [[7, 50], [9, 41], [6, 33]]) w.add(new G.StickyPuddle(x * 16 + 8, y * 16 + 8, true)).life = 1e9;
-      if (!f.popBeaten) {
-        for (const [x, y] of [[8, 48], [6, 43], [9, 38], [7, 33], [9, 29]]) w.add(new G.RofoPop(x * 16 + 8, y * 16 + 14));
-        w.addTrigger(5, 20, 6, 1, () => { if (!flags().popBeaten && !w.popFight) G.script.run(S.popFight()); });
-      }
+      for (const [x, y] of [[8, 48], [6, 43], [9, 38], [7, 33], [9, 29]]) w.add(new G.RofoPop(x * 16 + 8, y * 16 + 14));
+      if (!f.popBeaten) w.addTrigger(5, 20, 6, 1, () => { if (!flags().popBeaten && !w.popFight) G.script.run(S.popFight()); });
       // back to the first island, and on out the far end to the bridge between the tunnels
       w.addTrigger(5, 63, 6, 1, () => G.play.warp('cbbt', 14, 10, 'down'));
       w.addTrigger(5, 0, 6, 1, () => {
