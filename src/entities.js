@@ -1191,7 +1191,7 @@
       }
       if (this.calm > 0) { this.calm--; return; }
       const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
-      if (this.friendly) { if (dist < 110) G.SCRIPTS.animalTip(); this.tame(w, p, dist); return; }
+      if (this.friendly) { if (dist < 110) G.SCRIPTS.animalTip(); if (dist < 44) { this.vx = this.vy = 0; return; } this.tame(w, p, dist); return; }
       if (this.intro && dist < 90) G.SCRIPTS.critterIntro(this.intro);
       this.think(w, p, dx, dy, dist);
       if (this.touch !== false && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(this.dmg || 1, this.x, this.y);
@@ -5100,9 +5100,12 @@
       // (with Hannah along, it comes down off its light and lands right by her)
       if (this.friendly) {
         if (dist < 120) G.SCRIPTS.animalTip();
-        const near = dist < 120, tx = near ? p.x + (dx > 0 ? -26 : 26) : this.home.x, ty = near ? p.y - 2 : this.home.y, ax = tx - this.x, ay = ty - this.y, d = Math.hypot(ax, ay);
-        if (d > 1.2) { this.x += (ax / d) * 1.2; this.y += (ay / d) * 1.2; }
-        this.z += ((near ? 2 : this.perchZ) - this.z) * 0.06;
+        if (dist > 150) this.landAt = null;
+        else if (!this.landAt && dist < 120) this.landAt = { x: p.x + (dx > 0 ? -18 : 18), y: p.y - 2 };
+        const to = this.landAt, tx = to ? to.x : this.home.x, ty = to ? to.y : this.home.y, ax = tx - this.x, ay = ty - this.y, d = Math.hypot(ax, ay);
+        if (d > 1.2) { this.x += (ax / d) * 1.4; this.y += (ay / d) * 1.4; }
+        this.z += ((to ? 2 : this.perchZ) - this.z) * 0.06;
+        this.hb = { w: 22, h: 14 };
         Object.assign(this, { state: 'grounded', st: 8 });
         return;
       }
@@ -5807,6 +5810,7 @@
     update(w) {
       if (G.script.busy) return;
       this.t++;
+      if (G.hannahHere() && Math.hypot(G.play.player.x - this.x, G.play.player.y - this.y) < 44) return;
       if (this.peck > 0) { this.peck--; return; }
       if (this.flee <= 0 && --this.wt <= 0) {
         if (Math.random() < 0.4) { this.peck = 30 + Math.random() * 40; this.vx = this.vy = 0; this.wt = 1; return; }
