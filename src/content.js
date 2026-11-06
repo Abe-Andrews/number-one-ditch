@@ -1543,7 +1543,6 @@
   S.brooks = function* () {
     flags().brooksMet = true;
     yield G.say('Brooks', 'I heard nobody has EVER gotten the last question on this final right.');
-    yield G.say('Brooks', 'Also, why are there fire extinguishers on every single wall in here?');
   };
 
   S.notEast = function* () {
