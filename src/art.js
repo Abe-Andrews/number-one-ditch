@@ -10413,6 +10413,20 @@
     return cv;
   }
 
+  // a light switch, and the same one with Mom's tape and arrow next to it
+  function switchPlate() {
+    const p = new Pix(6, 9);
+    p.rect(0, 0, 6, 9, '#e8e4d8'); p.rect(2, 3, 2, 3, '#c8c4b8'); p.rect(2, 2, 2, 2, '#f8f4e8');
+    return finish(p);
+  }
+  function switchTape() {
+    const p = new Pix(16, 12);
+    p.rect(1, 1, 6, 9, '#e8e4d8'); p.rect(3, 4, 2, 3, '#c8c4b8'); p.rect(3, 3, 2, 2, '#f8f4e8');
+    p.rect(8, 2, 8, 6, '#e8d8a0'); p.hline(8, 15, 7, '#c8b880');
+    p.hline(9, 14, 3, '#3a3a48'); p.hline(9, 13, 5, '#3a3a48');
+    return p.canvas();
+  }
+
   // The fifteen fossils of the Tooth Book, drawn from rows. e/l are enamel, T the root; each kind
   // picks its own colors. (Fossils out of Chesapeake gravel come out gray, brown and bluish-black.)
   const FOSSIL_ROWS = {
@@ -10474,7 +10488,7 @@
 
   // The family photo at the Ditch, 120x80 (the Photos collection), everybody at 1x. The last
   // two arguments of the group's order are Lily, right under whatever Abe's holding.
-  // take 1: Mom's phone is too close and Abe's head is cut off. 2: Romulus runs through it.
+  // take 1: the phone slid down the rock, so it's everybody's feet. 2: Romulus runs through it.
   // 3: the one (and Abe, holding the doll over Lily's head).
   function familyPortrait(take) {
     const W = 120, H = 80, c = G.canvas(W, H), x = c.getContext('2d');
@@ -10493,7 +10507,7 @@
     gx.imageSmoothingEnabled = false;
     const P = G.sprites, stand = (id, cx, feet, img) => { const im = img || P[id].down[0]; gx.drawImage(im, cx - Math.floor(im.width / 2), feet - im.height); };
     const dog = G.spr.romulus;
-    stand('doron', 24, 60); stand('abe', 42, take === 1 ? 50 : 60, take === 3 ? P.abe.hold : null); stand('dad', 62, 60); stand('michelle', 84, 60);
+    stand('doron', 24, 60); stand('abe', 42, 60, take === 3 ? P.abe.hold : null); stand('dad', 62, 60); stand('michelle', 84, 60);
     stand('hannah', 106, 64);
     stand('lily', 34, 74); stand('nate', 56, 76);
     if (take !== 2) gx.drawImage(dog.left.happy || dog.left.stand, 66, 76 - (dog.left.happy || dog.left.stand).height);
@@ -10502,7 +10516,7 @@
       const e = G.spr.eggmas, h = 18, w = Math.round((e.width / e.height) * h);
       gx.drawImage(e, 36 - Math.floor(w / 2), 22, w, h);
     }
-    if (take === 1) x.drawImage(g, -38, -62, W * 1.65, H * 1.65);
+    if (take === 1) { x.fillStyle = '#8a7a62'; x.fillRect(0, 0, W, H); for (let i = 0; i < 500; i++) { x.fillStyle = ['#a8967a', '#6a5e4c', '#c0b090', '#50483c'][i % 4]; x.fillRect(Math.floor(G.hash(i, 5, 331) * W), Math.floor(G.hash(i, 6, 331) * H), 1, 1); } x.drawImage(g, -38, -112, W * 1.65, H * 1.65); }
     else x.drawImage(g, 0, 0);
     if (take === 2) {
       // a black and white blur, nose first, right across the front row
@@ -10806,6 +10820,6 @@
     S.candyPost = candyPost(); S.tinselWall = [tinselWall(0), tinselWall(1)]; S.ditchSignTwo = ditchSignTwo();
     S.gravelSpots = [0, 1, 2, 3, 4].map(gravelSpot); S.eggCartons = eggCartons(); S.numberTwoDitch = numberTwoDitch();
     S.fossils = {}; for (const id in FOSSIL_ROWS) S.fossils[id] = fossil(id);
-    S.natesBassDone = natesBassDone();
+    S.natesBassDone = natesBassDone(); S.switchPlate = switchPlate(); S.switchTape = switchTape();
   };
 })();

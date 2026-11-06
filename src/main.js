@@ -274,7 +274,7 @@
         G.script.run(pr.talk());
         return true;
       }
-      if (notNow) { this.world.pop(p.x, p.y - 30, ['*not now*', '*focus, Lily*', '*Taco Bell first*'][G.tick % 3], '#c8a0f0'); return true; }
+      if (notNow) { this.world.pop(p.x, p.y - 30, (G.state.night.abe ? ['*not now*', '*the lights, Abe*', '*last one up*'] : ['*not now*', '*focus, Lily*', '*Taco Bell first*'])[G.tick % 3], '#c8a0f0'); return true; }
       if (partner) { G.script.run(partner.talk()); return true; }
       return false;
     },

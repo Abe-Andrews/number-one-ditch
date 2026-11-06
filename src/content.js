@@ -530,7 +530,7 @@
     nate: { name: 'Nate', bio: 'Geology major at Lafayette. Makes his own fireworks. Thinks about pH often.', skill: 'Rock hammer, chemistry, explosive presents' },
     doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Obsessed with the UFC. Never skips leg day. Owns three luchador masks. Responsible for the Alligator Incident.', skill: 'Lifts and smashes heavy things' },
     lily: { name: 'Lily', bio: 'Nate\'s sister. Survived a refrigerator. Still subscribed to Badlands Chugs.', skill: 'A "No." that pops balloons' },
-    abe: { name: 'Abe', bio: '6\'5". Lives in Chesapeake with Hannah and Romulus. Bought way too many yellow guitar cables, and can\'t even give them away. Gave Nate a bidet for Christmas, then took it back.', skill: 'He\'s 6\'5": reaches things up high, and boosts Nate over tall hedges' },
+    abe: { name: 'Abe', bio: 'Lives in Chesapeake with Hannah and Romulus. Owns more guitars than anybody needs and way too many yellow cables, and can\'t even give them away. Keeper of the sacred number. Gave Nate a bidet for Christmas, then took it back. It wasn\'t him this time.', skill: 'Gets things down from way up high, and boosts Nate over tall hedges' },
     hannah: { name: 'Hannah', bio: '5\'2". A nurse in the NICU at CHKD. Married to Abe. Romulus\'s favorite person. Reads fantasy every spare minute, Sarah J. Maas above all. Father Eggmas hypnotized her babies, and now it\'s personal.', skill: 'Heals: patches Nate up when he\'s low, and gives him a checkup when you talk to her' },
   };
 
@@ -719,13 +719,14 @@
     if (f.hipHopMet) add('Dad\'s hip hop class', f.hipHopDone, G.sayable(f.hipHopRound || 0) + '/3 rounds', 'College Hill', 'It\'s REAL. Talk to Dad at the grocery store and copy his moves with the arrows.', [f.hipHopRound || 0, 3]);
     if (f.mobileBeaten && !f.rubyMet) side.push({ name: 'The rock doctor', status: 'Someone needs one', kind: 'rumor', where: 'CHKD - the ward', hint: 'The nurse on the ward says the girl behind the green door keeps asking for a "rock doctor."' });
     if (f.rubyMet) add('Ruby, the rock kid', f.rubyHeart, !f.rubyQuiz ? G.sayable(f.rubyQ || 0) + '/3 named' : 'Trade her a rock', 'CHKD - the ward', !f.rubyQuiz ? 'Ruby has three rocks with no names. Tell her what they are, rock doctor.' : 'Ruby will trade one of her two fairy stones for a rock she doesn\'t have yet, from somewhere she\'s never been.', !f.rubyQuiz ? [f.rubyQ || 0, 3] : null);
-    if (s.party.includes('abe')) add('Abe\'s reach', G.abeReachCount() >= G.ABE_REACH_TOTAL && 'All found!', G.sayable(G.abeReachCount()) + '/' + G.sayable(G.ABE_REACH_TOTAL) + ' found', 'Anywhere', 'Abe is 6\'5". With him along, check things that are way up high (press Z under them): around Abe and Hannah\'s, at CHKD, the tall hedge up by Anette\'s... and maybe places you\'ve already been.', [G.abeReachCount(), G.ABE_REACH_TOTAL]);
+    if (s.party.includes('abe')) add('Abe\'s reach', G.abeReachCount() >= G.ABE_REACH_TOTAL && 'All found!', G.sayable(G.abeReachCount()) + '/' + G.sayable(G.ABE_REACH_TOTAL) + ' found', 'Anywhere', 'With Abe along, check things that are way up high (press Z under them): around Abe and Hannah\'s, at CHKD, the tall hedge up by Anette\'s... and maybe places you\'ve already been.', [G.abeReachCount(), G.ABE_REACH_TOTAL]);
     if (f.lilySaved && s.party.includes('lily')) {
       if (!f.tacoRunMet) side.push({ name: 'Lily\'s phone', status: 'It keeps buzzing', kind: 'rumor', where: 'Home - Lily\'s room', hint: 'Lily\'s phone keeps buzzing on her bed upstairs. It\'s always Freya.' });
       else add('The 2 AM Taco Bell run', f.tacoRunDone && 'Fourthmeal!', 'Sneak out with Lily', 'Home - Lily\'s room', 'Check Lily\'s bed. Sneak out at 2 AM without waking Mom or Dad, then order for the whole car at the drive-thru.');
     }
     if (f.mattMet) add('Fishing with Matt Oliver', f.tollPaid && 'Toll paid!', G.sayable(Math.min(s.teeth, 500)) + '/500 teeth', 'The Bay - Island 2', 'Matt Oliver\'s boat is tied up on Island 2. Catch fish for his survey and he pays you in shark teeth.', [Math.min(s.teeth, 500), 500]);
     if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
+    if (s.party.includes('abe') && !f.lastUpDone) side.push({ name: 'The light switch', status: 'There\'s tape on it', kind: 'rumor', where: 'Home - the front hall', hint: 'There\'s a strip of tape by a light switch in the front hall, with Abe\'s name on it.' });
     if (f.bassQuest) add('Nate\'s bass', f.bassDone, ['', 'Needs strings', 'Needs a finish', 'Needs a cable'][f.bassQuest] || '', f.bassQuest === 1 ? 'Chesapeake - El Toro Loco' : f.bassQuest === 2 ? 'Home - Dad\'s workshop' : 'Chesapeake - Abe\'s office', ['', 'The Paul McCartney Lady keeps bass strings at El Toro Loco.', 'Dad can help Nate finish it, at his bench.', 'Ask Abe for a cable. Just one.'][f.bassQuest] || '');
     if (f.dayIntro) add('The Tooth Book', G.fossilsFound() >= G.FOSSILS.length && 'All found!', G.sayable(G.fossilsFound()) + '/' + G.sayable(G.FOSSILS.length) + ' fossils', 'The Ditch', 'Sift the gravel at the Number One Ditch with Tyler\'s Sifter.', [G.fossilsFound(), G.FOSSILS.length]);
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
@@ -3377,7 +3378,7 @@
     },
     {
       id: 'atticSelfie', name: 'Backyard Selfie', place: 'Home', file: 'assets/photos/attic-selfie.png',
-      how: 'In a shoebox in the attic. You\'d need somebody really tall to get up there.',
+      how: 'In a shoebox in the attic. Somebody would have to get that hatch open.',
       caption: 'A selfie in the backyard, taken mid-spin. The trees are a blur. One face says "I am cool." The other says "I did not agree to this picture."',
     },
     {
@@ -3688,6 +3689,7 @@
     { name: 'El Toro Loco: Romulus\'s sloth', map: 'toroLoco', at: [11, 8, 'up'], flags: { romHide: 8, romToGolf: true, slothQuest: 1 } },
     { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { slothQuest: 4, ladyMet: true, bassGiven: true, romGap: true }, items: { abeBass: true, yellowCable: true, sloth: true } },
     { name: 'Abe joined: his reach', map: 'condo', at: [16, 13, 'right'], flags: { romulusBeaten: true }, party: ['abe'], follower: 'abe' },
+    { name: 'The Last One Up (the tape in the hall)', map: 'homeDown', at: [21, 15, 'down'], flags: { homeArrived: true } },
     { name: 'Jamming with Abe (condo office)', map: 'condoUp', at: [22, 17, 'down'], flags: { plantQuest: true, plantsDone: true, gardenOpen: true } },
     { name: 'Lafayette: Studio B (three instruments, metronome)', alone: true, map: 'studioB', at: [7, 8, 'up'], flags: { chemPassed: true, jamMet: true, studioTold: true }, jams: { shoolby: 2, bongos: 2, island: 2 }, items: { metronome: true } },
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'], flags: { healerTalk: true, chkdArrived: true } },
@@ -5318,7 +5320,8 @@
       };
       if (!G.night()) { at(G.Corncob, 12, 8); at(G.Corncob, 9, 15); at(G.CerealBox, 41, 8); at(G.CerealBox, 47, 13); at(G.Firework, 18, 12); }
       // ---- ways out (at 2 AM: Lily's way out, S.nightSetup)
-      w.addTrigger(17, 3, 2, 1, () => G.play.warp('homeUp', 13, 13, 'up'));
+      if (!G.night() && !G.flashback) F.hang(sp.switchTape, 21, 17, 1, S.switchTape, -2);
+      w.addTrigger(17, 3, 2, 1, () => { if (G.night() && G.state.night.abe) G.script.run(S.lastUpStairs()); else G.play.warp('homeUp', 13, 13, 'up'); });
       if (G.night()) S.nightSetup(w, 'down');
       else {
         w.addWarp(4, 17, 1, 1, 'home', 14, 34, 'down');
@@ -7431,14 +7434,14 @@
     },
     {
       id: 'upbass', name: 'Abe\'s Upright Bass', kind: 'Double bass', art: () => G.spr.uprightBass, bow: 'upbass', song: 'walkingRomulus',
-      blurb: 'An upright bass, taller than Abe (almost). The biggest of the strings. In jazz, you pluck it.',
+      blurb: 'An upright bass, the biggest of the strings. In jazz, you pluck it.',
       about: [
         'The biggest of the bowed strings, also called a double bass. Its four strings are tuned E, A, D and G, in fourths, not fifths like the others.',
         'In jazz it\'s usually plucked, "walking" a line of steady quarter notes under the band.',
         'Abe traded his old bike for it. He walks everywhere now. It\'s fine.',
       ],
       how: 'Clear Walking Romulus, jamming with Abe at the condo.',
-      intro: [[null, 'Abe leans something enormous against the wall. It\'s an upright bass, and it\'s almost as tall as he is.'], ['Abe', 'I traded my bike for it. I walk everywhere now. Speaking of walking: this is a walking bass line.'], ['Abe', 'One note a beat, nice and steady. Like walking Romulus. Except Romulus never walks steady.']],
+      intro: [[null, 'Abe leans something enormous against the wall. It\'s an upright bass.'], ['Abe', 'I traded my bike for it. I walk everywhere now. Speaking of walking: this is a walking bass line.'], ['Abe', 'One note a beat, nice and steady. Like walking Romulus. Except Romulus never walks steady.']],
       won: [['Abe', 'The bass is yours. Every band needs one. You\'re the band now.']], gotLine: 'Abe helped carry it. Twice.',
       talk: ['Walk it. One, two, three, four. Like walking the dog.', 'That\'s it, that\'s the bass. Nobody notices until it stops.', 'Romulus would never walk this steady. Romulus stops at every tree.', 'Pluck it. Don\'t pet it. Pluck it.'],
     },
@@ -12230,7 +12233,7 @@
       yield G.say('Nate', 'Magnetite. A whole... person of it. A lodestone the size of a car.');
       if (G.with('doron')) yield G.say('Doron', 'I can take him.');
       else if (G.with('lily')) yield G.say('Lily', 'I am going back up the ladder.');
-      else if (G.with('abe')) yield G.say('Abe', 'I\'m tall, but I\'m not THAT tall.');
+      else if (G.with('abe')) yield G.say('Abe', 'I brought a cable. I don\'t think I brought enough cable.');
       else if (G.with('hannah')) yield G.say('Hannah', 'If it pulls you in, walk AWAY from it. I\'ll patch you up after.');
     }
     yield G.camFocus(null, null, 30);
@@ -13967,7 +13970,7 @@
     } else yield G.say('Carny', 'Ooh. Noodle arms.');
     if (!f.strikerHint) {
       f.strikerHint = true;
-      yield G.say('Nate', abe ? 'Nobody\'s swinging hard enough to ring that. ...But Abe is tall enough to just REACH it.' : 'Nobody\'s ringing that bell. Not without being, like, nine feet tall.');
+      yield G.say('Nate', abe ? 'Nobody\'s swinging hard enough to ring that. ...Abe could probably just flick it.' : 'Nobody\'s ringing that bell. Not without being, like, nine feet tall.');
     }
   };
 
@@ -14371,7 +14374,7 @@
       look: 'A stainless fridge. Nate checks it, just in case. Nobody\'s inside. Good.',
       high: 'There\'s something on top of the fridge, way at the back. Way too high.',
       after: 'A stainless fridge. Nothing on top of it anymore. Hannah may never know.',
-      lines: [['Abe', 'My emergency stash. Hannah can\'t reach it up here.'], ['Nate', 'Hannah is five foot two.'], ['Abe', 'That\'s the point.']],
+      lines: [['Abe', 'My emergency stash.'], ['Nate', 'I thought you quit Doosh De Luche.'], ['Abe', 'So does Hannah.']],
       *reward() {
         const s = G.state;
         s.items.doosh = (s.items.doosh || 0) + 1; flags().hadDoosh = true;
@@ -14443,7 +14446,7 @@
       look: 'The attic hatch, up in the hallway ceiling. The pull cord snapped off years ago, and nobody can find the ladder.',
       high: 'The attic hatch, up in the hallway ceiling. Way too high.',
       after: 'The attic hatch. Abe tied a new pull cord on it, up where only Abe can reach it.',
-      reach: 'Abe reaches up, pops the hatch open, and feels around in the attic. He doesn\'t even need the ladder.',
+      reach: 'Abe reaches up, pops the hatch open, and feels around in the attic.',
       lines: [['Abe', 'Got something. A shoebox. Mom wrote on the lid: OLD PHOTOS (DO NOT LET DAD LABEL).'], ['Nate', 'Why can\'t Dad label?'], ['Abe', 'He labeled the Christmas decorations "MISC. JOY."']],
       *reward() { yield* S.photoGive('atticSelfie'); },
     },
@@ -14470,7 +14473,7 @@
     }
     if (spot.sfx) G.audio.sfx(spot.sfx);
     if (spot.onReach) spot.onReach();
-    yield G.say(null, spot.reach || 'Abe reaches up and grabs it. He doesn\'t even go up on his tiptoes.');
+    yield G.say(null, spot.reach || 'Abe reaches up and grabs it.');
     if (abe) abe.pose = null;
     f['reach_' + id] = true;
     for (const [who, line] of spot.lines) yield G.say(who, line);
@@ -14486,7 +14489,7 @@
     if (f.gardenOpen) { yield G.say(null, 'Anette\'s garden, behind a tall hedge. The gate is open now.'); return; }
     if (p.y < 4 * 16) { yield* S.gardenGateOpen(); return; }
     yield G.say(null, 'A tall hedge, way over Nate\'s head. There\'s a little wooden gate in it, latched shut from the inside.');
-    if (!s.party.includes('abe')) { yield G.say('Nate', 'There\'s no way over that. Not without a ladder. Or somebody really tall.'); return; }
+    if (!s.party.includes('abe')) { yield G.say('Nate', 'There\'s no way over that. Not without a ladder. Or a boost.'); return; }
     yield* S.callIn('abe', 'Need a boost?');
     const abe = abeFollower();
     const x = G.clamp(p.x, 14 * 16 + 8, 17 * 16 + 8);
@@ -14526,7 +14529,7 @@
       yield G.say('Anette', 'Oh! Oh my goodness. My GARDEN!');
       yield G.say('Anette', 'That latch rusted shut years ago, and my knees can\'t get over that hedge. I\'ve been peeking at it through the leaves ever since.');
       yield G.say('Nate', 'Abe gave me a boost.');
-      if (G.with('abe')) yield G.say('Abe', 'I\'m six foot five. It\'s what I do.');
+      if (G.with('abe')) { yield G.say('Abe', 'Anette, while I\'m here: do you need a guitar cable? Any guitar cable?'); yield G.say('Anette', '...No, dear.'); }
       yield G.say('Anette', 'My roses are still blooming! Here, dear. This has been sitting under the birdbath the whole time. I always said whoever got that gate open could have it.');
       s.maxHp += 2; s.hp = s.maxHp;
       G.audio.sfx('heart');
@@ -15399,7 +15402,7 @@
     if (!s.party.includes('abe')) s.party.push('abe');
     s.follower = 'abe';
     G.audio.sfx('fanfare');
-    yield G.banner('ABE JOINED THE PARTY!', 'He\'s 6\'5". He can reach anything.', 220);
+    yield G.banner('ABE JOINED THE PARTY!', 'It wasn\'t him this time.', 220);
     yield G.say(null, 'With Abe along, Nate can get at things way up high (press Z under them), and Abe can boost him over tall hedges. Swap who tags along in the {y}PEOPLE{/} menu.');
     G.play.autosave();
     G.play.warp('condo', 16, 13, 'left');
@@ -16727,6 +16730,7 @@
   // the night's people and things, in the real house (from homeUp/homeDown's setup)
   S.nightSetup = function (w, floor) {
     const N = G.state.night;
+    if (N.abe) { S.lastUpSetup(w); return; }
     if (floor === 'up') {
       // Mom, asleep... for now (she walks the hall to the bathroom now and then: G.nightTick)
       w.nightMom = w.add(new G.NPC({ sprite: 'michelle', name: 'Mom', x: 6 * 16 + 8, y: 10 * 16 + 14, dir: 'down' }));
@@ -16820,10 +16824,11 @@
       if (!first && (ch === 'î' || ch === 'ò')) {
         N.noise++; N.decay = 0;
         G.audio.sfx('creak'); w.pop(p.x, p.y - 30, '*creeeak*', '#d8c8a8');
-        if (N.noise >= 3) { G.script.run(S.tacoCaught(floor === 'up' ? 'mom' : 'dad')); return; }
+        if (N.noise >= 3) { G.script.run(N.abe ? S.lastUpCaught() : S.tacoCaught(floor === 'up' ? 'mom' : 'dad')); return; }
       }
     }
     if (N.noise > 0 && ++N.decay > 360) { N.noise--; N.decay = 0; }
+    if (N.abe) { w.lastP = { x: p.x, y: p.y }; return; }
     if (floor === 'up') nightMom(w, p); else nightDad(w, p);
     w.lastP = { x: p.x, y: p.y };
   };
@@ -16878,6 +16883,7 @@
   G.nightTint = (ctx, floor) => {
     const cam = G.play.cam, w = G.play.world, p = G.play.player, N = G.state.night;
     if (!N || !p) return;
+    if (N.abe) { lastUpTint(ctx); return; }
     if (!nightCanvas) nightCanvas = G.canvas(G.W, G.H);
     const c = nightCanvas.getContext('2d');
     c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, G.W, G.H);
@@ -19066,7 +19072,7 @@
     dad: [['Dad', 'Father Eggmas. Do YOU speak EEENGLISH?'], ['Father Eggmas', 'I speak EGGLISH. HO HO HO.']],
     lily: [['Father Eggmas', 'Remember me, little one? HO HO HO.'], ['Lily', '...I remember.'], ['Lily', 'I\'ve been scared of you my whole life.'], ['Lily', 'I\'m still scared.'], ['Lily', 'I\'m doing it anyway.']],
     michelle: [['Michelle', 'You took my family, you took my ditch, and you broke my GOOD pots.'], ['Michelle', 'Henrietta. Get him.'], [null, '*BAWK*']],
-    abe: [['Father Eggmas', 'HO HO HO! Can\'t reach me up HERE!'], ['Abe', 'Buddy. I\'m six foot five.']],
+    abe: [['Father Eggmas', 'HO HO HO! Come to chase somebody with me, Abe?'], ['Abe', 'Buddy. That was a BIT.']],
     romulus: [['Romulus', '*WOOF!*'], ['Father Eggmas', 'Bad dog. BAD DOG!'], ['Hannah', 'Don\'t you TALK to him like that!']],
     hannah: [['Hannah', 'I\'m a NICU nurse. I am not scared of a cranky little egg.'], ['Father Eggmas', 'I am NOT little!']],
     nate: [['Nate', 'My turn.'], ['Doron', 'GO, NATE!'], ['Lily', 'Crack him!'], ['Father Eggmas', 'Come on, then, rock boy. HO HO HO!']],
@@ -19713,7 +19719,7 @@
     yield G.say('Michelle', 'And you\'ll have it in the picture. Nate, get in here. You go in the middle.');
   };
   S.poseTalk = (id) => function* () {
-    yield G.say(FIN_NAME[id], { doron: 'Get in here, little brother.', abe: 'I\'ll scrunch. I\'m scrunching.', lily: 'Nate, come ON. My face hurts.', hannah: 'There\'s a spot right there, by me.', michelle: 'In the MIDDLE, Nate.', dad: 'Go on, son. That spot\'s yours.', romulus: '*wag wag wag*' }[id]);
+    yield G.say(FIN_NAME[id], { doron: 'Get in here, little brother.', abe: 'Get in here. I am not holding anything behind my back.', lily: 'Nate, come ON. My face hurts.', hannah: 'There\'s a spot right there, by me.', michelle: 'In the MIDDLE, Nate.', dad: 'Go on, son. That spot\'s yours.', romulus: '*wag wag wag*' }[id]);
   };
   S.photoTake = function* () {
     const f = flags(), w = G.play.world, p = P(), fam = w.pose;
@@ -19736,8 +19742,8 @@
     yield G.say('Nate', 'Five. Four. Three. Two. One.');
     const snap = function* (take, hint) { G.audio.sfx('blip'); G.play.whiteout = 1; yield G.wait(40); yield G.noteView([G.photoFull(take)], hint); };
     yield* snap(1, 'Z: one more');
-    yield G.say('Michelle', 'Abe, you\'re cut off.');
-    yield G.say('Abe', 'I\'m ALWAYS cut off, Michelle.');
+    yield G.say('Michelle', 'The phone slid down the rock. That\'s a lovely picture of everybody\'s feet.');
+    yield G.say('Abe', 'Those are good feet.');
     yield G.say('Michelle', 'One more.');
     G.audio.sfx('blip');
     yield G.wait(50);
@@ -20414,6 +20420,293 @@
     yield G.say('Abe', 'New page on the setlist: BASS. You\'re on bass. I\'ll play guitar.');
     yield G.say('Nate', 'You\'ll PLAY? You never play. You just dance.');
     yield G.say('Abe', 'Don\'t get used to it. And it\'ll be in the studio too. Rae\'s already clearing a spot.');
+    G.play.autosave();
+  };
+
+  // ================================================================ THE LAST ONE UP
+  // A true family story: Abe was visiting, he was the last one up, he couldn't find the switch,
+  // so he unscrewed all the lightbulbs and burnt his fingertips. There's tape by the switch in the
+  // front hall now (S.switchTape). Played as Abe, in the real house at night (G.state.night with
+  // abe: true: see S.nightSetup, G.nightTick and G.nightTint): every light is on and everybody's
+  // asleep. Three wrong switches later he has a new plan, and each bulb is its own little game
+  // (bulbCmd): hold Z to twist, the longer the grip the faster it turns and the hotter it gets, let
+  // go to blow on your fingers. He can't lose: noise just wakes somebody up for a word. The score
+  // is how many fingertips he burns. Flags: lastUpMet, lastUpDone, lastUpBest.
+  // N: { abe, noise, decay, switches: { id: tries }, bulbs: { index: true }, plan, burned, woke, back }
+  const LAST_SWITCHES = {
+    porch: { at: [21, 17], lines: [[null, 'Out the front window, the porch light comes on. Every moth in New Jersey shows up.'], ['Abe', 'Not that one.']] },
+    disposal: { at: [29, 16], noise: true, big: 'GRRRRRRRRRRR', lines: [['Abe', 'NOPE. Nope nope nope.']] },
+    fan: { at: [42, 10], lines: [[null, 'A fan starts up somewhere. Abe can\'t find the fan. He can\'t find what turns it off, either.'], [null, 'It stops by itself. He decides not to think about it.']] },
+    nothing: { at: [8, 12], lines: [[null, 'Click. Nothing. Click. Nothing.'], ['Abe', 'Every house has one switch nobody understands.']] },
+    flood: { at: [41, 17], noise: true, lines: [[null, 'The whole yard lights up like a prison break. Next door, a dog starts barking.'], ['Abe', 'OFF. Off off off.']] },
+  };
+  // the seven bulbs: name, where to stand and press Z (tiles: x, y, w, h), where the light is, how far it reaches
+  const LAST_BULBS = [
+    { name: 'The Floor Lamp', hit: [9, 3, 1, 1], at: [9.5, 3.5], r: 130 },
+    { name: 'The Console Lamp', hit: [4, 13, 2, 1], at: [5, 13.5], r: 120 },
+    { name: 'The Hall Chandelier', hit: [18, 10, 5, 2], at: [20.5, 11], r: 110 },
+    { name: 'The Powder Room', hit: [21, 3, 1, 1], at: [21.5, 3.5], r: 44 },
+    { name: 'The Kitchen Chandelier', hit: [27, 7, 7, 5], at: [30, 9.5], r: 140 },
+    { name: 'The Tiffany Lamp', hit: [44, 3, 1, 1], at: [44.5, 4.5], r: 130 },
+    { name: 'The Breakfast Room', hit: [44, 13, 4, 2], at: [45.5, 13.5], r: 84 },
+  ];
+  const lastBulbsOut = () => Object.keys(G.state.night.bulbs).length;
+  S.switchTape = function* () {
+    const f = flags(), s = G.state;
+    yield G.say(null, 'A light switch. Next to it, a strip of masking tape and an arrow, in Mom\'s handwriting: ABE. THIS ONE.');
+    if (!s.party.includes('abe')) { yield G.say('Nate', 'That\'s been there for years. Nobody will tell me why.'); return; }
+    yield* S.callIn('abe');
+    if (!f.lastUpMet) {
+      f.lastUpMet = true;
+      yield G.say('Nate', 'Abe, why does this tape have your name on it?');
+      yield G.say('Abe', 'That\'s not funny. I don\'t know why she thinks that\'s funny.');
+      yield G.say('Abe', 'I was the last one up, okay? That\'s all. I was the last one up, and I did what the note said.');
+    } else yield G.say('Abe', f.lastUpDone ? 'You want to hear it AGAIN?' : 'Fine. FINE.');
+    const c = yield G.ask('Abe', 'You really want to know?', ['Tell me', 'Not now']);
+    if (c !== 0) return;
+    yield* S.lastUpStart();
+  };
+  S.lastUpStart = function* () {
+    const f = flags(), s = G.state, p = P();
+    yield G.fadeOut(30);
+    s.night = { abe: true, noise: 0, decay: 0, switches: {}, bulbs: {}, plan: false, burned: 0, woke: 0, back: { x: p.x, y: p.y, dir: p.dir } };
+    s.playAs = 'abe';
+    G.play.loadMap('homeDown', 30 * 16 + 8, 13 * 16 + 14, 'down', true);
+    yield G.fadeIn(40);
+    yield G.banner('1:17 AM', 'a few years ago', 150);
+    yield G.say(null, 'Everybody else went up to bed hours ago. Abe is the last one awake.');
+    yield G.say(null, 'There\'s a note on the counter, in Michelle\'s handwriting: LAST ONE UP, LIGHTS OFF PLEASE.');
+    yield G.say('Abe', 'Easy.');
+    yield G.say(null, 'You\'re playing as {y}Abe{/}. Find the light switches: press {y}Z{/} at a switch on the wall.');
+    yield G.say(null, 'Everybody\'s asleep. Bare boards creak, and so do some of those switches. Three noises and somebody gets up.');
+  };
+  S.lastUpSetup = (w) => {
+    const sp = G.spr, N = G.state.night, night = (o) => { const pr = w.addProp(o); pr.night = true; return pr; };
+    for (const [id, sw] of Object.entries(LAST_SWITCHES)) night({ img: sp.switchPlate, tx: sw.at[0], ty: sw.at[1], flat: true, dx: 5, dy: 1, hit: [sw.at[0], sw.at[1], 1, 1], talk: S.lastUpSwitch(id) });
+    LAST_BULBS.forEach((b, i) => night({ img: null, tx: b.hit[0], ty: b.hit[1], hit: b.hit, talk: S.lastUpBulb(i) }));
+    for (const [x, y] of [[20, 17], [4, 17], [39, 17]]) w.addTrigger(x, y, 1, 1, () => G.script.run(S.lastUpDoor()));
+  };
+  S.lastUpStairs = function* () {
+    const p = P();
+    yield G.say('Abe', 'Not with the lights on. Last one up turns off the lights. There\'s a NOTE.');
+    yield G.walkTo(p, p.x, p.y + 18, 1.2);
+    p.dir = 'down';
+  };
+  S.lastUpDoor = function* () {
+    const p = P();
+    yield G.say('Abe', 'I can\'t just leave. It\'s one in the morning, and there\'s a NOTE.');
+    yield G.walkTo(p, p.x, p.y - 16, 1.2);
+    p.dir = 'up';
+  };
+  // somebody heard that: a word from upstairs, and back to it (he keeps what he's done)
+  S.lastUpCaught = function* () {
+    const N = G.state.night, k = N.woke++ % 3;
+    N.noise = 0; N.decay = 0;
+    if (k === 0) { yield G.say('Dad', '(from upstairs) Abe? What was that?'); yield G.say('Abe', 'Nothing, Dad! Turning off the lights!'); yield G.say('Dad', '(from upstairs) ...Okay.'); }
+    else if (k === 1) { yield G.say('Michelle', '(from upstairs) Abe, honey. Whatever that is, please stop.'); yield G.say('Abe', 'Almost done, Michelle!'); }
+    else { yield G.say('Dad', '(from upstairs) How long does it take to turn off the lights?'); yield G.say('Abe', 'Not long! Probably!'); }
+  };
+  function* lastUpNoise() {
+    const N = G.state.night;
+    N.noise++; N.decay = 0;
+    if (N.noise >= 3) yield* S.lastUpCaught();
+  }
+  S.lastUpPlan = function* () {
+    const N = G.state.night;
+    N.plan = true;
+    yield G.wait(20);
+    yield G.say('Abe', 'I have been coming to this house for years, and I could not tell you where one light switch is.');
+    yield G.say('Abe', '...Okay. Think.');
+    yield G.say('Abe', 'A lamp can\'t stay on without a bulb.');
+    yield G.say('Abe', 'Michelle didn\'t say HOW.');
+    yield G.say(null, 'New plan: go to every light and press {y}Z{/}. There are {y}seven{/}.');
+  };
+  S.lastUpSwitch = (id) => function* () {
+    const N = G.state.night, sw = LAST_SWITCHES[id], again = N.switches[id];
+    if (again) { yield G.say(null, 'Abe isn\'t touching that one again.'); return; }
+    N.switches[id] = 1;
+    G.audio.sfx('blip');
+    if (sw.big) { G.play.shake(30, 2); yield G.bigText(sw.big, 60, '#f8d850'); }
+    for (const [who, line] of sw.lines) yield G.say(who, line);
+    if (sw.noise) yield* lastUpNoise();
+    if (!N.plan && Object.keys(N.switches).length >= 3) yield* S.lastUpPlan();
+  };
+  S.lastUpBulb = (i) => function* () {
+    const N = G.state.night, b = LAST_BULBS[i];
+    if (N.bulbs[i]) { yield G.say(null, 'This one\'s out.'); return; }
+    if (!N.plan) { yield G.say('Abe', 'No. There\'s a switch for this. There\'s ALWAYS a switch.'); return; }
+    const first = !lastBulbsOut();
+    if (first) {
+      yield G.say(null, 'The bulb has been on since dinner.');
+      yield G.say('Abe', 'It\'s fine. I play guitar. I have calluses on these fingers you could strike a match on.');
+    }
+    yield bulbCmd(b, first);
+    G.play.overlay = null;
+    N.bulbs[i] = true;
+    G.audio.sfx('blip');
+    G.play.world.pop(P().x, P().y - 30, 'Dark.', '#c8d8ff');
+    if (first) { yield G.say('Abe', 'Those calluses took YEARS.'); yield G.say('Abe', '...Okay. Quick grips. Blow on them. Six more.'); }
+    if (N.noise >= 3) yield* S.lastUpCaught();
+    if (lastBulbsOut() >= LAST_BULBS.length) yield* S.lastUpDone();
+  };
+  // one bulb: hold Z to twist it, let go to blow on your fingers
+  function bulbCmd(b, first) {
+    const N = G.state.night, FB = () => G.font;
+    const hot = 0.4 + lastBulbsOut() * 0.05;
+    const talk = dadTalk(first ? ['Calluses. Like a horse. Watch this.'] : ['Fff. Fff. Fff.', 'Who needs this many lamps?', 'This is fine. This is way safer than the beans.', 'I should have stayed at the condo.', 'Last one up. LAST one up. Whose idea was that?'], 'abe', []);
+    return {
+      start() { Object.assign(this, { t: 0, heat: 0, turn: 0, owT: 0, endT: 0, zReady: false, grip: false, grabbed: 0 }); talk.nowT = 0; G.play.overlay = this; },
+      update() {
+        this.t++; talk.update();
+        if (this.owT > 0) this.owT--;
+        if (this.endT > 0) { if (--this.endT === 0) return true; return false; }
+        this.grip = zHeld(this) && this.owT < 30;
+        if (this.grip) {
+          this.turn += (0.17 + this.heat * 0.36) / 60; this.heat += hot / 60;
+          // (the first grip of the first bulb: he has no idea how hot they are, and there's no saving him)
+          if (first && !N.burned && ++this.grabbed >= 8) this.heat = 1;
+          if (this.t % 16 === 0) G.audio.sfx('creak');
+          if (this.heat >= 1) {
+            this.heat = 0.55; this.owT = 44; this.zReady = false; N.burned++; N.noise++; N.decay = 0;
+            G.audio.sfx('hurt');
+            talk.say(['OW OW OW OW OW.', 'OW!', 'HOT. Hot hot hot.', 'WHY.', 'That was a good finger.'][(N.burned - 1) % 5]);
+          }
+          if (this.turn >= 1) { this.endT = 50; this.grip = false; G.audio.sfx('secret'); talk.say(first ? 'OKAY. Okay. They\'re hot.' : 'Got it.'); }
+        } else this.heat = Math.max(0, this.heat - 0.75 / 60);
+        return false;
+      },
+      draw(ctx) {
+        const off = this.endT > 0, jolt = this.owT > 30 ? ((this.t >> 1) & 1 ? 2 : -2) : 0, y0 = 58 + Math.round(this.turn * 8), cx = 120 + jolt;
+        ctx.fillStyle = off ? '#0c0a14' : '#2a2030'; ctx.fillRect(0, 0, G.W, G.H);
+        if (!off) { const g = ctx.createRadialGradient(cx, y0, 6, cx, y0, 120); g.addColorStop(0, 'rgba(255,236,170,0.75)'); g.addColorStop(1, 'rgba(255,220,140,0)'); ctx.fillStyle = g; ctx.fillRect(0, 0, G.W, G.H); }
+        ctx.fillStyle = '#16100c'; ctx.fillRect(0, 0, G.W, 12);
+        FB().draw(ctx, 'THE LAST ONE UP', 4, 2, '#f8d850', { shadow: '#000' });
+        FB().draw(ctx, b.name, G.W - 4 - FB().width(b.name), 2, '#c8b898', { shadow: '#000' });
+        // the socket, and the bulb in it, working loose
+        ctx.fillStyle = '#8a6a30'; ctx.fillRect(cx - 9, 14, 18, 22); ctx.fillStyle = '#c8a048'; ctx.fillRect(cx - 9, 14, 4, 22);
+        ctx.fillStyle = '#c8ccd4'; ctx.fillRect(cx - 7, 34, 14, y0 - 42);
+        ctx.fillStyle = '#7a7e88'; for (let k = 0; k < 4; k++) ctx.fillRect(cx - 7, 35 + ((k * 4 + Math.floor(this.turn * 24)) % 14), 14, 1);
+        ctx.fillStyle = off ? '#5a5a68' : '#fff4c0'; ctx.beginPath(); ctx.arc(cx, y0 + 12, 17, 0, Math.PI * 2); ctx.fill(); ctx.fillRect(cx - 8, y0 - 8, 16, 12);
+        if (!off) { ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(cx - 5, y0 + 7, 6, 0, Math.PI * 2); ctx.fill(); }
+        ctx.fillStyle = off ? '#3a3a48' : '#f8a838'; ctx.fillRect(cx - 5, y0 + 12, 10, 1); ctx.fillRect(cx - 5, y0 + 10, 1, 3); ctx.fillRect(cx + 4, y0 + 10, 1, 3);
+        // Abe's fingers, going red; when he's not gripping, they're back, and he's blowing on them
+        const u = Math.min(1, this.heat), pull = this.grip ? 0 : 12, skin = (k) => `rgb(${Math.round(244 + 4 * u)},${Math.round(200 - 110 * u)},${Math.round(170 - 90 * u)})`;
+        for (const [sx, sy] of [[-1, 0], [-1, 9], [1, 3], [1, 12]]) {
+          const fx = sx < 0 ? cx - 40 - pull : cx + 15 + pull, fy = y0 + sy;
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(fx - 1, fy - 1, 27, 9); ctx.fillStyle = skin(0); ctx.fillRect(fx, fy, 25, 7);
+          ctx.fillStyle = '#f8e0c8'; ctx.fillRect(sx < 0 ? fx + 19 : fx + 1, fy + 1, 5, 2);
+        }
+        if (!this.grip && !off && this.heat > 0) { FB().draw(ctx, 'fff', 66, y0 - 8 - ((this.t >> 3) & 1), '#c8d8ff', { shadow: '#000' }); FB().draw(ctx, 'fff', 158, y0 - 4 + ((this.t >> 3) & 1), '#c8d8ff', { shadow: '#000' }); }
+        // how loose, how hot, and what's left of his fingertips
+        const sh = { shadow: '#000' };
+        FB().draw(ctx, 'LOOSE', 12, 20, '#c8c0d8', sh); ctx.fillStyle = '#0c0814'; ctx.fillRect(14, 31, 14, 84); ctx.fillStyle = '#78e070'; ctx.fillRect(15, 114 - Math.round(82 * Math.min(1, this.turn)), 12, Math.round(82 * Math.min(1, this.turn)));
+        FB().draw(ctx, 'HEAT', 203, 20, '#c8c0d8', sh); ctx.fillStyle = '#0c0814'; ctx.fillRect(210, 31, 14, 84); const hh = Math.round(82 * Math.min(1, this.heat)); ctx.fillStyle = this.heat > 0.75 ? '#f86858' : this.heat > 0.45 ? '#f8d850' : '#78e070'; ctx.fillRect(211, 114 - hh, 12, hh);
+        for (let k = 0; k < 10; k++) { ctx.fillStyle = '#1c1424'; ctx.fillRect(59 + k * 12, 111, 9, 8); ctx.fillStyle = k < N.burned ? '#f85848' : '#f4c8aa'; ctx.fillRect(60 + k * 12, 112, 7, 6); }
+        if (this.owT > 24) { const w = FB().bigWidth('OW!', 3); FB().drawBig(ctx, 'OW!', Math.round(120 - w / 2), 22, 3, '#f85848', '#1c1424'); }
+        FB().draw(ctx, 'Hold Z: twist.   Let go: blow on your fingers.', 120 - Math.round(FB().width('Hold Z: twist.   Let go: blow on your fingers.') / 2), 120, '#f8f8f0', sh);
+        talk.draw(ctx);
+      },
+    };
+  }
+  // the house at night: every light that's still on is a pool of light, and it goes dark one bulb at a time
+  let lastCanvas = null;
+  function lastUpTint(ctx) {
+    const cam = G.play.cam, p = G.play.player, N = G.state.night;
+    if (!lastCanvas) lastCanvas = G.canvas(G.W, G.H);
+    const c = lastCanvas.getContext('2d'), lights = [[p.x, p.y - 10, 44]];
+    LAST_BULBS.forEach((b, i) => { if (!N.bulbs[i]) lights.push([b.at[0] * 16, b.at[1] * 16, b.r]); });
+    c.globalCompositeOperation = 'source-over'; c.clearRect(0, 0, G.W, G.H);
+    c.fillStyle = 'rgba(6,8,30,0.86)'; c.fillRect(0, 0, G.W, G.H);
+    c.globalCompositeOperation = 'destination-out';
+    for (const [x, y, r] of lights) {
+      const sx = x - cam.x, sy = y - cam.y, g = c.createRadialGradient(sx, sy, 2, sx, sy, r);
+      g.addColorStop(0, 'rgba(0,0,0,0.97)'); g.addColorStop(0.6, 'rgba(0,0,0,0.8)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+      c.fillStyle = g; c.fillRect(sx - r, sy - r, r * 2, r * 2);
+    }
+    ctx.drawImage(lastCanvas, 0, 0);
+    ctx.save(); ctx.globalCompositeOperation = 'lighter';
+    for (const [x, y, r] of lights.slice(1)) {
+      const sx = x - cam.x, sy = y - cam.y, g = ctx.createRadialGradient(sx, sy, 2, sx, sy, r);
+      g.addColorStop(0, 'rgba(255,216,144,0.18)'); g.addColorStop(1, 'rgba(255,216,144,0)');
+      ctx.fillStyle = g; ctx.fillRect(sx - r, sy - r, r * 2, r * 2);
+    }
+    ctx.restore();
+    const sh = { shadow: '#000' }, left = LAST_BULBS.length - lastBulbsOut();
+    ctx.fillStyle = 'rgba(6,8,30,0.7)'; ctx.fillRect(56, 1, 128, 23);
+    FT().draw(ctx, 'NOISE', 86, 4, '#c8c0d8', sh);
+    for (let i = 0; i < 3; i++) { ctx.fillStyle = i < N.noise ? '#f86858' : '#3a3450'; ctx.fillRect(118 + i * 9, 5, 7, 6); }
+    const goal = !N.plan ? 'Find the light switch' : G.sayable(left) + (left === 1 ? ' light on' : ' lights on') + '   Burned: ' + G.sayable(N.burned);
+    FT().draw(ctx, goal, 120 - Math.round(FT().width(goal) / 2), 14, '#f8d850', sh);
+  }
+  S.lastUpDone = function* () {
+    const f = flags(), s = G.state, N = s.night, burned = Math.min(10, N.burned), back = N.back;
+    const words = ['Zero', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten'];
+    yield G.wait(50);
+    yield G.say('Abe', 'There.');
+    yield G.say('Abe', 'All off. Last one up. Lights off. I am a GOOD son.');
+    yield G.say(null, 'The house is completely dark. Abe starts feeling his way toward the stairs.');
+    G.audio.sfx('bump'); yield G.wait(30);
+    yield G.say('Abe', 'Ow.');
+    G.audio.sfx('bump'); yield G.wait(30);
+    yield G.say('Abe', 'Ow. ...That was the good lamp.');
+    yield G.fadeOut(40);
+    G.audio.stop();
+    yield G.wait(40);
+    // the next morning, in the old-photo look of the other family stories
+    s.night = null;
+    G.flashback = true;
+    G.play.loadMap('homeDown', 20 * 16 + 8, 14 * 16 + 14, 'up', true);
+    const w = G.play.world;
+    w.ents.filter((e) => e.enemy).forEach((e) => { e.dead = true; });
+    const dad = w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 21 * 16 + 8, y: 9 * 16 + 14, dir: 'up' }));
+    const mom = w.add(new G.NPC({ sprite: 'michelle', name: 'Michelle', x: 19 * 16 + 8, y: 11 * 16 + 14, dir: 'right' }));
+    yield G.fadeIn(40);
+    yield G.say(null, 'The next morning.');
+    G.audio.sfx('blip'); yield G.wait(24);
+    yield G.say(null, 'Click.');
+    G.audio.sfx('blip'); yield G.wait(16); G.audio.sfx('blip'); yield G.wait(16);
+    yield G.say(null, 'Click click.');
+    yield G.say('Dad', 'Michelle? The hall light\'s out.');
+    yield G.say('Michelle', 'So is the kitchen.');
+    yield G.say('Dad', 'So is the den.');
+    dad.dir = 'down'; mom.dir = 'down';
+    yield G.wait(50);
+    yield G.say(null, 'They both turn and look at Abe. He has paper towels wrapped around ' + (burned === 1 ? 'one finger' : words[burned].toLowerCase() + ' fingers') + '.');
+    yield G.say('Abe', 'The note said last one up turns off the lights.');
+    yield G.say('Michelle', 'Abe. There\'s a SWITCH.');
+    yield G.say('Abe', 'There is NOT a switch. I tried every switch in this house. One of them is a garbage disposal.');
+    yield G.walkTo(mom, 21 * 16 + 8, 16 * 16 + 14, 1.4);
+    mom.dir = 'down';
+    yield G.wait(40);
+    G.audio.sfx('blip');
+    yield G.say(null, 'Click. Nothing comes on, because there isn\'t a bulb in anything. But that is very clearly a light switch.');
+    yield G.say('Abe', '...How long has that been there?');
+    yield G.say('Dad', 'Abe. Do you speak EEENGLISH?');
+    yield G.say(null, 'That afternoon, Michelle went and got the masking tape.');
+    yield G.fadeOut(40);
+    // back to now
+    G.flashback = false;
+    s.playAs = null;
+    G.play.loadMap('homeDown', back.x, back.y, back.dir, true);
+    G.play.setFollower('abe');
+    yield G.fadeIn(30);
+    yield G.say('Nate', 'How many fingertips?');
+    yield G.say('Abe', words[burned] + '. Out of ten. I couldn\'t hold a pick for a week.');
+    yield G.say('Nate', 'And you still didn\'t see the switch?');
+    yield G.say('Abe', 'It\'s a very sneaky switch, Nate.');
+    const firstTime = !f.lastUpDone, best = f.lastUpBest == null || burned < f.lastUpBest;
+    f.lastUpDone = true;
+    if (best) f.lastUpBest = burned;
+    if (firstTime) {
+      G.play.addTeeth(30);
+      yield G.itemGet(G.spr.toothGold, 'Abe pays you {y}30 shark teeth{/} never to bring this up at Christmas.');
+    }
+    if (burned === 1 && !f.lastUpPerfect) {
+      f.lastUpPerfect = true;
+      G.play.addTeeth(50);
+      yield G.say('Abe', 'Wait. Only ONE? That\'s not how it happened. Nobody can know you did that.');
+      yield G.itemGet(G.spr.toothGold, 'Abe pays you {y}50 more shark teeth{/}.');
+    }
     G.play.autosave();
   };
 
