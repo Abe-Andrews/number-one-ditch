@@ -171,6 +171,12 @@
         if (tx >= 0 && ty >= 0 && tx < this.w && ty < this.h) this.block[ty * this.w + tx] = 1;
       }
     }
+    unblockTiles(x, y, w, h) {
+      for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) {
+        const tx = x + i, ty = y + j;
+        if (tx >= 0 && ty >= 0 && tx < this.w && ty < this.h) this.block[ty * this.w + tx] = 0;
+      }
+    }
 
     addTree(x, y, kind) {
       if (kind === 'pink' || kind === 'purple') {

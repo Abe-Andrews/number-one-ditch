@@ -10277,8 +10277,244 @@
   G.TIN_IDS = ['lane1q', 'borkum', 'maidenLane', 'royalJersey', 'scottishCake', 'capstan', 'oldGowrie', 'cravensClaw', 'orlik', 'margate'];
 
   // ================================================================ EXPORTS
+  // ---------------------------------------------------------------- the last road to the Ditch
+  // Father Eggmas's yard decorations, come to life. A blow-up snowman: shiny, bulgy, with a seam
+  // down the middle and hypnotized purple eyes (f: 1 squashes it for the bounce).
+  function blowupSnowman(f) {
+    const p = new Pix(22, 30), sq = f ? 1 : 0;
+    for (const [cx, cy, rx, ry] of [[10.5, 21 + sq, 9 + sq, 7.5 - sq * 0.5], [10.5, 9.5 + sq, 6.5, 6]]) {
+      for (let y = 0; y < 30; y++) for (let x = 0; x < 22; x++) {
+        const d = ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2;
+        if (d <= 1) p.set(x, y, d > 0.72 && x + y > cx + cy ? '#b8c8e4' : x < cx - 2 && y < cy - 1 ? '#ffffff' : '#e8eef8');
+      }
+    }
+    for (let y = 5; y < 28; y += 2) p.set(10, y + sq, '#c8d4e8');
+    p.rect(6, 1 + sq, 9, 4, '#22202a'); p.hline(4, 16, 5 + sq, '#22202a'); p.hline(6, 14, 4 + sq, '#c83030');
+    p.set(8, 9 + sq, '#a85ae8'); p.set(12, 9 + sq, '#a85ae8'); p.set(8, 8 + sq, '#e8c8f8'); p.set(12, 8 + sq, '#e8c8f8');
+    p.set(10, 11 + sq, '#f08030'); p.set(11, 11 + sq, '#f08030'); p.set(12, 11 + sq, '#f08030');
+    p.hline(5, 15, 15 + sq, '#c83030'); p.hline(5, 15, 16 + sq, '#a82828'); p.rect(13, 17 + sq, 2, 3, '#c83030');
+    p.set(10, 20 + sq, '#22202a'); p.set(10, 23 + sq, '#22202a');
+    p.hline(6, 15, 29, '#5a5a64');
+    return finish(p);
+  }
+  // what's left of one
+  function flatSnowman() {
+    const p = new Pix(24, 8);
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 24; x++) if (((x - 11.5) / 11.5) ** 2 + ((y - 5) / 3.5) ** 2 <= 1) p.set(x, y, (x * 3 + y * 5) % 7 ? '#d8e0f0' : '#b8c8e4');
+    p.rect(8, 2, 6, 2, '#22202a'); p.hline(4, 9, 5, '#c83030'); p.set(16, 4, '#f08030');
+    return finish(p);
+  }
+  // a light-up wire reindeer off a front lawn: no body, just a frame of bulbs (head: 0 up, 1 down)
+  function wireDeer(head) {
+    const p = new Pix(30, 28), W = '#f4f4ff', Y = '#f8e070';
+    const line = (x0, y0, x1, y1) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)); for (let i = 0; i <= n; i++) { const x = Math.round(x0 + ((x1 - x0) * i) / n), y = Math.round(y0 + ((y1 - y0) * i) / n); p.set(x, y, i % 3 ? W : Y); } };
+    const hy = head ? 10 : 5, hx = 25;
+    line(5, 13, 19, 13); line(5, 19, 19, 19); line(5, 13, 5, 19); line(19, 13, 19, 19); line(9, 13, 9, 19); line(15, 13, 15, 19);
+    line(19, 13, hx - 2, hy + 3); line(19, 17, hx - 2, hy + 5);
+    line(hx - 2, hy + 3, hx + 3, hy + 3); line(hx - 2, hy + 5, hx + 3, hy + 3);
+    line(hx - 2, hy + 3, hx - 4, hy - 3); line(hx - 3, hy, hx - 7, hy - 1); line(hx, hy + 2, hx + 1, hy - 4); line(hx + 1, hy - 1, hx + 4, hy - 3);
+    for (const [x, d] of [[6, 1], [9, -1], [15, 1], [18, -1]]) line(x, 19, x + d, 26);
+    line(5, 13, 2, 11);
+    p.set(hx + 3, hy + 3, '#e83838'); p.set(hx, hy + 3, '#a85ae8');
+    p.outline('#4a2a7a');
+    return p.canvas();
+  }
+  // a nutcracker soldier, marching (step: 0 or 1)
+  function nutcracker(step) {
+    const p = new Pix(16, 32);
+    p.rect(3, 0, 10, 7, '#22202a'); p.hline(3, 12, 5, '#d8b040'); p.rect(7, 1, 2, 2, '#d8b040');
+    p.rect(4, 7, 8, 7, '#f0c8a0'); p.hline(4, 11, 7, '#e8e8e8'); p.set(6, 9, '#a85ae8'); p.set(9, 9, '#a85ae8'); p.rect(7, 10, 2, 1, '#d89070');
+    p.rect(3, 12, 10, 4, '#f4f4f0'); p.rect(5, 13, 6, 2, '#22202a'); p.rect(5, 14, 6, 1, '#f8f8f8');
+    p.rect(3, 16, 10, 7, '#c82838'); p.vline(7, 16, 22, '#d8b040'); p.vline(8, 16, 22, '#d8b040');
+    p.rect(1, 16, 2, 7, '#c82838'); p.rect(13, 16, 2, 7, '#c82838'); p.rect(1, 23, 2, 2, '#f0c8a0'); p.rect(13, 23, 2, 2, '#f0c8a0');
+    p.hline(3, 12, 22, '#22202a');
+    const a = step ? 1 : 0;
+    p.rect(4, 23, 3, 7 - a, '#2848a0'); p.rect(9, 23, 3, 6 + a, '#2848a0');
+    p.rect(3, 30 - a, 4, 2, '#22202a'); p.rect(9, 29 + a, 4, 2, '#22202a');
+    return finish(p);
+  }
+  function walnut() {
+    const p = new Pix(7, 7);
+    for (let y = 0; y < 7; y++) for (let x = 0; x < 7; x++) if (((x - 3) / 3.2) ** 2 + ((y - 3) / 3.2) ** 2 <= 1) p.set(x, y, (x + y * 2) % 3 ? '#a87840' : '#7a5228');
+    p.vline(3, 1, 5, '#5a3818');
+    return p.canvas();
+  }
+  // a little brick ranch house with the same lights on it as every other house on the road
+  function ranchHouse(wall, roof) {
+    const W = 80, H = 56, p = new Pix(W, H);
+    for (let y = 0; y < 24; y++) { const x0 = Math.max(0, 16 - y), x1 = Math.min(W - 1, W - 17 + y); p.hline(x0, x1, y, (y >> 1) % 2 ? roof : shade(roof, -0.12)); }
+    p.rect(3, 24, W - 6, 32, wall);
+    for (let y = 26; y < H; y += 4) p.hline(3, W - 4, y, shade(wall, -0.14));
+    p.rect(34, 34, 12, 22, '#3a2a20'); p.rect(36, 36, 8, 8, '#f8e8a0'); p.set(43, 46, '#d8b040');
+    for (const x of [10, 54]) { p.rect(x, 32, 16, 12, '#f8e8a0'); p.rect(x, 32, 16, 1, '#f4f4f0'); p.vline(x + 8, 32, 43, '#a89878'); p.hline(x, x + 15, 38, '#a89878'); }
+    const cols = ['#e83838', '#38c858', '#f8d850', '#3888f8'];
+    for (let x = 2; x < W - 2; x += 3) { p.set(x, 24, cols[(x / 3) % 4 | 0]); p.set(x, 23, '#22302a'); }
+    for (let y = 2; y < 22; y += 3) { p.set(16 - y, y, cols[y % 4]); p.set(W - 17 + y, y, cols[(y + 1) % 4]); }
+    return p.canvas();
+  }
+  function candyPost() {
+    const p = new Pix(14, 42);
+    for (let y = 8; y < 42; y++) { p.hline(3, 5, y, (y >> 2) % 2 ? '#f4f4f0' : '#d82838'); p.set(3, y, (y >> 2) % 2 ? '#ffffff' : '#f85868'); }
+    for (let k = 0; k <= 16; k++) { const a = Math.PI - (k / 16) * Math.PI, x = 7.5 + Math.cos(a) * 4, y = 7 + -Math.sin(a) * 5; for (let t = -1; t <= 1; t++) p.set(x + t, y, (k >> 2) % 2 ? '#d82838' : '#f4f4f0'); }
+    for (let y = 7; y < 13; y++) p.hline(10, 12, y, (y >> 1) % 2 ? '#f4f4f0' : '#d82838');
+    return finish(p);
+  }
+  // the wall of tinsel across the road (frame: it glitters)
+  function tinselWall(f) {
+    const W = 96, H = 26, p = new Pix(W, H), cs = ['#c8c8d8', '#a85ae8', '#e8e8f8', '#7a4ac8', '#f8d850'];
+    for (let x = 0; x < W; x++) {
+      const top = 3 + Math.floor(G.hash(x, 3, 301) * 7);
+      for (let y = top; y < H; y++) if (G.hash(x, y, 302) < 0.8) p.set(x, y, cs[Math.floor(G.hash(x + f * 3, y, 303) * cs.length)]);
+    }
+    return p.canvas();
+  }
+  // the road sign, the way Father Eggmas has it now
+  function ditchSignTwo() {
+    const W = 56, H = 42, p = new Pix(W, H);
+    for (const x of [8, 45]) { p.rect(x, 14, 3, 28, '#5a3818'); p.vline(x, 14, 41, '#7a5028'); }
+    p.rect(0, 0, W, 17, '#1c1424'); p.rect(1, 1, W - 2, 15, '#2e8a48'); p.hline(2, W - 3, 2, '#e8f0e8');
+    const cv = p.canvas(), x = cv.getContext('2d');
+    G.font.draw(x, 'No.  DITCH', 28 - Math.round(G.font.width('No.  DITCH') / 2), 5, '#ffffff');
+    x.fillStyle = '#d858f8'; G.font.draw(x, '2', 19, 5, '#d858f8'); x.fillRect(18, 13, 8, 1); x.fillRect(19, 15, 2, 3); x.fillRect(23, 14, 1, 5);
+    return cv;
+  }
+
+  // ---------------------------------------------------------------- the Ditch by day
+  // a bed of gravel worth sifting (flat, on the ditch floor)
+  function gravelSpot(seed) {
+    const W = 40, H = 26, p = new Pix(W, H), cs = ['#8a7a62', '#a8967a', '#6a5e4c', '#c0b090', '#50483c'];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const d = ((x - 19.5) / 19.5) ** 2 + ((y - 12.5) / 12.5) ** 2 + (G.hash(x, y, 310 + seed) - 0.5) * 0.3;
+      if (d <= 1) p.set(x, y, cs[Math.floor(G.hash(x >> 1, y >> 1, 311 + seed) * cs.length)]);
+    }
+    return p.canvas();
+  }
+  // what's left of the throne
+  function eggCartons() {
+    const p = new Pix(36, 18);
+    for (const [x, y, w] of [[1, 8, 14], [12, 4, 16], [20, 10, 14], [8, 12, 10]]) {
+      p.rect(x, y, w, 6, '#b8a890'); for (let i = 1; i < w; i += 3) { p.set(x + i, y + 1, '#8a7a62'); p.set(x + i + 1, y + 1, '#8a7a62'); p.set(x + i, y + 3, '#8a7a62'); }
+      p.hline(x, x + w - 1, y + 5, '#8a7a62');
+    }
+    return finish(p);
+  }
+  // Tyler's very own ditch
+  function numberTwoDitch() {
+    const W = 56, H = 38, p = new Pix(W, H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const d = ((x - 27.5) / 27) ** 2 + ((y - 24) / 13.5) ** 2 + (G.hash(x, y, 320) - 0.5) * 0.14;
+      if (d <= 1) p.set(x, y, d > 0.72 ? '#6a5a44' : d > 0.5 ? '#4a4030' : '#322a22');
+    }
+    for (const [x, y] of [[4, 16], [14, 12], [40, 12], [50, 15]]) p.rect(x, y, 4, 2, '#7a6a50');
+    p.rect(26, 0, 2, 12, '#7a5028');
+    p.rect(14, 0, 26, 9, '#c8a878'); p.hline(14, 39, 8, '#a8885a');
+    const cv = p.canvas(), x = cv.getContext('2d');
+    G.font.draw(x, 'No.2', 27 - Math.round(G.font.width('No.2') / 2), 1, '#3a2a18');
+    return cv;
+  }
+
+  // The fifteen fossils of the Tooth Book, drawn from rows. e/l are enamel, T the root; each kind
+  // picks its own colors. (Fossils out of Chesapeake gravel come out gray, brown and bluish-black.)
+  const FOSSIL_ROWS = {
+    sandTiger: ['.....ll......', '.....el......', '.....el......', '.....el......', '....eel......', '....eel......', '....eell.....', '.e..eell..e..', '.ee.eell.ee..', '..eeeeelee...', '.TTTTTTTTT...', '.TT.....TT...', '.T.......T...'],
+    bull: ['......l......', '.....ell.....', '.....ell.....', '....eelll....', '....eelll....', '...eeeelll...', '...eeeelll...', '..eeeeellll..', '..eeeeeelll..', '.TTTTTTTTTT..', '.TT..TT..TT..'],
+    rayPlate: ['..eeeeeeeee..', '.elllllllllT.', '.eeeeeeeeeeT.', '.elllllllllT.', '.eeeeeeeeeeT.', '.elllllllllT.', '.eeeeeeeeeeT.', '..TTTTTTTTT..', '..T.T.T.T.T..'],
+    vertebra: ['....eeeee....', '..eeTTTTTee..', '.eTTTlllTTTe.', '.eTTlTTTlTTe.', 'eTTlTTlTTlTTe', 'eTTlTlllTlTTe', 'eTTlTTlTTlTTe', '.eTTlTTTlTTe.', '.eTTTlllTTTe.', '..eeTTTTTee..', '....eeeee....'],
+    tiger: ['.........l...', '........el...', '.......eel...', '......eell...', '.....eell....', '....eeell.l..', '...eeeellll..', '..eeeeeelll..', '.eeeeeeeelll.', '.TTTTTTTTTT..', '..TT...TT....'],
+    thresher: ['.......l.....', '......el.....', '.....eel.....', '....eell.....', '...eeell.....', '..eeeelll....', '..eeeeelll...', '.TTTTTTTTT...', '.TT.....TT...'],
+    snaggle: ['..l..........', '..ell........', '...ell.......', '...eell......', '....eell.....', '....eeell....', '....eeelll...', '...eeeeelll..', '...eeeeellll.', '..TTTTTTTTT..', '..TT.....TT..'],
+    porpoise: ['.....l.......', '.....le......', '.....le......', '....lle......', '....lle......', '....lle......', '....TeT......', '....TTT......', '...TTTT......', '...TTeT......', '...TTeT......', '....TT.......'],
+    mako: ['......l......', '.....ell.....', '.....ell.....', '....eelll....', '....eelll....', '...eeeelll...', '...eeeellll..', '..eeeeellll..', '.eeeeeeellll.', '.TTTTTTTTTT..', 'TT.......TTT.', 'T.........TT.'],
+    croc: ['.....ll......', '....lleT.....', '....lleT.....', '...lleeeT....', '...lleeeT....', '...lelleT....', '...lleeeT....', '...TleleT....', '...TTTTT.....', '...TTTTT.....'],
+    cow: ['.............', '..l..l.l.l...', '.ele.l.l.l.l.', '.ele.ee.ee.el', '.eeeeeeeeeeel', '.eeeeeeeeeel.', '.TTTTTTTTTT..', '..TTTTTTTT...'],
+    earbone: ['....eeeee....', '..eeTTTTTee..', '.eTTlllTTTTe.', '.eTlllllTTTe.', '.eTlleellTTe.', '.eTlleeellTe.', '..eTlleellTe.', '...eTllllTe..', '....eeeeee...'],
+    white: ['......l......', '.....lel.....', '.....lee.....', '....lleee....', '....lleee....', '...llleeeT...', '...llleeeT...', '..lllleeeTT..', '..lllleeeTT..', '.lllleeeeTTT.', '.TTTTTTTTTTT.', '.TT.TTT.TTT..'],
+    falseMako: ['.........l...', '.......ell...', '......eel....', '.....eell....', '....eeell....', '...eeeell....', '...eeeelll...', '..eeeeellll..', '..eeeeeelll..', '.TTTTTTTTT...', '.TTTTT..TT...', '..TT.....T...'],
+    megalodon: ['.......l.......', '......ell......', '......ell......', '.....eelll.....', '.....eelll.....', '....eeellll....', '....eeellll....', '...eeeellll....', '...eeeelllll...', '..eeeeellllll..', '..eeeeeellll...', '.eeeeeeellllll.', '.dddddddddddd..', '.TTTTTTTTTTTT..', '.TTT..TTT..TT..'],
+  };
+  const FOSSIL_COL = {
+    sandTiger: ['#4a4a56', '#7a7a8a', '#7a5e3a'], bull: ['#5a4a3a', '#8a7458', '#4a3626'], rayPlate: ['#3e3a46', '#6a6676', '#6a5a4a'], vertebra: ['#5a4a38', '#a8926a', '#7a6448'],
+    tiger: ['#3e4250', '#6e7488', '#6a4a2a'], thresher: ['#6a5a48', '#a08a68', '#5a4430'], snaggle: ['#2e3240', '#5a6072', '#7a5e3a'], porpoise: ['#a88a5a', '#d8c8a0', '#6a4a2a'],
+    mako: ['#3a4a5a', '#7a98b0', '#7a5e3a'], croc: ['#2e2a26', '#6a625a', '#5a4430'], cow: ['#4a4438', '#8a8064', '#5a4430'], earbone: ['#4a4a50', '#b8b8c0', '#8a8a92'],
+    white: ['#7a7a84', '#d8d8e0', '#7a5e3a'], falseMako: ['#28303e', '#5878a0', '#4a3626'], megalodon: ['#22262e', '#5a6270', '#7a5430'],
+  };
+  function fossil(id) {
+    const [e, l, T] = FOSSIL_COL[id];
+    return finish(fromRows(FOSSIL_ROWS[id], { e, l, T, d: shade(e, -0.3) }));
+  }
+
+  // Nate's bass, finished: oiled walnut, chrome, a split pickup and four real strings.
+  function natesBassDone() {
+    const W = 22, H = 72, p = new Pix(W, H), W1 = '#7a4424', W2 = '#5a2e16', W3 = '#94603a';
+    for (let y = 0; y < 13; y++) {
+      const x0 = 8 + Math.round(y * 0.1), x1 = y < 2 ? 12 + y : 14;
+      p.hline(x0, x1, y, y < 1 ? BMAPD : BMAP); p.set(x0, y, BMAPL); p.set(x1, y, BMAPD);
+    }
+    for (let y = 13; y < 50; y++) { p.hline(9, 13, y, BMAP); p.set(9, y, BMAPL); p.set(13, y, BMAPD); }
+    p.hline(9, 13, 13, '#f4ecd8');
+    let fy = 16, gap = 3.4;
+    while (fy < 46) { p.hline(9, 13, Math.round(fy), BFRET); fy += gap; gap = Math.max(1.6, gap * 0.94); }
+    for (let y = 36; y < H; y++) for (let x = 0; x < W; x++) {
+      const low = (x - 11) ** 2 / 112 + (y - 61) ** 2 / 110 <= 1;
+      const up = (x - 11) ** 2 / 69 + (y - 50) ** 2 / 64 <= 1;
+      const hornU = (x - 4) ** 2 / 8 + (y - 43) ** 2 / 42 <= 1;
+      const hornL = (x - 18) ** 2 / 6 + (y - 46) ** 2 / 20 <= 1;
+      if (!(low || up || hornU || hornL) || (x >= 9 && x <= 13 && y < 50)) continue;
+      p.set(x, y, x < 3 ? W3 : x > 18 || y > 69 ? W2 : (x * 3 + y * 7) % 13 ? W1 : W2);
+    }
+    // a split pickup, a chrome bridge, three knobs and the tuners
+    p.rect(7, 53, 4, 2, '#1c1c22'); p.rect(11, 55, 4, 2, '#1c1c22');
+    p.rect(8, 64, 7, 3, '#c8ccd4'); p.hline(8, 14, 64, '#f0f0f4');
+    for (const [x, y] of [[17, 59], [18, 62], [17, 65]]) { p.set(x, y, '#e8d8a0'); p.set(x + 1, y, '#a89860'); }
+    for (const y of [2, 5, 8, 11]) { p.set(15, y, '#d8dce0'); p.set(16, y, '#a8acb4'); }
+    // the strings, nut to bridge
+    for (const x of [10, 12]) p.vline(x, 13, 64, x === 10 ? '#f0f0f8' : '#c8ccd4');
+    return finish(p);
+  }
+
+  // The family photo at the Ditch, 120x80 (the Photos collection), everybody at 1x. The last
+  // two arguments of the group's order are Lily, right under whatever Abe's holding.
+  // take 1: Mom's phone is too close and Abe's head is cut off. 2: Romulus runs through it.
+  // 3: the one (and Abe, holding the doll over Lily's head).
+  function familyPortrait(take) {
+    const W = 120, H = 80, c = G.canvas(W, H), x = c.getContext('2d');
+    x.imageSmoothingEnabled = false;
+    const sky = ['#f8c8a0', '#f8d8b0', '#f8e4c0', '#c8e0e8', '#a8d0e8'];
+    for (let y = 0; y < 26; y++) { x.fillStyle = sky[4 - Math.min(4, Math.floor(y / 5))]; x.fillRect(0, y, W, 1); }
+    x.fillStyle = '#f8f0c8'; x.beginPath(); x.arc(92, 23, 6, 0, Math.PI * 2); x.fill();
+    x.fillStyle = '#3e6a3a'; for (let i = 0; i < W; i += 7) { const h = 5 + Math.floor(G.hash(i, 1, 331) * 7); x.fillRect(i, 26 - h, 8, h + 2); }
+    x.fillStyle = '#5a9a44'; x.fillRect(0, 26, W, 16); x.fillStyle = '#4a8a3c'; for (let i = 0; i < W; i += 3) x.fillRect(i, 26 + Math.floor(G.hash(i, 2, 331) * 14), 1, 2);
+    x.fillStyle = '#8a7a62'; x.fillRect(0, 42, W, 38);
+    for (let i = 0; i < 300; i++) { x.fillStyle = ['#a8967a', '#6a5e4c', '#c0b090', '#50483c'][i % 4]; x.fillRect(Math.floor(G.hash(i, 3, 331) * W), 42 + Math.floor(G.hash(i, 4, 331) * 38), 1, 1); }
+    x.fillStyle = '#5a88a8'; x.beginPath(); x.moveTo(52, 42); x.lineTo(62, 42); x.lineTo(74, 80); x.lineTo(58, 80); x.fill();
+    x.drawImage(G.spr.cattails, 2, 28); x.drawImage(G.spr.cattails, 106, 30);
+    // everybody, on their own layer so the first take can crowd the frame
+    const g = G.canvas(W, H), gx = g.getContext('2d');
+    gx.imageSmoothingEnabled = false;
+    const P = G.sprites, stand = (id, cx, feet, img) => { const im = img || P[id].down[0]; gx.drawImage(im, cx - Math.floor(im.width / 2), feet - im.height); };
+    const dog = G.spr.romulus;
+    stand('doron', 24, 60); stand('abe', 42, take === 1 ? 50 : 60, take === 3 ? P.abe.hold : null); stand('dad', 62, 60); stand('michelle', 84, 60);
+    stand('hannah', 106, 64);
+    stand('lily', 34, 74); stand('nate', 56, 76);
+    if (take !== 2) gx.drawImage(dog.left.happy || dog.left.stand, 66, 76 - (dog.left.happy || dog.left.stand).height);
+    if (take === 3) {
+      // the doll, way up over Lily's head where she can't see it
+      const e = G.spr.eggmas, h = 18, w = Math.round((e.width / e.height) * h);
+      gx.drawImage(e, 36 - Math.floor(w / 2), 22, w, h);
+    }
+    if (take === 1) x.drawImage(g, -38, -62, W * 1.65, H * 1.65);
+    else x.drawImage(g, 0, 0);
+    if (take === 2) {
+      // a black and white blur, nose first, right across the front row
+      const r = dog.right.run1 || dog.right.stand;
+      for (let k = 0; k < 4; k++) { x.globalAlpha = 0.18 + k * 0.2; x.drawImage(r, 18 + k * 14, 76 - r.height); }
+      x.globalAlpha = 1; x.drawImage(r, 72, 76 - r.height);
+    }
+    return c;
+  }
+
   G.art = {
-    OUT, shade, Pix, fromRows, mirror, flash, person, P, scale2, buildingExtra, pipeArt, pipeProfile, PIPE_GEO,
+    OUT, shade, Pix, fromRows, mirror, flash, person, P, scale2, buildingExtra, pipeArt, pipeProfile, PIPE_GEO, familyPortrait,
     tile, tree, building,
   };
 
@@ -10564,5 +10800,12 @@
     S.condoVanity = condoVanity(2); S.bathMirror = bathMirror(2); S.openShelves = openShelves(); S.tubCurtain = tubCurtain(); S.tubGlass = tubGlass();
     S.bifoldCloset = bifoldCloset(); S.atticHatch = atticHatch(); S.closetRods = closetRods(4);
     S.cableHeaps = [cableHeap(1), cableHeap(2), cableHeap(3)]; S.cableTotes = cableTotes(2); S.cableBox = cableBox(); S.junkPile = junkPile();
+    // the last road, and the Ditch by day
+    S.blowupSnowman = [blowupSnowman(0), blowupSnowman(1)]; S.flatSnowman = flatSnowman(); S.wireDeer = { right: [wireDeer(0), wireDeer(1)] }; S.wireDeer.left = S.wireDeer.right.map(mirror);
+    S.nutcracker = [nutcracker(0), nutcracker(1)]; S.walnut = walnut(); S.ranchRed = ranchHouse('#a8583a', '#5a5a64'); S.ranchTan = ranchHouse('#c8b088', '#4a4a54');
+    S.candyPost = candyPost(); S.tinselWall = [tinselWall(0), tinselWall(1)]; S.ditchSignTwo = ditchSignTwo();
+    S.gravelSpots = [0, 1, 2, 3, 4].map(gravelSpot); S.eggCartons = eggCartons(); S.numberTwoDitch = numberTwoDitch();
+    S.fossils = {}; for (const id in FOSSIL_ROWS) S.fossils[id] = fossil(id);
+    S.natesBassDone = natesBassDone();
   };
 })();

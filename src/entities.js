@@ -5961,4 +5961,108 @@
     }
   }
   G.Sign = Sign;
+
+  // ============================================================== THE LAST ROAD
+  // Father Eggmas's yard decorations, come to life on the road to the Number One Ditch.
+  // A blow-up snowman: it bounces after Nate, and goes down with a long PFFFFT.
+  class BlowupSnowman extends Critter {
+    constructor(x, y) {
+      super(x, y, 2);
+      Object.assign(this, { intro: 'blowup', bits: ['#e8eef8', '#c8d4e8', '#c83030'], dropChance: 0.5, hb: { w: 14, h: 8 } });
+    }
+    hurtBox() { return [this.x - 9, this.y - 26 - (this.z || 0), this.x + 9, this.y]; }
+    think(w, p, dx, dy, dist) {
+      if (dist > 112) { this.z = 0; this.wander(w, 0.2); return; }
+      const ph = this.t % 46;
+      if (ph < 24) { this.z = Math.sin((ph / 24) * Math.PI) * 10; this.chase(w, dx, dy, dist, 0.95); }
+      else this.z = 0;
+    }
+    die() {
+      const w = this.world;
+      w.pop(this.x, this.y - 28, 'PFFFFT!', '#e8eef8');
+      w.props.push({ img: G.spr.flatSnowman, x: Math.round(this.x - 12), y: Math.round(this.y - 6), flat: true, base: 0 });
+      super.die();
+    }
+    draw(ctx, cx, cy) { this.drawSprite(ctx, cx, cy, G.spr.blowupSnowman[this.z > 1 ? 1 : 0], Math.round(this.z || 0)); }
+  }
+  G.BlowupSnowman = BlowupSnowman;
+
+  // A light-up wire reindeer: it grazes on the lawn until Nate lines up with it, paws the ground,
+  // charges straight at him, and stands there flickering if it hits something.
+  class WireDeer extends Critter {
+    constructor(x, y) {
+      super(x, y, 3);
+      Object.assign(this, { intro: 'wireDeer', bits: ['#f4f4ff', '#f8e070'], dropChance: 0.6, hb: { w: 18, h: 8 }, state: 'graze', st: 40, face: Math.random() < 0.5 ? 'left' : 'right' });
+    }
+    hurtBox() { return [this.x - 13, this.y - 24, this.x + 13, this.y]; }
+    think(w, p, dx, dy, dist) {
+      if (this.state === 'graze') {
+        this.wander(w, 0.25);
+        if (this.vx) this.face = this.vx < 0 ? 'left' : 'right';
+        if (dist < 132 && (Math.abs(dx) < 16 || Math.abs(dy) < 16)) { this.state = 'paw'; this.st = 30; this.face = dx < 0 ? 'left' : 'right'; G.audio.sfx('blip'); w.pop(this.x, this.y - 32, '!', '#f8e070'); }
+      } else if (this.state === 'paw') {
+        if (--this.st <= 0) {
+          const horiz = Math.abs(dx) >= Math.abs(dy);
+          this.vx = horiz ? Math.sign(dx) * 3.2 : 0; this.vy = horiz ? 0 : Math.sign(dy) * 3.2;
+          this.state = 'charge'; this.st = 56; G.audio.sfx('dash');
+        }
+      } else if (this.state === 'charge') {
+        const h1 = w.move(this, this.vx, 0), h2 = w.move(this, 0, this.vy);
+        if (h1.hitX || h2.hitY) { this.state = 'daze'; this.st = 60; G.audio.sfx('bump'); w.burst(this.x, this.y - 12, this.bits, 8, { speed: 1.2, life: 16, size: 2 }); }
+        else if (--this.st <= 0) { this.state = 'daze'; this.st = 30; }
+      } else if (--this.st <= 0) { this.state = 'graze'; this.st = 40; }
+    }
+    draw(ctx, cx, cy) {
+      if (this.state === 'daze' && (this.t >> 1) & 1) return;
+      this.drawSprite(ctx, cx, cy, G.spr.wireDeer[this.face][this.state === 'graze' && (this.t >> 5) & 1 ? 1 : this.state === 'paw' && (this.t >> 2) & 1 ? 1 : 0], 0);
+    }
+  }
+  G.WireDeer = WireDeer;
+
+  // A nutcracker soldier: marches back and forth across the road, halts, and spits walnuts at Nate.
+  class Nutcracker extends Critter {
+    constructor(x, y, span) {
+      super(x, y, 4);
+      Object.assign(this, { intro: 'nutcracker', bits: ['#c82838', '#d8b040', '#22202a'], dropChance: 0.7, heavy: true, hb: { w: 12, h: 8 }, x0: x - (span || 48), x1: x + (span || 48), vx: 0.55, st: 60 + Math.random() * 60 });
+    }
+    hurtBox() { return [this.x - 8, this.y - 30, this.x + 8, this.y]; }
+    think(w, p, dx, dy, dist) {
+      if (this.halt > 0) {
+        if (--this.halt === 14 && dist < 150) {
+          const a = Math.atan2(dy + 10, dx);
+          for (const k of [-0.28, 0, 0.28]) w.add(new G.Shot(this.x, this.y - 12, Math.cos(a + k) * 1.7, Math.sin(a + k) * 1.7, G.spr.walnut, { life: 130 }));
+          G.audio.sfx('bump');
+        }
+        return;
+      }
+      w.move(this, this.vx, 0);
+      if (this.x <= this.x0) this.vx = 0.55; else if (this.x >= this.x1) this.vx = -0.55;
+      if (--this.st <= 0) { this.halt = 34; this.st = 90 + Math.random() * 60; }
+    }
+    draw(ctx, cx, cy) { this.drawSprite(ctx, cx, cy, G.spr.nutcracker[this.halt > 0 ? 0 : (this.t >> 4) & 1], 0); }
+  }
+  G.Nutcracker = Nutcracker;
+
+  // The whole family, walking the last road behind Nate in a line.
+  class FamWalker extends Follower {
+    talk() { return G.SCRIPTS.walkTalk(this.id); }
+    update() {
+      if (this.walking || this.hold) return;
+      const tr = G.play.trail, tgt = tr[Math.min(tr.length - 1, (this.idx + 1) * 11)];
+      const dx = tgt.x - this.x, dy = tgt.y - this.y, d = Math.hypot(dx, dy);
+      if (d > 0.6) {
+        const sp = Math.min(d, Math.max(1.35, d * 0.2));
+        this.x += (dx / d) * sp; this.y += (dy / d) * sp;
+        this.dir = tgt.dir; this.moving = true; this.anim++;
+      } else this.moving = false;
+    }
+    draw(ctx, cx, cy) {
+      if (this.id !== 'romulus') { super.draw(ctx, cx, cy); return; }
+      if (this.dir === 'left' || this.dir === 'right') this.face = this.dir;
+      const set = G.spr.romulus[this.face || 'right'], img = this.moving ? set[['run1', 'stand', 'run3', 'stand'][(this.anim >> 2) & 3]] || set.stand : set.happy || set.stand;
+      drawShadow(ctx, this.x, this.y, cx, cy, true);
+      ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - 22) - cy);
+    }
+  }
+  G.FamWalker = FamWalker;
 })();

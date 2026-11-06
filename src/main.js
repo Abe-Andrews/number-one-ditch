@@ -337,7 +337,7 @@
         if (this.siftCool > 0) return;
         this.siftCool = 30;
         const px = p.x + dx * 12, py = p.y - 4 + dy * 12, area = [px - 10, py - 10, px + 10, py + 10];
-        const spot = w.props.find((pr) => pr.hit && (pr.talk === G.SCRIPTS.brookSift || pr.talk === G.SCRIPTS.megalodonSift) && G.overlap(pr.hit, area));
+        const spot = w.props.find((pr) => pr.hit && (pr.sift || pr.talk === G.SCRIPTS.brookSift || pr.talk === G.SCRIPTS.megalodonSift) && G.overlap(pr.hit, area));
         G.audio.sfx('slip');
         w.burst(px, py, ['#a89070', '#c8b090', '#8a7a68'], 6, { speed: 0.8, up: 0.6, g: 0.08, life: 18, size: 1 });
         if (spot) { G.script.run(spot.talk(true)); return; }
@@ -992,6 +992,7 @@
   // Nate only wears his flat cap once Groundskeeper Gus gives it back.
   G.nateSprites = () => (G.state && G.state.playAs ? G.sprites[G.state.playAs]
     : G.state && G.state.items.cap ? G.sprites.nate : G.sprites.nate_nocap);
+  for (const ph of G.PHOTOS) if (ph.gen) ph.img.src = ph.gen().toDataURL();
   G.fade = 0;
   G.state = newState();
   G.title.enter();

@@ -677,6 +677,11 @@ G.audio = (function () {
         if (!ctx || muted) return;
         return voiceNote({ midi, dur, vol, at, waves: [['sawtooth', 1, 0.5], ['sawtooth', 1.003, 0.35], ['sawtooth', 0.997, 0.25]], lp: [6, 6, 6], peaks: [[230, 1.2, 6], [1400, 1.5, 3]], attack: 0.12, vib: [5, 0.009, 0.25], puff: [0.06, 0.04, 1800] });
       },
+      // Nate's bass, plugged in: round and woody, a pluck that settles into a long sustain
+      ebass(midi, dur = 0.5, vol = 0.34, at) {
+        if (!ctx || muted) return;
+        return voiceNote({ midi, dur, vol, at, waves: [['triangle', 1, 0.75], ['sawtooth', 1, 0.3], ['sine', 2, 0.14]], lp: [9, 4.5, 3], swell: 0.08, q: 1.2, attack: 0.005, rel: 0.09, sus: 0.7, peaks: [[120, 1, 3]] });
+      },
       // The upright bass, plucked: a round thump that blooms and fades (held, it rings on a while)
       upbass(midi, dur = 0.5, vol = 0.34, at) {
         if (!ctx || muted) return;

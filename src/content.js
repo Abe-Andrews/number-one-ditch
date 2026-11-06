@@ -449,6 +449,10 @@
       kind: 'key', name: 'Abe\'s Bass', icon: () => G.spr.abeBassIcon, has: () => !!st().items.abeBass && !fl().bassGiven,
       desc: 'A sunburst bass, from the black case in Abe\'s closet. He has so many guitars, he won\'t even notice. (He will notice.)',
     },
+    mosasaurTooth: {
+      kind: 'key', name: 'The Mosasaur Tooth', short: 'Tooth', icon: () => G.spr.toothGold, has: () => !!st().items.mosasaurTooth,
+      desc: 'Five inches. Found at the very bottom of the Number One Ditch. Tyler is going to be SO mad.',
+    },
     yellowCable: {
       kind: 'key', name: 'Yellow Guitar Cable', short: 'Cable', icon: () => G.spr.cableIcon, has: () => !!st().items.yellowCable && !fl().bassGiven,
       desc: 'One of Abe\'s thousands of yellow guitar cables, from the storage room. He bought WAY too many and he\'s been begging people to take them. Nobody does.',
@@ -500,7 +504,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'mosasaurTooth', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -581,7 +585,9 @@
       met: () => fl().hoodedMet,
       tag: () => (fl().tylerBeaten ? '{o}Boss: snapped out of it' : fl().tollPaid ? '{r}Boss' : '{r}Toll: 500 teeth'),
       bio: () => (fl().tylerBeaten
-        ? 'Shark tooth hunter. Screams about mosasaurs. Snapped out of it, gave back the toll, ran for the ditch.'
+        ? fl().toothGiven ? 'Shark tooth hunter. Dropped the mosasaur tooth in the Number One Ditch years ago. Got it back. Has stopped screaming, mostly.'
+          : fl().toothKept ? 'Shark tooth hunter. Founder and sole owner of the Number Two Ditch. Does not want to talk about it.'
+          : 'Shark tooth hunter. Screams about mosasaurs. Snapped out of it, gave back the toll, ran for the ditch.'
         : fl().tollPaid
           ? 'Tyler, hypnotized by Father Eggmas. Thinks Nate stole his mosasaur tooth. Throws shark teeth. Hard.'
           : 'Hooded. No face, just glowing eyes. Blocks the Chesapeake Channel Tunnel. Toll: 500 shark teeth.'),
@@ -676,9 +682,13 @@
     else if (!s.items.badge && !f.mobileBeaten) goal = 'Everyone at CHKD is hypnotized! The NICU is a locked unit upstairs: find a staff badge to work the lobby elevator.';
     else if (!f.mobileBeaten) goal = 'Take the lobby elevator up to the NICU and find Hannah.';
     else if (!f.roofSeen) goal = 'Hannah joined the party! She wants to show everybody something up on the roof. Take the elevator.';
-    else goal = 'Mom and Dad are driving down. When they get here, the whole family goes to the Number One Ditch. Together. (More story soon!)';
+    else if (!f.parentsMet) goal = 'Mom and Dad are driving down. Take Abe\'s Jeep back to the condo and meet them there.';
+    else if (!f.finDrive) goal = 'Mom and Dad are at the condo. Do anything you need to first, then talk to Dad. The whole family goes to the Number One Ditch. Together.';
+    else if (!f.fin_done) goal = 'Walk the last road to the Number One Ditch, with everybody behind you.';
+    else if (!f.dayIntro) goal = 'Nate, get in the picture.';
+    else goal = 'The Number One Ditch is still Number One. Sift it, or open the MAP and drive anywhere you like.';
     // which chapter of the road trip Nate is on
-    const chapter = !f.doronDeal ? 'CH. 1 - LAFAYETTE' : !f.boulderGone ? 'CH. 2 - EASTON FAIR' : !f.mikeyBeaten ? 'CH. 3 - HOME' : !f.condoArrived ? 'CH. 4 - THE BAY' : !f.healerTalk ? 'CH. 5 - CHESAPEAKE' : 'CH. 6 - CHKD';
+    const chapter = !f.doronDeal ? 'CH. 1 - LAFAYETTE' : !f.boulderGone ? 'CH. 2 - EASTON FAIR' : !f.mikeyBeaten ? 'CH. 3 - HOME' : !f.condoArrived ? 'CH. 4 - THE BAY' : !f.healerTalk ? 'CH. 5 - CHESAPEAKE' : !f.roofSeen ? 'CH. 6 - CHKD' : !f.fin_done ? 'CH. 7 - THE DITCH' : 'THE END';
     // side quests: { name, status, kind (active / rumor / done), prog [n, of], where, hint }
     const side = [];
     const add = (name, done, status, where, hint, prog) => side.push({ name, status: done ? (typeof done === 'string' ? done : 'Done!') : status, kind: done ? 'done' : 'active', where, hint, prog });
@@ -716,15 +726,17 @@
     }
     if (f.mattMet) add('Fishing with Matt Oliver', f.tollPaid && 'Toll paid!', G.sayable(Math.min(s.teeth, 500)) + '/500 teeth', 'The Bay - Island 2', 'Matt Oliver\'s boat is tied up on Island 2. Catch fish for his survey and he pays you in shark teeth.', [Math.min(s.teeth, 500), 500]);
     if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
+    if (f.bassQuest) add('Nate\'s bass', f.bassDone, ['', 'Needs strings', 'Needs a finish', 'Needs a cable'][f.bassQuest] || '', f.bassQuest === 1 ? 'Chesapeake - El Toro Loco' : f.bassQuest === 2 ? 'Home - Dad\'s workshop' : 'Chesapeake - Abe\'s office', ['', 'The Paul McCartney Lady keeps bass strings at El Toro Loco.', 'Dad can help Nate finish it, at his bench.', 'Ask Abe for a cable. Just one.'][f.bassQuest] || '');
+    if (f.dayIntro) add('The Tooth Book', G.fossilsFound() >= G.FOSSILS.length && 'All found!', G.sayable(G.fossilsFound()) + '/' + G.sayable(G.FOSSILS.length) + ' fossils', 'The Ditch', 'Sift the gravel at the Number One Ditch with Tyler\'s Sifter.', [G.fossilsFound(), G.FOSSILS.length]);
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
     if (f.snackQuest) {
       const n = (s.items.candyCorn ? 1 : 0) + (s.items.doritos ? 1 : 0);
       add('Dad\'s snacks', f.snacksDone, n === 2 ? 'Bring them to Dad' : G.sayable(n) + '/2 snacks', 'Home', n === 2 ? 'Dad is in his workshop.' : 'Candy corn: Mom hides it somewhere. Doritos: follow the muddy tracks.', [n, 2]);
     }
     if (G.condoDone && G.condoDone()) {
-      const nj = G.JAM_SONGS.filter((sg) => (s.jams || {})[sg.id]).length;
+      const jams = G.JAM_SONGS.filter((sg) => !sg.elec || f.bassDone), nj = jams.filter((sg) => (s.jams || {})[sg.id]).length;
       if (!f.jamMet) side.push({ name: 'Abe\'s office', status: 'Abe wants to jam', kind: 'rumor', where: 'Chesapeake - the condo', hint: 'Things are quiet at the condo. Abe\'s little amp is upstairs, in his office.' });
-      else add('Jamming with Abe', nj >= G.JAM_SONGS.length && 'All played!', G.sayable(nj) + '/' + G.sayable(G.JAM_SONGS.length) + ' songs', 'Chesapeake - Abe\'s office', 'Play along with Abe at the little amp in Abe\'s office, upstairs: three guitar songs and three drum songs.', [nj, G.JAM_SONGS.length]);
+      else add('Jamming with Abe', nj >= jams.length && 'All played!', G.sayable(nj) + '/' + G.sayable(jams.length) + ' songs', 'Chesapeake - Abe\'s office', 'Play along with Abe at the little amp in Abe\'s office, upstairs: three guitar songs and three drum songs.', [nj, G.JAM_SONGS.length]);
     }
     if (f.dadBeaten) {
       const FS = s.fights || {}, five = G.FIGHTERS.filter((F) => !F.secret), nf = five.filter((F) => FS[F.id]).length;
@@ -2886,6 +2898,7 @@
       ['Ice JJ Fish', !!f.jjBeaten],
       ['The old fisherman', !!s.items.rod],
       ['Tyler', !!f.tylerBeaten],
+      ['The Number One Ditch', !!f.fin_done],
       ['Ruby, the rock kid', !!f.rubyHeart],
       ['Dad\'s hip hop class', !!f.hipHopDone],
       ['Every rock', G.rocksFound() >= G.ROCKS.length],
@@ -3372,8 +3385,13 @@
       how: 'Dad\'s grill, out on the patio. Check under the lid.',
       caption: 'The cedar plank was supposed to make the salmon a little smoky. It made EVERYTHING smoky. Dad\'s fix: blow it out like a birthday candle, inches from a tower of plastic chairs. Nobody remembers how the salmon tasted.',
     },
+    {
+      id: 'familyPhoto', name: 'All of Us', place: 'The Number One Ditch', gen: () => G.art.familyPortrait(3),
+      how: 'You\'ll have to go all the way to the end of the road for this one.',
+      caption: 'Everybody, at the Number One Ditch, the morning after. Third try. Mom had it framed. Lily has asked her to crop out what Abe is holding, and Mom has said no.',
+    },
   ];
-  for (const ph of G.PHOTOS) { ph.img = new Image(); ph.img.src = ph.file; }
+  for (const ph of G.PHOTOS) { ph.img = new Image(); if (ph.file) ph.img.src = ph.file; }
   const photoState = () => (G.state.photos = G.state.photos || {});
   G.photoHas = (id) => !!photoState()[id];
   G.photosFound = () => G.PHOTOS.filter((ph) => G.photoHas(ph.id)).length;
@@ -3676,11 +3694,15 @@
     { name: 'CHKD: MECHA-BABY (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
     { name: 'CHKD: Hannah joined (to the roof)', map: 'chkdNicu', at: [7, 8, 'down'], flags: { mobileBeaten: true, kitGot: true }, party: ['hannah'], follower: 'hannah', items: { firstAid: 3 }, maxHp: 12 },
     { name: 'CHKD: Hannah\'s shift (Charge Nurse Dot)', map: 'chkdNicu', at: [5, 8, 'up'], flags: { mobileBeaten: true, kitGot: true }, party: ['hannah'], follower: 'hannah', items: { firstAid: 3 }, maxHp: 12 },
-    { name: 'FINALE: the Number One Ditch', map: 'ditchFinal', at: [7, 17, 'up'], flags: { mobileBeaten: true, roofSeen: true }, party: ['abe', 'hannah'], items: { pipe: true, hammer: true }, maxHp: 12 },
+    { name: 'Mom and Dad at the condo', map: 'condo', at: [35, 16, 'left'], flags: { mobileBeaten: true, roofSeen: true }, party: ['abe', 'hannah'], items: { pipe: true, hammer: true }, maxHp: 12 },
+    { name: 'The last road', map: 'ditchRoad', at: [9, 60, 'up'], flags: { parentsMet: true, finDrive: true } },
+    { name: 'FINALE: the Number One Ditch', map: 'ditchFinal', at: [7, 17, 'up'], flags: { roadStarted: true, roadGate: true } },
     { name: 'FINALE: Romulus (possessed)', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_intro: true, fin_freed: 5, signal_crack: true } },
     { name: 'FINALE: Eggmas, the relay', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_freed: 7, fin_relay: 0 } },
     { name: 'FINALE: Romulus\'s turn', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_relay: 5 } },
     { name: 'FINALE: Nate\'s turn', map: 'ditchFinal', at: [7, 13, 'up'], flags: { fin_relay: 7 } },
+    { name: 'The morning after (family photo)', map: 'ditchDay', at: [7, 13, 'up'], flags: { fin_done: true, fin_intro: true }, items: { mosasaurTooth: true } },
+    { name: 'The Ditch by day', map: 'ditchDay', at: [7, 12, 'down'], flags: { photoDone: true, dayIntro: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [41, 21, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
@@ -3720,6 +3742,8 @@
     { name: 'El Toro Loco (outside)', map: 'toroLoco', at: [11, 8, 'up'] },
     { name: 'CHKD (outside)', map: 'chkd', at: [16, 21, 'up'] },
     { name: 'The Number One Ditch (finale)', map: 'ditchFinal', at: [7, 17, 'up'] },
+    { name: 'The last road', map: 'ditchRoad', at: [9, 60, 'up'] },
+    { name: 'The Ditch by day', map: 'ditchDay', at: [7, 12, 'down'] },
     { name: 'CHKD: the lobby', map: 'chkdLobby', at: [11, 12, 'up'] },
     { name: 'CHKD: the ward', map: 'chkdWard', at: [1, 7, 'right'] },
     { name: 'CHKD: the NICU', map: 'chkdNicu', at: [7, 9, 'up'] },
@@ -3763,6 +3787,7 @@
   G.adminAllMinigames = () => {
     const s = G.state, f = s.flags;
     s.jams = s.jams || {}; for (const sg of G.JAM_SONGS) s.jams[sg.id] = Math.max(s.jams[sg.id] || 0, 1);
+    s.flags.bassDone = true; s.flags.bassQuest = 4;
     s.instruments = s.instruments || {}; for (const it of G.INSTRUMENTS) s.instruments[it.id] = true;
     s.items.bass = true; s.items.metronome = true; G.giveAllPedals();
     f.jamMet = true; f.studioTold = true;
@@ -3781,6 +3806,7 @@
   // man singing a hymn on the pond for Sunday service.
   S.dadWorkshop = function* () {
     const f = flags(), s = G.state;
+    if (f.bassQuest === 2) { yield* S.bassFinish(); return; }
     // (once everything at home is done: his pipe bench. Before that, a hint that something's coming.)
     if (G.homeDone()) {
       if (!f.pipeBench) yield G.say('Dad', 'Mom has her books back. I have my snacks. The nine o\'clock has a singer. It\'s finally quiet around here.');
@@ -5878,6 +5904,7 @@
     jam_flute: ['Notes slide down onto the finger holes: low notes on the left, high on the right. Cover each hole with its arrow (← ↓ ↑ →) right as its note lands. A long tail means HOLD it till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band. Make it to the end of the song.'],
     jam_piano: ['Notes slide down onto the keys: low notes on the left, high on the right. Press each one with its arrow (← ↓ ↑ →) right as it lands.', 'Two at once? Press both. A long tail means HOLD it till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
     jam_violin: ['Notes slide down the four strings, G, D, A and E: low on the left, high on the right. Bow each one with its arrow (← ↓ ↑ →) right as it reaches the bridge.', 'A long tail is a long bow: HOLD the arrow till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
+    jam_bass: ['Same as the guitar: notes slide down the strings, low on the left and high on the right. Play each with its arrow (← ↓ ↑ →) right as it crosses the pickup.', 'A long tail means HOLD it till the tail runs out.', 'You\'re the bottom of the band now. Abe has the guitar. Lock in with the drums.'],
     jam_strings: ['Notes slide down the four strings: low on the left, high on the right. Play each one with its arrow (← ↓ ↑ →) right as it reaches the bridge.', 'A long tail means HOLD the arrow till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
     jam_horn: ['Notes slide down to the instrument: low on the left, high on the right. Play each one with its arrow (← ↓ ↑ →) right as it lands.', 'A long tail means HOLD it till the tail runs out, or it\'s DROPPED. (On the trombone, a held note slides right into the next one.)', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
     jam_machine: ['← hi-hat, ↓ BOOM, ↑ snare, → CLAP. Hit each pad right as its note lands on it.', 'Two at once (like BOOM and hi-hat)? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
@@ -7134,15 +7161,23 @@
   G.condoDone = () => { const f = flags(); return !!(f.romulusBeaten && f.plantsDone && f.gardenOpen); };
   // Nate has gotten through at least one song with Abe (opens the path to the Williams Center)
   G.jammedOnce = () => Object.keys(G.state.jams || {}).length > 0;
+  const bassDone = () => !!(G.state && G.state.flags.bassDone);
   G.INSTRUMENTS = [
     {
-      id: 'bass', name: 'Half-Finished Bass', kind: 'Electric bass (some assembly required)', art: () => G.spr.natesBass,
-      has: () => !!G.state.items.bass,
-      blurb: 'Nate\'s own build. It looks like a bass. It does not sound like one. Yet.',
-      about: [
-        'Nate\'s own build, on Dad\'s workbench in the garage: a walnut body and a maple neck, with the frets already in.',
-        'That\'s as far as it got: no strings, no finish, not one note. Someday it\'ll play. Until then, it\'s the quietest instrument in the family.',
-      ],
+      id: 'bass', get name() { return bassDone() ? 'Nate\'s Bass' : 'Half-Finished Bass'; }, get kind() { return bassDone() ? 'Electric bass, walnut and maple' : 'Electric bass (some assembly required)'; }, art: () => (bassDone() ? G.spr.natesBassDone : G.spr.natesBass),
+      has: () => !!G.state.items.bass, get chord() { return bassDone() ? [28, 33, 38, 43] : undefined; }, get mine() { return bassDone(); },
+      get blurb() { return bassDone() ? 'Nate\'s own build, finished at last. Every bit of it sounds like a bass.' : 'Nate\'s own build. It looks like a bass. It does not sound like one. Yet.'; },
+      get about() {
+        return bassDone() ? [
+          'Nate\'s own build: a walnut body, a maple neck, frets he put in himself.',
+          'Strung by the Paul McCartney Lady (upside down, then fixed), oiled and wired with Dad at his bench, and plugged in with one yellow guitar cable. Abe cried.',
+          'It was the quietest instrument in the family. It isn\'t now.',
+        ] : [
+          'Nate\'s own build, on Dad\'s workbench in the garage: a walnut body and a maple neck, with the frets already in.',
+          'That\'s as far as it got: no strings, no finish, not one note. Someday it\'ll play. Until then, it\'s the quietest instrument in the family.',
+        ];
+      },
+      talk: ['That\'s it. Stay in the pocket. I\'ll stand on top of you.', 'You built that. You BUILT that.', 'Nobody ever claps for the bass player. I\'m clapping. In my head. My hands are busy.', 'Listen to that walnut.'],
       how: 'Nate left something half done on Dad\'s workbench, in the garage at home.',
     },
     {
@@ -7847,6 +7882,39 @@
       },
       form: 'AABACABE',
     },
+    // BASS (the setlist's last page, once Nate's bass is finished): Nate on bass, Abe on guitar
+    {
+      id: 'halfABass', name: 'Half a Bass', bpm: 92, d: 1, elec: true, page: 'bass', style: 'slowfunk', perfect: 4, good: 9, drain: 0.05, lead: 96,
+      blurb: 'Slow and funky. You\'re the floor. I\'ll stand on it.',
+      riffs: {
+        A: { notes: 'E2/1 r/.5 E2/.5 G2/1 A2/1 E2/1 r/.5 E2/.5 D2/1 B1/1', bass: [40, 40] },
+        B: { notes: 'A2/1 r/.5 A2/.5 C3/1 A2/1 G2/1 E2/1 G2/.5 A2/.5 B2/1', bass: [45, 40] },
+        E: { notes: 'E2/.5 G2/.5 A2/.5 B2/.5 E3/2 E2/2 r/2', bass: [40, 40] },
+      },
+      form: 'AABAABAE',
+    },
+    {
+      id: 'upsideDown', name: 'Upside Down, Honey', bpm: 112, d: 2, elec: true, page: 'bass', style: 'pocket', perfect: 3, good: 7, drain: 0.07, lead: 84,
+      blurb: 'A singing line, way up the neck and back. Left-handed not required.',
+      riffs: {
+        A: { notes: 'C2/.5 C3/.5 G2/.5 E2/.5 F2/.5 F3/.5 C3/.5 A2/.5 G2/.5 G3/.5 D3/.5 B2/.5 C3/1 G2/1', bass: [36, 43] },
+        B: { notes: 'A2/.5 E3/.5 C3/.5 A2/.5 F2/.5 C3/.5 A2/.5 F2/.5 G2/1 G2/.5 A2/.5 B2/1 G2/1', bass: [45, 43] },
+        C: { notes: 'C3/1 B2/1 A2/1 G2/1 F2/1 E2/1 D2/1 G2/1', bass: [48, 43] },
+        E: { notes: 'C2/.5 E2/.5 G2/.5 C3/.5 E3/2 C3/2 r/2', bass: [36, 36] },
+      },
+      form: 'AABACABE',
+    },
+    {
+      id: 'wholeBass', name: 'A Whole Bass', bpm: 138, d: 3, elec: true, page: 'bass', style: 'bassdrive', perfect: 3, good: 6, drain: 0.09, lead: 76,
+      blurb: 'Fast and loud. The whole thing. Every string you put on it.',
+      riffs: {
+        A: { notes: 'E2/.5 E2/.5 E2/.5 G2/.5 E2/.5 E2/.5 A2/.5 G2/.5 E2/.5 E2/.5 E2/.5 G2/.5 B2/.5 A2/.5 G2/.5 E2/.5', bass: [40, 40] },
+        B: { notes: 'A2/.5 A2/.5 C3/.5 A2/.5 D3/.5 C3/.5 A2/.5 G2/.5 E2/.5 G2/.5 A2/.5 B2/.5 E3/1 D3/1', bass: [45, 40] },
+        C: { notes: 'E2+B2/1 E2+B2/1 G2+D3/1 A2+E3/1 E2+B2/.5 E2+B2/.5 G2+D3/.5 A2+E3/.5 B2+E3/1 r/1', bass: [40, 43] },
+        E: { notes: 'E2/.25 G2/.25 A2/.25 B2/.25 D3/.25 E3/.25 G3/.5 E2+B2/2 r/4', bass: [40, 40] },
+      },
+      form: 'ABACABCABE',
+    },
   ];
   G.JAM_SONGS = JAM_SONGS;
   const jamState = () => (G.state.jams = G.state.jams || {});
@@ -7879,7 +7947,8 @@
   // pages, GUITAR, DRUMS, FLUTE, PIANO, STRINGS, HORNS, SYNTHS and NOVELTY (←→ flips between them, ↑↓
   // picks a song), each its own unlock chain (a song's page: page, or what it's played on). On the
   // guitar page, C switches which of Abe's guitars Nate plays.
-  const JAM_TRACKS = [['guitar', 'GUITAR'], ['drums', 'DRUMS'], ['flute', 'FLUTE'], ['piano', 'PIANO'], ['strings', 'STRINGS'], ['horns', 'HORNS'], ['synths', 'SYNTHS'], ['novelty', 'NOVELTY']];
+  const ALL_TRACKS = [['guitar', 'GUITAR'], ['drums', 'DRUMS'], ['flute', 'FLUTE'], ['piano', 'PIANO'], ['strings', 'STRINGS'], ['horns', 'HORNS'], ['synths', 'SYNTHS'], ['novelty', 'NOVELTY'], ['bass', 'BASS']];
+  const jamTracks = () => (bassDone() ? ALL_TRACKS : ALL_TRACKS.slice(0, 8));
   const jamTrack = (sg) => sg.page || (sg.drums ? 'drums' : sg.wind ? 'flute' : sg.keys ? 'piano' : sg.bow ? 'strings' : sg.horn ? 'horns' : 'guitar');
   const jamPrize = (sg) => G.INSTRUMENTS.find((it) => it.song === sg.id);
   // (Nate's own instruments count as his on the setlist even before he's brought them out)
@@ -7897,14 +7966,14 @@
   // (it opens where you left off: the next song on the page you were on, if it's open)
   let jamLast = null;
   function jamPickCmd() {
-    const J = jamState();
+    const J = jamState(), JAM_TRACKS = jamTracks(), onList = JAM_SONGS.filter((sg) => !sg.elec || bassDone());
     const pageOf = (i) => JAM_TRACKS.findIndex(([id]) => id === jamTrack(JAM_SONGS[i]));
     const songsOn = (pg) => JAM_SONGS.filter((sg) => jamTrack(sg) === JAM_TRACKS[pg][0]);
     return {
       start() {
         const li = JAM_SONGS.indexOf(jamLast), next = JAM_SONGS[li + 1];
         if (li >= 0) this.sel = next && jamTrack(next) === jamTrack(jamLast) && this.open(li + 1) ? li + 1 : li;
-        else this.sel = Math.max(0, JAM_SONGS.findIndex((sg, i) => !J[sg.id] && this.open(i)));
+        else this.sel = Math.max(0, JAM_SONGS.findIndex((sg, i) => (!sg.elec || bassDone()) && !J[sg.id] && this.open(i)));
         this.t = 0; G.play.overlay = this;
       },
       open(i) { const sg = JAM_SONGS[i], prev = JAM_SONGS[i - 1]; return !prev || jamTrack(prev) !== jamTrack(sg) || !!J[prev.id]; },
@@ -7930,7 +7999,7 @@
       },
       draw(ctx) {
         const cur = JAM_SONGS[this.sel], pg = pageOf(this.sel), track = JAM_TRACKS[pg][0], page = songsOn(pg);
-        benchBack(ctx, 'ABE\'S SETLIST: ' + JAM_TRACKS[pg][1], G.sayable(JAM_SONGS.filter((sg) => J[sg.id]).length) + '/' + G.sayable(JAM_SONGS.length) + ' played');
+        benchBack(ctx, 'ABE\'S SETLIST: ' + JAM_TRACKS[pg][1], G.sayable(onList.filter((sg) => J[sg.id]).length) + '/' + G.sayable(onList.length) + ' played');
         page.forEach((sg, k) => {
           const i = JAM_SONGS.indexOf(sg), y = 17 + k * 31, on = i === this.sel, open = this.open(i), best = J[sg.id] || 0;
           G.box(ctx, 8, y, 166, 29, on ? { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' } : undefined);
@@ -7954,7 +8023,7 @@
         FT().draw(ctx, here, 91 - Math.round(FT().width(here) / 2), 111, '#f8d850', { shadow: '#000' });
         FT().draw(ctx, next + ' →', 172 - FT().width(next + ' →'), 111, '#5a4e70', { shadow: '#000' });
         for (let k = 0; k < NP; k++) { ctx.fillStyle = k === pg ? '#f8d850' : '#3e3460'; ctx.fillRect(91 - NP * 3 + k * 6, 120, 4, 2); }
-        if (track !== 'guitar' && track !== 'flute') {
+        if (track !== 'guitar' && track !== 'flute' && track !== 'bass') {
           // the instrument for the song you're on, fit to the corner (a silhouette until it's won)
           const it = jamPrize(cur), img = it.art(), won = G.instrumentHas(it.id), k = Math.min(2, 56 / img.width, 66 / img.height);
           ctx.drawImage(won ? img : G.silhouette(img), Math.round(208 - (img.width * k) / 2), Math.round(88 - img.height * k), Math.round(img.width * k), Math.round(img.height * k));
@@ -7965,8 +8034,8 @@
           ctx.drawImage(won ? img : G.silhouette(img), Math.round(208 - (img.width * k) / 2), 22, Math.round(img.width * k), Math.round(img.height * k));
           FT().wrap(won ? it.name.replace('Abe\'s ', '') : '???', 56).slice(0, 2).forEach((l, k2) => FT().draw(ctx, l, 208 - Math.round(FT().width(l) / 2), 99 + k2 * 9, '#f8f8f0', { shadow: '#000' }));
         } else {
-          // the guitar Nate's playing, on its stand (C to switch)
-          const gt = G.guitarNow(), gi = gt.art();
+          // the guitar Nate's playing, on its stand (C to switch; on the BASS page, his bass)
+          const gt = track === 'bass' ? G.INSTRUMENTS[0] : G.guitarNow(), gi = gt.art();
           ctx.drawImage(gi, 208 - Math.round(gi.width / 2), 22);
           FT().wrap(gt.name.replace('Abe\'s ', ''), 56).slice(0, 2).forEach((l, k) => FT().draw(ctx, l, 208 - Math.round(FT().width(l) / 2), 99 + k * 9, '#f8f8f0', { shadow: '#000' }));
         }
@@ -7984,12 +8053,12 @@
   function jamCmd(song, gt, talk) {
     // (wind: a flute song; keys: a piano song; bow: a violin song; solo: Nate on something other than guitar, with a backing guitar)
     // (horn: the horns, and the kazoo and the theremin)
-    const S0 = buildSong(song), fpb = 3600 / song.bpm, COUNT = Math.round(4 * fpb), HIT_Y = 116, TOP = 14, drums = song.drums, wind = song.wind, keys = song.keys, bow = song.bow, horn = song.horn, solo = drums || wind || keys || bow || horn;
+    const S0 = buildSong(song), fpb = 3600 / song.bpm, COUNT = Math.round(4 * fpb), HIT_Y = 116, TOP = 14, drums = song.drums, wind = song.wind, keys = song.keys, bow = song.bow, horn = song.horn, elec = song.elec, solo = drums || wind || keys || bow || horn || elec;
     const LANES = drums === 'bongos' || drums === 'cowbell' ? [96, 0, 0, 144] : [87, 109, 131, 153], USED = [0, 1, 2, 3].filter((L) => S0.notes.some((n) => n.lane === L));
     const KEYS = ['left', 'down', 'up', 'right'], ARROWS = ['←', '↓', '↑', '→'];
     const GEM = { bongos: ['#f8d890', 0, 0, '#e09048'], pan: ['#b8d8f8', '#b8f0c8', '#f8e8a0', '#f8c0d8'], kit: ['#f8d850', '#c050a0', '#f0f0f0', '#78c8f8'], pvc: ['#78e8e8', '#78e070', '#f8d850', '#f898c8'], flute: ['#c8d8f8', '#a8e8f0', '#f0f0ff', '#f8e0a8'], upright: ['#f8d8a8', '#f8f0c8', '#c8e8a8', '#a8d8f8'], casio: ['#ff6ad5', '#78e8e8', '#f8f070', '#9a7af8'], rhodes: ['#f8c070', '#e89858', '#f0e0c0', '#c8a8f8'], violin: ['#f8c870', '#f89858', '#f0e0c0', '#e8f0ff'], cello: ['#e8a060', '#f8c870', '#f0e0c0', '#d8b8f8'], upbass: ['#c87848', '#e8a060', '#f8d8a0', '#a8c8f8'],
       trumpet: ['#f8e088', '#f8c848', '#fff4c8', '#f8a848'], trombone: ['#f8d070', '#e8b048', '#fff0b8', '#f89848'], sax: ['#f8d070', '#e8a048', '#c8a8f8', '#f878a8'], synth: ['#ff4ad8', '#4af0f8', '#f8f04a', '#9a6af8'],
-      machine: ['#f8f8f0', '#ff6a4a', '#f8d850', '#4af0a8'], kazoo: ['#ff6a6a', '#f8d850', '#78e070', '#78c8f8'], cowbell: ['#f8e8a0', 0, 0, '#d8b860'], theremin: ['#78f8a8', '#a8f878', '#f8f878', '#78f8f8'] }[drums || wind || keys || bow || horn] || ['#c050a0', '#e08030', '#f0e6c0', '#78c8f8'];
+      machine: ['#f8f8f0', '#ff6a4a', '#f8d850', '#4af0a8'], kazoo: ['#ff6a6a', '#f8d850', '#78e070', '#78c8f8'], cowbell: ['#f8e8a0', 0, 0, '#d8b860'], theremin: ['#78f8a8', '#a8f878', '#f8f878', '#78f8f8'], elec: ['#f8a848', '#f8d850', '#78e070', '#68c8ff'] }[drums || wind || keys || bow || horn || (elec && 'elec')] || ['#c050a0', '#e08030', '#f0e6c0', '#78c8f8'];
     // what a hit sounds like (a drum still sounds when you hit it with no note there)
     // (long: a hold's length in seconds; then it returns the note's let-go)
     // (the trombone slides into its note from the one before, and a hold glides into the next note over
@@ -8003,7 +8072,7 @@
       if (horn === 'trombone') return I.trombone(n.midi, len, undefined, undefined, null, n.hold && n.next ? { midi: n.next.midi, after: len * 0.6, dur: len * 0.3 } : null);
       return I[horn](n.midi, len);
     };
-    const sound = (n, long) => (n.hit ? n.hit() : drums === 'pan' ? G.audio.inst.pan(n.midi, long || 0.7) : wind ? G.audio.inst.flute(n.midi, long || n.dur, 0.2, wind) : keys ? G.audio.inst[KEYV[keys]](n.midi, long || n.dur) : bow ? G.audio.inst[bow](n.midi, long || n.dur) : horn ? hornSound(n, long) : G.audio.inst.guitar(n.midi, long || n.dur, undefined, gt.id));
+    const sound = (n, long) => (n.hit ? n.hit() : drums === 'pan' ? G.audio.inst.pan(n.midi, long || 0.7) : wind ? G.audio.inst.flute(n.midi, long || n.dur, 0.2, wind) : keys ? G.audio.inst[KEYV[keys]](n.midi, long || n.dur) : bow ? G.audio.inst[bow](n.midi, long || n.dur) : horn ? hornSound(n, long) : elec ? G.audio.inst.ebass(n.midi, long || n.dur) : G.audio.inst.guitar(n.midi, long || n.dur, undefined, gt.id));
     const abeGuitar = G.guitarNow();
     const notes = S0.notes.map((n) => Object.assign({}, n, { t: COUNT + n.beat * fpb, done: null, holdF: n.hold * fpb }));
     notes.forEach((n, i) => { n.next = notes.slice(i + 1).find((m) => m.beat > n.beat) || null; });
@@ -8026,6 +8095,12 @@
         if (this.failT) return pose(A.down[0]);
         if (this.doneT) return pose(A.hold, { dy: -Math.round(Math.abs(Math.sin(this.doneT * 0.2)) * 8), rot: Math.sin(this.doneT * 0.3) * 0.15 });
         if (song.seat) return this.chairDance();
+        // (on the BASS page Abe actually plays: head down, in the pocket, then a big rock pose)
+        if (elec) {
+          if (this.oofT > 0) return pose(A.down[0], { axe: true, name: 'OOF' });
+          if (this.combo >= 24 && bar % 4 === 3) return pose(A.hold, { axe: true, dy: -Math.round(Math.sin(p * Math.PI) * 5), name: 'GUITAR SOLO' });
+          return pose(A.down[beat % 2 ? 1 : 2], { axe: true, dy: ph < 0.3 ? 1 : 0 });
+        }
         if (this.oofT > 0) return pose(A.down[0], { sx: 1.15, sy: 0.85, rot: Math.sin(this.oofT) * 0.1, name: 'OOF' });
         // (the count-in: a big stretch, warming up)
         if (this.f < COUNT) return pose(beat % 2 ? A.hold : A.down[0], { sy: 1 + Math.sin(ph * Math.PI) * 0.08 });
@@ -8121,6 +8196,10 @@
           else if (st === 'polka') { if (pos % 4 === 0) G.audio.inst.bass(pos === 4 ? root + 7 : root, 0.25); if (pos % 4 === 2) chord(0.15, 0.04); }
           else if (st === 'hoedown') { if (pos % 4 === 0) G.audio.inst.bass(pos === 4 ? root + 7 : root, 0.2); if (pos % 2 === 1 || pos % 4 === 2) chord(0.1, 0.035); }
           else if (st === 'spooky') { if (pos === 0) { chord(1.6, 0.03); G.audio.inst.bass(root, 1.2); } if (pos === 0 || pos === 1) G.audio.inst.kick(); }
+          // (the BASS page: real drums, and Abe's guitar for once, with nobody else on the bottom but Nate)
+          else if (st === 'slowfunk') { if (pos === 0 || pos === 3 || pos === 4) G.audio.inst.kick(); if (pos === 2 || pos === 6) G.audio.inst.snare(); G.audio.inst.hat(); if (pos === 1 || pos === 5) chord(0.12, 0.05); }
+          else if (st === 'pocket') { if (pos === 0 || pos === 4) G.audio.inst.kick(); if (pos === 2 || pos === 6) G.audio.inst.snare(); G.audio.inst.hat(); if (pos === 0 || pos === 3 || pos === 6) chord(0.3, 0.04); }
+          else if (st === 'bassdrive') { if (pos % 2 === 0) G.audio.inst.kick(); if (pos === 2 || pos === 6) G.audio.inst.snare(); G.audio.inst.hat(); chord(0.13, 0.05); }
           else if (st === 'soul') { if (pos === 2 || pos === 6) { chord(0.4, 0.035); G.audio.inst.snare(); } if (pos % 2 === 0) G.audio.inst.bass(root + [0, 3, 7, 10][pos / 2], 0.3); if (pos % 2) G.audio.inst.hat(); }
           else { chord(0.12, 0.04); if (pos % 2 === 0) G.audio.inst.bass(root, 0.16); }
           if (pos % 2 === 0) this.bob = 6;
@@ -8158,6 +8237,7 @@
           else if (bow) G.audio.inst[bow]((bow === 'violin' ? 89 : bow === 'cello' ? 68 : 30) + L, 0.1, 0.05);
           else if (horn) G.audio.inst[horn]((horn === 'trombone' ? 40 : 58) + L, 0.08, 0.04);
           else if (keys) G.audio.inst[KEYV[keys]](36 + L, 0.08, 0.06);
+          else if (elec) G.audio.inst.ebass(30 + L * 2, 0.06, 0.1);
           else G.audio.inst.guitar(40 + L * 5, 0.05, 0.06, gt.id);
           this.checkFail();
         }
@@ -8481,6 +8561,8 @@
           ctx.drawImage(A.img, -aw / 2, A.mid ? -ah / 2 : -ah, aw, ah);
           ctx.restore();
         }
+        // (the BASS page: Abe with a real guitar in his hands)
+        if (A.axe) { ctx.save(); ctx.translate(200 + A.dx, 84 + A.dy); ctx.rotate(-1.1); ctx.drawImage(guitarSmall(abeGuitar), -6, -18); ctx.restore(); }
         // (his imaginary shopping cart, made a little less imaginary)
         if (A.cart) {
           const cx = 214 + Math.max(0, A.dx), cy = 82;
@@ -8533,7 +8615,9 @@
     else if (!f.pianoTold) yield told('New pages on the setlist, by the way: PIANO, STRINGS, HORNS, SYNTHS and NOVELTY. ←→ to flip through them.');
     else if (!f.violinTold) yield told('New pages on the setlist, by the way: STRINGS, HORNS, SYNTHS and NOVELTY. ←→ to flip through them.');
     else if (!f.bandTold) yield told('Three new pages on the setlist: HORNS, SYNTHS and NOVELTY. And the cello and the bass are on STRINGS now, with the violin.');
+    if (f.bassQuest === 3) yield* S.bassCable();
     yield* abeStudioNews();
+    yield* S.bassNews();
     for (;;) {
       const song = yield jamPickCmd();
       if (!song) { G.play.overlay = null; yield G.say('Abe', 'Good session.'); return; }
@@ -8544,8 +8628,8 @@
         for (const [who, line] of drum.intro) yield G.say(who, line);
         if (drum.mine) instState()[drum.id] = true;
       }
-      yield howToCmd('JAMMING WITH ABE', song.wind ? HOW_TO.jam_flute : song.keys ? HOW_TO.jam_piano : song.bow ? (song.bow === 'violin' ? HOW_TO.jam_violin : HOW_TO.jam_strings) : song.horn ? HOW_TO.jam_horn : drum ? HOW_TO['jam_' + song.drums] : HOW_TO.jam);
-      const gt = drum || G.guitarNow(), r = yield jamCmd(song, gt, dadTalk(gt.talk, 'abe', []));
+      yield howToCmd('JAMMING WITH ABE', song.wind ? HOW_TO.jam_flute : song.keys ? HOW_TO.jam_piano : song.bow ? (song.bow === 'violin' ? HOW_TO.jam_violin : HOW_TO.jam_strings) : song.horn ? HOW_TO.jam_horn : drum ? HOW_TO['jam_' + song.drums] : song.elec ? HOW_TO.jam_bass : HOW_TO.jam);
+      const gt = song.elec ? G.INSTRUMENTS[0] : drum || G.guitarNow(), r = yield jamCmd(song, gt, dadTalk(gt.talk, 'abe', []));
       G.play.overlay = null;
       G.audio.play(G.play.world.def.music);
       if (r === 'quit') { yield G.say('Abe', 'We\'ll pick it up later.'); return; }
@@ -8592,6 +8676,7 @@
         G.play.autosave();
       }
       if (first && prize) yield* abeStudioNews();
+      if (first) yield* S.bassNews();
       const nextSong = JAM_SONGS[idx + 1];
       if (first && nextSong && jamTrack(nextSong) === jamTrack(song)) {
         const next = jamPrize(nextSong);
@@ -8624,10 +8709,10 @@
   // A song: { name, key, bpm, click, len (ms), tracks: [8 x { inst, vol (0-4), mute, ev: [[ms, n]] }] }.
   // Flags: studioTold, studioMet, studioHow, metroHow.
   // (the mic is Studio B's own: Nate's voice, there from the start; it doesn't count toward Abe's gifts)
-  const STUDIO_INST = ['strat', 'tele', 'jazzmaster', 'bongos', 'steelpan', 'drumkit', 'pvcFlute', 'flute', 'upright', 'casio', 'rhodes', 'violin', 'cello', 'upbass', 'trumpet', 'trombone', 'sax', 'synth', 'machine', 'kazoo', 'cowbell', 'theremin', 'mic'];
-  const STUDIO_SHORT = { strat: 'STRAT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONGOS', steelpan: 'STEEL', drumkit: 'KIT', pvcFlute: 'MAGIC', flute: 'FLUTE', upright: 'PIANO', casio: 'CASIO', rhodes: 'RHODES', violin: 'VIOLIN', cello: 'CELLO', upbass: 'BASS', trumpet: 'TRUMPET', trombone: 'TROMB', sax: 'SAX', synth: 'SYNTH', machine: 'BEATS', kazoo: 'KAZOO', cowbell: 'COWBELL', theremin: 'THRMIN', mic: 'MIC' };
-  const STUDIO_TINY = { strat: 'STRT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONG', steelpan: 'STEL', drumkit: 'KIT', pvcFlute: 'PVC', flute: 'FLUT', upright: 'PNO', casio: 'CSIO', rhodes: 'RHDS', violin: 'VLN', cello: 'CELO', upbass: 'BASS', trumpet: 'TRPT', trombone: 'BONE', sax: 'SAX', synth: 'SYN', machine: 'BEAT', kazoo: 'KZOO', cowbell: 'COW', theremin: 'THRM', mic: 'MIC' };
-  const STUDIO_COL = { strat: '#f4f0e8', tele: '#f86858', jazzmaster: '#c878d8', bongos: '#e0a058', steelpan: '#b8d8f8', drumkit: '#5a88e8', pvcFlute: '#a8f0d0', flute: '#d8e0f8', upright: '#d89a68', casio: '#ff7ad8', rhodes: '#f0c878', violin: '#e0783a',
+  const STUDIO_INST = ['strat', 'tele', 'jazzmaster', 'bongos', 'steelpan', 'drumkit', 'pvcFlute', 'flute', 'upright', 'casio', 'rhodes', 'violin', 'cello', 'upbass', 'bass', 'trumpet', 'trombone', 'sax', 'synth', 'machine', 'kazoo', 'cowbell', 'theremin', 'mic'];
+  const STUDIO_SHORT = { bass: 'BASS', strat: 'STRAT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONGOS', steelpan: 'STEEL', drumkit: 'KIT', pvcFlute: 'MAGIC', flute: 'FLUTE', upright: 'PIANO', casio: 'CASIO', rhodes: 'RHODES', violin: 'VIOLIN', cello: 'CELLO', upbass: 'BASS', trumpet: 'TRUMPET', trombone: 'TROMB', sax: 'SAX', synth: 'SYNTH', machine: 'BEATS', kazoo: 'KAZOO', cowbell: 'COWBELL', theremin: 'THRMIN', mic: 'MIC' };
+  const STUDIO_TINY = { bass: 'BASS', strat: 'STRT', tele: 'TELE', jazzmaster: 'JAZZ', bongos: 'BONG', steelpan: 'STEL', drumkit: 'KIT', pvcFlute: 'PVC', flute: 'FLUT', upright: 'PNO', casio: 'CSIO', rhodes: 'RHDS', violin: 'VLN', cello: 'CELO', upbass: 'BASS', trumpet: 'TRPT', trombone: 'BONE', sax: 'SAX', synth: 'SYN', machine: 'BEAT', kazoo: 'KZOO', cowbell: 'COW', theremin: 'THRM', mic: 'MIC' };
+  const STUDIO_COL = { bass: '#c88a58', strat: '#f4f0e8', tele: '#f86858', jazzmaster: '#c878d8', bongos: '#e0a058', steelpan: '#b8d8f8', drumkit: '#5a88e8', pvcFlute: '#a8f0d0', flute: '#d8e0f8', upright: '#d89a68', casio: '#ff7ad8', rhodes: '#f0c878', violin: '#e0783a',
     cello: '#c8703a', upbass: '#b86a40', trumpet: '#f8d048', trombone: '#e8b040', sax: '#f0a838', synth: '#ff4ad8', machine: '#f87a4a', kazoo: '#f85858', cowbell: '#d8c070', theremin: '#78f8a8', mic: '#c8c8e0' };
   // (the pianos: which voice each one plays with)
   const PIANO_VOICE = { upright: 'piano', casio: 'casio', rhodes: 'rhodes', synth: 'synth' };
@@ -8636,7 +8721,7 @@
   const isHigh = (inst) => isFlute(inst) || inst === 'violin';
   // the other single-note instruments (both rows; the top row an octave up): their voice, how far
   // above the key's root they start, and how loud
-  const SOLO_VOICE = { cello: ['cello', 0, 0.26], upbass: ['upbass', -12, 0.34], trumpet: ['trumpet', 12, 0.17], trombone: ['trombone', 0, 0.22], sax: ['sax', 12, 0.18], kazoo: ['kazoo', 12, 0.1], theremin: ['theremin', 24, 0.22], mic: ['voice', 12, 0.32] };
+  const SOLO_VOICE = { cello: ['cello', 0, 0.26], upbass: ['upbass', -12, 0.34], bass: ['ebass', -12, 0.32], trumpet: ['trumpet', 12, 0.17], trombone: ['trombone', 0, 0.22], sax: ['sax', 12, 0.18], kazoo: ['kazoo', 12, 0.1], theremin: ['theremin', 24, 0.22], mic: ['voice', 12, 0.32] };
   // the drums (just hits, never held): the kit and the drum machine have six sounds on A S D F J K;
   // the bongos and the cowbell, two (A-F the first, H-L the second)
   const DRUM_INST = { drumkit: 1, machine: 1, bongos: 1, cowbell: 1 };
@@ -8729,7 +8814,7 @@
   // Held notes: the guitars, the steel drum, the flutes, the pianos and the violin keep sounding while their key is held (up
   // to HOLD_MAX seconds), and a quick tap still rings for RING seconds. Drums are always just a hit.
   // A recorded note is [ms, n] (a hit, or a note from before notes could be held) or [ms, n, held ms].
-  const RING = { strat: 0.8, tele: 0.8, jazzmaster: 0.8, steelpan: 0.7, pvcFlute: 0.4, flute: 0.4, upright: 0.5, casio: 0.3, rhodes: 0.6, violin: 0.35, cello: 0.45, upbass: 0.6, trumpet: 0.3, trombone: 0.35, sax: 0.3, synth: 0.3, kazoo: 0.3, theremin: 0.4, mic: 0.3 }, HOLD_MAX = 6;
+  const RING = { strat: 0.8, tele: 0.8, jazzmaster: 0.8, steelpan: 0.7, pvcFlute: 0.4, flute: 0.4, upright: 0.5, casio: 0.3, rhodes: 0.6, violin: 0.35, cello: 0.45, upbass: 0.6, bass: 0.5, trumpet: 0.3, trombone: 0.35, sax: 0.3, synth: 0.3, kazoo: 0.3, theremin: 0.4, mic: 0.3 }, HOLD_MAX = 6;
   // (the trombone and the theremin slide from the note before, if it was only just played)
   const lastPitch = {};
   const slideFrom = (inst, m, at) => { const now = at || G.audio.now(), p = lastPitch[inst]; lastPitch[inst] = { m, t: now }; return p && now - p.t < 0.6 && p.m !== m ? p.m : null; };
@@ -8897,7 +8982,7 @@
     return mixCache.mix;
   };
   // the studio opens with Nate's first instrument from Abe; the metronome comes with the third
-  G.abeInstruments = () => STUDIO_INST.filter((id) => id !== 'mic' && G.instrumentHas(id)).length;
+  G.abeInstruments = () => STUDIO_INST.filter((id) => id !== 'mic' && id !== 'bass' && G.instrumentHas(id)).length;
   G.studioOpen = () => G.abeInstruments() > 0;
   const mmss = (sec) => { const s2 = Math.max(0, Math.floor(sec)); return Math.floor(s2 / 60) + ':' + String(s2 % 60).padStart(2, '0'); };
   const studioBack = (ctx, title, sub) => {
@@ -8977,7 +9062,7 @@
         if (ev && RING[v.inst]) ev[2] = Math.round(Math.min(HOLD_MAX, Math.max(RING[v.inst], this.clock() - v.t0)) * 1000);
       },
       letGoAll() { for (const code in this.voices) this.finish(this.voices[code]); this.voices = {}; },
-      have() { return STUDIO_INST.filter((id) => G.instrumentHas(id)); },
+      have() { return STUDIO_INST.filter((id) => G.instrumentHas(id) && (id !== 'bass' || bassDone())); },
       metro() { return !!G.state.items.metronome; },
       // (the audio clock, so takes line up with playback; the system clock if audio isn't running)
       clock() { return G.audio.running ? G.audio.now() : performance.now() / 1000; },
@@ -10224,6 +10309,7 @@
         w.blockTiles(tx, ty, 1, 1);
       };
       onStand('cello', 1, 10, 0.5, false, 'Abe\'s cello, on its stand. It comes with a chair. Abe insisted.');
+      if (bassDone()) onStand('bass', 5, 10, 0.55, false, 'Nate\'s bass, on its stand. Walnut and maple, and one yellow cable. Rae cleared a spot for it herself.');
       onStand('upbass', 3, 10, 0.5, false, 'Abe\'s upright bass. It\'s taller than Rae. Rae has asked people to stop pointing that out.');
       onStand('trumpet', 9, 11, 1, true, 'Abe\'s trumpet, bell up. Polished. Rae can see her face in it.');
       onStand('trombone', 10, 11, 1, true, 'Abe\'s trombone, standing on its end. The slide sticks a little. That\'s character.');
@@ -14752,6 +14838,7 @@
       car(sp.condoCars.black, 24, 30, 3, 14, 0, [25, 31, 2, 2], 'The neighbors\' black SUV. Very shiny.');
       car(sp.condoCars.escape, 41, 10, 2, 6, -3, [41, 10, 3, 2], 'A black SUV in one of the visitor spots.');
       car(sp.condoCars.crv, 41, 17, 2, 6, -3, [41, 17, 3, 2], 'A blue SUV in a visitor spot. Somebody has company.');
+      if (G.parentsHere()) S.parentsSetup(w);
       // ---- black lamp posts along the street, and a tall street light by the visitor parking
       for (const [x, y] of [[37, 12], [37, 21]]) if (clear(x, y)) w.addProp({ img: sp.postLamp, tx: x, ty: y, dx: 3, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: look('A black lamp post.') });
       w.addProp({ img: sp.lampPostL, tx: 41, ty: 21, h: 4, dx: -6, solid: [42, 24, 1, 1] });
@@ -14846,6 +14933,7 @@
       return (function* () {
         const f = flags();
         if (f.romulusBeaten && G.state.party.includes('abe') && !f.healerTalk) { yield* S.abeHealer(); return; }
+        if (G.parentsHere() && !f.parentsMet) { yield* S.parentsArrive(); return; }
         if (f.condoArrived) return;
         f.condoArrived = true;
         if (P().x < 30 * 16) return;
@@ -16038,6 +16126,7 @@
   // sloth), 4 Romulus dragged Nate through the woods with it.
   S.paulLady = function* () {
     const f = flags(), s = G.state, w = G.play.world, p = P(), L = 'Paul McCartney Lady';
+    if (f.bassQuest === 1) { yield* S.ladyStrings(); return; }
     if ((f.slothQuest || 0) < 2) {
       yield G.say(null, 'A woman is sitting in a booth with a basket of chips. Next to her, sitting up very straight, is a big fluffy sloth.');
       yield G.say('Nate', 'That\'s Romulus\'s sloth!');
@@ -16548,7 +16637,7 @@
   G.hannahTick = () => {
     const s = G.state, pl = G.play;
     if (pl.healCd > 0) { pl.healCd--; return; }
-    if (!G.with('hannah') || s.hp > 4 || s.hp <= 0 || s.hp >= s.maxHp || pl.dying) return;
+    if (!(G.with('hannah') || (pl.world && pl.world.def.hannahHeals)) || s.hp > 4 || s.hp <= 0 || s.hp >= s.maxHp || pl.dying) return;
     pl.healCd = 1200;
     s.hp = Math.min(s.maxHp, s.hp + 4);
     G.audio.sfx('heart');
@@ -18746,7 +18835,7 @@
     yield G.say('Doron', 'Best ditch in the world.');
     yield G.say('Lily', '...Why is it covered in Christmas lights?');
     yield G.say('Michelle', 'Is that TINSEL? On the CATTAILS?');
-    yield G.say('Hannah', 'It\'s snowing. In Chesapeake. That\'s not... that doesn\'t happen.');
+    yield G.say('Hannah', 'It\'s still only snowing right here. That\'s not... that doesn\'t happen.');
     yield G.say(null, 'Romulus presses up against Hannah\'s legs. His hackles are up.');
     yield G.say('Abe', 'He wasn\'t going to stay home for this. Were you, buddy?');
     G.audio.sfx('hohoho');
@@ -19140,9 +19229,9 @@
     G.audio.sfx('fanfare');
     yield G.itemGet(G.spr.toothGold, 'THE MOSASAUR TOOTH!');
     yield G.say('Doron', 'Tyler is going to be SO mad.');
-    yield G.banner('THE END', 'The Number One Ditch is still Number One.', 300);
+    G.state.items.mosasaurTooth = true;
     f.fin_done = true;
-    G.play.autosave();
+    yield* S.ditchMorning();
   };
   // talking to the family on the banks (during and after)
   const FIN_TALK = {
@@ -19283,7 +19372,7 @@
           }
         },
       });
-      if (f.fin_done) w.addTrigger(6, 20, 3, 1, () => G.script.run(function* () { const p = P(); yield G.say('Nate', 'The road home. (More to come!)'); yield G.walkTo(p, p.x, p.y - 16, 1); }()));
+      if (f.fin_done) w.addTrigger(6, 20, 3, 1, () => G.play.warp('ditchDay', 7, 17, 'up', true));
     },
     onEnter() { return S.finEnter(); },
     tick(w) {
@@ -19297,4 +19386,1060 @@
       }
     },
   };
+  // ================================================================ THE WAY TO THE DITCH
+  // After the roof at CHKD, Mom and Dad drive down from New Jersey and park at Abe and Hannah's.
+  // Nate talks to Dad when he's ready (nothing rushes him). The family drives out in two cars, the
+  // road ices over, and Nate leads everybody up the last road on foot (G.MAPS.ditchRoad), the
+  // decorations getting thicker and meaner, to the Number One Ditch.
+  // Flags: parentsMet, finDrive, roadStarted, road_<n>, roadGate.
+  G.parentsHere = () => { const f = flags(); return !!f.roofSeen && !f.fin_done; };
+  S.parentsSetup = (w) => {
+    const sp = G.spr;
+    w.addProp({ img: sp.suv, tx: 37, ty: 15, h: 3, dx: 3, solid: [37, 16, 2, 2], hit: [37, 16, 2, 2], talk: look('Mom and Dad\'s navy SUV, parked crooked. The engine is still ticking.') });
+    w.dad = w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 36 * 16 + 8, y: 14 * 16 + 14, dir: 'down', talk: S.parentsTalk }));
+    w.mom = w.add(new G.NPC({ sprite: 'michelle', name: 'Michelle', x: 38 * 16 + 8, y: 14 * 16 + 14, dir: 'down', talk: S.momSandwich }));
+  };
+  S.parentsArrive = function* () {
+    const f = flags(), w = G.play.world, p = P();
+    if (f.parentsMet) return;
+    f.parentsMet = true;
+    yield G.wait(30);
+    yield G.say(null, 'A navy SUV is parked crooked at the curb, its engine still ticking.');
+    w.mom.dir = G.dirToward(p.x - w.mom.x, p.y - w.mom.y); w.dad.dir = G.dirToward(p.x - w.dad.x, p.y - w.dad.y);
+    yield G.say('Michelle', 'THERE you are. Let me look at you. Are you hurt? Who\'s hurt? Is anybody hurt?');
+    yield G.say('Nate', 'Mom, how are you already here? That\'s a seven hour drive.');
+    yield G.say('Michelle', 'Your father drove.');
+    yield G.say('Dad', 'We made good time.');
+    yield G.say('Michelle', 'I have never prayed so hard in my life. And I work at a CHURCH.');
+    yield G.say('Michelle', '...And you\'re not wearing a helmet.');
+    yield G.say('Nate', 'I have my Hat.');
+    yield G.say('Michelle', 'That little brown hat is not a helmet, honey.');
+    yield G.say('Nate', 'It\'s green.');
+    yield G.say('Dad', 'Son. I saw that light from the highway. I know what he wants.');
+    yield G.say('Dad', 'When you\'re ready, we go. All of us. But once we get down in that ditch, nobody leaves until it\'s finished.');
+    yield G.say('Dad', 'So if there\'s anything you want to do first, go and do it. We\'ll be right here.');
+    yield G.say('Michelle', 'I packed sandwiches.');
+    G.play.autosave();
+  };
+  S.parentsTalk = function* () {
+    const c = yield G.ask('Dad', 'Are you ready, son? Once we\'re down in that ditch, nobody leaves until it\'s finished.', ['Let\'s go', 'Not yet']);
+    if (c !== 0) { yield G.say('Dad', 'Take your time. We\'ll be right here. Peace be with you.'); return; }
+    yield* S.finaleDrive();
+  };
+  S.momSandwich = function* () {
+    const s = G.state;
+    if (s.hp < s.maxHp) {
+      s.hp = s.maxHp; G.audio.sfx('heart');
+      yield G.say('Michelle', 'You look awful. Eat this.');
+      yield G.say(null, 'Mom hands Nate a turkey sandwich, cut in triangles. All his hearts are back.');
+      return;
+    }
+    const f = flags();
+    f.momLine = ((f.momLine || 0) + 1) % 3;
+    yield G.say('Michelle', ['There are more sandwiches. Tell your brothers.', 'Is that really the only hat you brought?', 'Your father is pretending he isn\'t worried. He has been cleaning the windshield for twenty minutes.'][f.momLine]);
+  };
+
+  // the two cars on the road at night, the purple light up ahead and the snow coming on (t: frames)
+  function driveScene(ctx, t) {
+    const W = G.W, k = Math.min(1, t / 1200), mod = (a, b) => ((a % b) + b) % b;
+    ctx.fillStyle = '#0c0a20'; ctx.fillRect(0, 0, W, G.H);
+    const glow = ctx.createRadialGradient(W, 92, 8, W, 92, 110 + k * 170);
+    glow.addColorStop(0, `rgba(190,110,250,${0.3 + k * 0.5})`); glow.addColorStop(1, 'rgba(168,90,232,0)');
+    ctx.fillStyle = glow; ctx.fillRect(0, 0, W, G.H);
+    for (let i = 0; i < 30; i++) { ctx.fillStyle = '#c8c8e8'; ctx.fillRect(Math.floor(G.hash(i, 1, 350) * W), Math.floor(G.hash(i, 2, 350) * 64), 1, 1); }
+    // (all of this sits high on the screen, above the text box)
+    ctx.save(); ctx.translate(0, -38);
+    // the treeline, far off
+    ctx.fillStyle = '#141828';
+    for (let i = 0; i < 16; i++) { const x = mod(i * 22 - t * 0.3, W + 44) - 22, h = 14 + Math.floor(G.hash(i, 3, 350) * 18); ctx.fillRect(x, 96 - h, 22, h + 4); }
+    // the houses, closer: every one with the same lights
+    for (let i = 0; i < 5; i++) {
+      const x = mod(i * 72 - t * 0.8, W + 72) - 72;
+      ctx.fillStyle = '#20202e'; ctx.fillRect(x, 80, 46, 22); ctx.beginPath(); ctx.moveTo(x - 3, 80); ctx.lineTo(x + 23, 66); ctx.lineTo(x + 49, 80); ctx.fill();
+      ctx.fillStyle = '#f8e8a0'; ctx.fillRect(x + 8, 86, 8, 7); ctx.fillRect(x + 30, 86, 8, 7);
+      const cols = ['#e83838', '#38c858', '#f8d850', '#3888f8'];
+      for (let j = 0; j < 8; j++) { ctx.fillStyle = cols[(j + (t >> 4)) % 4]; ctx.fillRect(x + j * 6 + 2, 79, 2, 2); }
+    }
+    // the road
+    ctx.fillStyle = k > 0.6 ? '#c8c8d8' : '#2a3a2a'; ctx.fillRect(0, 102, W, 6);
+    ctx.fillStyle = '#1c1a26'; ctx.fillRect(0, 108, W, 32);
+    ctx.fillStyle = '#d8c868'; for (let x = mod(-t * 3.2, 32) - 32; x < W; x += 32) ctx.fillRect(x, 123, 16, 2);
+    ctx.fillStyle = k > 0.6 ? '#c8c8d8' : '#2a3a2a'; ctx.fillRect(0, 140, W, 60);
+    // a car, side on: body, cab, windows, wheels, its headlights
+    const car = (x, y, body, hi, tall) => {
+      const b = (t >> 3) & 1 ? 1 : 0;
+      ctx.fillStyle = 'rgba(248,240,180,0.18)'; ctx.beginPath(); ctx.moveTo(x + 46, y + 7 + b); ctx.lineTo(x + 100, y + 2); ctx.lineTo(x + 100, y + 20); ctx.fill();
+      ctx.fillStyle = body; ctx.fillRect(x, y - 6 + b, 46, 14); ctx.fillRect(x + 6, y - 15 - tall + b, 30, 10 + tall);
+      ctx.fillStyle = hi; ctx.fillRect(x + 1, y - 6 + b, 44, 2);
+      ctx.fillStyle = '#f8e8a0'; ctx.fillRect(x + 9, y - 13 - tall + b, 10, 7 + tall); ctx.fillRect(x + 22, y - 13 - tall + b, 11, 7 + tall);
+      ctx.fillStyle = '#f8f0b0'; ctx.fillRect(x + 45, y - 1 + b, 2, 3); ctx.fillStyle = '#e83838'; ctx.fillRect(x - 1, y - 2 + b, 2, 3);
+      ctx.fillStyle = '#0c0a14'; ctx.fillRect(x + 6, y + 6, 9, 5); ctx.fillRect(x + 31, y + 6, 9, 5);
+    };
+    car(34, 122, '#b8bcc4', '#e0e4ec', 0);
+    car(118, 116, '#26365e', '#3e5288', 3);
+    ctx.restore();
+    // the snow, a little more every second
+    ctx.fillStyle = '#f4f4ff';
+    const n = Math.floor(k * 90);
+    for (let i = 0; i < n; i++) ctx.fillRect(mod(G.hash(i, 5, 350) * W - t * 1.4, W), mod(G.hash(i, 6, 350) * G.H + t * (0.6 + (i % 3) * 0.2), G.H), i % 3 ? 1 : 2, i % 3 ? 1 : 2);
+  }
+  S.finaleDrive = function* () {
+    const f = flags(), first = !f.finDrive;
+    f.finDrive = true;
+    yield G.say('Dad', 'Everybody in.');
+    G.audio.sfx('door');
+    yield G.fadeOut(30);
+    if (first) {
+      const t0 = G.tick;
+      G.play.overlay = { draw: (ctx) => driveScene(ctx, G.tick - t0) };
+      G.audio.play('lastRoad');
+      yield G.fadeIn(30);
+      yield G.say(null, 'Two cars, heading south. Dad\'s SUV in front, Abe\'s Jeep behind.');
+      yield G.text('Abe', 'dad the speed limit is 45');
+      yield G.text('Dad', 'I am aware.');
+      yield G.text('Michelle', 'Please tell him again.');
+      yield G.text('Doron', 'i could run there faster');
+      yield G.text('Hannah', 'Romulus just jumped in the Jeep. Through the window. While it was moving.');
+      yield G.text('Abe', 'he heard us say ditch');
+      yield G.text('Lily', 'every house on this road has the same lights');
+      yield G.text('Lily', 'why does every house have the same lights');
+      yield G.wait(50);
+      yield G.say(null, 'Two miles out, it starts to snow.');
+      yield G.wait(70);
+      yield G.say(null, 'One mile out, the road ices over, and Dad\'s brake lights come on.');
+      yield G.fadeOut(40);
+      G.play.overlay = null;
+    }
+    G.play.loadMap('ditchRoad', 9 * 16 + 8, 60 * 16 + 14, 'up', true);
+    G.play.autosave();
+    yield G.fadeIn(40);
+    yield* S.roadStart();
+  };
+  S.roadStart = function* () {
+    const f = flags();
+    if (f.roadStarted) return;
+    f.roadStarted = true;
+    yield G.wait(30);
+    yield G.say('Dad', 'That\'s as far as the cars go. We walk from here.');
+    yield G.say('Abe', 'I have lived here for years, and I have never owned a shovel.');
+    yield G.say('Hannah', 'Stay close. Anybody gets hurt, you come to me.');
+    yield G.say('Lily', 'Nate? You go first.');
+    yield G.say('Nate', '...Yeah. Okay.');
+    yield G.say('Nate', 'Stay behind me.');
+    G.play.autosave();
+  };
+  const WALK_TALK = {
+    romulus: ['*wag wag wag*', '*sniffs a candy cane and thinks better of it*'],
+    doron: ['This is leg day. I\'m calling it. This counts.', 'I\'ve marched farther than this with a full pack. In the Army.'],
+    lily: ['I\'m fine. Keep walking. I\'m fine.', 'If I see that egg, I am going to say No so hard.'],
+    abe: ['New rule: nobody chases anybody with anything.', 'This is the weirdest Christmas I\'ve ever been to, and it isn\'t even Christmas.'],
+    michelle: ['You STILL don\'t have a helmet.', 'Those are nice lights. I hate that they\'re nice.'],
+    dad: ['Keep going, son. We\'re right behind you.', 'The Lord is my shepherd. ...Nate, is that reindeer looking at us?'],
+  };
+  S.walkTalk = (id) => (function* () {
+    if (id === 'hannah') { yield* S.hannahCheckup(); return; }
+    const f = flags(), k = 'walk_' + id;
+    f[k] = ((f[k] || 0) + 1) % 2;
+    yield G.say(id === 'romulus' ? 'Romulus' : G.PARTY_INFO[id] ? G.PARTY_INFO[id].name : id === 'dad' ? 'Dad' : 'Michelle', WALK_TALK[id][f[k]]);
+  })();
+  Object.assign(CRITTER_LINES, {
+    blowup: [['Nate', 'A blow-up snowman. It\'s bouncing. Toward us.'], ['Lily', 'It\'s looking at me. Nate. It\'s LOOKING at me.']],
+    wireDeer: [['Nate', 'A wire reindeer. Off somebody\'s lawn.'], ['Hannah', 'Why are its eyes purple?'], ['Doron', 'If it lines up with you, MOVE.']],
+    nutcracker: [['Doron', 'Now THAT is a soldier. Look at that posture.'], ['Nate', 'Doron, it\'s spitting walnuts at us.'], ['Doron', 'Great form.']],
+  });
+  const ROAD_BEATS = [
+    [52, [['Michelle', 'Every yard. Every single yard has them.'], ['Dad', 'Nobody\'s home. Not one house.'], ['Hannah', 'They\'ll be okay. I\'ve seen this. It wears off.']]],
+    [38, [['Abe', 'Is it me, or is it getting thicker up here?'], ['Dad', 'It\'s sticking now.'], ['Lily', 'I can hear it. The little bells. Does everybody else hear that?']]],
+    [28, [['Dad', 'Hold up a second. All of you.'], ['Dad', 'The peace of the Lord be with you.'], ['Abe', 'And also with you.'], ['Doron', 'And also with you.'], ['Lily', '...And also with you.'], ['Dad', 'All right. Let\'s go.']]],
+  ];
+  // the wall of tinsel across the road: it only comes down once the last of them are beaten
+  S.roadGate = function* () {
+    const f = flags(), w = G.play.world, p = P();
+    f.roadGate = true;
+    yield G.wait(30);
+    yield G.camFocus(9.5 * 16 + 8, 12 * 16, 50);
+    yield G.say('Nate', 'Look at the sign.');
+    yield G.say('Lily', 'He CHANGED it.');
+    yield G.say('Abe', 'Number TWO?');
+    yield G.say('Michelle', 'That\'s spray paint. That is a real road sign, and that is spray paint.');
+    yield G.say('Dad', 'We don\'t get through that tinsel without some help.');
+    yield G.say('Doron', 'Everybody stand back.');
+    yield G.say('Nate', 'Doron.');
+    yield G.say('Doron', 'I said stand BACK.');
+    G.audio.sfx('dash');
+    yield G.wait(30);
+    yield G.bigText('ARMY... SUPLEX!!!', 80, '#68c8ff');
+    G.audio.sfx('explode');
+    G.play.shake(24, 3);
+    w.burst(9.5 * 16 + 8, 13 * 16, ['#c8c8d8', '#a85ae8', '#f8d850', '#2e8a48'], 40, { speed: 2.4, up: 1.4, g: 0.06, life: 44, size: 2 });
+    w.gateDown();
+    yield G.wait(40);
+    yield G.say(null, 'The sign, both posts and most of the tinsel land in a heap in somebody\'s yard.');
+    yield G.say('Doron', 'Leg day.');
+    yield G.camFocus(null, null, 40);
+    yield G.say('Hannah', 'Last checkup. Everybody.');
+    G.state.hp = G.state.maxHp; G.audio.sfx('heart');
+    yield G.say('Lily', 'Nate? I\'m scared.');
+    yield G.say('Nate', 'Me too.');
+    yield G.say('Lily', 'Okay. Just checking.');
+    G.play.autosave();
+  };
+  S.ditchAhead = function* () {
+    const c = yield G.ask(null, 'The Number One Ditch is right ahead. Once you\'re down in it, nobody leaves until it\'s finished.', ['Keep going', 'Not yet']);
+    if (c === 0) { G.play.warp('ditchFinal', 7, 17, 'up', true); return; }
+    const p = P();
+    yield G.walkTo(p, p.x, p.y + 16, 1.2);
+  };
+  S.roadCar = function* () {
+    const c = yield G.ask('Dad', 'Forget something? We can head back to the condo. Nobody will mind.', ['Back to the condo', 'Keep going']);
+    if (c !== 0) return;
+    G.audio.sfx('door');
+    G.play.warp('condo', 35, 16, 'left', true);
+  };
+  const ROAD_LIGHTS = [56, 49, 43, 38, 33, 30, 27, 24, 22, 20, 18, 16, 15];
+  G.MAPS.ditchRoad = {
+    name: 'The Last Road',
+    music: 'lastRoad',
+    noFollower: true,
+    hannahHeals: true,
+    tiles() {
+      const W = 20, H = 66, g = Array.from({ length: H }, () => Array(W).fill('.'));
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        // (the snow starts at a ragged line partway up the road)
+        const snow = y < 38 + Math.round(Math.sin(x * 0.9) * 2 + Math.sin(x * 2.3) * 1.5), road = x >= 8 && x <= 11;
+        g[y][x] = road ? (snow ? 'A' : 'a') : snow ? 'J' : '.';
+      }
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr, f = flags();
+      // trees down both sides and across the top, with a gap for the road
+      const tree = (x, y) => w.addTree(x, y, y < 38 ? 'snowpine' : undefined);
+      for (let y = 0; y < 64; y += 2) { tree(0, y); tree(18, y); }
+      for (const x of [2, 4, 6, 12, 14, 16]) tree(x, 0);
+      for (let x = 2; x < 18; x += 2) if (x < 7 || x > 11) tree(x, 64);
+      // the cars, stopped where the ice starts (either one takes Nate back to the condo)
+      w.addProp({ img: sp.suv, tx: 12, ty: 60, h: 3, dx: 3, solid: [12, 61, 2, 2], hit: [12, 61, 2, 2], talk: S.roadCar });
+      w.addProp({ img: sp.condoCars.jeep, tx: 4, ty: 61, h: 2, dy: -3, solid: [4, 61, 3, 2], hit: [4, 61, 3, 2], talk: S.roadCar });
+      w.addProp({ img: sp.mailbox, tx: 7, ty: 53, dx: 2, solid: [7, 53, 1, 1], hit: [7, 53, 1, 1], talk: look('The mailbox is wrapped in tinsel. The flag is up. Nobody\'s coming.') });
+      w.addProp({ img: sp.mailbox, tx: 12, ty: 41, dx: 2, solid: [12, 41, 1, 1], hit: [12, 41, 1, 1], talk: look('The mailbox is wrapped in tinsel.', 'There\'s a Christmas card inside. It\'s blank. It\'s all of them, all the way down.') });
+      // the houses, every one with the same lights on it
+      for (const [img, x, y, line] of [[sp.ranchRed, 2, 54, 'All the lights are on, and nobody\'s home.'], [sp.ranchTan, 13, 46, 'A plate of cookies on the step. They\'re frozen solid.'], [sp.ranchRed, 13, 34, 'A wreath on the door. It\'s made of egg cartons.'], [sp.ranchTan, 2, 38, 'The TV is on inside. It\'s just the Yule log. It\'s been the Yule log for a while.']]) {
+        w.addProp({ img, tx: x, ty: y, h: 4, solid: [x, y + 1, 5, 3], hit: [x, y + 1, 5, 3], talk: look(line) });
+      }
+      // what's between Nate and the Ditch: a few at first, then more
+      const add = (C, x, y, a) => { const e = w.add(new C(x * 16, y * 16, a)); return e; };
+      for (const [C, x, y] of [[G.BlowupSnowman, 6, 50], [G.BlowupSnowman, 15, 44], [G.BlowupSnowman, 6, 41], [G.WireDeer, 15, 40], [G.BlowupSnowman, 13, 33], [G.WireDeer, 4, 34], [G.BlowupSnowman, 7, 31]]) add(C, x, y);
+      add(G.Nutcracker, 9.5, 27, 40); add(G.WireDeer, 15, 27); add(G.BlowupSnowman, 4, 25);
+      if (!f.roadGate) w.gateWave = [add(G.Nutcracker, 9.5, 22, 64), add(G.Nutcracker, 9.5, 18, 48), add(G.WireDeer, 4, 21), add(G.WireDeer, 15, 18), add(G.BlowupSnowman, 6, 17), add(G.BlowupSnowman, 13, 17), add(G.BlowupSnowman, 10, 20)];
+      // the wall of tinsel, the sign and the candy canes
+      w.gateUp = !f.roadGate;
+      if (w.gateUp) {
+        w.blockTiles(2, 13, 16, 1);
+        const gate = { img: null, x: 0, y: 0, base: 14 * 16, hit: [2 * 16, 13 * 16, 18 * 16, 14 * 16],
+          talk: look('A wall of tinsel across the whole road. It won\'t budge.', 'Those decorations are still moving. Better deal with them first.'),
+          draw(ctx, cx, cy) { if (!w.gateUp) return; const im = sp.tinselWall[(G.tick >> 4) & 1]; ctx.drawImage(im, 2 * 16 - cx, 13 * 16 - 12 - cy); ctx.drawImage(im, 8 * 16 - cx, 13 * 16 - 12 - cy); ctx.drawImage(im, 12 * 16 - cx, 13 * 16 - 12 - cy); } };
+        w.props.push(gate);
+        const sign = { img: sp.ditchSignTwo, x: 9 * 16 + 8 - 12, y: 12 * 16 - 42, base: 12 * 16 + 1, draw(ctx, cx, cy) { if (w.gateUp) ctx.drawImage(this.img, this.x - cx, this.y - cy); } };
+        w.props.push(sign);
+        w.gateDown = () => { w.gateUp = false; w.unblockTiles(2, 13, 16, 1); };
+      }
+      for (const x of [7, 12]) w.addProp({ img: sp.candyPost, tx: x, ty: 9, h: 3, dx: 1, solid: [x, 11, 1, 1] });
+      w.addTrigger(8, 0, 4, 1, () => G.script.run(S.ditchAhead()));
+      for (const [i, [row, lines]] of ROAD_BEATS.entries()) {
+        w.addTrigger(2, row, 16, 1, () => {
+          const fl = flags();
+          if (fl['road_' + i]) return;
+          fl['road_' + i] = true;
+          G.script.run((function* () { for (const [who, line] of lines) yield G.say(who, line); })());
+        });
+      }
+      // the whole family, single file behind Nate
+      ['romulus', 'doron', 'lily', 'abe', 'hannah', 'michelle', 'dad'].forEach((id, i) => w.add(new G.FamWalker(id, i, 9.5 * 16, (61 + i * 0.5) * 16, 'up')));
+      // overhead: the night, the purple sky ahead, strings of lights, and the snow
+      w.props.push({
+        img: null, x: 0, y: 0, base: 99990,
+        draw(ctx, cx, cy) {
+          const p = P(), k = G.clamp(1 - p.y / (60 * 16), 0, 1);
+          ctx.save(); ctx.globalAlpha = 0.34; ctx.fillStyle = '#140a28'; ctx.fillRect(0, 0, G.W, G.H); ctx.restore();
+          const glow = ctx.createLinearGradient(0, 0, 0, 90);
+          glow.addColorStop(0, `rgba(168,90,232,${0.08 + k * 0.42})`); glow.addColorStop(1, 'rgba(168,90,232,0)');
+          ctx.fillStyle = glow; ctx.fillRect(0, 0, G.W, 90);
+          const cols = ['#ff5a5a', '#5af878', '#f8e070', '#6aa8ff'];
+          for (const ry of ROAD_LIGHTS) {
+            const sy = ry * 16 - cy;
+            if (sy < -24 || sy > G.H + 30) continue;
+            for (let x = 4 * 16, i = 0; x <= 16 * 16; x += 7, i++) {
+              const u = (x - 4 * 16) / (12 * 16), y = sy - 26 + Math.sin(u * Math.PI) * 12;
+              ctx.fillStyle = '#2a3030'; ctx.fillRect(x - cx, Math.round(y) - 1, 7, 1);
+              if ((i + (G.tick >> 4) + ry) % 5) { ctx.fillStyle = cols[(i + ry) % 4]; ctx.fillRect(x - cx, Math.round(y), 2, 2); }
+            }
+          }
+          ctx.fillStyle = 'rgba(255,255,255,0.85)';
+          const n = 12 + Math.floor(k * 80), mod = (a, b) => ((a % b) + b) % b;
+          for (let i = 0; i < n; i++) ctx.fillRect(Math.round(mod(G.hash(i, 7, 351) * G.W + G.tick * 0.2 * ((i % 3) - 1) - cx, G.W)), Math.round(mod(G.hash(i, 8, 351) * G.H + G.tick * (0.5 + (i % 3) * 0.2) - cy, G.H)), i % 3 ? 1 : 2, i % 3 ? 1 : 2);
+        },
+      });
+    },
+    onEnter() { return S.roadStart(); },
+    tick(w) {
+      if (w.gateUp && w.gateWave && !G.script.busy && w.gateWave.every((e) => e.dead)) { w.gateWave = null; G.script.run(S.roadGate()); }
+    },
+  };
+
+  // ================================================================ THE MORNING AFTER
+  // The sun comes up, everybody lines up for a picture (Nate walks into the gap himself), it takes
+  // three tries, and then the credits. After that the Ditch is Nate's: G.MAPS.ditchDay.
+  // Flags: fin_done, photoDone, dayIntro.
+  const POSE_X = { doron: 3.7, abe: 5, lily: 6.3, hannah: 8.7, michelle: 10, dad: 11.3 }, POSE_Y = 8 * 16 + 12;
+  const fullPhotos = {};
+  G.photoFull = (take) => {
+    if (fullPhotos[take]) return fullPhotos[take];
+    const c = G.canvas(G.W, G.H), x = c.getContext('2d');
+    x.imageSmoothingEnabled = false; x.drawImage(G.art.familyPortrait(take), 0, 0, G.W, G.H);
+    return (fullPhotos[take] = c);
+  };
+  S.ditchMorning = function* () {
+    yield G.fadeOut(70);
+    G.play.loadMap('ditchDay', MID, 13 * 16 + 14, 'up', true);
+    G.play.autosave();
+    yield G.wait(50);
+    yield G.fadeIn(90);
+    yield G.say(null, 'They sift all night.');
+    yield G.say(null, 'And then the sun comes up over the Number One Ditch.');
+    yield G.say('Hannah', 'Everybody\'s here. Everybody\'s fine. I checked twice.');
+    yield G.say('Michelle', 'Nobody move. I want a picture. Of ALL of us.');
+    yield G.say('Lily', 'Mom. I have gravel in my hair.');
+    yield G.say('Michelle', 'And you\'ll have it in the picture. Nate, get in here. You go in the middle.');
+  };
+  S.poseTalk = (id) => function* () {
+    yield G.say(FIN_NAME[id], { doron: 'Get in here, little brother.', abe: 'I\'ll scrunch. I\'m scrunching.', lily: 'Nate, come ON. My face hurts.', hannah: 'There\'s a spot right there, by me.', michelle: 'In the MIDDLE, Nate.', dad: 'Go on, son. That spot\'s yours.', romulus: '*wag wag wag*' }[id]);
+  };
+  S.photoTake = function* () {
+    const f = flags(), w = G.play.world, p = P(), fam = w.pose;
+    if (f.photoDone) return;
+    p.dir = 'down';
+    yield G.walkTo(p, MID, POSE_Y, 1.2);
+    p.dir = 'down';
+    for (const n of Object.values(fam)) n.dir = 'down';
+    const mom = fam.michelle, home = [mom.x, mom.y];
+    yield G.say('Michelle', 'Squeeze in. Hold still. I\'m setting the timer.');
+    yield G.walkTo(mom, MID, 13 * 16, 2.4);
+    mom.dir = 'up';
+    yield G.say(null, 'Mom props her phone up on a rock and presses something.');
+    yield G.say('Michelle', 'Ten seconds!');
+    yield G.walkTo(mom, home[0], home[1], 3);
+    mom.dir = 'down';
+    yield G.say('Nate', 'Ten. Nine. Eight. Seven.');
+    yield G.say('Nate', 'Five plus one.');
+    yield G.say('Abe', 'Good.');
+    yield G.say('Nate', 'Five. Four. Three. Two. One.');
+    const snap = function* (take, hint) { G.audio.sfx('blip'); G.play.whiteout = 1; yield G.wait(40); yield G.noteView([G.photoFull(take)], hint); };
+    yield* snap(1, 'Z: one more');
+    yield G.say('Michelle', 'Abe, you\'re cut off.');
+    yield G.say('Abe', 'I\'m ALWAYS cut off, Michelle.');
+    yield G.say('Michelle', 'One more.');
+    G.audio.sfx('blip');
+    yield G.wait(50);
+    yield* snap(2, 'Z: one more');
+    yield G.say('Hannah', 'ROMULUS.');
+    yield G.say('Abe', 'He thought it was a race.');
+    yield G.say('Michelle', 'One more. Everybody look at the phone. Abe, what\'s in your hand?');
+    yield G.say('Abe', 'Nothing. Smile, everybody.');
+    G.audio.sfx('blip');
+    yield G.wait(50);
+    yield* snap(3, 'Z: that\'s the one');
+    yield G.say('Michelle', 'That\'s it. That\'s the one. I\'m framing it.');
+    yield G.say('Lily', 'Let me see.');
+    yield G.wait(50);
+    yield G.say('Lily', 'ABE.');
+    yield G.say('Abe', 'That was a BIT.');
+    yield G.say('Doron', 'Is that the EGG? Did you bring the EGG?');
+    yield G.say('Lily', 'It\'s going in the box, Abe. FAR back in the box.');
+    G.audio.sfx('heart');
+    (G.state.photos = G.state.photos || {}).familyPhoto = 1;
+    f.photoDone = true;
+    G.audio.play('title');
+    yield G.banner('THE END', 'The Number One Ditch is still Number One.', 280);
+    G.play.autosave();
+    yield G.fadeOut(70);
+    yield creditsCmd();
+    yield G.fadeOut(40);
+    G.play.overlay = null;
+    yield* S.dayAfter();
+  };
+  S.dayAfter = function* () {
+    G.play.loadMap('ditchDay', MID, 12 * 16 + 14, 'down', true);
+    G.play.autosave();
+    yield G.wait(30);
+    yield G.fadeIn(50);
+    const f = flags();
+    f.dayIntro = true;
+    yield G.say(null, 'The family drives back to the condo to sleep for about a week.');
+    yield G.say('Nate', 'Not me. I came all this way, and I still haven\'t really sifted this ditch.');
+    yield G.say(null, 'Use {y}Tyler\'s Sifter{/} on the gravel beds. New finds go in the {y}Tooth Book{/}, in COLLECTABLES.');
+    yield G.say(null, 'And Nate can go anywhere now: open the {y}MAP{/} in the menu and press Z on a place to drive there.');
+  };
+
+  // ================================================================ THE CREDITS
+  // A road trip: everybody walks across the screen while the sky goes from night to morning, then
+  // the photos you found, your numbers, and the picture from the Ditch. Hold Z to hurry it along.
+  const CREDIT_FAMILY = [
+    ['nate', 'Nate', 'Thinks about pH often.'], ['lily', 'Lily', 'No.'], ['doron', 'Doron', 'Best ditch in the world. He said it and he meant it.'],
+    ['abe', 'Abe', 'Has a cable for you.'], ['hannah', 'Hannah', 'Everybody gets a checkup.'], ['dad', 'Dad', 'Do you speak EEENGLISH?'],
+    ['michelle', 'Michelle', 'Not "the pastor\'s wife."'], ['romulus', 'Romulus', 'He thought it was a race.'],
+  ];
+  const CREDIT_OTHERS = [
+    ['badlands', 'Badlands Chugs', '...LIKE AND SUBSCRIBE!'], ['mikey', 'Mikey', 'Was it the song?'], ['icejj', 'Ice JJ Fish', 'Stay icy.'], ['tyler', 'Tyler', 'THE MOSASAUR TOOTH!'],
+    ['paulLady', 'Paul McCartney Lady', 'Every single day of her life, honey.'], ['freya', 'Freya', 'Fourthmeal.'], ['matt', 'Matt Oliver', 'That\'s fishing.'], ['danHurd', 'Dan Hurd', 'Still prospecting.'],
+  ];
+  const CREDIT_NAMES = ['Ben', 'Bismarck', 'Brooks', 'Prof. Sunderlin', 'Dr. Nataro', 'Prof. Carley', 'Professor Pembrook', 'Groundskeeper Gus', 'Pyro Pete', 'Grandma Rose', 'Tom', 'Rae', 'Ruby', 'Anette', 'Kit and Gail', 'Charge Nurse Dot', 'The Old Fisherman', 'Henrietta', 'Daisy', 'The Globglogabgalab', 'MECHA-BABY', 'The Two-Liter', 'El Toro Loco', 'and Father Eggmas, in the box'];
+  function creditPages() {
+    const pg = [{ k: 'title', d: 300 }, { k: 'head', d: 150, text: 'The Family' }];
+    for (const c of CREDIT_FAMILY) pg.push({ k: 'walk', d: 250, id: c[0], name: c[1], line: c[2] });
+    pg.push({ k: 'head', d: 150, text: 'Along the Way' });
+    for (const c of CREDIT_OTHERS) if (G.sprites[c[0]]) pg.push({ k: 'walk', d: 210, id: c[0], name: c[1], line: c[2] });
+    pg.push({ k: 'names', d: 60 + CREDIT_NAMES.length * 40 });
+    const found = G.PHOTOS.filter((ph) => G.photoHas(ph.id) && ph.id !== 'familyPhoto');
+    if (found.length) pg.push({ k: 'head', d: 120, text: 'From the Family Album' });
+    for (const ph of found) pg.push({ k: 'photo', d: 210, ph });
+    pg.push({ k: 'stats', d: 420 }, { k: 'final', d: 1e9 });
+    return pg;
+  }
+  const lerpCol = (a, b, u) => { const p = (h, i) => parseInt(h.slice(i, i + 2), 16), c = (i) => Math.round(p(a, i) + (p(b, i) - p(a, i)) * u); return `rgb(${c(1)},${c(3)},${c(5)})`; };
+  const CREDIT_SKY = [['#0c0a24', '#1c1438'], ['#2a1a4a', '#6a3a6a'], ['#5a3a6a', '#f89878'], ['#7ab0d8', '#f8d8b0'], ['#8ac0e8', '#d8ecf0']];
+  function creditsCmd() {
+    const pages = creditPages(), total = pages.filter((p) => p.d < 1e8).reduce((a, p) => a + p.d, 0), FB = () => G.font;
+    const center = (ctx, text, y, col) => FB().draw(ctx, text, Math.round(120 - FB().width(text) / 2), y, col || '#f8f8f0', { shadow: '#0c0814' });
+    return {
+      start() { Object.assign(this, { i: 0, t: 0, run: 0, scroll: 0 }); G.play.overlay = this; G.audio.play('credits'); G.fade = 0; },
+      update() {
+        const pg = pages[this.i], sp = G.input.down('a') && pg.k !== 'final' ? 4 : 1;
+        this.t += sp; this.run += sp; this.scroll += sp;
+        if (pg.k === 'final') { if (this.t > 120 && G.input.hit('a')) { G.input.eat('a'); G.audio.sfx('select'); return true; } return false; }
+        if (this.t >= pg.d) { this.i++; this.t = 0; }
+        return false;
+      },
+      back(ctx) {
+        const u = Math.min(0.999, this.run / total) * (CREDIT_SKY.length - 1), j = Math.floor(u), v = u - j, top = lerpCol(CREDIT_SKY[j][0], CREDIT_SKY[j + 1][0], v), low = lerpCol(CREDIT_SKY[j][1], CREDIT_SKY[j + 1][1], v);
+        const g = ctx.createLinearGradient(0, 0, 0, 118); g.addColorStop(0, top); g.addColorStop(1, low);
+        ctx.fillStyle = g; ctx.fillRect(0, 0, G.W, 118);
+        const day = this.run / total, mod = (a, b) => ((a % b) + b) % b, sc = this.scroll;
+        if (day > 0.4) { ctx.fillStyle = '#fff4c8'; ctx.beginPath(); ctx.arc(176, 112 - Math.min(80, (day - 0.4) * 160), 9, 0, Math.PI * 2); ctx.fill(); }
+        else for (let i = 0; i < 24; i++) { ctx.fillStyle = `rgba(232,232,248,${1 - day * 2.4})`; ctx.fillRect(Math.floor(G.hash(i, 1, 352) * G.W), Math.floor(G.hash(i, 2, 352) * 80), 1, 1); }
+        ctx.fillStyle = lerpCol('#141828', '#4a7a58', Math.min(1, day * 1.6));
+        for (let i = 0; i < 14; i++) { const x = mod(i * 30 - sc * 0.2, G.W + 60) - 30, h = 12 + Math.floor(G.hash(i, 3, 352) * 20); ctx.fillRect(x, 114 - h, 32, h + 6); }
+        ctx.fillStyle = lerpCol('#1c2a22', '#5a9a44', Math.min(1, day * 1.6)); ctx.fillRect(0, 116, G.W, 44);
+        ctx.fillStyle = lerpCol('#22202c', '#6a6a70', Math.min(1, day * 1.6)); ctx.fillRect(0, 124, G.W, 18);
+        ctx.fillStyle = '#d8c868'; for (let x = mod(-sc * 0.6, 28) - 28; x < G.W; x += 28) ctx.fillRect(x, 133, 14, 1);
+      },
+      draw(ctx) {
+        const pg = pages[this.i], t = this.t;
+        if (pg.k === 'final') {
+          ctx.drawImage(G.photoFull(3), 0, 0);
+          if (t > 60) { ctx.fillStyle = 'rgba(12,8,20,0.55)'; ctx.fillRect(0, 138, G.W, 18); center(ctx, 'Made by Abe.', 143, '#f8f0d8'); }
+          return;
+        }
+        this.back(ctx);
+        if (pg.k === 'title') {
+          const a = FB().bigWidth('JOURNEY TO THE', 1), b = FB().bigWidth('NUMBER ONE DITCH', 2);
+          FB().drawBig(ctx, 'JOURNEY TO THE', Math.round(120 - a / 2), 40, 1, '#f8f8f0', '#1c1424');
+          FB().drawBig(ctx, 'NUMBER ONE DITCH', Math.round(120 - b / 2), 54, 2, '#f8d850', '#1c1424');
+        } else if (pg.k === 'head') center(ctx, pg.text, 58, '#f8d850');
+        else if (pg.k === 'walk') {
+          // in from the left, a stop in the middle, off to the right
+          const set = G.sprites[pg.id], u = t / pg.d, x = u < 0.25 ? -24 + (u / 0.25) * 144 : u < 0.75 ? 120 : 120 + ((u - 0.75) / 0.25) * 150, moving = u < 0.25 || u >= 0.75;
+          const img = moving ? set.right[1 + ((t >> 3) & 1)] : set.down ? set.down[0] : set.right[0], h = img.height * 2, w = img.width * 2;
+          ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(Math.round(x - 12), 130, 24, 3);
+          ctx.drawImage(img, Math.round(x - w / 2), 132 - h, w, h);
+          if (u > 0.12 && u < 0.88) { center(ctx, pg.name, 22, '#f8d850'); FB().wrap(pg.line, 210).forEach((l, i) => center(ctx, l, 34 + i * 10)); }
+        } else if (pg.k === 'names') {
+          const y0 = 124 - (t / pg.d) * (CREDIT_NAMES.length * 12 + 130);
+          center(ctx, 'And', Math.round(y0) - 14, '#f8d850');
+          CREDIT_NAMES.forEach((n, i) => { const y = Math.round(y0 + i * 12); if (y > 2 && y < 118) center(ctx, n, y); });
+        } else if (pg.k === 'photo') {
+          const im = pg.ph.img, iw = im.naturalWidth || 82, ih = im.naturalHeight || 120, k = Math.min(1, 100 / ih), w = Math.round(iw * k), h = Math.round(ih * k), x = Math.round(120 - w / 2), y = 10;
+          ctx.fillStyle = '#f6f4ee'; ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
+          if (im.complete && im.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(im, x, y, w, h); ctx.imageSmoothingEnabled = false; }
+          center(ctx, pg.ph.name, y + h + 6, '#f8f8f0');
+        } else if (pg.k === 'stats') {
+          const s = G.state, rows = [['Time on the road', G.playTimeText ? G.playTimeText(s.playTime) : ''], ['Shark teeth', G.sayable(s.teeth)], ['Times the sacred number was spoken', G.sayable(s.stats.slips || 0)], ['Rocks', G.sayable(G.rocksFound()) + '/' + G.sayable(G.ROCKS.length)], ['Photos', G.sayable(G.photosFound()) + '/' + G.sayable(G.PHOTOS.length)]];
+          center(ctx, 'Your Trip', 20, '#f8d850');
+          rows.forEach(([a, b], i) => { FB().draw(ctx, a, 16, 38 + i * 13, '#f8f8f0', { shadow: '#0c0814' }); FB().draw(ctx, b, 224 - FB().width(b), 38 + i * 13, '#f8d850', { shadow: '#0c0814' }); });
+        }
+      },
+    };
+  }
+
+  // ================================================================ THE TOOTH BOOK
+  // The fifteen fossils you can sift out of the Number One Ditch. They're real ones: the Chesapeake
+  // country sits on old sea floor (the Yorktown Formation and its neighbors) full of shark teeth.
+  // r: rarity; coin: what it's worth in shark teeth; line: what Nate reads about it.
+  G.FOSSILS = [
+    { id: 'sandTiger', name: 'Sand Tiger Tooth', r: 0, coin: 2, line: 'Long and thin as an awl, with a tiny point on each side, made for snagging fish. Sand tigers still swim in the Chesapeake every summer.' },
+    { id: 'bull', name: 'Bull Shark Tooth', r: 0, coin: 2, line: 'Wide, triangular and saw-edged. Bull sharks go farther up fresh water than any other big shark.' },
+    { id: 'rayPlate', name: 'Ray Crushing Plate', r: 0, coin: 2, line: 'Not really a tooth. Some rays grind clams between flat plates like these, and they turn up all over Chesapeake fossil beds.' },
+    { id: 'vertebra', name: 'Shark Vertebra', r: 0, coin: 3, line: 'Shark skeletons are cartilage, and they rot away. The vertebrae can harden enough to last, with rings you can almost count like a tree\'s.' },
+    { id: 'tiger', name: 'Tiger Shark Tooth', r: 1, coin: 5, line: 'Shaped like a rooster\'s comb, with a notch in one side. A tiger shark can bite through a sea turtle\'s shell.' },
+    { id: 'thresher', name: 'Thresher Tooth', r: 1, coin: 5, line: 'Small, smooth and slanted. A thresher\'s tail is as long as the rest of it, and it stuns fish with it.' },
+    { id: 'snaggle', name: 'Snaggletooth', r: 1, coin: 5, line: 'Hooked like a claw and serrated like a steak knife. The big one that left these is extinct, but the Yorktown is full of its teeth.' },
+    { id: 'porpoise', name: 'Porpoise Tooth', r: 1, coin: 7, line: 'A plain little peg. Sharks drop thousands of teeth, but a porpoise only ever grows one set, so these are much harder to find.' },
+    { id: 'mako', name: 'Broadtooth Mako Tooth', r: 2, coin: 10, line: 'Collectors call this a broad-tooth mako. Scientists now think this extinct shark was closer to the great white.' },
+    { id: 'croc', name: 'Crocodile Tooth', r: 2, coin: 12, line: 'A glossy little cone with ribs down it. Crocodiles hunted this coast millions of years ago, when the water was warmer.' },
+    { id: 'cow', name: 'Cow Shark Tooth', r: 2, coin: 12, line: 'Shaped like a tiny comb, a whole row of points on one root. Cow sharks are an ancient family, some with seven gills instead of five.' },
+    { id: 'earbone', name: 'Whale Ear Bone', r: 2, coin: 15, line: 'The densest bone in a whale, so it lasts when the rest doesn\'t. It really does look like a lumpy little ear.' },
+    { id: 'white', name: 'Great White Tooth', r: 3, coin: 25, line: 'Wide, flat and serrated, the same shape as the ones in the ocean right now.' },
+    { id: 'falseMako', name: 'False Mako Tooth', r: 3, coin: 30, line: 'A thick, curved tooth from a huge shark that hardly left anything behind. Collectors will drive all night for one of these.' },
+    { id: 'megalodon', name: 'Ditch Megalodon', r: 4, coin: 50, line: 'The biggest shark there ever was. A big one\'s tooth is wider than Nate\'s hand. This one isn\'t big. It\'s still a Megalodon.' },
+  ];
+  G.FOSSIL_RARITY = ['Common', 'Uncommon', 'Rare', 'Very rare', 'Legendary'];
+  G.FOSSIL_COLOR = ['#c8c0d8', '#78e070', '#78e8e8', '#ff98d0', '#f8d850'];
+  G.fossilBook = () => (G.state.fossils = G.state.fossils || {});
+  G.fossilsFound = () => G.FOSSILS.filter((k) => G.fossilBook()[k.id]).length;
+  // the gravel beds, each with its own mix (the last is Tyler's)
+  const SIFT_SPOTS = [
+    { name: 'The Culvert', x: 4.6, y: 4.8, text: 'Gravel, washed out of the culvert.', mix: { sandTiger: 5, bull: 5, rayPlate: 4, vertebra: 3, tiger: 2, thresher: 1 } },
+    { name: 'The Bank Cut', x: 9.8, y: 6.2, text: 'Where the water has cut into the bank, there\'s a seam full of old shell.', mix: { snaggle: 4, tiger: 4, bull: 3, mako: 3, cow: 2, earbone: 1 } },
+    { name: 'The Gravel Bar', x: 2.7, y: 9.4, text: 'A gravel bar, heaped up where the ditch bends.', mix: { tiger: 3, mako: 3, porpoise: 3, earbone: 2, croc: 2, cow: 2, white: 1 } },
+    { name: 'The Cattails', x: 2.7, y: 14.2, text: 'Black mud and fine gravel, down among the cattails.', mix: { rayPlate: 5, sandTiger: 3, thresher: 4, vertebra: 3, porpoise: 2, snaggle: 2, croc: 1 } },
+    { name: 'Tyler\'s Spot', x: 9.8, y: 14.2, text: 'The gravel Tyler told you about. Nobody has touched it in years.', mix: { mako: 3, white: 3, earbone: 2, croc: 2, falseMako: 2, megalodon: 1 } },
+  ];
+  const JUNK_FINDS = { cable: 'And a yellow guitar cable. How. HOW.', bulb: 'And one Christmas bulb. It\'s still warm.', cap: 'And a bottle cap from a RoFo Pop.' };
+  // a roll on a spot's mix: anything not in the book yet, and (from a deep scoop) anything rarer, comes up more often
+  function siftRoll(spot, depth) {
+    const B = G.fossilBook(), entries = Object.entries(SIFT_SPOTS[spot].mix).map(([id, w]) => {
+      const k = G.FOSSILS.find((x) => x.id === id);
+      return [id, w * (B[id] ? 1 : 2.5) * (k.r >= 2 ? 1 + depth : 1)];
+    });
+    let r = Math.random() * entries.reduce((a, e) => a + e[1], 0);
+    for (const [id, w] of entries) if ((r -= w) <= 0) return id;
+    return entries[0][0];
+  }
+  // SIFTING: dig (hold Z; deeper is better, but too deep and it spills), shake the sand out (← → ← →),
+  // then pick the fossils out of the gravel by hand before Nate's arms give out. X dumps it early.
+  // Result: { got: [fossil ids], junk: [ids] } (or 'quit').
+  function siftCmd(spot) {
+    const FX = 10, FY = 20, FW = 156, FH = 116, TX = FX + 6, TY = FY + 6, TW = FW - 12, TH = FH - 12;
+    const ROCK = ['#8a7a62', '#a8967a', '#6a5e4c', '#c0b090', '#50483c', '#3a3430', '#7a6a58'];
+    return {
+      start() {
+        Object.assign(this, { step: 'dig', t: 0, depth: 0, shook: 0, need: 1, side: null, jig: 0, left: 1, arms: 1, finds: [], peb: [], grains: [], got: [], junk: [], cx: TX + TW / 2, cy: TY + TH / 2, msg: null, msgT: 0, endT: 0, zReady: false, spilled: false });
+        G.play.overlay = this;
+      },
+      say(text, n) { this.msg = text; this.msgT = n || 80; },
+      fill() {
+        const d = this.depth, n = 1 + Math.round(d * 3) + (Math.random() < 0.3 ? 1 : 0);
+        const spotAt = () => [TX + 16 + Math.random() * (TW - 32), TY + 14 + Math.random() * (TH - 26)];
+        const free = () => { for (let k = 0; k < 40; k++) { const [x, y] = spotAt(); if (this.finds.every((f) => Math.hypot(f.x - x, f.y - y) > 26)) return [x, y]; } return spotAt(); };
+        for (let i = 0; i < n; i++) { const [x, y] = free(), id = siftRoll(spot, d); this.finds.push({ id, x, y, flip: Math.random() < 0.5 }); }
+        if (Math.random() < 0.3) { const [x, y] = free(), id = Object.keys(JUNK_FINDS)[Math.floor(Math.random() * 3)]; this.finds.push({ id, x, y, junk: true }); }
+        for (let i = 0; i < 110; i++) {
+          const [x, y] = [TX + 4 + Math.random() * (TW - 8), TY + 4 + Math.random() * (TH - 8)];
+          if (this.finds.some((f) => Math.hypot(f.x - x, f.y - y) < 7)) continue;
+          this.peb.push({ x, y, w: 3 + Math.floor(Math.random() * 6), h: 2 + Math.floor(Math.random() * 4), c: ROCK[Math.floor(Math.random() * ROCK.length)] });
+        }
+        this.need = 8 + Math.round(d * 14);
+        this.ARMS = this.arms = 780 + n * 120;
+      },
+      update() {
+        const inp = G.input;
+        this.t++;
+        if (this.msgT > 0 && --this.msgT === 0) this.msg = null;
+        if (this.jig > 0) this.jig--;
+        for (const g of this.grains) { g.y += g.v; g.v += 0.2; g.life--; }
+        this.grains = this.grains.filter((g) => g.life > 0);
+        if (this.endT > 0) { if (--this.endT === 0) { this.result = { got: this.got, junk: this.junk }; return true; } return false; }
+        if (quitHit()) { this.result = 'quit'; return true; }
+        if (this.step === 'dig') {
+          if (zHeld(this)) {
+            this.depth += 1 / 110;
+            if (this.t % 14 === 0) G.audio.sfx('slip');
+            if (this.depth >= 1.15) { this.depth = 0.35; this.spilled = true; G.audio.sfx('bump'); this.say('Too much! Half of it spills out.', 90); this.fill(); this.step = 'shake'; }
+          } else if (this.depth > 0) {
+            this.depth = Math.min(1, this.depth); G.audio.sfx('select'); this.fill(); this.step = 'shake';
+          }
+          return false;
+        }
+        if (this.step === 'shake') {
+          const L = inp.hit('left'), R = inp.hit('right');
+          if ((L && this.side !== 'left') || (R && this.side !== 'right')) {
+            this.side = L ? 'left' : 'right'; this.jig = 8; this.shook++;
+            G.audio.sfx('slip');
+            for (let i = 0; i < 12; i++) this.grains.push({ x: TX + Math.random() * TW, y: TY + TH - 4, v: 0.4 + Math.random(), life: 16 + Math.random() * 14 });
+            if (this.shook >= this.need) { this.step = 'pick'; G.audio.sfx('secret'); }
+          }
+          return false;
+        }
+        // picking: nearest fossil under the fingers, then the nearest pebble
+        const sp = 1.9;
+        if (inp.down('left')) this.cx -= sp;
+        if (inp.down('right')) this.cx += sp;
+        if (inp.down('up')) this.cy -= sp;
+        if (inp.down('down')) this.cy += sp;
+        this.cx = G.clamp(this.cx, TX + 1, TX + TW - 2); this.cy = G.clamp(this.cy, TY + 1, TY + TH - 2);
+        if (inp.hit('a')) {
+          inp.eat('a');
+          let best = null, bd = 11;
+          for (const f of this.finds) { const d = Math.hypot(f.x - this.cx, f.y - this.cy); if (d < bd) { bd = d; best = f; } }
+          if (best) {
+            this.finds.splice(this.finds.indexOf(best), 1);
+            if (best.junk) { this.junk.push(best.id); G.audio.sfx('blip'); this.say('Not a fossil. Nate keeps it anyway.', 70); }
+            else {
+              this.got.push(best.id); G.audio.sfx('heart');
+              const k = G.FOSSILS.find((x) => x.id === best.id);
+              this.say(k.name + '!', 90);
+            }
+            if (!this.finds.length) { this.endT = 50; this.say('That\'s everything in this scoop.', 60); }
+          } else {
+            let pb = null, pd = 9;
+            for (const b of this.peb) { const d = Math.hypot(b.x - this.cx, b.y - this.cy); if (d < pd) { pd = d; pb = b; } }
+            if (pb) { this.peb.splice(this.peb.indexOf(pb), 1); this.arms -= 50; G.audio.sfx('bump'); this.say('Just a pebble.', 40); }
+          }
+        }
+        if (inp.hit('b')) { inp.eat('b'); this.endT = 30; G.audio.sfx('select'); return false; }
+        if (--this.arms <= 0) { this.endT = 60; G.audio.sfx('no'); this.say('Nate\'s arms give out! He dumps the rest.', 60); }
+        return false;
+      },
+      draw(ctx) {
+        const FT2 = G.font, sh = { shadow: '#000' };
+        ctx.fillStyle = '#3a5a2e'; ctx.fillRect(0, 0, G.W, G.H);
+        for (let i = 0; i < 90; i++) { ctx.fillStyle = i % 2 ? '#34522a' : '#46683a'; ctx.fillRect(Math.floor(G.hash(i, 1, 360) * G.W), Math.floor(G.hash(i, 2, 360) * G.H), 3, 2); }
+        ctx.fillStyle = '#16100c'; ctx.fillRect(0, 0, G.W, 12);
+        FT2.draw(ctx, 'SIFTING: ' + SIFT_SPOTS[spot].name, 4, 2, '#f8d850', sh);
+        const ox = this.step === 'shake' && this.jig > 0 ? (this.side === 'left' ? -3 : 3) : 0;
+        // the frame and the mesh
+        ctx.fillStyle = '#5a3818'; ctx.fillRect(FX + ox, FY, FW, FH); ctx.fillStyle = '#7a5028'; ctx.fillRect(FX + 1 + ox, FY + 1, FW - 2, 4); ctx.fillRect(FX + 1 + ox, FY + 1, 4, FH - 2);
+        ctx.fillStyle = '#26221e'; ctx.fillRect(TX + ox, TY, TW, TH);
+        ctx.fillStyle = '#3a342c'; for (let x = TX + 3; x < TX + TW; x += 4) ctx.fillRect(x + ox, TY, 1, TH); for (let y = TY + 3; y < TY + TH; y += 4) ctx.fillRect(TX + ox, y, TW, 1);
+        if (this.step === 'dig') {
+          // the scoop, getting fuller
+          const d = Math.min(1, this.depth), hh = Math.round(d * (TH - 8));
+          for (let i = 0; i < 300 * d; i++) { ctx.fillStyle = ROCK[i % ROCK.length]; ctx.fillRect(TX + 4 + Math.floor(G.hash(i, 3, 361) * (TW - 8)), TY + TH - 4 - Math.floor(G.hash(i, 4, 361) * hh), 3, 2); }
+        } else {
+          for (const f of this.finds) {
+            const img = f.junk ? (f.id === 'cable' ? G.spr.cableIcon : null) : G.spr.fossils[f.id], x = Math.round(f.x + ox), y = Math.round(f.y);
+            if (img) { ctx.save(); ctx.translate(x, y); if (f.flip) ctx.scale(-1, 1); ctx.drawImage(img, -Math.round(img.width / 2), -Math.round(img.height / 2)); ctx.restore(); }
+            else if (f.id === 'bulb') { ctx.fillStyle = '#e83838'; ctx.fillRect(x - 2, y - 3, 5, 6); ctx.fillStyle = '#c8ccd4'; ctx.fillRect(x - 1, y + 3, 3, 2); }
+            else { ctx.fillStyle = '#c8ccd4'; ctx.fillRect(x - 3, y - 3, 7, 7); ctx.fillStyle = '#3a68c8'; ctx.fillRect(x - 2, y - 2, 5, 5); }
+            // now and then, a glint
+            if (this.step === 'pick' && (this.t + Math.floor(f.x)) % 100 < 7) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 3, y - 4, 1, 3); ctx.fillRect(x - 4, y - 3, 3, 1); }
+          }
+          for (const b of this.peb) { ctx.fillStyle = '#1c1814'; ctx.fillRect(Math.round(b.x + ox), Math.round(b.y) + 1, b.w, b.h); ctx.fillStyle = b.c; ctx.fillRect(Math.round(b.x + ox), Math.round(b.y), b.w, b.h); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(Math.round(b.x + ox), Math.round(b.y), b.w, 1); }
+          if (this.step === 'shake') {
+            const sand = 1 - this.shook / this.need;
+            ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, sand * 1.3)); ctx.fillStyle = '#b8a078'; ctx.fillRect(TX + ox, TY, TW, TH);
+            for (let i = 0; i < 160; i++) { ctx.fillStyle = i % 2 ? '#a89068' : '#c8b490'; ctx.fillRect(TX + ox + Math.floor(G.hash(i, 5, 361) * TW), TY + Math.floor(G.hash(i, 6, 361) * TH), 2, 1); }
+            ctx.restore();
+          }
+          ctx.fillStyle = '#c8b490'; for (const g of this.grains) ctx.fillRect(Math.round(g.x), Math.round(g.y), 1, 1);
+        }
+        if (this.step === 'pick') {
+          // Nate's fingers
+          const x = Math.round(this.cx), y = Math.round(this.cy);
+          ctx.fillStyle = '#1c1424'; ctx.fillRect(x - 1, y - 1, 3, 12); ctx.fillRect(x + 2, y + 1, 3, 11);
+          ctx.fillStyle = '#f4c8aa'; ctx.fillRect(x, y, 2, 11); ctx.fillRect(x + 3, y + 2, 2, 10); ctx.fillRect(x - 1, y + 9, 7, 6);
+          ctx.strokeStyle = '#f8d850'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(x + 0.5, y + 0.5, 7, 0, Math.PI * 2); ctx.stroke();
+        }
+        // the side panel
+        const PX = 172, PW = 62;
+        G.box(ctx, PX, 18, PW, 120);
+        if (this.step === 'dig') {
+          FT2.draw(ctx, 'HOW DEEP', PX + 7, 24, '#c8c0d8', sh);
+          ctx.fillStyle = '#0c0814'; ctx.fillRect(PX + 25, 36, 12, 90);
+          const d = Math.min(1.15, this.depth), hh = Math.round((d / 1.15) * 88);
+          ctx.fillStyle = d > 1 ? '#f86858' : d > 0.66 ? '#f8d850' : '#78e070'; ctx.fillRect(PX + 26, 125 - hh, 10, hh);
+          ctx.fillStyle = '#f86858'; ctx.fillRect(PX + 22, 125 - Math.round((1 / 1.15) * 88), 18, 1);
+        } else {
+          FT2.draw(ctx, 'FOUND', PX + 7, 24, '#c8c0d8', sh);
+          this.got.forEach((id, i) => { const im = G.spr.fossils[id]; ctx.drawImage(im, PX + 7 + (i % 3) * 17, 36 + Math.floor(i / 3) * 18); });
+          if (this.step === 'pick') {
+            FT2.draw(ctx, 'ARMS', PX + 7, 108, '#c8c0d8', sh);
+            const k = Math.max(0, this.arms / this.ARMS);
+            ctx.fillStyle = '#0c0814'; ctx.fillRect(PX + 7, 119, PW - 14, 7); ctx.fillStyle = k > 0.3 ? '#78e070' : '#f86858'; ctx.fillRect(PX + 8, 120, Math.round((PW - 16) * k), 5);
+          } else {
+            FT2.draw(ctx, 'SHAKE', PX + 7, 108, '#c8c0d8', sh);
+            ctx.fillStyle = '#0c0814'; ctx.fillRect(PX + 7, 119, PW - 14, 7); ctx.fillStyle = '#f8d850'; ctx.fillRect(PX + 8, 120, Math.round((PW - 16) * Math.min(1, this.shook / this.need)), 5);
+          }
+        }
+        const hint = this.msg || (this.step === 'dig' ? 'Hold Z to dig. Let go to scoop. Not too deep!' : this.step === 'shake' ? 'Tap ← → ← → to shake out the sand.' : 'Arrows: move.  Z: pick it up.  X: dump the rest.');
+        FT2.draw(ctx, hint, 120 - Math.round(FT2.width(hint) / 2), 145, this.msg ? '#f8d850' : '#f8f8f0', sh);
+      },
+    };
+  }
+  HOW_TO.sift = ['Scoop the gravel: HOLD Z to dig, and let go. Deeper finds more and rarer fossils, but it takes more shaking, and if you dig past the red line it spills.', 'Shake out the sand: tap ← → ← →.', 'Pick the fossils out of the gravel: arrows to move your fingers, Z to grab. Watch for a glint. Grabbing a plain pebble tires out your arms.', 'Each gravel bed holds different fossils. New ones go in the {y}Tooth Book{/}, in COLLECTABLES.'];
+  function* siftReport(r) {
+    const B = G.fossilBook(), f = flags(), s = G.state;
+    let coins = 0;
+    for (const id of r.got) {
+      const k = G.FOSSILS.find((x) => x.id === id), isNew = !B[id];
+      B[id] = (B[id] || 0) + 1;
+      coins += k.coin;
+      if (isNew) {
+        G.audio.sfx('fanfare');
+        yield G.itemGet(G.spr.fossils[id], 'NEW! {y}' + k.name + '{/} (' + G.FOSSIL_RARITY[k.r] + ')');
+        yield G.say(null, k.line);
+      }
+    }
+    if (coins) { G.play.addTeeth(coins); yield G.say(null, 'That scoop is worth {y}' + G.sayable(coins) + ' shark teeth{/}.'); }
+    else if (!r.junk.length) yield G.say(null, 'Nothing in that scoop but pebbles.');
+    for (const id of r.junk) yield G.say(null, JUNK_FINDS[id]);
+    if (G.fossilsFound() >= G.FOSSILS.length && !f.toothBookDone) {
+      f.toothBookDone = true;
+      G.audio.sfx('fanfare');
+      yield G.banner('TOOTH BOOK COMPLETE', 'every fossil in the Number One Ditch', 170);
+      s.maxHp += 2; s.hp = s.maxHp;
+      yield G.itemGet(G.spr.heartBig, 'You got a {r}Heart Container{/}! Max hearts +1.');
+    }
+    G.play.autosave();
+  }
+  function* siftAt(i, direct) {
+    const f = flags();
+    if (!direct) { const c = yield G.ask(null, SIFT_SPOTS[i].text, ['Sift it', 'Leave it']); if (c) return; }
+    for (;;) {
+      if (!f.siftHow) { f.siftHow = true; yield howToCmd('SIFTING', HOW_TO.sift); }
+      const r = yield siftCmd(i);
+      G.play.overlay = null;
+      if (r === 'quit') return;
+      yield* siftReport(r);
+      f.siftScoops = (f.siftScoops || 0) + 1;
+      if (!f.tylerDitch) { yield* S.tylerDitch(); return; }
+      const c = yield G.ask(null, 'Another scoop?', ['Sift again', 'That\'s enough']);
+      if (c !== 0) return;
+    }
+  }
+
+  // ================================================================ THE DITCH BY DAY
+  // The finale's map in the morning: no snow, no lights, no throne, and gravel to sift. Before the
+  // family photo, everybody's posing on the ditch floor with a gap for Nate.
+  G.MAPS.ditchDay = {
+    name: 'The Number One Ditch',
+    get music() { return flags().photoDone ? 'ditchDay' : 'title'; },
+    water(x, y) { return G.MAPS.ditchFinal.water(x, y); },
+    tiles() { return G.MAPS.ditchFinal.tiles(); },
+    get noFollower() { return !flags().photoDone; },
+    setup(w) {
+      const sp = G.spr, f = flags();
+      w.props.push({
+        img: null, x: 0, y: 0, flat: true, base: 0,
+        draw(ctx, cx, cy) {
+          for (let y = 4 * 16; y < 18 * 16; y += 2) {
+            const x = MID + Math.sin(y * 0.05) * 10 + Math.sin(y * 0.13) * 4;
+            ctx.fillStyle = '#4a88b8'; ctx.fillRect(Math.round(x - 6) - cx, y - cy, 12, 2);
+            ctx.fillStyle = (y + (G.tick >> 2)) % 16 < 2 ? '#c8e8f8' : '#6aa8d0'; ctx.fillRect(Math.round(x - 4) - cx, y - cy, 8, 1);
+          }
+        },
+      });
+      w.addProp({ img: sp.culvert, tx: 5, ty: 2, h: 2, dx: -4, dy: 0 });
+      for (const [x, y] of [[0, 4], [14, 4], [0, 17], [14, 17], [4, 18], [10, 18]]) w.addProp({ img: sp.cattails, tx: x, ty: y, dx: 1 });
+      w.addProp({ img: sp.ditchSign, tx: 2, ty: 18, h: 1, dx: 0, dy: -4, talk: look('The sign: No.1 DITCH. Still standing.'), hit: [2, 18, 3, 1] });
+      w.addProp({ img: sp.eggCartons, tx: 7, ty: 5, dy: 4, flat: true, talk: look('What\'s left of the throne: a pile of soggy egg cartons. Somebody will come for them. Probably Dad.'), hit: [7, 5, 2, 1] });
+      // the gravel beds (the last one waits for Tyler)
+      SIFT_SPOTS.forEach((sq, i) => {
+        if (i === 4 && !f.tylerDitch) return;
+        const x = Math.round(sq.x * 16), y = Math.round(sq.y * 16), img = sp.gravelSpots[i];
+        w.props.push({ img: null, x: 0, y: 0, flat: true, base: 0, sift: true, hit: [x, y, x + 40, y + 26], talk: (direct) => siftAt(i, direct),
+          draw(ctx, cx, cy) {
+            ctx.drawImage(img, x - cx, y - cy);
+            if ((G.tick + i * 37) % 130 < 8) { ctx.fillStyle = '#ffffff'; const gx = x + 8 + (i * 7) % 24, gy = y + 6 + (i * 5) % 14; ctx.fillRect(gx - cx, gy - 1 - cy, 1, 3); ctx.fillRect(gx - 1 - cx, gy - cy, 3, 1); }
+          } });
+      });
+      if (f.toothKept) w.addProp({ img: sp.numberTwoDitch, tx: 9, ty: 12, h: 2, dx: 4, flat: true });
+      if (f.tylerDitch) w.tyler = w.add(new G.NPC({ sprite: 'tyler', name: 'Tyler', x: 11.5 * 16, y: 12 * 16, dir: 'left', talk: S.tylerTalk }));
+      if (!f.photoDone) {
+        // everybody lined up, with a gap in the middle for Nate, and an arrow over the gap
+        const pose = w.pose = {};
+        for (const id of Object.keys(POSE_X)) pose[id] = finNew(w, id, { x: POSE_X[id] * 16, y: POSE_Y, dir: 'down', talk: S.poseTalk(id) });
+        pose.romulus = finNew(w, 'romulus', { x: 8.7 * 16, y: POSE_Y + 22, dir: 'left', talk: S.poseTalk('romulus') });
+        w.props.push({ img: null, x: 0, y: 0, base: 9999, draw(ctx, cx, cy) { if (!flags().photoDone && !G.script.busy) G.font.draw(ctx, '↓', MID - 3 - cx, POSE_Y - 40 + ((G.tick >> 4) & 1) - cy, '#f8d850', { shadow: '#000' }); } });
+        w.addTrigger(7, 7, 2, 2, () => { if (!flags().photoDone) G.script.run(S.photoTake()); });
+        w.addTrigger(6, 18, 3, 1, () => G.script.run((function* () { yield G.say('Michelle', 'Nate! PICTURE!'); const p = P(); yield G.walkTo(p, p.x, p.y - 16, 1.4); })()));
+      } else w.addProp({ img: sp.condoCars.jeep, tx: 10, ty: 19, h: 2, dy: -3, solid: [10, 19, 3, 2], hit: [10, 19, 3, 2], talk: S.ditchCar });
+      w.addTrigger(0, 19, 1, 2, () => G.script.run((function* () { const p = P(); yield G.say('Nate', 'It\'s a long walk from here. The Jeep\'s right there.'); yield G.walkTo(p, p.x + 16, p.y, 1.4); })()));
+      w.addTrigger(14, 19, 1, 2, () => G.script.run((function* () { const p = P(); yield G.say('Nate', 'It\'s a long walk from here. The Jeep\'s right there.'); yield G.walkTo(p, p.x - 16, p.y, 1.4); })()));
+      // the morning: a warm wash over everything until the photo's done
+      w.props.push({ img: null, x: 0, y: 0, base: 99990, draw(ctx) { if (flags().photoDone) return; ctx.save(); ctx.globalAlpha = 0.16; ctx.fillStyle = '#f8a868'; ctx.fillRect(0, 0, G.W, G.H); ctx.restore(); } });
+    },
+    onEnter() {
+      return (function* () {
+        const f = flags();
+        // (closed the game partway through: pick the morning back up)
+        if (f.photoDone && !f.dayIntro) yield* S.dayAfter();
+      })();
+    },
+  };
+  S.ditchCar = function* () {
+    const c = yield G.ask('Nate', 'Abe left the Jeep for me. Back to the condo? (Or open the MAP and pick anywhere.)', ['Back to the condo', 'Stay']);
+    if (c !== 0) return;
+    G.audio.sfx('door');
+    G.play.warp('condo', 35, 16, 'left', true);
+  };
+
+  // ---- Tyler and the mosasaur tooth
+  // He ran for the Ditch after the bridge-tunnel, and he turns up the first time Nate sifts it.
+  // Flags: tylerDitch, toothGiven (he got it back), toothKept (he dug his own ditch).
+  S.tylerDitch = function* () {
+    const f = flags(), s = G.state, w = G.play.world, p = P();
+    if (f.tylerDitch) return;
+    f.tylerDitch = true;
+    yield G.wait(30);
+    yield G.say(null, 'Somebody is coming down the road. Fast.');
+    const t = w.tyler = w.add(new G.NPC({ sprite: 'tyler', name: 'Tyler', x: 7.5 * 16, y: 20 * 16, dir: 'up', talk: S.tylerTalk }));
+    G.audio.sfx('dash');
+    yield G.say('Tyler', 'THE...');
+    yield G.walkTo(t, 7.5 * 16, 16 * 16, 3.2);
+    yield G.say('Tyler', 'MOSASAUR...');
+    yield G.walkTo(t, p.x + 26, p.y + 2, 3.2);
+    t.dir = 'left'; p.dir = 'right';
+    yield G.bigText('TOOTH!!!', 70, '#ff6a5a');
+    yield G.say('Nate', 'Tyler? How did you even know?');
+    yield G.say('Tyler', 'I can SMELL it. You FOUND it. It\'s in your POCKET.');
+    yield G.say(null, 'Nate takes out the tooth. Five inches. Tyler stops breathing.');
+    yield G.say('Nate', 'What was it doing here? Mosasaurs are Cretaceous. This gravel is way too young for that.');
+    yield G.say('Tyler', '...');
+    yield G.say('Tyler', 'I dropped it.');
+    yield G.say('Tyler', 'Right here. Years ago. I told everybody it was stolen, because that was better than saying I dropped it.');
+    yield G.say('Tyler', 'And then that egg told me YOU had it, and I yelled at people in a tunnel for a very long time.');
+    yield G.say('Tyler', 'And now you HAVE it.');
+    yield G.say('Tyler', 'Nate. That was the best fossil I ever found.');
+    yield G.say('Tyler', 'Can I have it back?');
+    const c = yield G.ask('Nate', 'Give Tyler the mosasaur tooth?', ['Give it back', 'Finders keepers']);
+    if (c === 0) {
+      f.toothGiven = true;
+      s.items.mosasaurTooth = false;
+      yield G.say(null, 'Nate puts it in Tyler\'s hand. He holds it with both of his, and for a long time he doesn\'t say anything.');
+      yield G.say('Tyler', 'the mosasaur tooth.');
+      yield G.say('Tyler', '...Nate. I\'ve been sifting this ditch since I was nine. There\'s a spot. Down by the south end, on the east bank.');
+      yield G.say('Tyler', 'I never told anybody about it. It\'s yours now.');
+    } else {
+      f.toothKept = true;
+      yield G.say('Nate', 'You told a whole family I stole it.');
+      yield G.say('Tyler', '...');
+      yield G.say('Tyler', 'Fine.');
+      yield G.say('Tyler', 'FINE. I don\'t need this ditch. I\'ll dig my OWN ditch. A BETTER one. RIGHT HERE.');
+      G.audio.sfx('slip');
+      yield G.fadeOut(30);
+      yield G.wait(50);
+      w.props.push({ img: G.spr.numberTwoDitch, x: 9 * 16 + 4, y: 12 * 16, flat: true, base: 0 });
+      yield G.fadeIn(30);
+      yield G.say(null, 'Some time later, there is a hole in the bank, and a cardboard sign.');
+      yield G.say('Nate', 'Tyler. You know what you just made, right?');
+      yield G.say('Tyler', 'Don\'t.');
+      yield G.say('Nate', 'That\'s the Number Two Ditch.');
+      yield G.say('Tyler', 'I SAID DON\'T.');
+      yield G.say('Tyler', '...There\'s good gravel down in it, though. I hate that. Go ahead. You\'re going to anyway.');
+    }
+    // the fifth bed opens up
+    const sq = SIFT_SPOTS[4], x = Math.round(sq.x * 16), y = Math.round(sq.y * 16), img = G.spr.gravelSpots[4];
+    w.props.push({ img: null, x: 0, y: 0, flat: true, base: 0, sift: true, hit: [x, y, x + 40, y + 26], talk: (direct) => siftAt(4, direct), draw(ctx, cx, cy) { ctx.drawImage(img, x - cx, y - cy); } });
+    yield G.walkTo(t, 11.5 * 16, 12 * 16, 1.6);
+    t.dir = 'left';
+    G.play.autosave();
+  };
+  S.tylerTalk = function* () {
+    const f = flags(), n = G.fossilsFound();
+    if (n >= G.FOSSILS.length && !f.tylerAll) {
+      f.tylerAll = true;
+      yield G.say('Tyler', 'All fifteen? In THIS ditch? I have been looking for a false mako for eleven years.');
+      yield G.say('Tyler', '...Nice sifting.');
+      return;
+    }
+    f.tylerLine = ((f.tylerLine || 0) + 1) % 3;
+    const lines = f.toothGiven
+      ? ['the mosasaur tooth.', 'Dig deep at my spot. Past the point where it feels like a bad idea.', 'Don\'t tell Doron I cried.']
+      : ['THE MOSASAUR TOOTH.', 'This ditch is going to be better than your ditch. Give it a few years.', 'Dig deep at my spot. I mean, I HATE you. But dig deep.'];
+    yield G.say('Tyler', lines[f.tylerLine]);
+  };
+
+  // ================================================================ DRIVING ANYWHERE
+  // Once the game is finished, the MAP tab drives Nate to any place he's been: Z on a place.
+  G.TRAVEL = { laf: ['campus', 20, 24, 'down'], fair: ['fair', 20, 20, 'down'], home: ['home', 30, 41, 'up'], andover: ['andover', 27, 15, 'left'], bay: ['cbbtToll', 17, 13, 'left'], ches: ['condo', 35, 16, 'left'], chkd: ['chkd', 16, 21, 'up'], ditch: ['ditchDay', 7, 17, 'up'] };
+  G.canTravel = (id) => {
+    const f = flags(), s = G.state;
+    if (!f.fin_done || !f.dayIntro || !G.TRAVEL[id] || s.playAs || s.night || G.play.bossFight() || G.script.busy) return false;
+    return G.TRAVEL[id][0] !== G.play.world.id;
+  };
+  S.fastTravel = function* (id) {
+    const [map, x, y, dir] = G.TRAVEL[id];
+    G.audio.sfx('door');
+    G.play.warp(map, x, y, dir, true);
+  };
+
+  // ================================================================ NATE'S BASS
+  // Pass every song on Abe's setlist, and Abe points out the one instrument Nate has never played.
+  // Strings from the Paul McCartney Lady, the finish with Dad at his bench, and finally the one thing
+  // nobody has ever said to Abe: can I have a yellow cable? Then the BASS page opens on the setlist,
+  // Nate on bass and Abe (for once) on guitar, and the bass goes to Studio B.
+  // Flags: bassQuest (1 go see the Lady, 2 go see Dad, 3 go see Abe, 4 done), bassDone.
+  G.jamAllPassed = () => { const J = G.state.jams || {}; return G.JAM_SONGS.filter((sg) => !sg.elec).every((sg) => J[sg.id]); };
+  S.bassNews = function* () {
+    const f = flags();
+    if (f.bassQuest || !G.jamAllPassed()) return;
+    f.bassQuest = 1;
+    G.play.overlay = null;
+    yield G.say('Abe', 'Nate. That\'s all of them. Every song on every page.');
+    yield G.say('Abe', 'My guitars. My drums. My horns. A cowbell. A KAZOO.');
+    yield G.say('Abe', 'There\'s only one instrument left that you\'ve never played.');
+    yield G.say('Nate', 'Which one?');
+    yield G.say('Abe', 'The one you built.');
+    yield G.say('Nate', '...It\'s half finished.');
+    yield G.say('Abe', 'Then finish it. Start with strings. I gave my last set away with my bass.');
+    yield G.say('Nate', 'To the Paul McCartney Lady.');
+    yield G.say('Abe', 'She keeps boxes of them under the booth at El Toro Loco. Go see her.');
+    G.play.autosave();
+  };
+  S.ladyStrings = function* () {
+    const f = flags(), s = G.state, L = 'Paul McCartney Lady';
+    yield G.say('Nate', 'Abe says you have bass strings.');
+    if (!s.items.bass) {
+      yield G.say(L, 'I do, honey. Where\'s the bass?');
+      yield G.say('Nate', 'On Dad\'s workbench. In New Jersey.');
+      yield G.say(L, 'Well, I don\'t string rumors.');
+      return;
+    }
+    yield G.say(L, 'Is that the half a bass?');
+    yield G.say('Nate', 'It\'s half finished.');
+    yield G.say(L, 'Give her here, honey.');
+    G.audio.sfx('blip');
+    yield G.say(null, 'She has all four strings on before Nate can sit down. Then she hands it back.');
+    yield G.say('Nate', '...You put them on upside down.');
+    yield G.say(L, 'I\'m left-handed, honey.');
+    yield G.fadeOut(24);
+    yield G.wait(40);
+    yield G.fadeIn(24);
+    yield G.say(null, 'Twenty minutes later, Nate has them back the right way around.');
+    yield G.say(L, 'There. Now it\'s three quarters of a bass.');
+    yield G.say(L, 'That wood\'s thirsty, though, and those pickup holes are just holes. Who taught you to work wood?');
+    yield G.say('Nate', 'Dad.');
+    yield G.say(L, 'Then go see Dad, honey.');
+    f.bassQuest = 2;
+    G.play.autosave();
+  };
+  // rubbing the oil in, at Dad's bench: hold Z and go over all the wood
+  function bassOilCmd(talk) {
+    const CS = 4, K = 2, X0 = 48, Y0 = 54, R = 11;
+    // (it lies on its side on the bench, headstock to the left)
+    const turn = (src) => { const c = G.canvas(src.height * K, src.width * K), x = c.getContext('2d'); x.imageSmoothingEnabled = false; x.translate(0, c.height); x.rotate(-Math.PI / 2); x.scale(K, K); x.drawImage(src, 0, 0); return c; };
+    const rawB = turn(G.spr.natesBass), doneB = turn(G.spr.natesBassDone), W = rawB.width, H = rawB.height, cols = Math.ceil(W / CS), rows = Math.ceil(H / CS);
+    const px = rawB.getContext('2d').getImageData(0, 0, W, H).data, wood = [], coat = new Float32Array(cols * rows);
+    let count = 0;
+    for (let cy = 0; cy < rows; cy++) for (let cx = 0; cx < cols; cx++) {
+      const on = px[(Math.min(H - 1, cy * CS + 2) * W + Math.min(W - 1, cx * CS + 2)) * 4 + 3] > 0;
+      wood.push(on); if (on) count++;
+    }
+    return {
+      start() { Object.assign(this, { t: 0, bx: W / 2, by: H / 2, endT: 0, zReady: false }); talk.nowT = 0; G.play.overlay = this; },
+      covered() { let k = 0; for (let i = 0; i < coat.length; i++) if (wood[i] && coat[i] >= 1) k++; return k / count; },
+      update() {
+        const inp = G.input;
+        this.t++; talk.update();
+        if (this.endT > 0) { if (--this.endT === 0) return true; return false; }
+        const sp = 1.8;
+        if (inp.down('left')) this.bx -= sp;
+        if (inp.down('right')) this.bx += sp;
+        if (inp.down('up')) this.by -= sp;
+        if (inp.down('down')) this.by += sp;
+        this.bx = G.clamp(this.bx, 0, W - 1); this.by = G.clamp(this.by, 0, H - 1);
+        if (zHeld(this)) {
+          for (let cy = Math.floor((this.by - R) / CS); cy <= Math.floor((this.by + R) / CS); cy++) for (let cx = Math.floor((this.bx - R) / CS); cx <= Math.floor((this.bx + R) / CS); cx++) {
+            if (cx < 0 || cy < 0 || cx >= cols || cy >= rows || Math.hypot(cx * CS + 2 - this.bx, cy * CS + 2 - this.by) > R) continue;
+            coat[cy * cols + cx] = Math.min(1.2, coat[cy * cols + cx] + 0.09);
+          }
+          if (this.t % 16 === 0) G.audio.sfx('spray');
+        }
+        if (this.t % 10 === 0 && this.covered() >= 0.96) { this.endT = 60; G.audio.sfx('secret'); talk.say('There she is. Look at that grain.'); }
+        return false;
+      },
+      draw(ctx) {
+        benchBack(ctx, 'THE FINISH', 'Nate\'s bass');
+        ctx.fillStyle = '#4a3424'; ctx.fillRect(X0 - 12, Y0 - 8, W + 24, H + 16); ctx.fillStyle = '#5a4230'; ctx.fillRect(X0 - 12, Y0 - 8, W + 24, 2);
+        ctx.drawImage(rawB, X0, Y0);
+        for (let cy = 0; cy < rows; cy++) for (let cx = 0; cx < cols; cx++) {
+          const i = cy * cols + cx; if (!wood[i] || coat[i] <= 0) continue;
+          ctx.globalAlpha = Math.min(1, coat[i]); ctx.drawImage(doneB, cx * CS, cy * CS, CS, CS, X0 + cx * CS, Y0 + cy * CS, CS, CS); ctx.globalAlpha = 1;
+        }
+        const bx = X0 + Math.round(this.bx), by = Y0 + Math.round(this.by);
+        ctx.strokeStyle = this.zReady && G.input.down('a') ? '#f8d850' : '#f8f8f0'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(bx + 0.5, by + 0.5, R, 0, Math.PI * 2); ctx.stroke();
+        const k = this.covered();
+        FT().draw(ctx, 'OILED', 40, 22, '#c8c0d8', { shadow: '#000' });
+        ctx.fillStyle = '#0c0814'; ctx.fillRect(76, 23, 120, 7); ctx.fillStyle = '#78e070'; ctx.fillRect(77, 24, Math.round(118 * Math.min(1, k / 0.96)), 5);
+        FT().draw(ctx, 'Arrows: move   Hold Z: oil', 120 - Math.round(FT().width('Arrows: move   Hold Z: oil') / 2), 34, '#9890a8', { shadow: '#000' });
+        talk.draw(ctx);
+      },
+    };
+  }
+  S.bassFinish = function* () {
+    const f = flags();
+    yield G.say('Nate', 'Dad? Can you help me finish my bass?');
+    yield G.say('Dad', '...Son. I have been waiting for you to say that since you were in high school.');
+    yield G.say(null, 'Dad clears off the bench without saying another word. He\'s had the oil on the shelf this whole time.');
+    yield G.say('Dad', 'Danish oil. Rub it in, every inch, the way we do a pipe. The walnut will tell you when it\'s had enough.');
+    yield bassOilCmd(dadTalk(['Long strokes. With the grain.', 'Walnut drinks it right up. Look at it go.', 'You did good work on this, you know. You just stopped.', 'Get the horns. Everybody forgets the horns.']));
+    G.play.overlay = null;
+    yield G.say(null, 'Dad holds the iron while Nate wires in the pickups. It takes the rest of the afternoon. Neither of them is in any hurry.');
+    yield G.say('Dad', 'A good finish is like a good sermon. It takes patience, and you know when it\'s over.');
+    yield G.say('Nate', 'It\'s beautiful, Dad.');
+    yield G.say('Dad', 'It is. Now go plug it in. And Nate? Tell Abe I said take it easy.');
+    f.bassQuest = 3;
+    G.play.autosave();
+  };
+  S.bassCable = function* () {
+    const f = flags();
+    yield G.say('Nate', 'It\'s done. Strings, finish, pickups. It just needs one more thing.');
+    yield G.say('Abe', 'What thing?');
+    yield G.say('Nate', 'A cable.');
+    yield G.say('Abe', '...');
+    yield G.say('Nate', 'Abe? Can I have a yellow cable?');
+    yield G.wait(60);
+    yield G.say(null, 'Abe doesn\'t move. His eyes fill up.');
+    yield G.say('Abe', 'Say that again.');
+    yield G.say('Nate', 'Can I have one of your yellow cables?');
+    yield G.bigText('HANNAH!!! HE WANTS ONE!!!', 90, '#f8d850');
+    yield G.say('Hannah', '(from downstairs) That\'s great, honey.');
+    yield G.say('Abe', 'Take two. Take ten. Take the box. Take the storage room.');
+    yield G.say('Nate', 'I just need the one.');
+    yield G.itemGet(G.spr.cableIcon, 'You got a {y}Yellow Guitar Cable{/}! Abe is wiping his eyes.');
+    yield G.say(null, 'Nate plugs in. He turns the amp up. He plucks the low E.');
+    G.audio.inst.ebass(28, 3.2, 0.5);
+    G.play.shake(60, 1);
+    yield G.wait(150);
+    yield G.say(null, 'Something in the kitchen falls off a shelf.');
+    yield G.say('Hannah', 'WHAT WAS THAT?');
+    yield G.say(null, 'Downstairs, Romulus starts to howl.');
+    yield G.say('Abe', 'That, my friend, is a whole bass.');
+    f.bassDone = true; f.bassQuest = 4;
+    delete guitarSmallC.bass;
+    if (G.instrumentPage.forget) G.instrumentPage.forget('bass');
+    G.audio.sfx('fanfare');
+    yield G.itemGet(G.spr.natesBassDone, 'You finished {y}Nate\'s Bass{/}! It\'s with the instruments in {y}COLLECTABLES{/}.');
+    yield G.say('Abe', 'New page on the setlist: BASS. You\'re on bass. I\'ll play guitar.');
+    yield G.say('Nate', 'You\'ll PLAY? You never play. You just dance.');
+    yield G.say('Abe', 'Don\'t get used to it. And it\'ll be in the studio too. Rae\'s already clearing a spot.');
+    G.play.autosave();
+  };
+
+  // ---- music: the title tune in a minor key, marching; a sunny one for the Ditch; and the credits
+  G.SONGS.lastRoad = {
+    bpm: 76,
+    tracks: [
+      { wave: 'square', vol: 0.05, notes: 'G4:4 C5:4 D#5:6 D5:2 | C5:4 G#4:4 G4:8 | G#4:4 C5:4 F5:6 D#5:2 | D5:12 R:4 | G4:4 C5:4 D#5:6 G5:2 | G#5:4 G5:4 D#5:8 | F5:4 D#5:4 D5:4 B4:4 | C5:12 R:4' },
+      { wave: 'triangle', vol: 0.17, notes: 'C3:8 G2:8 | G#2:8 D#2:8 | F2:8 C3:8 | G2:8 G2:8 | C3:8 D#3:8 | F3:8 C3:8 | D3:8 G2:8 | C3:8 C3:8' },
+      { wave: 'noise', vol: 0.02, notes: 'h:4 h:2 h:2 h:4 h:4 | h:4 h:2 h:2 h:4 h:4 | h:4 h:2 h:2 h:4 h:4 | h:4 h:2 h:2 h:4 h:4 | h:4 h:2 h:2 h:4 h:4 | h:4 h:2 h:2 h:4 h:4 | h:4 h:2 h:2 h:4 h:4 | h:4 h:2 h:2 h:4 h:4' },
+    ],
+  };
+  G.SONGS.ditchDay = {
+    bpm: 104,
+    tracks: [
+      { wave: 'square', vol: 0.045, notes: 'E5:2 G5:2 C5:4 D5:2 E5:2 G4:4 | A4:2 C5:2 F5:4 E5:2 D5:2 C5:4 | B4:2 D5:2 G5:4 F5:2 E5:2 D5:4 | E5:2 C5:2 D5:2 B4:2 C5:8 | C5:2 E5:2 A5:4 G5:2 E5:2 C5:4 | D5:2 F5:2 B5:4 A5:2 F5:2 D5:4 | E5:2 G5:2 C6:4 B5:2 G5:2 E5:4 | D5:2 E5:2 D5:2 B4:2 C5:8' },
+      { wave: 'triangle', vol: 0.14, notes: 'C3:4 G3:4 C3:4 G3:4 | F2:4 C3:4 F2:4 C3:4 | G2:4 D3:4 G2:4 D3:4 | C3:4 G2:4 C3:8 | A2:4 E3:4 A2:4 E3:4 | D3:4 A3:4 D3:4 A3:4 | C3:4 G3:4 C3:4 G3:4 | G2:4 D3:4 C3:8' },
+    ],
+  };
+  G.SONGS.credits = {
+    bpm: 96,
+    tracks: [
+      { wave: 'square', vol: 0.06, notes: 'G4:4 C5:4 E5:6 D5:2 | C5:4 A4:4 G4:8 | A4:4 C5:4 F5:6 E5:2 | D5:12 R:4 | G4:4 C5:4 E5:6 G5:2 | A5:4 G5:4 E5:8 | F5:4 E5:4 D5:4 B4:4 | C5:12 R:4 | E5:4 F5:4 G5:6 E5:2 | F5:4 E5:4 D5:8 | C5:4 D5:4 E5:6 C5:2 | D5:12 R:4 | E5:4 F5:4 G5:6 A5:2 | G5:4 F5:4 E5:8 | D5:4 E5:4 F5:4 D5:4 | C5:12 R:4' },
+      { wave: 'triangle', vol: 0.16, notes: 'C3:8 G2:8 | A2:8 E2:8 | F2:8 C3:8 | G2:8 G2:8 | C3:8 E3:8 | F3:8 C3:8 | D3:8 G2:8 | C3:8 C3:8 | C3:8 E3:8 | F3:8 G2:8 | A2:8 E2:8 | G2:8 G2:8 | C3:8 E3:8 | F3:8 C3:8 | G2:8 G2:8 | C3:8 C3:8' },
+      { wave: 'square', vol: 0.025, notes: 'E4:8 D4:8 | C4:8 B3:8 | C4:8 A3:8 | B3:8 D4:8 | E4:8 G4:8 | F4:8 E4:8 | D4:8 B3:8 | E4:8 E4:8 | G4:8 G4:8 | A4:8 B3:8 | C4:8 B3:8 | B3:8 D4:8 | G4:8 G4:8 | A4:8 G4:8 | B3:8 D4:8 | E4:8 E4:8' },
+    ],
+  };
+
 })();

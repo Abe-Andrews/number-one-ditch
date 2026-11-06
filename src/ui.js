@@ -260,8 +260,10 @@
     { id: 'pipes', name: 'Dad\'s Pipes', icon: 'pipe', count: () => [G.pipesMadeCount(), G.PIPES.length], blurb: 'Pipes you turned on Dad\'s lathe and finished with him in the workshop. Pick one and Dad\'s Pipe looks just like it.' },
     { id: 'tins', name: 'Tobacco', icon: 'tin', count: () => [G.tinsMadeCount(), G.TOBACCOS.length], blurb: 'The tobaccos from Dad\'s pipe journal, blended with him in the workshop. Pack one in Dad\'s Pipe and the smoke comes out its color.' },
     { id: 'fish', name: 'Matt\'s Survey', icon: 'fish', count: () => [G.fishCaughtKinds(), G.FISH_ORDER.length], blurb: 'Every kind of fish Nate has caught for Matt Oliver\'s survey out on the bay, and the biggest one of each.' },
+    { id: 'teeth', name: 'Tooth Book', icon: 'tooth', when: () => G.state.flags.fin_done, count: () => [G.fossilsFound(), G.FOSSILS.length], blurb: 'Everything Nate has sifted out of the Number One Ditch. Every kind is a real fossil from the old sea floor under Chesapeake.' },
     { id: 'instruments', name: 'Instruments', icon: 'guitar', count: () => [G.instrumentsCount(), G.INSTRUMENTS.length], blurb: 'Nate\'s instruments: the ones he builds, and the ones he earns jamming with Abe. More to come.' },
   ];
+  const colls = () => COLLECTIONS.filter((c) => !c.when || c.when());
   // the pipes page also has the one Dad gave Nate, first
   const benchList = (coll) => (coll === 'pipes' ? [{ id: 'dad', dad: true, name: 'Dad\'s Pipe', kind: 'The one Dad gave you. Hand-carved in his workshop.' }].concat(G.PIPES) : G.TOBACCOS);
   const SEL = { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' };
@@ -280,6 +282,7 @@
     items: ['kkkkkkkk.', 'kgggggGk.', 'kgwwgggk.', 'kkkkbkkk.', '....b....', '....b....', '....b....', '...kbk...', '....k....'],
     keys: ['..kkk....', '.kyyyk...', '.ky.yk...', '.kyyyk...', '..kyk....', '...ykk...', '...yyk...', '...ykk...', '...yyk...'],
     people: ['..kkkkk..', '.khhhhhk.', '.hhssshh.', '.skssksk.', '.sssssss.', '..sskss..', '..sssss..', '.nnnnnnn.', 'nnnnnnnnn'],
+    tooth: ['....k....', '...kwk...', '...kwk...', '..kwwgk..', '..kwwgk..', '.kwwwggk.', '.kwwwggk.', '.kbbbbbk.', '.kk...kk.'],
     rocks: ['...kkk...', '..kcwck..', '.kcwccck.', 'kccccccCk', 'kCcccccCk', '.kCcccCk.', '..kCcCk..', '...kCk...', '....k....'],
     save: ['kkkkkkkkk', 'kuwwwwwuk', 'kuwwwwwuk', 'kuuuuuuuk', 'kuugggguk', 'kuugkgguk', 'kuugggguk', 'kuuuuuuuk', 'kkkkkkkkk'],
     admin: ['.kk...kk.', 'kggk.kggk', 'kggkkkggk', '.kgggggk.', '..kgggk..', '...kgk...', '...kgk...', '...kgk...', '...kkk...'],
@@ -401,16 +404,18 @@
 
   // ---- the MAP page: where Nate has been, where he is, and where the quests are
   const PLACES = [
-    { id: 'laf', name: 'LAFAYETTE', x: 30, y: 36, icon: 'college', key: 'Lafayette',
+    { id: 'laf', name: 'LAFAYETTE', x: 30, y: 32, icon: 'college', key: 'Lafayette',
       maps: [['lab', 'Nate\'s Lab'], ['campus', 'The Quad'], ['science', 'Science Center'], ['geology', 'Van Wickle Hall'], ['pardee', 'Pardee Hall'], ['collegeHill', 'College Hill'], ['toms', 'Tom\'s Pizza']] },
-    { id: 'fair', name: 'EASTON FAIR', x: 98, y: 32, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
-    { id: 'home', name: 'HOME', x: 44, y: 72, icon: 'house', key: 'Home',
+    { id: 'fair', name: 'EASTON FAIR', x: 98, y: 30, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
+    { id: 'home', name: 'HOME', x: 40, y: 60, icon: 'house', key: 'Home',
       maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['north', 'The Frozen Pond']] },
-    { id: 'andover', name: 'ANDOVER', x: 112, y: 64, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
-    { id: 'bay', name: 'THE BAY', x: 74, y: 98, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel']] },
-    { id: 'ditch', name: 'THE DITCH', x: 118, y: 94, icon: 'trophy', key: '-', maps: [] },
+    { id: 'andover', name: 'ANDOVER', x: 110, y: 58, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
+    { id: 'bay', name: 'THE BAY', x: 72, y: 80, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel']] },
+    { id: 'ches', name: 'CHESAPEAKE', x: 33, y: 104, icon: 'house', key: 'Chesapeake', maps: [['condo', 'The Condo'], ['condoDown', 'Downstairs'], ['condoUp', 'Upstairs'], ['condoStorage', 'Storage'], ['golf', 'The Golf Course'], ['toroLoco', 'El Toro Loco']] },
+    { id: 'chkd', name: 'CHKD', x: 80, y: 106, icon: 'college', key: 'CHKD', maps: [['chkd', 'Outside'], ['chkdLobby', 'The Lobby'], ['chkdWard', 'The Ward'], ['chkdNicu', 'The NICU'], ['chkdRoof', 'The Roof']] },
+    { id: 'ditch', name: 'THE DITCH', x: 114, y: 96, icon: 'trophy', key: 'The Ditch', maps: [['ditchRoad', 'The Last Road'], ['ditchFinal', 'The Number One Ditch'], ['ditchDay', 'In the Morning']] },
   ];
-  const ROADS = [['laf', 'fair'], ['laf', 'home'], ['home', 'andover'], ['home', 'bay'], ['bay', 'ditch']];
+  const ROADS = [['laf', 'fair'], ['laf', 'home'], ['home', 'andover'], ['home', 'bay'], ['bay', 'ches'], ['ches', 'chkd'], ['ches', 'ditch']];
   const placeById = (id) => PLACES.find((p) => p.id === id);
   // somewhere Nate has been (older saves didn't keep track, so the story fills in)
   const SEEN_IF = {
@@ -424,7 +429,7 @@
   // can Nate get there yet?
   const placeOpen = (pl) => {
     const f = G.state.flags, s = G.state;
-    return { laf: true, fair: s.items.cap || f.doronChat, home: f.boulderGone, andover: s.items.andoverKey || f.andoverLocked, bay: f.mikeyBeaten, ditch: f.tylerBeaten }[pl.id] || placeVisited(pl);
+    return { laf: true, fair: s.items.cap || f.doronChat, home: f.boulderGone, andover: s.items.andoverKey || f.andoverLocked, bay: f.mikeyBeaten, ches: f.condoArrived, chkd: f.chkdArrived, ditch: f.finDrive || f.fin_done }[pl.id] || placeVisited(pl);
   };
   // which place Nate is standing in
   const placeOf = (mapId) => {
@@ -441,7 +446,9 @@
     if (!f.boulderGone) return 'laf';
     if (!f.mikeyBeaten) return 'home';
     if (!f.tylerBeaten) return 'bay';
-    return 'ditch';
+    if (!f.healerTalk) return 'ches';
+    if (!f.roofSeen) return 'chkd';
+    return f.finDrive || f.fin_done ? 'ditch' : 'ches';
   };
   // a round badge for a place on the map
   function badge(ctx, x, y, rim, fill) {
@@ -478,6 +485,7 @@
   // (the instruments grid: three to a row, four once there are more than twelve)
   const instCols = () => (G.INSTRUMENTS.length > 12 ? 4 : 3);
   const instPages = new Map();
+  // (Nate's bass changes when he finishes it)
   G.instrumentPage = (it) => {
     if (instPages.has(it.id)) return instPages.get(it.id);
     const c = G.canvas(G.W, G.H), x = c.getContext('2d'), img = it.art(), tw = G.W - 16;
@@ -505,6 +513,7 @@
     instPages.set(it.id, c);
     return c;
   };
+  G.instrumentPage.forget = (id) => instPages.delete(id);
   // a tiny framed version, for the "you got it" fanfare
   G.photoIcon = (ph) => {
     const c = G.canvas(12, 15), x = c.getContext('2d');
@@ -619,6 +628,9 @@
           if (best >= 0) { this.msel = best; G.audio.sfx('menu'); }
           else if (d === 'up') { this.onTabs = true; G.audio.sfx('menu'); }
         }
+        // (once the game is finished, Z drives Nate there)
+        const dest = PLACES[this.msel];
+        if (inp.hit('a') && placeOpen(dest) && G.canTravel(dest.id)) { inp.eat('a'); G.audio.sfx('select'); G.script.run(G.SCRIPTS.fastTravel(dest.id)); return true; }
       } else if (this.tab === ITEM_TAB || this.tab === KEY_TAB) {
         const col = this.sel % COLS, row = Math.floor(this.sel / COLS);
         if (inp.hit('left') && col > 0) this.move(-1, COLS * ROWS);
@@ -635,14 +647,14 @@
         } else if (inp.hit('a') || inp.hit('b')) { inp.eat('a'); inp.eat('b'); this.photoView = this.instView = null; this.strum = this.fill = null; G.audio.sfx('cancel'); }
       } else if (this.tab === COLL_TAB && this.coll && inp.hit('b')) {
         inp.eat('b');
-        this.sel = COLLECTIONS.findIndex((c) => c.id === this.coll);
+        this.sel = colls().findIndex((c) => c.id === this.coll);
         this.coll = null;
         G.audio.sfx('cancel');
       } else if (this.tab === COLL_TAB && !this.coll) {
         // the list of sections
-        if (inp.hit('down')) this.move(1, COLLECTIONS.length);
-        if (inp.hit('up')) { if (this.sel > 0) this.move(-1, COLLECTIONS.length); else { this.onTabs = true; G.audio.sfx('menu'); } }
-        if (inp.hit('a')) { inp.eat('a'); this.coll = COLLECTIONS[this.sel].id; this.sel = 0; G.audio.sfx('select'); }
+        if (inp.hit('down')) this.move(1, colls().length);
+        if (inp.hit('up')) { if (this.sel > 0) this.move(-1, colls().length); else { this.onTabs = true; G.audio.sfx('menu'); } }
+        if (inp.hit('a')) { inp.eat('a'); this.coll = colls()[this.sel].id; this.sel = 0; G.audio.sfx('select'); }
       } else if (this.tab === COLL_TAB && this.coll === 'photos') {
         const n = G.PHOTOS.length, col = this.sel % PCOLS, row = Math.floor(this.sel / PCOLS);
         if (inp.hit('left') && col > 0) this.move(-1, n);
@@ -654,8 +666,8 @@
           const ph = G.PHOTOS[this.sel];
           if (ph && G.photoHas(ph.id)) { this.photoView = ph; G.audio.sfx('select'); } else G.audio.sfx('bump');
         }
-      } else if (this.tab === COLL_TAB && this.coll === 'fish') {
-        const n = G.FISH_ORDER.length, col = this.sel % 4, row = Math.floor(this.sel / 4);
+      } else if (this.tab === COLL_TAB && (this.coll === 'fish' || this.coll === 'teeth')) {
+        const n = this.coll === 'fish' ? G.FISH_ORDER.length : G.FOSSILS.length, col = this.sel % 4, row = Math.floor(this.sel / 4);
         if (inp.hit('left') && col > 0) this.move(-1, n);
         if (inp.hit('right') && col < 3) this.move(1, n);
         if (inp.hit('down') && this.sel + 4 < n) this.move(4, n);
@@ -794,7 +806,7 @@
       }
       const admin = G.state.admin, act = {
         [QUEST_TAB]: QMODES[(this.qmode + 1) % QMODES.length] === 'ACTIVE' ? 'quests' : QMODES[(this.qmode + 1) % QMODES.length] === '100%' ? '100% list' : 'rules',
-        [MAP_TAB]: null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
+        [MAP_TAB]: placeOpen(PLACES[this.msel]) && G.canTravel(PLACES[this.msel].id) ? 'drive there' : null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
         [COLL_TAB]: this.instView && G.GUITARS.includes(this.instView) && G.guitarNow() !== this.instView ? 'play it' : this.photoView || this.instView ? 'put away' : !this.coll ? 'open' : this.coll === 'fish' ? null : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
         [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here',
       }[this.tab];
@@ -1028,7 +1040,7 @@
       let y = MY + 17;
       if (pl === here) { TXT(ctx, 'YOU ARE HERE', RX + 6, y, C.green); y += 10; }
       if (pl.id === 'ditch') {
-        const msg = open ? 'The Number One Ditch, in Chesapeake. Father Eggmas is waiting. (More story soon!)' : 'Somewhere far to the south...';
+        const msg = G.state.flags.fin_done ? 'The Number One Ditch, in Chesapeake. Still Number One.' : open ? 'The Number One Ditch, in Chesapeake. Father Eggmas is waiting.' : 'Somewhere far to the south...';
         F().wrap(msg, RW - 12).forEach((l) => { TXT(ctx, l, RX + 6, y, C.soft); y += 9; });
       } else if (!open) {
         F().wrap('Nate can\'t get here yet.', RW - 12).forEach((l) => { TXT(ctx, l, RX + 6, y, C.dim); y += 9; });
@@ -1159,6 +1171,7 @@
     drawCollect(ctx) {
       if (this.coll === 'rocks') this.drawRocks(ctx);
       else if (this.coll === 'photos') this.drawPhotos(ctx);
+      else if (this.coll === 'teeth') this.drawTeeth(ctx);
       else if (this.coll === 'pipes' || this.coll === 'tins') this.drawBench(ctx);
       else if (this.coll === 'instruments') this.drawInstruments(ctx);
       else if (this.coll === 'fish') this.drawFish(ctx);
@@ -1169,8 +1182,8 @@
     drawCollectList(ctx) {
       card(ctx, 5, 21, 112, 121, 'COLLECTABLES');
       // (the rows squeeze together as more kinds get added)
-      const gap = Math.min(26, Math.floor(103 / COLLECTIONS.length)), h = gap - 3;
-      COLLECTIONS.forEach((c, i) => {
+      const gap = Math.min(26, Math.floor(103 / colls().length)), h = gap - 3;
+      colls().forEach((c, i) => {
         const y = 37 + i * gap, sel = i === this.sel && !this.onTabs, [have, all] = c.count();
         G.box(ctx, 9, y, 104, h, sel ? SEL : { bg: '#1a1428', border: '#3e3460', inner: '#262038' });
         ctx.drawImage(icon(c.icon), 14, y + Math.round((h - 9) / 2));
@@ -1187,7 +1200,7 @@
         }
         if (sel) cursor(ctx, 3, y + Math.round(h / 2) - 3);
       });
-      const c = COLLECTIONS[this.sel];
+      const c = colls()[this.sel];
       card(ctx, 120, 21, 115, 121, c.name, C.cyan);
       F().wrap(c.blurb, 104).slice(0, 8).forEach((l, i) => TXT(ctx, l, 125, 40 + i * 9, C.soft));
     }
@@ -1275,6 +1288,37 @@
 
     // ---- PHOTOS: thumbnails on the left, the one you're on at the right
     // ---- MATT'S SURVEY: each kind of fish, how many, and the biggest
+    // ---- the TOOTH BOOK: fifteen fossils, four to a row
+    drawTeeth(ctx) {
+      const B = G.fossilBook(), S0 = G.spr.fossils;
+      card(ctx, 5, 21, 112, 121, 'TOOTH BOOK', C.gold, G.sayable(G.fossilsFound()) + '/' + G.sayable(G.FOSSILS.length));
+      G.FOSSILS.forEach((k, i) => {
+        const x = 10 + (i % 4) * 26, y = 39 + Math.floor(i / 4) * 24, sel = i === this.sel && !this.onTabs, got = !!B[k.id], im = S0[k.id];
+        slot(ctx, x, y, 24, 22, got ? (k.r >= 3 ? C.gold : C.cyan) : undefined);
+        if (got) ctx.drawImage(im, x + 12 - Math.floor(im.width / 2), y + 11 - Math.floor(im.height / 2));
+        else TXT(ctx, '?', x + 10, y + 7, C.faint);
+        if (sel) brackets(ctx, x - 1, y - 1, 26, 24);
+      });
+      const k = G.FOSSILS[this.sel];
+      card(ctx, 120, 21, 115, 121);
+      if (!k) return;
+      if (!B[k.id]) {
+        TXT(ctx, '???', 125, 27, C.cyan);
+        ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 40, 107, 1);
+        TXT(ctx, G.FOSSIL_RARITY[k.r], 125, 44, G.FOSSIL_COLOR[k.r]);
+        F().wrap('Not found yet. Keep sifting. Some gravel beds are better for this than others.', 104).slice(0, 6).forEach((l, i) => TXT(ctx, l, 125, 56 + i * 9, C.dim));
+        return;
+      }
+      slot(ctx, 124, 25, 24, 22, k.r >= 3 ? C.gold : C.cyan);
+      const im = S0[k.id];
+      ctx.drawImage(im, 136 - Math.floor(im.width / 2), 36 - Math.floor(im.height / 2));
+      F().wrap(k.name, 82).slice(0, 2).forEach((l, i) => TXT(ctx, l, 151, 26 + i * 9, C.cyan));
+      ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 50, 107, 1);
+      TXT(ctx, G.FOSSIL_RARITY[k.r], 125, 54, G.FOSSIL_COLOR[k.r]);
+      const n = 'x' + G.sayable(B[k.id]);
+      TXT(ctx, n, 231 - F().width(n), 54, C.gold);
+      F().wrap(k.line, 104).slice(0, 8).forEach((l, i) => TXT(ctx, l, 125, 66 + i * 9, C.soft));
+    }
     drawFish(ctx) {
       const log = G.fishLog(), have = (k) => !!log[k];
       card(ctx, 5, 21, 112, 121, 'MATT\'S SURVEY', C.gold, G.sayable(G.fishCaughtKinds()) + '/' + G.sayable(G.FISH_ORDER.length));
