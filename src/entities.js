@@ -1174,6 +1174,12 @@
       this.wt = 0;
     }
     hurtBox() { return [this.x - 7, this.y - 15, this.x + 7, this.y]; }
+    // Real animals (this.animal: their id in G.ANIMALS) trust Hannah: while she's following Nate
+    // they stop attacking, and Z says hello.
+    get friendly() { return !!this.animal && G.hannahHere(); }
+    get talk() { return this.ownTalk || (this.friendly ? () => G.SCRIPTS.animalMeet(this.animal) : null); }
+    set talk(fn) { this.ownTalk = fn; }
+    tame(w) { this.wander(w, 0.22); }
     update(w) {
       if (G.script.busy) return;
       this.t++;
@@ -1185,6 +1191,7 @@
       }
       if (this.calm > 0) { this.calm--; return; }
       const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      if (this.friendly) { if (dist < 110) G.SCRIPTS.animalTip(); this.tame(w, p, dist); return; }
       if (this.intro && dist < 90) G.SCRIPTS.critterIntro(this.intro);
       this.think(w, p, dx, dy, dist);
       if (this.touch !== false && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(this.dmg || 1, this.x, this.y);
@@ -1204,6 +1211,7 @@
     }
     chase(w, dx, dy, dist, sp) { this.vx = (dx / dist) * sp; this.vy = (dy / dist) * sp; this.step(w); }
     hit(dmg, sx, sy) {
+      if (this.friendly) { G.audio.sfx('no'); this.world.pop(this.x, this.y - 30, 'NATE!', '#c898ff'); return; }
       this.hp -= dmg;
       this.hurtT = 14;
       this.calm = 0;
@@ -3476,6 +3484,7 @@
     constructor(x, y) {
       super(x, y, 8);
       this.intro = 'bear';
+      this.animal = 'bear';
       this.heavy = true;
       this.bigShadow = true;
       this.dmg = 2;
@@ -3485,6 +3494,7 @@
       this.face = 'right';
     }
     hurtBox() { return [this.x - 13, this.y - 20, this.x + 13, this.y]; }
+    tame(w) { this.state = 'roam'; this.wander(w, 0.25); if (this.vx) this.face = this.vx < 0 ? 'left' : 'right'; }
     update(w) {
       if (this.fled) {
         if (G.script.busy) return;
@@ -3703,6 +3713,7 @@
     constructor(x, y) {
       super(x, y, 3);
       this.intro = 'goose';
+      this.animal = 'goose';
       this.touch = false;
       this.home = { x, y };
       this.state = 'graze';
@@ -3713,6 +3724,7 @@
     }
     // (up to the top of its head: that long neck)
     hurtBox() { return [this.x - 9, this.y - 25, this.x + 9, this.y]; }
+    tame(w) { this.state = 'graze'; this.wander(w, 0.2); if (this.vx) this.face = this.vx < 0 ? 'left' : 'right'; }
     update(w) {
       if (this.flying) {
         if (G.script.busy) return;
@@ -4569,6 +4581,7 @@
     constructor(x, y, tier = 1) {
       super(x, y, tierOf(tier, [1, 1, 2, 3]));
       this.tier = tier;
+      this.animal = 'bat';
       this.dmg = tierOf(tier, [1, 1, 2, 2]);
       this.sp = tierOf(tier, [1.15, 1.3, 1.5, 1.7]);
       this.dropChance = 0.35;
@@ -4577,6 +4590,7 @@
       this.wob = Math.random() * 6;
     }
     hurtBox() { return [this.x - 6, this.y - 20, this.x + 6, this.y - 8]; }
+    tame() { this.awake = false; }
     think(w, p, dx, dy, dist) {
       if (!this.awake) { if (dist < 72) { this.awake = true; w.pop(this.x, this.y - 26, 'SQUEAK!', '#c8a8d8'); } return; }
       // erratic little loops toward Nate
@@ -5064,6 +5078,7 @@
       this.state = 'perch';
       this.st = 30 + Math.random() * 90;
       this.touch = false;
+      this.animal = 'gull';
       this.bits = ['#ffffff', '#c8ccd4', laughing ? '#1c1c22' : '#a8b0bc'];
     }
     hurtBox() { return [this.x - 7, this.y - this.z - 12, this.x + 7, this.y - this.z]; }
@@ -5079,6 +5094,15 @@
       }
       if (this.calm > 0) { this.calm--; return; }
       const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      // (with Hannah along, it comes down off its light and lands right by her)
+      if (this.friendly) {
+        if (dist < 120) G.SCRIPTS.animalTip();
+        const near = dist < 120, tx = near ? p.x + (dx > 0 ? -26 : 26) : this.home.x, ty = near ? p.y - 2 : this.home.y, ax = tx - this.x, ay = ty - this.y, d = Math.hypot(ax, ay);
+        if (d > 1.2) { this.x += (ax / d) * 1.2; this.y += (ay / d) * 1.2; }
+        this.z += ((near ? 2 : this.perchZ) - this.z) * 0.06;
+        Object.assign(this, { state: 'grounded', st: 8 });
+        return;
+      }
       if (this.state === 'perch') {
         this.z = this.perchZ;
         if (dist < 100 && --this.st <= 0) {
@@ -5124,7 +5148,7 @@
       }
     }
     onHook(p) {
-      if (this.dead) return;
+      if (this.dead || this.friendly) return;
       this.hp--;
       G.audio.sfx('hit');
       if (this.hp <= 0) { this.die(); return; }
@@ -5799,8 +5823,12 @@
       if (this.t % 300 === 0 && Math.hypot(p.x - this.x, p.y - this.y) < 60) G.audio.sfx('cluck');
     }
 
+    // (with Hannah along, Z says hello, and the hammer stays down)
+    get talk() { return G.hannahHere() ? () => G.SCRIPTS.animalMeet('hens') : null; }
+
     onHammer(p) {
       const w = this.world;
+      if (G.hannahHere()) { G.audio.sfx('no'); w.pop(this.x, this.y - 22, 'NATE!', '#c898ff'); return; }
       w.chickenHits = (w.chickenHits || 0) + 1;
       G.audio.sfx('bawk');
       w.pop(this.x, this.y - 16, 'BAWK!', '#ffffff');

@@ -449,6 +449,10 @@
       kind: 'key', name: 'Abe\'s Bass', icon: () => G.spr.abeBassIcon, has: () => !!st().items.abeBass && !fl().bassGiven,
       desc: 'A sunburst bass, from the black case in Abe\'s closet. He has so many guitars, he won\'t even notice. (He will notice.)',
     },
+    globBookmark: {
+      kind: 'key', name: 'The Little Bookmark', short: 'Bookmark', icon: () => G.spr.bookmarkIcon, has: () => !!st().items.globBookmark,
+      desc: 'A bookmark from the Globglogabgalab, chewed down to a stub, for finishing the whole book club. He has always called you "little bookmark." He says this is a compliment.',
+    },
     mosasaurTooth: {
       kind: 'key', name: 'The Mosasaur Tooth', short: 'Tooth', icon: () => G.spr.toothGold, has: () => !!st().items.mosasaurTooth,
       desc: 'Five inches. Found at the very bottom of the Number One Ditch. Tyler is going to be SO mad.',
@@ -504,7 +508,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'mosasaurTooth', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'mosasaurTooth', 'globBookmark', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -531,7 +535,7 @@
     doron: { name: 'Doron', bio: 'The oldest brother. Army vet. Obsessed with the UFC. Never skips leg day. Owns three luchador masks. Responsible for the Alligator Incident.', skill: 'Lifts and smashes heavy things' },
     lily: { name: 'Lily', bio: 'Nate\'s sister. Survived a refrigerator. Still subscribed to Badlands Chugs.', skill: 'A "No." that pops balloons' },
     abe: { name: 'Abe', bio: 'Lives in Chesapeake with Hannah and Romulus. Owns more guitars than anybody needs and way too many yellow cables, and can\'t even give them away. Keeper of the sacred number. Gave Nate a bidet for Christmas, then took it back. It wasn\'t him this time.', skill: 'Gets things down from way up high, and boosts Nate over tall hedges' },
-    hannah: { name: 'Hannah', bio: '5\'2". A nurse in the NICU at CHKD. Married to Abe. Romulus\'s favorite person. Reads fantasy every spare minute, Sarah J. Maas above all. Father Eggmas hypnotized her babies, and now it\'s personal.', skill: 'Heals: patches Nate up when he\'s low, and gives him a checkup when you talk to her' },
+    hannah: { name: 'Hannah', bio: 'Reads fantasy every spare minute, Sarah J. Maas above all, and will stop the car for any animal. Romulus\'s favorite person. Married to Abe, and somehow still in a good mood. Runs on no sleep in the NICU at CHKD. Father Eggmas hypnotized her babies, and now it\'s personal.', skill: 'Animals trust her: they won\'t attack while she\'s along. She also heals Nate when he\'s low, and gives him a checkup when you talk to her' },
   };
 
   // ================================================================ PEOPLE (menu tab)
@@ -575,7 +579,7 @@
       id: 'globglog', name: 'Globglogabgalab', met: () => fl().globMet, img: () => G.spr.globglog[1],
       tag: () => (fl().globBeaten ? '{o}Boss: sings quietly' : '{r}Boss'),
       bio: () => (fl().globBeaten
-        ? 'A bookworm who lived in the basement and ate Mom\'s books. Lost a dance battle to Nate. Now sings quietly.'
+        ? fl().clubMet ? 'A bookworm in the ductwork who ate Mom\'s books. Now the other half of Hannah\'s book club. Sings quietly. Do not tell Michelle.' : 'A bookworm who lived in the basement and ate Mom\'s books. Lost a dance battle to Nate. Now sings quietly.'
         : 'Something pink in the basement, eating Mom\'s books and singing a song she can\'t stand. He loves books.'),
     },
     {
@@ -727,6 +731,9 @@
     if (f.mattMet) add('Fishing with Matt Oliver', f.tollPaid && 'Toll paid!', G.sayable(Math.min(s.teeth, 500)) + '/500 teeth', 'The Bay - Island 2', 'Matt Oliver\'s boat is tied up on Island 2. Catch fish for his survey and he pays you in shark teeth.', [Math.min(s.teeth, 500), 500]);
     if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
     if (s.party.includes('abe') && !f.lastUpDone) side.push({ name: 'The light switch', status: 'There\'s tape on it', kind: 'rumor', where: 'Home - the front hall', hint: 'There\'s a strip of tape by a light switch in the front hall, with Abe\'s name on it.' });
+    if (s.party.includes('hannah')) add('Animal Friends', G.animalsFound() >= G.ANIMALS.length && 'All of them!', G.sayable(G.animalsFound()) + '/' + G.sayable(G.ANIMALS.length) + ' friends', 'Anywhere', 'Bring Hannah along. Animals won\'t attack her, and Z says hello.', [G.animalsFound(), G.ANIMALS.length]);
+    if (s.party.includes('hannah') && f.globBeaten && !f.clubMet) side.push({ name: 'The little door', status: 'Hannah might like this', kind: 'rumor', where: 'Home - the basement', hint: 'There\'s humming behind a little door in the basement. It wants a password. Hannah reads a lot.' });
+    if (f.clubMet) add('Hannah\'s book club', f.clubDone, G.sayable(Object.keys(s.bookClub || {}).length) + '/' + G.sayable(G.CLUB_BOOKS.length) + ' books', 'Home - the basement', 'Bring Hannah to the little door in the basement.', [Object.keys(s.bookClub || {}).length, G.CLUB_BOOKS.length]);
     if (f.bassQuest) add('Nate\'s bass', f.bassDone, ['', 'Needs strings', 'Needs a finish', 'Needs a cable'][f.bassQuest] || '', f.bassQuest === 1 ? 'Chesapeake - El Toro Loco' : f.bassQuest === 2 ? 'Home - Dad\'s workshop' : 'Chesapeake - Abe\'s office', ['', 'The Paul McCartney Lady keeps bass strings at El Toro Loco.', 'Dad can help Nate finish it, at his bench.', 'Ask Abe for a cable. Just one.'][f.bassQuest] || '');
     if (f.dayIntro) add('The Tooth Book', G.fossilsFound() >= G.FOSSILS.length && 'All found!', G.sayable(G.fossilsFound()) + '/' + G.sayable(G.FOSSILS.length) + ' fossils', 'The Ditch', 'Sift the gravel at the Number One Ditch with Tyler\'s Sifter.', [G.fossilsFound(), G.FOSSILS.length]);
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
@@ -2159,6 +2166,7 @@
   };
   // Daisy's house, in the corner of Mom's garden
   S.daisyHouse = function* () {
+    if (G.hannahHere()) { yield* S.animalMeet('daisy'); return; }
     yield G.say(null, 'Daisy\'s house: a little wooden bunny hutch with a white picket fence around it.');
     yield G.say(null, 'Daisy is a boy. Everybody found that out after he was already named Daisy. It stuck.');
     yield G.say(null, 'Inside, there\'s a blue blanket with a wet spot on it.');
@@ -3696,6 +3704,7 @@
     { name: 'CHKD: MECHA-BABY (NICU)', map: 'chkdNicu', at: [7, 9, 'up'], flags: { chkdLobby: true, chkdWard: true, badgeUsed: true }, items: { badge: true } },
     { name: 'CHKD: Hannah joined (to the roof)', map: 'chkdNicu', at: [7, 8, 'down'], flags: { mobileBeaten: true, kitGot: true }, party: ['hannah'], follower: 'hannah', items: { firstAid: 3 }, maxHp: 12 },
     { name: 'CHKD: Hannah\'s shift (Charge Nurse Dot)', map: 'chkdNicu', at: [5, 8, 'up'], flags: { mobileBeaten: true, kitGot: true }, party: ['hannah'], follower: 'hannah', items: { firstAid: 3 }, maxHp: 12 },
+    { name: 'Hannah: the book club (the little door)', map: 'basement', at: [10, 4, 'up'], flags: { globBeaten: true, globMet: true, shopOpen: true }, party: ['abe', 'hannah'], follower: 'hannah' },
     { name: 'Mom and Dad at the condo', map: 'condo', at: [35, 16, 'left'], flags: { mobileBeaten: true, roofSeen: true }, party: ['abe', 'hannah'], items: { pipe: true, hammer: true }, maxHp: 12 },
     { name: 'The last road', map: 'ditchRoad', at: [9, 60, 'up'], flags: { parentsMet: true, finDrive: true } },
     { name: 'FINALE: the Number One Ditch', map: 'ditchFinal', at: [7, 17, 'up'], flags: { roadStarted: true, roadGate: true } },
@@ -4943,6 +4952,8 @@
         w.addTrigger(2, 12, 1, 2, () => { if (!flags().chemPassed) G.script.run(S.campusSafety(true)); });
       }
       w.add(new G.Sign(2, 11, 'WEST: College Hill. Shops, groceries, and {y}Tom\'s Pizza{/}.'));
+      // Hannah's friend: a very fat squirrel, working on a bagel
+      w.addProp({ img: G.spr.squirrel, tx: 8, ty: 9, solid: [8, 9, 1, 1], hit: [8, 9, 1, 1], talk: S.animalSpot('squirrel', 'A very fat squirrel, working on a whole bagel. It looks at Nate. It keeps eating.') });
       // Van Wickle Hall: the geology building (walk into the arched front door)
       w.addProp({ img: G.spr.vanWickle, tx: 26, ty: 17, h: 4 });
       w.blockTiles(26, 17, 8, 4);
@@ -13500,7 +13511,7 @@
       w.add(new G.Sign(18, 52, ['ISLAND 3', 'Behind you: the Chesapeake Channel Tunnel. Ahead: the Thimble Shoal Channel Tunnel.']));
       w.add(new G.Sign(11, 9, ['ISLAND 2', 'Ahead: the Thimble Shoal Channel Tunnel. The way in to Hampton Roads runs right over it.']));
       for (const [x, y, flip, line] of [[4, 50, false, 'A brown pelican, wings out, drying off on the rocks.'], [25, 7, true, 'A brown pelican. It has clearly seen some things.']]) {
-        w.addProp({ img: flip ? sp.pelicanL : sp.pelican, tx: x, ty: y, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: look(line) });
+        w.addProp({ img: flip ? sp.pelicanL : sp.pelican, tx: x, ty: y, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: S.animalSpot('pelican', line) });
       }
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [6 * 16, 9 * 16, 9 * 16, 12 * 16], talk: S.megalodonSift });
       S.mattSetup(w);
@@ -13572,7 +13583,7 @@
       w.add(new G.Sign(6, 12, ['BIRD NOTE', 'The rocks around these islands are a hangout for gulls, brown pelicans and purple sandpipers.', 'Please do not feed the gulls. They do not need the encouragement.']));
       // brown pelicans on the riprap
       for (const [x, y, flip, line] of [[3, 17, false, 'A brown pelican. It stares at Nate like he owes it money.'], [26, 13, true, 'A brown pelican, eyes closed, napping on the rocks. Living the dream.'], [8, 27, false, 'A brown pelican. It opens its pouch, considers Nate, and closes it again.']]) {
-        w.addProp({ img: flip ? G.spr.pelicanL : G.spr.pelican, tx: x, ty: y, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: look(line) });
+        w.addProp({ img: flip ? G.spr.pelicanL : G.spr.pelican, tx: x, ty: y, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: S.animalSpot('pelican', line) });
       }
       // the old fisherman on the rocks at the south end, line in the water
       const fish = w.add(new G.NPC({ sprite: 'fisherman', name: 'Old Fisherman', x: 9 * 16 + 8, y: 24 * 16 + 14, dir: 'down', talk: S.fisherman }));
@@ -13748,6 +13759,8 @@
         // still up in the ducts until the bait goes down (hidden from the first frame, not after the fade-in)
         if (!f.globMet && G.state.items.bait) w.glob.hidden = true;
       }
+      // the little door to the Globglogabgalab's own library: only Hannah gets through it (S.clubDoor)
+      w.addProp({ img: sp.clubDoor, tx: 10, ty: 1, flat: true, dy: 2, hit: [10, 2, 1, 1], talk: S.clubDoor });
     },
     onEnter() { return (function* () { if (!flags().globBeaten) yield* S.globIntro(); })(); },
   };
@@ -13848,6 +13861,9 @@
 
       w.add(new G.Sign(5, 11, ['EASTON FAIRGROUNDS', 'Tonight: {y}MICRO MAYHEM WRESTLING{/}! Doors at 7.']));
       w.add(new G.Sign(18, 14, 'PARKING. Do not leave valuables in your car. Or near the wrestlers.'));
+      // Hannah's friend: the fair's goat
+      w.props.push({ img: null, x: 0, y: 0, base: 11 * 16, hit: [2 * 16, 10 * 16, 4 * 16, 11 * 16], talk: S.animalSpot('goat', 'A goat, tied up by the fence. There\'s a sign around his neck: DO NOT FEED. Most of the sign is gone.'), draw(ctx, cx, cy) { ctx.drawImage(G.spr.goat[(G.tick >> 5) & 1], 2 * 16 + 4 - cx, 11 * 16 - 22 - cy); } });
+      w.blockTiles(2, 10, 2, 1);
 
       const styles = ['red', 'blue', 'gold', 'green'];
       [[6, 21], [12, 21], [14, 26], [27, 24], [32, 26], [30, 13], [35, 14]].forEach(([x, y], i) =>
@@ -15261,6 +15277,18 @@
       w.pop(r.x, r.y - 26, '*wag wag wag wag*', '#f8f8f0');
       yield G.say('Nate', 'He LOVES her.');
       yield G.say('Hannah', 'Of course he does. ...He\'s still giving YOU the side-eye, though.');
+      r.state = 'hide';
+      yield* S.animalGive('romulus');
+      return;
+    }
+    if (f.animalsAll && !f.romulusTrust) {
+      f.romulusTrust = true;
+      yield G.say(null, 'Romulus looks at Nate for a long time. Then, slowly, he walks over and rolls onto his back.');
+      yield G.say('Nate', '...Is this a trick?');
+      r.state = 'happy';
+      yield G.say(null, 'Nate scratches his stomach. Romulus lets him.');
+      w.pop(r.x, r.y - 26, '*wag*', '#f8f8f0');
+      yield G.say('Nate', 'He\'s still giving me the side-eye. But he\'s doing it upside down.');
       r.state = 'hide';
       return;
     }
@@ -19792,7 +19820,7 @@
   // the photos you found, your numbers, and the picture from the Ditch. Hold Z to hurry it along.
   const CREDIT_FAMILY = [
     ['nate', 'Nate', 'Thinks about pH often.'], ['lily', 'Lily', 'No.'], ['doron', 'Doron', 'Best ditch in the world. He said it and he meant it.'],
-    ['abe', 'Abe', 'Has a cable for you.'], ['hannah', 'Hannah', 'Everybody gets a checkup.'], ['dad', 'Dad', 'Do you speak EEENGLISH?'],
+    ['abe', 'Abe', 'Has a cable for you.'], ['hannah', 'Hannah', 'One more chapter.'], ['dad', 'Dad', 'Do you speak EEENGLISH?'],
     ['michelle', 'Michelle', 'Not "the pastor\'s wife."'], ['romulus', 'Romulus', 'He thought it was a race.'],
   ];
   const CREDIT_OTHERS = [
@@ -20139,6 +20167,7 @@
       for (const [x, y] of [[0, 4], [14, 4], [0, 17], [14, 17], [4, 18], [10, 18]]) w.addProp({ img: sp.cattails, tx: x, ty: y, dx: 1 });
       w.addProp({ img: sp.ditchSign, tx: 2, ty: 18, h: 1, dx: 0, dy: -4, talk: look('The sign: No.1 DITCH. Still standing.'), hit: [2, 18, 3, 1] });
       w.addProp({ img: sp.eggCartons, tx: 7, ty: 5, dy: 4, flat: true, talk: look('What\'s left of the throne: a pile of soggy egg cartons. Somebody will come for them. Probably Dad.'), hit: [7, 5, 2, 1] });
+      if (f.photoDone) w.addProp({ img: sp.turtle, tx: 11, ty: 9, dy: 3, solid: [11, 9, 1, 1], hit: [11, 9, 1, 1], talk: S.animalSpot('turtle', 'A very old snapping turtle, sitting at the edge of the water. It doesn\'t move. It looks like it has seen some things.') });
       // the gravel beds (the last one waits for Tyler)
       SIFT_SPOTS.forEach((sq, i) => {
         if (i === 4 && !f.tylerDitch) return;
@@ -20708,6 +20737,255 @@
       yield G.itemGet(G.spr.toothGold, 'Abe pays you {y}50 more shark teeth{/}.');
     }
     G.play.autosave();
+  };
+
+  // ================================================================ HANNAH'S ANIMALS
+  // Hannah loves animals, and they know it. While she's following Nate, the real animals stop
+  // attacking (Critter.friendly, G.hannahHere) and Z says hello. Everyone she meets goes in
+  // Animal Friends, in COLLECTABLES. Meet them all and Romulus finally rolls over for Nate.
+  // State: s.animals ({ id: 1 }). Flags: animalTip, animalsAll, romulusTrust.
+  G.hannahHere = () => { const pl = G.play; return G.with('hannah') && !G.state.playAs && !G.state.night && !!pl.world && !pl.world.def.noFollower; };
+  G.ANIMALS = [
+    { id: 'romulus', name: 'Romulus', where: 'The condo', art: () => G.spr.romulus.right.happy || G.spr.romulus.right.stand, how: 'Her favorite. He\'s at the condo.', note: 'He would walk into traffic for Hannah. Hannah has asked him not to.' },
+    { id: 'goose', name: 'The Goose', where: 'The condo', art: () => G.spr.goose.right.walk1, how: 'The one that took her sandwich. It\'s out by the condo.', note: 'Took Hannah\'s sandwich. Gave it back. Has been to confession.',
+      lines: [['Hannah', 'Oh, it\'s YOU.'], [null, 'The goose stops. The two of them look at each other for a long time.'], ['Hannah', 'We have unfinished business.'], [null, 'The goose walks behind a bush and comes back with half of a very old sandwich. It sets it down at her feet.'], ['Hannah', 'Thank you. I forgive you.'], ['Nate', 'That goose has tried to kill me four times.'], ['Hannah', 'Did you ever ask it about its day?']] },
+    { id: 'gull', name: 'A Seagull', where: 'The Bay', art: () => G.spr.gull[0].sit, how: 'Out on the bridge-tunnel. Bring her close and it\'ll come down.', note: 'It had fishing line on its foot. It left her one french fry, the highest honor a gull can give.',
+      lines: [[null, 'The gull lands right in front of Hannah and holds up one foot.'], ['Hannah', 'Look at you. You\'ve got fishing line all around your foot. Hold still.'], [null, 'She unwinds it with two fingers. The gull lets her.'], ['Nate', 'It has been screaming at me for an hour.'], ['Hannah', 'You\'d scream too.'], [null, 'The gull drops one french fry at her feet and flies off. That\'s the highest honor there is.']] },
+    { id: 'pelican', name: 'The Pelican', where: 'The Bay', art: () => G.spr.pelican, how: 'On the rocks at the bridge-tunnel islands.', note: 'Offered her a whole fish. She said he should keep it. He has never gotten over this.',
+      lines: [['Hannah', 'Hi, big guy. Long day?'], [null, 'The pelican opens its whole beak at her. There\'s a fish in there. It\'s an offer.'], ['Hannah', 'That\'s so generous. You keep it, though.'], [null, 'The pelican shuts its beak, deeply moved.']] },
+    { id: 'bat', name: 'The Bat', where: 'Andover', art: () => G.spr.bat[1], how: 'Down in the Andover mines.', note: 'Works nights. Hannah respects that.',
+      lines: [[null, 'The bat flutters down, lands on Hannah\'s sleeve and folds itself up.'], ['Nate', 'Hannah. There\'s a bat on you.'], ['Hannah', 'I know. Look at his little hands.'], ['Nate', 'It tried to bite my face.'], ['Hannah', 'He works nights. I get it.']] },
+    { id: 'bear', name: 'The Bear', where: 'Home', art: () => G.spr.bear[0], how: 'The one by the brook at home. Nobody hurts the bear.', note: 'Nobody hurts the bear. It turns out nobody had tried scratching its stomach, either.',
+      lines: [[null, 'The bear stops growling. It walks right up to Hannah, sniffs the book in her bag, and sits down.'], ['Hannah', 'You\'re just a big baby, aren\'t you?'], [null, 'The bear rolls over.'], ['Nate', 'Everybody in this family is afraid of that bear.'], ['Hannah', 'Has anybody in this family scratched his stomach?'], ['Nate', '...No.'], ['Hannah', 'Well.']] },
+    { id: 'daisy', name: 'Daisy', where: 'Home', art: () => G.spr.daisy.sit, how: 'In his hutch in Mom\'s garden.', note: 'A boy. He has opinions about his blanket.',
+      lines: [['Hannah', 'Is this Daisy? Hi, Daisy! Who\'s a good girl?'], ['Nate', 'He\'s a boy.'], ['Hannah', '...Daisy?'], ['Nate', 'Everybody found out after.'], ['Hannah', 'Who\'s a good BOY?'], [null, 'Daisy thumps one back foot. Hannah nods like that was a full sentence.'], ['Hannah', 'He says that blanket needs washing.']] },
+    { id: 'hens', name: 'The Hens', where: 'Home', art: () => G.spr.chickens.white.right[0], how: 'Mom\'s hens, in the garden.', note: 'They remember what Nate did. Hannah has asked them to let it go. They have not.',
+      lines: [[null, 'Every hen in the garden stops scratching and lines up in front of Hannah.'], ['Nate', 'They\'ve never done that. They chased me across the yard.'], ['Hannah', 'What did you do?'], ['Nate', '...I hit one with a hammer. A few times.'], [null, 'Hannah looks at him. So do the hens.']] },
+    { id: 'squirrel', name: 'The Campus Squirrel', where: 'Lafayette', art: () => G.spr.squirrel, how: 'On the quad at Lafayette, working on a bagel.', note: 'Put down a bagel when Hannah told it to. Nobody has ever gotten a campus squirrel to do that.',
+      lines: [[null, 'A very fat squirrel is sitting on the lawn, working on a whole bagel.'], ['Hannah', 'You are NOT supposed to be eating that.'], [null, 'The squirrel puts down the bagel.'], ['Nate', '...How did you do that?'], ['Hannah', 'I have talked a lot of people out of a lot of things.']] },
+    { id: 'goat', name: 'The Fair Goat', where: 'Easton Fair', art: () => G.spr.goat[0], how: 'In a pen at the Easton Fair. He eats anything.', note: 'Ate the last chapter of her book. She forgave him. He doesn\'t know what he did.',
+      lines: [['Hannah', 'Hello, handsome. Yes. Hello. Look at that face.'], [null, 'The goat leans in and takes a bite out of the paperback in her bag.'], ['Hannah', '...'], ['Nate', 'Was that...'], ['Hannah', 'That was the last chapter.'], ['Nate', 'Are you okay?'], ['Hannah', 'He didn\'t know. He didn\'t KNOW, Nate.'], [null, 'She scratches him behind the ears anyway. Her hand is shaking a little.']] },
+    { id: 'turtle', name: 'The Ditch Turtle', where: 'The Ditch', art: () => G.spr.turtle, how: 'Somebody has been at the Number One Ditch a lot longer than any of you.', note: 'Saw the whole thing. Has not said what he thought.',
+      lines: [[null, 'A very old snapping turtle is sitting at the edge of the water, looking at Hannah.'], ['Hannah', 'Were you here the whole time?'], [null, 'The turtle blinks. It takes about a minute.'], ['Hannah', 'He says it was a lot.']] },
+  ];
+  G.animalState = () => (G.state.animals = G.state.animals || {});
+  G.animalsFound = () => G.ANIMALS.filter((a) => G.animalState()[a.id]).length;
+  // the first time Nate walks up on an animal with Hannah along
+  S.animalTip = function () {
+    const f = flags();
+    if (f.animalTip || G.script.busy) return;
+    f.animalTip = true;
+    G.script.run((function* () {
+      yield G.say('Hannah', 'Easy. Easy, everybody. It\'s fine. Put the hammer down, Nate.');
+      yield G.say(null, 'Animals won\'t attack while {y}Hannah{/} is following. Press {y}Z{/} next to one to say hello.');
+      yield G.say(null, 'New friends go in {y}Animal Friends{/}, in COLLECTABLES.');
+    })());
+  };
+  S.animalGive = function* (id) {
+    const F = G.animalState(), a = G.ANIMALS.find((x) => x.id === id);
+    if (F[id]) return;
+    F[id] = 1;
+    G.audio.sfx('heart');
+    yield G.itemGet(a.art(), 'NEW FRIEND! {y}' + a.name + '{/}');
+    if (G.animalsFound() >= G.ANIMALS.length && !flags().animalsAll) yield* S.animalsAll();
+    G.play.autosave();
+  };
+  S.animalMeet = function* (id) {
+    const F = G.animalState(), a = G.ANIMALS.find((x) => x.id === id);
+    if (F[id]) { const f = flags(), k = 'hi_' + id; f[k] = ((f[k] || 0) + 1) % 3; yield G.say('Hannah', ['Hi, friend.', 'Who\'s a good animal? You are. Yes, you.', 'How was your day? ...Mm-hm. ...Oh, no.'][f[k]]); return; }
+    for (const [who, line] of a.lines || []) yield G.say(who, line);
+    yield* S.animalGive(id);
+  };
+  // an animal that's just standing there (no Hannah: a plain look at it)
+  S.animalSpot = (id, line) => function* () {
+    if (G.hannahHere()) { yield* S.animalMeet(id); return; }
+    yield G.say(null, line);
+    if (G.state.party.includes('hannah') && !G.animalState()[id]) yield G.say('Nate', 'Hannah would want to meet this.');
+  };
+  S.animalsAll = function* () {
+    const f = flags(), s = G.state;
+    f.animalsAll = true;
+    yield G.wait(30);
+    G.audio.sfx('fanfare');
+    yield G.banner('EVERY ANIMAL', 'and all of them like her better', 170);
+    yield G.say('Hannah', 'That\'s everybody. You know what they all have in common?');
+    yield G.say('Nate', 'What?');
+    yield G.say('Hannah', 'Somebody finally asked them how their day was.');
+    s.maxHp += 2; s.hp = s.maxHp;
+    yield G.itemGet(G.spr.heartBig, 'You got a {r}Heart Container{/}! Max hearts +1.');
+    yield G.say('Hannah', 'And Nate? Romulus has been watching. Go say hi.');
+  };
+
+  // ================================================================ HANNAH'S BOOK CLUB
+  // The Globglogabgalab has eaten every book in the house, so he's the only one who's read them,
+  // and Hannah is the only one in the family who wants to talk about it. After his fight he built
+  // his own library behind the basement wall (G.MAPS.bookClub), behind a little locked door with a
+  // slot in it. Only Hannah gets in: the password is what she always says, "one more chapter". The
+  // two of them become real friends. He reviews books by taste, one licked page each, in bites out
+  // of five (real Sarah J. Maas titles, named and never quoted), and talking to her plays their
+  // conversations (CLUB_CHATS). Flags: clubMet, clubDone, clubChat, clubHi.
+  // State: s.bookClub ({ book id: bites }).
+  const GL = 'Globglogabgalab', BITES = ['NO BITES', 'ONE BITE', 'TWO BITES', 'THREE BITES', 'FOUR BITES', 'FIVE BITES'];
+  G.CLUB_BOOKS = [
+    { id: 'acotar', title: 'A Court of Thorns and Roses', short: 'Thorns and Roses', bites: 4, lines: [[GL, 'Mm. Thorns up front. Roses on the finish. And then something grabs you by the throat around the middle.'], [GL, 'It\'s a first book, dear. It has room to grow.']], after: [['Hannah', 'FOUR? That\'s... actually, that\'s fair.']] },
+    { id: 'acomaf', title: 'A Court of Mist and Fury', short: 'Mist and Fury', bites: 5, spicy: true, lines: [[null, 'He licks the page. He stops dancing, for the first time anybody has ever seen.'], [GL, 'Oh.'], [GL, 'OH.'], [GL, 'Oh, MY. Hannah. This one is very SPICY.']], after: [['Hannah', 'I KNOW.'], ['Nate', 'What do you mean, spicy?'], ['Hannah', 'Nothing.'], [GL, 'Nothing, little bookmark.']] },
+    { id: 'tog', title: 'Throne of Glass', short: 'Throne of Glass', bites: 3, lines: [[GL, 'Crunchy. Little sharp bits all through it. Wonderful for the gums.'], [GL, 'It wants to be taken seriously. I respect that in a meal.']], after: [['Hannah', 'Three?! Wait until you get to the second one.'], [GL, 'Is it better?'], ['Hannah', 'I\'m not telling you anything.']] },
+    { id: 'com', title: 'Crown of Midnight', short: 'Crown of Midnight', bites: 5, lines: [[GL, 'Ah.'], [GL, 'You were right. I hate that. Dark. Rich. It has been aged in something.']], after: [['Hannah', 'I TOLD you.']] },
+    { id: 'cc', title: 'Crescent City', short: 'Crescent City', bites: 4, lines: [[GL, 'This is a very large book. Modern flavors. Tastes like a city at night.'], [GL, 'I shall need a second stomach.']], after: [['Nate', 'Do you have a second stomach?'], [GL, 'I don\'t know. Do I have a spine?']] },
+    { id: 'wings', title: 'A Court of Wings and Ruin', short: 'Wings and Ruin', bites: 4, lines: [[GL, 'Feathery. Goes down slow. There is so MUCH of it, and I did not want it to stop.']], after: [['Hannah', 'That\'s the whole reason I\'ve read it four times.']] },
+    { id: 'rocks', title: 'Nate\'s mineralogy textbook', short: 'Nate\'s textbook', bites: 1, nate: true, lines: [['Nate', 'Can I bring one? I brought one.'], [null, 'Hannah looks at the cover. She hands it over without a word.'], [GL, 'Dry. Extremely dry. Hard to chew, and it\'s very sure of itself.'], [GL, 'There is a chapter on feldspar. There is a SECOND chapter on feldspar.']], after: [['Nate', 'It\'s a classic.'], ['Hannah', 'Nate, honey. No.']] },
+  ];
+  const clubState = () => (G.state.bookClub = G.state.bookClub || {});
+  // the two of them, talking about books (Nate is there too)
+  const CLUB_CHATS = [
+    [['Hannah', 'Be honest. Have you ever actually cried at a book?'], [GL, 'My dear, I weep at the binding alone.'], ['Hannah', 'I cried in the NICU break room. At four in the morning. Over a man who doesn\'t exist.'], [GL, 'As one does.']],
+    [[GL, 'Who is your favorite?'], ['Hannah', 'You can\'t ask me that. You can\'t just ASK me that.'], [GL, 'I shall tell you mine if you tell me yours.'], ['Hannah', 'On three.'], [null, 'They both say it at the same time. They both gasp.'], ['Hannah', 'I KNEW you were a good person.'], [GL, 'I am a worm, dear. But thank you.']],
+    [['Hannah', 'Abe asked me what this one was about, and I talked for forty minutes.'], [GL, 'Did he listen?'], ['Hannah', 'He fell asleep with his eyes open. He\'s very good at it.'], [GL, 'I would have listened.'], ['Hannah', 'I know you would, Glob.']],
+    [[GL, 'I have been meaning to tell you. The seed catalogs upstairs have a remarkable plot.'], ['Hannah', 'You read Michelle\'s seed catalogs?'], [GL, 'Will she order the heirloom tomatoes, Hannah? WILL she?'], ['Hannah', '...Did she?'], [GL, 'I can\'t say. I ate the ending.']],
+    [['Hannah', 'Do you ever reread anything?'], [GL, 'Constantly. It\'s a digestive matter.'], ['Hannah', 'I\'m going to pretend you didn\'t say that.'], [GL, 'Everybody does.']],
+    [['Hannah', 'I got to the end of a chapter last night and it was a cliffhanger. So I started the next one. It was four AM. I work at seven.'], [GL, 'What did you do?'], ['Hannah', 'I read one more chapter.'], [GL, 'That\'s my girl.']],
+    [[GL, 'Nobody has ever asked me what I thought of a book before.'], ['Hannah', 'Well, what did you think?'], [GL, 'I thought it was delicious.'], [GL, '...And I thought I would like to have a friend.'], ['Hannah', 'You\'ve got one, Glob.'], ['Nate', 'Am I in the book club?'], ['Hannah', 'No.'], [GL, 'No, little bookmark.']],
+  ];
+  // the little door. The eyes in the slot, and everybody who isn't Hannah
+  S.clubDoor = function* () {
+    const f = flags(), s = G.state;
+    if (!f.globBeaten) { yield G.say(null, 'A little door in the basement wall, bound in iron. Nate has never noticed it before. It\'s locked from the other side.'); return; }
+    if (G.hannahHere()) { if (f.clubMet) { yield* clubEnter(); yield* S.clubGreet(); } else yield* S.clubStart(); return; }
+    yield G.say(null, 'A little door, bound in iron. There\'s quiet humming behind it. A slot slides open. Two pink eyes.');
+    yield G.say(GL, 'Password.');
+    if (f.clubMet) { yield G.say(GL, 'Where is Hannah? No Hannah, no book club. Those are the bylaws.'); return; }
+    if (G.with('doron')) { yield G.say('Doron', 'Stand back. I\'ll handle this. OPEN UP.'); yield G.say(GL, 'That is not the password.'); yield G.say('Doron', 'ARMY...'); yield G.say('Nate', 'Doron, that\'s the foundation of the house.'); }
+    else if (G.with('lily')) { yield G.say('Lily', 'No.'); yield G.say(GL, 'That is not the password. But I do respect it.'); }
+    else if (G.with('abe')) { yield G.say('Abe', 'Hi. Do you want a yellow guitar cable?'); yield G.say(GL, 'I have eaten four of your cables. They were chewy. That is not the password.'); }
+    else { yield G.say('Nate', '...Feldspar?'); yield G.say(GL, 'That is not the password.'); }
+    yield G.say(GL, 'This door opens for a true reader. You, little bookmark, read about ROCKS.');
+    G.audio.sfx('bump');
+    yield G.say(null, 'The slot slides shut.');
+    if (s.party.includes('hannah')) yield G.say('Nate', '...I know somebody who reads.');
+  };
+  function* clubEnter() {
+    G.audio.sfx('door');
+    yield G.fadeOut(20);
+    G.play.loadMap('bookClub', 7 * 16 + 8, 8 * 16 + 14, 'up', true);
+    yield G.fadeIn(24);
+  }
+  // the first time: Hannah at the door, and what's behind it
+  S.clubStart = function* () {
+    const f = flags();
+    yield G.say(null, 'A little door, bound in iron. There\'s quiet humming behind it. A slot slides open. Two pink eyes.');
+    yield G.say(GL, 'Password.');
+    yield G.say('Nate', 'Is that... I thought you went to find a library.');
+    yield G.say(GL, 'I FOUND one. Password.');
+    yield G.say('Hannah', 'Excuse me. What are you reading in there?');
+    yield G.say(GL, '...Who wants to know?');
+    yield G.say('Hannah', 'Somebody who was up until four this morning, because she told herself one more chapter.');
+    yield G.wait(60);
+    yield G.say(null, 'Silence. Then, slowly, a bolt slides back.');
+    yield G.say(GL, '...That is the password.');
+    yield* clubEnter();
+    f.clubMet = true;
+    yield G.say(null, 'Behind the door there\'s a room nobody knew about. Every wall is books: nibbled, licked, stacked to the ceiling.');
+    yield G.say('Nate', 'You said you were going to find a library.');
+    yield G.say(GL, 'I said I would find one that appreciates me. So I built it, behind your furnace. I appreciate me very much.');
+    yield G.say('Hannah', 'Did you ALPHABETIZE these?');
+    yield G.say(GL, 'By author. Then by flavor.');
+    yield G.say('Hannah', '...Nate. I live here now.');
+    yield G.say('Hannah', 'Nobody in this family will talk to me about books. Nate reads about ROCKS.');
+    yield G.say('Nate', 'Hey.');
+    yield G.say(GL, 'Nobody in this family will talk to ME about books. They only scream.');
+    yield G.say('Hannah', 'Have you read Sarah J. Maas?');
+    yield G.say(GL, 'Have I READ... Dear lady. I have read EVERYTHING. I have read it, and then I have eaten it. Sometimes in the other order.');
+    yield G.say('Hannah', 'Okay. A book club. You and me. One rule: you lick ONE page. You do not eat my copies. I will know.');
+    yield G.say(GL, '...A book club. I have waited my entire life for somebody to say those words.');
+    yield G.say('Hannah', 'Can I call you Glob? I can\'t say the whole thing.');
+    yield G.say(GL, 'Nobody has ever called me anything but AAAAAH.');
+    yield G.say(GL, '...Yes. You may call me Glob.');
+    yield G.say('Hannah', 'And nobody tells Michelle.');
+    G.play.autosave();
+  };
+  S.clubGreet = function* () {
+    const f = flags();
+    f.clubHi = ((f.clubHi || 0) + 1) % 3;
+    const lines = [[['Hannah', 'Glob! I saved you a chapter.'], [GL, 'My dear Hannah. I saved you a chair.']], [[GL, 'You look tired, dear.'], ['Hannah', 'I\'ve been on nights. And I started a new series.'], [GL, 'Excellent.']], [['Hannah', 'I brought tea.'], [GL, 'I brought thoughts.']]][f.clubHi];
+    for (const [who, line] of lines) yield G.say(who, line);
+  };
+  // talking to Hannah in her chair: the two of them, going on about books
+  S.clubChat = function* () {
+    const f = flags(), k = f.clubChat || 0;
+    f.clubChat = (k + 1) % CLUB_CHATS.length;
+    for (const [who, line] of CLUB_CHATS[k]) yield G.say(who, line);
+  };
+  S.bookClub = function* () {
+    const f = flags(), s = G.state, Club = clubState(), left = G.CLUB_BOOKS.filter((b) => !Club[b.id]);
+    if (!left.length) {
+      f.clubLine = ((f.clubLine || 0) + 1) % 3;
+      yield G.say(GL, ['Same time next month. Tell her to bring the sequel.', 'I still think about Mist and Fury. I think about it during the day.', 'Your feldspar chapters have given me indigestion, little bookmark.'][f.clubLine]);
+      return;
+    }
+    const first = left.filter((b) => !b.nate).slice(0, 3).concat(left.length === 1 ? left : []);
+    const c = yield G.ask('Hannah', 'What are we reading, Glob?', first.map((b) => b.short).concat(['Not today']));
+    if (c >= first.length) { yield G.say(GL, 'I shall be here. I am always here.'); return; }
+    const b = first[c];
+    if (!b.nate) yield G.say(null, 'Hannah opens ' + b.title + ' to the first page and holds it out. He licks it. Once.');
+    for (const [who, line] of b.lines) yield G.say(who, line);
+    G.audio.sfx('secret');
+    yield G.bigText(BITES[b.bites], 70, b.bites >= 5 ? '#f8d850' : b.bites >= 3 ? '#78e070' : '#f86858');
+    Club[b.id] = b.bites;
+    for (const [who, line] of b.after || []) yield G.say(who, line);
+    if (Object.keys(Club).length >= G.CLUB_BOOKS.length) yield* S.clubDone();
+    G.play.autosave();
+  };
+  S.clubDone = function* () {
+    const f = flags(), s = G.state;
+    f.clubDone = true;
+    yield G.wait(20);
+    yield G.say(GL, 'That is the whole stack. This has been the finest year of my life.');
+    yield G.say('Hannah', 'Best book club I\'ve ever been in, Glob. You\'re the only one who has ever finished the book.');
+    yield G.say(GL, 'And you are the only one who has ever opened that door.');
+    yield G.say(GL, 'For the little bookmark, a bookmark. For carrying her bag. I have been saving it. Mostly.');
+    s.items.globBookmark = true;
+    G.play.addTeeth(50);
+    G.audio.sfx('fanfare');
+    yield G.itemGet(G.spr.bookmarkIcon, 'You got {y}The Little Bookmark{/}! And {y}50 shark teeth{/} he found in the walls.');
+    G.play.shake(20, 2);
+    yield G.say(null, '*BANG BANG BANG*');
+    yield G.say('Michelle', '(through the ceiling) IS THAT SINGING? IS SOMEBODY SINGING DOWN THERE?');
+    yield G.say(GL, 'No appreciation for the arts.');
+    yield G.say('Hannah', 'Nobody move.');
+  };
+  // the Globglogabgalab's library, behind the basement wall: books to the ceiling, Hannah's chair, his dance
+  G.MAPS.bookClub = {
+    name: 'The Book Club',
+    music: 'bookworm',
+    noFollower: true,
+    tiles() {
+      const W = 15, H = 11, g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 13, 2, 'N'); fill(1, 3, 13, 7, 'd'); fill(4, 5, 7, 3, 'R');
+      g[10][7] = 'x';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      const shelf = ['Every spine on this shelf has one neat bite out of it.', 'A shelf labeled SEED CATALOGS (FICTION).', 'A shelf labeled DEVOTIONALS (LIGHT SNACKS).', 'A shelf labeled FANTASY. It\'s the only shelf with nothing chewed on it. He\'s been told.'];
+      for (let x = 2; x <= 12; x++) F.stand(sp.bookshelf2, x, 3, 1, look(shelf[x % 4]));
+      for (const [x, y, k] of [[1, 5, 0], [13, 5, 1], [1, 8, 2], [13, 8, 0]]) F.stand(sp.bookPiles[k], x, y, 1, look('A stack of books, taller than Nate would have guessed. They\'re in order. Don\'t move them.'));
+      F.stand(sp.tbrStack, 3, 8, 1, look('Hannah\'s to-be-read pile has followed her down here. It has grown.'));
+      F.stand(sp.nookTable, 7, 6, 1, look('Two mugs of tea. One of them has been licked.'));
+      // Hannah, curled up in her chair with a book
+      const chair = F.stand(sp.readingChair, 5, 6, 1, () => S.clubChat());
+      chair.draw = function (ctx, cx, cy) {
+        const x = this.x - cx, y = this.y - cy, h = G.sprites.hannah.down[0];
+        ctx.drawImage(this.img, x, y);
+        ctx.drawImage(h, 0, 0, h.width, 15, x + 1, y - 2, h.width, 15);
+        ctx.drawImage(sp.openBook, x + 4, y + 10);
+      };
+      // the Globglogabgalab, who is always dancing, a little
+      const glob = w.add(new G.NPC({ sprite: null, name: GL, x: 10 * 16, y: 7 * 16 + 14, dir: 'down', talk: S.bookClub }));
+      glob.hb = { w: 24, h: 8 };
+      glob.draw = function (ctx, cx, cy) { const img = G.spr.globglog[(G.tick >> 4) % 3]; ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy); };
+      w.addWarp(7, 10, 1, 1, 'basement', 10, 3, 'down');
+    },
   };
 
   // ---- music: the title tune in a minor key, marching; a sunny one for the Ditch; and the credits

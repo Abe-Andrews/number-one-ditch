@@ -260,6 +260,7 @@
     { id: 'pipes', name: 'Dad\'s Pipes', icon: 'pipe', count: () => [G.pipesMadeCount(), G.PIPES.length], blurb: 'Pipes you turned on Dad\'s lathe and finished with him in the workshop. Pick one and Dad\'s Pipe looks just like it.' },
     { id: 'tins', name: 'Tobacco', icon: 'tin', count: () => [G.tinsMadeCount(), G.TOBACCOS.length], blurb: 'The tobaccos from Dad\'s pipe journal, blended with him in the workshop. Pack one in Dad\'s Pipe and the smoke comes out its color.' },
     { id: 'fish', name: 'Matt\'s Survey', icon: 'fish', count: () => [G.fishCaughtKinds(), G.FISH_ORDER.length], blurb: 'Every kind of fish Nate has caught for Matt Oliver\'s survey out on the bay, and the biggest one of each.' },
+    { id: 'animals', name: 'Animal Friends', short: 'Animals', icon: 'paw', when: () => G.state.party.includes('hannah'), count: () => [G.animalsFound(), G.ANIMALS.length], blurb: 'Every animal Hannah has made friends with. Bring her along: animals won\'t attack her, and Z says hello.' },
     { id: 'teeth', name: 'Tooth Book', icon: 'tooth', when: () => G.state.flags.fin_done, count: () => [G.fossilsFound(), G.FOSSILS.length], blurb: 'Everything Nate has sifted out of the Number One Ditch. Every kind is a real fossil from the old sea floor under Chesapeake.' },
     { id: 'instruments', name: 'Instruments', icon: 'guitar', count: () => [G.instrumentsCount(), G.INSTRUMENTS.length], blurb: 'Nate\'s instruments: the ones he builds, and the ones he earns jamming with Abe. More to come.' },
   ];
@@ -282,6 +283,7 @@
     items: ['kkkkkkkk.', 'kgggggGk.', 'kgwwgggk.', 'kkkkbkkk.', '....b....', '....b....', '....b....', '...kbk...', '....k....'],
     keys: ['..kkk....', '.kyyyk...', '.ky.yk...', '.kyyyk...', '..kyk....', '...ykk...', '...yyk...', '...ykk...', '...yyk...'],
     people: ['..kkkkk..', '.khhhhhk.', '.hhssshh.', '.skssksk.', '.sssssss.', '..sskss..', '..sssss..', '.nnnnnnn.', 'nnnnnnnnn'],
+    paw: ['.........', '.kk...kk.', 'kbbk.kbbk', '.kk.k.kk.', '..kkbkk..', '.kbbbbbk.', '.kbbbbbk.', '..kkkkk..', '.........'],
     tooth: ['....k....', '...kwk...', '...kwk...', '..kwwgk..', '..kwwgk..', '.kwwwggk.', '.kwwwggk.', '.kbbbbbk.', '.kk...kk.'],
     rocks: ['...kkk...', '..kcwck..', '.kcwccck.', 'kccccccCk', 'kCcccccCk', '.kCcccCk.', '..kCcCk..', '...kCk...', '....k....'],
     save: ['kkkkkkkkk', 'kuwwwwwuk', 'kuwwwwwuk', 'kuuuuuuuk', 'kuugggguk', 'kuugkgguk', 'kuugggguk', 'kuuuuuuuk', 'kkkkkkkkk'],
@@ -408,7 +410,7 @@
       maps: [['lab', 'Nate\'s Lab'], ['campus', 'The Quad'], ['science', 'Science Center'], ['geology', 'Van Wickle Hall'], ['pardee', 'Pardee Hall'], ['collegeHill', 'College Hill'], ['toms', 'Tom\'s Pizza']] },
     { id: 'fair', name: 'EASTON FAIR', x: 98, y: 30, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
     { id: 'home', name: 'HOME', x: 40, y: 60, icon: 'house', key: 'Home',
-      maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['north', 'The Frozen Pond']] },
+      maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['bookClub', 'The Book Club'], ['north', 'The Frozen Pond']] },
     { id: 'andover', name: 'ANDOVER', x: 110, y: 58, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
     { id: 'bay', name: 'THE BAY', x: 72, y: 80, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel']] },
     { id: 'ches', name: 'CHESAPEAKE', x: 33, y: 104, icon: 'house', key: 'Chesapeake', maps: [['condo', 'The Condo'], ['condoDown', 'Downstairs'], ['condoUp', 'Upstairs'], ['condoStorage', 'Storage'], ['golf', 'The Golf Course'], ['toroLoco', 'El Toro Loco']] },
@@ -666,8 +668,8 @@
           const ph = G.PHOTOS[this.sel];
           if (ph && G.photoHas(ph.id)) { this.photoView = ph; G.audio.sfx('select'); } else G.audio.sfx('bump');
         }
-      } else if (this.tab === COLL_TAB && (this.coll === 'fish' || this.coll === 'teeth')) {
-        const n = this.coll === 'fish' ? G.FISH_ORDER.length : G.FOSSILS.length, col = this.sel % 4, row = Math.floor(this.sel / 4);
+      } else if (this.tab === COLL_TAB && (this.coll === 'fish' || this.coll === 'teeth' || this.coll === 'animals')) {
+        const n = this.coll === 'fish' ? G.FISH_ORDER.length : this.coll === 'teeth' ? G.FOSSILS.length : G.ANIMALS.length, col = this.sel % 4, row = Math.floor(this.sel / 4);
         if (inp.hit('left') && col > 0) this.move(-1, n);
         if (inp.hit('right') && col < 3) this.move(1, n);
         if (inp.hit('down') && this.sel + 4 < n) this.move(4, n);
@@ -1172,6 +1174,7 @@
       if (this.coll === 'rocks') this.drawRocks(ctx);
       else if (this.coll === 'photos') this.drawPhotos(ctx);
       else if (this.coll === 'teeth') this.drawTeeth(ctx);
+      else if (this.coll === 'animals') this.drawAnimals(ctx);
       else if (this.coll === 'pipes' || this.coll === 'tins') this.drawBench(ctx);
       else if (this.coll === 'instruments') this.drawInstruments(ctx);
       else if (this.coll === 'fish') this.drawFish(ctx);
@@ -1182,7 +1185,7 @@
     drawCollectList(ctx) {
       card(ctx, 5, 21, 112, 121, 'COLLECTABLES');
       // (the rows squeeze together as more kinds get added)
-      const gap = Math.min(26, Math.floor(103 / colls().length)), h = gap - 3;
+      const gap = Math.min(26, Math.floor(103 / colls().length)), h = gap < 14 ? gap - 1 : gap - 3;
       colls().forEach((c, i) => {
         const y = 37 + i * gap, sel = i === this.sel && !this.onTabs, [have, all] = c.count();
         G.box(ctx, 9, y, 104, h, sel ? SEL : { bg: '#1a1428', border: '#3e3460', inner: '#262038' });
@@ -1194,9 +1197,9 @@
           TXT(ctx, num, 81, y + h - 10, C.gold);
         } else {
           // (short rows, once there are lots of kinds: the name and count on one line, a thin bar under)
-          TXT(ctx, c.name, 27, y + 1, sel ? C.gold : C.soft);
+          TXT(ctx, c.short || c.name, 27, y + 1, sel ? C.gold : C.soft);
           TXT(ctx, num, 110 - F().width(num), y + 1, C.gold);
-          bar(ctx, 27, y + h - 4, 83, 3, have / all, have >= all ? C.green : C.cyan);
+          if (h >= 13) bar(ctx, 27, y + h - 4, 83, 3, have / all, have >= all ? C.green : C.cyan);
         }
         if (sel) cursor(ctx, 3, y + Math.round(h / 2) - 3);
       });
@@ -1288,6 +1291,35 @@
 
     // ---- PHOTOS: thumbnails on the left, the one you're on at the right
     // ---- MATT'S SURVEY: each kind of fish, how many, and the biggest
+    // ---- ANIMAL FRIENDS: everybody Hannah has met, four to a row
+    drawAnimals(ctx) {
+      const F2 = G.animalState(), fit = (im, x, y, w, h) => { const k = Math.min(1, w / im.width, h / im.height), dw = Math.round(im.width * k), dh = Math.round(im.height * k); ctx.drawImage(im, x + Math.round((w - dw) / 2), y + Math.round((h - dh) / 2), dw, dh); };
+      card(ctx, 5, 21, 112, 121, 'ANIMAL FRIENDS', C.gold, G.sayable(G.animalsFound()) + '/' + G.sayable(G.ANIMALS.length));
+      G.ANIMALS.forEach((a, i) => {
+        const x = 10 + (i % 4) * 26, y = 39 + Math.floor(i / 4) * 24, sel = i === this.sel && !this.onTabs, got = !!F2[a.id];
+        slot(ctx, x, y, 24, 22, got ? C.cyan : undefined);
+        if (got) { ctx.fillStyle = '#6a6088'; ctx.fillRect(x + 2, y + 2, 20, 18); fit(a.art(), x + 2, y + 2, 20, 18); }
+        else TXT(ctx, '?', x + 10, y + 7, C.faint);
+        if (sel) brackets(ctx, x - 1, y - 1, 26, 24);
+      });
+      const a = G.ANIMALS[this.sel];
+      card(ctx, 120, 21, 115, 121);
+      if (!a) return;
+      if (!F2[a.id]) {
+        TXT(ctx, '???', 125, 27, C.cyan);
+        ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 40, 107, 1);
+        TXT(ctx, a.where, 125, 44, C.gold);
+        F().wrap(a.how, 104).slice(0, 7).forEach((l, i) => TXT(ctx, l, 125, 56 + i * 9, C.dim));
+        return;
+      }
+      slot(ctx, 124, 25, 24, 22, C.cyan);
+      ctx.fillStyle = '#6a6088'; ctx.fillRect(126, 27, 20, 18);
+      fit(a.art(), 126, 27, 20, 18);
+      F().wrap(a.name, 82).slice(0, 2).forEach((l, i) => TXT(ctx, l, 151, 26 + i * 9, C.cyan));
+      ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 50, 107, 1);
+      TXT(ctx, a.where, 125, 54, C.gold);
+      F().wrap(a.note, 104).slice(0, 8).forEach((l, i) => TXT(ctx, l, 125, 66 + i * 9, C.soft));
+    }
     // ---- the TOOTH BOOK: fifteen fossils, four to a row
     drawTeeth(ctx) {
       const B = G.fossilBook(), S0 = G.spr.fossils;

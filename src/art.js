@@ -10413,6 +10413,51 @@
     return cv;
   }
 
+  // Hannah's friends: a fat campus squirrel, the fair's goat, and the very old turtle at the Ditch
+  function squirrel() {
+    const p = new Pix(14, 14), B = '#8a6a48', D = '#6a4e34', L = '#c8a880';
+    for (let y = 0; y < 14; y++) for (let x = 0; x < 14; x++) if (((x - 10.5) / 3.8) ** 2 + ((y - 5) / 5.5) ** 2 <= 1 && x < 7) p.set(x + 7 - 7, y, null);
+    for (let y = 0; y < 9; y++) for (let x = 0; x < 6; x++) if (((x - 2.5) / 2.8) ** 2 + ((y - 4) / 4.6) ** 2 <= 1) p.set(x, y + 1, y % 2 ? B : D);
+    p.rect(5, 6, 6, 7, B); p.rect(7, 8, 3, 5, L);
+    p.rect(7, 2, 5, 5, B); p.set(8, 1, D); p.set(10, 1, D); p.set(10, 4, '#1c1424'); p.set(12, 5, '#3a2a20');
+    p.rect(10, 8, 3, 2, '#e8d8a8');
+    p.rect(5, 13, 3, 1, D); p.rect(9, 13, 3, 1, D);
+    return finish(p);
+  }
+  function goat(f) {
+    const p = new Pix(24, 22), W = '#e8e0d0', D = '#c8bca8';
+    p.rect(3, 9, 15, 8, W); p.hline(3, 17, 16, D); p.rect(2, 8, 2, 3, W);
+    for (const x of [4, 7, 13, 16]) p.rect(x, 17, 2, 4, D);
+    p.rect(16, 3 + f, 6, 7, W); p.rect(14, 6 + f, 3, 6, W);
+    p.set(18, 1 + f, '#6a5a48'); p.set(19, 2 + f, '#6a5a48'); p.set(20, 1 + f, '#6a5a48'); p.set(20, 2 + f, '#6a5a48');
+    p.set(19, 5 + f, '#1c1424'); p.rect(21, 7 + f, 2, 2, '#c89090'); p.rect(19, 10 + f, 2, 2, D);
+    p.rect(11, 9, 3, 5, '#a88a68');
+    return finish(p);
+  }
+  function turtle() {
+    const p = new Pix(22, 12), G1 = '#4a5a34', G2 = '#3a4628', L = '#7a8a5a';
+    for (let y = 0; y < 9; y++) for (let x = 0; x < 18; x++) if (((x - 8.5) / 8.5) ** 2 + ((y - 8) / 7.5) ** 2 <= 1) p.set(x, y + 1, (x + y * 2) % 5 ? G1 : G2);
+    for (const [x, y] of [[5, 5], [9, 4], [13, 5]]) p.rect(x, y, 2, 2, L);
+    p.rect(17, 6, 4, 3, L); p.set(19, 6, '#1c1424');
+    p.rect(2, 9, 3, 2, L); p.rect(12, 9, 3, 2, L); p.rect(0, 8, 2, 1, L);
+    return finish(p);
+  }
+  // the little door in the basement wall, with a slot for the eyes
+  function clubDoor() {
+    const p = new Pix(16, 30), W1 = '#5a3a20', W2 = '#4a2e18', I = '#2a2a30';
+    for (let y = 0; y < 30; y++) for (let x = 0; x < 16; x++) { if (y < 5 && ((x - 7.5) / 8) ** 2 + ((y - 5) / 5.2) ** 2 > 1) continue; p.set(x, y, x % 4 === 3 ? W2 : W1); }
+    for (const y of [8, 22]) p.hline(0, 15, y, I);
+    p.rect(4, 12, 8, 3, '#14100c'); p.hline(4, 11, 12, I); p.hline(4, 11, 14, I);
+    p.rect(12, 18, 2, 2, '#c8a048');
+    return finish(p);
+  }
+  function bookmarkIcon() {
+    const p = new Pix(16, 16);
+    p.rect(5, 1, 6, 12, '#c84848'); p.hline(5, 10, 2, '#e87070');
+    p.set(5, 13, '#c84848'); p.set(7, 13, '#c84848'); p.set(9, 13, '#c84848'); p.set(10, 13, '#c84848'); p.set(6, 14, '#c84848'); p.set(9, 14, '#c84848');
+    p.rect(7, 4, 2, 2, '#f4ecd8');
+    return finish(p);
+  }
   // a light switch, and the same one with Mom's tape and arrow next to it
   function switchPlate() {
     const p = new Pix(6, 9);
@@ -10821,5 +10866,6 @@
     S.gravelSpots = [0, 1, 2, 3, 4].map(gravelSpot); S.eggCartons = eggCartons(); S.numberTwoDitch = numberTwoDitch();
     S.fossils = {}; for (const id in FOSSIL_ROWS) S.fossils[id] = fossil(id);
     S.natesBassDone = natesBassDone(); S.switchPlate = switchPlate(); S.switchTape = switchTape();
+    S.squirrel = squirrel(); S.goat = [goat(0), goat(1)]; S.turtle = turtle(); S.bookmarkIcon = bookmarkIcon(); S.clubDoor = clubDoor();
   };
 })();
