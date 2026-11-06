@@ -20821,24 +20821,133 @@
   // and Hannah is the only one in the family who wants to talk about it. After his fight he built
   // his own library behind the basement wall (G.MAPS.bookClub), behind a little locked door with a
   // slot in it. Only Hannah gets in: the password is what she always says, "one more chapter". The
-  // two of them become real friends. He reviews books by taste, one licked page each, in bites out
-  // of five (real Sarah J. Maas titles, named and never quoted), and talking to her plays their
+  // two of them become real friends. She reads fantasy for fun, but in here they read the classics:
+  // one licked page each, a review by taste in bites out of five, and then a real talk about the book
+  // (titles named and themes discussed, never quoted). Talking to her plays their smaller
   // conversations (CLUB_CHATS). Flags: clubMet, clubDone, clubChat, clubHi.
   // State: s.bookClub ({ book id: bites }).
   const GL = 'Globglogabgalab', BITES = ['NO BITES', 'ONE BITE', 'TWO BITES', 'THREE BITES', 'FOUR BITES', 'FIVE BITES'];
   G.CLUB_BOOKS = [
-    { id: 'acotar', title: 'A Court of Thorns and Roses', short: 'Thorns and Roses', bites: 4, lines: [[GL, 'Mm. Thorns up front. Roses on the finish. And then something grabs you by the throat around the middle.'], [GL, 'It\'s a first book, dear. It has room to grow.']], after: [['Hannah', 'FOUR? That\'s... actually, that\'s fair.']] },
-    { id: 'acomaf', title: 'A Court of Mist and Fury', short: 'Mist and Fury', bites: 5, lines: [[null, 'He stops dancing, for the first time anybody has ever seen.'], [GL, 'Oh.'], [GL, 'OH.'], [GL, 'Hannah. This is the finest page I have ever tasted.']], after: [['Hannah', 'I KNOW.'], ['Nate', 'Is it really that good?'], ['Hannah', 'Nate. I have read it five times.'], [GL, 'I shall read it a sixth. On her behalf.']] },
-    { id: 'tog', title: 'Throne of Glass', short: 'Throne of Glass', bites: 3, lines: [[GL, 'Crunchy. Little sharp bits all through it. Wonderful for the gums.'], [GL, 'It wants to be taken seriously. I respect that in a meal.']], after: [['Hannah', 'Three?! Wait until you get to the second one.'], [GL, 'Is it better?'], ['Hannah', 'I\'m not telling you anything.']] },
-    { id: 'com', title: 'Crown of Midnight', short: 'Crown of Midnight', bites: 5, lines: [[GL, 'Ah.'], [GL, 'You were right. I hate that. Dark. Rich. It has been aged in something.']], after: [['Hannah', 'I TOLD you.']] },
-    { id: 'cc', title: 'Crescent City', short: 'Crescent City', bites: 4, lines: [[GL, 'This is a very large book. Modern flavors. Tastes like a city at night.'], [GL, 'I shall need a second stomach.']], after: [['Nate', 'Do you have a second stomach?'], [GL, 'I don\'t know. Do I have a spine?']] },
-    { id: 'wings', title: 'A Court of Wings and Ruin', short: 'Wings and Ruin', bites: 4, lines: [[GL, 'Feathery. Goes down slow. There is so MUCH of it, and I did not want it to stop.']], after: [['Hannah', 'That\'s the whole reason I\'ve read it four times.']] },
-    { id: 'rocks', title: 'Nate\'s mineralogy textbook', short: 'Nate\'s textbook', bites: 1, nate: true, lines: [['Nate', 'Can I bring one? I brought one.'], [null, 'Hannah looks at the cover. She hands it over without a word.'], [GL, 'Dry. Extremely dry. Hard to chew, and it\'s very sure of itself.'], [GL, 'There is a chapter on feldspar. There is a SECOND chapter on feldspar.']], after: [['Nate', 'It\'s a classic.'], ['Hannah', 'Nate, honey. No.']] },
+    { id: 'oldman', title: 'The Old Man and the Sea', short: 'Old Man and the Sea', bites: 4,
+      lines: [[GL, 'Salt. Clean. Not one wasted word. I barely had to chew.']],
+      after: [
+        ['Hannah', 'I read this one on my breaks. Eighty-four days with nothing, and then he does everything right. He catches the fish of his life.'],
+        [GL, 'And the sharks take it, a piece at a time, all the way home.'],
+        ['Hannah', 'He comes back with bones. All that, and he comes back with bones.'],
+        [GL, 'Then tell me why we love him.'],
+        ['Hannah', 'Because in the morning he\'s going back out.'],
+        ['Hannah', 'Some nights at work are like that. You do everything right, and it still isn\'t up to you. And the next night you go back in, because somebody has to be there.'],
+        [GL, '...There is a boy in that book, you know. He waits on the shore. He brings the old man coffee.'],
+        ['Hannah', 'I know.'],
+        [GL, 'I only mean that nobody goes out alone, in the end.'],
+        ['Hannah', '...Thanks, Glob.'],
+        ['Nate', 'What kind of sharks?'],
+        ['Hannah', 'Not now, Nate.'],
+      ] },
+    { id: 'wp', title: 'War and Peace', short: 'War and Peace', bites: 5,
+      lines: [[GL, 'Twelve hundred pages. Roughly forty meals. It tastes like snow, and old money, and being very young.']],
+      after: [
+        ['Hannah', 'It took me a year of night shifts. You know what stayed with me? The prince, flat on his back on the battlefield.'],
+        [GL, 'All his plans. All his glory. And he looks up at the sky.'],
+        ['Hannah', 'And none of it matters anymore. Napoleon himself stops and stands over him, and he doesn\'t even care.'],
+        [GL, 'Tolstoy takes a thousand pages to tell us that history isn\'t made by the Napoleons.'],
+        ['Hannah', 'It\'s made by a million people who have no idea they\'re making it. Somebody getting up. Somebody doing the next small thing.'],
+        [GL, 'At three o\'clock in the morning, perhaps.'],
+        ['Hannah', '...Perhaps.'],
+        [GL, 'I think you are in that book, dear. Somewhere around page nine hundred, carrying something down a hallway.'],
+      ] },
+    { id: 'odyssey', title: 'The Odyssey', short: 'The Odyssey', bites: 5,
+      lines: [[GL, 'Very old. Honey and salt water. It has been chewed by a great many people before me, and it\'s better for it.']],
+      after: [
+        ['Hannah', 'Twenty years he\'s gone. He comes home in disguise, and nobody knows him. Not one person.'],
+        [GL, 'Except the dog.'],
+        ['Hannah', 'Don\'t.'],
+        [GL, 'Old Argos, lying by the gate.'],
+        ['Hannah', 'I read that in a supply closet, Glob. I had to stand in there for ten minutes.'],
+        [GL, 'All those monsters, all that sea, and the whole poem is a man trying to get back to his own front door.'],
+        ['Hannah', 'That\'s everybody on my unit. Every family on that floor is on the same trip. All they want is to go home.'],
+        [GL, 'And what does that make you?'],
+        ['Hannah', 'On a good night? The one who knows the way.'],
+        [GL, 'The goddess at his shoulder, then. In scrubs.'],
+        ['Hannah', 'I\'ll take it.'],
+      ] },
+    { id: 'moby', title: 'Moby-Dick', short: 'Moby-Dick', bites: 3,
+      lines: [[GL, 'Enormous. Oily. There are a hundred pages in here about rope, and I ate every one, and I want you to know that.']],
+      after: [
+        ['Hannah', 'You know what gets me? The whale doesn\'t know. Ahab gives up his ship, his crew, his whole life, to hate something that never once thought about him.'],
+        [GL, 'It is very tiring, being somebody\'s whale.'],
+        ['Hannah', 'Michelle doesn\'t hate you.'],
+        [GL, 'She bangs on the ceiling.'],
+        ['Hannah', '...Okay, Michelle hates you.'],
+        ['Nate', 'I know a guy who\'s like that about a tooth.'],
+        [GL, 'And who lives, at the end? Not the captain. The one who made a friend. He floats home on the coffin that his friend had built.'],
+        ['Hannah', 'So the whole book is the world\'s biggest whale, and what saves you is having somebody.'],
+        [GL, 'It took him a hundred pages of rope to say so. But yes.'],
+      ] },
+    { id: 'quixote', title: 'Don Quixote', short: 'Don Quixote', bites: 4,
+      lines: [[GL, 'Dry, with a very good finish. A man reads so many books about knights that he loses his mind and goes out to become one.']],
+      after: [
+        ['Hannah', '...I have no comment.'],
+        [GL, 'He sets off down a long road with his loyal companions, to defend the honor of something everybody else can see is a ditch.'],
+        ['Nate', 'Hey.'],
+        ['Hannah', 'Nate. It IS a ditch.'],
+        ['Nate', 'It\'s the Number ONE ditch.'],
+        [GL, 'Exactly what he would say.'],
+        ['Hannah', 'Everybody laughs at him. But have you noticed? He treats every innkeeper and farm girl he meets like a lord or a lady. And some of them start to act like it.'],
+        [GL, 'Who is the madder, dear: the man who sees a giant where there\'s a windmill, or the man who has only ever seen windmills?'],
+        ['Hannah', 'I\'ve watched a grown man cry because a baby gained one ounce. It\'s just an ounce. It is not just an ounce.'],
+        [GL, 'No. It never is.'],
+      ] },
+    { id: 'crime', title: 'Crime and Punishment', short: 'Crime and Punishment', bites: 2,
+      lines: [[GL, 'Heavy. It has been sitting on my stomach for a week.'], ['Hannah', 'It\'s supposed to.']],
+      after: [
+        [GL, 'He tells himself he is above it all. An extraordinary person. That the rules are for other people.'],
+        ['Hannah', 'And then he can\'t eat. He can\'t sleep. Nobody\'s even after him yet.'],
+        [GL, 'It isn\'t the crime that undoes him, is it? It\'s being alone with it.'],
+        ['Hannah', 'That\'s why it matters that she goes with him. All the way to Siberia. She doesn\'t tell him it was fine. She just doesn\'t leave.'],
+        [GL, '...I ate that woman\'s devotionals, Hannah.'],
+        ['Hannah', 'I know you did.'],
+        [GL, 'I hear her up there. Watering things. I think about the seed catalogs.'],
+        ['Hannah', 'Have you ever told Michelle you\'re sorry?'],
+        [GL, 'I wrote an apology. I ate it.'],
+        ['Hannah', 'Write another one. I\'ll sit with you.'],
+      ] },
+    { id: 'frank', title: 'Frankenstein', short: 'Frankenstein', bites: 0, noLick: true,
+      lines: [[null, 'Hannah holds it out. He looks at it for a long time. He doesn\'t lick it.'], [GL, 'I would rather not eat this one.']],
+      after: [
+        ['Hannah', 'You\'ve gone quiet.'],
+        [GL, 'There is a creature in this book. He lives in a shed, against the wall of a family\'s house. He watches them through a crack. He teaches himself to read from books he finds.'],
+        [GL, 'He loves them. They have no idea he\'s there.'],
+        ['Hannah', 'Glob.'],
+        [GL, 'And one day he works up his courage, and he knocks on the door. And they scream.'],
+        [null, 'For the first time since anybody has known him, he isn\'t dancing.'],
+        [GL, 'I have been in these walls for some time, dear. I know what this family sounds like at Christmas.'],
+        ['Hannah', 'You know what the real tragedy of that book is? The doctor spends the whole thing running away. All he ever had to do was say hello.'],
+        [GL, 'You asked me what I was reading.'],
+        ['Hannah', 'I did.'],
+        [GL, 'Through the slot, that first day. Nobody had ever asked.'],
+        ['Hannah', 'Well. I\'m asking every month now. That\'s the bylaws.'],
+        [null, 'After a moment, very slowly, he starts to dance again.'],
+      ] },
+    { id: 'rocks', title: 'Nate\'s mineralogy textbook', short: 'Nate\'s textbook', bites: 1, nate: true,
+      lines: [['Nate', 'Can I bring one? I brought one.'], [null, 'Hannah looks at the cover. She hands it over without a word.'], [GL, 'Dry. Extremely dry. There is a chapter on feldspar. There is a SECOND chapter on feldspar.']],
+      after: [
+        ['Nate', 'It\'s a classic.'],
+        ['Hannah', 'Nate, honey. No.'],
+        ['Nate', 'Just read the part I marked.'],
+        [null, 'She reads it out loud. Every rock used to be some other rock. Everything anybody has ever stood on has been melted, crushed and worn away, and made into something else, and it\'s still here.'],
+        [null, 'Nobody says anything for a while.'],
+        [GL, '...Little bookmark.'],
+        ['Hannah', 'Nate. That\'s actually beautiful.'],
+        ['Nate', 'So am I in the book club?'],
+        ['Hannah', 'No.'],
+        [GL, 'No.'],
+      ] },
   ];
   const clubState = () => (G.state.bookClub = G.state.bookClub || {});
   // the two of them, talking about books (Nate is there too)
   const CLUB_CHATS = [
-    [['Hannah', 'Be honest. Have you ever actually cried at a book?'], [GL, 'My dear, I weep at the binding alone.'], ['Hannah', 'I cried in the NICU break room. At four in the morning. Over a man who doesn\'t exist.'], [GL, 'As one does.']],
+    [['Hannah', 'Be honest. Have you ever actually cried at a book?'], [GL, 'My dear, I weep at the binding alone.'], ['Hannah', 'I cried in the NICU break room. At four in the morning. Over an old man and a fish.'], [GL, 'As one does.']],
     [[GL, 'Who is your favorite?'], ['Hannah', 'You can\'t ask me that. You can\'t just ASK me that.'], [GL, 'I shall tell you mine if you tell me yours.'], ['Hannah', 'On three.'], [null, 'They both say it at the same time. They both gasp.'], ['Hannah', 'I KNEW you were a good person.'], [GL, 'I am a worm, dear. But thank you.']],
     [['Hannah', 'Abe asked me what this one was about, and I talked for forty minutes.'], [GL, 'Did he listen?'], ['Hannah', 'He fell asleep with his eyes open. He\'s very good at it.'], [GL, 'I would have listened.'], ['Hannah', 'I know you would, Glob.']],
     [[GL, 'I have been meaning to tell you. The seed catalogs upstairs have a remarkable plot.'], ['Hannah', 'You read Michelle\'s seed catalogs?'], [GL, 'Will she order the heirloom tomatoes, Hannah? WILL she?'], ['Hannah', '...Did she?'], [GL, 'I can\'t say. I ate the ending.']],
@@ -20893,9 +21002,10 @@
     yield G.say('Hannah', 'Nobody in this family will talk to me about books. Nate reads about ROCKS.');
     yield G.say('Nate', 'Hey.');
     yield G.say(GL, 'Nobody in this family will talk to ME about books. They only scream.');
-    yield G.say('Hannah', 'Have you read Sarah J. Maas?');
+    yield G.say('Hannah', 'I\'ve read every fantasy novel I can get my hands on. I want to read the big ones now. The ones everybody says they\'ve read.');
+    yield G.say('Hannah', 'Have you actually read War and Peace?');
     yield G.say(GL, 'Have I READ... Dear lady. I have read EVERYTHING. I have read it, and then I have eaten it. Sometimes in the other order.');
-    yield G.say('Hannah', 'Okay. A book club. You and me. One rule: you lick ONE page. You do not eat my copies. I will know.');
+    yield G.say('Hannah', 'Okay. A book club. You and me. The classics. One rule: you lick ONE page. You do not eat my copies. I will know.');
     yield G.say(GL, '...A book club. I have waited my entire life for somebody to say those words.');
     yield G.say('Hannah', 'Can I call you Glob? I can\'t say the whole thing.');
     yield G.say(GL, 'Nobody has ever called me anything but AAAAAH.');
@@ -20916,22 +21026,25 @@
     for (const [who, line] of CLUB_CHATS[k]) yield G.say(who, line);
   };
   S.bookClub = function* () {
-    const f = flags(), s = G.state, Club = clubState(), left = G.CLUB_BOOKS.filter((b) => !Club[b.id]);
+    const f = flags(), s = G.state, Club = clubState(), left = G.CLUB_BOOKS.filter((b) => Club[b.id] == null);
     if (!left.length) {
       f.clubLine = ((f.clubLine || 0) + 1) % 3;
-      yield G.say(GL, ['Same time next month. Tell her to bring the sequel.', 'I still think about Mist and Fury. I think about it during the day.', 'Your feldspar chapters have given me indigestion, little bookmark.'][f.clubLine]);
+      yield G.say(GL, ['Same time next month. She is bringing Anna Karenina. I have been warned.', 'I still think about the old man. I think about him during the day.', 'I think about your feldspar chapters, little bookmark. I do not want to. But I do.'][f.clubLine]);
       return;
     }
     const first = left.filter((b) => !b.nate).slice(0, 3).concat(left.length === 1 ? left : []);
     const c = yield G.ask('Hannah', 'What are we reading, Glob?', first.map((b) => b.short).concat(['Not today']));
     if (c >= first.length) { yield G.say(GL, 'I shall be here. I am always here.'); return; }
-    const b = first[c];
-    if (!b.nate) yield G.say(null, 'Hannah opens ' + b.title + ' to the first page and holds it out. He licks it. Once.');
+    const b = first[c], glob = G.play.world.ents.find((e) => e.name === GL);
+    // (Frankenstein: the one book that stops him dancing)
+    if (b.noLick && glob) glob.still = true;
+    if (!b.nate && !b.noLick) yield G.say(null, 'Hannah opens ' + b.title + ' to the first page and holds it out. He licks it. Once.');
     for (const [who, line] of b.lines) yield G.say(who, line);
     G.audio.sfx('secret');
-    yield G.bigText(BITES[b.bites], 70, b.bites >= 5 ? '#f8d850' : b.bites >= 3 ? '#78e070' : '#f86858');
+    yield G.bigText(BITES[b.bites], 70, !b.bites ? '#c898ff' : b.bites >= 5 ? '#f8d850' : b.bites >= 3 ? '#78e070' : '#f86858');
     Club[b.id] = b.bites;
     for (const [who, line] of b.after || []) yield G.say(who, line);
+    if (glob) glob.still = false;
     if (Object.keys(Club).length >= G.CLUB_BOOKS.length) yield* S.clubDone();
     G.play.autosave();
   };
@@ -20941,6 +21054,7 @@
     yield G.wait(20);
     yield G.say(GL, 'That is the whole stack. This has been the finest year of my life.');
     yield G.say('Hannah', 'Best book club I\'ve ever been in, Glob. You\'re the only one who has ever finished the book.');
+    yield G.say(GL, 'I have eaten a great many books, dear. I don\'t think I had ever read one until you asked me what it meant.');
     yield G.say(GL, 'And you are the only one who has ever opened that door.');
     yield G.say(GL, 'For the little bookmark, a bookmark. For carrying her bag. I have been saving it. Mostly.');
     s.items.globBookmark = true;
@@ -20983,7 +21097,7 @@
       // the Globglogabgalab, who is always dancing, a little
       const glob = w.add(new G.NPC({ sprite: null, name: GL, x: 10 * 16, y: 7 * 16 + 14, dir: 'down', talk: S.bookClub }));
       glob.hb = { w: 24, h: 8 };
-      glob.draw = function (ctx, cx, cy) { const img = G.spr.globglog[(G.tick >> 4) % 3]; ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy); };
+      glob.draw = function (ctx, cx, cy) { const img = G.spr.globglog[this.still ? 1 : (G.tick >> 4) % 3]; ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy); };
       w.addWarp(7, 10, 1, 1, 'basement', 10, 3, 'down');
     },
   };
