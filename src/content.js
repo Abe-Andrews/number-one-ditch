@@ -151,7 +151,12 @@
       skin: '#e0aa80', hair: '#3a2418', hairStyle: 'cap', hat: '#ffffff', hatStyle: 'ball', smile: '#ffffff',
       shirt: '#f8f8f8', pants: '#5878b8', shoes: '#303030', torso: 7, legs: 3,
     },
-    maya: { skin: '#d8a078', hair: '#2a1a14', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 },
+    // Jack Braun, Nate's roommate (from the user's photo in Refe Photos/Lafayette People): swept,
+    // tousled honey-blond hair, a light blue polo and navy shorts. (He used to be "Maya".)
+    jack: {
+      skin: '#f2c8a8', hair: '#b08848', hairStyle: 'swoop', eyes: '#3a4a58',
+      shirt: '#6a9ad4', collar: '#8ab4e4', pants: '#2a3460', shoes: '#f0f0f0', shorts: true, torso: 6, legs: 3,
+    },
     // Bismarck, Nate's real friend (from the user's photo in Refe Photos/Lafayette People):
     // shoulder-length black twists, a short goatee, a big grin, and an aqua tee with a little orange
     // logo on the chest. (He used to be "Jordan"; same lines.)
@@ -1241,10 +1246,23 @@
     f.profTalk = true;
   };
 
-  S.maya = function* () {
-    yield G.say('Maya', 'My cousin in Virginia goes shark tooth hunting every weekend.');
-    yield G.say('Maya', 'She says there\'s a guy on the beach named {c}Tyler{/} who screams about mosasaurs.');
-    yield G.say('Maya', 'Apparently he\'s... VERY intense.');
+  // Jack Braun, Nate's roommate, outside the dorm. Nate can't stand him. However a talk starts, it
+  // ends with the same question. (He kept Maya's cousin and her Tyler hint.)
+  const JACK = 'Jack Braun', JACK_TALK = [
+    [[JACK, 'Nate. My guy. Heading out?']],
+    [[JACK, 'My cousin in Virginia goes shark tooth hunting every weekend. She says there\'s a guy on the beach named {c}Tyler{/} who screams about mosasaurs.'], [JACK, 'Anyway.']],
+    [[JACK, 'No reason. I just like to know these things.']],
+    [['Nate', 'Jack, I\'m walking to class.'], [JACK, 'Totally. Totally.']],
+    [[JACK, 'If you could text me ten minutes before you come up, that would be huge.'], ['Nate', 'It\'s my room too.'], [JACK, 'Totally.']],
+  ];
+  S.jack = function* () {
+    const f = flags(), n = f.jackTalk || 0;
+    f.jackTalk = n + 1;
+    for (const [who, line] of JACK_TALK[n % JACK_TALK.length]) yield G.say(who, line);
+    const c = yield G.ask(JACK, 'What time will you be back?', ['Late', 'Soon', 'I live here, Jack']);
+    if (c === 0) yield G.say(JACK, 'Late. Perfect. Take your time.');
+    else if (c === 1) { yield G.say(JACK, '...How soon is soon?'); yield G.say(JACK, 'Could it be less soon?'); }
+    else yield G.say(JACK, 'Totally. So what time?');
   };
 
   S.bismarck = function* () {
@@ -1671,7 +1689,7 @@
     'Big Earl': { lines: [['', 'Wrestling\'s fake.'], ['n', 'The pyro is real.'], ['', 'Still no.']] },
     'Prof. Sunderlin': { lines: [['', 'I\'d rather watch sediment settle. And I do. Often.']] },
     'Prof. Carley': { lines: [['', 'I would, but I\'m buried in New Zealand trip paperwork.'], ['', 'Have you sent in your passport info yet, Nate?']] },
-    'Maya': { lines: [['', 'I have a thing tonight.'], ['', '...The thing is not going to wrestling.']] },
+    'Jack Braun': { lines: [['', 'Wrestling? No. But YOU should go.'], ['', 'Stay for the whole thing. What time will you be back?']] },
     'Bismarck': { lines: [['', 'Is that the show with the guy who yells about English? Hard pass.']] },
     'Vendor': { lines: [['', 'And leave my Doosh unattended? Never.']] },
     'Dr. Nataro': { lines: [['', 'I have 200 finals to grade. Nobody got the last question right. Again.']] },
@@ -4991,7 +5009,7 @@
         w.add(new G.NPC(Object.assign({ sprite, name, x: tx * 16 + 8, y: ty * 16 + 14, talk }, o)));
       npc('ben', 'Ben', 9, 10, S.ben);
       npc('prof', 'Prof. Sunderlin', 30, 10, S.prof, { wander: 20 });
-      npc('maya', 'Maya', 15, 18, S.maya, { dir: 'left' });
+      npc('jack', 'Jack Braun', 4, 8, S.jack, { dir: 'right' });
       npc('bismarck', 'Bismarck', 23, 9, S.bismarck, { wander: 16 });
       npc('vendor', 'Vendor', 24, 15, S.vendor, { dir: 'left' });
 
