@@ -368,6 +368,10 @@
       kind: 'key', name: 'Abe\'s Metronome', short: 'Metronome', icon: () => G.spr.metronomeIcon, has: () => !!st().items.metronome,
       desc: 'A little wooden metronome from Abe, for keeping time in Studio B at the Williams Center. "Not your foot. Your foot lies."',
     },
+    rushTrophy: {
+      kind: 'key', name: 'Boss Rush Trophy', short: 'Trophy', icon: () => G.spr.rushTrophy, has: () => !!st().items.rushTrophy,
+      desc: () => 'Every boss, back to back, without fainting once. ' + (st().rushTime ? 'Best time: ' + G.rushClock(st().rushTime) + '. ' : '') + 'The engraving says NUMBER ONE. Doron says it\'s a participation trophy.',
+    },
     bmf: {
       kind: 'key', name: 'BMF Belt', short: 'BMF Belt', icon: () => G.spr.bmfIcon, has: () => !!st().items.bmf,
       desc: 'Nani held it until Doron took it off her in the Expo Hall locker room. He is not allowed to say what the letters stand for at Nani\'s house.',
@@ -511,7 +515,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'mosasaurTooth', 'globBookmark', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'rushTrophy', 'mosasaurTooth', 'globBookmark', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -3102,6 +3106,8 @@
     yield G.banner('POSTGAME CLEAR!', 'thank you for playing', 220);
     yield G.walkTo(m, 20 * 16 + 8, 5 * 16 + 14, 1);
     m.dead = true;
+    G.audio.sfx('bell');
+    yield G.say(null, 'A new page just opened up in the menu: {y}BOSS RUSH{/}. Every boss, back to back. Good luck.');
     G.play.autosave();
   };
 
@@ -3725,6 +3731,7 @@
     { name: 'The Ditch by day', map: 'ditchDay', at: [7, 12, 'down'], flags: { photoDone: true, dayIntro: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [41, 21, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
     { name: 'Mom\'s garden: Not My Dahlias', map: 'home', at: [35, 27, 'up'], flags: { shopOpen: true, momHeart: true }, items: { chicken: true, andoverKey: true, eggs: 40 } },
+    { name: 'Boss Rush (in the menu)', map: 'homeDown', at: [20, 15, 'up'], flags: { fcAwake: true, fcBeaten: true, fcMet: true } },
   ];
   // Places the admin menu can warp to (with whatever the story state is).
   G.ADMIN_PLACES = [
@@ -13769,7 +13776,7 @@
         if (!f.globMet && G.state.items.bait) w.glob.hidden = true;
       }
       // the little door to the Globglogabgalab's own library: only Hannah gets through it (S.clubDoor)
-      w.addProp({ img: sp.clubDoor, tx: 10, ty: 1, flat: true, dy: 2, hit: [10, 2, 1, 1], talk: S.clubDoor });
+      w.addProp({ img: sp.clubDoor, tx: 10, ty: 1, h: 2, dx: -6, dy: 2, flat: true, hit: [10, 2, 1, 1], talk: S.clubDoor });
     },
     onEnter() { return (function* () { if (!flags().globBeaten) yield* S.globIntro(); })(); },
   };
@@ -16676,6 +16683,7 @@
   // (two hearts back, then she needs about 20 seconds before she can do it again).
   G.hannahTick = () => {
     const s = G.state, pl = G.play;
+    if (s.rush) return;
     if (pl.healCd > 0) { pl.healCd--; return; }
     if (!(G.with('hannah') || (pl.world && pl.world.def.hannahHeals)) || s.hp > 4 || s.hp <= 0 || s.hp >= s.maxHp || pl.dying) return;
     pl.healCd = 1200;
@@ -19201,11 +19209,13 @@
     boss.cracks = Math.min(3, boss.cracks + 1);
     w.burst(boss.x, boss.y - 30, ['#f2ead6', '#d4c8ac', '#ffffff', '#f8e070'], 24, { speed: 2.2, up: 1.4, g: 0.1, life: 30, size: 2 });
     yield G.wait(30);
-    const last = boss.turnHits + 1 >= boss.td.need;
+    const last = boss.turnHits + 1 >= boss.need;
     if (!last) {
-      yield G.say(null, 'CRACK!');
-      yield G.say('Lily', 'NICE CRACK!');
-      yield G.say('Father Eggmas', 'STOP. CRACKING. ME.');
+      if (!G.state.rush) {
+        yield G.say(null, 'CRACK!');
+        yield G.say('Lily', 'NICE CRACK!');
+        yield G.say('Father Eggmas', 'STOP. CRACKING. ME.');
+      }
       boss.state = 'fight'; boss.targetH = boss.td.h;
     }
     boss.relayHit('crack');
@@ -21646,6 +21656,283 @@
       yield G.say('Michelle', 'And if you ever can\'t sleep, I\'ll be out there. There\'s always another night.');
     }
     G.play.autosave();
+  };
+
+  // ================================================================ BOSS RUSH
+  // A page in the pause menu, once Father Christmas is beaten: every boss in the game, back to back,
+  // in their own arenas. The run plays on a copy of the save (G.state.rush keeps the real one), so
+  // nothing that happens here touches the story: G.writeSave leaves it alone, and the flags each fight
+  // flips only change the copy. Bosses have more health (RUSH_HP, or a fight's own hp), hearts don't
+  // drop, and Hannah can't patch anyone up. Between fights the player takes a little healing or an
+  // item (rushRest). Faint once and the run is over (G.rushEnd). Each boss's usual ending, hints and
+  // phase scenes are swapped out at the bottom of this section. The prize, the first time: the trophy.
+  // State (on the real save): s.rushBest, s.rushWins, s.rushTime. On the copy: s.rush.
+  const RUSH_HP = 1.5, RUSH_HEAL = 4;
+  const famFight = (id, k) => ({
+    name: id === 'romulus' ? 'ROMULUS' : G.POSSESSED[id].name, map: 'ditchFinal', at: [7, 14, 'up'], song: 'possessed',
+    x: id === 'romulus' ? 'bidet' : null, hp: id === 'romulus' ? 1 : RUSH_HP, flags: { fin_done: false, fin_intro: true, fin_freed: k },
+    start(w) {
+      finFam(w)[id].dead = true;
+      const b = w.finBoss = w.add(id === 'romulus' ? new G.PossessedRomulus(MID, 10 * 16, FIN_BOUNDS) : new G.Possessed(id, MID, 10 * 16, FIN_BOUNDS));
+      b.start();
+      return b;
+    },
+  });
+  // (in story order. x: what has to be on X for this one. hp: the ones that already take a lot of hits get less extra.)
+  const RUSH = G.RUSH = [
+    { name: 'MIKEY', as: 'lily', map: 'goldenHour', at: [3, 5, 'right'], flags: { mikeyBeaten: false }, start: (w) => w.ents.find((e) => e instanceof G.MikeyBoss) },
+    { name: 'EL EEENGLISH', map: 'ring', at: [4, 5, 'right'], flags: { dadBeaten: false }, start: (w) => w.ents.find((e) => e instanceof G.ElEnglish) },
+    { name: 'THE GLOBGLOGABGALAB', map: 'basement', at: [15, 9, 'left'], flags: { globBeaten: false, globMet: true }, start(w) { w.glob.noBar = false; w.glob.hidden = false; return w.glob; } },
+    { name: 'ICE JJ FISH', map: 'north', at: [10, 13, 'up'], hp: 1.25, flags: { jjBeaten: false, jjGig: true }, start: (w) => w.jj },
+    { name: 'OLD IRON', map: 'andoverVault', at: [28, 17, 'left'], song: 'boss', hp: 1.25, flags: { mine_ironBeaten: false },
+      start(w) {
+        w.ironFight = true;
+        w.blockTiles(28, 13, 2, 2);
+        w.rubble = w.addProp({ img: G.spr.bigMine, tx: 28, ty: 13, dx: -2, dy: 0, h: 2 });
+        w.iron.state = 'walk'; w.iron.t = 80;
+        return w.iron;
+      } },
+    { name: 'THE TWO-LITER', map: 'chesTunnel', at: [8, 14, 'up'], song: 'boss', flags: { popBeaten: false },
+      start(w) {
+        w.popFight = true;
+        w.blockTiles(5, 24, 6, 1);
+        const b = w.pop2l = w.add(new G.TwoLiter(8 * 16, 9 * 16 + 14, [5 * 16 + 18, 5 * 16, 11 * 16 - 18, 21 * 16]));
+        b.arenaBottom = 24 * 16;
+        w.add(new G.SlamZone(b));
+        w.camLean = (q) => (b.state === 'defeated' ? 0 : G.clamp(q.y - b.y - 8, 0, 28));
+        return b;
+      } },
+    { name: 'TYLER', map: 'cbbtTunnel', at: [8, 10, 'up'], song: 'tyler', x: 'rod', hp: 1.25, flags: { tylerBeaten: false, tollPaid: true },
+      start(w) {
+        const h = w.hooded;
+        h.dead = true;
+        w.unblockTiles(5, 4, 6, 1);
+        w.blockTiles(5, 1, 6, 1); w.blockTiles(5, 22, 6, 1);
+        w.tylerFight = true;
+        return (w.tyler = w.add(new G.TylerBoss(h.x, h.y)));
+      } },
+    { name: 'ROMULUS', map: 'golf', at: [24, 16, 'right'], song: 'boss', x: 'bidet', hp: 1, flags: { romulusBeaten: false },
+      start(w) { const r = w.romulus; w.romFight = true; r.pose = null; r.state = 'roam'; r.st = 90; return r; } },
+    { name: 'MECHA-BABY', map: 'chkdNicu', at: [7, 9, 'up'], song: 'mecha', hp: 1.25, flags: { mobileBeaten: false },
+      start(w) { const m = w.mech; m.hidden = false; m.face = -1; m.x = 8 * 16; m.y = 7 * 16 + 8; m.start(); return m; } },
+    ...FIN_ORDER.map(famFight),
+    // (only Nate's turn from the relay, but with more cracks to land and his shell already split)
+    { name: 'FATHER EGGMAS', map: 'ditchFinal', at: [7, 13, 'up'], song: 'eggmas', x: 'pipe', hp: 1, flags: { fin_done: false, fin_intro: true, fin_freed: FIN_ORDER.length },
+      start(w) { const b = w.eggmas; b.cracks = 1; b.extraNeed = 2; b.beginTurn('nate'); b.hp = b.maxHp = b.need; return b; } },
+    { name: 'FATHER CHRISTMAS', map: 'andoverDeep', at: [11, 11, 'up'], song: 'fc', hp: 1.25, flags: { fcAwake: true, fcBeaten: false, fcMet: true },
+      start(w) {
+        w.fcBox.still = true;
+        w.fcFight = true;
+        return (w.fc = w.add(new G.FatherChristmas(w.fcBox.x + 9, 6 * 16 + 4, FC_BOUNDS)));
+      } },
+  ];
+  const rushClock = (frames) => { const t = Math.floor(frames / 60), m = Math.floor(t / 60); return G.sayable(m) + 'm ' + G.sayable(t % 60) + 's'; };
+  G.rushClock = rushClock;
+  G.rushOk = () => !G.state.playAs && !G.state.night && !G.flashback && !G.play.bossFight();
+
+  // what the rests offer: healing right now, or something for later
+  const rushItem = (name, desc, icon, id, n, x) => ({ name, desc, icon, take(s) { s.items[id] = (s.items[id] || 0) + n; s.xItem = x || id; } });
+  const RUSH_PICKS = {
+    heal: { name: 'Catch Your Breath', desc: 'Two hearts back, right now.', icon: () => G.spr.heart.full, take(s) { s.hp = Math.min(s.maxHp, s.hp + RUSH_HEAL); } },
+    firstAid: rushItem('First-Aid Kit', 'One patch-up for later: 3 hearts.', () => G.spr.firstAidIcon, 'firstAid', 1),
+    doosh: rushItem('Doosh De Luche', 'One for later: 4 hearts.', () => G.spr.doosh, 'doosh', 1),
+    tacoBag: rushItem('Fourthmeal', 'One for later: every heart back.', () => G.spr.tacoBag, 'tacoBag', 1),
+    package: rushItem('Booby-Trapped Packages', 'Three more. They stun most bosses.', () => G.spr.gift, 'package', 3),
+    eggs: rushItem('A Dozen Eggs', 'Henrietta fires them from X.', () => G.spr.chickens.white.right[0], 'eggs', 12, 'chicken'),
+    heart: { name: 'Heart Container', desc: 'One more heart, for the rest of the run.', icon: () => G.spr.heart.full, take(s) { s.maxHp += 2; s.hp += 2; } },
+  };
+  function rushOffers(r) {
+    const any = (list) => list[Math.floor(Math.random() * list.length)];
+    const later = r.i >= RUSH.length / 2 && !r.ateTaco ? ['firstAid', 'doosh', 'tacoBag'] : ['firstAid', 'doosh'];
+    return ['heal', any(later), r.i % 5 ? any(['package', 'eggs']) : 'heart'];
+  }
+  // the rest between fights: pick one
+  function rushRest() {
+    const s = G.state, r = s.rush, ids = rushOffers(r), next = RUSH[r.i], FB = G.font, sh = { shadow: '#0c0814' };
+    return {
+      t: 0, sel: 0, leave: 0,
+      update() {
+        const inp = G.input;
+        this.t++;
+        if (this.leave) return --this.leave <= 0;
+        // (not right away: the fight's last button mash shouldn't pick anything)
+        if (this.t < 45) return false;
+        if (inp.hit('down')) { this.sel = (this.sel + 1) % 3; G.audio.sfx('menu'); }
+        if (inp.hit('up')) { this.sel = (this.sel + 2) % 3; G.audio.sfx('menu'); }
+        if (inp.hit('a')) {
+          inp.eat('a');
+          RUSH_PICKS[ids[this.sel]].take(s);
+          if (ids[this.sel] === 'tacoBag') r.ateTaco = true;
+          G.audio.sfx(this.sel ? 'select' : 'heart');
+          this.leave = 26;
+        }
+        return false;
+      },
+      draw(ctx) {
+        ctx.fillStyle = 'rgba(12,8,20,0.84)'; ctx.fillRect(0, 0, G.W, G.H);
+        G.hud.draw(ctx);
+        const head = 'BOSS ' + G.sayable(r.i) + ' OF ' + G.sayable(RUSH.length) + ' DOWN';
+        const hy = 8 + Math.ceil(s.maxHp / 20) * 8 + (s.admin ? 9 : 0);
+        FB.draw(ctx, head, Math.round((G.W - FB.width(head)) / 2), hy, '#f8d850', sh);
+        ids.forEach((id, i) => {
+          const pk = RUSH_PICKS[id], y = hy + 12 + i * 26, on = i === this.sel, ic = pk.icon();
+          G.box(ctx, 10, y, 220, 24, on ? { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' } : { bg: '#1a1428', border: '#5a5078', inner: '#262038' });
+          if (on && this.leave && (this.leave >> 2) & 1) return;
+          ctx.drawImage(ic, 24 - Math.floor(ic.width / 2), y + 12 - Math.floor(ic.height / 2));
+          FB.draw(ctx, pk.name, 40, y + 4, on ? '#f8d850' : '#f8f8f0', sh);
+          FB.draw(ctx, pk.desc, 40, y + 13, '#c8c0d8', sh);
+        });
+        const foot = 'Next: ' + next.name, fy = hy + 12 + 3 * 26 + 2;
+        FB.draw(ctx, foot, Math.round((G.W - FB.width(foot)) / 2), fy, '#f86858', sh);
+        const keys = 'Up/Down: pick   Z: take it';
+        if (this.t >= 45 && !this.leave) FB.draw(ctx, keys, Math.round((G.W - FB.width(keys)) / 2), fy + 11, '#9890a8', sh);
+      },
+    };
+  }
+
+  // the copy of the save the run plays on: everyone's real gear, nothing left in the pockets but three packages
+  function rushBegin() {
+    const home = G.state, s = JSON.parse(JSON.stringify(home)), f = s.flags;
+    s.rush = { home: JSON.stringify(home), i: 0, t0: s.playTime || 0, x: 'package' };
+    Object.assign(s, { playAs: null, follower: null, hp: s.maxHp, xItem: 'package' });
+    Object.assign(s.items, { hammer: true, pipe: true, rod: true, bidet: true, chicken: true, earplugs: true, bait: false, package: 3, eggs: 12, doosh: 0, tacoBag: 0, firstAid: 0, bidetWater: G.BIDET_MAX });
+    Object.assign(f, { doronDeal: true, hadDoosh: true, ateDoosh: true, ateTaco: true, tacoRunDone: true, kitGot: true, menuTaught: true, signal_crack: true });
+    Object.assign(f, { bossFinishHint: true, popRefillHint: true, tylerBlockHint: true, romSoakHint: true });
+    G.state = s;
+    G.toasts.clear();
+    Object.assign(G.play, { menu: null, dying: 0, healQ: 0, warping: false });
+  }
+  // what's left of the map around the fight: nobody to talk to, no doors out, nothing to pick up
+  function rushClean(w) {
+    w.triggers = [];
+    for (const pr of w.props) pr.talk = null;
+    const p = G.play.player, junk = [G.Pickup, G.Chest, G.Sign, G.OreVein, G.BigRock, G.CrackedWall, G.Seagull];
+    for (const e of w.ents) {
+      if (e === p || e.boss) continue;
+      if (e instanceof G.NPC || e instanceof G.Golfer) e.talk = null;
+      else if (e.enemy || junk.some((c) => c && e instanceof c)) e.dead = true;
+    }
+  }
+  S.rushStart = function* () {
+    const c = yield G.ask(null, 'Every boss, back to back. No saving, and if you faint the run is over. Ready?', ['Let\'s go', 'Not yet']);
+    if (c) return;
+    G.play.autosave();
+    G.audio.stop();
+    yield G.fadeOut(20);
+    rushBegin();
+    yield* S.rushNext();
+  };
+  S.rushNext = function* () {
+    const s = G.state, r = s.rush, fight = RUSH[r.i], k = fight.hp == null ? RUSH_HP : fight.hp;
+    Object.assign(s.flags, fight.flags);
+    s.playAs = fight.as || null;
+    r.x = s.xItem;
+    if (fight.x) s.xItem = fight.x;
+    if (fight.x === 'bidet') s.items.bidetWater = G.BIDET_MAX;
+    G.play.loadMap(fight.map, fight.at[0] * 16 + 8, fight.at[1] * 16 + 14, fight.at[2], true);
+    G.areaBanner.t = 0;
+    const w = G.play.world, b = w.rushBoss = fight.start(w);
+    rushClean(w);
+    if (k !== 1) b.hp = b.maxHp = Math.ceil(b.maxHp * k);
+    if (fight.song) G.audio.play(fight.song);
+    yield G.fadeIn(20);
+    yield G.banner(fight.name, 'Boss ' + G.sayable(r.i + 1) + ' of ' + G.sayable(RUSH.length), 110);
+  };
+  // a boss goes down: straight to the rest, and on to the next one
+  S.rushDown = function* (b) {
+    const s = G.state, r = s.rush, w = G.play.world, p = P(), fight = RUSH[r.i];
+    r.i++;
+    G.audio.stop();
+    G.pipe.stop();
+    G.play.spraying = false;
+    G.play.earworm = 0;
+    if (fight.x) s.xItem = r.x;
+    for (const e of w.ents) if (e !== p && e !== b && !(e instanceof G.NPC) && !(e instanceof G.Golfer)) e.dead = true;
+    G.audio.sfx('bell');
+    yield G.shakeCmd(30, 3);
+    for (let i = 0; i < 3; i++) { G.audio.sfx('poof'); w.burst(b.x, b.y - 24, ['#ffffff', '#f8d850', '#f86858'], 14, { speed: 1.8, up: 1, life: 26, size: 2 }); yield G.wait(14); }
+    b.dead = true;
+    yield G.wait(30);
+    if (r.i >= RUSH.length) { G.audio.sfx('fanfare'); G.rushEnd.enter(true); return; }
+    G.audio.play('house');
+    yield rushRest();
+    yield G.fadeOut(20);
+    yield* S.rushNext();
+  };
+  function* rushPhase(song, text, col) {
+    yield G.shakeCmd(16, 3);
+    if (text) yield G.bigText(text, 60, col);
+    G.audio.play(song);
+  }
+  // in a rush, every boss ends the same way, and nobody stops to explain anything
+  const inRush = (name, fn) => { const story = S[name]; S[name] = function (...a) { return G.state.rush ? fn(...a) : story.apply(this, a); }; };
+  for (const name of ['mikeyDefeated', 'dadDefeated', 'globDefeated', 'jjDefeated', 'oldIronDefeated', 'popDefeated', 'tylerDefeated', 'romulusBeaten', 'mechDefeated', 'finFreed', 'finTagOut', 'fcDefeated']) inRush(name, (b) => S.rushDown(b));
+  for (const name of ['finishHint', 'romulusHint', 'tylerBlockHint', 'popRefillHint']) inRush(name, function* () {});
+  inRush('tylerPhase', () => rushPhase('tyler2', 'THE MOSASAUR TOOTH!!!', '#ff6a5a'));
+  inRush('fcPhase', (b, ph) => rushPhase(ph === 2 ? 'fc2' : 'fc3', ph === 2 ? null : 'NAUGHTY LIST', '#f86858'));
+
+  // how it ended: the real save comes back, with the record on it
+  G.rushEnd = {
+    enter(won, quit) {
+      const cur = G.state, r = cur.rush, home = JSON.parse(r.home);
+      G.script.reset();
+      G.scene = this;
+      G.fade = 0;
+      Object.assign(this, { t: 0, sel: 0, won, quit, beaten: r.i, time: (cur.playTime || 0) - r.t0, foe: RUSH[Math.min(r.i, RUSH.length - 1)].name, who: cur.playAs === 'lily' ? 'Lily' : 'Nate', first: won && !home.items.rushTrophy });
+      home.playTime = cur.playTime;
+      home.rushBest = Math.max(home.rushBest || 0, r.i);
+      if (won) {
+        home.rushWins = (home.rushWins || 0) + 1;
+        home.rushTime = home.rushTime ? Math.min(home.rushTime, this.time) : this.time;
+        home.items.rushTrophy = true;
+      }
+      this.best = home.rushBest;
+      G.state = home;
+      G.writeSave();
+      G.audio.stop();
+      if (won) G.audio.play('credits');
+    },
+    update() {
+      this.t++;
+      if (this.t < 50) return;
+      const inp = G.input;
+      if (!this.won && (inp.hit('up') || inp.hit('down'))) { this.sel ^= 1; G.audio.sfx('menu'); }
+      if (!inp.hit('a') && !inp.hit('start')) return;
+      inp.eat('a'); inp.eat('start');
+      G.audio.sfx('select');
+      if (this.won || this.sel) { G.play.enter(false); return; }
+      rushBegin();
+      G.fade = 1;
+      G.scene = G.play;
+      G.script.run(S.rushNext());
+    },
+    draw(ctx) {
+      const FB = G.font, sh = { shadow: '#1c1424' }, mid = (t, y, c) => FB.draw(ctx, t, Math.round((G.W - FB.width(t)) / 2), y, c || '#f8f8f0', sh);
+      ctx.fillStyle = '#0c0814'; ctx.fillRect(0, 0, G.W, G.H);
+      const glow = ctx.createRadialGradient(120, 58, 4, 120, 58, 90);
+      glow.addColorStop(0, this.won ? 'rgba(200,150,40,0.4)' : 'rgba(120,30,50,0.45)'); glow.addColorStop(1, 'rgba(12,8,20,0)');
+      ctx.fillStyle = glow; ctx.fillRect(0, 0, G.W, G.H);
+      const n = G.sayable(RUSH.length), title = this.won ? 'BOSS RUSH CLEAR!' : this.quit ? 'Called it off' : this.who + ' fainted...';
+      if (this.won) ctx.drawImage(G.spr.rushTrophy, 96, 8, 48, 48);
+      FB.drawBig(ctx, title, Math.round((G.W - FB.bigWidth(title, 2)) / 2), this.won ? 62 : 34, 2, (r) => (this.won ? (r < 2 ? '#fff0a8' : r < 4 ? '#f8d850' : '#c89838') : r < 2 ? '#ffb0a8' : r < 4 ? '#f86858' : '#c83848'), '#1c1424');
+      if (this.won) {
+        mid('All ' + n + ' bosses, back to back.', 84);
+        mid('Time: ' + rushClock(this.time), 96, '#78e8e8');
+        if (this.first) mid('The trophy is in your KEY ITEMS.', 108, '#f8d850');
+      } else {
+        mid((this.quit ? 'You stopped at ' : 'Fell to ') + this.foe, 58, '#f86858');
+        mid('Bosses beaten: ' + G.sayable(this.beaten) + ' of ' + n, 72);
+        mid('Best run: ' + G.sayable(this.best) + ' of ' + n, 84, '#78e8e8');
+      }
+      if (this.t < 50) return;
+      if (this.won) { if ((this.t >> 4) & 1) mid('Z: back to the game', 136, '#c8c0d8'); return; }
+      const w = 100, x = Math.round((G.W - w) / 2), y = 108;
+      G.box(ctx, x, y, w, 32);
+      ['Try Again', 'Back to the Game'].forEach((o, i) => FB.draw(ctx, o, x + 16, y + 5 + i * 12, i === this.sel ? '#f8d850' : '#f8f8f0', { shadow: '#0c0814' }));
+      const cy = y + 6 + this.sel * 12, b = (this.t >> 3) & 1;
+      ctx.fillStyle = '#f8d850';
+      ctx.fillRect(x + 7 + b, cy, 1, 5); ctx.fillRect(x + 8 + b, cy + 1, 1, 3); ctx.fillRect(x + 9 + b, cy + 2, 1, 1);
+    },
   };
 
   // ---- music: the title tune in a minor key, marching; a sunny one for the Ditch; and the credits

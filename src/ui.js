@@ -248,10 +248,12 @@
 
   // ------------------------------------------------------------ pause menu
   // GBA-style pages: QUESTS / MAP / ITEMS / KEYS / PEOPLE / COLLECTABLES / SAVE (ADMIN
-  // in admin runs). Q/E flip pages (or press up into the tab bar, then left/right).
+  // in admin runs), and BOSS RUSH once Father Christmas is beaten. Q/E flip pages (or press up into the tab bar, then left/right).
   // The menu opens on whichever page you had open last (QUESTS the first time).
-  const TABS = ['QUESTS', 'MAP', 'ITEMS', 'KEYS', 'PEOPLE', 'COLLECTABLES', 'SAVE'];
-  const QUEST_TAB = 0, MAP_TAB = 1, ITEM_TAB = 2, KEY_TAB = 3, PEOPLE_TAB = 4, COLL_TAB = 5, SAVE_TAB = 6;
+  const TABS = ['QUESTS', 'MAP', 'ITEMS', 'KEYS', 'PEOPLE', 'COLLECTABLES', 'SAVE', 'BOSS RUSH'];
+  const QUEST_TAB = 0, MAP_TAB = 1, ITEM_TAB = 2, KEY_TAB = 3, PEOPLE_TAB = 4, COLL_TAB = 5, SAVE_TAB = 6, RUSH_TAB = 7;
+  // which pages are open right now (in the middle of a boss rush: only the gear, and the way out)
+  const tabList = () => (G.state.rush ? [ITEM_TAB, RUSH_TAB] : TABS.map((_, i) => i).filter((i) => i !== RUSH_TAB || G.state.flags.fcBeaten));
   const COLS = 4, ROWS = 3, RCOLS = 5, PCOLS = 3;
   // COLLECTABLES opens on a list of sections; Z opens one, X backs out. Add new kinds here.
   const COLLECTIONS = [
@@ -302,6 +304,7 @@
     pipe: ['.........', '....kkkkk', '....kbbbk', '....kbbbk', 'kkkkkbbbk', 'GGGGkbbbk', 'kkkkkbbbk', '.....kkk.', '.........'],
     tin: ['.........', '..kkkkk..', '.kyyyyyk.', 'kyrrrrryk', 'kyrwwwryk', 'kyrrrrryk', 'kkyyyyykk', 'kokkkkkok', '.kkkkkkk.'],
     fish: ['.........', '.......k.', '..kkkkkk.', '.kllllllk', 'kllkllllk', '.kcccccck', '..kkkkkk.', '.......k.', '.........'],
+    rush: ['....k....', '...kok...', '..koyok..', '.koyyyok.', '.koyryok.', 'koyrrryok', 'koyrrryok', '.koyyyok.', '..kkkkk..'],
     guitar: ['......kk.', '.....kbk.', '....kbk..', '...kbk...', '.kkvbk...', 'kvvwvk...', 'kvwvvk...', '.kvvk....', '..kk.....'],
   };
   const iconCache = {};
@@ -532,7 +535,7 @@
 
   class PauseMenu {
     constructor() {
-      this.tab = lastTab;
+      this.tab = tabList().includes(lastTab) ? lastTab : tabList()[0];
       this.sel = 0;
       this.qsel = 0;
       this.qscroll = 0;
@@ -558,8 +561,10 @@
     }
 
     switchTab(d) {
-      this.tab = (this.tab + d + TABS.length) % TABS.length;
+      const list = tabList();
+      this.tab = list[(list.indexOf(this.tab) + d + list.length) % list.length];
       lastTab = this.tab;
+      this.rushSure = false;
       this.admList = null;
       this.coll = null;
       this.photoView = null;
@@ -600,7 +605,7 @@
       if (inp.hit('l')) this.switchTab(-1);
       if (inp.hit('r')) this.switchTab(1);
       // (inside a COLLECTABLES section, X backs out instead)
-      if (inp.hit('b') && !G.state.admin && !(this.tab === COLL_TAB && this.coll)) this.saveTo(G.state.slot || 1);
+      if (inp.hit('b') && !G.state.admin && !G.state.rush && !(this.tab === COLL_TAB && this.coll)) this.saveTo(G.state.slot || 1);
 
       if (this.onTabs) {
         if (inp.hit('left')) this.switchTab(-1);
@@ -722,6 +727,20 @@
         }
         if (inp.hit('down')) this.move(1, n);
         if (inp.hit('up')) { if (this.sel > 0) this.move(-1, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
+      } else if (this.tab === RUSH_TAB) {
+        if (inp.hit('up')) { this.onTabs = true; G.audio.sfx('menu'); }
+        if (inp.hit('a')) {
+          inp.eat('a');
+          if (G.state.rush) {
+            // giving up takes two presses
+            if (!this.rushSure) { this.rushSure = true; G.audio.sfx('menu'); return false; }
+            G.rushEnd.enter(false, true);
+            return true;
+          }
+          if (!G.rushOk()) { this.flash('Not right now.'); G.audio.sfx('bump'); return false; }
+          G.script.run(G.SCRIPTS.rushStart());
+          return true;
+        }
       } else if (this.tab === SAVE_TAB && G.state.admin) {
         return this.updateAdmin(inp);
       } else if (this.tab === SAVE_TAB) {
@@ -788,6 +807,7 @@
       else if (this.tab === ITEM_TAB || this.tab === KEY_TAB) this.drawGrid(ctx);
       else if (this.tab === PEOPLE_TAB) this.drawPeople(ctx);
       else if (this.tab === COLL_TAB) this.drawCollect(ctx);
+      else if (this.tab === RUSH_TAB) this.drawRush(ctx);
       else if (G.state.admin) this.drawAdmin(ctx);
       else this.drawSave(ctx);
       ctx.restore();
@@ -810,12 +830,12 @@
         [QUEST_TAB]: QMODES[(this.qmode + 1) % QMODES.length] === 'ACTIVE' ? 'quests' : QMODES[(this.qmode + 1) % QMODES.length] === '100%' ? '100% list' : 'rules',
         [MAP_TAB]: placeOpen(PLACES[this.msel]) && G.canTravel(PLACES[this.msel].id) ? 'drive there' : null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
         [COLL_TAB]: this.instView && G.GUITARS.includes(this.instView) && G.guitarNow() !== this.instView ? 'play it' : this.photoView || this.instView ? 'put away' : !this.coll ? 'open' : this.coll === 'fish' ? null : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
-        [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here',
+        [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here', [RUSH_TAB]: G.state.rush ? (this.rushSure ? 'really give up' : 'give up') : 'start',
       }[this.tab];
       const pairs = act ? [['Z', act]] : [['↑↓←→', 'look around']];
       if (this.tab === COLL_TAB && this.coll && !this.photoView && !this.instView) pairs.push(['X', 'back']);
       else if (this.tab === COLL_TAB && this.instView && act === 'play it') pairs.push(['X', 'put away']);
-      else if (!admin && !(this.tab === COLL_TAB && (this.photoView || this.instView))) pairs.push(['X', 'quick save']);
+      else if (!admin && !G.state.rush && !(this.tab === COLL_TAB && (this.photoView || this.instView))) pairs.push(['X', 'quick save']);
       else if (this.tab === SAVE_TAB && this.admList) pairs.push(['X', 'back']);
       // (no room for the pages hint next to a guitar's play it / put away)
       if (!(this.tab === COLL_TAB && this.instView && act === 'play it')) pairs.push(['Q/E', 'pages']);
@@ -831,19 +851,20 @@
     }
 
     drawTabs(ctx) {
-      const names = TABS.map((n, i) => (i === SAVE_TAB && G.state.admin ? 'ADMIN' : n));
-      const icons = ['quests', 'map', 'items', 'keys', 'people', 'collect', G.state.admin ? 'admin' : 'save'];
-      const wOf = (i) => (i === this.tab ? 9 + 5 + F().width(names[i]) + 8 : 17);
-      const gap = 2, total = names.reduce((a, _, i) => a + wOf(i), 0) + gap * (names.length - 1);
+      const list = tabList(), names = TABS.map((n, i) => (i === SAVE_TAB && G.state.admin ? 'ADMIN' : n));
+      const icons = ['quests', 'map', 'items', 'keys', 'people', 'collect', G.state.admin ? 'admin' : 'save', 'rush'];
+      // (the eighth page takes a little off each of the others, to keep Q and E on the screen)
+      const small = list.length > 7 ? 15 : 17, wOf = (i) => (i === this.tab ? 9 + 5 + F().width(names[i]) + 8 : small);
+      const gap = 2, total = list.reduce((a, i) => a + wOf(i), 0) + gap * (list.length - 1);
       let x = Math.round((G.W - total) / 2);
       keycap(ctx, x - 13, 5, 'Q');
-      names.forEach((n, i) => {
-        const on = i === this.tab, w = wOf(i);
+      list.forEach((i) => {
+        const n = names[i], on = i === this.tab, w = wOf(i);
         const blink = on && this.onTabs && (G.tick >> 4) & 1;
         const style = on ? (blink ? { bg: '#5a4878', border: '#ffffff', inner: '#7a6a30' } : SEL) : { bg: '#1a1428', border: '#5a5078', inner: '#262038' };
         G.box(ctx, x, on ? 1 : 3, w, on ? 17 : 14, style);
         if (!on) ctx.globalAlpha *= 0.55;
-        ctx.drawImage(icon(icons[i]), x + 4, on ? 5 : 6);
+        ctx.drawImage(icon(icons[i]), x + (small < 17 && !on ? 3 : 4), on ? 5 : 6);
         if (!on) ctx.globalAlpha /= 0.55;
         if (on) TXT(ctx, n, x + 16, 6, C.gold);
         // a gold dot on QUESTS while there's something new on it
@@ -1522,6 +1543,28 @@
     }
 
     // three save files; the one being played is marked
+    // ---- BOSS RUSH: what it is and the record, or how the run is going
+    drawRush(ctx) {
+      const s = G.state, r = s.rush, list = G.RUSH, n = G.sayable(list.length);
+      card(ctx, 5, 21, 230, 121, 'BOSS RUSH', C.gold, n + ' bosses', C.cyan);
+      ctx.drawImage(icon('rush'), 12, 40);
+      if (r) {
+        const row = (a, b, y, col) => { TXT(ctx, a, 12, y, C.soft); TXT(ctx, b, 90, y, col || '#f8f8f0'); };
+        TXT(ctx, 'In the middle of a run', 26, 40, C.gold);
+        row('Fighting', list[r.i].name, 58, C.red);
+        row('Boss', G.sayable(r.i + 1) + ' of ' + n, 70);
+        row('Time', G.rushClock((s.playTime || 0) - r.t0), 82, C.cyan);
+        F().wrap(this.rushSure ? 'Press Z again and this run is over. Your save is fine either way.' : 'X items can be swapped on the ITEMS page.', 216).forEach((l, i) => TXT(ctx, l, 12, 104 + i * 10, this.rushSure ? C.red : C.dim));
+        return;
+      }
+      TXT(ctx, 'Every boss, back to back.', 26, 40, C.gold);
+      F().wrap('Bosses are tougher and hearts don\'t drop. Between fights, take a little healing or an item. Faint and the run is over. Your save is safe either way.', 216).forEach((l, i) => TXT(ctx, l, 12, 54 + i * 10));
+      const best = s.rushBest || 0, wins = s.rushWins || 0;
+      TXT(ctx, 'Best run', 12, 100, C.soft); TXT(ctx, G.sayable(best) + ' of ' + n, 66, 100, best ? C.cyan : C.dim);
+      TXT(ctx, 'Cleared', 12, 110, C.soft); TXT(ctx, wins ? G.sayable(wins) + (wins > 1 ? ' times' : ' time') : 'not yet', 66, 110, wins ? C.green : C.dim);
+      if (s.rushTime) { TXT(ctx, 'Best time', 12, 120, C.soft); TXT(ctx, G.rushClock(s.rushTime), 66, 120, C.gold); }
+    }
+
     drawSave(ctx) {
       const cur = G.state.slot || 1;
       for (let i = 0; i < G.SAVE_FILES; i++) {

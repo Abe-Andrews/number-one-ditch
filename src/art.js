@@ -10442,13 +10442,44 @@
     p.rect(2, 9, 3, 2, L); p.rect(12, 9, 3, 2, L); p.rect(0, 8, 2, 1, L);
     return finish(p);
   }
-  // the little door in the basement wall, with a slot for the eyes
+  // the Boss Rush trophy: a gold cup with a shark tooth on it
+  function rushTrophy() {
+    const p = new Pix(16, 16), Y = '#f8d850', O = '#c89838', H = '#fff0a8';
+    p.rect(4, 1, 8, 7, Y); p.rect(5, 8, 6, 1, Y); p.rect(6, 9, 4, 1, O); p.rect(7, 10, 2, 2, O); p.rect(5, 12, 6, 1, Y); p.rect(4, 13, 8, 2, O);
+    p.vline(1, 2, 5, Y); p.vline(14, 2, 5, Y); p.hline(1, 3, 1, Y); p.hline(12, 14, 1, Y); p.hline(2, 3, 6, Y); p.hline(12, 13, 6, Y);
+    p.vline(5, 2, 6, H); p.vline(11, 1, 7, O);
+    p.rect(7, 2, 3, 2, '#f4ecd8'); p.set(8, 4, '#f4ecd8'); p.hline(7, 9, 5, '#8a5a34');
+    p.outline();
+    return finish(p);
+  }
+  // the little door in the basement wall: a stone arch, iron straps, a slot for the eyes with a bookmark
+  // hanging out of it, and lamplight underneath. The bottom rows are a step, which sits on the floor.
   function clubDoor() {
-    const p = new Pix(16, 30), W1 = '#5a3a20', W2 = '#4a2e18', I = '#2a2a30';
-    for (let y = 0; y < 30; y++) for (let x = 0; x < 16; x++) { if (y < 5 && ((x - 7.5) / 8) ** 2 + ((y - 5) / 5.2) ** 2 > 1) continue; p.set(x, y, x % 4 === 3 ? W2 : W1); }
-    for (const y of [8, 22]) p.hline(0, 15, y, I);
-    p.rect(4, 12, 8, 3, '#14100c'); p.hline(4, 11, 12, I); p.hline(4, 11, 14, I);
-    p.rect(12, 18, 2, 2, '#c8a048');
+    const p = new Pix(28, 32), cx = 13.5, cy = 13, W = ['#6e4628', '#5e3a20', '#744c2c', '#623e22'];
+    const ST = ['#9a9aa4', '#84848e'], M = '#3e3e48', I = '#2e2e38', IH = '#5a5a68', B = '#c8a048', BH = '#f0d888';
+    for (let y = 0; y < 29; y++) for (let x = 0; x < 28; x++) {
+      const dx = x - cx, r = y < cy ? Math.hypot(dx, y - cy) : Math.abs(dx);
+      if (r > 12.8) continue;
+      if (r < 9) { // the planks, set back in the shadow of the arch
+        const seam = x === 9 || x === 14 || x === 18, dark = x === 5 || (y < cy && r > 8);
+        p.set(x, y, seam ? '#3a2414' : dark ? '#2c1c10' : W[x < 9 ? 0 : x < 14 ? 1 : x < 18 ? 2 : 3]);
+        continue;
+      }
+      const k = y < cy ? Math.atan2(cy - y, dx) / Math.PI * 9 : 9 + (y - cy) / 5;
+      p.set(x, y, (y < cy ? k % 1 < 0.24 : (y - cy) % 5 === 0) ? M : ST[Math.floor(k) % 2]);
+    }
+    for (const [x, y] of [[7, 6], [7, 7], [16, 6], [16, 7], [20, 14], [20, 15], [6, 19], [7, 15], [16, 19], [16, 20], [12, 26], [20, 26]]) p.set(x, y, '#7e5632');
+    for (const y of [9, 23]) {
+      p.rect(3, y, 17, 3, I); p.hline(3, 19, y, IH);
+      p.rect(20, y - 1, 1, 5, I); p.set(21, y + 1, I);
+      for (const x of [7, 11, 15]) p.set(x, y + 1, '#8a8a98');
+    }
+    p.rect(9, 13, 10, 5, B); p.hline(9, 18, 13, BH); p.rect(10, 14, 8, 3, '#14100c'); p.hline(10, 17, 15, '#3a2a20');
+    p.rect(11, 18, 3, 4, '#c84848'); p.vline(11, 18, 21, '#e87070'); p.set(12, 21, '#3a2414');
+    p.set(20, 17, B); for (const [x, y] of [[19, 18], [21, 18], [19, 19], [21, 19], [20, 20]]) p.set(x, y, BH);
+    p.rect(11, 0, 6, 6, M); p.rect(12, 1, 4, 4, '#b4b4bc');
+    p.hline(5, 22, 28, '#f8d878');
+    p.rect(0, 29, 28, 3, ST[1]); p.hline(0, 27, 29, '#b4b4bc'); p.hline(6, 21, 29, '#e8c878'); p.hline(0, 27, 31, M);
     return finish(p);
   }
   // Mom's garden game: a deer, a rain barrel, a marigold, and Daisy's blue blanket
@@ -10901,7 +10932,7 @@
     S.gravelSpots = [0, 1, 2, 3, 4].map(gravelSpot); S.eggCartons = eggCartons(); S.numberTwoDitch = numberTwoDitch();
     S.fossils = {}; for (const id in FOSSIL_ROWS) S.fossils[id] = fossil(id);
     S.natesBassDone = natesBassDone(); S.switchPlate = switchPlate(); S.switchTape = switchTape();
-    S.squirrel = squirrel(); S.goat = [goat(0), goat(1)]; S.turtle = turtle(); S.bookmarkIcon = bookmarkIcon(); S.clubDoor = clubDoor();
+    S.squirrel = squirrel(); S.goat = [goat(0), goat(1)]; S.turtle = turtle(); S.bookmarkIcon = bookmarkIcon(); S.clubDoor = clubDoor(); S.rushTrophy = rushTrophy();
     S.gardenDeer = { left: [gardenDeer(0), gardenDeer(1)] }; S.gardenDeer.right = S.gardenDeer.left.map(mirror); S.rainBarrel = rainBarrel(); S.marigold = marigold(); S.wetBlanket = wetBlanket();
   };
 })();

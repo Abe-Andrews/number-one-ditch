@@ -72,6 +72,8 @@
   // Write the game to file n (default: the file being played).
   G.writeSave = (n) => {
     const s = G.state;
+    // (a boss rush plays on a copy of the save, and leaves the real one alone)
+    if (s.rush) return true;
     // admin (testing) runs never touch the save files: they keep a copy in memory instead, so
     // fainting continues from the last door walked through, like a real save
     if (s.admin) { G.adminSnap = JSON.parse(JSON.stringify(s)); return true; }
@@ -462,7 +464,7 @@
     },
 
     maybeDrop(x, y, chance) {
-      if (Math.random() > chance) return;
+      if (G.state.rush || Math.random() > chance) return;
       const s = G.state;
       let kind = 'tooth';
       if (s.hp < s.maxHp && Math.random() < 0.35) kind = 'heart';
@@ -508,13 +510,13 @@
         if (d === 36) this.player.dir = 'down';
         if (d === FAINT_LAND) { G.audio.sfx('bump'); this.shake(8, 2); }
         if (d > 96) G.fade = Math.min(1, (d - 96) / 24);
-        if (d > 122) G.gameOver.enter();
+        if (d > 122) { if (G.state.rush) G.rushEnd.enter(false); else G.gameOver.enter(); }
         return;
       }
 
       G.state.playTime = (G.state.playTime || 0) + 1;
-      if (G.tick % 30 === 0 && !G.script.busy && !this.warping && G.postgameTick) G.postgameTick();
-      if (G.tick % 30 === 15 && !G.script.busy && !this.warping && !this.menu) G.questWatch();
+      if (G.tick % 30 === 0 && !G.script.busy && !this.warping && !G.state.rush && G.postgameTick) G.postgameTick();
+      if (G.tick % 30 === 15 && !G.script.busy && !this.warping && !this.menu && !G.state.rush) G.questWatch();
       if (this.eggCool > 0) this.eggCool--;
       if (this.siftCool > 0) this.siftCool--;
       if (this.earworm > 0 && !G.script.busy) this.earworm--;

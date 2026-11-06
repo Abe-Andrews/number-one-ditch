@@ -2945,6 +2945,7 @@
       this.hp = this.maxHp = RELAY_TOTAL;
     }
     get td() { return TURNS[this.turn]; }
+    get need() { return this.td.need + (this.extraNeed || 0); } // (the boss rush asks for more)
     // what can hit him: everything near him on the ground (his shadow and up through him), or
     // only his body when he's floating high (Abe's turn)
     hurtBox() {
@@ -3036,7 +3037,7 @@
       G.audio.sfx('hit'); G.play.shake(5, 2);
       this.world.burst(this.x, this.y - this.h - 36, ['#f2ead6', '#7a1e2c', '#f8e070'], 8, { speed: 1.6, up: 0.8, g: 0.06, life: 24, size: 2 });
       this.world.pop(this.x, this.y - this.h - 78, ['OOF!', 'HOW DARE YOU!', 'MY PAISLEY!', 'OW! OW!'][this.turnHits % 4], '#f86858');
-      if (this.turnHits >= this.td.need) { this.state = 'tagout'; G.script.run(G.SCRIPTS.finTagOut(this)); }
+      if (this.turnHits >= this.need) { this.state = 'tagout'; G.script.run(G.SCRIPTS.finTagOut(this)); }
       return true;
     }
     hit(dmg, sx, sy) {
