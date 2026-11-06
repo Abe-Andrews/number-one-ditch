@@ -4989,7 +4989,7 @@
       }
       w.add(new G.Sign(2, 11, 'WEST: College Hill. Shops, groceries, and {y}Tom\'s Pizza{/}.'));
       // Hannah's friend: a very fat squirrel, working on a bagel
-      w.addProp({ img: G.spr.squirrel, tx: 8, ty: 9, solid: [8, 9, 1, 1], hit: [8, 9, 1, 1], talk: S.animalSpot('squirrel', 'A very fat squirrel, working on a whole bagel. It looks at Nate. It keeps eating.') });
+      w.addProp({ img: G.spr.squirrel, tx: 15, ty: 18, solid: [15, 18, 1, 1], hit: [15, 18, 1, 1], talk: S.animalSpot('squirrel', 'A very fat squirrel, working on a whole bagel. It looks at Nate. It keeps eating.') });
       // Van Wickle Hall: the geology building (walk into the arched front door)
       w.addProp({ img: G.spr.vanWickle, tx: 26, ty: 17, h: 4 });
       w.blockTiles(26, 17, 8, 4);
