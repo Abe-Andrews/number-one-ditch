@@ -409,17 +409,17 @@
 
   // ---- the MAP page: where Nate has been, where he is, and where the quests are
   const PLACES = [
-    { id: 'laf', name: 'LAFAYETTE', x: 30, y: 32, icon: 'college', key: 'Lafayette',
+    { id: 'laf', name: 'LAFAYETTE', x: 28, y: 30, icon: 'college', key: 'Lafayette',
       maps: [['lab', 'Nate\'s Lab'], ['campus', 'The Quad'], ['science', 'Science Center'], ['geology', 'Van Wickle Hall'], ['pardee', 'Pardee Hall'], ['collegeHill', 'College Hill'], ['toms', 'Tom\'s Pizza']] },
-    { id: 'fair', name: 'EASTON FAIR', x: 98, y: 27, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
-    { id: 'home', name: 'HOME', x: 40, y: 60, icon: 'house', key: 'Home',
+    { id: 'fair', name: 'EASTON FAIR', x: 100, y: 28, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
+    { id: 'home', name: 'HOME', x: 36, y: 56, icon: 'house', key: 'Home',
       maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['bookClub', 'The Book Club'], ['north', 'The Frozen Pond']] },
-    { id: 'andover', name: 'ANDOVER', x: 110, y: 54, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
-    { id: 'bay', name: 'THE BAY', x: 72, y: 76, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel']] },
-    { id: 'ches', name: 'CHESAPEAKE', x: 33, y: 99, icon: 'house', key: 'Chesapeake', maps: [['condo', 'The Condo'], ['condoDown', 'Downstairs'], ['condoUp', 'Upstairs'], ['condoStorage', 'Storage'], ['golf', 'The Golf Course'], ['toroLoco', 'El Toro Loco']] },
-    { id: 'chkd', name: 'CHKD', x: 76, y: 103, icon: 'college', key: 'CHKD', maps: [['chkd', 'Outside'], ['chkdLobby', 'The Lobby'], ['chkdWard', 'The Ward'], ['chkdNicu', 'The NICU'], ['chkdRoof', 'The Roof']] },
-    { id: 'ditch', name: 'THE DITCH', x: 110, y: 94, icon: 'trophy', key: 'The Ditch', maps: [['ditchRoad', 'The Last Road'], ['ditchFinal', 'The Number One Ditch'], ['ditchDay', 'In the Morning']] },
-    { id: 'aurora', name: 'AURORA', x: 130, y: 76, icon: 'trophy', key: 'Aurora', labelLeft: true, maps: [['aurora', 'Main Street'], ['auroraMuseum', 'The Fossil Museum'], ['hamStand', 'The August Ham']] },
+    { id: 'andover', name: 'ANDOVER', x: 112, y: 54, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
+    { id: 'bay', name: 'THE BAY', x: 70, y: 74, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel']] },
+    { id: 'ches', name: 'CHESAPEAKE', x: 30, y: 92, icon: 'house', key: 'Chesapeake', maps: [['condo', 'The Condo'], ['condoDown', 'Downstairs'], ['condoUp', 'Upstairs'], ['condoStorage', 'Storage'], ['golf', 'The Golf Course'], ['toroLoco', 'El Toro Loco']] },
+    { id: 'chkd', name: 'CHKD', x: 68, y: 104, labelRight: true, icon: 'college', key: 'CHKD', maps: [['chkd', 'Outside'], ['chkdLobby', 'The Lobby'], ['chkdWard', 'The Ward'], ['chkdNicu', 'The NICU'], ['chkdRoof', 'The Roof']] },
+    { id: 'ditch', name: 'THE DITCH', x: 114, y: 100, icon: 'trophy', key: 'The Ditch', maps: [['ditchRoad', 'The Last Road'], ['ditchFinal', 'The Number One Ditch'], ['ditchDay', 'In the Morning']] },
+    { id: 'aurora', name: 'AURORA', x: 126, y: 78, icon: 'trophy', key: 'Aurora', labelLeft: true, maps: [['aurora', 'Main Street'], ['auroraMuseum', 'The Fossil Museum'], ['hamStand', 'The August Ham']] },
   ];
   const ROADS = [['laf', 'fair'], ['laf', 'home'], ['home', 'andover'], ['home', 'bay'], ['bay', 'ches'], ['ches', 'chkd'], ['ches', 'ditch'], ['ditch', 'aurora']];
   const placeById = (id) => PLACES.find((p) => p.id === id);
@@ -456,6 +456,103 @@
     if (!f.roofSeen) return 'chkd';
     return f.finDrive || f.fin_done ? 'ditch' : 'ches';
   };
+  // ---- the MAP page's land, painted once: fields, forest, ridges up north, the bay (with the
+  // Bridge-Tunnel across it), rivers, farmland down south, and a compass. Nothing is drawn where a
+  // place's marker or name goes, so the labels stay readable. (Coordinates are the map card's, the
+  // same ones PLACES uses; the picture starts at the card's (1, 14).)
+  const MAPW = 138, MAPH = 106, MAP0 = [1, 14];
+  // the bay: a lumpy oval under THE BAY, and the Pamlico River running out east past Aurora
+  const inBay = (x, y) => ((x - 68) / 27) ** 2 + ((y - 83) / 9.5) ** 2 + (G.hash(x >> 2, y >> 2, 707) - 0.5) * 0.18 <= 1;
+  const inRiver = (x, y) => {
+    // the Delaware, winding down from the top into the bay
+    const rx = 66 + Math.sin(y * 0.11) * 4 + Math.sin(y * 0.031) * 3;
+    if (y < 76 && Math.abs(x - rx) <= 1.2) return true;
+    // the Pamlico, from under Aurora out to the right edge
+    const py = 87 + Math.sin(x * 0.2) * 1.5;
+    return x > 119 && Math.abs(y - py) <= (x - 119) * 0.12 + 1;
+  };
+  let mapBG = null;
+  function mapBackground() {
+    if (mapBG) return mapBG;
+    const c = G.canvas(MAPW, MAPH), x = c.getContext('2d'), at = (px, py, col) => { x.fillStyle = col; x.fillRect(px - MAP0[0], py - MAP0[1], 1, 1); };
+    const X0 = MAP0[0], Y0 = MAP0[1], X1 = X0 + MAPW, Y1 = Y0 + MAPH;
+    // where the places and their names go: nothing busy there
+    const keep = [];
+    for (const pl of PLACES) {
+      keep.push([pl.x - 11, pl.y - 12, pl.x + 11, pl.y + 10]);
+      const w = F().width(pl.name);
+      keep.push(pl.labelLeft ? [pl.x - 12 - w, pl.y - 5, pl.x - 8, pl.y + 6] : pl.labelRight ? [pl.x + 8, pl.y - 5, pl.x + 12 + w, pl.y + 6] : [pl.x - w / 2 - 2, pl.y + 8, pl.x + w / 2 + 2, pl.y + 19]);
+    }
+    keep.push([X0, Y0, X0 + 16, Y0 + 16]); // the compass
+    const clear = (px, py, pad = 0) => !keep.some((r) => px >= r[0] - pad && px <= r[2] + pad && py >= r[1] - pad && py <= r[3] + pad);
+    // the land: soft patches of lighter and darker green
+    for (let py = Y0; py < Y1; py++) for (let px = X0; px < X1; px++) {
+      const n = G.hash(px >> 3, py >> 3, 701) * 0.6 + G.hash(px >> 1, py >> 1, 702) * 0.4;
+      at(px, py, n > 0.72 ? '#4c8a42' : n < 0.24 ? '#356c36' : '#3f7a3c');
+    }
+    // farmland down south: striped fields
+    for (const [fx, fy, fw, fh] of [[4, 108, 18, 10], [92, 108, 20, 10], [118, 96, 18, 22]]) {
+      for (let py = fy; py < fy + fh; py++) for (let px = fx; px < fx + fw; px++) if (clear(px, py)) at(px, py, py % 3 ? '#6a8a3a' : '#527a34');
+    }
+    // the water: a sandy shore, shallows, then deep
+    for (let py = Y0; py < Y1; py++) for (let px = X0; px < X1; px++) {
+      const w = inBay(px, py) || inRiver(px, py);
+      if (w) {
+        const edge = !(inBay(px - 2, py) || inRiver(px - 2, py)) || !(inBay(px + 2, py) || inRiver(px + 2, py)) || !(inBay(px, py - 2) || inRiver(px, py - 2)) || !(inBay(px, py + 2) || inRiver(px, py + 2));
+        at(px, py, edge ? '#3e7cbc' : '#2c5c9c');
+      } else if (inBay(px - 1, py) || inBay(px + 1, py) || inBay(px, py - 1) || inBay(px, py + 1)) at(px, py, '#c8b878');
+    }
+    // the Bridge-Tunnel, straight across the bay under its marker
+    for (let py = 72; py <= 96; py++) if (inBay(70, py) || inBay(70, py - 1)) { at(69, py, '#9a9aa4'); at(70, py, '#c8c8d0'); }
+    // ridges up north (the Highlands), a little sawtooth with a lit side
+    const ridge = (rx, ry) => {
+      for (let k = 0; k < 5; k++) for (let i = -k; i <= k; i++) at(rx + i, ry + k, i < 0 ? '#9a8a64' : '#6e6248');
+      at(rx, ry, '#d8d0c0');
+    };
+    for (let i = 0; i < 40; i++) {
+      const rx = X0 + 4 + Math.floor(G.hash(i, 1, 703) * (MAPW - 8)), ry = Y0 + 2 + Math.floor(G.hash(i, 2, 703) * 46);
+      if (clear(rx, ry, 6) && clear(rx, ry + 5, 6) && !inRiver(rx, ry + 3) && G.hash(i, 3, 703) < 0.55) ridge(rx, ry);
+    }
+    // forest: little dark pines in clumps
+    const pine = (tx, ty) => { at(tx, ty, '#2e6a34'); at(tx - 1, ty + 1, '#24502c'); at(tx, ty + 1, '#2e6a34'); at(tx + 1, ty + 1, '#24502c'); at(tx - 1, ty + 2, '#1e4426'); at(tx, ty + 2, '#24502c'); at(tx + 1, ty + 2, '#1e4426'); at(tx, ty + 3, '#5a4028'); };
+    for (let k = 0; k < 26; k++) {
+      const cx = X0 + 4 + G.hash(k, 4, 704) * (MAPW - 8), cy = Y0 + 4 + G.hash(k, 5, 704) * (MAPH - 8);
+      for (let t = 0; t < 7; t++) {
+        const tx = Math.round(cx + (G.hash(k, t, 705) - 0.5) * 12), ty = Math.round(cy + (G.hash(k, t + 9, 705) - 0.5) * 8);
+        if (clear(tx, ty, 2) && !inBay(tx, ty + 3) && !inBay(tx, ty) && !inRiver(tx, ty + 2) && !inRiver(tx, ty)) pine(tx, ty);
+      }
+    }
+    // the compass, top left
+    const cx0 = X0 + 8, cy0 = Y0 + 8;
+    for (let i = -4; i <= 4; i++) { at(cx0 + i, cy0, '#c8b878'); at(cx0, cy0 + i, '#c8b878'); }
+    for (let i = 1; i <= 4; i++) { at(cx0 - 1, cy0 - i + 1, '#f8f0d0'); at(cx0 + 1, cy0 - i + 1, '#f8f0d0'); }
+    at(cx0, cy0 - 5, '#f86858'); at(cx0, cy0, '#1c1424');
+    x.fillStyle = 'rgba(12,8,20,0.55)'; x.fillRect(cx0 - 3 - X0, cy0 - 14 - Y0 + 1, 7, 1);
+    // a darker rim, so the land sits down into the card
+    x.fillStyle = 'rgba(12,8,20,0.35)'; x.fillRect(0, 0, MAPW, 1); x.fillRect(0, 0, 1, MAPH); x.fillStyle = 'rgba(12,8,20,0.2)'; x.fillRect(0, 1, MAPW, 1); x.fillRect(1, 0, 1, MAPH);
+    return (mapBG = c);
+  }
+  // a road between two places: a pale track with darker edges, or a faint dotted line if it's not open yet
+  function mapRoad(ctx, MX, MY, A, B, open) {
+    const n = Math.ceil(Math.hypot(B.x - A.x, B.y - A.y)), ux = (B.x - A.x) / n, uy = (B.y - A.y) / n;
+    for (let i = 9; i < n - 9; i++) {
+      // a gentle wiggle, so it isn't ruler-straight
+      const w = Math.sin(i * 0.18 + A.x) * 1.2, px = Math.round(MX + A.x + ux * i - uy * w), py = Math.round(MY + A.y + uy * i + ux * w);
+      if (!open) { if (i % 4 === 0) { ctx.fillStyle = 'rgba(12,8,20,0.45)'; ctx.fillRect(px, py, 1, 1); } continue; }
+      ctx.fillStyle = '#6a5434'; ctx.fillRect(px - 1, py - 1, 3, 3);
+    }
+    if (!open) return;
+    for (let i = 9; i < n - 9; i++) {
+      const w = Math.sin(i * 0.18 + A.x) * 1.2, px = Math.round(MX + A.x + ux * i - uy * w), py = Math.round(MY + A.y + uy * i + ux * w);
+      ctx.fillStyle = i % 6 < 3 ? '#e8d4a0' : '#d4bc84'; ctx.fillRect(px, py, 1, 1);
+    }
+  }
+  // a name on the map: outlined all the way around, so it reads on any ground
+  function mapLabel(ctx, str, x, y, col) {
+    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1], [1, 1]]) F().draw(ctx, str, x + dx, y + dy, SH);
+    F().draw(ctx, str, x, y, col);
+  }
+
   // a round badge for a place on the map
   function badge(ctx, x, y, rim, fill) {
     for (let dy = -8; dy <= 8; dy++) {
@@ -1075,23 +1172,17 @@
       const MX = 5, MY = 21, MW = 140, MH = 121;
       const total = PLACES.reduce((n, pl) => n + pl.maps.length, 0), been = PLACES.reduce((n, pl) => n + pl.maps.filter(([id]) => beenTo(id)).length, 0);
       card(ctx, MX, MY, MW, MH, 'MAP', C.gold, G.sayable(been) + '/' + G.sayable(total) + ' places', C.dim);
-      // the land, with a speckle, and the bay down at the bottom
+      // the land (painted once), with glints drifting across the water
+      ctx.drawImage(mapBackground(), MX + MAP0[0], MY + MAP0[1]);
       ctx.save(); ctx.beginPath(); ctx.rect(MX + 1, MY + 14, MW - 2, MH - 15); ctx.clip();
-      ctx.fillStyle = '#1a2a22'; ctx.fillRect(MX + 1, MY + 14, MW - 2, MH - 15);
-      ctx.fillStyle = '#22362a';
-      for (let yy = MY + 16; yy < MY + MH; yy += 6) for (let xx = MX + 3 + (yy % 12 ? 3 : 0); xx < MX + MW; xx += 6) ctx.fillRect(xx, yy, 1, 1);
-      ctx.fillStyle = '#152040';
-      ctx.fillRect(MX + 50, MY + 86, 50, 36); ctx.fillRect(MX + 58, MY + 80, 34, 6); ctx.fillRect(MX + 42, MY + 96, 8, 26); ctx.fillRect(MX + 100, MY + 104, 8, 18);
-      ctx.fillStyle = '#28407a';
-      for (let k = 0; k < 9; k++) { const wx = MX + 52 + ((k * 23 + (G.tick >> 3)) % 46), wy = MY + 88 + ((k * 7) % 30); ctx.fillRect(wx, wy, 3, 1); }
-      ctx.restore();
-      // roads (dim when they lead somewhere Nate can't go yet)
-      for (const [a, b] of ROADS) {
-        const A = placeById(a), B = placeById(b), open = placeOpen(A) && placeOpen(B);
-        const n = Math.ceil(Math.hypot(B.x - A.x, B.y - A.y) / 3);
-        ctx.fillStyle = open ? '#b89868' : '#3e3a50';
-        for (let i = 3; i < n - 2; i++) ctx.fillRect(MX + Math.round(A.x + ((B.x - A.x) * i) / n), MY + Math.round(A.y + ((B.y - A.y) * i) / n), 1, 1);
+      ctx.fillStyle = '#8ab8e8';
+      for (let k = 0; k < 7; k++) {
+        const wx = 46 + ((k * 23 + (G.tick >> 3)) % 50), wy = 77 + ((k * 5) % 14);
+        if (inBay(wx, wy) && inBay(wx + 2, wy) && (wx > 70 || wx + 2 < 69)) ctx.fillRect(MX + wx, MY + wy, 3, 1);
       }
+      ctx.restore();
+      // roads (a faint dotted line when they lead somewhere Nate can't go yet)
+      for (const [a, b] of ROADS) { const A = placeById(a), B = placeById(b); mapRoad(ctx, MX, MY, A, B, placeOpen(A) && placeOpen(B)); }
       // the places
       const quests = (pl) => j.side.filter((q) => q.kind !== 'done' && q.where && q.where.includes(pl.key));
       PLACES.forEach((pl, i) => {
@@ -1102,8 +1193,8 @@
         if (pl === here) ctx.drawImage(G.nateSprites().down[0], 0, 0, 16, 11, x - 8, y - 6 + ((G.tick >> 4) & 1), 16, 11);
         else if (open) { if (!seen) ctx.globalAlpha *= 0.5; ctx.drawImage(icon(pl.icon), x - 4, y - 4); if (!seen) ctx.globalAlpha /= 0.5; }
         else TXT(ctx, '?', x - 1, y - 3, '#5a5078');
-        const label = open ? pl.name : '???', lx = pl.labelLeft ? x - 10 - F().width(label) : x - Math.floor(F().width(label) / 2);
-        TXT(ctx, label, lx, pl.labelLeft ? y - 3 : y + 10, sel ? C.gold : seen ? '#f8f8f0' : C.dim);
+        const label = open ? pl.name : '???', side = pl.labelLeft || pl.labelRight, lx = pl.labelLeft ? x - 10 - F().width(label) : pl.labelRight ? x + 11 : x - Math.floor(F().width(label) / 2);
+        if (open || sel) mapLabel(ctx, label, lx, side ? y - 3 : y + 10, sel ? C.gold : seen ? '#f8f8f0' : open ? '#c8c0d8' : '#8a82a0');
         // quest markers: ! for quests, ? for rumors; a star where the main quest is headed
         const qs = quests(pl);
         if (qs.length) {
