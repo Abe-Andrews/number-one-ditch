@@ -263,7 +263,7 @@
     { id: 'tins', name: 'Tobacco', icon: 'tin', count: () => [G.tinsMadeCount(), G.TOBACCOS.length], blurb: 'The tobaccos from Dad\'s pipe journal, blended with him in the workshop. Pack one in Dad\'s Pipe and the smoke comes out its color.' },
     { id: 'fish', name: 'Matt\'s Survey', icon: 'fish', count: () => [G.fishCaughtKinds(), G.FISH_ORDER.length], blurb: 'Every kind of fish Nate has caught for Matt Oliver\'s survey out on the bay, and the biggest one of each.' },
     { id: 'animals', name: 'Animal Friends', short: 'Animals', icon: 'paw', when: () => G.state.party.includes('hannah'), count: () => [G.animalsFound(), G.ANIMALS.length], blurb: 'Every animal Hannah has made friends with. Bring her along: animals won\'t attack her, and Z says hello.' },
-    { id: 'teeth', name: 'Tooth Book', icon: 'tooth', when: () => G.state.flags.fin_done, count: () => [G.fossilsFound(), G.FOSSILS.length], blurb: 'Everything Nate has sifted out of the Number One Ditch. Every kind is a real fossil from the old sea floor under Chesapeake.' },
+    { id: 'teeth', name: 'Tooth Book', icon: 'tooth', when: () => G.state.flags.fin_done, count: () => [G.fossilsFound(), G.FOSSILS.length], blurb: 'Everything Nate has sifted out of the Number One Ditch and the pile in Aurora. Every kind is a real fossil from the old sea floor under the coast.' },
     { id: 'instruments', name: 'Instruments', icon: 'guitar', count: () => [G.instrumentsCount(), G.INSTRUMENTS.length], blurb: 'Nate\'s instruments: the ones he builds, and the ones he earns jamming with Abe. More to come.' },
   ];
   const colls = () => COLLECTIONS.filter((c) => !c.when || c.when());
@@ -411,16 +411,17 @@
   const PLACES = [
     { id: 'laf', name: 'LAFAYETTE', x: 30, y: 32, icon: 'college', key: 'Lafayette',
       maps: [['lab', 'Nate\'s Lab'], ['campus', 'The Quad'], ['science', 'Science Center'], ['geology', 'Van Wickle Hall'], ['pardee', 'Pardee Hall'], ['collegeHill', 'College Hill'], ['toms', 'Tom\'s Pizza']] },
-    { id: 'fair', name: 'EASTON FAIR', x: 98, y: 30, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
+    { id: 'fair', name: 'EASTON FAIR', x: 98, y: 27, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
     { id: 'home', name: 'HOME', x: 40, y: 60, icon: 'house', key: 'Home',
       maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['bookClub', 'The Book Club'], ['north', 'The Frozen Pond']] },
-    { id: 'andover', name: 'ANDOVER', x: 110, y: 58, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
+    { id: 'andover', name: 'ANDOVER', x: 110, y: 54, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
     { id: 'bay', name: 'THE BAY', x: 72, y: 76, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel']] },
     { id: 'ches', name: 'CHESAPEAKE', x: 33, y: 99, icon: 'house', key: 'Chesapeake', maps: [['condo', 'The Condo'], ['condoDown', 'Downstairs'], ['condoUp', 'Upstairs'], ['condoStorage', 'Storage'], ['golf', 'The Golf Course'], ['toroLoco', 'El Toro Loco']] },
-    { id: 'chkd', name: 'CHKD', x: 80, y: 102, icon: 'college', key: 'CHKD', maps: [['chkd', 'Outside'], ['chkdLobby', 'The Lobby'], ['chkdWard', 'The Ward'], ['chkdNicu', 'The NICU'], ['chkdRoof', 'The Roof']] },
-    { id: 'ditch', name: 'THE DITCH', x: 114, y: 92, icon: 'trophy', key: 'The Ditch', maps: [['ditchRoad', 'The Last Road'], ['ditchFinal', 'The Number One Ditch'], ['ditchDay', 'In the Morning']] },
+    { id: 'chkd', name: 'CHKD', x: 76, y: 103, icon: 'college', key: 'CHKD', maps: [['chkd', 'Outside'], ['chkdLobby', 'The Lobby'], ['chkdWard', 'The Ward'], ['chkdNicu', 'The NICU'], ['chkdRoof', 'The Roof']] },
+    { id: 'ditch', name: 'THE DITCH', x: 110, y: 94, icon: 'trophy', key: 'The Ditch', maps: [['ditchRoad', 'The Last Road'], ['ditchFinal', 'The Number One Ditch'], ['ditchDay', 'In the Morning']] },
+    { id: 'aurora', name: 'AURORA', x: 130, y: 76, icon: 'trophy', key: 'Aurora', labelLeft: true, maps: [['aurora', 'Main Street'], ['auroraMuseum', 'The Fossil Museum'], ['hamStand', 'The August Ham']] },
   ];
-  const ROADS = [['laf', 'fair'], ['laf', 'home'], ['home', 'andover'], ['home', 'bay'], ['bay', 'ches'], ['ches', 'chkd'], ['ches', 'ditch']];
+  const ROADS = [['laf', 'fair'], ['laf', 'home'], ['home', 'andover'], ['home', 'bay'], ['bay', 'ches'], ['ches', 'chkd'], ['ches', 'ditch'], ['ditch', 'aurora']];
   const placeById = (id) => PLACES.find((p) => p.id === id);
   // somewhere Nate has been (older saves didn't keep track, so the story fills in)
   const SEEN_IF = {
@@ -434,7 +435,7 @@
   // can Nate get there yet?
   const placeOpen = (pl) => {
     const f = G.state.flags, s = G.state;
-    return { laf: true, fair: s.items.cap || f.doronChat, home: f.boulderGone, andover: s.items.andoverKey || f.andoverLocked, bay: f.mikeyBeaten, ches: f.condoArrived, chkd: f.chkdArrived, ditch: f.finDrive || f.fin_done }[pl.id] || placeVisited(pl);
+    return { laf: true, fair: s.items.cap || f.doronChat, home: f.boulderGone, andover: s.items.andoverKey || f.andoverLocked, bay: f.mikeyBeaten, ches: f.condoArrived, chkd: f.chkdArrived, ditch: f.finDrive || f.fin_done, aurora: f.auroraNews }[pl.id] || placeVisited(pl);
   };
   // which place Nate is standing in
   const placeOf = (mapId) => {
@@ -1101,12 +1102,12 @@
         if (pl === here) ctx.drawImage(G.nateSprites().down[0], 0, 0, 16, 11, x - 8, y - 6 + ((G.tick >> 4) & 1), 16, 11);
         else if (open) { if (!seen) ctx.globalAlpha *= 0.5; ctx.drawImage(icon(pl.icon), x - 4, y - 4); if (!seen) ctx.globalAlpha /= 0.5; }
         else TXT(ctx, '?', x - 1, y - 3, '#5a5078');
-        const label = open ? pl.name : '???';
-        TXT(ctx, label, x - Math.floor(F().width(label) / 2), y + 10, sel ? C.gold : seen ? '#f8f8f0' : C.dim);
+        const label = open ? pl.name : '???', lx = pl.labelLeft ? x - 10 - F().width(label) : x - Math.floor(F().width(label) / 2);
+        TXT(ctx, label, lx, pl.labelLeft ? y - 3 : y + 10, sel ? C.gold : seen ? '#f8f8f0' : C.dim);
         // quest markers: ! for quests, ? for rumors; a star where the main quest is headed
         const qs = quests(pl);
         if (qs.length) {
-          const act = qs.some((q) => q.kind === 'active'), mx = x + (pl === here ? 8 : 5), my = y - 9;
+          const act = qs.some((q) => q.kind === 'active'), mx = pl.labelLeft ? x - 2 : x + (pl === here ? 8 : 5), my = pl.labelLeft ? y + 9 : y - 9;
           ctx.fillStyle = SH; ctx.fillRect(mx - 1, my - 1, 7, 9);
           ctx.fillStyle = act ? C.gold : C.cyan; ctx.fillRect(mx, my, 5, 7);
           F().draw(ctx, act ? '!' : '?', mx + 3 - Math.ceil(F().width(act ? '!' : '?') / 2), my, '#1c1424');

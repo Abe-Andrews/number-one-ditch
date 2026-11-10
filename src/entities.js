@@ -1547,6 +1547,188 @@
     }
   }
   G.TwoLiter = TwoLiter;
+
+  // ============================================================== THE WORLD'S LARGEST AUGUST HAM
+  // Four miles outside Aurora, NC, on a stand by the road (the pin Nate only noticed on the map on the
+  // drive home, and is still upset about). It's tired of everybody driving past. It hops after Nate,
+  // sweats glaze (sticky puddles), fires cloves, and rolls at him. The glaze is too thick for the
+  // hammer: only a roll into the edge of the lot (DIZZY) or a package (stunned) opens it up. At half
+  // health it goes SPIRAL CUT: faster, its rolls bounce once, and slices fly off when it lands.
+  class GlazePuddle extends Ent {
+    constructor(x, y, big) { super(x, y); this.life = big ? 420 : 320; this.r = 2; this.max = big ? 16 : 11; this.flat = true; }
+    update() {
+      if (G.script.busy) return;
+      if (this.r < this.max) this.r += 0.6;
+      if (--this.life <= 0) { this.dead = true; return; }
+      const p = G.play.player;
+      if (((p.x - this.x) / this.r) ** 2 + ((p.y - 2 - this.y) / (this.r * 0.55)) ** 2 <= 1) {
+        if (!p.sticky && G.tick - (this.popT || -99) > 50) { this.popT = G.tick; this.world.pop(p.x, p.y - 30, 'glazed...', '#f8c050'); }
+        p.sticky = 3;
+      }
+    }
+    draw(ctx, cx, cy) {
+      const x = this.x - cx, y = this.y - cy;
+      ctx.save(); ctx.globalAlpha = Math.min(1, this.life / 60) * 0.85;
+      ctx.fillStyle = '#b8681e'; ctx.beginPath(); ctx.ellipse(x, y, this.r + 1, this.r * 0.55 + 1, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#f0a838'; ctx.beginPath(); ctx.ellipse(x, y, this.r, this.r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff0b0'; ctx.fillRect(Math.round(x - this.r * 0.4), Math.round(y - 1), 2, 1);
+      ctx.restore();
+    }
+  }
+  G.GlazePuddle = GlazePuddle;
+
+  const HAM_PLAN = ['roll', 'cloves', 'roll', 'glaze'];
+  class AugustHam extends Ent {
+    constructor(x, y, bounds) {
+      super(x, y);
+      Object.assign(this, { enemy: true, boss: true, name: 'AUGUST HAM', hp: 26, maxHp: 26, hb: { w: 30, h: 10 }, bounds, t: 0,
+        state: 'perch', st: 0, phase: 1, hurtT: 0, ang: 0, vx: 0, vy: 0, hops: 0, air: 0, z: 16, plan: 0, bounces: 0, pose: 'sleep', noBar: true, squashT: 0 });
+    }
+    hurtBox() { return [this.x - 26, this.y - this.z - 50, this.x + 26, this.y - this.z]; }
+    bodyBox() { return [this.x - 22, this.y - 20, this.x + 22, this.y + 2]; }
+    get open() { return this.state === 'dizzy' || this.stunT > 0; }
+    // off the stand and into the lot
+    wake() { Object.assign(this, { state: 'hop', st: 30, hops: 0, noBar: false, pose: 'stand' }); }
+    hit(dmg) {
+      if (this.state === 'defeated' || this.state === 'perch' || this.state === 'home') return;
+      const w = this.world;
+      if (!this.open) {
+        // the glaze is too thick: the hammer slides off
+        if (G.tick - (this.thunkT || -99) > 12) { this.thunkT = G.tick; G.audio.sfx('clank'); w.pop(this.x, this.y - 62, ['*thunk*', 'TOO GLAZED!', '*slide*'][Math.floor(Math.random() * 3)], '#f8c050'); }
+        if (!G.state.flags.hamHint) G.script.run(G.SCRIPTS.hamHint());
+        return;
+      }
+      this.hp = Math.max(0, this.hp - dmg);
+      this.hurtT = 12;
+      G.audio.sfx('hit');
+      w.burst(this.x, this.y - 30, ['#c8682e', '#f0a838', '#f8e0c0'], 6, { speed: 1.4, up: 0.6, g: 0.06, life: 22, size: 2 });
+      if (Math.random() < 0.3) w.pop(this.x, this.y - 66, ['*sizzle*', 'OOF!', '*squish*', 'HMPH!'][Math.floor(Math.random() * 4)], '#f8c050');
+      if (this.hp <= 0) { this.state = 'defeated'; this.stunT = 0; G.script.run(G.SCRIPTS.hamDefeated(this)); }
+    }
+    bomb(sx, sy) { if (this.state === 'perch' || this.state === 'defeated') return; G.stun(this, 120); const hp = this.hp; this.hp = Math.max(1, hp - 2); this.hurtT = 12; }
+    // the next thing it does, after a few hops
+    next(w, p) {
+      const kind = HAM_PLAN[this.plan++ % HAM_PLAN.length], hot = this.phase === 2;
+      if (kind === 'roll') { Object.assign(this, { state: 'tip', st: hot ? 34 : 46 }); w.pop(this.x, this.y - 66, '!', '#f86858'); G.audio.sfx('fuse'); }
+      else if (kind === 'cloves') Object.assign(this, { state: 'cloves', st: 50 });
+      else { Object.assign(this, { state: 'glaze', st: 70 }); w.pop(this.x, this.y - 66, '*drip drip*', '#f8c050'); }
+    }
+    update(w) {
+      if (G.script.busy || this.state === 'defeated' || this.state === 'perch' || this.state === 'home') return;
+      this.t++;
+      const p = G.play.player, b = this.bounds, hot = this.phase === 2;
+      if (this.hurtT > 0) this.hurtT--;
+      if (this.squashT > 0) this.squashT--;
+      if (this.stunT > 0) { this.stunT--; this.z = Math.max(0, this.z - 2); return; }
+      if (this.phase === 1 && this.hp <= this.maxHp / 2) {
+        this.phase = 2; G.audio.sfx('crack'); G.play.shake(14, 2);
+        w.pop(this.x, this.y - 70, 'SPIRAL CUT!', '#f86858');
+        w.burst(this.x, this.y - 30, ['#f0a0a0', '#f8f0e0', '#c8682e'], 14, { speed: 1.8, up: 1, life: 26, size: 2 });
+      }
+      // walking into it hurts (except while it's dizzy); getting rolled over hurts more
+      if (this.state !== 'dizzy' && this.z < 6 && G.overlap(this.bodyBox(), p.hurtBox())) p.hurt(this.state === 'roll' ? 4 : 2, this.x, this.y);
+      switch (this.state) {
+        case 'hop': {
+          if (this.air > 0) {
+            // in the air, heading for Nate
+            const n = hot ? 18 : 22, k = 1 - this.air / n;
+            this.z = Math.round(Math.sin(k * Math.PI) * 12);
+            const dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1, sp = hot ? 1.5 : 1.1;
+            this.x = G.clamp(this.x + (dx / d) * sp, b[0], b[2]); this.y = G.clamp(this.y + (dy / d) * sp, b[1], b[3]);
+            if (--this.air === 0) {
+              this.z = 0; this.squashT = 6; this.hops++;
+              G.audio.sfx('bump'); G.play.shake(5, 1);
+              w.burst(this.x, this.y, ['#8a7e68', '#a89a80'], 4, { speed: 0.8, up: 0.4, life: 14, size: 1 });
+              // sliced: a couple of slices fly off every landing
+              if (hot) for (const s of [-1, 1]) { const a = Math.atan2(p.y - this.y, p.x - this.x) + s * 0.7; w.add(new Shot(this.x, this.y - 4, Math.cos(a) * 1.8, Math.sin(a) * 1.8, G.spr.hamSlice, { life: 110, dmg: 1, z: 10 })); }
+            }
+          } else if (--this.st <= 0) {
+            if (this.hops >= (hot ? 2 : 3)) { this.hops = 0; this.next(w, p); }
+            else { this.air = hot ? 18 : 22; this.st = hot ? 14 : 22; }
+          }
+          // (it starts up on the stand: the first hop brings it down)
+          if (this.y < b[1]) this.y = Math.min(b[1], this.y + 1.5);
+          break;
+        }
+        case 'tip': {
+          // rocking, about to go over (and shuffling back toward the middle, so the roll has room):
+          // the roll goes wherever Nate is when it tips
+          const mx = (b[0] + b[2]) / 2, my = (b[1] + b[3]) / 2, dm = Math.hypot(mx - this.x, my - this.y);
+          if (dm > 4) { this.x += ((mx - this.x) / dm) * 0.9; this.y += ((my - this.y) / dm) * 0.9; }
+          if (--this.st <= 0) {
+            const dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1, sp = hot ? 4 : 3.2;
+            Object.assign(this, { state: 'roll', vx: (dx / d) * sp, vy: (dy / d) * sp, bounces: hot ? 2 : 1, st: 150 });
+            G.audio.sfx('dash');
+          }
+          break;
+        }
+        case 'roll': {
+          this.x += this.vx; this.y += this.vy; this.ang += Math.hypot(this.vx, this.vy) * 0.08 * (this.vx < 0 ? -1 : 1);
+          if (this.t % 6 === 0) w.burst(this.x, this.y, ['#8a7e68', '#a89a80'], 2, { speed: 0.6, up: 0.3, life: 12, size: 1 });
+          const hitX = this.x < b[0] || this.x > b[2], hitY = this.y < b[1] || this.y > b[3];
+          if (hitX || hitY || --this.st <= 0) {
+            this.x = G.clamp(this.x, b[0], b[2]); this.y = G.clamp(this.y, b[1], b[3]);
+            if (this.bounces > 0 && (hitX || hitY)) {
+              // it bounces off the edge of the lot and keeps going (sliced, the second bounce comes back at Nate)
+              if (hot && this.bounces === 1) { const dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1; this.vx = (dx / d) * 4; this.vy = (dy / d) * 4; }
+              else { if (hitX) this.vx = -this.vx; if (hitY) this.vy = -this.vy; }
+              this.bounces--;
+              G.audio.sfx('bump'); G.play.shake(6, 2);
+              break;
+            }
+            G.audio.sfx('boom'); G.play.shake(12, 3);
+            w.pop(this.x, this.y - 66, 'DIZZY!', '#f8e070');
+            Object.assign(this, { state: 'dizzy', st: hot ? 120 : 150, ang: 0 });
+          }
+          break;
+        }
+        case 'dizzy':
+          if (--this.st <= 0) Object.assign(this, { state: 'hop', st: 20, hops: 0 });
+          break;
+        case 'cloves':
+          if (this.st === 30) {
+            // a spread of cloves at Nate
+            G.audio.sfx('swing');
+            const n = hot ? 7 : 5, a0 = Math.atan2(p.y - this.y, p.x - this.x);
+            for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * 0.22; w.add(new Shot(this.x, this.y - 6, Math.cos(a) * 2.4, Math.sin(a) * 2.4, G.spr.cloveShot, { life: 120, dmg: 1, z: 22 })); }
+          }
+          if (--this.st <= 0) Object.assign(this, { state: 'hop', st: 16, hops: 0 });
+          break;
+        case 'glaze':
+          if (this.st === 40) {
+            // glaze runs off in every direction (and one lands right where Nate is standing)
+            G.audio.sfx('spray');
+            for (let i = 0; i < (hot ? 5 : 3); i++) { const a = (i / (hot ? 5 : 3)) * Math.PI * 2 + this.t; w.add(new GlazePuddle(G.clamp(this.x + Math.cos(a) * 34, b[0], b[2]), G.clamp(this.y + Math.sin(a) * 20, b[1], b[3]), false)); }
+            w.add(new GlazePuddle(p.x, p.y, true));
+          }
+          if (--this.st <= 0) Object.assign(this, { state: 'hop', st: 16, hops: 0 });
+          break;
+      }
+    }
+    draw(ctx, cx, cy) {
+      const S = G.spr.augustHam, st = this.state;
+      let pose;
+      if (st === 'perch' || st === 'home') pose = this.pose;
+      else if (st === 'defeated') pose = 'dizzy';
+      else pose = st === 'dizzy' || this.stunT > 0 ? 'dizzy' : st === 'glaze' ? 'glaze' : this.squashT > 0 ? 'squash' : this.phase === 2 ? 'spiral' : 'stand';
+      let img = S[pose] || S.stand;
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      const jx = st === 'tip' ? ((G.tick >> 1) & 1 ? 2 : -2) : 0;
+      if (st !== 'perch' && st !== 'home') ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 26) - cx, Math.round(this.y - 4) - cy, 52, 8);
+      const x = Math.round(this.x) - cx, y = Math.round(this.y - this.z) - cy;
+      if (st === 'roll') {
+        ctx.save(); ctx.translate(x, y - 24); ctx.rotate(this.ang); ctx.drawImage(img, -img.width / 2, -img.height + 26); ctx.restore();
+      } else ctx.drawImage(img, x - Math.round(img.width / 2) + jx, y - img.height + 2);
+      if (st === 'dizzy') {
+        const top = y - 56;
+        for (let i = 0; i < 3; i++) {
+          const a = G.tick * 0.15 + (i * Math.PI * 2) / 3, s = G.spr.tinyStars[i];
+          ctx.drawImage(s, Math.round(x + Math.cos(a) * 16 - s.width / 2), Math.round(top + Math.sin(a) * 4 - s.height / 2));
+        }
+      }
+    }
+  }
+  G.AugustHam = AugustHam;
   // the Two-Liter's slam warning and shockwave, drawn flat on the road under everything
   class SlamZone extends Ent {
     constructor(boss) { super(boss.x, boss.y); this.boss = boss; this.flat = true; }

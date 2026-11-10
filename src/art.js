@@ -10638,6 +10638,254 @@
     return c;
   }
 
+  // ================================================================ AURORA, NC (after the finale)
+  // The Aurora Fossil Museum (from the user's family trip; looked up online): a squat, plain building on
+  // Main Street with a long skinny entrance, a glass case of megalodon teeth just inside, a life-size
+  // megalodon jaw in the hall, a 114-tooth false mako set, and prehistoric seas painted on the walls.
+  // Across the street, the Fossil Park: a muddy pile of mine tailings that anyone can sift for free.
+  // And four miles out of town, a pin on the map: the World's Largest August Ham.
+  function auroraMuseum() {
+    const W = 128, H = 64, p = new Pix(W, H), brick = '#b89a7a', brickD = '#9a7c5e', trim = '#f2ece0';
+    p.rect(0, 0, W, 8, '#6a6660'); p.hline(0, W - 1, 0, '#8a8680'); p.hline(0, W - 1, 7, '#4a4640');
+    for (let y = 8; y < H; y++) for (let x = 0; x < W; x++) {
+      const row = Math.floor(y / 4), off = row % 2 ? 4 : 0;
+      p.set(x, y, y % 4 === 3 || (x + off) % 8 === 0 ? '#a08868' : G.hash(Math.floor((x + off) / 8), row, 77) < 0.25 ? brickD : brick);
+    }
+    // the sign: a long white board, with a shark tooth hung on the wall at each end
+    p.rect(14, 11, 100, 15, trim); p.rect(15, 12, 98, 13, '#24486a'); p.hline(15, 112, 12, '#34587a');
+    for (const x0 of [3, 117]) for (let y = 0; y < 9; y++) { const hw = Math.round((8 - y) * 0.45); p.hline(x0 + 3 - hw, x0 + 3 + hw, 14 + y, y > 6 ? '#c8c0a8' : '#3a3a40'); }
+    // two windows, with fossils on the sills
+    for (const x0 of [8, 92]) {
+      p.rect(x0, 32, 28, 20, trim); p.rect(x0 + 2, 34, 24, 16, '#4a6a88'); p.vline(x0 + 13, 34, 49, trim); p.set(x0 + 3, 35, '#a8c8e8'); p.set(x0 + 4, 35, '#a8c8e8');
+      for (let i = 0; i < 3; i++) { const tx = x0 + 4 + i * 8; p.set(tx + 1, 47, '#3a3a40'); p.hline(tx, tx + 2, 48, '#3a3a40'); p.hline(tx - 1, tx + 3, 49, '#c8c0a8'); }
+    }
+    // the long, skinny entrance: a white canopy over a glass door
+    p.rect(50, 28, 28, 4, trim); p.hline(50, 77, 31, '#c8c0b0');
+    p.rect(56, 34, 16, 30, '#2a2a30'); p.rect(58, 36, 12, 28, '#6a8aa8'); p.vline(63, 36, 63, '#2a2a30'); p.set(68, 50, '#d8b050');
+    p.rect(58, 42, 12, 3, trim); p.hline(59, 68, 43, '#24486a');
+    p.outline();
+    const cv = p.canvas(), x = cv.getContext('2d'), t = 'AURORA FOSSIL MUSEUM';
+    G.font.draw(x, t, Math.round((W - G.font.width(t)) / 2), 15, '#f8f0d8', { shadow: '#0e1e30' });
+    return cv;
+  }
+  // the pile of mine tailings in the Fossil Park: gray-tan sand and gravel, muddy at the bottom, with
+  // bits of shell and the odd glint of a tooth
+  function tailingsPile() {
+    const W = 136, H = 50, p = new Pix(W, H), cs = ['#a89a80', '#b8aa8e', '#8a7e68', '#c8bca0', '#6e6454'];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const top = 6 + 10 * Math.abs(Math.sin(x * 0.045)) * (1 - Math.abs(x - 68) / 80) + (G.hash(x >> 2, 3, 420) - 0.5) * 3;
+      const d = ((x - 67.5) / 67.5) ** 2;
+      if (d > 1 || y < top + (1 - Math.sqrt(1 - d)) * 26) continue;
+      let c = cs[Math.floor(G.hash(x >> 1, y >> 1, 421) * cs.length)];
+      if (y > H - 8) c = G.hash(x, y, 422) < 0.5 ? '#5e5444' : '#6e6454';
+      p.set(x, y, c);
+    }
+    for (let i = 0; i < 40; i++) {
+      const x = 10 + Math.floor(G.hash(i, 1, 423) * 116), y = 20 + Math.floor(G.hash(i, 2, 423) * 24);
+      if (!p.get(x, y)) continue;
+      const k = G.hash(i, 3, 423);
+      if (k < 0.45) { p.set(x, y, '#f0e8d8'); p.set(x + 1, y, '#d8ccb4'); }
+      else if (k < 0.75) { p.set(x, y, '#3a3a40'); p.set(x, y + 1, '#3a3a40'); p.set(x + 1, y + 1, '#c8c0a8'); }
+      else p.set(x, y, '#e8d8b8');
+    }
+    return p.canvas();
+  }
+  // the reference board by the pile: what's what, with drawings
+  function fossilIdBoard() {
+    const p = new Pix(34, 30);
+    p.rect(4, 18, 2, 12, '#6a4a2a'); p.rect(28, 18, 2, 12, '#6a4a2a');
+    p.rect(0, 0, 34, 20, '#4a3a2a'); p.rect(1, 1, 32, 18, '#f2ece0'); p.rect(1, 1, 32, 4, '#24486a');
+    const tooth = (x, y, s, c) => { for (let j = 0; j < s; j++) p.hline(x - Math.round((s - j) / 2), x + Math.round((s - j) / 2), y + j, c); p.hline(x - Math.round(s / 2) - 1, x + Math.round(s / 2) + 1, y + s, '#c8b890'); };
+    tooth(6, 7, 6, '#3a3a40'); tooth(15, 9, 4, '#5a5a62'); tooth(22, 8, 5, '#4a4a52'); tooth(29, 10, 3, '#6a6a72');
+    for (let x = 3; x < 31; x += 4) p.hline(x, x + 2, 16, '#8a8478');
+    p.outline();
+    return p.canvas();
+  }
+  // a stack of sifting screens and a bucket, for anybody who didn't bring their own
+  function siftScreens() {
+    const p = new Pix(24, 20);
+    for (const [x, y] of [[0, 10], [2, 6], [4, 2]]) {
+      p.rect(x, y, 16, 8, '#a8804a'); p.rect(x + 1, y + 1, 14, 6, '#8a8e92');
+      for (let i = x + 2; i < x + 15; i += 2) p.vline(i, y + 1, y + 6, '#6a6e72');
+    }
+    p.rect(17, 9, 7, 10, '#e05a30'); p.hline(17, 23, 9, '#f08060'); p.hline(16, 24, 8, '#3a3a40'); p.set(20, 12, '#ffffff');
+    p.outline();
+    return p.canvas();
+  }
+  // the billboard on the way out of town (Nate saw it on the map, after they'd left)
+  function hamBillboard() {
+    const W = 100, H = 50, p = new Pix(W, H);
+    for (const x of [14, 82]) { p.rect(x, 30, 4, 20, '#7a5a3a'); p.vline(x, 30, 49, '#9a7a52'); }
+    p.rect(0, 0, W, 32, '#f6f0e0'); p.rect(2, 2, W - 4, 28, '#f8d878'); p.hline(2, W - 3, 2, '#fff0b0');
+    // a little cartoon ham in the corner, and an arrow
+    const hx = 10, hy = 18;
+    for (let y = -7; y <= 7; y++) for (let x = -8; x <= 8; x++) if ((x / 8) ** 2 + (y / 7) ** 2 <= 1) p.set(hx + x, hy + y, y < -3 ? '#e09050' : '#c8683a');
+    p.rect(hx - 10, hy - 9, 3, 3, '#f6f2ea'); p.set(hx - 8, hy - 7, '#f6f2ea'); p.set(hx - 7, hy - 6, '#d8d0c0');
+    for (let i = 0; i < 9; i++) p.set(W - 14 + i, 25, '#c83828');
+    p.set(W - 7, 24, '#c83828'); p.set(W - 7, 26, '#c83828'); p.set(W - 8, 23, '#c83828'); p.set(W - 8, 27, '#c83828');
+    p.outline();
+    const cv = p.canvas(), x = cv.getContext('2d'), F = G.font;
+    F.draw(x, 'WORLD\'S LARGEST', 24, 4, '#7a2a1a');
+    F.draw(x, 'AUGUST HAM', 24, 12, '#c83828', { shadow: '#7a2a1a' });
+    F.draw(x, '4 MI', 60, 21, '#7a2a1a');
+    return cv;
+  }
+  // The World's Largest August Ham. Nobody knows what an August ham is. It's a ham, and it's the
+  // biggest one, glazed, scored in diamonds with a clove in every one, a paper frill on the bone,
+  // and two cloves for eyes. Poses: stand, squash (landing a hop), dizzy (spiral eyes), glaze
+  // (dripping), spiral (sliced: the second half of the fight), sleep (beaten, back on its stand).
+  function augustHam(pose) {
+    const W = 72, H = 64, p = new Pix(W, H), cx = 38, cy = 38, sq = pose === 'squash' ? 1.12 : 1, sy = pose === 'squash' ? 0.86 : 1;
+    const rx = 27 * sq, ry = 22 * sy, base = cy + 22 - ry, gl = '#c8682e', glL = '#e08a40', glH = '#f8b860', glD = '#8a3c18';
+    // the body: a big round butt end, tapering up and to the left into the shank
+    const inBody = (x, y) => {
+      if (((x - cx) / rx) ** 2 + ((y - (base + ry - 22)) / ry) ** 2 <= 1) return true;
+      // the shank: a cone from the body up to the bone
+      const ax = 14, ay = 12, bx = cx - 6, by = base + ry - 30, t = ((x - ax) * (bx - ax) + (y - ay) * (by - ay)) / ((bx - ax) ** 2 + (by - ay) ** 2);
+      if (t < 0 || t > 1) return false;
+      const qx = ax + (bx - ax) * t, qy = ay + (by - ay) * t, r = 5 + t * 12;
+      return (x - qx) ** 2 + (y - qy) ** 2 <= r * r;
+    };
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      if (!inBody(x, y)) continue;
+      // light from the top left
+      const lit = (x - cx) * -0.5 + (y - cy) * -0.8;
+      let c = lit > 14 ? glH : lit > 4 ? glL : lit < -16 ? glD : gl;
+      // scored in diamonds
+      if ((x + y) % 8 === 0 || (x - y + 64) % 8 === 0) c = shade(c, -0.22);
+      p.set(x, y, c);
+    }
+    // a clove where the scores cross
+    for (let y = 2; y < H; y += 8) for (let x = 2; x < W; x += 8) {
+      if (!inBody(x, y) || !inBody(x + 1, y + 1)) continue;
+      p.set(x, y, '#3a2010'); p.set(x + 1, y, '#5a3418'); p.set(x, y - 1, '#5a3418');
+    }
+    // the spiral cut: slices showing down the body
+    if (pose === 'spiral') for (let x = 18; x < 64; x += 5) for (let y = 0; y < H; y++) if (inBody(x, y) && inBody(x + 2, y)) { p.set(x, y, '#f0a8a0'); p.set(x + 1, y, '#8a3c18'); }
+    // glaze running down (glaze pose, and a little always)
+    for (const [dx, len] of pose === 'glaze' ? [[-14, 9], [-4, 12], [6, 8], [15, 11]] : [[-8, 3], [10, 2]]) {
+      const x = Math.round(cx + dx); let y = 0; while (y < H && !inBody(x, y)) y++;
+      const y0 = Math.round(base + ry - 2 - 2);
+      for (let j = 0; j < len; j++) { p.set(x, y0 + j - len, '#f8c050'); p.set(x + 1, y0 + j - len, '#e8a030'); }
+      p.rect(x - 1, y0, 3, 2, '#f8c050');
+    }
+    // the bone and its paper frill
+    p.rect(7, 4, 8, 8, '#f6f2ea'); p.rect(5, 2, 5, 5, '#f6f2ea'); p.rect(12, 1, 4, 4, '#f6f2ea'); p.hline(7, 14, 11, '#d8d0c0'); p.vline(14, 4, 10, '#d8d0c0');
+    for (let i = 0; i < 6; i++) { p.set(9 + i, 13 + (i % 2), '#ffffff'); p.set(9 + i, 14 + (i % 2), '#e8e4f0'); }
+    // the face: two cloves for eyes, and a scowl (it's tired of being driven past)
+    const ex = cx - 2, ey = Math.round(base + ry - 30);
+    if (pose === 'dizzy') {
+      for (const sx of [-8, 8]) { const x0 = ex + sx; p.rect(x0 - 2, ey - 2, 5, 5, '#f6f2ea'); p.set(x0, ey, '#3a2010'); p.set(x0 + 1, ey - 1, '#3a2010'); p.set(x0 - 1, ey + 1, '#3a2010'); p.set(x0 + 2, ey + 1, '#3a2010'); p.set(x0 - 1, ey - 2, '#3a2010'); }
+      p.hline(ex - 4, ex + 4, ey + 9, '#3a2010'); p.set(ex - 5, ey + 8, '#3a2010'); p.set(ex + 5, ey + 10, '#3a2010');
+    } else if (pose === 'sleep') {
+      for (const sx of [-8, 8]) p.hline(ex + sx - 2, ex + sx + 2, ey, '#3a2010');
+      p.hline(ex - 2, ex + 2, ey + 9, '#7a2a1a');
+    } else {
+      for (const sx of [-8, 8]) {
+        const x0 = ex + sx;
+        p.rect(x0 - 1, ey - 1, 3, 4, '#2a1408'); p.set(x0, ey - 2, '#5a3418'); p.set(x0 - 1, ey - 2, '#5a3418'); p.set(x0 + 1, ey - 2, '#5a3418');
+        // the eyebrows, angled down toward the middle
+        for (let i = 0; i < 5; i++) p.set(x0 + (sx < 0 ? i - 2 : 2 - i), ey - 6 + (i >> 1), '#3a2010');
+      }
+      p.hline(ex - 5, ex + 5, ey + 9, '#3a2010'); p.set(ex - 6, ey + 10, '#3a2010'); p.set(ex + 6, ey + 10, '#3a2010');
+    }
+    p.outline();
+    return p.canvas();
+  }
+  // the stand it sits on by the road: a white platform and a little plaque
+  function hamStand() {
+    const W = 88, H = 22, p = new Pix(W, H);
+    p.rect(0, 4, W, 14, '#f2ece0'); p.hline(0, W - 1, 4, '#ffffff'); p.rect(0, 14, W, 4, '#d8d0c0');
+    for (let x = 4; x < W; x += 12) p.vline(x, 5, 13, '#e0d8c8');
+    p.rect(30, 8, 28, 8, '#7a5a3a'); p.rect(31, 9, 26, 6, '#d8b050');
+    p.rect(2, 18, 6, 4, '#8a8478'); p.rect(W - 8, 18, 6, 4, '#8a8478');
+    p.outline();
+    return p.canvas();
+  }
+  // a whole clove, flying
+  function cloveShot() {
+    const p = new Pix(5, 7);
+    p.vline(2, 2, 6, '#5a3418'); p.rect(1, 0, 3, 3, '#3a2010'); p.set(0, 1, '#3a2010'); p.set(4, 1, '#3a2010'); p.set(2, 1, '#7a4a20');
+    p.outline('#1c1008');
+    return p.canvas();
+  }
+  // a slice of spiral-cut ham, spinning
+  function hamSlice() {
+    const p = new Pix(12, 8);
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 12; x++) { const e = ((x - 5.5) / 5.5) ** 2 + ((y - 3.5) / 3.5) ** 2; if (e <= 1) p.set(x, y, e > 0.65 ? '#c8682e' : e > 0.45 ? '#f8f0e0' : '#f0a0a0'); }
+    p.outline();
+    return p.canvas();
+  }
+  // ---- inside the museum
+  // the glass case just inside the door: dozens of megalodon teeth, a few with price tags
+  function megToothCase(wt) {
+    const W = wt * 16, p = new Pix(W, 28);
+    p.rect(0, 14, W, 14, '#5a3a24'); p.hline(0, W - 1, 14, '#7a5a3a');
+    p.rect(1, 2, W - 2, 12, '#cfe6f2'); p.hline(1, W - 2, 2, '#ffffff');
+    for (let i = 0; i < W / 6 - 1; i++) {
+      const x = 4 + i * 6 + (i % 2), y = 5 + (i % 3), s = 3 + (i % 3);
+      for (let j = 0; j < s; j++) p.hline(x - Math.round((s - j) / 2), x + Math.round((s - j) / 2), y + j, i % 4 ? '#3a3a40' : '#5a5048');
+      p.hline(x - 2, x + 2, y + s, '#c8b890');
+      if (i % 5 === 2) { p.set(x + 3, y + s - 1, '#ffffff'); p.set(x + 4, y + s - 1, '#f8d850'); }
+    }
+    p.outline();
+    return p.canvas();
+  }
+  // the life-size megalodon jaw in the hall: you could walk through it
+  function megJaw() {
+    const W = 64, H = 54, p = new Pix(W, H), cx = 31.5;
+    for (let y = 0; y < H - 6; y++) for (let x = 0; x < W; x++) {
+      const e = ((x - cx) / 31) ** 2 + ((y - 24) / 22) ** 2, inner = ((x - cx) / 24) ** 2 + ((y - 24) / 14) ** 2;
+      if (e <= 1 && inner > 1) p.set(x, y, e > 0.8 ? '#8a7a64' : y < 24 ? '#b8a88a' : '#a8987a');
+    }
+    // rows of big triangular teeth pointing in, gray-black like the fossils (bigger toward the front)
+    for (let a = 0; a < 22; a++) {
+      const t = (a / 22) * Math.PI * 2, x = Math.round(cx + Math.cos(t) * 24), y = Math.round(24 + Math.sin(t) * 15), dx = -Math.cos(t), dy = -Math.sin(t) * 1.4;
+      const L = 5 + Math.round(Math.abs(Math.sin(t)) * 3), d = Math.hypot(dx, dy);
+      for (let k = 0; k < L; k++) for (let s = -3 + Math.floor(k * 3 / L); s <= 3 - Math.floor(k * 3 / L); s++) p.set(Math.round(x + (dx / d) * k - (dy / d) * s), Math.round(y + (dy / d) * k + (dx / d) * s), k < 2 ? '#c8b890' : (a % 3 ? '#4a4a52' : '#3a3a40'));
+    }
+    p.rect(26, H - 6, 12, 6, '#5a3a24'); p.hline(20, 43, H - 1, '#3a2418');
+    p.outline();
+    return p.canvas();
+  }
+  // the false mako set: 114 teeth from one rare shark, laid out in rows on a board
+  function falseMakoBoard() {
+    const W = 48, H = 26, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#3a2a1e'); p.rect(2, 2, W - 4, H - 4, '#1e2a3a');
+    for (let r = 0; r < 4; r++) for (let i = 0; i < 9 - Math.abs(r - 1.5); i++) {
+      const x = 6 + i * 4 + Math.round(Math.abs(r - 1.5) * 2), y = 5 + r * 5;
+      p.set(x, y, '#e8e0cc'); p.hline(x - 1, x + 1, y + 1, '#e8e0cc'); p.hline(x - 1, x + 1, y + 2, '#c8b890');
+    }
+    p.rect(14, H - 3, 20, 2, '#d8b050');
+    p.outline();
+    return p.canvas();
+  }
+  // the painted walls: a prehistoric sea, with a whale and a megalodon (the museum's first director painted them)
+  function seaMural(wt) {
+    const W = wt * 16, H = 26, p = new Pix(W, H);
+    for (let y = 0; y < H; y++) p.hline(0, W - 1, y, y < 3 ? '#a8d8f0' : shade('#3a88b8', -y / 60));
+    for (let x = 0; x < W; x += 9) p.set(x + (x % 4), 2, '#ffffff');
+    // a whale
+    for (let y = -4; y <= 4; y++) for (let x = -14; x <= 14; x++) if ((x / 14) ** 2 + (y / 4) ** 2 <= 1) p.set(18 + x, 12 + y, y > 1 ? '#c8d0d8' : '#5a6a7a');
+    p.rect(30, 8, 4, 3, '#5a6a7a'); p.set(9, 11, '#1c1424');
+    // a megalodon, chasing it
+    for (let y = -3; y <= 3; y++) for (let x = -11; x <= 11; x++) if ((x / 11) ** 2 + (y / 3) ** 2 <= 1) p.set(W - 22 + x, 18 + y, y > 0 ? '#e8e8e8' : '#4a5a68');
+    for (let i = 0; i < 5; i++) p.set(W - 22, 14 - i, '#4a5a68'); p.rect(W - 34, 15, 3, 7, '#4a5a68');
+    p.hline(W - 31, W - 28, 19, '#ffffff'); p.set(W - 29, 17, '#1c1424');
+    // the sea floor
+    for (let x = 0; x < W; x++) p.vline(x, H - 3 + Math.round(Math.sin(x * 0.3)), H - 1, '#c8b890');
+    return p.canvas();
+  }
+  // a whale vertebra "as big as a stool"
+  function whaleVertebra() {
+    const p = new Pix(18, 16);
+    for (let y = 0; y < 10; y++) for (let x = 0; x < 18; x++) if (((x - 8.5) / 8.5) ** 2 + ((y - 4.5) / 4.5) ** 2 <= 1) p.set(x, y, y < 3 ? '#e8dcc0' : '#c8b490');
+    p.rect(2, 6, 14, 6, '#b8a07a'); p.rect(3, 12, 3, 4, '#a08a64'); p.rect(12, 12, 3, 4, '#a08a64');
+    for (let i = 0; i < 8; i++) p.set(4 + i * 1.5, 3 + (i % 2), '#a89470');
+    p.outline();
+    return p.canvas();
+  }
+
   G.art = {
     OUT, shade, Pix, fromRows, mirror, flash, person, P, scale2, buildingExtra, pipeArt, pipeProfile, PIPE_GEO, familyPortrait,
     tile, tree, building,
@@ -10934,5 +11182,10 @@
     S.natesBassDone = natesBassDone(); S.switchPlate = switchPlate(); S.switchTape = switchTape();
     S.squirrel = squirrel(); S.goat = [goat(0), goat(1)]; S.turtle = turtle(); S.bookmarkIcon = bookmarkIcon(); S.clubDoor = clubDoor(); S.rushTrophy = rushTrophy();
     S.gardenDeer = { left: [gardenDeer(0), gardenDeer(1)] }; S.gardenDeer.right = S.gardenDeer.left.map(mirror); S.rainBarrel = rainBarrel(); S.marigold = marigold(); S.wetBlanket = wetBlanket();
+    // Aurora, NC
+    S.auroraMuseum = auroraMuseum(); S.tailingsPile = tailingsPile(); S.fossilIdBoard = fossilIdBoard(); S.siftScreens = siftScreens(); S.hamBillboard = hamBillboard();
+    S.augustHam = {}; for (const k of ['stand', 'squash', 'dizzy', 'glaze', 'spiral', 'sleep']) S.augustHam[k] = augustHam(k);
+    S.hamStand = hamStand(); S.cloveShot = cloveShot(); S.hamSlice = hamSlice();
+    S.megToothCase = megToothCase(3); S.megJaw = megJaw(); S.falseMakoBoard = falseMakoBoard(); S.seaMural = seaMural(4); S.whaleVertebra = whaleVertebra();
   };
 })();
