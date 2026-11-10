@@ -536,6 +536,12 @@ G.audio = (function () {
     if (recSource) { try { recSource.stop(); } catch (e) { /* already stopped */ } recSource = null; }
   }
 
+  // a hidden tab stops its sound (browsers slow a hidden tab's timers, and the music would stutter)
+  document.addEventListener('visibilitychange', () => {
+    if (!ctx) return;
+    if (document.hidden) ctx.suspend(); else ctx.resume();
+  });
+
   return {
     unlock,
     sfx,

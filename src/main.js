@@ -82,6 +82,20 @@
     try { localStorage.setItem(fileKey(s.slot), JSON.stringify(s)); return true; } catch (e) { return false; }
   };
 
+  // Shark teeth never show the sacred number: a count that would have a 6 in it skips to the next
+  // one that doesn't (up when Nate gains teeth, down when he spends them). Skipping down takes more
+  // than the price, so the difference is owed (s.teethOwed) and comes back with the next teeth he
+  // picks up. Returns true if the count skipped.
+  function moveTeeth(s, n) {
+    let t = s.teeth + n;
+    if (n > 0 && s.teethOwed) { t += s.teethOwed; s.teethOwed = 0; }
+    const exact = t;
+    while (/6/.test(String(t))) t += n >= 0 ? 1 : -1;
+    if (t < exact && t >= 0) s.teethOwed = (s.teethOwed || 0) + (exact - t);
+    s.teeth = G.clamp(t, 0, 999);
+    return t !== exact;
+  }
+
   // Fainting: the frame Nate hits the ground, and the share of his shark teeth he drops.
   const FAINT_LAND = G.FAINT_LAND = 54;
   const FAINT_COST = 0.15;
@@ -450,10 +464,7 @@
     },
 
     addTeeth(n) {
-      const s = G.state;
-      let t = s.teeth + n, skipped = false;
-      while (/6/.test(String(t))) { t += n >= 0 ? 1 : -1; skipped = true; }
-      s.teeth = G.clamp(t, 0, 999);
+      const s = G.state, skipped = moveTeeth(s, n);
       // the joke about it only ever plays once on this device (not again for every new game or admin start)
       if (skipped && !s.flags.skipNote) {
         s.flags.skipNote = true;
@@ -681,8 +692,8 @@
       // Father Eggmas lurking by the sign
       const ey = 104 + Math.round(Math.abs(Math.sin(this.t / 20)) * -3);
       ctx.drawImage(G.spr.eggmas, 208, ey);
-      // Nate looking on
-      ctx.drawImage(G.sprites.nate.right[(this.t >> 4) % 2 ? 0 : 0], 34, 104);
+      // Nate looking on (shifting his weight now and then)
+      ctx.drawImage(G.sprites.nate.right[0], 34, 104 + (this.t % 90 < 10 ? 1 : 0));
       // menu
       const w = 84, h = this.opts.length * 12 + 8, x = Math.round((G.W - w) / 2), y = this.opts.length > 3 ? 100 : this.opts.length > 2 ? 108 : 114;
       G.box(ctx, x, y, w, h);
@@ -891,7 +902,7 @@
       const cur = G.state, saved = cur.admin ? G.adminSnap : G.loadSave(cur.slot);
       this.lost = Math.floor(((saved || cur).teeth || 0) * FAINT_COST);
       if (saved && this.lost) {
-        saved.teeth -= this.lost;
+        moveTeeth(saved, -this.lost);
         if (!cur.admin) { G.state = saved; G.writeSave(saved.slot || cur.slot); G.state = cur; }
       }
     },

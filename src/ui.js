@@ -415,10 +415,10 @@
     { id: 'home', name: 'HOME', x: 40, y: 60, icon: 'house', key: 'Home',
       maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['bookClub', 'The Book Club'], ['north', 'The Frozen Pond']] },
     { id: 'andover', name: 'ANDOVER', x: 110, y: 58, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
-    { id: 'bay', name: 'THE BAY', x: 72, y: 80, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel']] },
-    { id: 'ches', name: 'CHESAPEAKE', x: 33, y: 104, icon: 'house', key: 'Chesapeake', maps: [['condo', 'The Condo'], ['condoDown', 'Downstairs'], ['condoUp', 'Upstairs'], ['condoStorage', 'Storage'], ['golf', 'The Golf Course'], ['toroLoco', 'El Toro Loco']] },
-    { id: 'chkd', name: 'CHKD', x: 80, y: 106, icon: 'college', key: 'CHKD', maps: [['chkd', 'Outside'], ['chkdLobby', 'The Lobby'], ['chkdWard', 'The Ward'], ['chkdNicu', 'The NICU'], ['chkdRoof', 'The Roof']] },
-    { id: 'ditch', name: 'THE DITCH', x: 114, y: 96, icon: 'trophy', key: 'The Ditch', maps: [['ditchRoad', 'The Last Road'], ['ditchFinal', 'The Number One Ditch'], ['ditchDay', 'In the Morning']] },
+    { id: 'bay', name: 'THE BAY', x: 72, y: 76, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel']] },
+    { id: 'ches', name: 'CHESAPEAKE', x: 33, y: 99, icon: 'house', key: 'Chesapeake', maps: [['condo', 'The Condo'], ['condoDown', 'Downstairs'], ['condoUp', 'Upstairs'], ['condoStorage', 'Storage'], ['golf', 'The Golf Course'], ['toroLoco', 'El Toro Loco']] },
+    { id: 'chkd', name: 'CHKD', x: 80, y: 102, icon: 'college', key: 'CHKD', maps: [['chkd', 'Outside'], ['chkdLobby', 'The Lobby'], ['chkdWard', 'The Ward'], ['chkdNicu', 'The NICU'], ['chkdRoof', 'The Roof']] },
+    { id: 'ditch', name: 'THE DITCH', x: 114, y: 92, icon: 'trophy', key: 'The Ditch', maps: [['ditchRoad', 'The Last Road'], ['ditchFinal', 'The Number One Ditch'], ['ditchDay', 'In the Morning']] },
   ];
   const ROADS = [['laf', 'fair'], ['laf', 'home'], ['home', 'andover'], ['home', 'bay'], ['bay', 'ches'], ['ches', 'chkd'], ['ches', 'ditch']];
   const placeById = (id) => PLACES.find((p) => p.id === id);
@@ -566,6 +566,7 @@
       lastTab = this.tab;
       this.rushSure = false;
       this.qread = null;
+      this.pread = null;
       this.admList = null;
       this.coll = null;
       this.photoView = null;
@@ -581,6 +582,17 @@
       this.sel = n;
       G.audio.sfx('menu');
       return true;
+    }
+
+    // everything there is to read about somebody: who they are, their bio and their ability, one
+    // wrapped line at a time (the card on the PEOPLE page only has room for a few lines)
+    personText(p) {
+      const W = 218, out = [], text = (t, col) => { for (const l of F().wrap(t, W)) out.push([l, col]); };
+      text(p.name, C.gold);
+      if (p.tag) text(p.tag);
+      if (p.bio) { out.push(['']); text(p.bio); }
+      if (p.skill) { out.push(['']); text('{o}Ability:{/} ' + p.skill); }
+      return out;
     }
 
     // everything there is to read about the quest under the cursor (and the main quest, if it
@@ -620,8 +632,8 @@
       if (inp.hit('start')) { G.audio.sfx('cancel'); return true; }
       if (inp.hit('l')) this.switchTab(-1);
       if (inp.hit('r')) this.switchTab(1);
-      // (inside a COLLECTABLES section, or reading a quest, X backs out instead)
-      if (inp.hit('b') && !G.state.admin && !G.state.rush && !(this.tab === COLL_TAB && this.coll) && !this.qread) this.saveTo(G.state.slot || 1);
+      // (inside a COLLECTABLES section, or reading a quest or a person, X backs out instead)
+      if (inp.hit('b') && !G.state.admin && !G.state.rush && !(this.tab === COLL_TAB && this.coll) && !this.qread && !this.pread) this.saveTo(G.state.slot || 1);
 
       if (this.onTabs) {
         if (inp.hit('left')) this.switchTab(-1);
@@ -743,6 +755,14 @@
         if (inp.hit('up')) { if (row > 0) this.move(-RCOLS, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
       } else if (this.tab === PEOPLE_TAB) {
         const list = G.people(), n = list.length;
+        // reading somebody in full (a long bio doesn't fit on the card): Z, X or left closes it
+        if (this.pread) {
+          if (inp.hit('a') || inp.hit('b') || inp.hit('left')) { inp.eat('a'); inp.eat('b'); this.pread = null; G.audio.sfx('cancel'); }
+          if (inp.hit('down')) this.pread.top = Math.min(this.pread.top + 1, Math.max(0, this.pread.lines.length - READ_ROWS));
+          if (inp.hit('up')) this.pread.top = Math.max(0, this.pread.top - 1);
+          return false;
+        }
+        if (inp.hit('right') && list[this.sel].known) { this.pread = { top: 0, lines: this.personText(list[this.sel]) }; G.audio.sfx('select'); }
         if (inp.hit('a')) {
           inp.eat('a');
           const p = list[this.sel];
@@ -830,7 +850,7 @@
       if (this.tab === QUEST_TAB) { if (this.qread) this.drawQuestRead(ctx); else this.drawQuests(ctx); }
       else if (this.tab === MAP_TAB) this.drawMap(ctx);
       else if (this.tab === ITEM_TAB || this.tab === KEY_TAB) this.drawGrid(ctx);
-      else if (this.tab === PEOPLE_TAB) this.drawPeople(ctx);
+      else if (this.tab === PEOPLE_TAB) { if (this.pread) this.drawQuestRead(ctx, this.pread); else this.drawPeople(ctx); }
       else if (this.tab === COLL_TAB) this.drawCollect(ctx);
       else if (this.tab === RUSH_TAB) this.drawRush(ctx);
       else if (G.state.admin) this.drawAdmin(ctx);
@@ -853,16 +873,18 @@
       }
       const admin = G.state.admin, act = {
         [QUEST_TAB]: this.qread ? 'close' : this.qmode < 2 ? 'read all' : null,
-        [MAP_TAB]: placeOpen(PLACES[this.msel]) && G.canTravel(PLACES[this.msel].id) ? 'drive there' : null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: 'bring along',
+        [MAP_TAB]: placeOpen(PLACES[this.msel]) && G.canTravel(PLACES[this.msel].id) ? 'drive there' : null, [ITEM_TAB]: 'set to X', [KEY_TAB]: 'use', [PEOPLE_TAB]: this.pread ? 'close' : 'bring along',
         [COLL_TAB]: this.instView && G.GUITARS.includes(this.instView) && G.guitarNow() !== this.instView ? 'play it' : this.photoView || this.instView ? 'put away' : !this.coll ? 'open' : this.coll === 'fish' ? null : this.coll === 'rocks' ? 'next area' : this.coll === 'pipes' || this.coll === 'tins' ? 'use it' : 'look',
         [SAVE_TAB]: admin ? (this.admList ? 'go' : 'do it') : 'save here', [RUSH_TAB]: G.state.rush ? (this.rushSure ? 'really give up' : 'give up') : 'start',
       }[this.tab];
       const pairs = act ? [['Z', act]] : [['↑↓←→', 'look around']];
       if (this.tab === QUEST_TAB && !this.qread) pairs.splice(0, 1, ...(act ? [['Z', act]] : []), ['←→', 'lists']);
       if (this.tab === QUEST_TAB && this.qread && this.qread.lines.length > READ_ROWS) pairs.push(['↑↓', 'more']);
+      if (this.tab === PEOPLE_TAB && !this.pread) pairs.push(['→', 'read all']);
+      if (this.tab === PEOPLE_TAB && this.pread && this.pread.lines.length > READ_ROWS) pairs.push(['↑↓', 'more']);
       if (this.tab === COLL_TAB && this.coll && !this.photoView && !this.instView) pairs.push(['X', 'back']);
       else if (this.tab === COLL_TAB && this.instView && act === 'play it') pairs.push(['X', 'put away']);
-      else if (!admin && !G.state.rush && !this.qread && !(this.tab === COLL_TAB && (this.photoView || this.instView))) pairs.push(['X', 'quick save']);
+      else if (!admin && !G.state.rush && !this.qread && !this.pread && !(this.tab === COLL_TAB && (this.photoView || this.instView))) pairs.push(['X', 'quick save']);
       else if (this.tab === SAVE_TAB && this.admList) pairs.push(['X', 'back']);
       // (no room for the pages hint next to a guitar's play it / put away)
       if (!(this.tab === COLL_TAB && this.instView && act === 'play it')) pairs.push(['Q/E', 'pages']);
@@ -880,10 +902,14 @@
     drawTabs(ctx) {
       const list = tabList(), names = TABS.map((n, i) => (i === SAVE_TAB && G.state.admin ? 'ADMIN' : n));
       const icons = ['quests', 'map', 'items', 'keys', 'people', 'collect', G.state.admin ? 'admin' : 'save', 'rush'];
-      // (the eighth page takes a little off each of the others, to keep Q and E on the screen)
-      const small = list.length > 7 ? 15 : 17, wOf = (i) => (i === this.tab ? 9 + 5 + F().width(names[i]) + 8 : small);
-      const gap = 2, total = list.reduce((a, i) => a + wOf(i), 0) + gap * (list.length - 1);
-      let x = Math.round((G.W - total) / 2);
+      // (the eighth page takes a little off each of the others, and a long name a little more, to keep
+      // Q and E on the screen: the two keycaps need 28 pixels between them)
+      const gap = 2, wide = (i) => 9 + 5 + F().width(names[i]) + 8;
+      let small = list.length > 7 ? 15 : 17;
+      const span = () => list.reduce((a, i) => a + (i === this.tab ? wide(i) : small), 0) + gap * (list.length - 1);
+      while (span() + 28 > G.W && small > 12) small--;
+      const wOf = (i) => (i === this.tab ? wide(i) : small), total = span();
+      let x = Math.round((G.W - total) / 2) - 1;
       keycap(ctx, x - 13, 5, 'Q');
       list.forEach((i) => {
         const n = names[i], on = i === this.tab, w = wOf(i);
@@ -891,7 +917,7 @@
         const style = on ? (blink ? { bg: '#5a4878', border: '#ffffff', inner: '#7a6a30' } : SEL) : { bg: '#1a1428', border: '#5a5078', inner: '#262038' };
         G.box(ctx, x, on ? 1 : 3, w, on ? 17 : 14, style);
         if (!on) ctx.globalAlpha *= 0.55;
-        ctx.drawImage(icon(icons[i]), x + (small < 17 && !on ? 3 : 4), on ? 5 : 6);
+        ctx.drawImage(icon(icons[i]), x + (on ? 4 : Math.floor((small - 9) / 2)), on ? 5 : 6);
         if (!on) ctx.globalAlpha /= 0.55;
         if (on) TXT(ctx, n, x + 16, 6, C.gold);
         // a gold dot on QUESTS while there's something new on it
@@ -905,8 +931,8 @@
     }
 
     // ---- QUESTS: one quest, opened up with nothing cut off
-    drawQuestRead(ctx) {
-      const { lines, top } = this.qread;
+    drawQuestRead(ctx, read = this.qread) {
+      const { lines, top } = read;
       card(ctx, 5, 21, 230, 121);
       lines.slice(top, top + READ_ROWS).forEach(([l, col], i) => TXT(ctx, l, 11, 26 + i * 9, col));
       ctx.fillStyle = C.dim;
@@ -1071,30 +1097,26 @@
         const x = MX + pl.x, y = MY + pl.y, open = placeOpen(pl), seen = placeVisited(pl), sel = i === this.msel && !this.onTabs;
         const rim = sel ? ((G.tick >> 3) & 1 ? '#ffffff' : C.gold) : pl === here ? C.green : open ? '#8a80a8' : '#3e3a50';
         badge(ctx, x, y, rim, open ? '#2a2240' : '#1a1428');
-        if (open) { if (!seen) ctx.globalAlpha *= 0.5; ctx.drawImage(icon(pl.icon), x - 4, y - 4); if (!seen) ctx.globalAlpha /= 0.5; }
+        // (wherever Nate is, his head sits on the marker in place of its icon, clear of every label)
+        if (pl === here) ctx.drawImage(G.nateSprites().down[0], 0, 0, 16, 11, x - 8, y - 6 + ((G.tick >> 4) & 1), 16, 11);
+        else if (open) { if (!seen) ctx.globalAlpha *= 0.5; ctx.drawImage(icon(pl.icon), x - 4, y - 4); if (!seen) ctx.globalAlpha /= 0.5; }
         else TXT(ctx, '?', x - 1, y - 3, '#5a5078');
         const label = open ? pl.name : '???';
         TXT(ctx, label, x - Math.floor(F().width(label) / 2), y + 10, sel ? C.gold : seen ? '#f8f8f0' : C.dim);
         // quest markers: ! for quests, ? for rumors; a star where the main quest is headed
         const qs = quests(pl);
         if (qs.length) {
-          const act = qs.some((q) => q.kind === 'active'), mx = x + 5, my = y - 9;
+          const act = qs.some((q) => q.kind === 'active'), mx = x + (pl === here ? 8 : 5), my = y - 9;
           ctx.fillStyle = SH; ctx.fillRect(mx - 1, my - 1, 7, 9);
           ctx.fillStyle = act ? C.gold : C.cyan; ctx.fillRect(mx, my, 5, 7);
           F().draw(ctx, act ? '!' : '?', mx + 3 - Math.ceil(F().width(act ? '!' : '?') / 2), my, '#1c1424');
         }
         if (pl.id === main && open) {
-          const sx = x - 11, sy = y - 10, tw = (G.tick >> 4) & 1;
+          const sx = x - (pl === here ? 14 : 11), sy = y - 10, tw = (G.tick >> 4) & 1;
           ctx.fillStyle = SH; ctx.fillRect(sx + 1, sy - 1, 3, 7); ctx.fillRect(sx - 1, sy + 1, 7, 3);
           ctx.fillStyle = tw ? '#fff4c0' : C.gold; ctx.fillRect(sx + 2, sy, 1, 5); ctx.fillRect(sx, sy + 2, 5, 1); ctx.fillRect(sx + 1, sy + 1, 3, 3);
         }
       });
-      // Nate's head bobbing over wherever he is
-      if (here) {
-        const img = G.nateSprites().down[0], bob = Math.round(Math.sin(G.tick / 9) * 1.5);
-        ctx.drawImage(img, 0, 0, 16, 11, MX + here.x - 8, MY + here.y - 21 + bob, 16, 11);
-      }
-
       // right: about the place under the cursor
       const pl = PLACES[this.msel], open = placeOpen(pl), RX = 148, RW = 87;
       card(ctx, RX, MY, RW, MH, open ? pl.name : '???', C.gold);
@@ -1226,6 +1248,8 @@
       const room = Math.floor((140 - 84) / 8) - skill.length;
       bio.slice(0, room).forEach((l, i) => TXT(ctx, l, 106, 84 + i * 8));
       skill.forEach((l, i) => TXT(ctx, l, 106, 84 + (Math.min(bio.length, room) + i) * 8 + 1));
+      // (more than fits: a little arrow in the corner, and right opens all of it)
+      if (bio.length > room || F().wrap('{o}Ability:{/} ' + p.skill, 124).length > 2) { ctx.fillStyle = C.gold; ctx.fillRect(228, 133, 1, 5); ctx.fillRect(229, 134, 1, 3); ctx.fillRect(230, 135, 1, 1); }
     }
 
     // ---- COLLECTABLES: a list of sections (rocks, photos), each with its own page
@@ -1523,7 +1547,7 @@
       ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 56, 107, 1);
       TXT(ctx, 'Have {y}' + G.sayable((s.rocks && s.rocks[r.id]) || 0) + '{/}   Found {y}' + G.sayable(s.rocksFound[r.id]), 125, 60);
       const g = r.crush;
-      const crush = !g ? '{r}Never. Museum piece.' : g.teeth ? '{y}+' + G.sayable(g.teeth) + ' teeth' : g.eggs ? '{y}A dozen eggs' : g.package ? '{y}2 packages' : '{r}Heart container!';
+      const crush = !g ? '{r}Museum piece!' : g.teeth ? '{y}+' + G.sayable(g.teeth) + ' teeth' : g.eggs ? '{y}A dozen eggs' : g.package ? '{y}2 packages' : '{r}Heart container!';
       TXT(ctx, 'Crusher: ' + crush, 125, 70);
       const first = r.fact.split(/(?<=\.) /)[0];
       F().wrap(first, 104).slice(0, 6).forEach((l, i) => TXT(ctx, l, 125, 82 + i * 9, C.soft));

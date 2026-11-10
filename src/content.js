@@ -1299,8 +1299,13 @@
 
   const CAP_GOAL = 10;
   G.capProgress = () => Math.min(CAP_GOAL, G.state.stats.sixes || 0);
-  // Abe's Rule #1 applies to on-screen counters too: 6 is shown as "5+1".
-  G.sayable = (n) => (String(n).includes('6') ? (n - 1) + '+1' : String(n));
+  // Abe's Rule #1 applies to on-screen counters too: a number with a 6 in it is shown as a sum of
+  // two numbers without one (6 is "5+1", 67 is "59+8").
+  G.sayable = (n) => {
+    if (!String(n).includes('6')) return String(n);
+    for (let m = n - 1; m >= 0; m--) if (!/6/.test(m + '+' + (n - m))) return m + '+' + (n - m);
+    return String(n);
+  };
 
   // The north path to the Williams Center (music, theater, Studio B): Nate won't head up until he's
   // jammed with Abe once (G.jammedOnce).
@@ -12257,7 +12262,7 @@
     w.pop(pl.x, pl.y - 40, 'WRONG!', '#f86858');
     { const b = w.add(new G.Bat(pl.x + (pl.x < 20 * 16 ? 40 : -40), pl.y - 30, 3)); b.awake = true; }
     if (door.wrong === 1) G.script.run((function* () { yield G.say('Nate', 'Softest first. It\'s a scratch test. Like Mohs hardness. I KNOW this.'); })());
-    else if (door.wrong === 2) G.script.run((function* () { yield G.say('Nate', 'Okay. Calcite is a 3. Sphalerite is a 4. Magnetite is a 6. Quartz is a 7. Softest first.'); })());
+    else if (door.wrong === 2) G.script.run((function* () { yield G.say('Nate', 'Okay. Calcite is a 3. Sphalerite is a 4. Magnetite is a 5 plus 1. Quartz is a 7. Softest first.'); })());
   };
   S.mohsOpen = function* () {
     const w = G.play.world;
@@ -12545,7 +12550,7 @@
     if (f.cbbtArrived) return;
     f.cbbtArrived = true;
     yield G.wait(30);
-    yield G.say('Nate', 'The Chesapeake Bay Bridge-Tunnel. Seventeen-point-six miles across the mouth of the bay, shore to shore.');
+    yield G.say('Nate', 'The Chesapeake Bay Bridge-Tunnel. Seventeen-point-five-plus-one miles across the mouth of the bay, shore to shore.');
     if (G.with('doron')) {
       yield G.say('Doron', 'Why does a bridge turn into a tunnel?');
       yield G.say('Nate', 'Ships. Huge ones, headed into the bay. A bridge would be in their way, so the road dives under the channels. Twice.');
