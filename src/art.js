@@ -10645,27 +10645,26 @@
   // Across the street, the Fossil Park: a muddy pile of mine tailings that anyone can sift for free.
   // And four miles out of town, a pin on the map: the World's Largest August Ham.
   function auroraMuseum() {
-    const W = 128, H = 64, p = new Pix(W, H), brick = '#b89a7a', brickD = '#9a7c5e', trim = '#f2ece0';
+    const W = 144, H = 64, p = new Pix(W, H), brick = '#b89a7a', brickD = '#9a7c5e', trim = '#f2ece0';
     p.rect(0, 0, W, 8, '#6a6660'); p.hline(0, W - 1, 0, '#8a8680'); p.hline(0, W - 1, 7, '#4a4640');
     for (let y = 8; y < H; y++) for (let x = 0; x < W; x++) {
       const row = Math.floor(y / 4), off = row % 2 ? 4 : 0;
       p.set(x, y, y % 4 === 3 || (x + off) % 8 === 0 ? '#a08868' : G.hash(Math.floor((x + off) / 8), row, 77) < 0.25 ? brickD : brick);
     }
-    // the sign: a long white board, with a shark tooth hung on the wall at each end
-    p.rect(14, 11, 100, 15, trim); p.rect(15, 12, 98, 13, '#24486a'); p.hline(15, 112, 12, '#34587a');
-    for (const x0 of [3, 117]) for (let y = 0; y < 9; y++) { const hw = Math.round((8 - y) * 0.45); p.hline(x0 + 3 - hw, x0 + 3 + hw, 14 + y, y > 6 ? '#c8c0a8' : '#3a3a40'); }
+    // the sign: a long white board, wide enough for the name
+    p.rect(8, 10, 128, 16, trim); p.rect(9, 11, 126, 14, '#24486a'); p.hline(9, 134, 11, '#34587a');
     // two windows, with fossils on the sills
-    for (const x0 of [8, 92]) {
+    for (const x0 of [10, 106]) {
       p.rect(x0, 32, 28, 20, trim); p.rect(x0 + 2, 34, 24, 16, '#4a6a88'); p.vline(x0 + 13, 34, 49, trim); p.set(x0 + 3, 35, '#a8c8e8'); p.set(x0 + 4, 35, '#a8c8e8');
       for (let i = 0; i < 3; i++) { const tx = x0 + 4 + i * 8; p.set(tx + 1, 47, '#3a3a40'); p.hline(tx, tx + 2, 48, '#3a3a40'); p.hline(tx - 1, tx + 3, 49, '#c8c0a8'); }
     }
-    // the long, skinny entrance: a white canopy over a glass door
-    p.rect(50, 28, 28, 4, trim); p.hline(50, 77, 31, '#c8c0b0');
-    p.rect(56, 34, 16, 30, '#2a2a30'); p.rect(58, 36, 12, 28, '#6a8aa8'); p.vline(63, 36, 63, '#2a2a30'); p.set(68, 50, '#d8b050');
-    p.rect(58, 42, 12, 3, trim); p.hline(59, 68, 43, '#24486a');
+    // the long, skinny entrance: a white canopy over a glass door (the door is tile 4 from the left)
+    p.rect(56, 28, 32, 4, trim); p.hline(56, 87, 31, '#c8c0b0');
+    p.rect(64, 34, 16, 30, '#2a2a30'); p.rect(66, 36, 12, 28, '#6a8aa8'); p.vline(71, 36, 63, '#2a2a30'); p.set(76, 50, '#d8b050');
+    p.rect(66, 42, 12, 3, trim); p.hline(67, 76, 43, '#24486a');
     p.outline();
     const cv = p.canvas(), x = cv.getContext('2d'), t = 'AURORA FOSSIL MUSEUM';
-    G.font.draw(x, t, Math.round((W - G.font.width(t)) / 2), 15, '#f8f0d8', { shadow: '#0e1e30' });
+    G.font.draw(x, t, Math.round((W - G.font.width(t)) / 2), 14, '#f8f0d8', { shadow: '#0e1e30' });
     return cv;
   }
   // the pile of mine tailings in the Fossil Park: gray-tan sand and gravel, muddy at the bottom, with
@@ -10714,8 +10713,8 @@
   }
   // the billboard on the way out of town (Nate saw it on the map, after they'd left)
   function hamBillboard() {
-    const W = 100, H = 50, p = new Pix(W, H);
-    for (const x of [14, 82]) { p.rect(x, 30, 4, 20, '#7a5a3a'); p.vline(x, 30, 49, '#9a7a52'); }
+    const W = 118, H = 50, p = new Pix(W, H);
+    for (const x of [16, 98]) { p.rect(x, 30, 4, 20, '#7a5a3a'); p.vline(x, 30, 49, '#9a7a52'); }
     p.rect(0, 0, W, 32, '#f6f0e0'); p.rect(2, 2, W - 4, 28, '#f8d878'); p.hline(2, W - 3, 2, '#fff0b0');
     // a little cartoon ham in the corner, and an arrow
     const hx = 10, hy = 18;
@@ -10725,9 +10724,9 @@
     p.set(W - 7, 24, '#c83828'); p.set(W - 7, 26, '#c83828'); p.set(W - 8, 23, '#c83828'); p.set(W - 8, 27, '#c83828');
     p.outline();
     const cv = p.canvas(), x = cv.getContext('2d'), F = G.font;
-    F.draw(x, 'WORLD\'S LARGEST', 24, 4, '#7a2a1a');
-    F.draw(x, 'AUGUST HAM', 24, 12, '#c83828', { shadow: '#7a2a1a' });
-    F.draw(x, '4 MI', 60, 21, '#7a2a1a');
+    F.draw(x, 'WORLD\'S LARGEST', 26, 4, '#7a2a1a');
+    F.draw(x, 'AUGUST HAM', 26, 13, '#c83828', { shadow: '#7a2a1a' });
+    F.draw(x, '4 MI', W - 40, 21, '#7a2a1a');
     return cv;
   }
   // The World's Largest August Ham. Nobody knows what an August ham is. It's a ham, and it's the
@@ -10874,6 +10873,96 @@
     p.hline(W - 31, W - 28, 19, '#ffffff'); p.set(W - 29, 17, '#1c1424');
     // the sea floor
     for (let x = 0; x < W; x++) p.vline(x, H - 3 + Math.round(Math.sin(x * 0.3)), H - 1, '#c8b890');
+    return p.canvas();
+  }
+  // ---- more of the museum (the shark tooth room, the whale room, the lobby)
+  // the wall of teeth from the mine, in rows by shark, each row a different shape
+  function toothWall(wt) {
+    const W = wt * 16, H = 26, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#3a2a1e'); p.rect(2, 2, W - 4, H - 4, '#e8e0cc');
+    const shapes = [[3, '#3a3a40'], [2, '#5a4a3a'], [4, '#2e2e34'], [2, '#6a5a48']];
+    shapes.forEach(([s, c], r) => {
+      for (let i = 0; i < Math.floor((W - 8) / (s * 2 + 3)); i++) {
+        const x = 5 + i * (s * 2 + 3) + s, y = 4 + r * 5;
+        for (let j = 0; j < s; j++) p.hline(x - (s - j - 1), x + (s - j - 1), y + j, c);
+        p.hline(x - s, x + s, y + s, '#c8b890');
+      }
+    });
+    p.outline();
+    return p.canvas();
+  }
+  // a cow shark's jaw: every lower tooth a little comb of points
+  function cowSharkCase() {
+    const W = 32, H = 24, p = new Pix(W, H);
+    p.rect(0, 12, W, 12, '#5a3a24'); p.hline(0, W - 1, 12, '#7a5a3a');
+    p.rect(1, 1, W - 2, 11, '#cfe6f2'); p.hline(1, W - 2, 1, '#ffffff');
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 26; x++) { const e = ((x - 12.5) / 12.5) ** 2 + ((y - 7) / 6) ** 2; if (e <= 1 && e > 0.55) p.set(3 + x, 2 + y, '#c8b890'); }
+    for (let i = 0; i < 5; i++) { const x = 6 + i * 4; for (let k = 0; k < 3; k++) p.set(x + k, 9 - (k % 2), '#3a3a40'); }
+    p.outline();
+    return p.canvas();
+  }
+  // part of a whale on the floor: a row of vertebrae and a few ribs
+  function whaleBones() {
+    const W = 96, H = 30, p = new Pix(W, H);
+    p.rect(2, 22, W - 4, 6, '#5a3a24'); p.hline(2, W - 3, 22, '#7a5a3a');
+    for (let i = 0; i < 11; i++) {
+      const x = 6 + i * 8, s = i < 3 ? 4 : i > 8 ? 2 : 3, y = 14 - Math.round(Math.sin(i * 0.3) * 2);
+      p.rect(x - s, y - s, s * 2 + 1, s * 2 + 1, '#e8dcc0'); p.hline(x - s, x + s, y + s, '#b8a07a'); p.vline(x, y - s - 3, y - s, '#d8c8a8');
+      if (i > 1 && i < 8) { for (let k = 0; k < 7; k++) { p.set(x - 2 - k, y + 1 + Math.round(k * 0.8), '#e0d0b0'); p.set(x + 2 + k, y + 1 + Math.round(k * 0.8), '#e0d0b0'); } }
+    }
+    // the skull end, on the left
+    p.rect(0, 8, 6, 12, '#e8dcc0'); p.hline(0, 5, 19, '#b8a07a');
+    p.outline();
+    return p.canvas();
+  }
+  // a fossil walrus tusk and a seal's flipper bones, in a case
+  function walrusCase() {
+    const W = 32, H = 24, p = new Pix(W, H);
+    p.rect(0, 12, W, 12, '#5a3a24'); p.hline(0, W - 1, 12, '#7a5a3a');
+    p.rect(1, 1, W - 2, 11, '#cfe6f2'); p.hline(1, W - 2, 1, '#ffffff');
+    for (let i = 0; i < 18; i++) { p.set(5 + i, 4 + Math.round((i / 18) ** 2 * 5), '#d8c8a8'); p.set(5 + i, 5 + Math.round((i / 18) ** 2 * 5), '#b8a07a'); }
+    for (let i = 0; i < 4; i++) p.vline(24 + i * 1.5, 4, 7 + i, '#8a7a5a');
+    p.outline();
+    return p.canvas();
+  }
+  // the layers the mine digs through, painted on a board: the Yorktown on top, the Pungo River below
+  function layersPoster() {
+    const W = 30, H = 26, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#3a2a1e');
+    const bands = [['#5a8a3a', 2], ['#c8a878', 5], ['#b89868', 4], ['#8a8a7a', 4], ['#5a5a50', 5], ['#3a3a34', 2]];
+    let y = 2;
+    for (const [c, h] of bands) { p.rect(2, y, W - 4, h, c); y += h; }
+    for (let i = 0; i < 8; i++) { p.set(4 + i * 3, 8 + (i % 3), '#3a3a40'); p.set(5 + i * 3, 15 + (i % 2), '#f0e8d8'); }
+    p.outline();
+    return p.canvas();
+  }
+  // the poster for the Fossil Festival, every May
+  function festivalPoster() {
+    const p = new Pix(18, 24);
+    p.rect(0, 0, 18, 24, '#f8d878'); p.rect(0, 0, 18, 6, '#24486a');
+    for (let j = 0; j < 9; j++) p.hline(9 - Math.round((9 - j) * 0.5), 9 + Math.round((9 - j) * 0.5), 8 + j, '#3a3a40');
+    p.hline(3, 15, 18, '#c83828'); p.hline(4, 14, 20, '#7a2a1a');
+    p.outline();
+    return p.canvas();
+  }
+  // the gift shop: shark tooth necklaces, books, and a bin of rubber sharks
+  function giftShelf() {
+    const W = 32, H = 30, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#7a5a3a'); p.rect(2, 2, W - 4, H - 4, '#5a3a24');
+    for (const y of [9, 18]) p.rect(2, y, W - 4, 2, '#9a7a52');
+    for (let i = 0; i < 6; i++) { p.vline(5 + i * 4, 3, 6, '#e8e4d8'); p.set(5 + i * 4, 7, '#3a3a40'); }
+    ['#c83828', '#24486a', '#3a8a4a', '#d8b050', '#8a4a9a', '#c86a28'].forEach((c, i) => p.rect(3 + i * 4, 12, 3, 6, c));
+    for (let i = 0; i < 5; i++) { p.rect(4 + i * 5, 22, 4, 3, '#6a8ab8'); p.set(4 + i * 5 + 3, 21, '#6a8ab8'); }
+    p.outline();
+    return p.canvas();
+  }
+  // the front desk, with a donation box on it
+  function frontDesk(wt) {
+    const W = wt * 16, p = new Pix(W, 22);
+    p.rect(0, 6, W, 16, '#7a5a3a'); p.rect(0, 4, W, 3, '#c8b890'); p.hline(0, W - 1, 4, '#e8d8b0');
+    for (let x = 4; x < W; x += 10) p.vline(x, 9, 20, '#6a4a2e');
+    p.rect(W - 14, 0, 9, 5, '#24486a'); p.hline(W - 12, W - 8, 1, '#0c0814');
+    p.outline();
     return p.canvas();
   }
   // a whale vertebra "as big as a stool"
@@ -11186,6 +11275,7 @@
     S.auroraMuseum = auroraMuseum(); S.tailingsPile = tailingsPile(); S.fossilIdBoard = fossilIdBoard(); S.siftScreens = siftScreens(); S.hamBillboard = hamBillboard();
     S.augustHam = {}; for (const k of ['stand', 'squash', 'dizzy', 'glaze', 'spiral', 'sleep']) S.augustHam[k] = augustHam(k);
     S.hamStand = hamStand(); S.cloveShot = cloveShot(); S.hamSlice = hamSlice();
-    S.megToothCase = megToothCase(3); S.megJaw = megJaw(); S.falseMakoBoard = falseMakoBoard(); S.seaMural = seaMural(4); S.whaleVertebra = whaleVertebra();
+    S.megToothCase = megToothCase(3); S.megJaw = megJaw(); S.falseMakoBoard = falseMakoBoard(); S.seaMural = seaMural(4); S.seaMural2 = seaMural(2); S.whaleVertebra = whaleVertebra();
+    S.toothWall = toothWall(4); S.cowSharkCase = cowSharkCase(); S.whaleBones = whaleBones(); S.walrusCase = walrusCase(); S.layersPoster = layersPoster(); S.festivalPoster = festivalPoster(); S.giftShelf = giftShelf(); S.frontDesk = frontDesk(3);
   };
 })();

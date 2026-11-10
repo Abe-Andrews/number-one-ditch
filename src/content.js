@@ -751,6 +751,7 @@
     if (f.gardenMet) add('Guard the garden', (f.gardenWon || 0) >= 3 && 'All three nights!', G.sayable(f.gardenWon || 0) + '/3 nights', 'Home - Mom\'s flower stand', 'Talk to Mom and take a night in the garden. Every night you win upgrades The Chicken.', [f.gardenWon || 0, 3]);
     if (f.bassQuest) add('Nate\'s bass', f.bassDone, ['', 'Needs strings', 'Needs a finish', 'Needs a cable'][f.bassQuest] || '', f.bassQuest === 1 ? 'Chesapeake - El Toro Loco' : f.bassQuest === 2 ? 'Home - Dad\'s workshop' : 'Chesapeake - Abe\'s office', ['', 'The Paul McCartney Lady keeps bass strings at El Toro Loco.', 'Dad can help Nate finish it, at his bench.', 'Ask Abe for a cable. Just one.'][f.bassQuest] || '');
     if (f.dayIntro) add('The Tooth Book', G.fossilsFound() >= G.FOSSILS.length && 'All found!', G.sayable(G.fossilsFound()) + '/' + G.sayable(G.FOSSILS.length) + ' fossils', 'The Ditch', 'Sift the gravel at the Number One Ditch with Tyler\'s Sifter.', [G.fossilsFound(), G.FOSSILS.length]);
+    if (f.museumCard) add('The museum\'s stamp card', f.museumDone && 'Fine screen!', G.museumStamps() >= G.MUSEUM_STAMPS ? 'Back to the front desk' : G.sayable(G.museumStamps()) + '/' + G.sayable(G.MUSEUM_STAMPS) + ' stamps', 'Aurora - the museum', 'Read the plaque on every big exhibit in the Aurora Fossil Museum, then see the Volunteer at the front desk.', [Math.min(G.museumStamps(), G.MUSEUM_STAMPS), G.MUSEUM_STAMPS]);
     if (f.auroraNews) add('The World\'s Largest August Ham', f.hamBeaten && 'Seen it!', f.hamSign ? 'Four miles out of town' : 'Go to Aurora', 'Aurora', f.hamSign ? 'The billboard says it\'s four miles east, off the end of Main Street.' : 'Tyler says the fossil pile in Aurora, NC is good right now. Drive there from the MAP.');
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
     if (f.snackQuest) {
@@ -2985,6 +2986,7 @@
       row('Tyler\'s tooth', f.toothGiven || f.toothKept, 'The Ditch', 'Find Tyler at the Ditch and decide what to do about the mosasaur tooth.'),
       count('The Tooth Book', G.fossilsFound(), G.FOSSILS.length, 'The Ditch + Aurora', 'Sift the gravel with Tyler\'s Sifter until you have one of every fossil.'),
       row('The World\'s Largest August Ham', f.hamBeaten, 'Aurora', 'Four miles out of town. Don\'t drive past it.'),
+      row('The museum\'s stamp card', f.museumDone, 'Aurora - the museum', 'Get a stamp card from the Volunteer, read every exhibit, then bring it back.'),
       Object.assign(count('Every rock', G.rocksFound(), G.ROCKS.length, 'Everywhere', 'See the Rocks page in COLLECTABLES. Every rock has a hint.'), { core: true }),
       Object.assign(count('Every photo', G.photosFound(), G.PHOTOS.length, 'Everywhere', 'See the Photos page in COLLECTABLES. Every photo has a hint.'), { core: true }),
       count('Every pipe song', G.SIGNALS.filter((sg) => sg.known()).length, G.SIGNALS.length, 'Everywhere', 'People teach them along the way. Ask around, and don\'t skip the side quests.'),
@@ -3870,7 +3872,7 @@
     { name: 'CHKD: the roof', map: 'chkdRoof', at: [2, 11, 'down'] },
     { name: 'El Toro Loco (inside)', map: 'toroLocoIn', at: [9, 11, 'up'] },
     { name: 'Aurora, NC (Main Street)', map: 'aurora', at: [4, 9, 'up'] },
-    { name: 'Aurora: the fossil museum (inside)', map: 'auroraMuseum', at: [7, 9, 'up'] },
+    { name: 'Aurora: the fossil museum (inside)', map: 'auroraMuseum', at: [11, 15, 'up'] },
     { name: 'Aurora: the August ham', map: 'hamStand', at: [4, 3, 'down'] },
   ];
   // Admin: one of every rock.
@@ -20090,7 +20092,7 @@
           if (this.finds.some((f) => Math.hypot(f.x - x, f.y - y) < 7)) continue;
           this.peb.push({ x, y, w: 3 + Math.floor(Math.random() * 6), h: 2 + Math.floor(Math.random() * 4), c: ROCK[Math.floor(Math.random() * ROCK.length)] });
         }
-        this.need = 8 + Math.round(d * 14);
+        this.need = Math.round((8 + Math.round(d * 14)) * (flags().fineScreen ? 0.6 : 1));
         this.ARMS = this.arms = 780 + n * 120;
       },
       update() {
@@ -20476,13 +20478,14 @@
     },
     setup(w) {
       const sp = G.spr, f = flags(), s = G.state;
-      // the museum (its door at tile 6, 4)
-      w.addProp({ img: sp.auroraMuseum, tx: 3, ty: 1, h: 4, dx: -8 });
-      w.blockTiles(3, 1, 8, 4); w.block[4 * w.w + 6] = 0;
-      w.addWarp(6, 4, 1, 1, 'auroraMuseum', 7, 9, 'up');
+      // the museum (its door at tile 7, 4)
+      w.addProp({ img: sp.auroraMuseum, tx: 3, ty: 1, h: 4 });
+      w.blockTiles(3, 1, 9, 4); w.block[4 * w.w + 7] = 0;
+      w.addWarp(7, 4, 1, 1, 'auroraMuseum', 11, 15, 'up');
       w.addProp({ img: sp.lamppost, tx: 1, ty: 5, dx: 2, solid: [1, 5, 1, 1] });
-      w.addProp({ img: sp.lamppost, tx: 12, ty: 5, dx: 2, solid: [12, 5, 1, 1] });
-      w.add(new G.Sign(11, 4, ['AURORA FOSSIL MUSEUM', 'Admission: free. The Fossil Park across the street is open dawn to dusk. Dig all you want.']));
+      w.addProp({ img: sp.lamppost, tx: 13, ty: 5, dx: 2, solid: [13, 5, 1, 1] });
+      w.add(new G.Sign(12, 4, ['AURORA FOSSIL MUSEUM', 'Admission: free. Donations welcome. Open most days, but call ahead in the winter.']));
+      w.add(new G.Sign(3, 9, ['FOSSIL PARK', 'Free! Dig, sift, and take home what you find. Open dawn to dusk.', 'Please fill in your holes.']));
       // the Fossil Park: the pile, the reference board, screens to borrow, a bench
       w.addProp({ img: sp.tailingsPile, tx: 4, ty: 12, h: 4, dx: 4 });
       w.blockTiles(5, 14, 8, 2);
@@ -20492,7 +20495,7 @@
       w.addProp({ img: sp.siftScreens, tx: 2, ty: 11, h: 1, dx: -2, solid: [2, 11, 1, 1], hit: [2, 11, 1, 1], talk: look('A stack of sifting screens and a bucket, for anybody who didn\'t bring their own.', ['Nate', 'I brought my own. I have Tyler\'s Sifter. I\'m borrowing one anyway, for luck.']) });
       w.addProp({ img: sp.parkBench, tx: 20, ty: 15, h: 1, solid: [20, 15, 2, 1], hit: [20, 15, 2, 1], talk: look('A bench. Somebody left a cooler on it.', ['Hannah', 'That\'s mine! Snacks!']) });
       // the billboard on the way out of town
-      w.addProp({ img: sp.hamBillboard, tx: 23, ty: 9, h: 3, dx: -2, solid: [24, 11, 4, 1], hit: [23, 11, 6, 1], talk: () => S.hamSign() });
+      w.addProp({ img: sp.hamBillboard, tx: 22, ty: 9, h: 3, solid: [23, 11, 5, 1], hit: [22, 11, 7, 1], talk: () => S.hamSign() });
       w.addTrigger(21, 8, 3, 4, () => { if (!flags().hamSign) G.script.run(S.hamSign()); });
       // the family, digging (the people who went on the real trip), and whoever else is here
       const npc = (sprite, name, x, y, dir, talk, o) => w.add(new G.NPC(Object.assign({ sprite, name, x: x * 16 + 8, y: y * 16 + 14, dir, talk }, o)));
@@ -20638,37 +20641,108 @@
   };
 
   // ---- inside the museum
+  // Laid out like the real one (from what's written about it): through the door, a long skinny lobby
+  // with the front desk, the gift shop, the glass case of megalodon teeth and the meteorites; up a
+  // narrow hallway, under the life-size megalodon jaw; and at the top, the shark tooth room (the
+  // teeth from the mine, the false mako set, a cow shark's jaw) and the whale room (a whale, a fossil
+  // walrus tusk, the layers the mine digs through). The walls are painted with prehistoric seas.
+  // THE EXHIBIT HUNT: the Volunteer hands Nate a stamp card. Reading every exhibit's plaque stamps it;
+  // all of them, and the Volunteer gives him the museum's fine screen: sifting needs a lot less
+  // shaking. Flags: museumCard, museumStamp_<id>, museumDone (fineScreen).
+  const MUSEUM_STAMPS = ['megCase', 'meteorite', 'jaw', 'toothWall', 'falseMako', 'cowShark', 'whale', 'walrus', 'layers'];
+  G.museumStamps = () => MUSEUM_STAMPS.filter((id) => flags()['museumStamp_' + id]).length;
+  G.MUSEUM_STAMPS = MUSEUM_STAMPS.length;
+  // an exhibit: its plaque (narration), Nate's take, and a stamp on the card if he has one
+  const exhibit = (id, ...pages) => function* () {
+    for (const pg of pages) yield Array.isArray(pg) ? G.say(pg[0], pg[1]) : G.say(null, pg);
+    const f = flags();
+    if (!f.museumCard || f['museumStamp_' + id]) return;
+    f['museumStamp_' + id] = true;
+    G.audio.sfx('select');
+    const p = P(), n = G.museumStamps();
+    G.play.world.pop(p.x, p.y - 34, 'STAMP! ' + G.sayable(n) + '/' + G.sayable(MUSEUM_STAMPS.length), '#f8d850');
+    if (n >= MUSEUM_STAMPS.length) yield G.say('Nate', 'That\'s every stamp. Back to the front desk!');
+  };
   G.MAPS.auroraMuseum = {
     name: 'The Aurora Fossil Museum',
     music: 'house',
     noFollower: true,
     tiles() {
-      const W = 15, H = 11, g = Array.from({ length: H }, () => Array(W).fill('w'));
-      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
-      fill(1, 1, 13, 2, '7');        // the painted walls
-      fill(1, 3, 13, 7, 'E');        // the floor
-      g[10][7] = 'x';                // the door
-      return g.map((r) => r.join(''));
+      return [
+        'wwwwwwwwwwwwwwwwwwwwwwww',
+        'w77777777777w7777777777w',
+        'w77777777777w7777777777w',
+        'wEEEEEEEEEEEwEEEEEEEEEEw',
+        'wEEEEEEEEEEEwEEEEEEEEEEw',
+        'wEEEEEEEEEEEEEEEEEEEEEEw',
+        'wEEEEEEEEEEEEEEEEEEEEEEw',
+        'wEEEEEEEEEEEEEEEEEEEEEEw',
+        'wwwwwwwwwwEEEEwwwwwwwwww',
+        'wwwwwwwwwwEEEEwwwwwwwwww',
+        'wwwwwwwwwwEEEEwwwwwwwwww',
+        'wwwww66666EEEE66666wwwww',
+        'wwwww66666EEEE66666wwwww',
+        'wwwwwEEEEEEEEEEEEEEwwwww',
+        'wwwwwEEEEEEEEEEEEEEwwwww',
+        'wwwwwEEEEEEEEEEEEEEwwwww',
+        'wwwwwwwwwwwxwwwwwwwwwwww',
+      ];
     },
     setup(w) {
       const F = furnish(w), sp = G.spr;
-      F.hang(sp.seaMural, 1, 2, 4, look('Prehistoric seas, painted right on the wall: a whale, and something much bigger chasing it.', 'The museum\'s first director painted them.'), 4);
-      F.hang(sp.seaMural, 10, 2, 4, look('More of the painted sea. The megalodon is winning.'), 4);
-      F.hang(sp.falseMakoBoard, 6, 2, 3, look('THE FALSE MAKO (Parotodus benedeni). 114 teeth, all from one shark. A replica: the real teeth almost never turn up.', ['Nate', 'Tyler has been looking for one of these for eleven years.']), 4);
-      F.stand(sp.megJaw, 5, 5, 5, look('A life-size megalodon jaw. Nate could stand up inside it.', ['Nate', 'Every one of those teeth is wider than my hand. Every ONE.']), { ht: 2 });
-      F.stand(sp.megToothCase, 1, 8, 3, look('A glass case of megalodon teeth, dozens of them, nearly all from the mine. A few have price tags.', 'Nate does the math. Then he stops doing the math.'));
-      F.stand(sp.megToothCase, 11, 8, 3, look('Smaller shark teeth, shells, and a few trilobites from very far away.', ['Nate', 'Trilobites aren\'t from here. They\'re way too old. They\'re still GREAT.']));
-      F.stand(sp.whaleVertebra, 12, 5, 1, look('A whale vertebra, as big as a stool. A little sign: PLEASE DO NOT SIT ON THE WHALE.'));
-      w.add(new G.NPC({ sprite: 'museumVolunteer', name: 'Volunteer', x: 2 * 16 + 8, y: 5 * 16 + 14, dir: 'right', talk: S.auroraVolunteer }));
-      w.addWarp(7, 10, 1, 1, 'aurora', 6, 5, 'down');
+      // ---- the lobby
+      F.hang(sp.festivalPoster, 5, 12, 1, look('A poster: THE AURORA FOSSIL FESTIVAL. Every May. Fossils, food, a parade, and an auction.', ['Nate', 'A PARADE. For FOSSILS.']), 4);
+      F.hang(sp.seaMural2, 6, 12, 2, look('More of the painted sea: little sharks circling a sunken log.'), 4);
+      F.hang(sp.seaMural2, 14, 12, 2, look('Prehistoric seas painted right on the wall, all through the museum. The museum\'s first director painted them.'), 4);
+      F.stand(sp.frontDesk, 5, 14, 3, S.auroraVolunteer);
+      w.add(new G.NPC({ sprite: 'museumVolunteer', name: 'Volunteer', x: 6 * 16 + 8, y: 13 * 16 + 14, dir: 'down', talk: S.auroraVolunteer }));
+      F.stand(sp.giftShelf, 17, 13, 2, look('The gift shop: shark tooth necklaces, books about megalodon, and a bin of rubber sharks.', ['Nate', 'I would buy every one of these books. I HAVE every one of these books.']));
+      F.stand(sp.megToothCase, 14, 15, 3, exhibit('megCase', 'MEGALODON. The biggest shark that ever lived. Its teeth grew up to about seven inches long, and it lost them all its life, thousands of them.', 'A glass case of them, dozens, nearly all from the mine. A few have price tags.', ['Nate', 'I did the math on the price tags. Then I stopped doing the math.']));
+      F.stand(sp.meteorite, 18, 15, 1, exhibit('meteorite', 'METEORITES. Rocks from space. Most of them are pieces of asteroids, and the iron ones are heavy for their size and stick to a magnet.', ['Nate', 'Not a fossil. Not even from Earth. It\'s still the best thing in the lobby.']));
+      F.stand(sp.mineralCases.fossil, 8, 13, 2, look('Fossils from very far away: trilobites, an ammonite, a piece of petrified wood.', ['Nate', 'Trilobites are way too old to be from around here. They\'re still GREAT.']));
+      // ---- the narrow hallway, and the jaw you walk under
+      w.addProp({ img: sp.megJaw, tx: 10, ty: 10, h: 1, base: 11 * 16 - 2, flat: false, hit: [10, 9, 4, 2], talk: exhibit('jaw', 'A LIFE-SIZE MEGALODON JAW, built to scale around real fossil teeth.', ['Nate', 'I can stand up inside it. I am standing up inside it.']) });
+      // ---- the shark tooth room (top left)
+      F.hang(sp.seaMural, 1, 2, 4, look('A painted sea: a whale, and something much bigger chasing it.'), 4);
+      F.hang(sp.falseMakoBoard, 5, 2, 3, exhibit('falseMako', 'THE FALSE MAKO (Parotodus benedeni). 114 teeth, all from one shark, laid out the way they sat in its mouth. A replica: the real teeth almost never turn up.', ['Nate', 'Tyler has been looking for one of these for eleven years.']), 4);
+      F.hang(sp.toothWall, 8, 2, 4, exhibit('toothWall', 'TEETH FROM THE MINE, sorted by shark: megalodon, great white, mako, tiger, snaggletooth, sand tiger, bull. The phosphate mine outside town digs straight through old sea floor.', ['Nate', 'Every one of these came out of the ground about seven miles from here.']), 4);
+      F.stand(sp.cowSharkCase, 2, 5, 2, exhibit('cowShark', 'COW SHARK (Hexanchus). Every lower tooth is a little comb of points. Its living cousin is the bluntnose sixgill shark.', ['Nate', 'The bluntnose five-plus-one-gill shark.'], ['Nate', '...That\'s what it\'s called now. I just decided.']));
+      F.stand(sp.megToothCase, 6, 6, 3, look('More shark teeth, sorted into little trays: hundreds of them, mostly tiny.', ['Nate', 'Tiny ones are the best ones. Nobody keeps the tiny ones.']));
+      // ---- the whale room (top right)
+      F.hang(sp.seaMural, 13, 2, 4, look('The painted sea keeps going: a pod of whales, and a little seal on a rock.'), 4);
+      F.hang(sp.layersPoster, 18, 2, 2, exhibit('layers', 'THE LAYERS. The mine digs down through the Yorktown Formation, full of shells, into the older Pungo River Formation, where the phosphate is, and the biggest teeth.', ['Nate', 'Rocks with a READING ORDER. Top to bottom. Youngest to oldest.']), 4);
+      F.hang(sp.seaMural2, 20, 2, 2, null, 4);
+      F.stand(sp.whaleBones, 14, 4, 6, exhibit('whale', 'WHALES. The mine turns up whale bones all the time: vertebrae, ribs, skulls, and the ear bones, the densest bones in a whale.', ['Nate', 'A whole whale, in a phosphate mine, in Aurora. The ocean used to be RIGHT HERE.']), { ht: 2 });
+      F.stand(sp.walrusCase, 20, 6, 2, exhibit('walrus', 'A FOSSIL WALRUS TUSK, and a seal\'s flipper bones. Walruses lived on this coast once, when it was colder.', ['Nate', 'A walrus. In North Carolina. I need to sit down.']));
+      F.stand(sp.whaleVertebra, 14, 7, 1, look('A whale vertebra, as big as a stool. A little sign: PLEASE DO NOT SIT ON THE WHALE.'));
+      w.addWarp(11, 16, 1, 1, 'aurora', 7, 5, 'down');
     },
   };
-  S.auroraVolunteer = auroraCycle('Volunteer', [
-    'Welcome to the Aurora Fossil Museum! Admission\'s free, and so is the pile across the street.',
-    'Almost everything in here came out of the phosphate mine outside town. Sharks, whales, porpoises, seals. This whole county used to be under the ocean.',
-    'That jaw is life-size. Folks always ask. Yes, really.',
-    'If you find something you can\'t name, bring it in. We love that.',
-  ]);
+  S.auroraVolunteer = function* () {
+    const f = flags(), V = 'Volunteer', n = G.museumStamps();
+    if (!f.museumCard) {
+      f.museumCard = true;
+      yield G.say(V, 'Welcome to the Aurora Fossil Museum! Admission\'s free, and so is the pile across the street.');
+      yield G.say(V, 'First time? Here: a stamp card. Read the plaque on every big exhibit and it gets a stamp.');
+      G.audio.sfx('select');
+      yield G.say(null, 'Nate gets a {y}stamp card{/}. ' + G.sayable(MUSEUM_STAMPS.length) + ' exhibits: the lobby, the hallway, and the two rooms at the top.');
+      yield G.say(V, 'Fill it up and come see me. I\'ve got something for serious diggers.');
+      return;
+    }
+    if (f.museumDone) {
+      yield* auroraCycle(V, ['Almost everything in here came out of the phosphate mine outside town. This whole county used to be under the ocean.', 'That jaw is life-size. Folks always ask. Yes, really.', 'If you find something at the pile you can\'t name, bring it in. We love that.'])();
+      return;
+    }
+    if (n < MUSEUM_STAMPS.length) { yield G.say(V, G.sayable(n) + ' out of ' + G.sayable(MUSEUM_STAMPS.length) + ' stamps! Keep looking. Up the hallway, under the jaw, and into the rooms at the top.'); return; }
+    f.museumDone = true; f.fineScreen = true;
+    yield G.say(V, 'Every stamp! You read EVERY plaque. Nobody reads every plaque.');
+    yield G.say('Nate', 'I read them twice.');
+    yield G.say(V, 'Then you\'ve earned this. The museum\'s fine screen: the mesh is just right for that pile. The sand falls right through.');
+    yield G.itemGet(G.spr.siftScreens, 'You got the museum\'s {y}fine screen{/}! Sifting takes a lot less shaking now.');
+    G.play.addTeeth(30);
+    yield G.say(V, 'And thirty shark teeth from the donation drawer. Don\'t tell the board.');
+    G.play.autosave();
+  };
 
   // ---- four miles out of town: the World's Largest August Ham
   const HAM_X = 11 * 16, HAM_PERCH = 10 * 16, HAM_BOUNDS = [3 * 16, 4 * 16 + 12, 18 * 16 + 8, 10 * 16];
