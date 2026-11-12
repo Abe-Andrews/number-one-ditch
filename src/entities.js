@@ -1626,7 +1626,7 @@
         w.burst(this.x, this.y - 30, ['#f0a0a0', '#f8f0e0', '#c8682e'], 14, { speed: 1.8, up: 1, life: 26, size: 2 });
       }
       // walking into it hurts (except while it's dizzy); getting rolled over hurts more
-      if (this.state !== 'dizzy' && this.z < 6 && G.overlap(this.bodyBox(), p.hurtBox())) p.hurt(this.state === 'roll' ? 4 : 2, this.x, this.y);
+      if (this.state !== 'dizzy' && this.z < 6 && G.overlap(this.bodyBox(), p.hurtBox())) p.hurt(this.state === 'roll' ? 3 : 1, this.x, this.y);
       switch (this.state) {
         case 'hop': {
           if (this.air > 0) {

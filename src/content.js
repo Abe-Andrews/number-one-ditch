@@ -752,7 +752,9 @@
     if (f.bassQuest) add('Nate\'s bass', f.bassDone, ['', 'Needs strings', 'Needs a finish', 'Needs a cable'][f.bassQuest] || '', f.bassQuest === 1 ? 'Chesapeake - El Toro Loco' : f.bassQuest === 2 ? 'Home - Dad\'s workshop' : 'Chesapeake - Abe\'s office', ['', 'The Paul McCartney Lady keeps bass strings at El Toro Loco.', 'Dad can help Nate finish it, at his bench.', 'Ask Abe for a cable. Just one.'][f.bassQuest] || '');
     if (f.dayIntro) add('The Tooth Book', G.fossilsFound() >= G.FOSSILS.length && 'All found!', G.sayable(G.fossilsFound()) + '/' + G.sayable(G.FOSSILS.length) + ' fossils', 'The Ditch', 'Sift the gravel at the Number One Ditch with Tyler\'s Sifter.', [G.fossilsFound(), G.FOSSILS.length]);
     if (f.museumCard) add('The museum\'s stamp card', f.museumDone && 'Fine screen!', G.museumStamps() >= G.MUSEUM_STAMPS ? 'Back to the front desk' : G.sayable(G.museumStamps()) + '/' + G.sayable(G.MUSEUM_STAMPS) + ' stamps', 'Aurora - the museum', 'Read the plaque on every big exhibit in the Aurora Fossil Museum, then see the Volunteer at the front desk.', [Math.min(G.museumStamps(), G.MUSEUM_STAMPS), G.MUSEUM_STAMPS]);
-    if (f.auroraNews) add('The World\'s Largest August Ham', f.hamBeaten && 'Seen it!', f.hamSign ? 'Four miles out of town' : 'Go to Aurora', 'Aurora', f.hamSign ? 'The billboard says it\'s four miles east, off the end of Main Street.' : 'Tyler says the fossil pile in Aurora, NC is good right now. Drive there from the MAP.');
+    if (f.auroraNews && !f.hamSign) side.push({ name: 'Aurora, NC', status: f.auroraArrived ? 'A shop down the street' : 'Go see the pile', kind: 'rumor', where: 'Aurora', hint: f.auroraArrived ? 'There\'s a little shop on Main Street, a couple of doors down from the museum. Nobody seems to go in.' : 'Tyler says the fossil pile in Aurora, NC is good right now. Drive there from the MAP.' });
+    if (f.hamSign) add('The World\'s Largest August Ham', f.hamBeaten && 'Seen it!', f.hamOpen ? 'The door is open' : f.daleTooth ? 'Bring Dale his tooth' : f.daleQuest ? 'Find Dale\'s lucky tooth' : f.hamDoor ? 'Back in 5 minutes' : 'It\'s right there', 'Aurora',
+      f.hamOpen ? 'Dale gave you the key. The shop is two doors down from the museum.' : f.daleTooth ? 'Dale is digging at the pile.' : f.daleQuest ? 'Sift the pile for Dale\'s lucky tooth: a big megalodon with a hole drilled through it, on a string.' : f.hamDoor ? 'The door is locked. Somebody in Aurora has to know whose place this is. Try the museum.' : 'Try the door.');
     if (f.fcAwake) add('Father Christmas', f.fcBeaten, 'The deep stope', 'Andover - the tunnels', 'A cave-in shook loose off the east stope of the Andover tunnels.');
     if (f.snackQuest) {
       const n = (s.items.candyCorn ? 1 : 0) + (s.items.doritos ? 1 : 0);
@@ -2985,7 +2987,7 @@
       core('The Number One Ditch', f.fin_done, 'Chesapeake', 'Finish the story.'),
       row('Tyler\'s tooth', f.toothGiven || f.toothKept, 'The Ditch', 'Find Tyler at the Ditch and decide what to do about the mosasaur tooth.'),
       count('The Tooth Book', G.fossilsFound(), G.FOSSILS.length, 'The Ditch + Aurora', 'Sift the gravel with Tyler\'s Sifter until you have one of every fossil.'),
-      row('The World\'s Largest August Ham', f.hamBeaten, 'Aurora', 'Four miles out of town. Don\'t drive past it.'),
+      row('The World\'s Largest August Ham', f.hamBeaten, 'Aurora', 'Two doors down from the museum. Find out who has the key.'),
       row('The museum\'s stamp card', f.museumDone, 'Aurora - the museum', 'Get a stamp card from the Volunteer, read every exhibit, then bring it back.'),
       Object.assign(count('Every rock', G.rocksFound(), G.ROCKS.length, 'Everywhere', 'See the Rocks page in COLLECTABLES. Every rock has a hint.'), { core: true }),
       Object.assign(count('Every photo', G.photosFound(), G.PHOTOS.length, 'Everywhere', 'See the Photos page in COLLECTABLES. Every photo has a hint.'), { core: true }),
@@ -3820,7 +3822,7 @@
     { name: 'The morning after (family photo)', map: 'ditchDay', at: [7, 13, 'up'], flags: { fin_done: true, fin_intro: true }, items: { mosasaurTooth: true } },
     { name: 'The Ditch by day', map: 'ditchDay', at: [7, 12, 'down'], flags: { photoDone: true, dayIntro: true } },
     { name: 'Aurora: the fossil museum', map: 'aurora', at: [4, 9, 'up'], flags: { photoDone: true, dayIntro: true, auroraNews: true, tylerDitch: true, toothGiven: true, danMet: true } },
-    { name: 'Aurora: the World\'s Largest August Ham', map: 'hamStand', at: [4, 3, 'down'], flags: { hamSign: true, hamSeen: true } },
+    { name: 'Aurora: the World\'s Largest August Ham', map: 'hamStand', at: [12, 11, 'up'], flags: { hamSign: true, hamDoor: true, daleQuest: true, daleTooth: true, hamOpen: true, hamSeen: true } },
     { name: 'Father Christmas (postgame)', map: 'andoverMine', at: [41, 21, 'right'], flags: { cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, tylerBeaten: true, rockHound: true, fcAwake: true }, rocks: true, teeth: 520 },
     { name: 'Mom\'s garden: Not My Dahlias', map: 'home', at: [35, 27, 'up'], flags: { shopOpen: true, momHeart: true }, items: { chicken: true, andoverKey: true, eggs: 40 } },
     { name: 'Boss Rush (in the menu)', map: 'homeDown', at: [20, 15, 'up'], flags: { fcAwake: true, fcBeaten: true, fcMet: true } },
@@ -3873,7 +3875,7 @@
     { name: 'El Toro Loco (inside)', map: 'toroLocoIn', at: [9, 11, 'up'] },
     { name: 'Aurora, NC (Main Street)', map: 'aurora', at: [4, 9, 'up'] },
     { name: 'Aurora: the fossil museum (inside)', map: 'auroraMuseum', at: [11, 15, 'up'] },
-    { name: 'Aurora: the August ham', map: 'hamStand', at: [4, 3, 'down'] },
+    { name: 'Aurora: the August ham (inside)', map: 'hamStand', at: [12, 11, 'up'] },
   ];
   // Admin: one of every rock.
   G.adminAllRocks = () => {
@@ -20425,11 +20427,14 @@
   // fossil hunting at the Aurora Fossil Museum). Main Street: the museum (a squat, plain building, free
   // to get in) and, across the street, the Fossil Park's pile of mine tailings, which anybody can sift.
   // Lily, Abe and Hannah are digging; Tyler is there (he's always there); Dan Hurd too, once Nate has
-  // met him in Andover. And four miles out of town, a pin on the map that Nate only noticed on the drive
-  // home, the first time, and is still upset about: the World's Largest August Ham. Nobody knows what an
-  // August ham is. This time he goes, and it turns out the ham is tired of everybody driving past.
-  // Flags: auroraNews (unlocks the place), auroraArrived, auroraDan, hamSign, hamSeen, hamBeaten,
-  // hamHint, auroraTyler, tylerMako ('given' or 'kept'), auroraTalk_<who>.
+  // met him in Andover. And two doors down from the museum, a little shop they walked right past on
+  // the real trip (Nate only noticed it on the map once they got home, and he's still upset about it):
+  // the World's Largest August Ham. Nobody knows what an August ham is. The door has said BACK IN 5
+  // MINUTES for years: the owner, Dale, is out at the pile looking for his lucky tooth. Find it and he
+  // hands over the key, and it turns out the ham is tired of everybody walking past.
+  // Flags: auroraNews (unlocks the place), auroraArrived, auroraDan, hamSign, hamDoor, daleQuest,
+  // daleTooth, hamOpen, hamSeen, hamBeaten, hamHint, auroraTyler, tylerMako ('given' or 'kept'),
+  // auroraTalk_<who>.
   G.TRAVEL.aurora = ['aurora', 4, 9, 'up'];
   G.CAST.museumVolunteer = { skin: '#f0c8a8', hair: '#d8d8dc', hairStyle: 'short', glasses: '#6a5a8a', smile: '#ffffff', blush: true, shirt: '#24486a', logo: '#f2ece0', pants: '#8a7a5a', shoes: '#4a3428', torso: 6, legs: 3 };
   G.CAST.pitKid = { skin: '#e8b890', hair: '#5a3a24', hairStyle: 'short', hat: '#e05a30', hatStyle: 'ball', shirt: '#3a9a5a', pants: '#3a4a6a', shoes: '#f0f0f0', torso: 5, legs: 3 };
@@ -20468,7 +20473,7 @@
       const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
       const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
       for (let i = 0; i < 50; i++) set(Math.floor(G.hash(i, 1, 640) * W), 10 + Math.floor(G.hash(i, 2, 640) * 10), ',');
-      for (const x of [0, 13, 15, 26, 28]) set(x, 0, 'T');   // trees behind Main Street
+      for (const x of [0, 13, 24, 26, 28]) set(x, 0, 'T');   // trees behind Main Street
       fill(0, 5, W, 1, 'C');                                // the sidewalk in front of the museum
       fill(0, 6, W, 1, 'a'); fill(0, 7, W, 1, 'Y');        // Main Street
       fill(0, 8, W, 1, 'C');                                // the Fossil Park side
@@ -20494,9 +20499,12 @@
         talk: look('The reference board: WHAT DID I FIND? Drawings of a dozen kinds of shark teeth, a whale ear bone, a scallop and a lump of coral.', ['Nate', 'I know every single one of these. I\'m going to read it anyway.']) });
       w.addProp({ img: sp.siftScreens, tx: 2, ty: 11, h: 1, dx: -2, solid: [2, 11, 1, 1], hit: [2, 11, 1, 1], talk: look('A stack of sifting screens and a bucket, for anybody who didn\'t bring their own.', ['Nate', 'I brought my own. I have Tyler\'s Sifter. I\'m borrowing one anyway, for luck.']) });
       w.addProp({ img: sp.parkBench, tx: 20, ty: 15, h: 1, solid: [20, 15, 2, 1], hit: [20, 15, 2, 1], talk: look('A bench. Somebody left a cooler on it.', ['Hannah', 'That\'s mine! Snacks!']) });
-      // the billboard on the way out of town
-      w.addProp({ img: sp.hamBillboard, tx: 22, ty: 9, h: 3, solid: [23, 11, 5, 1], hit: [22, 11, 7, 1], talk: () => S.hamSign() });
-      w.addTrigger(21, 8, 3, 4, () => { if (!flags().hamSign) G.script.run(S.hamSign()); });
+      // a couple of doors down: the ham's shop (its door at tile 19, 4; locked until Dale opens up)
+      w.addProp({ img: sp.hamShop, tx: 16, ty: 1, h: 4, dx: 8 });
+      w.blockTiles(17, 1, 6, 4);
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [16 * 16 + 8, 1 * 16, 22 * 16 + 8, 5 * 16], talk: () => S.hamShopLook() });
+      if (f.hamOpen) { w.block[4 * w.w + 19] = 0; w.addWarp(19, 4, 1, 1, 'hamStand', 12, 11, 'up'); }
+      w.addTrigger(16, 5, 7, 1, () => { if (!flags().hamSign) G.script.run(S.hamSign()); });
       // the family, digging (the people who went on the real trip), and whoever else is here
       const npc = (sprite, name, x, y, dir, talk, o) => w.add(new G.NPC(Object.assign({ sprite, name, x: x * 16 + 8, y: y * 16 + 14, dir, talk }, o)));
       if (s.party.includes('lily')) npc('lily', 'Lily', 4, 13, 'right', S.auroraLily);
@@ -20504,12 +20512,13 @@
       if (s.party.includes('hannah')) npc('hannah', 'Hannah', 9, 16, 'up', S.auroraHannah);
       w.tyler = npc('tyler', 'Tyler', 12, 11, 'down', S.auroraTyler);
       if (f.danMet) { w.dan = npc('danHurd', 'Dan Hurd', 5, 16, 'up', S.auroraDan); w.dan.held = sp.goldPan; w.dan.heldAt = [5, 5]; }
+      w.dale = npc('dale', 'Dale', 17, 12, 'left', S.auroraDale);
       npc('pitKid', 'Kid', 15, 16, 'up', look(['Kid', 'I found a megalodon tooth once. It was this big.'], 'He holds his fingers about an inch apart.', ['Kid', 'It was a baby one.']), { wander: 10 });
       // the Jeep, parked on Main Street
       w.addProp({ img: sp.condoCars.jeep, tx: 1, ty: 7, h: 2, dy: -3, solid: [1, 7, 3, 1], hit: [1, 7, 3, 2], talk: S.auroraCar });
-      // the ends of Main Street: the Jeep's right here, and four miles east, the ham
+      // the ends of Main Street: the Jeep's right here, and east it turns into farm road
       w.addTrigger(0, 5, 1, 4, () => G.script.run((function* () { const p = P(); yield G.say('Nate', 'The Jeep\'s right here. (Or open the MAP and drive anywhere.)'); yield G.walkTo(p, p.x + 16, p.y, 1.4); })()));
-      w.addTrigger(29, 5, 1, 4, () => G.script.run(S.hamDrive()));
+      w.addTrigger(29, 5, 1, 4, () => G.script.run((function* () { const p = P(); yield G.say('Nate', 'Main Street turns into farm road out that way. Nothing but soybeans.'); yield G.walkTo(p, p.x - 16, p.y, 1.4); })()));
     },
     onEnter() {
       return (function* () {
@@ -20534,34 +20543,44 @@
     G.play.warp('condo', 35, 16, 'left', true);
   };
 
-  // the billboard: the reason Nate is still upset
+  // the shop: the reason Nate is still upset (they walked right past it, last time)
   S.hamSign = function* () {
     const f = flags(), lily = G.state.party.includes('lily'), abe = G.state.party.includes('abe'), hannah = G.state.party.includes('hannah');
-    if (f.hamSign) {
-      yield G.say(null, f.hamBeaten ? 'WORLD\'S LARGEST AUGUST HAM. 4 MI. Nate has seen it. Nate is at peace.' : 'WORLD\'S LARGEST AUGUST HAM. 4 MI. Straight down Main Street, and keep going.');
-      return;
-    }
+    if (f.hamSign) return;
     f.hamSign = true;
     const p = P();
-    p.dir = 'right';
+    p.dir = 'up';
     yield G.emote(p, 'bang', 30);
     yield G.say('Nate', '...Wait.');
-    yield G.say('Nate', 'WORLD\'S LARGEST AUGUST HAM. FOUR MILES.');
-    yield G.say('Nate', 'Last time we came down here, I didn\'t see it on the map until we got home. I\'m still upset about it.');
+    yield G.say('Nate', 'WORLD\'S LARGEST AUGUST HAM.');
+    yield G.say('Nate', 'It\'s RIGHT HERE. Two minutes from the museum.');
+    yield G.say('Nate', 'Last time we came down here, we walked right past this door. I didn\'t even notice until we got home. I\'m still upset about it.');
     if (lily) {
       yield G.say('Lily', 'What\'s an August ham?');
-      yield G.say('Nate', 'I don\'t KNOW! Nobody knows! That\'s why we have to SEE it!');
+      yield G.say('Nate', 'I don\'t KNOW! Nobody knows! That\'s why we have to go IN!');
     }
-    if (abe) yield G.say('Abe', 'Nobody drives past the ham. Not this time.');
+    if (abe) yield G.say('Abe', 'Nobody walks past the ham. Not this time.');
     if (hannah) yield G.say('Hannah', 'Pit first, then the ham. I packed enough snacks for both.');
-    yield G.say(null, 'The ham is four miles east, off the end of Main Street.');
   };
-  S.hamDrive = function* () {
-    const p = P();
-    const c = yield G.ask('Nate', 'Drive out to the World\'s Largest August Ham? (4 miles)', ['Drive there', 'Not yet']);
-    if (c !== 0) { yield G.walkTo(p, p.x - 16, p.y, 1.4); return; }
-    G.audio.sfx('door');
-    G.play.warp('hamStand', 4, 3, 'down', true);
+  // the shop's door: locked, with a card in it
+  S.hamShopLook = function* () {
+    const f = flags(), p = P();
+    if (f.hamOpen) { yield G.say(null, 'WORLD\'S LARGEST AUGUST HAM. The door is unlocked now.'); return; }
+    if (!f.hamSign) yield* S.hamSign();
+    if (f.hamDoor) {
+      yield G.say(null, f.daleTooth ? 'BACK IN 5 MINUTES. Dale is still out at the pile. Nate has his tooth.' : f.daleQuest ? 'BACK IN 5 MINUTES. Dale won\'t open up until somebody finds his lucky tooth in the pile.' : 'BACK IN 5 MINUTES. The card is very faded.');
+      return;
+    }
+    f.hamDoor = true;
+    yield G.say(null, 'The door is locked. There\'s a card in the window: BACK IN 5 MINUTES.');
+    yield G.say('Nate', 'Okay. I can wait five minutes.');
+    yield G.fadeOut(24);
+    yield G.wait(30);
+    yield G.fadeIn(24);
+    yield G.say(null, 'Nate waits five minutes. Then ten more.');
+    yield G.say('Nate', '...That card is SO faded. It\'s been "five minutes" for YEARS.');
+    yield G.say('Nate', 'Somebody in Aurora has to know whose place this is.');
+    p.dir = 'down';
   };
 
   // ---- the people at the pile
@@ -20572,6 +20591,48 @@
   S.auroraLily = auroraCycle('Lily', ['I found a tooth. It\'s tiny. It\'s still mine.', 'There\'s no Taco Bell in Aurora. I checked. Twice.', 'Nate. The ham. We\'re seeing the ham.']);
   S.auroraAbe = auroraCycle('Abe', ['I found a yellow guitar cable in the pit. I didn\'t bring a yellow guitar cable.', '...I might have brought a yellow guitar cable.', 'Tyler says dig deep. Tyler says it a lot.']);
   S.auroraHannah = auroraCycle('Hannah', ['I\'ve been holding this shell for twenty minutes. It\'s mine now.', 'Nate, come look. Is this a tooth or a rock? ...It\'s a rock. I\'m keeping it anyway.', 'Snacks are on the bench! Wash your hands first. You\'ve been in a dirt pile.']);
+  // Dale owns the ham. He's always at the pile: he dropped his lucky tooth in it (a megalodon he's
+  // worn on a string for forty years) and he isn't opening up until it turns up. Flags: daleQuest,
+  // daleTooth (Nate sifted it out), hamOpen (Dale gave him the key), daleScoops.
+  G.CAST.dale = { skin: '#e8b48e', hair: '#e0e0e4', hairStyle: 'cap', hat: '#c83828', hatStyle: 'ball', beard: '#e8e8ec', beardLow: true, smile: '#ffffff',
+    shirt: '#d8c8a8', coat: '#3a5a8a', pants: '#4a5a7a', shoes: '#4a3428', boots: true, torso: 7, legs: 4 };
+  S.auroraDale = function* () {
+    const f = flags(), w = G.play.world, D = 'Dale';
+    if (f.hamOpen) { yield* auroraCycle(D, ['Go on in. Don\'t lick the ham.', 'Five minutes. I said five minutes. ...What year is it?', 'Lock up when you leave. Nobody else is going to.'])(); return; }
+    if (f.daleTooth) {
+      yield G.say('Nate', 'Dale? Is THIS it?');
+      yield G.say(null, 'Nate holds up the tooth on its string. Dale stops digging.');
+      yield G.say(D, '...');
+      yield G.say(D, 'Forty years I\'ve had that tooth.');
+      yield G.say(D, 'Well. I suppose it\'s been five minutes.');
+      f.hamOpen = true;
+      G.audio.sfx('fanfare');
+      yield G.itemGet(G.spr.gateKey, 'Dale tosses Nate a key: the {y}World\'s Largest August Ham{/}.');
+      yield G.say(D, 'Go on. Nobody\'s been in there in a while. It gets lonely.');
+      yield G.say('Nate', 'The ham gets lonely?');
+      yield G.say(D, '...Go on.');
+      w.block[4 * w.w + 19] = 0; w.addWarp(19, 4, 1, 1, 'hamStand', 12, 11, 'up');
+      G.play.autosave();
+      return;
+    }
+    if (!f.hamDoor) { yield* auroraCycle(D, ['Can\'t talk. Digging.', 'Pile\'s good today.', 'You\'re standing on my spot. ...No, you\'re fine.'])(); return; }
+    if (!f.daleQuest) {
+      f.daleQuest = true;
+      yield G.say('Nate', 'Excuse me. Do you know whose place the August ham is?');
+      yield G.say(D, '...Mine.');
+      yield G.say('Nate', 'The card says you\'ll be back in five minutes.');
+      yield G.say(D, 'I will be. Soon as I find my lucky tooth.');
+      yield G.say(D, 'Dropped it in this pile. Big megalodon, with a hole drilled through for the string. Had it forty years.');
+      yield G.say('Nate', 'So the ham\'s been closed since...');
+      yield G.say(D, 'Since I dropped it.');
+      yield G.say('Nate', 'When was that?');
+      yield G.say(D, '...Tuesday. Some Tuesday.');
+      yield G.say('Nate', 'I have a sifter. I\'ll find it.');
+      yield G.say(null, 'Sift the pile with {y}Tyler\'s Sifter{/} and look for Dale\'s lucky tooth.');
+      return;
+    }
+    yield G.say(D, ['Big megalodon. A hole through it. On a string.', 'It\'s in there somewhere. The pile doesn\'t go anywhere.', 'Five minutes. I keep saying five minutes.'][Math.floor(Math.random() * 3)]);
+  };
   const DAN_AURORA = [
     'Same idea as panning, really. Heavy things settle. Shake the screen, let the sand fall through, and see what\'s left.',
     'Teeth have a shine to them that rock doesn\'t. Look for the shine after a rain.',
@@ -20613,6 +20674,19 @@
   // after a scoop at the pile: the first false mako, with Tyler watching (true if it ended the session)
   S.auroraAfterSift = function* (r) {
     const f = flags(), w = G.play.world, t = w.tyler;
+    // Dale's lucky tooth turns up within a few scoops of looking for it
+    if (f.daleQuest && !f.daleTooth) {
+      f.daleScoops = (f.daleScoops || 0) + 1;
+      if (f.daleScoops >= 3 || Math.random() < 0.34) {
+        f.daleTooth = true;
+        yield G.say(null, 'Something heavy is still in the screen: a big megalodon tooth with a hole drilled through it, on an old string.');
+        G.audio.sfx('fanfare');
+        yield G.itemGet(G.spr.fossils.megalodon, 'You found {y}Dale\'s lucky tooth{/}!');
+        yield G.say('Nate', 'Forty years on a string. Dale!');
+        G.play.autosave();
+        return true;
+      }
+    }
     if (f.tylerMako || !r.got.includes('falseMako') || !t) return false;
     const p = P();
     G.audio.sfx('dash');
@@ -20720,6 +20794,13 @@
   };
   S.auroraVolunteer = function* () {
     const f = flags(), V = 'Volunteer', n = G.museumStamps();
+    if (f.hamDoor && !f.daleQuest && !f.volHam) {
+      f.volHam = true;
+      yield G.say('Nate', 'Do you know who owns the August ham place?');
+      yield G.say(V, 'Oh, that\'s Dale\'s. He\'s out at the pile. He\'s ALWAYS out at the pile.');
+      yield G.say(V, 'Older fellow, red cap. Tell him the museum says hi.');
+      return;
+    }
     if (!f.museumCard) {
       f.museumCard = true;
       yield G.say(V, 'Welcome to the Aurora Fossil Museum! Admission\'s free, and so is the pile across the street.');
@@ -20744,32 +20825,32 @@
     G.play.autosave();
   };
 
-  // ---- four miles out of town: the World's Largest August Ham
-  const HAM_X = 11 * 16, HAM_PERCH = 10 * 16, HAM_BOUNDS = [3 * 16, 4 * 16 + 12, 18 * 16 + 8, 10 * 16];
+  // ---- inside the shop: the World's Largest August Ham, on its stand behind a velvet rope
+  const HAM_X = 12 * 16, HAM_PERCH = 8 * 16, HAM_BOUNDS = [2 * 16 + 8, 4 * 16, 22 * 16 - 8, 9 * 16 + 4];
   G.MAPS.hamStand = {
     name: 'The World\'s Largest August Ham',
-    get music() { const w = G.play.world; return w && w.hamFight ? 'boss' : 'field'; },
+    get music() { const w = G.play.world; return w && w.hamFight ? 'boss' : 'house'; },
+    noFollower: false,
     tiles() {
-      // the road along the top, the gravel lot, and the ham at the back of it, facing the road
-      const W = 22, H = 13, g = Array.from({ length: H }, () => Array(W).fill('.'));
-      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
-      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
-      fill(0, 1, W, 1, 'a'); fill(0, 2, W, 1, 'Y'); fill(0, 3, W, 1, 'C'); // the road and its shoulder
-      fill(2, 4, 18, 7, 'g');                                              // the gravel lot
-      for (let y = 11; y < H; y++) fill(0, y, W, 1, y % 2 ? 'M' : 'L');   // a soybean field behind the ham
-      for (const y of [5, 8]) set(0, y, 'T');
+      const W = 24, H = 13, g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 22, 2, '6');   // cream walls
+      fill(1, 3, 22, 9, 'o');   // the old wood floor
+      fill(1, 10, 22, 2, 'R');  // the red carpet by the door, for visitors (the ham stays off it)
+      g[12][12] = 'x';          // the door
       return g.map((r) => r.join(''));
     },
     setup(w) {
-      const sp = G.spr, f = flags();
-      w.addProp({ img: sp.hamStand, tx: 8, ty: 9, h: 1, dx: -4, solid: [8, 9, 6, 1] });
-      w.add(new G.Sign(5, 3, ['WORLD\'S LARGEST AUGUST HAM', 'Please do not lick the ham.']));
-      w.addProp({ img: sp.condoCars.jeep, tx: 1, ty: 1, h: 2, dy: -3, solid: [1, 1, 3, 1], hit: [1, 1, 3, 2], talk: S.hamCar });
-      w.addTrigger(0, 1, 1, 3, () => G.script.run((function* () { const p = P(); yield G.say('Nate', 'Not walking four miles. The Jeep\'s right here.'); yield G.walkTo(p, p.x + 16, p.y, 1.4); })()));
-      w.addTrigger(21, 1, 1, 3, () => G.script.run((function* () { const p = P(); yield G.say('Nate', 'Nothing down that way but more soybeans.'); yield G.walkTo(p, p.x - 16, p.y, 1.4); })()));
+      const F = furnish(w), sp = G.spr, f = flags();
+      w.addProp({ img: sp.hamStand, tx: 9, ty: 7, h: 1, dx: -4, solid: [9, 7, 6, 1] });
+      F.hang(sp.festivalPoster, 5, 2, 1, look('A faded poster: THE WORLD\'S LARGEST AUGUST HAM. There\'s no explanation. There was never an explanation.'), 4);
+      F.hang(sp.seaMural2, 17, 2, 2, look('A painting of a ham, at sunset, on a beach. Someone took this very seriously.'), 4);
+      F.stand(sp.giftShelf, 21, 3, 2, look('Ham magnets. Ham postcards. A ham snow globe. They\'re all very dusty.', ['Nate', 'Nobody has bought a ham snow globe in a long time.']));
+      F.stand(sp.frontDesk, 1, 3, 3, look('A guest book on the counter. The last name in it was signed a long time ago.', ['Nate', 'I\'m signing it. NATE. Number One Ditch, Chesapeake, Virginia.']));
+      w.addWarp(12, 12, 1, 1, 'aurora', 19, 5, 'down');
       if (!f.hamBeaten) {
         w.ham = w.add(new G.AugustHam(HAM_X, HAM_PERCH, HAM_BOUNDS));
-        w.addTrigger(3, 6, 16, 1, () => { if (!w.hamFight && w.ham && w.ham.state === 'perch') G.script.run(S.hamWake()); });
+        w.addTrigger(3, 9, 18, 1, () => { if (!w.hamFight && w.ham && w.ham.state === 'perch') G.script.run(S.hamWake()); });
       } else w.addProp(hamAsleep());
     },
     onEnter() {
@@ -20778,26 +20859,20 @@
         if (f.hamSeen) return;
         f.hamSeen = true;
         yield G.wait(30);
-        yield G.say('Nate', 'Four miles. Past the soybeans. There it is.');
+        yield G.say('Nate', 'Dust everywhere. A velvet rope. And there it is.');
       })();
     },
   };
   // asleep on its stand, at peace: somebody stopped (drawn in front of the stand)
-  const hamAsleep = () => ({ img: G.spr.augustHam.sleep, tx: 8, ty: 9, h: 1, dx: 12, dy: -14, base: 10 * 16, hit: [8, 8, 6, 2],
+  const hamAsleep = () => ({ img: G.spr.augustHam.sleep, tx: 9, ty: 7, h: 1, dx: 12, dy: -14, base: 8 * 16, hit: [9, 6, 6, 2],
     talk: look('The World\'s Largest August Ham, asleep on its stand. It looks happy. Somebody stopped.', ['Nate', 'I still don\'t know what an August ham is.']) });
-  S.hamCar = function* () {
-    const c = yield G.ask('Nate', 'Drive back into Aurora?', ['Drive back', 'Stay']);
-    if (c !== 0) return;
-    G.audio.sfx('door');
-    G.play.warp('aurora', 27, 7, 'left', true);
-  };
   S.hamWake = function* () {
     const f = flags(), w = G.play.world, h = w.ham, p = P();
     if (!h || w.hamFight) return;
     w.hamFight = true;
     // (Nate stops in front of it, not behind it)
-    if (p.y > 4 * 16 + 12) yield G.walkTo(p, p.x, 4 * 16 + 12, 1.4);
-    p.dir = 'down';
+    if (p.y < HAM_PERCH + 34) yield G.walkTo(p, p.x, HAM_PERCH + 34, 1.4);
+    p.dir = 'up';
     yield G.camFocus(h.x, h.y - 30, 30);
     yield G.say('Nate', 'The World\'s Largest August Ham.');
     yield G.say(null, 'It\'s enormous. It\'s glazed. There\'s a clove in every diamond.');
@@ -20811,9 +20886,9 @@
     yield G.shakeCmd(20, 2);
     yield G.bigText('NOBODY STOPS', 60, '#f8a050');
     yield G.bigText('FOR THE HAM', 70, '#f8a050');
-    yield G.say('Nate', '...Oh. It\'s been four miles away from everybody, the whole time.');
-    yield G.say('Nate', 'Everybody drives right past it.');
-    yield G.say('Nate', 'I drove right past it.');
+    yield G.say('Nate', '...Oh. It\'s been sitting in here the whole time, two minutes from the museum.');
+    yield G.say('Nate', 'Everybody walks right past it.');
+    yield G.say('Nate', 'I walked right past it.');
     yield G.camFocus(null, null, 20);
     h.wake();
     yield G.banner('AUGUST HAM', 'the world\'s largest. nobody knows what that means', 160);
@@ -22264,8 +22339,8 @@
     // (only Nate's turn from the relay, but with more cracks to land and his shell already split)
     { name: 'FATHER EGGMAS', map: 'ditchFinal', at: [7, 13, 'up'], song: 'eggmas', x: 'pipe', hp: 1, flags: { fin_done: false, fin_intro: true, fin_freed: FIN_ORDER.length },
       start(w) { const b = w.eggmas; b.cracks = 1; b.extraNeed = 2; b.beginTurn('nate'); b.hp = b.maxHp = b.need; return b; } },
-    { name: 'AUGUST HAM', map: 'hamStand', at: [11, 5, 'down'], song: 'boss', hp: 1.25, flags: { hamBeaten: false, hamHint: true },
-      start(w) { const h = w.ham; h.y = 8 * 16 + 8; h.z = 0; h.wake(); w.hamFight = true; return h; } },
+    { name: 'AUGUST HAM', map: 'hamStand', at: [12, 11, 'up'], song: 'boss', hp: 1.25, flags: { hamBeaten: false, hamHint: true },
+      start(w) { const h = w.ham; h.y = 7 * 16; h.z = 0; h.wake(); w.hamFight = true; return h; } },
     { name: 'FATHER CHRISTMAS', map: 'andoverDeep', at: [11, 11, 'up'], song: 'fc', hp: 1.25, flags: { fcAwake: true, fcBeaten: false, fcMet: true },
       start(w) {
         w.fcBox.still = true;

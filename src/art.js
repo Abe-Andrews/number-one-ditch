@@ -10729,6 +10729,33 @@
     F.draw(x, '4 MI', W - 40, 21, '#7a2a1a');
     return cv;
   }
+  // the ham's own little shop on Main Street, a couple of doors down from the museum: WORLD'S
+  // LARGEST over the sign, the ham's silhouette in the window, and a faded card in the door
+  // (BACK IN 5 MINUTES). The door is 3 tiles in from the left edge (the shop is drawn 8px in).
+  function hamShop() {
+    const W = 96, H = 64, p = new Pix(W, H), brick = '#9a5a3e';
+    p.rect(0, 0, W, 12, '#5a5c64'); p.hline(0, W - 1, 0, '#7a7c84'); p.hline(0, W - 1, 11, '#3a3c44');
+    for (let y = 12; y < H; y++) for (let x = 0; x < W; x++) {
+      const row = Math.floor(y / 4), off = row % 2 ? 4 : 0;
+      p.set(x, y, y % 4 === 3 || (x + off) % 8 === 0 ? '#c8a088' : G.hash(Math.floor((x + off) / 8), row, 33) < 0.3 ? shade(brick, -0.12) : brick);
+    }
+    p.rect(10, 14, 76, 12, '#f6f0e0'); p.rect(11, 15, 74, 10, '#7a2a1a'); p.hline(11, 84, 15, '#9a3a2a');
+    // a pink and white striped awning
+    for (let y = 28; y < 34; y++) for (let x = 2; x < W - 2; x++) p.set(x, y, Math.floor((x - 2) / 6) % 2 ? '#f6f0e8' : '#e88a8a');
+    for (let x = 2; x < W - 2; x++) if ((x - 2) % 6 > 0 && (x - 2) % 6 < 5) p.set(x, 34, Math.floor((x - 2) / 6) % 2 ? '#f6f0e8' : '#e88a8a');
+    // the window (a dusty glass, with the ham in it) and the door with its card
+    p.rect(58, 38, 32, 22, '#2a2a30'); p.rect(60, 40, 28, 18, '#5a6a78');
+    for (let y = -5; y <= 5; y++) for (let x = -7; x <= 7; x++) if ((x / 7) ** 2 + (y / 5) ** 2 <= 1) p.set(75 + x, 51 + y, '#8a4a2a');
+    p.rect(67, 44, 2, 3, '#d8d0c0'); p.set(61, 41, '#a8b8c8'); p.set(62, 41, '#a8b8c8');
+    p.rect(40, 38, 16, 26, '#2a2a30'); p.rect(42, 40, 12, 24, '#6a7a88'); p.vline(47, 40, 63, '#2a2a30'); p.set(52, 52, '#d8b050');
+    p.rect(43, 45, 9, 5, '#e8e0c8'); p.hline(44, 50, 47, '#a89878');
+    p.rect(8, 38, 26, 22, '#2a2a30'); p.rect(10, 40, 22, 18, '#5a6a78');
+    p.outline();
+    const cv = p.canvas(), x = cv.getContext('2d'), F = G.font;
+    F.draw(x, 'WORLD\'S LARGEST', Math.round((W - F.width('WORLD\'S LARGEST')) / 2), 2, '#f8e8c8', { shadow: '#2a2c34' });
+    F.draw(x, 'AUGUST HAM', Math.round((W - F.width('AUGUST HAM')) / 2), 17, '#f8d878', { shadow: '#3a0e08' });
+    return cv;
+  }
   // The World's Largest August Ham. Nobody knows what an August ham is. It's a ham, and it's the
   // biggest one, glazed, scored in diamonds with a clove in every one, a paper frill on the bone,
   // and two cloves for eyes. Poses: stand, squash (landing a hop), dizzy (spiral eyes), glaze
@@ -11272,7 +11299,7 @@
     S.squirrel = squirrel(); S.goat = [goat(0), goat(1)]; S.turtle = turtle(); S.bookmarkIcon = bookmarkIcon(); S.clubDoor = clubDoor(); S.rushTrophy = rushTrophy();
     S.gardenDeer = { left: [gardenDeer(0), gardenDeer(1)] }; S.gardenDeer.right = S.gardenDeer.left.map(mirror); S.rainBarrel = rainBarrel(); S.marigold = marigold(); S.wetBlanket = wetBlanket();
     // Aurora, NC
-    S.auroraMuseum = auroraMuseum(); S.tailingsPile = tailingsPile(); S.fossilIdBoard = fossilIdBoard(); S.siftScreens = siftScreens(); S.hamBillboard = hamBillboard();
+    S.auroraMuseum = auroraMuseum(); S.tailingsPile = tailingsPile(); S.fossilIdBoard = fossilIdBoard(); S.siftScreens = siftScreens(); S.hamBillboard = hamBillboard(); S.hamShop = hamShop();
     S.augustHam = {}; for (const k of ['stand', 'squash', 'dizzy', 'glaze', 'spiral', 'sleep']) S.augustHam[k] = augustHam(k);
     S.hamStand = hamStand(); S.cloveShot = cloveShot(); S.hamSlice = hamSlice();
     S.megToothCase = megToothCase(3); S.megJaw = megJaw(); S.falseMakoBoard = falseMakoBoard(); S.seaMural = seaMural(4); S.seaMural2 = seaMural(2); S.whaleVertebra = whaleVertebra();
