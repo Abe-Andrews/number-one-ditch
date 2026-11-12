@@ -3590,7 +3590,7 @@
     }
     w.sifted = true;
     yield G.say(null, 'Nate shakes scoop after scoop of cold, wet gravel through Tyler\'s sifter...');
-    G.audio.sfx('slip');
+    G.audio.sfx('siftLong');
     yield G.wait(30);
     f.siftTries = (f.siftTries || 0) + 1;
     const roll = Math.random();
@@ -12439,7 +12439,7 @@
     if (c) { yield G.say('Dan Hurd', 'Anytime. I\'ll be right here.'); return; }
     w.danPanned = true;
     yield G.say(null, 'Nate scoops a pan of gravel out of the pool and swirls it, side to side, while Dan watches.');
-    G.audio.sfx('slip');
+    G.audio.sfx('siftLong');
     if (dan) w.burst(dan.x + 18, dan.y - 6, ['#a8d0e0', '#ffffff', '#2e5260'], 8, { speed: 0.8, up: 0.6, g: 0.08, life: 18, size: 1 });
     yield G.wait(40);
     const r = Math.random();
@@ -13559,7 +13559,7 @@
       if (c) return;
     }
     yield G.say(null, 'Nate shakes scoop after scoop through the sifter. Shell, pebbles, a few tiny fossil teeth...');
-    G.audio.sfx('slip');
+    G.audio.sfx('siftLong');
     yield G.wait(30);
     yield G.say(null, '...and then something big and heavy rattles in the screen.');
     f.megalodon = true;
@@ -20109,7 +20109,7 @@
         if (this.step === 'dig') {
           if (zHeld(this)) {
             this.depth += 1 / 110;
-            if (this.t % 14 === 0) G.audio.sfx('slip');
+            if (this.t % 14 === 0) G.audio.sfx('scoop');
             if (this.depth >= 1.15) { this.depth = 0.35; this.spilled = true; G.audio.sfx('bump'); this.say('Too much! Half of it spills out.', 90); this.fill(); this.step = 'shake'; }
           } else if (this.depth > 0) {
             this.depth = Math.min(1, this.depth); G.audio.sfx('select'); this.fill(); this.step = 'shake';
@@ -20120,7 +20120,7 @@
           const L = inp.hit('left'), R = inp.hit('right');
           if ((L && this.side !== 'left') || (R && this.side !== 'right')) {
             this.side = L ? 'left' : 'right'; this.jig = 8; this.shook++;
-            G.audio.sfx('slip');
+            G.audio.sfx('sift');
             for (let i = 0; i < 12; i++) this.grains.push({ x: TX + Math.random() * TW, y: TY + TH - 4, v: 0.4 + Math.random(), life: 16 + Math.random() * 14 });
             if (this.shook >= this.need) { this.step = 'pick'; G.audio.sfx('secret'); }
           }

@@ -356,7 +356,7 @@
         this.siftCool = 30;
         const px = p.x + dx * 12, py = p.y - 4 + dy * 12, area = [px - 10, py - 10, px + 10, py + 10];
         const spot = w.props.find((pr) => pr.hit && (pr.sift || pr.talk === G.SCRIPTS.brookSift || pr.talk === G.SCRIPTS.megalodonSift) && G.overlap(pr.hit, area));
-        G.audio.sfx('slip');
+        G.audio.sfx('sift');
         w.burst(px, py, ['#a89070', '#c8b090', '#8a7a68'], 6, { speed: 0.8, up: 0.6, g: 0.08, life: 18, size: 1 });
         if (spot) { G.script.run(spot.talk(true)); return; }
         w.pop(p.x, p.y - 30, ['*shake shake*  Just dirt.', '*shake shake*  Pebbles. Nothing good.', '*shake shake*  Nothing here.'][Math.floor(Math.random() * 3)], '#c8b090');
