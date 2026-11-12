@@ -10761,7 +10761,7 @@
   // and two cloves for eyes. Poses: stand, squash (landing a hop), dizzy (spiral eyes), glaze
   // (dripping), spiral (sliced: the second half of the fight), sleep (beaten, back on its stand).
   function augustHam(pose) {
-    const W = 72, H = 64, p = new Pix(W, H), cx = 38, cy = 38, sq = pose === 'squash' || pose === 'husk' ? 1.12 : 1, sy = pose === 'squash' ? 0.86 : pose === 'husk' ? 0.78 : 1;
+    const W = 72, H = 64, p = new Pix(W, H), cx = 38, cy = 38, sq = pose === 'squash' ? 1.12 : 1, sy = pose === 'squash' ? 0.86 : 1;
     const rx = 27 * sq, ry = 22 * sy, base = cy + 22 - ry, gl = '#c8682e', glL = '#e08a40', glH = '#f8b860', glD = '#8a3c18';
     // the body: a big round butt end, tapering up and to the left into the shank
     const inBody = (x, y) => {
@@ -10794,13 +10794,6 @@
       const y0 = Math.round(base + ry - 2 - 2);
       for (let j = 0; j < len; j++) { p.set(x, y0 + j - len, '#f8c050'); p.set(x + 1, y0 + j - len, '#e8a030'); }
       p.rect(x - 1, y0, 3, 2, '#f8c050');
-    }
-    // the husk it leaves behind when the bone pulls out: slumped, empty, no face
-    if (pose === 'husk') {
-      for (let y = 0; y < 12; y++) for (let x = 0; x < W; x++) p.d[y * W + x] = null;
-      p.rect(9, 12, 7, 3, '#5a2410'); p.rect(10, 13, 5, 1, '#3a1408');
-      p.outline();
-      return p.canvas();
     }
     // the bone and its paper frill
     p.rect(7, 4, 8, 8, '#f6f2ea'); p.rect(5, 2, 5, 5, '#f6f2ea'); p.rect(12, 1, 4, 4, '#f6f2ea'); p.hline(7, 14, 11, '#d8d0c0'); p.vline(14, 4, 10, '#d8d0c0');
@@ -10840,35 +10833,6 @@
     const p = new Pix(5, 7);
     p.vline(2, 2, 6, '#5a3418'); p.rect(1, 0, 3, 3, '#3a2010'); p.set(0, 1, '#3a2010'); p.set(4, 1, '#3a2010'); p.set(2, 1, '#7a4a20');
     p.outline('#1c1008');
-    return p.canvas();
-  }
-  // THE BONE: what's left once the ham comes off. Knobby at both ends, a few scraps still on it, and
-  // the scowl moved over with it
-  function hamBone(pose) {
-    const W = 48, H = 22, p = new Pix(W, H), cr = '#f6f2ea', crD = '#d8d0c0', crL = '#ffffff';
-    const inBone = (x, y) => (y >= 8 && y <= 13 && x >= 7 && x <= 40) || [[7, 7], [7, 14], [40, 7], [40, 14]].some(([kx, ky]) => (x - kx) ** 2 + (y - ky) ** 2 <= 22);
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (inBone(x, y)) p.set(x, y, !inBone(x, y - 2) ? crL : !inBone(x, y + 2) ? crD : cr);
-    // scraps of ham still hanging on
-    for (const [x0, y0, w, h] of [[13, 12, 5, 3], [15, 8, 3, 2], [31, 12, 4, 2], [34, 8, 2, 2]]) { p.rect(x0, y0, w, h, '#f0a0a0'); p.hline(x0, x0 + w - 1, y0 + h - 1, '#c8682e'); }
-    // the paper frill on the end
-    for (let y = 3; y < 19; y++) { p.set(1 + (y % 2), y, '#ffffff'); p.set(2 + (y % 2), y, '#e8e4f0'); }
-    // the face
-    const ex = 24, ey = 9;
-    if (pose === 'dizzy') {
-      for (const sx of [-4, 4]) { const x0 = ex + sx; p.set(x0 - 1, ey - 1, '#3a2010'); p.set(x0 + 1, ey - 1, '#3a2010'); p.set(x0, ey, '#3a2010'); p.set(x0 - 1, ey + 1, '#3a2010'); p.set(x0 + 1, ey + 1, '#3a2010'); }
-      p.hline(ex - 2, ex + 2, ey + 4, '#3a2010'); p.set(ex + 3, ey + 3, '#3a2010');
-    } else {
-      for (const sx of [-4, 4]) { const x0 = ex + sx; p.rect(x0 - 1, ey, 2, 2, '#2a1408'); for (let i = 0; i < 3; i++) p.set(x0 + (sx < 0 ? i - 2 : 1 - i), ey - 2 + (i >> 1), '#3a2010'); }
-      p.hline(ex - 2, ex + 2, ey + 4, '#3a2010'); p.set(ex - 3, ey + 5, '#3a2010'); p.set(ex + 3, ey + 5, '#3a2010');
-    }
-    p.outline();
-    return p.canvas();
-  }
-  // a bone shard, spinning off the twirl
-  function boneShard() {
-    const p = new Pix(8, 5);
-    p.rect(1, 2, 6, 1, '#f6f2ea'); p.rect(0, 1, 2, 3, '#f6f2ea'); p.rect(6, 1, 2, 3, '#f6f2ea'); p.set(3, 1, '#ffffff'); p.set(4, 3, '#d8d0c0');
-    p.outline();
     return p.canvas();
   }
   // a slice of spiral-cut ham, spinning
@@ -11336,9 +11300,8 @@
     S.gardenDeer = { left: [gardenDeer(0), gardenDeer(1)] }; S.gardenDeer.right = S.gardenDeer.left.map(mirror); S.rainBarrel = rainBarrel(); S.marigold = marigold(); S.wetBlanket = wetBlanket();
     // Aurora, NC
     S.auroraMuseum = auroraMuseum(); S.tailingsPile = tailingsPile(); S.fossilIdBoard = fossilIdBoard(); S.siftScreens = siftScreens(); S.hamBillboard = hamBillboard(); S.hamShop = hamShop();
-    S.augustHam = {}; for (const k of ['stand', 'squash', 'dizzy', 'glaze', 'spiral', 'sleep', 'husk']) S.augustHam[k] = augustHam(k);
+    S.augustHam = {}; for (const k of ['stand', 'squash', 'dizzy', 'glaze', 'spiral', 'sleep']) S.augustHam[k] = augustHam(k);
     S.hamStand = hamStand(); S.cloveShot = cloveShot(); S.hamSlice = hamSlice();
-    S.hamBone = { mad: hamBone('mad'), dizzy: hamBone('dizzy') }; S.boneShard = boneShard();
     S.megToothCase = megToothCase(3); S.megJaw = megJaw(); S.falseMakoBoard = falseMakoBoard(); S.seaMural = seaMural(4); S.seaMural2 = seaMural(2); S.whaleVertebra = whaleVertebra();
     S.toothWall = toothWall(4); S.cowSharkCase = cowSharkCase(); S.whaleBones = whaleBones(); S.walrusCase = walrusCase(); S.layersPoster = layersPoster(); S.festivalPoster = festivalPoster(); S.giftShelf = giftShelf(); S.frontDesk = frontDesk(3);
   };

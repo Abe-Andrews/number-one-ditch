@@ -1577,22 +1577,16 @@
   }
   G.GlazePuddle = GlazePuddle;
 
-  // the empty ham, slumped on the floor after the bone pulls out of it
-  class HamHusk extends Ent {
-    draw(ctx, cx, cy) { const img = G.spr.augustHam.husk; ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height + 2) - cy); }
-  }
-  G.HamHusk = HamHusk;
-
   const HAM_PLAN = ['roll', 'cloves', 'roll', 'glaze'];
   class AugustHam extends Ent {
     constructor(x, y, bounds) {
       super(x, y);
-      Object.assign(this, { enemy: true, boss: true, name: 'AUGUST HAM', hp: 40, maxHp: 40, hb: { w: 30, h: 10 }, bounds, t: 0,
+      Object.assign(this, { enemy: true, boss: true, name: 'AUGUST HAM', hp: 26, maxHp: 26, hb: { w: 30, h: 10 }, bounds, t: 0,
         state: 'perch', st: 0, phase: 1, hurtT: 0, ang: 0, vx: 0, vy: 0, hops: 0, air: 0, z: 16, plan: 0, bounces: 0, pose: 'sleep', noBar: true, squashT: 0 });
     }
-    hurtBox() { return this.bone ? [this.x - 24, this.y - this.z - 24, this.x + 24, this.y - this.z + 2] : [this.x - 26, this.y - this.z - 50, this.x + 26, this.y - this.z]; }
-    bodyBox() { return this.bone ? [this.x - 18, this.y - 12, this.x + 18, this.y + 2] : [this.x - 22, this.y - 20, this.x + 22, this.y + 2]; }
-    get open() { return this.state === 'dizzy' || this.state === 'wobble' || this.stunT > 0; }
+    hurtBox() { return [this.x - 26, this.y - this.z - 50, this.x + 26, this.y - this.z]; }
+    bodyBox() { return [this.x - 22, this.y - 20, this.x + 22, this.y + 2]; }
+    get open() { return this.state === 'dizzy' || this.stunT > 0; }
     // off the stand and into the lot
     wake() { Object.assign(this, { state: 'hop', st: 30, hops: 0, noBar: false, pose: 'stand' }); }
     hit(dmg) {
@@ -1600,15 +1594,15 @@
       const w = this.world;
       if (!this.open) {
         // the glaze is too thick: the hammer slides off
-        if (G.tick - (this.thunkT || -99) > 12) { this.thunkT = G.tick; G.audio.sfx('clank'); w.pop(this.x, this.y - (this.bone ? 34 : 62), (this.bone ? ['*clack*', 'TOO FAST!', '*tok*'] : ['*thunk*', 'TOO GLAZED!', '*slide*'])[Math.floor(Math.random() * 3)], '#f8c050'); }
+        if (G.tick - (this.thunkT || -99) > 12) { this.thunkT = G.tick; G.audio.sfx('clank'); w.pop(this.x, this.y - 62, ['*thunk*', 'TOO GLAZED!', '*slide*'][Math.floor(Math.random() * 3)], '#f8c050'); }
         if (!G.state.flags.hamHint) G.script.run(G.SCRIPTS.hamHint());
         return;
       }
       this.hp = Math.max(0, this.hp - dmg);
       this.hurtT = 12;
       G.audio.sfx('hit');
-      w.burst(this.x, this.y - (this.bone ? 12 : 30), this.bone ? ['#f6f2ea', '#d8d0c0', '#f0a0a0'] : ['#c8682e', '#f0a838', '#f8e0c0'], 6, { speed: 1.4, up: 0.6, g: 0.06, life: 22, size: 2 });
-      if (Math.random() < 0.3) w.pop(this.x, this.y - (this.bone ? 36 : 66), (this.bone ? ['*crack*', 'OOF!', '*rattle*', 'HMPH!'] : ['*sizzle*', 'OOF!', '*squish*', 'HMPH!'])[Math.floor(Math.random() * 4)], '#f8c050');
+      w.burst(this.x, this.y - 30, ['#c8682e', '#f0a838', '#f8e0c0'], 6, { speed: 1.4, up: 0.6, g: 0.06, life: 22, size: 2 });
+      if (Math.random() < 0.3) w.pop(this.x, this.y - 66, ['*sizzle*', 'OOF!', '*squish*', 'HMPH!'][Math.floor(Math.random() * 4)], '#f8c050');
       if (this.hp <= 0) { this.state = 'defeated'; this.stunT = 0; G.script.run(G.SCRIPTS.hamDefeated(this)); }
     }
     bomb(sx, sy) { if (this.state === 'perch' || this.state === 'defeated') return; G.stun(this, 120); const hp = this.hp; this.hp = Math.max(1, hp - 2); this.hurtT = 12; }
@@ -1626,15 +1620,13 @@
       if (this.hurtT > 0) this.hurtT--;
       if (this.squashT > 0) this.squashT--;
       if (this.stunT > 0) { this.stunT--; this.z = Math.max(0, this.z - 2); return; }
-      if (this.phase === 2 && this.hp <= Math.round(this.maxHp * 0.35)) { this.toBone(w); return; }
-      if (this.phase === 1 && this.hp <= Math.round(this.maxHp * 0.7)) {
+      if (this.phase === 1 && this.hp <= this.maxHp / 2) {
         this.phase = 2; G.audio.sfx('crack'); G.play.shake(14, 2);
         w.pop(this.x, this.y - 70, 'SPIRAL CUT!', '#f86858');
         w.burst(this.x, this.y - 30, ['#f0a0a0', '#f8f0e0', '#c8682e'], 14, { speed: 1.8, up: 1, life: 26, size: 2 });
       }
       // walking into it hurts (except while it's dizzy); getting rolled over hurts more
-      if (!this.open && this.z < 6 && G.overlap(this.bodyBox(), p.hurtBox())) p.hurt(this.state === 'roll' || this.state === 'zip' ? 4 : 2, this.x, this.y);
-      if (this.bone) { this.boneUpdate(w, p, b); return; }
+      if (this.state !== 'dizzy' && this.z < 6 && G.overlap(this.bodyBox(), p.hurtBox())) p.hurt(this.state === 'roll' ? 4 : 2, this.x, this.y);
       switch (this.state) {
         case 'hop': {
           if (this.air > 0) {
@@ -1713,79 +1705,7 @@
           break;
       }
     }
-    // THE BONE: the meat comes off, the velvet rope comes down, and what's left is small and fast
-    toBone(w) {
-      const b = this.bounds;
-      this.phase = 3; this.bone = true; this.stunT = 0;
-      for (const e of w.ents) if (e instanceof Shot || e instanceof GlazePuddle) e.dead = true;
-      this.husk = w.add(new HamHusk(this.x, this.y));
-      this.bounds = [b[0], b[1], b[2], b[3] + 36]; // (the red carpet isn't safe anymore)
-      Object.assign(this, { state: 'aim', st: 40, zips: 0, z: 0, ang: 0, vx: 0, vy: 0 });
-      G.audio.sfx('crack'); G.play.shake(18, 3);
-      w.burst(this.x, this.y - 24, ['#c8682e', '#f0a838', '#f0a0a0', '#f8e0c0'], 22, { speed: 2.2, up: 1.4, g: 0.1, life: 30, size: 2 });
-      G.script.run(G.SCRIPTS.hamBone(this));
-    }
-    boneUpdate(w, p, b) {
-      switch (this.state) {
-        case 'aim': {
-          // rattling in place, lining up on Nate
-          this.ang = Math.sin(this.t * 0.9) * 0.25;
-          if (this.st === 16) { w.pop(this.x, this.y - 34, '!', '#f86858'); G.audio.sfx('fuse'); }
-          if (--this.st <= 0) {
-            const dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1;
-            Object.assign(this, { state: 'zip', vx: (dx / d) * 5.2, vy: (dy / d) * 5.2, bounces: 1, st: 80 });
-            G.audio.sfx('dash');
-          }
-          break;
-        }
-        case 'zip': {
-          // spinning across the room like a thrown stick; off one wall, back at Nate, and then it skids
-          this.x += this.vx; this.y += this.vy; this.ang += 0.55;
-          if (this.t % 3 === 0) w.burst(this.x, this.y - 8, ['#f6f2ea', '#d8d0c0'], 1, { speed: 0.3, up: 0.2, life: 10, size: 1 });
-          const hitX = this.x < b[0] || this.x > b[2], hitY = this.y < b[1] || this.y > b[3];
-          if (hitX || hitY || --this.st <= 0) {
-            this.x = G.clamp(this.x, b[0], b[2]); this.y = G.clamp(this.y, b[1], b[3]);
-            G.audio.sfx('bump'); G.play.shake(5, 1);
-            if (this.bounces > 0 && (hitX || hitY)) {
-              const dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1;
-              this.vx = (dx / d) * 5.2; this.vy = (dy / d) * 5.2; this.bounces--;
-              break;
-            }
-            this.zips++;
-            if (this.zips >= 3) { Object.assign(this, { state: 'wobble', st: 110 }); w.pop(this.x, this.y - 34, 'SPUN OUT!', '#f8e070'); G.audio.sfx('boom'); G.play.shake(10, 2); }
-            else Object.assign(this, { state: 'aim', st: 18 });
-          }
-          break;
-        }
-        case 'wobble':
-          // spinning down on the floor like a dropped bone: this is the opening
-          this.ang = Math.sin(this.st * 0.3) * (this.st / 110) * 1.2;
-          if (--this.st <= 0) Object.assign(this, { state: 'twirl', st: 66, ang: 0 });
-          break;
-        case 'twirl':
-          // up on one end, spinning, and flinging shards off in rings (two rings, the gaps don't line up)
-          this.ang += 0.7;
-          if (this.st === 46 || this.st === 22) {
-            G.audio.sfx('swing');
-            const n = 12, off = this.st === 22 ? Math.PI / n : 0;
-            for (let i = 0; i < n; i++) { const a = (i / n) * Math.PI * 2 + off; w.add(new Shot(this.x, this.y - 6, Math.cos(a) * 2.1, Math.sin(a) * 2.1, G.spr.boneShard, { life: 130, dmg: 2, z: 10 })); }
-          }
-          if (--this.st <= 0) Object.assign(this, { state: 'aim', st: 26, zips: 0, ang: 0 });
-          break;
-      }
-    }
     draw(ctx, cx, cy) {
-      if (this.bone) {
-        const img0 = this.open || this.state === 'defeated' || this.state === 'home' ? G.spr.hamBone.dizzy : G.spr.hamBone.mad, img = this.hurtT && (this.hurtT >> 1) & 1 ? G.art.flash(img0) : img0;
-        ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 18) - cx, Math.round(this.y - 3) - cy, 36, 6);
-        const x = Math.round(this.x) - cx, y = Math.round(this.y - this.z) - cy - 10;
-        ctx.save(); ctx.translate(x, y); ctx.rotate(this.ang); ctx.drawImage(img, -img.width / 2, -img.height / 2); ctx.restore();
-        if (this.open) for (let i = 0; i < 3; i++) {
-          const a = G.tick * 0.15 + (i * Math.PI * 2) / 3, s = G.spr.tinyStars[i];
-          ctx.drawImage(s, Math.round(x + Math.cos(a) * 14 - s.width / 2), Math.round(y - 16 + Math.sin(a) * 3 - s.height / 2));
-        }
-        return;
-      }
       const S = G.spr.augustHam, st = this.state;
       let pose;
       if (st === 'perch' || st === 'home') pose = this.pose;

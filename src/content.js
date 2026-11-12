@@ -20899,20 +20899,6 @@
     yield G.say('Nate', 'The glaze is too thick! The hammer just slides right off!');
     yield G.say('Nate', 'When it rolls, get out of the way. If it hits the wall hard enough, maybe it\'ll get dizzy.');
   };
-  // the third phase: the ham comes off the bone (the fight itself changes in AugustHam.toBone)
-  S.hamBone = function* (h) {
-    const w = G.play.world;
-    G.audio.stop();
-    yield G.shakeCmd(16, 2);
-    yield G.bigText('THE BONE', 70, '#f6f2ea');
-    yield G.say('Nate', 'It... took its ham off.');
-    yield G.say('Nate', 'And now the rope\'s down. There\'s nowhere safe in here.');
-    if (G.with('lily')) yield G.say('Lily', 'It\'s so much faster without the ham, Nate.');
-    else if (G.with('abe')) yield G.say('Abe', 'Wait for it to spin out. Then get it.');
-    else if (G.with('hannah')) yield G.say('Hannah', 'It has to get dizzy eventually. Everything does.');
-    else if (G.with('doron')) yield G.say('Doron', 'Now it\'s a fair fight.');
-    G.audio.play('boss');
-  };
   S.hamDefeated = function* (h) {
     const f = flags(), w = G.play.world, s = G.state;
     G.audio.stop();
@@ -20922,16 +20908,8 @@
     yield G.shakeCmd(30, 3);
     w.pop(h.x, h.y - 60, '*sizzle*', '#f8c050');
     yield G.wait(40);
-    // it hops back up onto its stand, and settles (if it's only the bone, it puts its ham back on first)
+    // it hops back up onto its stand, and settles
     h.state = 'home';
-    if (h.bone && h.husk) {
-      yield G.walkTo(h, h.husk.x, h.husk.y, 1.4);
-      h.husk.dead = true; h.bone = false; h.ang = 0;
-      G.audio.sfx('gulp');
-      w.pop(h.x, h.y - 60, '*shlorp*', '#f0a0a0');
-      yield G.wait(30);
-      yield G.say('Nate', '...It put its ham back on.');
-    }
     yield G.walkTo(h, HAM_X, HAM_PERCH, 1.4);
     h.z = 16; h.pose = 'sleep';
     G.audio.sfx('bump');
@@ -22513,7 +22491,6 @@
   for (const name of ['mikeyDefeated', 'dadDefeated', 'globDefeated', 'jjDefeated', 'oldIronDefeated', 'popDefeated', 'tylerDefeated', 'romulusBeaten', 'mechDefeated', 'finFreed', 'finTagOut', 'hamDefeated', 'fcDefeated']) inRush(name, (b) => S.rushDown(b));
   for (const name of ['finishHint', 'romulusHint', 'tylerBlockHint', 'popRefillHint', 'hamHint']) inRush(name, function* () {});
   inRush('tylerPhase', () => rushPhase('tyler2', 'THE MOSASAUR TOOTH!!!', '#ff6a5a'));
-  inRush('hamBone', () => rushPhase('boss', 'THE BONE', '#f6f2ea'));
   inRush('fcPhase', (b, ph) => rushPhase(ph === 2 ? 'fc2' : 'fc3', ph === 2 ? null : 'NAUGHTY LIST', '#f86858'));
 
   // how it ended: the real save comes back, with the record on it
