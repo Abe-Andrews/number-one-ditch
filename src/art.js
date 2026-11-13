@@ -6263,10 +6263,63 @@
     return p.canvas();
   }
 
-  function streetSign() {
-    const p = new Pix(18, 32);
-    p.rect(8, 6, 2, 26, '#8a8a94');
-    p.rect(0, 0, 18, 7, '#2e7a48'); p.hline(2, 15, 3, '#f0f0f0');
+  // The Hummingbird Hill Farm sign at the end of the driveway, which Dad built in his shop (from the
+  // user's photo): a green arched cap, a white board with a green stripe inside its edges, HHF and
+  // FARM in green, "Hummingbird" and "Hill" in black with a black hummingbird between them, a white
+  // and green sill, and two green legs with little braces.
+  function farmSign() {
+    const rows = [
+      '            GGGGGGGG            ',
+      '         GGGGGGGGGGGGGG         ',
+      '      GGGGGGGGGGGGGGGGGGGG      ',
+      ' GGGGGGGGGGGGGGGGGGGGGGGGGGGGGG ',
+      ' GGWWWWWWWWWWWWWWWWWWWWWWWWWWGG ',
+      '   GWgWWWWWWWWWWWWWWWWWWWWgWG   ',
+      '   GWgWWWWHWHWHWHWFFFWWWWWgWG   ',
+      '   GWgWWWWHWHWHWHWFWWWWWWWgWG   ',
+      '   GWgWWWWHHHWHHHWFFWWWWWWgWG   ',
+      '   GWgWWWWHWHWHWHWFWWWWWWWgWG   ',
+      '   GWgWWWWHWHWHWHWFWWWWWWWgWG   ',
+      '   GWgWWWWWWWWWWWWWWWWWWWWgWG   ',
+      '   GWgWKWKWWWWWWWWWWKWWWKWgWG   ',
+      '   GWgWKKKWKWKKWKKWWKKWKKWgWG   ',
+      '   GWgWKWKWKKKWKWKWKWKWKKWgWG   ',
+      '   GWgWWWWWWWWWWWWWWWWWWWWgWG   ',
+      '   GWgWWWWWWKKWWWWWWWWWWWWgWG   ',
+      '   GWgWKKKKKKKKKWWWWWWWWWWgWG   ',
+      '   GWgWWWWWKKKKKKKKKWWWWWWgWG   ',
+      '   GWgWWWWWWWKKKWWKKKWWWWWgWG   ',
+      '   GWgWWWWWWWWKWWWWWKWWWWWgWG   ',
+      '   GWgWWWWWWWWWWWWWWWWWWWWgWG   ',
+      '   GWgWWWWWKWKWKWKWKWWWWWWgWG   ',
+      '   GWgWWWWWKKKWWWKWKWWWWWWgWG   ',
+      '   GWgWWWWWKWKWKWKWKWWWWWWgWG   ',
+      '   GWgWWWWWKWKWKWKWKWWWWWWgWG   ',
+      '   GWgWWWWWWWWWWWWWWWWWWWWgWG   ',
+      '   GWgWWFFFWWAWWRRWWMWWWMWgWG   ',
+      '   GWgWWFWWWAWAWRWRWMMWMMWgWG   ',
+      '   GWgWWFFWWAAAWRRWWMWMWMWgWG   ',
+      '   GWgWWFWWWAWAWRWRWMWWWMWgWG   ',
+      '   GWgWWFWWWAWAWRWRWMWWWMWgWG   ',
+      '   GWgWWWWWWWWWWWWWWWWWWWWgWG   ',
+      'wwwwwwwwwwwwwwwwwwwwwwwwwwwwwwww',
+      'GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG',
+      '  wwwwwwwwwwwwwwwwwwwwwwwwwwww  ',
+      '   GGGGGGGGGGGGGGGGGGGGGGGGGG   ',
+      '   GGGGGGGGGGGGGGGGGGGGGGGGGG   ',
+      '     GGGgGG          GGgGGG     ',
+      '     GGGgG            GgGGG     ',
+      '     GGGg              gGGG     ',
+      '     GGGg              gGGG     ',
+      '     GGGg              gGGG     ',
+      '     GGGg              gGGG     ',
+      '     GGGg              gGGG     ',
+      '     GGGg              gGGG     ',
+      '     GGGg              gGGG     ',
+    ];
+    const green = '#1f6e3c', pal = { G: green, g: '#2f8a50', W: '#f2f0e6', w: '#d6d4ca', K: '#1a1a1e', H: green, F: green, A: green, R: green, M: green };
+    const src = fromRows(rows, pal), p = new Pix(src.w + 2, src.h + 1);
+    for (let y = 0; y < src.h; y++) for (let x = 0; x < src.w; x++) p.set(x + 1, y + 1, src.get(x, y));
     p.outline();
     return p.canvas();
   }
@@ -11153,7 +11206,7 @@
     S.suv = suv();
     S.picnicTable = picnicTable();
     S.mailbox = mailbox();
-    S.streetSign = streetSign();
+    S.farmSign = farmSign();
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
     S.vanWickle = vanWickle();

@@ -2262,9 +2262,10 @@
       yield G.say('Lily', 'Who do you THINK.');
     }
   };
-  S.homeStreetSign = function* () {
-    yield G.say(null, 'RATTLESNAKE BRIDGE RD.');
-    yield G.say(null, 'Bedminster, New Jersey.');
+  // the sign Dad built in his shop, out at the end of the driveway
+  S.homeFarmSign = function* () {
+    yield G.say(null, 'HHF. {g}Hummingbird Hill Farm.{/} There\'s a little black hummingbird right in the middle.');
+    yield G.say(null, 'Dad built this sign himself, out in his shop.');
   };
   // Leaving home from either end of the road: back to campus, or the long
   // drive to Chesapeake (which Mikey blocks until Lily is saved).
@@ -11746,7 +11747,7 @@
         },
       });
       w.addProp({ img: G.spr.mailbox, tx: 46, ty: 51, dx: 2, solid: [46, 51, 1, 1], hit: [46, 51, 1, 1], talk: S.homeMailbox });
-      w.addProp({ img: G.spr.streetSign, tx: 40, ty: 51, solid: [40, 51, 1, 1], hit: [40, 51, 1, 1], talk: S.homeStreetSign });
+      w.addProp({ img: G.spr.farmSign, tx: 40, ty: 50, dx: -1, solid: [40, 50, 2, 1], hit: [40, 50, 2, 1], talk: S.homeFarmSign });
       for (const x of [42, 45]) w.addProp({ img: G.spr.gatePost, tx: x, ty: 52, dx: 1, solid: [x, 52, 1, 1], hit: [x, 52, 1, 1], talk: S.homeGatepost });
       w.addTree(16, 19, 'pine');
       w.addTree(46, 23, 'pine');
