@@ -258,6 +258,8 @@
       const tx0 = Math.floor(r[0] / 16), tx1 = Math.floor((r[2] - 0.01) / 16);
       const ty0 = Math.floor(r[1] / 16), ty1 = Math.floor((r[3] - 0.01) / 16);
       for (let ty = ty0; ty <= ty1; ty++) for (let tx = tx0; tx <= tx1; tx++) if (this.tileSolid(tx, ty)) return true;
+      // thin walls that don't take up a whole tile (a banister along a staircase): pixel rects
+      if (this.walls) for (const b of this.walls) if (overlap(b, r)) return true;
       for (const e of this.ents) {
         if (e === self || !e.solid || e.dead) continue;
         if (self && self.ghost) continue;

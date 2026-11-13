@@ -15182,7 +15182,7 @@
   // means he leaves the map (up or down the stairs).
   const ROM_SPOTS = [
     { map: 'condoDown', at: [15.5, 5.75], run: [[11.5, 5.5], [11.5, 8], [13.5, 9.6], [19.5, 9.6], [19.5, 15.6], [17.5, 15.6]], line: 'He ran down the back hall!', abe: 'He always hides behind the breakfast bar. Right next to me. Not very sneaky.' },
-    { map: 'condoDown', at: [17.5, 15.6], run: [[19.5, 15.6], [19.5, 9.6], [13.5, 9.6], [13.5, 12.2]], vanish: true, bidet: true, line: 'He ran up the stairs!', abe: 'Try the bathroom. He likes the bath mat. It\'s fluffy.' },
+    { map: 'condoDown', at: [17.5, 15.6], run: [[19.5, 15.6], [19.5, 9.6], [11.5, 9.6], [11.5, 18.5], [13.8, 18.5], [13.8, 12.2]], vanish: true, bidet: true, line: 'He ran up the stairs!', abe: 'Try the bathroom. He likes the bath mat. It\'s fluffy.' },
     { map: 'condoUp', at: [22.5, 6.7], run: [[23.5, 6.7], [23.5, 10.6], [21.5, 12.7]], line: 'He ran out of the closet!', abe: 'Upstairs? Check the closet. Careful of the guitars.' },
     { map: 'condoUp', at: [21.5, 12.75], run: [[16.5, 11.6], [14.5, 11.6], [13.5, 13]], vanish: true, door: true, line: 'He\'s headed downstairs!', abe: 'He likes it under my desk. Probably because it\'s the only clean spot in my office.' },
   ];
@@ -15771,6 +15771,9 @@
       F.stand(sp.creamDresser, 21, 18, 1, look('A cream dresser with fancy brass pulls.'));
       w.props.push({ img: null, x: 22 * 16 + 4, y: 14 * 16 - 4, base: 20 * 16, draw(ctx, cx, cy) { ctx.drawImage(sp.ceilingFan[(G.tick >> 2) % 4], this.x - cx, this.y - cy); } });
       // ---- ways out
+      // the stairs only go up from the foot: a banister along the front hall side, and the top
+      // step (it's a whole floor up from the kitchen side) can't be walked onto from above
+      w.walls = [[13 * 16 - 1, 12 * 16, 13 * 16 + 1, 18 * 16], [13 * 16, 12 * 16 - 2, 15 * 16, 12 * 16 + 1]];
       w.addTrigger(13, 12, 2, 1, () => G.play.warp('condoUp', 13, 11, 'up'));
       w.addWarp(13, 19, 1, 1, 'condo', 23, 18, 'down');
       w.addWarp(0, 4, 1, 2, 'condo', 17, 12, 'left');
@@ -15822,6 +15825,18 @@
         if (e.key.length !== 1 || this.pause) return;
         const want = this.text[this.i];
         this.clock = true;
+        // (kept quiet on purpose: Nate's own way around it, 5+1, typed where the 6 goes, counts as the 6)
+        if (want === '6' && e.key === '5+1'[this.alt || 0]) {
+          G.audio.sfx('typeKey');
+          this.alt = (this.alt || 0) + 1;
+          if (this.alt < 3) return;
+          this.alt = 0; e = { key: '6', fine: true };
+        } else if (this.alt) { this.alt = 0; if (e.key !== '6') { this.errs++; this.flash = 10; G.audio.sfx('bump'); return; } }
+        if (e.fine) {
+          this.i++; this.chars++;
+          if (this.i >= this.text.length) this.endRound();
+          return;
+        }
         if (e.key === '6') {
           // the sacred number: it counts whether or not it was the right key
           if (want === '6') { this.i++; this.chars++; } else { this.errs++; this.flash = 10; }
@@ -15829,12 +15844,13 @@
         }
         if (e.key === want) {
           this.i++; this.chars++; G.audio.sfx('typeKey');
-          if (this.i >= this.text.length) {
-            this.clock = false; this.round++; G.audio.sfx('select');
-            if (this.round >= TYPE_ROUNDS.length) { this.finished = true; this.score = this.wpm(); this.acc = Math.round(100 * this.chars / Math.max(1, this.chars + this.errs)); G.audio.sfx('secret'); }
-            else { this.next(); this.pause = 40; }
-          }
+          if (this.i >= this.text.length) this.endRound();
         } else { this.errs++; this.flash = 10; G.audio.sfx('bump'); }
+      },
+      endRound() {
+        this.clock = false; this.round++; G.audio.sfx('select');
+        if (this.round >= TYPE_ROUNDS.length) { this.finished = true; this.score = this.wpm(); this.acc = Math.round(100 * this.chars / Math.max(1, this.chars + this.errs)); G.audio.sfx('secret'); }
+        else { this.next(); this.pause = 40; }
       },
       update() {
         this.t++;
@@ -15881,7 +15897,13 @@
     if (c !== 0) return;
     const cmd = typingCmd();
     let r, said = 0;
-    for (;;) { r = yield cmd; if (r !== 'six') break; said++; yield* S.sixKey(); }
+    for (;;) {
+      r = yield cmd;
+      if (r !== 'six') break;
+      said++; yield* S.sixKey();
+      // the first time he types it, Nate works out the way around it
+      if (!f.typingAlt) { f.typingAlt = true; yield G.say('Nate', 'Wait. I can just type 5+1.'); }
+    }
     G.play.overlay = null;
     if (r === 'quit') {
       if (cmd.text && cmd.text[cmd.i] === '6') yield G.say('Nate', 'There\'s a number in there. I\'m not typing that.');
