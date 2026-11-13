@@ -14981,7 +14981,8 @@
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [25 * 16, 5 * 16, 27 * 16, 6 * 16], talk: look('Another duplex, a lot like Abe and Hannah\'s, with a big half-round window. Nobody answers.') });
       for (const x of [19, 21, 23]) shrub(sp.boxwood, x, 6, boxwood);
       w.addProp({ img: sp.condoTan, tx: 17, ty: 22, h: 8 });
-      w.blockTiles(17, 22, 11, 8);
+      // (blocked to the roof's shape: the gable on the left goes up to y 22, the garage roof only to 24)
+      w.blockTiles(17, 22, 5, 8); w.blockTiles(22, 24, 5, 6); w.blockTiles(27, 26, 1, 4);
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [18 * 16, 29 * 16, 21 * 16, 30 * 16], talk: look('The neighbors\' front door. Nobody\'s home.') });
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [21 * 16, 29 * 16, 27 * 16, 30 * 16], talk: look('Two garage doors. The neighbors take their cars seriously.') });
       for (const x of [17, 18]) shrub(sp.boxwood, x, 30, boxwood);
