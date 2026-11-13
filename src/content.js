@@ -21093,7 +21093,7 @@
         if (t === 130 || t === 142) G.audio.sfx('blip');
         for (const q of this.drops) { q.x += q.vx; q.y += q.vy; q.vy += 0.15; q.life--; }
         this.drops = this.drops.filter((q) => q.life > 0);
-        return t >= 210;
+        return t >= 250;
       },
       draw(ctx) {
         const t = this.t, [deep, light] = d.col, mine = d.id === 'mine';
@@ -21127,6 +21127,10 @@
         if (t > 128 && t < 170) G.font.draw(ctx, '*blub*', 176, 90 - ((t - 128) >> 3), '#ffffff', { shadow: '#000' });
         ctx.fillStyle = 'rgba(12,8,20,0.7)'; ctx.fillRect(0, 0, G.W, 14);
         G.font.draw(ctx, d.name.toUpperCase(), 120 - Math.round(G.font.width(d.name.toUpperCase()) / 2), 3, '#f8d850', { shadow: '#000' });
+        // where he's taking him, as a caption along the bottom (no button to press)
+        const lines = G.font.wrap(d.trip, G.W - 16), by = G.H - 6 - lines.length * 9;
+        ctx.fillStyle = 'rgba(12,8,20,0.7)'; ctx.fillRect(0, by - 3, G.W, G.H - by + 3);
+        lines.forEach((l, i) => G.font.draw(ctx, l, 120 - Math.round(G.font.width(l) / 2), by + i * 9, '#ffffff', { shadow: '#000' }));
       },
     };
   }
@@ -21176,6 +21180,7 @@
     p.x = abe.x; p.y = abe.y + 1; p.z = abeH - 6; p.dir = 'down';
     yield G.wait(24);
     const spot = levelWater(w, abe);
+    let logged = null;
     if (spot) {
       // the water's right here: Abe walks Nate over to it (or, if it's a long way, he just gets there)
       const d = dunkById(levelDunk(w.id, Math.floor(spot.at.x / 16), Math.floor(spot.at.y / 16)));
@@ -21210,21 +21215,22 @@
       abe.dir = G.dirToward(p.x - abe.x, p.y - abe.y);
       yield G.wait(40);
       G.play.soakT = 60 * 45; G.play.soakSaid = {};
-      if (d) yield* logDunk(d);
+      logged = d;
+      yield G.fadeOut(24);
     } else {
-      // nothing on this level: Abe carries Nate off to the nearest real water
+      // nothing on this level: Abe carries Nate off to the nearest real water (the trip line is the
+      // scene's caption, so the screen never sits black waiting on a button)
       const d = dryDunk(w.id);
       yield G.fadeOut(24);
       p.hidden = true; abe.hidden = true;
-      yield G.say(null, d.trip);
       yield G.fadeIn(12);
       yield dunkTrip(d);
+      yield G.fadeOut(24);
       G.play.overlay = null;
       G.play.soakT = 60 * 45; G.play.soakSaid = {};
-      yield* logDunk(d);
+      logged = d;
     }
     // and then everybody's back where they were
-    yield G.fadeOut(24);
     p.hidden = false; p.z = 0; p.x = home.x; p.y = home.y; p.dir = home.dir;
     if (spawned) abe.dead = true;
     else {
@@ -21237,6 +21243,8 @@
     G.play.snapCam();
     yield G.wait(10);
     yield G.fadeIn(24);
+    // (the Dunk Log note comes once Nate's back where he can be seen)
+    if (logged) yield* logDunk(logged);
     G.play.autosave();
   };
 
