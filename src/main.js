@@ -279,7 +279,7 @@
         if (e instanceof G.Follower) { if (!fighting && !partner) partner = e; continue; }
         if (e instanceof G.NPC) e.dir = G.dirToward(p.x - e.x, p.y - e.y);
         // while Nate is handing out Doron's spare tickets, people get offered one first
-        const offer = e instanceof G.NPC && G.SCRIPTS.ticketReaction(e);
+        const offer = e instanceof G.NPC && (G.SCRIPTS.ticketReaction(e) || G.SCRIPTS.soakReaction(e));
         G.script.run(offer || e.talk.call(e, e));
         return true;
       }
@@ -534,6 +534,8 @@
       if (this.whiteout > 0) this.whiteout -= 0.03;
       // Hannah (a nurse) patches Nate up when he's low
       if (G.hannahTick && !G.script.busy && !this.warping && !this.menu) G.hannahTick();
+      // (thrown in the water by Abe: dripping for a while)
+      if (G.soakTick && !this.menu) G.soakTick();
 
       if (this.menu) {
         if (this.menu.update()) this.menu = null;

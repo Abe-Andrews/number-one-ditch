@@ -1041,13 +1041,25 @@
   const P = () => G.play.player;
   const flags = () => G.state.flags;
 
-  // Saying the sacred number costs half a heart (never the last one).
+  // Saying the sacred number is a strike. Three strikes and Abe throws Nate in the nearest water
+  // (S.abeDunk, which G.postgameTick runs once nothing else is going on).
   function* slip() {
+    const st = G.state.stats, f = flags(), s = G.state;
     G.audio.sfx('slip');
     yield G.shakeCmd(30, 3);
-    G.state.stats.slips++;
-    G.state.hp = Math.max(1, G.state.hp - 1);
-    yield G.banner('THE SACRED NUMBER WAS SPOKEN', 'Slips so far: ' + G.sayable(G.state.stats.slips), 150);
+    st.slips++;
+    st.strikes = Math.min(3, (st.strikes || 0) + 1);
+    yield G.banner('THE SACRED NUMBER WAS SPOKEN', 'Strike ' + st.strikes + ' of 3', 150);
+    if (f.dunkDue) return; // (he's already coming)
+    const third = st.strikes >= 3, inParty = s.party.includes('abe');
+    if (third) { f.dunkDue = true; if (!inParty) f.dunkLate = true; else return; } // (he says that one in person)
+    const w = G.play.world, here = G.with('abe') || (w && w.ents.some((e) => e instanceof G.NPC && e.name === 'Abe' && !e.hidden && !e.dead));
+    if (here) yield G.say('Abe', ['That\'s one.', 'Two. You know what happens at three.'][st.strikes - 1]);
+    else {
+      G.audio.sfx('buzz');
+      yield G.say(null, '{c}~ FAMILY GROUP CHAT ~{/}');
+      yield G.text('Abe', ['thats one.', 'two. u know what happens at three', 'thats three.'][st.strikes - 1]);
+    }
   }
   S.slip = slip;
 
@@ -3005,6 +3017,7 @@
   G.postgameTick = () => {
     const f = flags();
     if (G.state.playAs || G.play.dying) return;
+    if (f.dunkDue && G.state.party.includes('abe') && G.dunkReady()) { G.script.run(S.abeDunk()); return; }
     if (f.ticketsGiven && !f.ticketsDone && f.dadBeaten) { G.script.run(S.ticketsText()); return; }
     if (!f.fcAwake && G.fcReady()) { G.script.run(S.fcWakes()); return; }
     if (f.dayIntro && !f.auroraNews && G.play.world && !['ditchFinal', 'ditchDay', 'ditchRoad'].includes(G.play.world.id)) { G.script.run(S.auroraNews()); return; }
@@ -20936,6 +20949,302 @@
     w.addProp(hamAsleep());
     G.audio.play('field');
     G.play.autosave();
+  };
+
+  // ================================================================ THREE STRIKES (Abe's Rule #1)
+  // Say the sacred number three times and Abe throws Nate in the nearest water. If there's water on
+  // this level, he walks over and uses it; anywhere dry (indoors, Aurora, CHKD) he carries Nate off to
+  // the nearest real water instead. Every one goes in the DUNK LOG, and Nate drips for a while after.
+  const WATER_K = new Set(['water', 'mineWater', 'bay', 'ice', 'iceHole']);
+  const SPLASH = ['#3a7ab0', '#a8d8f0', '#ffffff'], MINE_SPLASH = ['#2a3a48', '#6a8a9a', '#c8d8e0'];
+  G.DUNKS = [
+    { id: 'quad', near: 'the pond on the Quad', name: 'The Quad Pond', where: 'Lafayette', how: 'Three strikes on the Quad.', note: 'The little stone pond on the Quad. Nate climbed out with pond weed in his hair.', col: ['#3a7ab0', '#6aa8d0'] },
+    { id: 'bushkill', near: 'Bushkill Creek', name: 'Bushkill Creek', where: 'Lafayette', how: 'Three strikes somewhere dry at Lafayette.', note: 'The creek at the bottom of College Hill. Cold. Very cold.', col: ['#3a6a5a', '#6a9a80'], trip: 'Abe carries Nate down the hill to Bushkill Creek.' },
+    { id: 'brook', near: 'the brook', name: 'The Brook', where: 'Home', how: 'Three strikes out in the yard.', note: 'The brook that runs across the yard, under the little bridge. It\'s shallow. Abe made it work.', col: ['#3a7ab0', '#6aa8d0'], trip: 'Abe carries Nate out the back door to the brook.' },
+    { id: 'homePond', near: 'the pond at the top of the yard', name: 'The Pond by the Yard', where: 'Home', how: 'Three strikes near the pond at the top of the yard.', note: 'The pond at the top of the yard. The geese had opinions about it.', col: ['#3a7ab0', '#6aa8d0'] },
+    { id: 'frozen', near: 'the frozen pond', name: 'The Frozen Pond', where: 'Home', how: 'Three strikes out on the ice.', note: 'Abe threw Nate onto the ice. The ice lost.', col: ['#a8d0e8', '#e0f0f8'] },
+    { id: 'duck', near: 'the Hook-a-Duck trough', name: 'The Hook-a-Duck Trough', where: 'Easton Fair', how: 'Three strikes at the fair.', note: 'The Hook-a-Duck trough on the midway. Nate came up holding a duck. It was a winner.', col: ['#3a8ad0', '#8ac8f0'], trip: 'Abe carries Nate out to the Hook-a-Duck booth on the midway.' },
+    { id: 'cave', near: 'the pool at the back of the cave', name: 'The Cave Pool', where: 'Easton Fair', how: 'Three strikes in the little cave.', note: 'The still little pool at the back of the cave. Very still. Until Nate.', col: ['#2a4a6a', '#4a7a9a'] },
+    { id: 'mine', near: 'the flooded mine', name: 'The Flooded Mine', where: 'Andover', how: 'Three strikes down in the mines.', note: 'Black, ice-cold mine water, a long way down. Nate came back up a lot faster than he went in.', col: ['#101820', '#2a3a48'], trip: 'Abe carries Nate down to the flooded level.' },
+    { id: 'bay', near: 'the bay', name: 'The Chesapeake Bay', where: 'The Bay', how: 'Three strikes on the Bridge-Tunnel.', note: 'Right off the Bridge-Tunnel into the Chesapeake Bay. Salty.', col: ['#2a5a8a', '#5a8ac0'], trip: 'Abe carries Nate up out of the tunnel to the Chesapeake Bay.' },
+    { id: 'golf', near: 'the pond on the golf course', name: 'The Golf Course Pond', where: 'Chesapeake', how: 'Three strikes around the condo.', note: 'The water hazard on the course behind the condo. One-stroke penalty.', col: ['#3a7ab0', '#6aa8d0'], trip: 'Abe carries Nate out to the pond on the golf course.' },
+    { id: 'elizabeth', near: 'the Elizabeth River', name: 'The Elizabeth River', where: 'CHKD', how: 'Three strikes at the hospital.', note: 'The river by the hospital. Half the ward watched from the windows.', col: ['#3a5a6a', '#6a8a9a'], trip: 'Abe carries Nate out of the hospital and down to the Elizabeth River.' },
+    { id: 'ditch', near: 'the Ditch', name: 'The Number One Ditch', where: 'The Ditch', how: 'Three strikes at the Ditch.', note: 'The Number One Ditch itself. Of course it was.', col: ['#4a88b8', '#6aa8d0'], trip: 'Abe carries Nate down into the Number One Ditch.' },
+    { id: 'pamlico', near: 'the Pamlico River', name: 'The Pamlico River', where: 'Aurora', how: 'Three strikes in Aurora.', note: 'The Pamlico River, a couple of minutes from the fossil museum. Nate checked the bottom for teeth.', col: ['#3a5a6a', '#6a8a9a'], trip: 'Abe carries Nate down to the Pamlico River.' },
+  ];
+  G.dunkLog = () => G.state.dunks || (G.state.dunks = {});
+  G.dunksFound = () => G.DUNKS.filter((d) => G.dunkLog()[d.id]).length;
+  const dunkById = (id) => G.DUNKS.find((d) => d.id === id);
+  // which log entry the water on a level is (home has two: the pond up top, and the brook)
+  const LEVEL_DUNK = { campus: 'quad', north: 'frozen', fair: 'duck', fairCave: 'cave', andoverFlood: 'mine', andoverOld: 'mine', andoverVault: 'mine',
+    cbbtToll: 'bay', cbbt: 'bay', cbbtMid: 'bay', golf: 'golf', ditchFinal: 'ditch', ditchDay: 'ditch' };
+  const levelDunk = (map, tx, ty) => (map === 'home' ? (tx <= 12 && ty <= 6 ? 'homePond' : 'brook') : LEVEL_DUNK[map]);
+  // and for dry levels, the nearest water for each area
+  const DRY_DUNK = [
+    [['lab', 'campus', 'science', 'pardee', 'geology', 'collegeHill', 'grocery', 'toms', 'arts', 'studioB'], 'bushkill'],
+    [['fair', 'arena', 'ring', 'locker', 'fairCave'], 'duck'],
+    [['home', 'homeDown', 'homeUp', 'garage', 'basement', 'bookClub', 'north'], 'brook'],
+    [['andover', 'andoverMine', 'andoverFlood', 'andoverOld', 'andoverVault', 'andoverDeep'], 'mine'],
+    [['cbbtToll', 'cbbt', 'chesTunnel', 'cbbtMid', 'cbbtTunnel'], 'bay'],
+    [['condo', 'condoDown', 'condoUp', 'condoStorage', 'golf', 'toroLoco', 'toroLocoIn'], 'golf'],
+    [['chkd', 'chkdLobby', 'chkdWard', 'chkdNicu', 'chkdRoom', 'chkdRoof'], 'elizabeth'],
+    [['ditchRoad', 'ditchFinal', 'ditchDay'], 'ditch'],
+    [['aurora', 'auroraMuseum', 'hamStand'], 'pamlico'],
+  ];
+  const dryDunk = (map) => { const r = DRY_DUNK.find(([maps]) => maps.includes(map)); return dunkById(r ? r[1] : 'brook'); };
+  // (no throwing anybody in during a memory, a sneak-out, or a boss fight)
+  const NO_DUNK = new Set(['kitGail', 'goldenHour']);
+  G.dunkReady = () => {
+    const pl = G.play, w = pl.world, p = pl.player;
+    if (!w || !p || pl.overlay || pl.menu || pl.warping || G.state.night || G.state.rush || NO_DUNK.has(w.id) || w.def.quiet) return false;
+    if (p.state !== 'walk' || p.hidden) return false;
+    // (a boss that's still asleep or waiting for Nate doesn't count)
+    return !w.ents.some((e) => e.boss && !e.dead && !e.noBar && !e.hidden && e.hp > 0 && !['defeated', 'wait', 'perch', 'sleep', 'asleep', 'idle', 'home'].includes(e.state));
+  };
+
+  // The water on this level nearest Nate: where Abe stands (dry ground next to it) and where Nate lands.
+  function levelWater(w, from) {
+    const isWater = (tx, ty) => { const d = G.TILE_DEFS[w.tileAt(tx, ty)]; return !!(d && WATER_K.has(d.k)); };
+    const dry = (x, y) => { const tx = Math.floor(x / 16), ty = Math.floor(y / 16); return !w.tileSolid(tx, ty) && !isWater(tx, ty) && !(w.def.water && w.def.water(x, y)); };
+    // (and not somewhere a boulder or a bush would be drawn over Abe)
+    const covered = (x, y) => w.props.some((pr) => pr.img && !pr.flat && x >= pr.x - 4 && x <= pr.x + pr.img.width + 4 && y >= pr.y && y <= pr.base + 6);
+    let best = null;
+    const consider = (wx, wy, sx, sy, ice) => {
+      if (!dry(sx, sy) || !dry(sx - 6, sy) || !dry(sx + 6, sy) || covered(sx, sy) || w.ents.some((e) => e !== G.play.player && !e.dead && e.box && !(e instanceof G.NPC) && !(e instanceof G.Follower) && G.overlap(e.box(), [sx - 10, sy - 28, sx + 10, sy + 2]))) return;
+      const d = Math.hypot(sx - from.x, sy - from.y);
+      if (!best || d < best.d) best = { d, shore: { x: sx, y: sy }, at: { x: wx, y: wy }, ice };
+    };
+    for (let ty = 0; ty < w.h; ty++) for (let tx = 0; tx < w.w; tx++) {
+      if (!isWater(tx, ty)) continue;
+      const k = G.TILE_DEFS[w.tileAt(tx, ty)].k, ice = k === 'ice';
+      // (land two tiles out is fine too: Abe can throw over a stone rim or a reed bed)
+      for (const [dx, dy] of [[0, 1], [-1, 0], [1, 0], [0, -1], [0, 2], [-2, 0], [2, 0], [0, -2]]) {
+        // Nate lands a tile further in when the water goes on that far
+        const ix = isWater(tx - Math.sign(dx), ty - Math.sign(dy)) ? tx - Math.sign(dx) : tx, iy = isWater(tx - Math.sign(dx), ty - Math.sign(dy)) ? ty - Math.sign(dy) : ty;
+        consider(ix * 16 + 8, iy * 16 + 10, (tx + dx) * 16 + 8, (ty + dy) * 16 + 12, ice);
+      }
+    }
+    // the Ditch: a stream drawn down the middle, not tiles
+    if (w.def.water) for (let y = 8; y < w.ph; y += 8) for (let x = 4; x < w.pw; x += 8) {
+      if (!w.def.water(x, y)) continue;
+      for (const dx of [-26, 26]) consider(x, y + 2, x + dx, y + 4, false);
+    }
+    return best;
+  }
+  // a straight walk from a to b that doesn't cross anything solid (or the water)
+  function clearPath(w, a, b) {
+    const n = Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 6);
+    for (let i = 0; i <= n; i++) {
+      const x = a.x + ((b.x - a.x) * i) / n, y = a.y + ((b.y - a.y) * i) / n, tx = Math.floor(x / 16), ty = Math.floor(y / 16), d = G.TILE_DEFS[w.tileAt(tx, ty)];
+      if (w.tileSolid(tx, ty) || (d && WATER_K.has(d.k) && d.k !== 'ice')) return false;
+    }
+    return true;
+  }
+  // Abe walks in from the nearest edge of the screen with a clear way to Nate
+  function abeEntry(w, p) {
+    const cam = G.play.cam, side = clearPath(w, p, { x: p.x - 20, y: p.y }) ? -1 : 1, stand = { x: p.x + side * 20, y: p.y };
+    const edges = [{ x: cam.x - 12, y: p.y }, { x: cam.x + G.W + 12, y: p.y }, { x: p.x, y: cam.y + G.H + 24 }, { x: p.x, y: cam.y + 8 }]
+      .map((e) => ({ x: G.clamp(e.x, 8, w.pw - 8), y: G.clamp(e.y, 16, w.ph - 4) }))
+      .sort((a, b) => Math.abs(a.x - stand.x) + Math.abs(a.y - stand.y) - (Math.abs(b.x - stand.x) + Math.abs(b.y - stand.y)));
+    const from = edges.find((e) => clearPath(w, e, stand));
+    return { from, stand };
+  }
+  // Abe walking with Nate up over his head
+  const carryCmd = (abe, p, x, y, sp) => ({
+    update() {
+      const dx = x - abe.x, dy = y - abe.y, d = Math.hypot(dx, dy), done = d <= sp;
+      if (done) { abe.x = x; abe.y = y; abe.moving = false; }
+      else { abe.x += (dx / d) * sp; abe.y += (dy / d) * sp; abe.dir = G.dirToward(dx, dy); abe.moving = true; abe.anim = (abe.anim || 0) + 1; }
+      p.x = abe.x; p.y = abe.y + 1;
+      return done;
+    },
+  });
+  // ...and the throw: up, over, spinning, and in
+  const tossCmd = (p, from, to, n) => ({
+    start() { this.t = 0; G.audio.sfx('swing'); },
+    update() {
+      const k = ++this.t / n;
+      p.x = from.x + (to.x - from.x) * k; p.y = from.y + (to.y - from.y) * k;
+      p.z = Math.max(0, from.z * (1 - k) + Math.sin(k * Math.PI) * 26);
+      p.dir = ['down', 'left', 'up', 'right'][(this.t >> 2) % 4];
+      return this.t >= n;
+    },
+  });
+  // Somewhere dry: Abe carries Nate off to the nearest water (a little scene of its own)
+  function dunkTrip(d) {
+    const abeS = G.sprites.abe, nateS = G.sprites.nate;
+    return {
+      start() { this.t = 0; this.drops = []; G.play.overlay = this; },
+      update() {
+        const t = ++this.t;
+        if (t === 40) G.audio.sfx('swing');
+        if (t === 74) {
+          G.audio.sfx('splash'); G.audio.sfx('boom'); G.play.shake(8, 2);
+          for (let i = 0; i < 26; i++) this.drops.push({ x: 172, y: 116, vx: (Math.random() - 0.5) * 3.2, vy: -1.5 - Math.random() * 2.6, life: 30 + Math.random() * 20 });
+        }
+        if (t === 130 || t === 142) G.audio.sfx('blip');
+        for (const q of this.drops) { q.x += q.vx; q.y += q.vy; q.vy += 0.15; q.life--; }
+        this.drops = this.drops.filter((q) => q.life > 0);
+        return t >= 210;
+      },
+      draw(ctx) {
+        const t = this.t, [deep, light] = d.col, mine = d.id === 'mine';
+        // sky (or the mine's roof), the far bank, the water, and the near bank Abe stands on
+        ctx.fillStyle = mine ? '#1c1814' : '#9ac8e8'; ctx.fillRect(0, 0, G.W, 70);
+        if (!mine) { ctx.fillStyle = '#c8e0f0'; ctx.fillRect(0, 50, G.W, 20); }
+        ctx.fillStyle = mine ? '#3a3028' : '#3a6a3a'; ctx.fillRect(0, 62, G.W, 10);
+        for (let x = 0; x < G.W; x += 12) { ctx.fillStyle = mine ? '#2a2420' : '#2e5a2e'; ctx.fillRect(x + (x % 24 ? 3 : 0), 56 - ((x * 7) % 9), 10, 16); }
+        ctx.fillStyle = deep; ctx.fillRect(0, 72, G.W, G.H - 72);
+        ctx.fillStyle = light;
+        for (let y = 76; y < G.H; y += 7) for (let x = ((y * 13 + (t >> 2)) % 22) - 22; x < G.W; x += 22) ctx.fillRect(x, y, 8, 1);
+        ctx.fillStyle = '#6a8a4a'; ctx.beginPath(); ctx.moveTo(0, 108); ctx.lineTo(92, 112); ctx.lineTo(104, G.H); ctx.lineTo(0, G.H); ctx.fill();
+        ctx.fillStyle = '#8a6a48'; ctx.beginPath(); ctx.moveTo(92, 112); ctx.lineTo(104, G.H); ctx.lineTo(98, G.H); ctx.lineTo(88, 114); ctx.fill();
+        if (d.id === 'duck') { const bob = Math.sin(t * 0.1) * 1.5; ctx.fillStyle = '#f8d850'; ctx.fillRect(200, 96 + bob, 9, 6); ctx.fillRect(206, 92 + bob, 5, 5); ctx.fillStyle = '#e88838'; ctx.fillRect(211, 94 + bob, 3, 2); }
+        // Abe (twice size), Nate up over his head, then flying, then in
+        const big = (img, x, y) => ctx.drawImage(img, Math.round(x), Math.round(y), img.width * 2, img.height * 2);
+        const ax = 50, ay = 136 - abeS.h * 2;
+        big(t < 40 ? abeS.hold : abeS.right[0], ax, ay);
+        if (t < 40) big(nateS.down[0], ax, ay - nateS.h * 2 + 14 + (t % 20 < 10 ? 0 : 1));
+        else if (t < 74) {
+          const k = (t - 40) / 34, x = ax + (172 - 16 - ax) * k, y = ay - nateS.h * 2 + 14 + (116 - nateS.h * 2 - (ay - nateS.h * 2 + 14)) * k - Math.sin(k * Math.PI) * 40;
+          big(nateS[['down', 'left', 'up', 'right'][(t >> 2) % 4]][0], x, y);
+        } else if (t > 120) {
+          // he comes back up: just his head, bobbing
+          const bob = Math.round(Math.sin(t * 0.15)), hy = 116 - 14 + bob, img = nateS.down[0];
+          ctx.drawImage(img, 0, 0, img.width, 8, 156, hy, img.width * 2, 16);
+          ctx.fillStyle = light; ctx.fillRect(150, hy + 15, 44, 2);
+        }
+        if (t >= 74 && t < 120) { const r = (t - 74) * 0.8; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(172, 118, r, r * 0.35, 0, 0, Math.PI * 2); ctx.stroke(); }
+        ctx.fillStyle = '#ffffff'; for (const q of this.drops) ctx.fillRect(Math.round(q.x), Math.round(q.y), 2, 2);
+        if (t > 128 && t < 170) G.font.draw(ctx, '*blub*', 176, 90 - ((t - 128) >> 3), '#ffffff', { shadow: '#000' });
+        ctx.fillStyle = 'rgba(12,8,20,0.7)'; ctx.fillRect(0, 0, G.W, 14);
+        G.font.draw(ctx, d.name.toUpperCase(), 120 - Math.round(G.font.width(d.name.toUpperCase()) / 2), 3, '#f8d850', { shadow: '#000' });
+      },
+    };
+  }
+  function* logDunk(d) {
+    const L = G.dunkLog(), isNew = !L[d.id];
+    L[d.id] = (L[d.id] || 0) + 1;
+    if (!isNew) return;
+    G.audio.sfx('secret');
+    yield G.say(null, 'New in the {c}Dunk Log{/}: {y}' + d.name + '{/}.');
+    if (G.dunksFound() === 1) yield G.say(null, 'Every place Abe has thrown Nate in goes in the {c}Dunk Log{/}, in COLLECTABLES.');
+  }
+  S.abeDunk = function* () {
+    const f = flags(), s = G.state, w = G.play.world, p = P(), late = f.dunkLate;
+    f.dunkDue = false; f.dunkLate = false; s.stats.strikes = 0;
+    const home = { x: p.x, y: p.y, dir: p.dir }, abeH = G.sprites.abe.h;
+    // Abe: the one following Nate, or he walks in from the edge of the screen
+    let abe = w.ents.find((e) => e instanceof G.Follower && e.id === 'abe' && !e.dead), spawned = false;
+    // (walking: true keeps a follower out of Nate's trail for the whole scene; walkTo clears it, so it's set again)
+    if (abe) { abe.walking = true; yield G.walkTo(abe, p.x + (clearPath(w, p, { x: p.x - 20, y: p.y }) ? -20 : 20), p.y, 1.4); abe.walking = true; }
+    else {
+      const { from, stand } = abeEntry(w, p);
+      abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: (from || stand).x, y: (from || stand).y, dir: 'down' }));
+      abe.solid = false; spawned = true;
+      if (from) yield G.walkTo(abe, stand.x, stand.y, 1.6);
+    }
+    abe.dir = G.dirToward(p.x - abe.x, p.y - abe.y); p.dir = G.dirToward(abe.x - p.x, abe.y - p.y);
+    yield G.wait(20);
+    yield G.say('Abe', late ? 'I heard.' : 'That\'s three.');
+    yield G.say('Nate', 'Abe. Abe, wait.');
+    // up he goes
+    G.audio.sfx('menu');
+    abe.pose = 'hold'; abe.dir = 'down';
+    p.x = abe.x; p.y = abe.y + 1; p.z = abeH - 6; p.dir = 'down';
+    yield G.wait(24);
+    const spot = levelWater(w, abe);
+    if (spot) {
+      // the water's right here: Abe walks Nate over to it (or, if it's a long way, he just gets there)
+      const d = dunkById(levelDunk(w.id, Math.floor(spot.at.x / 16), Math.floor(spot.at.y / 16)));
+      if (clearPath(w, abe, spot.shore) && Math.hypot(spot.shore.x - abe.x, spot.shore.y - abe.y) < 14 * 16) yield carryCmd(abe, p, spot.shore.x, spot.shore.y, 1.3);
+      else {
+        yield G.fadeOut(20);
+        abe.x = spot.shore.x; abe.y = spot.shore.y; p.x = abe.x; p.y = abe.y + 1;
+        G.play.snapCam();
+        yield G.fadeIn(20);
+        if (d) yield G.say(null, 'Abe carries Nate all the way over to ' + d.near + '.');
+      }
+      abe.dir = G.dirToward(spot.at.x - abe.x, spot.at.y - abe.y);
+      yield G.wait(16);
+      abe.pose = null;
+      yield tossCmd(p, { x: abe.x, y: abe.y + 1, z: abeH - 6 }, spot.at, 30);
+      p.z = 0; p.hidden = true;
+      if (spot.ice) { G.audio.sfx('crack'); w.pop(spot.at.x, spot.at.y - 40, '*CRACK*', '#e0f0f8'); }
+      G.audio.sfx('splash'); G.play.shake(10, 2);
+      const col = w.id.startsWith('andover') ? MINE_SPLASH : SPLASH;
+      w.burst(spot.at.x, spot.at.y - 4, col, 22, { speed: 2, up: 1.6, g: 0.1, life: 30, size: 2 });
+      w.pop(spot.at.x, spot.at.y - 26, 'SPLASH!', '#a8e0ff');
+      yield G.wait(50);
+      w.burst(spot.at.x, spot.at.y - 2, col, 4, { speed: 0.4, up: 0.8, g: 0.02, life: 26, size: 1 });
+      w.pop(spot.at.x, spot.at.y - 18, '*blub*', '#ffffff');
+      G.audio.sfx('blip');
+      yield G.wait(40);
+      // he climbs out, dripping
+      p.hidden = false; p.x = spot.shore.x + (abe.x < spot.shore.x + 8 ? 12 : -12); p.y = spot.shore.y; p.dir = 'down';
+      if (w.blocked([p.x - 6, p.y - 4, p.x + 6, p.y])) p.x = spot.shore.x;
+      G.audio.sfx('splash');
+      w.burst(p.x, p.y - 10, col, 8, { speed: 0.6, up: 0.2, g: 0.12, life: 18, size: 1 });
+      abe.dir = G.dirToward(p.x - abe.x, p.y - abe.y);
+      yield G.wait(40);
+      G.play.soakT = 60 * 45; G.play.soakSaid = {};
+      if (d) yield* logDunk(d);
+    } else {
+      // nothing on this level: Abe carries Nate off to the nearest real water
+      const d = dryDunk(w.id);
+      yield G.fadeOut(24);
+      p.hidden = true; abe.hidden = true;
+      yield G.say(null, d.trip);
+      yield G.fadeIn(12);
+      yield dunkTrip(d);
+      G.play.overlay = null;
+      G.play.soakT = 60 * 45; G.play.soakSaid = {};
+      yield* logDunk(d);
+    }
+    // and then everybody's back where they were
+    yield G.fadeOut(24);
+    p.hidden = false; p.z = 0; p.x = home.x; p.y = home.y; p.dir = home.dir;
+    if (spawned) abe.dead = true;
+    else {
+      // (back in line behind Nate)
+      const [ddx, ddy] = G.DIRS[home.dir];
+      G.play.trail = G.play.trail.map((_, i) => ({ x: home.x - ddx * i * 0.6, y: home.y - ddy * i * 0.6, dir: home.dir }));
+      const t = G.play.trail[Math.min(G.play.trail.length - 1, (abe.idx + 1) * 14)];
+      Object.assign(abe, { pose: null, hidden: false, walking: false, x: t.x, y: t.y, dir: home.dir });
+    }
+    G.play.snapCam();
+    yield G.wait(10);
+    yield G.fadeIn(24);
+    G.play.autosave();
+  };
+
+  // Soaked: Nate drips and squelches for a while after, and a few people notice (once each)
+  G.soakTick = () => {
+    const pl = G.play, p = pl.player, w = pl.world;
+    if (!(pl.soakT > 0) || !p || !w) return;
+    if (!G.script.busy) pl.soakT--;
+    if (p.hidden) return;
+    if (G.tick % 6 === 0) w.burst(p.x - 4 + Math.random() * 8, p.y - 6 - Math.random() * 12, ['#6ab0e0', '#a8d8f0'], 1, { speed: 0.15, up: 0, g: 0.14, life: 12, size: 1 });
+    if (p.moving && !G.script.busy && G.tick % 16 === 0) G.audio.sfx('squelch');
+  };
+  const SOAK_LINES = {
+    'Dad': [['Dad', 'I\'m not asking.']],
+    'Michelle': [['Michelle', 'Oh, Nate.'], [null, 'Michelle hands Nate a towel. She doesn\'t ask either.']],
+    'Tyler': [['Tyler', '...Did you find anything down there?']],
+    'Dan Hurd': [['Dan Hurd', 'You look like me after a shift on the flooded level.']],
+    'Gus': [['Gus', 'Don\'t drip on my lawn.']],
+    'Matt Oliver': [['Matt Oliver', 'You know you\'re supposed to stay IN the boat, right?']],
+    'Dale': [['Dale', 'Find any teeth down there?']],
+  };
+  S.soakReaction = function (npc) {
+    const pl = G.play, lines = SOAK_LINES[npc.name];
+    if (!(pl.soakT > 0) || !lines || (pl.soakSaid || (pl.soakSaid = {}))[npc.name]) return null;
+    return (function* () {
+      pl.soakSaid[npc.name] = true;
+      for (const [who, text] of lines) yield G.say(who, text);
+      if (npc.name === 'Michelle') pl.soakT = 0; // (the towel)
+      yield* npc.talk.call(npc, npc);
+    })();
   };
 
   // ================================================================ NATE'S BASS

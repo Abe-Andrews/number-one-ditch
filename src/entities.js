@@ -517,7 +517,8 @@
       if (this.hidden) return;
       const S = this.S;
       drawShadow(ctx, this.x, this.y, cx, cy, S.h > 24);
-      let img = S[this.dir][walkFrame(this.anim, this.moving)];
+      // (pose 'hold': arms up, e.g. Abe with Nate over his head)
+      let img = this.pose === 'hold' && S.hold ? S.hold : S[this.dir][walkFrame(this.anim, this.moving)];
       if (this.flashT > 0 && (this.flashT >> 1) & 1) img = G.art.flash(img);
       if (this.balloons) drawBalloons(ctx, this.x - cx, this.y - S.h - cy, this.x);
       if (this.sign) ctx.drawImage(this.sign, Math.round(this.x - this.sign.width / 2 + 4) - cx, Math.round(this.y - S.h - this.sign.height + 14) - cy);
