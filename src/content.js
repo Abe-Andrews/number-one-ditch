@@ -15778,6 +15778,121 @@
     onEnter() { return (function* () { if (!flags().romulusMet) yield* S.romulusMeet(); })(); },
   };
 
+  // ---------------------------------------------------------------- Abe's typing test
+  // Up on one of Abe's monitors. Three rounds: plain words, then a few numbers, then one with the
+  // sacred number in it, which Nate can't type without saying it (it's a slip, through S.sixKey; before
+  // Abe joins that only counts, and he brings it up once he's along). Typing goes straight to the test:
+  // its own keyboard listener, and nothing reaches the rest of the game while it's up. ESC quits.
+  const TYPE_ROUNDS = [
+    ['The quick brown fox jumps over the lazy dog.', 'Sphinx of black quartz, judge my vow.', 'A wizard\'s job is to vex chumps quickly in fog.'],
+    ['Meet at 4:30 by gate 12. Bring 2 chairs and 1 cooler.', 'Room 214 is on the 3rd floor, 2 doors past the stairs.', 'Take exit 47, go 9 miles, then turn left at the light.'],
+    ['Pack 2 shirts, 4 pairs of socks, 1 toothbrush and 6 granola bars.', 'The bus leaves at 7:15, makes 9 stops and gets in at 6:40.', 'Preheat the oven to 350 and bake for 16 minutes, then let it cool.'],
+  ];
+  const ABE_WPM = 104;
+  function typingCmd() {
+    const X0 = 14, X1 = G.W - 14, Y0 = 62, LH = 13;
+    return {
+      start() {
+        if (!this.init) { Object.assign(this, { init: true, round: 0, chars: 0, errs: 0, f: 0, t: 0, flash: 0, pause: 40, clock: false, finished: false, doneT: 0 }); this.next(); }
+        this.result = undefined; this.clock = false;
+        this.onKey = (e) => this.key(e);
+        addEventListener('keydown', this.onKey, true);
+        G.play.overlay = this;
+      },
+      next() {
+        const pool = TYPE_ROUNDS[this.round];
+        this.text = pool[Math.floor(Math.random() * pool.length)]; this.i = 0;
+        // lay the passage out a character at a time, wrapping between words
+        const pos = []; let x = X0, y = Y0;
+        this.text.split(' ').forEach((wd, k, all) => {
+          if (x > X0 && x + FT().width(wd) > X1) { x = X0; y += LH; }
+          for (const ch of wd) { pos.push([x, y, FT().width(ch)]); x += FT().width(ch) + 1; }
+          if (k < all.length - 1) { pos.push([x, y, 4]); x += 5; }
+        });
+        this.pos = pos;
+      },
+      wpm() { return this.f > 0 ? Math.round((this.chars / 5) / (this.f / 3600)) : 0; },
+      stop(r) { removeEventListener('keydown', this.onKey, true); this.clock = false; this.result = r; },
+      key(e) {
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        if (e.repeat || this.result !== undefined) return;
+        G.audio.unlock();
+        if (this.finished) { if (this.doneT > 40) { G.audio.sfx('select'); this.stop('done'); } return; }
+        if (e.key === 'Escape') { G.audio.sfx('cancel'); this.stop('quit'); return; }
+        if (e.key.length !== 1 || this.pause) return;
+        const want = this.text[this.i];
+        this.clock = true;
+        if (e.key === '6') {
+          // the sacred number: it counts whether or not it was the right key
+          if (want === '6') { this.i++; this.chars++; } else { this.errs++; this.flash = 10; }
+          this.stop('six'); return;
+        }
+        if (e.key === want) {
+          this.i++; this.chars++; G.audio.sfx('typeKey');
+          if (this.i >= this.text.length) {
+            this.clock = false; this.round++; G.audio.sfx('select');
+            if (this.round >= TYPE_ROUNDS.length) { this.finished = true; this.score = this.wpm(); this.acc = Math.round(100 * this.chars / Math.max(1, this.chars + this.errs)); G.audio.sfx('secret'); }
+            else { this.next(); this.pause = 40; }
+          }
+        } else { this.errs++; this.flash = 10; G.audio.sfx('bump'); }
+      },
+      update() {
+        this.t++;
+        if (this.flash) this.flash--;
+        if (this.pause) this.pause--;
+        if (this.clock) this.f++;
+        if (this.finished) this.doneT++;
+        return this.result !== undefined;
+      },
+      draw(ctx) {
+        const C = (s, y, col) => FT().draw(ctx, s, Math.round(G.W / 2 - FT().width(s) / 2), y, col, { shadow: '#000' });
+        ctx.fillStyle = '#0e1220'; ctx.fillRect(0, 0, G.W, G.H);
+        ctx.fillStyle = '#141a2c'; for (let y = 16; y < G.H; y += 4) ctx.fillRect(0, y, G.W, 1);
+        ctx.fillStyle = '#1e2840'; ctx.fillRect(0, 0, G.W, 14);
+        FT().draw(ctx, 'TYPING TEST', 4, 3, '#f8d850', { shadow: '#000' });
+        const hs = 'HIGH SCORE: ABE ' + ABE_WPM;
+        FT().draw(ctx, hs, G.W - 4 - FT().width(hs), 3, '#c8c0d8', { shadow: '#000' });
+        if (this.finished) {
+          C('DONE!', 34, '#f8d850');
+          C('SPEED: ' + this.score + ' WPM', 58, '#ffffff');
+          C('ACCURACY: ' + this.acc + '%', 72, '#ffffff');
+          C('ABE: ' + ABE_WPM + ' WPM', 90, '#c8c0d8');
+          if (this.score > ABE_WPM) C('NEW HIGH SCORE!', 108, (this.t >> 3) % 2 ? '#68d878' : '#f8d850');
+          if (this.doneT > 40) C('Press any key', G.H - 16, '#7a8498');
+          return;
+        }
+        C('ROUND ' + (this.round + 1) + ' OF ' + TYPE_ROUNDS.length, 24, this.pause && (this.t >> 2) % 2 ? '#f8d850' : '#88a0c0');
+        C('WPM ' + this.wpm() + '     ERRORS ' + this.errs, 38, '#c8c0d8');
+        ctx.fillStyle = '#18203a'; ctx.fillRect(X0 - 6, Y0 - 6, X1 - X0 + 12, this.pos[this.pos.length - 1][1] - Y0 + LH + 10);
+        this.text.split('').forEach((ch, i) => {
+          const [x, y, w] = this.pos[i], cur = i === this.i;
+          if (cur) { ctx.fillStyle = this.flash ? '#ff6060' : (this.t >> 4) % 2 ? '#ffffff' : '#88a0c0'; ctx.fillRect(x, y + 9, w, 1); }
+          if (ch !== ' ') FT().draw(ctx, ch, x, y, i < this.i ? '#68d878' : cur ? (this.flash ? '#ff6060' : '#ffffff') : '#7a8498');
+        });
+        FT().draw(ctx, 'Type what you see.', 6, G.H - 12, '#7a8498');
+        FT().draw(ctx, 'ESC: quit', G.W - 6 - FT().width('ESC: quit'), G.H - 12, '#7a8498');
+      },
+    };
+  }
+  S.abeDesk = function* () {
+    const f = flags();
+    yield G.say(null, 'Abe\'s desk: two monitors up on a little wooden stand, a keyboard and a mug. This is where the AI and machine learning happens. Or the guitar videos.');
+    const c = yield G.ask(null, 'One of the monitors has a typing test up. The high score at the top: ABE, ' + ABE_WPM + ' words a minute.' + (f.typingBest ? ' Nate\'s best: ' + f.typingBest + '.' : ''), ['Take the test', 'Leave it']);
+    if (c !== 0) return;
+    const cmd = typingCmd();
+    let r, said = 0;
+    for (;;) { r = yield cmd; if (r !== 'six') break; said++; yield* S.sixKey(); }
+    G.play.overlay = null;
+    if (r === 'quit') {
+      if (cmd.text && cmd.text[cmd.i] === '6') yield G.say('Nate', 'There\'s a number in there. I\'m not typing that.');
+      return;
+    }
+    const beat = cmd.score > ABE_WPM, best = cmd.score > (f.typingBest || 0);
+    if (best) f.typingBest = cmd.score;
+    yield G.say('Nate', beat ? 'Faster than Abe. Somebody tell him.' : 'Abe\'s still faster. For now.');
+    if (said) yield G.say('Nate', '...Why was that number even in there?');
+  };
+
   // ---------------------------------------------------------------- upstairs
   //   the loft x 1-14, y 3-11 (over the dining room and kitchen), its railing looking down on the
   //   living room (x 1-9, y 9-18) and the front hall (x 10-12, y 13-18); stairs down x 13-14, y 12-17
@@ -15839,7 +15954,7 @@
       F.hang(sp.guitarAdPrints, 22, 10, 1, look('Two framed vintage guitar ads: old-timey paintings, with speech bubbles about guitars.'), 2);
       F.hang(sp.wilcoPoster, 24, 10, 1, look('A framed concert poster: WILCO, at the Dome in Virginia Beach. Seagulls and beach umbrellas.'), 3);
       F.stand(sp.blackFloorLamp, 17, 11, 1, look('A black floor lamp with a white shade.'));
-      F.stand(sp.officeDesk, 19, 11, 3, look('Abe\'s desk: two monitors up on a little wooden stand, a keyboard and a mug. This is where the AI and machine learning happens. Or the guitar videos.'));
+      F.stand(sp.officeDesk, 19, 11, 3, () => S.abeDesk());
       F.stand(sp.officeChair, 20, 12, 1, look('A gray office chair. It spins. Nate spins it.'));
       F.stand(sp.guestBed, 16, 14, 3, look('The spare bed: a black iron headboard and a white comforter with gray vines. Made, for once.'), { ht: 2 });
       F.stand(sp.woodChest, 19, 14, 1, look('A dark wood chest at the foot of the bed.'), { ht: 2 });

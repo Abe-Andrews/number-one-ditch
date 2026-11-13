@@ -365,6 +365,7 @@ G.audio = (function () {
     slip: (t) => { [62, 61, 60, 59].forEach((n, i) => tone(N(n), t + i * 0.22, i === 3 ? 0.6 : 0.2, 'sawtooth', 0.09)); },
     // gravel: a trowel biting into the pile, pebbles rattling across a screen, and a few shakes in a row
     scoop: (t) => { noise(t, 0.09, 0.2, sfxBus, 1300); noise(t + 0.025, 0.05, 0.12, sfxBus, 3400); tone(150, t, 0.05, 'triangle', 0.07, sfxBus, 90); },
+    typeKey: (t) => { noise(t, 0.018, 0.05, sfxBus, 4200 + Math.random() * 800); },
     sift: (t) => { for (let i = 0; i < 6; i++) noise(t + i * 0.024 + Math.random() * 0.01, 0.025, 0.1 + Math.random() * 0.05, sfxBus, 3000 + Math.random() * 2500); noise(t, 0.2, 0.05, sfxBus, 6500); },
     // wet sneakers
     squelch: (t) => { noise(t, 0.07, 0.1, sfxBus, 650); tone(240, t, 0.06, 'sine', 0.05, sfxBus, 130); },
