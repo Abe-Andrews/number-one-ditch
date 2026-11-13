@@ -1048,6 +1048,12 @@
     G.audio.sfx('slip');
     yield G.shakeCmd(30, 3);
     st.slips++;
+    // before Abe joins, nobody says anything; it just adds up, and he brings it up once he's with Nate (S.abeHeard)
+    if (!s.party.includes('abe') && !f.dunkDue) {
+      st.preAbe = (st.preAbe || 0) + 1;
+      yield G.banner('THE SACRED NUMBER WAS SPOKEN', 'Said ' + st.preAbe + (st.preAbe === 1 ? ' time' : ' times'), 150);
+      return;
+    }
     st.strikes = Math.min(3, (st.strikes || 0) + 1);
     yield G.banner('THE SACRED NUMBER WAS SPOKEN', 'Strike ' + st.strikes + ' of 3', 150);
     if (f.dunkDue) return; // (he's already coming)
@@ -3018,6 +3024,7 @@
     const f = flags();
     if (G.state.playAs || G.play.dying) return;
     if (f.dunkDue && G.state.party.includes('abe') && G.dunkReady()) { G.script.run(S.abeDunk()); return; }
+    if (G.state.stats.preAbe && G.state.party.includes('abe') && G.dunkReady()) { G.script.run(S.abeHeard()); return; }
     if (f.ticketsGiven && !f.ticketsDone && f.dadBeaten) { G.script.run(S.ticketsText()); return; }
     if (!f.fcAwake && G.fcReady()) { G.script.run(S.fcWakes()); return; }
     if (f.dayIntro && !f.auroraNews && G.play.world && !['ditchFinal', 'ditchDay', 'ditchRoad'].includes(G.play.world.id)) { G.script.run(S.auroraNews()); return; }
@@ -21130,9 +21137,22 @@
     yield G.say(null, 'New in the {c}Dunk Log{/}: {y}' + d.name + '{/}.');
     if (G.dunksFound() === 1) yield G.say(null, 'Every place Abe has thrown Nate in goes in the {c}Dunk Log{/}, in COLLECTABLES.');
   }
-  S.abeDunk = function* () {
-    const f = flags(), s = G.state, w = G.play.world, p = P(), late = f.dunkLate;
-    f.dunkDue = false; f.dunkLate = false; s.stats.strikes = 0;
+  // every time Nate said it before Abe joined: he heard them all
+  const TIMES = ['zero', 'once', 'twice', 'three times', 'four times', 'five times', 'six times', 'seven times', 'eight times', 'nine times', 'ten times', 'eleven times', 'twelve times'];
+  S.abeHeard = function* () {
+    const st = G.state.stats, n = st.preAbe || 0;
+    st.preAbe = 0;
+    if (n >= 3) { yield* S.abeDunk(n); return; }
+    // once or twice: those carry over as strikes, and he lets Nate know
+    st.strikes = n;
+    const abe = G.play.world.ents.find((e) => e instanceof G.Follower && e.id === 'abe' && !e.dead), p = P();
+    if (abe) { abe.dir = G.dirToward(p.x - abe.x, p.y - abe.y); p.dir = G.dirToward(abe.x - p.x, abe.y - p.y); }
+    yield G.say('Abe', 'You said it ' + TIMES[n] + '.');
+    yield G.say('Abe', ['That\'s one.', 'Two. You know what happens at three.'][n - 1]);
+  };
+  S.abeDunk = function* (heard) {
+    const f = flags(), s = G.state, w = G.play.world, p = P(), late = f.dunkLate || heard;
+    f.dunkDue = false; f.dunkLate = false; s.stats.strikes = 0; s.stats.preAbe = 0;
     const home = { x: p.x, y: p.y, dir: p.dir }, abeH = G.sprites.abe.h;
     // Abe: the one following Nate, or he walks in from the edge of the screen
     let abe = w.ents.find((e) => e instanceof G.Follower && e.id === 'abe' && !e.dead), spawned = false;
@@ -21147,6 +21167,7 @@
     abe.dir = G.dirToward(p.x - abe.x, p.y - abe.y); p.dir = G.dirToward(abe.x - p.x, abe.y - p.y);
     yield G.wait(20);
     yield G.say('Abe', late ? 'I heard.' : 'That\'s three.');
+    if (heard) yield G.say('Abe', 'You said it ' + (TIMES[heard] || heard + ' times') + '.');
     yield G.say('Nate', 'Abe. Abe, wait.');
     // up he goes
     G.audio.sfx('menu');
