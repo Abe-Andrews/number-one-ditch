@@ -14541,6 +14541,12 @@
       yield G.say('Abe', 'Got you. Got you SO good.');
     }
     yield G.say('Abe', 'You made it! Welcome to Chesapeake.');
+    // he's been counting the whole way down: three or more and Nate goes in the water, right now
+    if ((G.state.stats.preAbe || 0) >= 3) {
+      yield G.say('Abe', 'Oh. One more thing.');
+      yield* S.abeDunk(G.state.stats.preAbe, abe);
+      yield G.say('Abe', 'Okay. NOW welcome to Chesapeake.');
+    }
     yield G.say('Nate', 'Where\'s Hannah?');
     yield G.say('Abe', 'At work. She\'ll be home later.');
     yield G.say('Abe', 'Oh, quick question. How many strings are on a guitar?');
@@ -14548,6 +14554,8 @@
     if (c === 0) {
       yield* slip();
       yield G.say('Abe', 'GOT HIM.');
+      // (and if that was the third time, it's straight in the water)
+      if ((G.state.stats.preAbe || 0) >= 3) yield* S.abeDunk(G.state.stats.preAbe, abe);
     } else if (c === 1) {
       yield G.say('Abe', '...He\'s learning.');
     } else {
@@ -21367,20 +21375,23 @@
     yield G.say('Abe', 'You said it ' + TIMES[n] + '.');
     yield G.say('Abe', ['That\'s one.', 'Two. You know what happens at three.'][n - 1]);
   };
-  S.abeDunk = function* (heard) {
+  // (scene: an Abe NPC that's already standing there, like at the condo when he first meets Nate)
+  S.abeDunk = function* (heard, scene) {
     const f = flags(), s = G.state, w = G.play.world, p = P(), late = f.dunkLate || heard;
     f.dunkDue = false; f.dunkLate = false; s.stats.strikes = 0; s.stats.preAbe = 0;
     const home = { x: p.x, y: p.y, dir: p.dir }, abeH = G.sprites.abe.h;
-    // Abe: the one following Nate, or he walks in from the edge of the screen
-    let abe = w.ents.find((e) => e instanceof G.Follower && e.id === 'abe' && !e.dead), spawned = false;
+    // Abe: the one in the scene, the one following Nate, or he walks in from the edge of the screen
+    let abe = scene || w.ents.find((e) => e instanceof G.Follower && e.id === 'abe' && !e.dead), spawned = false;
+    const sceneAt = scene && { x: scene.x, y: scene.y, dir: scene.dir };
     // (walking: true keeps a follower out of Nate's trail for the whole scene; walkTo clears it, so it's set again)
-    if (abe) { abe.walking = true; yield G.walkTo(abe, p.x + (clearPath(w, p, { x: p.x - 20, y: p.y }) ? -20 : 20), p.y, 1.4); abe.walking = true; }
+    if (abe && !scene) { abe.walking = true; yield G.walkTo(abe, p.x + (clearPath(w, p, { x: p.x - 20, y: p.y }) ? -20 : 20), p.y, 1.4); abe.walking = true; }
     else {
       const { from, stand } = abeEntry(w, p);
       abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: (from || stand).x, y: (from || stand).y, dir: 'down' }));
       abe.solid = false; spawned = true;
       if (from) yield G.walkTo(abe, stand.x, stand.y, 1.6);
     }
+    // (a scene Abe is already standing right there)
     abe.dir = G.dirToward(p.x - abe.x, p.y - abe.y); p.dir = G.dirToward(abe.x - p.x, abe.y - p.y);
     yield G.wait(20);
     yield G.say('Abe', late ? 'I heard.' : 'That\'s three.');
@@ -21445,6 +21456,7 @@
     // and then everybody's back where they were
     p.hidden = false; p.z = 0; p.x = home.x; p.y = home.y; p.dir = home.dir;
     if (spawned) abe.dead = true;
+    else if (scene) Object.assign(abe, { pose: null, hidden: false }, sceneAt);
     else {
       // (back in line behind Nate)
       const [ddx, ddy] = G.DIRS[home.dir];
