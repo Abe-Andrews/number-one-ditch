@@ -3541,7 +3541,7 @@
     {
       id: 'weddingSuit', name: 'Wedding Suit', place: 'Chesapeake', file: 'assets/photos/wedding-suit.png',
       how: 'Stuck to a fridge door at Abe and Hannah\'s.',
-      caption: 'Nate at Abe and Hannah\'s wedding: gray suit, arms crossed, very serious. The venue\'s garden looked lovely on the website. Nobody looked very closely at what was growing in it until the pictures came back.',
+      caption: 'Nate at Abe and Hannah\'s wedding: gray suit, arms crossed, very serious. The venue\'s garden looked lovely on the website. In person, every single guest noticed what was growing in it.',
     },
     {
       id: 'dadItaly', name: 'Ciao', place: 'Home', file: 'assets/photos/dad-italy.png',
@@ -3578,9 +3578,7 @@
   S.condoFridgePhoto = function* () {
     yield G.say(null, 'A stainless fridge. On the door, under a crab-shaped magnet: a picture from Abe and Hannah\'s wedding.');
     yield G.say(null, 'Nate in a gray suit, arms crossed, looking VERY serious, next to a big leafy bush.');
-    yield G.say('Nate', 'I remember this. Great venue. Really nice garden.');
-    yield G.say(null, 'Nate looks at the bush a little closer.');
-    yield G.say('Nate', '...Oh. OH.');
+    yield G.say('Nate', 'I remember this. Great venue. And THAT bush. Everybody at the wedding noticed that bush.');
     if (G.with('hannah')) yield G.say('Hannah', 'We booked it off the website! We didn\'t know!');
     else if (G.with('abe')) yield G.say('Abe', 'We booked it off the website. Nobody told us about the garden.');
     yield* S.photoGive('weddingSuit');
