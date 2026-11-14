@@ -21385,7 +21385,7 @@
     const sceneAt = scene && { x: scene.x, y: scene.y, dir: scene.dir };
     // (walking: true keeps a follower out of Nate's trail for the whole scene; walkTo clears it, so it's set again)
     if (abe && !scene) { abe.walking = true; yield G.walkTo(abe, p.x + (clearPath(w, p, { x: p.x - 20, y: p.y }) ? -20 : 20), p.y, 1.4); abe.walking = true; }
-    else {
+    else if (!abe) {
       const { from, stand } = abeEntry(w, p);
       abe = w.add(new G.NPC({ sprite: 'abe', name: 'Abe', x: (from || stand).x, y: (from || stand).y, dir: 'down' }));
       abe.solid = false; spawned = true;
