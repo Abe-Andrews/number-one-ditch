@@ -1238,7 +1238,7 @@
       drawShadow(ctx, this.x, this.y, cx, cy, this.bigShadow);
       if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
       ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height + 1 - lift) - cy);
-      if (this.calm > 0 && !this.dancing) drawHalo(ctx, this.x - cx, this.y - img.height - 4 - lift - cy);
+      if (this.calm > 0 && !this.dancing && !this.dazed) drawHalo(ctx, this.x - cx, this.y - img.height - 4 - lift - cy);
     }
   }
   G.Critter = Critter;
@@ -3785,6 +3785,7 @@
       if (G.script.busy) return;
       this.t++;
       if (this.hurtT > 0) this.hurtT--;
+      if (this.calm > 0) { this.calm--; this.vx = this.vy = 0; return; }
       const p = G.play.player;
       if (this.leaving || --this.life <= 0) {
         this.leaving = true;
@@ -3813,7 +3814,7 @@
   // One of Abe's yellow guitar cables (he bought way too many and can't give them away), come alive: it slithers after Nate
   // in a wave, rears back, and lunges. A lunge that lands bites AND tangles him up (half speed
   // for a second). Its body follows its plug, with a plug on the tail end too. The surf rod can
-  // reel one in (it's a cable: Nate just winds it up).
+  // reel one in, and it lands all tangled up for a bit.
   class YellowCable extends Critter {
     constructor(x, y) {
       super(x, y, 2);
@@ -3861,11 +3862,11 @@
         } else if (h1.hitX || h2.hitY || --this.st <= 0) { this.state = 'rest'; this.st = 40; }
       } else if (--this.st <= 0) this.state = 'slither';
     }
-    // reeled in on the surf rod: Nate winds it right up
+    // reeled in on the surf rod: all tangled up for a bit (dizzy, from the landing code)
     onReeled() {
       this.carried = false;
-      this.world.pop(this.x, this.y - 22, 'Wound up!', '#f0c830');
-      this.die();
+      this.state = 'coil';
+      this.world.pop(this.x, this.y - 22, 'All tangled up!', '#f0c830');
     }
     draw(ctx, cx, cy) {
       const T = this.trail, lift = this.state === 'rear' ? 5 : 0, flash = this.hurtT && (this.hurtT >> 1) & 1;
@@ -3885,7 +3886,7 @@
       ctx.fillStyle = flash ? '#ffffff' : '#2a2a30'; ctx.fillRect(hx - 2, hy - 2, 5, 5);
       ctx.fillStyle = flash ? '#ffffff' : '#e8b820'; ctx.fillRect(hx - 1, hy - 1, 3, 3);
       for (let k = 2; k <= 6; k++) { ctx.fillStyle = k === 4 ? '#1a1a1e' : k === 6 ? '#f8f8ff' : '#c8c8d4'; ctx.fillRect(Math.round(hx + ux * k), Math.round(hy + uy * k), 2, 2); }
-      if (this.calm > 0 && !this.dancing) drawHalo(ctx, this.x - cx, this.y - 18 - cy);
+      if (this.calm > 0 && !this.dancing && !this.dazed) drawHalo(ctx, this.x - cx, this.y - 18 - cy);
     }
   }
   G.YellowCable = YellowCable;
@@ -5109,9 +5110,33 @@
 
   // ============================================================== SURF ROD (cast + reel)
   // X casts a lure in the direction Nate faces. It flies out over land or
-  // water; anything it hooks gets reeled back toward Nate: enemies take a
-  // hit and get yanked closer (gulls come right out of the sky), pickups get
-  // dragged in, and some things (Tyler) have their own idea of what happens.
+  // water; anything it hooks gets reeled back toward Nate. It never does damage:
+  // a regular enemy gets reeled in and lands in front of Nate dizzy for a bit
+  // (gulls come right out of the sky), pickups get dragged in, bosses shrug it
+  // off, and some things (Tyler) have their own idea of what happens. There's a
+  // cooldown after every cast (main.js, rodCool), and a dizzy enemy can't be
+  // re-hooked until it shakes it off.
+  const ROD_DAZE = 75;
+  const rodRegular = (e) => !e.boss && (e instanceof G.Critter || e instanceof G.Six || e instanceof G.Wrestler);
+  // dizzy: calm (so it holds still and can't hurt Nate) with stars instead of a halo
+  const daze = (w, e, pop) => {
+    e.calm = ROD_DAZE; e.dazed = true;
+    if (!w.ents.some((d) => d instanceof DazeStars && d.e === e && !d.dead)) w.add(new DazeStars(e));
+    if (pop) w.pop(e.x, e.y - 28, pop, '#78c0ff');
+  };
+  class DazeStars extends Ent {
+    constructor(e) { super(e.x, e.y); this.e = e; }
+    get base() { return 99000; }
+    update() { if (this.e.dead || !(this.e.calm > 0)) { this.e.dazed = false; this.e.hookFree = G.tick + 90; this.dead = true; } }
+    draw(ctx, cx, cy) {
+      const e = this.e, top = (e.hurtBox ? e.hurtBox()[1] : e.y - 20) - 4 - (e.z || 0);
+      for (let i = 0; i < 3; i++) {
+        const a = G.tick * 0.15 + (i * Math.PI * 2) / 3, st = G.spr.tinyStars[i];
+        ctx.drawImage(st, Math.round(e.x + Math.cos(a) * 9 - st.width / 2) - cx, Math.round(top + Math.sin(a) * 2 - st.height / 2) - cy);
+      }
+    }
+  }
+  G.rodDaze = daze;
   const isWater = (w, x, y) => { const d = G.TILE_DEFS[w.tileAt(Math.floor(x / 16), Math.floor(y / 16))]; return !!(d && (d.k === 'bay' || d.k === 'water' || d.k === 'mineWater')); };
   class Lure extends Ent {
     constructor(p) {
@@ -5127,7 +5152,7 @@
       if (this.state === 'out') {
         this.x += this.vx; this.y += this.vy; this.dist += 4.5;
         for (const e of w.ents) {
-          if (e.dead || e === p || e === this || !e.hurtBox) continue;
+          if (e.dead || e === p || e === this || !e.hurtBox || e.dazed || G.tick < (e.hookFree || 0)) continue;
           if ((e.enemy || e.hookable) && G.overlap(this.hookBox(), e.hurtBox())) { this.hook(w, e); return; }
         }
         for (const e of w.ents) {
@@ -5143,6 +5168,7 @@
         const dx = p.x - this.x, dy = p.y - 6 - this.y, d = Math.hypot(dx, dy);
         if (d < 8) {
           this.dead = true;
+          G.play.rodCool = 40;
           const c = this.carry;
           if (c && !c.dead && !(c instanceof G.Pickup)) {
             // a reeled-in critter lands in front of Nate, dazed
@@ -5150,6 +5176,7 @@
             w.move(c, (p.x + fx * 16) - c.x, 0); w.move(c, 0, (p.y + fy * 14) - c.y);
             c.carried = false;
             if (c.onReeled) c.onReeled(p);
+            if (c.enemy && !c.dead) daze(w, c, c.onReeled ? null : '@_@');
           } else if (c && !c.dead) { c.x = p.x; c.y = p.y; }
           return;
         }
@@ -5162,10 +5189,22 @@
       const p = this.owner;
       // (onHook returning false means the hook slid right off)
       if (e.onHook && e.onHook(p) === false) { G.audio.sfx('clank'); return; }
+      // a boss (or anything else without a catch of its own) just shrugs the hook off
+      if (!e.onHook && !e.reelable && !rodRegular(e)) {
+        G.audio.sfx('clank');
+        if (e.boss && G.tick - (e.shrugT || -99) > 40) { e.shrugT = G.tick; w.pop(this.x, this.y - 22, 'Too big to reel in!', '#f8f8f0'); }
+        return;
+      }
       G.audio.sfx('select');
       w.pop(this.x, this.y - 22, 'HOOKED!', '#f8f8f0');
-      if (e.reelable) { this.carry = e; e.carried = true; return; }
-      if (!e.onHook) e.hit(1, e.x * 2 - p.x, e.y * 2 - p.y); // (knocked back TOWARD Nate)
+      if (e.friendly) return;
+      if (e.reelable || (!e.onHook && !e.heavy && !e.rooted)) {
+        this.carry = e; e.carried = true;
+        if (!e.reelable) e.calm = 999; // (no wriggling free or biting on the way in)
+        return;
+      }
+      // too heavy or dug in to drag: dizzy right where it stands
+      if (!e.onHook) daze(w, e, '@_@');
     }
     draw(ctx, cx, cy) {
       const p = this.owner, [dx, dy] = DIRS[p.dir];
@@ -5339,14 +5378,12 @@
     }
     onHook(p) {
       if (this.dead || this.friendly) return;
-      this.hp--;
-      G.audio.sfx('hit');
-      if (this.hp <= 0) { this.die(); return; }
-      // out of the sky and onto the ground, right in front of Nate
+      // out of the sky and onto the ground, right in front of Nate (no damage: just dizzy)
       const dx = this.x - p.x, dy = this.y - p.y, d = Math.hypot(dx, dy) || 1;
       this.x = p.x + (dx / d) * 22; this.y = p.y + (dy / d) * 18;
-      Object.assign(this, { state: 'grounded', st: 80, z: 3, hurtT: 0 });
+      Object.assign(this, { state: 'grounded', st: 20, z: 3, hurtT: 0 });
       this.world.pop(this.x, this.y - 20, this.laughing ? 'HA-- HUH?!' : 'SKRAWK!', '#f8f8f0');
+      G.rodDaze(this.world, this);
     }
     // Jamie Lee Curtis on the pipe: the fright knocks it right off its light
     startle() {
@@ -5387,7 +5424,7 @@
       const x = Math.round(this.x - 8) - cx, y = Math.round(this.y - this.z - 12) - cy;
       if (flip) { ctx.save(); ctx.translate(x + 16, y); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); ctx.restore(); }
       else ctx.drawImage(img, x, y);
-      if (this.calm > 0 && !this.dancing) drawHalo(ctx, this.x - cx, this.y - this.z - 16 - cy);
+      if (this.calm > 0 && !this.dancing && !this.dazed) drawHalo(ctx, this.x - cx, this.y - this.z - 16 - cy);
     }
   }
   G.Seagull = Seagull;
@@ -5730,7 +5767,7 @@
       let img = G.spr.six[Math.floor(this.t / 10) % 2];
       if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
       ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - 16 - z) - cy);
-      if (this.calm > 0 && !this.dancing) drawHalo(ctx, this.x - cx, this.y - 19 - cy);
+      if (this.calm > 0 && !this.dancing && !this.dazed) drawHalo(ctx, this.x - cx, this.y - 19 - cy);
     }
   }
   G.Six = Six;
@@ -5867,7 +5904,7 @@
       const jx = this.state === 'windup' ? ((this.t >> 1) & 1 ? 1 : -1) : 0;
       const sx = Math.round(this.x - 8 + jx) - cx, sy = Math.round(this.y - S.h + 2) - cy;
       ctx.drawImage(img, sx, sy);
-      if (this.calm > 0 && !this.dancing) drawHalo(ctx, this.x - cx, sy - 3);
+      if (this.calm > 0 && !this.dancing && !this.dazed) drawHalo(ctx, this.x - cx, sy - 3);
       if (this.state === 'dizzy') {
         for (let i = 0; i < 3; i++) {
           const a = G.tick * 0.12 + (i * Math.PI * 2) / 3;

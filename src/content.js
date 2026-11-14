@@ -242,16 +242,17 @@
     coat: '#a88aa0', shirt: '#e8dce4', pants: '#4a6aa8', shoes: '#4a7a3a', boots: true, torso: 6, legs: 3,
   };
 
-  // Rae (an original character): the studio tech in Studio B. Shoulder-length dark hair, a black
-  // band tee, headphones around her neck.
   // The oncoming nurses who want report in Hannah's SHIFT CHANGE (original characters).
   G.CAST.nurseKim = { skin: '#e8c0a0', hair: '#1c1418', hairStyle: 'shoulder', shirt: '#4a8ad8', pants: '#4a8ad8', shoes: '#f0f0f0', torso: 5, legs: 3, smile: '#ffffff' };
   G.CAST.nurseJoe = { skin: '#b07850', hair: '#2a1c14', hairStyle: 'buzz', shirt: '#3a8a6a', pants: '#3a8a6a', shoes: '#2a2a30', torso: 6, legs: 3, smile: '#ffffff' };
   G.CAST.nurseTasha = { skin: '#7a4a30', hair: '#1c1418', hairStyle: 'locs', shirt: '#c85a8a', pants: '#c85a8a', shoes: '#f0f0f0', torso: 5, legs: 3, smile: '#ffffff' };
   G.CAST.nurseLuis = { skin: '#d0a078', hair: '#3a2418', hairStyle: 'short', shirt: '#5a5ab8', pants: '#5a5ab8', shoes: '#f0f0f0', torso: 6, legs: 3, smile: '#ffffff' };
-  G.CAST.rae = {
-    skin: '#c08a68', hair: '#2a1c18', hairStyle: 'shoulder', smile: '#ffffff', headphones: '#1c1c22',
-    shirt: '#2a2a30', pants: '#3a4a6a', shoes: '#e8e8e8', torso: 6, legs: 3,
+  // Prof. Jeff "Tain" Watts (a real person, from the user's photo): Grammy-winning jazz drummer and
+  // director of the jazz ensemble at Lafayette, Nate's ensemble professor. Short black hair, a brown
+  // tweed blazer over an olive shirt, dark slacks. He's in Studio B at the Williams Center.
+  G.CAST.watts = {
+    skin: '#6a4028', hair: '#16100e', hairStyle: 'cropped', smile: '#ffffff', wide: true,
+    coat: '#8a6238', shirt: '#6e7044', collar: '#8e9060', pants: '#34302c', shoes: '#241a14', torso: 7, legs: 3,
   };
   // Charge Nurse Dot (an original character): Hannah's charge nurse in the NICU. Short gray hair,
   // reading glasses, purple scrubs, white clogs.
@@ -632,6 +633,7 @@
     { id: 'pete', name: 'Pyro Pete', tag: '{y}Friend', met: () => fl().doronDeal, bio: 'Runs the pyro for Micro Mayhem. Thinks Nate\'s exploding present was beautiful.' },
     { id: 'prof', name: 'Prof. Sunderlin', tag: '{y}Friend', met: () => fl().profTalk, bio: 'Geology professor. Finds coastal plain ditches fascinating. Flat. Wet. Ditchy.' },
     { id: 'carley', name: 'Prof. Carley', tag: '{y}Friend', met: () => fl().carleyMet, bio: 'Associate professor of geology, in Van Wickle Hall. She\'s taking Nate to New Zealand to study abroad: volcanoes, glaciers and a plate boundary.' },
+    { id: 'watts', name: 'Prof. Watts', tag: '{y}Jazz ensemble', met: () => fl().raeMet, bio: 'Jeff "Tain" Watts. Grammy-winning jazz drummer and director of the jazz ensemble at Lafayette: Nate\'s ensemble professor. Rehearsal is Thursday. On time.' },
     { id: 'ben', name: 'Ben', tag: '{y}Friend', met: () => fl().phDone, bio: 'Nate\'s lab partner. Was paid in shark teeth to ask about the pH of rainwater. Once made the campus paper for his shirt.' },
     { id: 'bismarck', name: 'Bismarck', tag: '{y}Friend', met: () => fl().bismarckMet, bio: 'A McKelvey Scholar from Manhattan who wants to be a lawyer. He invited Nate to church.' },
     { id: 'brooks', name: 'Brooks', tag: '{y}Friend', met: () => fl().brooksMet, bio: 'Hilarious. Always asks the question everybody else is too nervous to ask.' },
@@ -1335,8 +1337,7 @@
     const f = flags(), p = P();
     p.dir = 'up';
     yield G.say('Nate', 'The Williams Center for the Arts. Music, theater, a whole recording studio...');
-    if (f.jamMet) yield G.say('Nate', 'I should get through a song with Abe first. THEN I can call myself a musician.');
-    else yield G.say('Nate', '...I don\'t even play anything. Abe keeps saying he\'ll teach me someday.');
+    yield G.say('Nate', 'Nothing to bring up there yet, though. I\'ll come back when I\'ve got something to record.');
     yield G.walkTo(p, p.x, p.y + 16, 1.2);
   };
   // Finals week: no leaving campus for College Hill until the Chem Final is done.
@@ -2782,6 +2783,19 @@
       yield G.itemGet(G.spr.doosh, 'You got a {y}Doosh De Luche{/}! Heals 4 hearts.');
       yield G.say('Michelle', 'I keep a cooler of these for the farmers market crowd. It\'s pronounced dulce de leche, by the way.');
     }]);
+    // the same deal as Pyro Pete's at the fair: 5 for 10 teeth, 10 at most
+    menu.push(['Booby-Trapped Packages (5): 10', function* () {
+      if ((s.items.package || 0) >= 10) { yield G.say('Michelle', 'You\'ve already got ten of those in your pockets. Walk carefully, hon.'); return; }
+      if (!(yield* momPay(10))) return;
+      s.items.package = Math.min(10, (s.items.package || 0) + 5);
+      if (!s.xItem) s.xItem = 'package';
+      yield G.itemGet(G.spr.gift, 'You got {y}5 Booby-Trapped Packages{/}!');
+      if (!f.momPackages) {
+        f.momPackages = true;
+        yield G.say('Nate', 'Mom. Why do you sell exploding presents?');
+        yield G.say('Michelle', 'I wrap them with the same ribbon as the bouquets. Pyro Pete does the inside. I don\'t ask.');
+      }
+    }]);
     menu.push(['Bouquet: 5 (heals)', function* () {
       if (s.hp >= s.maxHp) { yield G.say('Michelle', 'You look perfectly healthy. Save your teeth.'); return; }
       if (!(yield* momPay(5))) return;
@@ -2995,6 +3009,7 @@
       core('Tyler', f.tylerBeaten, 'The Bay - the Thimble Shoal tunnel', 'Snap him out of it.'),
       row('Anette\'s thirsty plants', f.plantsDone, 'Chesapeake - the condo street', 'Water all five of her potted plants with the bidet, then tell her.'),
       row('Romulus', f.romulusBeaten, 'Chesapeake - the golf course', 'He\'s huge, and he hates water.'),
+      row('Abe\'s typing test', f.typingDone || f.typingBest, 'Chesapeake - Abe\'s office', 'Check Abe\'s desk upstairs and finish all three rounds of the typing test.'),
       count('Abe\'s reach', G.abeReachCount(), G.ABE_REACH_TOTAL, 'Anywhere', 'With Abe along, check everything way up high.'),
       count('Jamming with Abe', G.JAM_SONGS.filter((sg) => J[sg.id]).length, G.JAM_SONGS.length, 'Chesapeake - Abe\'s office', 'Pass every song, on every page.'),
       count('Every instrument', G.instrumentsCount(), G.INSTRUMENTS.length, 'Chesapeake - Abe\'s office', 'Clearing a song with Abe gets you its instrument.'),
@@ -3011,6 +3026,7 @@
       Object.assign(count('Every rock', G.rocksFound(), G.ROCKS.length, 'Everywhere', 'See the Rocks page in COLLECTABLES. Every rock has a hint.'), { core: true }),
       Object.assign(count('Every photo', G.photosFound(), G.PHOTOS.length, 'Everywhere', 'See the Photos page in COLLECTABLES. Every photo has a hint.'), { core: true }),
       count('Every pipe song', G.SIGNALS.filter((sg) => sg.known()).length, G.SIGNALS.length, 'Everywhere', 'People teach them along the way. Ask around, and don\'t skip the side quests.'),
+      count('The Dunk Log', G.dunksFound(), G.DUNKS.length, 'Everywhere', 'With Abe in the party, say the sacred number three times and he throws Nate in the nearest water. The Dunk Log in COLLECTABLES says where the rest are.'),
       count('Every heart container', Math.floor((s.maxHp - 6) / 2), HEARTS, 'Everywhere', 'Gus, the Chem Final, Mom\'s stand, the rock crusher, and most of the hardest things on this list.'),
       count('Everyone you can meet', met[0], met[1], 'Everywhere', 'Talk to people. See the PEOPLE page.'),
       f.fcAwake ? row('Father Christmas', f.fcBeaten, 'Andover - the deep stope', 'A cave-in opened up off the east stope of the tunnels.') : row('???', false, '???', 'Finish the story, every rock and every photo, and see what wakes up.'),
@@ -3523,6 +3539,21 @@
       caption: 'The cedar plank was supposed to make the salmon a little smoky. It made EVERYTHING smoky. Dad\'s fix: blow it out like a birthday candle, inches from a tower of plastic chairs. Nobody remembers how the salmon tasted.',
     },
     {
+      id: 'weddingSuit', name: 'Wedding Suit', place: 'Chesapeake', file: 'assets/photos/wedding-suit.png',
+      how: 'Stuck to a fridge door at Abe and Hannah\'s.',
+      caption: 'Nate at Abe and Hannah\'s wedding: gray suit, arms crossed, very serious. The venue\'s garden looked lovely on the website. Nobody looked very closely at what was growing in it until the pictures came back.',
+    },
+    {
+      id: 'dadItaly', name: 'Ciao', place: 'Home', file: 'assets/photos/dad-italy.png',
+      how: 'Somewhere in Dad\'s workshop. Every drawer in there is a different kind of mess.',
+      caption: 'Dad on a bridge in Italy, shirt unbuttoned WAY too far, lips out like a cologne ad. Abe took it. Dad held the pose for a very long time. Dad is still doing the bit.',
+    },
+    {
+      id: 'treeHead', name: 'She Lives Here Now', place: 'Home', file: 'assets/photos/tree-head.png',
+      how: 'Out back, behind the house on the left. An old oak with a split in it. Look closely. Or don\'t.',
+      caption: 'A hair-cutting practice head: a joke Christmas present from Dad to Abe, years ago. She has lived out back ever since, wedged in the split of an old oak, watching the house. Her makeup has not held up.',
+    },
+    {
       id: 'familyPhoto', name: 'All of Us', place: 'The Number One Ditch', gen: () => G.art.familyPortrait(3),
       how: 'You\'ll have to go all the way to the end of the road for this one.',
       caption: 'Everybody, at the Number One Ditch, the morning after. Third try. Mom had it framed. Lily has asked her to crop out what Abe is holding, and Mom has said no.',
@@ -3533,12 +3564,51 @@
   G.photoHas = (id) => !!photoState()[id];
   G.photosFound = () => G.PHOTOS.filter((ph) => G.photoHas(ph.id)).length;
   // Inside a script: add a photo, announce it, and show it full screen.
-  S.photoGive = function* (id) {
+  // (scare: the photo slams up first, with a bang, and the announcement comes after)
+  S.photoGive = function* (id, scare) {
     const ph = G.PHOTOS.find((q) => q.id === id), isNew = !G.photoHas(id);
     photoState()[id] = 1;
+    if (scare) { G.audio.sfx('boom'); G.audio.sfx('yell'); G.play.shake(14, 4); yield G.noteView([G.photoPage(ph)], 'Z: put it away'); }
     yield G.itemGet(G.photoIcon(ph), (isNew ? 'NEW PHOTO! ' : '') + '{y}' + ph.name + '{/}');
-    yield G.noteView([G.photoPage(ph)], 'Z: put it away');
+    if (!scare) yield G.noteView([G.photoPage(ph)], 'Z: put it away');
     if (isNew && !flags().photoTip) { flags().photoTip = true; yield G.say(null, 'Photos go in {y}COLLECTABLES{/} in the menu.'); }
+  };
+
+  // On Abe and Hannah's fridge door: Nate at their wedding, and the venue's garden.
+  S.condoFridgePhoto = function* () {
+    yield G.say(null, 'A stainless fridge. On the door, under a crab-shaped magnet: a picture from Abe and Hannah\'s wedding.');
+    yield G.say(null, 'Nate in a gray suit, arms crossed, looking VERY serious, next to a big leafy bush.');
+    yield G.say('Nate', 'I remember this. Great venue. Really nice garden.');
+    yield G.say(null, 'Nate looks at the bush a little closer.');
+    yield G.say('Nate', '...Oh. OH.');
+    if (G.with('hannah')) yield G.say('Hannah', 'We booked it off the website! We didn\'t know!');
+    else if (G.with('abe')) yield G.say('Abe', 'We booked it off the website. Nobody told us about the garden.');
+    yield* S.photoGive('weddingSuit');
+  };
+  // At the bottom of a drawer in Dad's tool chest: Dad in Italy, doing a bit.
+  S.toolChestPhoto = function* () {
+    yield G.say(null, 'A big red rolling tool chest. Nate pulls open the bottom drawer: sandpaper, a tape measure, about forty pencils...');
+    yield G.say(null, 'And under all of it, a photo.');
+    yield G.say('Nate', 'Is that Dad? In ITALY? With his shirt like THAT?');
+    yield G.say('Nate', 'Abe took this one. Dad thought it was hilarious. Dad still thinks it\'s hilarious.');
+    yield* S.photoGive('dadItaly');
+  };
+  // The old oak out back, behind the house on the left. Something is wedged in the split.
+  S.treeHead = function* () {
+    if (G.photoHas('treeHead')) {
+      yield G.say(null, 'The old oak out back. She\'s still in there. Watching the house.');
+      if (G.with('lily')) yield G.say('Lily', 'I don\'t look at that tree. Ever.');
+      return;
+    }
+    yield G.say(null, 'An old oak behind the house. There\'s a dark gap where the trunk splits in two.');
+    yield G.say(null, 'Something is wedged in there. Nate leans in close to get a better look...');
+    G.audio.sfx('creak');
+    yield G.wait(50);
+    yield* S.photoGive('treeHead', true);
+    yield G.say('Nate', 'JAMIE LEE CURTIS!');
+    yield G.say('Nate', '...Where did THAT come from?');
+    if (G.with('abe')) yield G.say('Abe', 'Oh, you found her. Dad got her for me for Christmas. As a joke. She lives out here now.');
+    else yield G.say('Nate', 'Oh. It\'s HER. Dad got her for Abe for Christmas, as a joke. Nobody ever brought her inside.');
   };
 
   // A choice from a long list, seven at a time. Returns the index, or -1.
@@ -5640,7 +5710,7 @@
         yield G.say(null, 'Dad\'s workbench: pegboard full of tools, and every one of them is exactly where he left it.');
       });
       F.hang(sp.wallWindow.one, 13, 2, 1, null, 3);
-      F.stand(sp.toolChest, 14, 3, 1, look('A big red rolling tool chest. Every drawer is a different kind of mess.'));
+      F.stand(sp.toolChest, 14, 3, 1, () => (G.photoHas('dadItaly') ? look('A big red rolling tool chest. Every drawer is a different kind of mess.')() : S.toolChestPhoto()));
       F.stand(sp.lumberPile, 16, 3, 3, look('A stack of good lumber. It\'s for "a project." It has been for a project for years.'));
       F.stand(sp.bandsaw, 20, 3, 1, look('A bandsaw for cutting curves. Like the curves of a bass body.'));
       F.stand(sp.convertible, 2, 6, 3, look('The old red convertible, under a blanket of sawdust.', 'The trunk is covered in little handprints and a message nobody will admit to writing.'), { ht: 4 });
@@ -7337,15 +7407,15 @@
       about: [
         'Abe\'s 1984 Stratocaster, an American Vintage Reissue: a new build of a late-\'50s Strat, made in Fullerton, California.',
         'Three single-coil pickups, and a little quack when you set the switch in between two of them.',
-        'Abe\'s rule: everybody starts on a Strat.',
+        'Abe\'s rule: everybody should own a Strat.',
       ],
       how: 'Clear Shoolby Blues, jamming with Abe at the condo.',
       talk: [
         'That\'s my \'84 Strat. A Vintage Reissue, made in Fullerton, California.',
-        'Everybody starts on a Strat. It\'s the law.',
+        'Everybody should own a Strat. It\'s the law.',
         'Three single-coils. Hear that little quack in between? That\'s the good stuff.',
         'Maple neck. Feel how fast that is? Like a bowling lane.',
-        'Lock in with the bass. Listen to me. I\'m the bass.',
+        'Bass and guitar. Best seats in the band.',
       ],
     },
     {
@@ -7363,7 +7433,7 @@
         'Those are Wide Range humbuckers. Seth Lover designed them. The guy who INVENTED the humbucker.',
         'Look at that headstock. Big. Very \'70s.',
         'Four knobs. Two volumes, two tones. I only ever touch one of them.',
-        'Lock in with the bass. Listen to me. I\'m the bass.',
+        'Bass and guitar. Best seats in the band.',
       ],
     },
     {
@@ -7383,7 +7453,7 @@
         'Fender made the Jazzmaster for jazz players. Then the surf bands got it.',
         'The waist is crooked on purpose. An offset body. It sits better on your leg.',
         'The tremolo floats. Don\'t yank it. Just think about it and it wobbles.',
-        'Lock in with the bass. Listen to me. I\'m the bass.',
+        'Bass and guitar. Best seats in the band.',
       ],
     },
     {
@@ -7630,7 +7700,7 @@
       how: 'Clear After Hours, jamming with Abe at the condo.',
       intro: [[null, 'Abe opens a case lined in purple. Inside, a gold saxophone, all curves.'], ['Abe', 'A man at the bus stop sold me this. He said it was lucky. I believe him.'], ['Abe', 'After Hours. Smooth. Smoky. Late. Like the Rhodes, but it breathes.']],
       won: [['Abe', 'Keep the sax. The luck goes with it. That was the deal.']], gotLine: 'Lucky, apparently.',
-      talk: ['Smooth. Breathe into it.', 'A little vibrato on the long ones. Like it\'s tired. In a cool way.', 'This is the part in the movie where it starts raining.', 'You play. I lean on things. That\'s sax dancing.'],
+      talk: ['Smooth. Breathe into it.', 'Those long notes sound tired. In a cool way.', 'This is the part in the movie where it starts raining.', 'You play. I lean on things. That\'s sax dancing.'],
     },
     // SYNTHS (the seventh page): a synthesizer and a drum machine
     {
@@ -8754,8 +8824,8 @@
       f.jamMet = true;
       yield G.say('Abe', 'Romulus is home. Anette has her garden. It\'s finally quiet. Let\'s play.');
       yield G.say(null, 'Abe opens a tweed case lined with red fur like it\'s a museum exhibit. Inside: a black guitar with a white pickguard.');
-      yield G.say('Abe', 'My \'84 Strat. Everybody starts on a Strat. Hold it like a baby bird. Carefully. CAREFULLY.');
-      yield G.say('Abe', 'I\'ll play bass. You follow me. Three songs, three of my guitars. Get through a song and its guitar is yours. On loan.');
+      yield G.say('Abe', 'My \'84 Strat. Hold it like a baby bird. Carefully. CAREFULLY.');
+      yield G.say('Abe', 'I\'ll play bass, you take guitar. Three songs, three of my guitars. Get through a song and its guitar is yours. On loan.');
       yield G.say('Abe', 'And there are more pages on the setlist: ←→. Drums. Flute. Piano. Strings. Horns. Synths. And one I can only call NOVELTY. Don\'t tell Hannah.');
       f.fluteTold = true; f.pianoTold = true; f.violinTold = true; f.bandTold = true;
     }
@@ -8838,8 +8908,8 @@
   // ================================================================ STUDIO B (the Williams Center for the Arts)
   // Nate is very into music production. North of the quad (a new path between Pardee Hall and the
   // Science Center), the Williams Center for the Arts (Lafayette's real arts building; the music
-  // department is in it) sits on its own plaza. Inside: Studio B, with Rae, the studio tech (an
-  // original character), and a recording console.
+  // department is in it) sits on its own plaza. Inside: Studio B, with Prof. Watts, Nate's jazz ensemble professor (a real
+  // person, from the user's photo), and a recording console.
   // The console opens once Nate has won his first instrument from Abe (any of the guitars or drums;
   // Abe mentions the studio the next time he's at the amp). Eight tracks, each played LIVE on the
   // keyboard and recorded as played: there's no editing and no moving notes. ↑↓ track, ←→ its
@@ -10244,28 +10314,30 @@
     G.audio.play(G.play.world.def.music);
     G.play.autosave();
   };
-  // Rae, the studio tech
-  S.rae = function* () {
-    const f = flags();
+  // Prof. Watts, Nate's jazz ensemble professor (the flags are still raeMet / raeLine, from when
+  // this was Rae the studio tech, so old saves carry over)
+  S.watts = function* () {
+    const f = flags(), W = 'Prof. Watts';
     if (!f.raeMet) {
       f.raeMet = true;
-      yield G.say('Rae', 'Hey! Welcome to Studio B. I run the place. Anyone with an instrument can record here.');
-      yield G.say('Rae', 'We do it the old way: eight tracks, every one played live. No fixing notes on a computer. You play it, it\'s on the record.');
-      if (!G.studioOpen()) yield G.say('Rae', 'No instrument? Then today you\'re a listener. Come back when you\'ve got something to play.');
-      else yield G.say('Rae', 'The console\'s all yours.');
+      yield G.say(W, 'Nate! Out of the rock lab and into Studio B. Ensemble doesn\'t rehearse in here till Thursday, so it\'s all yours.');
+      yield G.say(W, 'We record the old way: eight tracks, every one played live. No fixing notes on a computer. You play it, it\'s on the record.');
+      if (!G.studioOpen()) yield G.say(W, 'Didn\'t bring anything to play today? Then you listen. Listening is half the gig.');
+      else yield G.say(W, 'The console\'s yours. Count yourself in.');
       return;
     }
-    if (!G.studioOpen()) { yield G.say('Rae', 'Find an instrument and the console\'s yours. Ask around. Musicians love lending gear. Sort of.'); return; }
+    if (!G.studioOpen()) { yield G.say(W, 'Go grab something to play and the console\'s yours.'); return; }
     const lines = [
-      'The first track you record sets how long the song is. Make it a good one.',
+      'The first track you record sets how long the song is. Lay down something solid. That\'s the drummer in me talking.',
       'Somebody left a tambourine in here in 2004. We\'re still finding the jingles.',
       'Save your song and you can play it as the game\'s music. Menu, PLAY IN GAME.',
-      'Mute a track with V if it\'s fighting the others. Or turn it down with minus.',
+      'Mute a track with V if it\'s fighting the others, or turn it down with minus. Leave some space in there.',
+      'See you at ensemble on Thursday. On time. The drummer always knows.',
     ];
-    if (G.state.items.metronome) lines.push('Is that a metronome on my desk? Look at you. Professional.');
+    if (G.state.items.metronome) lines.push('A metronome on the desk? Good. Time is everything. Ask any drummer.');
     if (songsSaved().length) lines.push('I heard "' + songsSaved()[songsSaved().length - 1].name + '" through the wall. Not bad. NOT bad.');
     f.raeLine = ((f.raeLine || 0) + 1) % lines.length;
-    yield G.say('Rae', lines[f.raeLine]);
+    yield G.say(W, lines[f.raeLine]);
   };
   // Abe's pedals, as he hands each one over (and after; a 'last' line only when no other one's due)
   const PEDAL_GIVE = {
@@ -10300,10 +10372,10 @@
     if (n >= 1 && !f.studioTold) {
       f.studioTold = true;
       yield G.say('Abe', 'Hey. You know Lafayette has a recording studio? Studio B, in the Williams Center for the Arts. North of the quad.');
-      yield G.say('Abe', 'Take what you\'ve got up there and record something. Play it all live. That\'s how you learn.');
+      yield G.say('Abe', 'Take what you\'ve got up there and record something. Play it all live. That\'s the fun part.');
     }
     if (n >= 3 && !s.items.metronome) {
-      yield G.say('Abe', 'Three instruments. You\'re officially a musician. One more thing.');
+      yield G.say('Abe', 'Three instruments. That\'s a whole band. One more thing.');
       yield G.say(null, 'Abe digs through a desk drawer and comes up with a little wooden metronome.');
       s.items.metronome = true;
       yield G.itemGet(G.spr.metronomeIcon, 'You got {y}Abe\'s Metronome{/}! It goes on the desk in {y}Studio B{/}, at the Williams Center.');
@@ -10367,7 +10439,7 @@
   // walls, an ON AIR light, the instruments Nate has won (guitars on stands on the left, the drums,
   // the violin on the wall, the keys corner on the right: the pianos and a flute case; along the bottom,
   // the cello and the upright bass, the horns on their stands, the synth, the drum machine, the
-  // theremin, a side table with the kazoo and the cowbell), the mic, a couch, and Rae.
+  // theremin, a side table with the kazoo and the cowbell), the mic, a couch, and Prof. Watts.
   G.MAPS.studioB = {
     name: 'Williams Center: Studio B',
     music: 'house',
@@ -10418,15 +10490,15 @@
         w.blockTiles(0, 4 + k * 2, 2, 1);
       });
       // the drums on the right
-      if (G.instrumentHas('drumkit')) F.stand(sp.drumKit, 11, 3, 3, look('Abe\'s drum kit, in blue sparkle. Rae says it\'s the loudest thing that\'s ever been in here.'));
+      if (G.instrumentHas('drumkit')) F.stand(sp.drumKit, 11, 3, 3, look('Abe\'s drum kit, in blue sparkle. Prof. Watts sat down at it once, played four bars, and the whole building went quiet.'));
       if (G.instrumentHas('steelpan')) F.stand(sp.steelPan, 12, 6, 2, look('Abe\'s steel drum. Still has never been to the beach.'));
       if (G.instrumentHas('bongos')) F.stand(sp.bongos, 12, 8, 2, look('Abe\'s bongos. Hannah does not miss them.'));
       // the violin, on a wall hanger between the monitor and the ON AIR light
-      if (G.instrumentHas('violin')) F.hang(guitarSmall(G.INSTRUMENTS.find((it) => it.id === 'violin')), 10, 1, 1, look('Abe\'s violin, on a wall hanger. Rae dusts it. Nothing else in here gets dusted.'), 3);
+      if (G.instrumentHas('violin')) F.hang(guitarSmall(G.INSTRUMENTS.find((it) => it.id === 'violin')), 10, 1, 1, look('Abe\'s violin, on a wall hanger. Prof. Watts dusts it. Nothing else in here gets dusted.'), 3);
       // the keys corner: the upright against the back wall, the Casio on its X stand, the Rhodes
-      if (G.instrumentHas('upright')) F.stand(sp.uprightPiano, 15, 2, 3, look('Abe\'s upright piano, against the wall. Rae swears it was in tune when it got here.'));
+      if (G.instrumentHas('upright')) F.stand(sp.uprightPiano, 15, 2, 3, look('Abe\'s upright piano, against the wall. Prof. Watts swears it was in tune when it got here.'));
       if (G.instrumentHas('casio')) F.stand(sp.casioKeyboard, 15, 4, 3, look('Abe\'s Casio, on its X stand. Somebody has pressed DEMO a LOT.'));
-      if (G.instrumentHas('rhodes')) F.stand(sp.rhodesPiano, 15, 7, 3, look('Abe\'s Rhodes. It weighs about as much as the couch, and Rae helped carry it in.'));
+      if (G.instrumentHas('rhodes')) F.stand(sp.rhodesPiano, 15, 7, 3, look('Abe\'s Rhodes. It weighs about as much as the couch, and Prof. Watts helped carry it in.'));
       // the flute case, open on the floor: the Happy Magic Flute and the silver flute lying in red velvet
       const pvc = G.instrumentHas('pvcFlute'), silver = G.instrumentHas('flute');
       if (pvc || silver) {
@@ -10460,12 +10532,12 @@
         w.blockTiles(tx, ty, 1, 1);
       };
       onStand('cello', 1, 10, 0.5, false, 'Abe\'s cello, on its stand. It comes with a chair. Abe insisted.');
-      if (bassDone()) onStand('bass', 5, 10, 0.55, false, 'Nate\'s bass, on its stand. Walnut and maple, and one yellow cable. Rae cleared a spot for it herself.');
-      onStand('upbass', 3, 10, 0.5, false, 'Abe\'s upright bass. It\'s taller than Rae. Rae has asked people to stop pointing that out.');
-      onStand('trumpet', 9, 11, 1, true, 'Abe\'s trumpet, bell up. Polished. Rae can see her face in it.');
+      if (bassDone()) onStand('bass', 5, 10, 0.55, false, 'Nate\'s bass, on its stand. Walnut and maple, and one yellow cable. Prof. Watts cleared a spot for it himself.');
+      onStand('upbass', 3, 10, 0.5, false, 'Abe\'s upright bass. Prof. Watts says every jazz band needs one.');
+      onStand('trumpet', 9, 11, 1, true, 'Abe\'s trumpet, bell up. Polished. Prof. Watts can see his face in it.');
       onStand('trombone', 10, 11, 1, true, 'Abe\'s trombone, standing on its end. The slide sticks a little. That\'s character.');
       onStand('sax', 11, 11, 1, false, 'Abe\'s lucky saxophone. It does feel lucky.');
-      if (G.instrumentHas('synth')) F.stand(sp.synth, 12, 11, 3, look('Abe\'s synth. It hums when it\'s plugged in. Rae says that\'s normal. Probably.'));
+      if (G.instrumentHas('synth')) F.stand(sp.synth, 12, 11, 3, look('Abe\'s synth. It hums when it\'s plugged in. Prof. Watts says that\'s normal. Probably.'));
       if (G.instrumentHas('theremin')) F.stand(sp.theremin, 17, 11, 2, look('Abe\'s theremin. Nobody touches it. You\'re not supposed to touch it anyway.'));
       // a little table for the drum machine, and a side table with the kazoo and the cowbell
       const onTable = (tx, ty, wt, items, text) => {
@@ -10482,8 +10554,8 @@
       const odd = [['kazoo', sp.kazoo], ['cowbell', sp.cowbell]].filter(([id]) => G.instrumentHas(id)).map(([, img]) => img);
       if (odd.length) onTable(9, 12, 2, odd, odd.length > 1 ? 'A side table: Abe\'s kazoo and Abe\'s cowbell. Serious instruments.' : 'A side table, for the serious instruments.');
       F.stand(sp.studioCouch, 1, 12, 3, look('A beat-up purple couch. Every studio has one. Nobody knows where it came from.'));
-      F.stand(sp.monstera, 4, 12, 1, look('A big plant. Rae says it likes jazz.'));
-      w.add(new G.NPC({ sprite: 'rae', name: 'Rae', x: 10 * 16 + 8, y: 4 * 16 + 14, dir: 'left', talk: S.rae }));
+      F.stand(sp.monstera, 4, 12, 1, look('A big plant. Prof. Watts says it likes jazz.'));
+      w.add(new G.NPC({ sprite: 'watts', name: 'Prof. Watts', x: 10 * 16 + 8, y: 4 * 16 + 14, dir: 'left', talk: S.watts }));
       w.addWarp(7, 13, 1, 1, 'arts', 14, 9, 'down');
     },
   };
@@ -11708,6 +11780,8 @@
       // the big double-trunk tree between the house and the parking area
       w.props.push({ img: G.spr.bigTree, x: 27 * 16 - 48, y: 35 * 16 - 120, base: 35 * 16 - 1 });
       w.blockTiles(26, 33, 2, 2);
+      // (something lives in the old oak out back, behind the house on the left: a photo, and a jump scare)
+      w.addProp({ img: null, tx: 5, ty: 26, hit: [5, 26, 1, 2], talk: () => S.treeHead() });
       w.addProp({ img: G.spr.suv, tx: 20, ty: 37, h: 3, dx: 3, solid: [20, 38, 2, 2], hit: [20, 38, 2, 2], talk: S.homeSUV });
       // firewood racks, a fresh pile and the hoop beside the garage (Dad's workshop
       // inside), which opens onto the parking area
@@ -11790,10 +11864,11 @@
         else G.script.run(S.northNotYet());
       });
 
-      // Mikey, waiting at the start of the driveway with flowers and heart balloons.
-      // Once Lily is out of the fridge, walking by him starts his serenade.
+      // Mikey, waiting at the start of the driveway with flowers and heart balloons (on the
+      // grass to the right of it, by the mailbox: Dad's sign is on the left, and the gap in the
+      // fence has to stay open). Once Lily is out of the fridge, walking by him starts his serenade.
       if (!flags().mikeyBeaten) {
-        const mikey = w.add(new G.NPC({ sprite: 'mikey', name: 'Mikey', x: 41 * 16 + 8, y: 50 * 16 + 14, dir: 'down', talk: S.mikey, balloons: true }));
+        const mikey = w.add(new G.NPC({ sprite: 'mikey', name: 'Mikey', x: 45 * 16 + 8, y: 49 * 16 + 14, dir: 'down', talk: S.mikey, balloons: true }));
         mikey.held = G.spr.bouquet; mikey.heldAt = [-7, 3];
         w.mikey = mikey;
         if (!flags().lilySaved) w.addTrigger(38, 50, 10, 5, () => { if (!flags().mikeyMet) G.script.run(S.mikeyIntro()); });
@@ -15725,7 +15800,7 @@
       // glass-top range with the microwave over it, the sink and dishwasher, and the breakfast bar. From the
       // user's photo: a runner rug and a crock of wooden spoons on the counter. (The white pantry hutch at the
       // end of the galley is gone: the user asked for it out, it hid Romulus behind the breakfast bar.)
-      F.stand(sp.condoFridge, 10, 3, 1, () => S.abeReach('fridge'));
+      F.stand(sp.condoFridge, 10, 3, 1, () => (G.photoHas('weddingSuit') ? S.abeReach('fridge') : S.condoFridgePhoto()));
       F.hang(sp.condoUppers.two, 11, 2, 2, null, 10);
       F.hang(sp.condoUppers.micro, 13, 2, 1, null, 10);
       F.hang(sp.condoUppers.three, 14, 2, 3, null, 10);
@@ -15911,6 +15986,7 @@
       return;
     }
     const beat = cmd.score > ABE_WPM, best = cmd.score > (f.typingBest || 0);
+    f.typingDone = true;
     if (best) f.typingBest = cmd.score;
     yield G.say('Nate', beat ? 'Faster than Abe. Somebody tell him.' : 'Abe\'s still faster. For now.');
     if (said) yield G.say('Nate', '...Why was that number even in there?');
@@ -20103,7 +20179,7 @@
     ['badlands', 'Badlands Chugs', '...LIKE AND SUBSCRIBE!'], ['mikey', 'Mikey', 'Was it the song?'], ['icejj', 'Ice JJ Fish', 'Stay icy.'], ['tyler', 'Tyler', 'THE MOSASAUR TOOTH!'],
     ['paulLady', 'Paul McCartney Lady', 'Every single day of her life, honey.'], ['freya', 'Freya', 'Fourthmeal.'], ['matt', 'Matt Oliver', 'That\'s fishing.'], ['danHurd', 'Dan Hurd', 'Still prospecting.'],
   ];
-  const CREDIT_NAMES = ['Ben', 'Bismarck', 'Brooks', 'Prof. Sunderlin', 'Dr. Nataro', 'Prof. Carley', 'Professor Pembrook', 'Groundskeeper Gus', 'Pyro Pete', 'Grandma Rose', 'Tom', 'Rae', 'Ruby', 'Anette', 'Kit and Gail', 'Charge Nurse Dot', 'The Old Fisherman', 'Henrietta', 'Daisy', 'The Globglogabgalab', 'MECHA-BABY', 'The Two-Liter', 'El Toro Loco', 'and Father Eggmas, in the box'];
+  const CREDIT_NAMES = ['Ben', 'Bismarck', 'Brooks', 'Prof. Sunderlin', 'Dr. Nataro', 'Prof. Carley', 'Professor Pembrook', 'Groundskeeper Gus', 'Pyro Pete', 'Grandma Rose', 'Tom', 'Prof. Watts', 'Ruby', 'Anette', 'Kit and Gail', 'Charge Nurse Dot', 'The Old Fisherman', 'Henrietta', 'Daisy', 'The Globglogabgalab', 'MECHA-BABY', 'The Two-Liter', 'El Toro Loco', 'and Father Eggmas, in the box'];
   function creditPages() {
     const pg = [{ k: 'title', d: 300 }, { k: 'head', d: 150, text: 'The Family' }];
     for (const c of CREDIT_FAMILY) pg.push({ k: 'walk', d: 250, id: c[0], name: c[1], line: c[2] });
@@ -21564,7 +21640,7 @@
     yield G.itemGet(G.spr.natesBassDone, 'You finished {y}Nate\'s Bass{/}! It\'s with the instruments in {y}COLLECTABLES{/}.');
     yield G.say('Abe', 'New page on the setlist: BASS. You\'re on bass. I\'ll play guitar.');
     yield G.say('Nate', 'You\'ll PLAY? You never play. You just dance.');
-    yield G.say('Abe', 'Don\'t get used to it. And it\'ll be in the studio too. Rae\'s already clearing a spot.');
+    yield G.say('Abe', 'Don\'t get used to it. And it\'ll be in the studio too. Prof. Watts is already clearing a spot.');
     G.play.autosave();
   };
 

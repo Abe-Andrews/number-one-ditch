@@ -361,8 +361,8 @@
         if (spot) { G.script.run(spot.talk(true)); return; }
         w.pop(p.x, p.y - 30, ['*shake shake*  Just dirt.', '*shake shake*  Pebbles. Nothing good.', '*shake shake*  Nothing here.'][Math.floor(Math.random() * 3)], '#c8b090');
       } else if (s.xItem === 'rod') {
-        // cast the surf rod (one line out at a time)
-        if (this.world.ents.some((e) => e instanceof G.Lure && !e.dead)) return;
+        // cast the surf rod (one line out at a time, and a breather after each one comes back)
+        if (this.world.ents.some((e) => e instanceof G.Lure && !e.dead) || this.rodCool > 0) return;
         this.world.add(new G.Lure(this.player));
         G.audio.sfx('swing');
       } else if (s.xItem === 'package') {
@@ -530,6 +530,7 @@
       if (G.tick % 30 === 15 && !G.script.busy && !this.warping && !this.menu && !G.state.rush) G.questWatch();
       if (this.eggCool > 0) this.eggCool--;
       if (this.siftCool > 0) this.siftCool--;
+      if (this.rodCool > 0) this.rodCool--;
       if (this.earworm > 0 && !G.script.busy) this.earworm--;
       if (this.whiteout > 0) this.whiteout -= 0.03;
       // Hannah (a nurse) patches Nate up when he's low
