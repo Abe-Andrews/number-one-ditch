@@ -1291,42 +1291,43 @@
     else yield G.say(JACK, 'Totally. So what time?');
   };
 
-  // ...and wherever Nate goes, Jack texts every few minutes of play to ask the same thing. Nate
-  // hates it. (postgameTick picks the moment: never in a cutscene, menu, fight or minigame.)
+  // ...and at each turn in the story, wherever Nate is, Jack texts to ask the same thing. Nate
+  // hates it. Each one goes out once, at the first calm moment after its event (postgameTick:
+  // never in a cutscene, menu, fight or minigame), in story order. A save that's already past a
+  // few of them only gets the latest.
   const JACK_TEXTS = [
-    [['t', JACK, 'hey what time will you be back'], ['s', 'Nate', 'Every. Single. Time.']],
-    [['t', JACK, 'yo. eta?'], ['t', 'Nate', 'late'], ['t', JACK, 'perfect. take ur time'], ['s', 'Nate', 'I hate that he said perfect.']],
-    [['t', JACK, 'what time will you be back. no reason'], ['s', 'Nate', 'There is ALWAYS a reason.']],
-    [['t', JACK, 'are you coming back tonight or'], ['t', JACK, 'just so i know'], ['s', 'Nate', '...I\'m not answering that.']],
-    [['t', JACK, 'quick q'], ['t', JACK, 'what time will you be back'], ['s', 'Nate', 'That is not a quick question, Jack. That is THE question.']],
-    [['t', JACK, 'can u text me 10 min before u come back. would be huge'], ['s', 'Nate', 'It is my room TOO.']],
-    // (once he's a long way from campus)
-    [['t', JACK, 'what time will you be back'], ['t', 'Nate', 'im in virginia'], ['t', JACK, 'ok so like what time'], ['s', 'Nate', 'He doesn\'t even care where I am. Just WHEN.'], 'far'],
-    // (after the Ditch)
-    [['t', JACK, 'congrats on the ditch man'], ['t', JACK, 'what time will you be back'], ['s', 'Nate', 'He didn\'t even ask what the ditch was.'], 'ditch'],
+    // Gus gives Nate his hat back
+    { id: 'hat', when: (f, s) => !!s.items.cap, lines: [['t', JACK, 'hey what time will you be back'], ['s', 'Nate', 'Every. Single. Time.']] },
+    // the first time at the fair
+    { id: 'fair', when: (f) => G.play.world && G.play.world.id === 'fair', lines: [['t', JACK, 'yo. eta?'], ['t', 'Nate', 'late'], ['t', JACK, 'perfect. take ur time'], ['s', 'Nate', 'I hate that he said perfect.']] },
+    // the boulder's out of the way
+    { id: 'boulder', when: (f) => f.boulderGone, lines: [['t', JACK, 'are you coming back tonight or'], ['t', JACK, 'just so i know'], ['s', 'Nate', '...I\'m not answering that.']] },
+    // home
+    { id: 'home', when: (f) => f.homeArrived, lines: [['t', JACK, 'quick q'], ['t', JACK, 'what time will you be back'], ['s', 'Nate', 'That is not a quick question, Jack. That is THE question.']] },
+    // Mikey's sorted out, and the road south is open
+    { id: 'mikey', when: (f) => f.mikeyBeaten, lines: [['t', JACK, 'can u text me 10 min before u come back. would be huge'], ['s', 'Nate', 'It is my room TOO.']] },
+    // Abe and Hannah's, in Chesapeake
+    { id: 'condo', when: (f) => f.condoArrived, lines: [['t', JACK, 'what time will you be back'], ['t', 'Nate', 'im in virginia'], ['t', JACK, 'ok so like what time'], ['s', 'Nate', 'He doesn\'t even care where I am. Just WHEN.']] },
+    // CHKD
+    { id: 'chkd', when: (f) => f.chkdArrived, lines: [['t', JACK, 'what time will you be back. no reason'], ['s', 'Nate', 'There is ALWAYS a reason.']] },
+    // the morning after the Ditch
+    { id: 'ditch', when: (f) => f.dayIntro, lines: [['t', JACK, 'congrats on the ditch man'], ['t', JACK, 'what time will you be back'], ['s', 'Nate', 'He didn\'t even ask what the ditch was.']] },
   ];
+  // the latest story text that's due and hasn't gone out yet (or null)
   G.jackTextDue = () => {
-    const f = flags(), s = G.state, t = s.playTime || 0;
-    if (!f.readChat || s.playAs || s.rush || (G.night && G.night())) return false;
-    if (!f.jackNext) { f.jackNext = t + 60 * 60 * 4; return false; }
-    return t >= f.jackNext;
-  };
-  S.jackText = function* () {
     const f = flags(), s = G.state;
-    f.jackNext = (s.playTime || 0) + 60 * 60 * (6 + Math.random() * 3);
-    const ok = JACK_TEXTS.filter((x) => {
-      const tag = typeof x[x.length - 1] === 'string' ? x[x.length - 1] : null;
-      return !tag || (tag === 'far' && f.condoArrived) || (tag === 'ditch' && f.fin_done);
-    });
-    const n = f.jackTexts || 0;
-    f.jackTexts = n + 1;
+    if (!f.readChat || s.playAs || s.rush || (G.night && G.night())) return null;
+    let due = null;
+    JACK_TEXTS.forEach((x, k) => { if (!f['jackText_' + x.id] && x.when(f, s)) due = k; });
+    return due;
+  };
+  S.jackText = function* (k) {
+    const f = flags();
+    // (everything before it counts as sent too, so an old save doesn't get a pile of them)
+    for (let i = 0; i <= k; i++) f['jackText_' + JACK_TEXTS[i].id] = true;
     yield G.wait(20);
     G.audio.sfx('buzz');
-    for (const step of ok[n % ok.length]) {
-      if (typeof step === 'string') continue;
-      const [kind, who, line] = step;
-      yield kind === 't' ? G.text(who, line) : G.say(who, line);
-    }
+    for (const [kind, who, line] of JACK_TEXTS[k].lines) yield kind === 't' ? G.text(who, line) : G.say(who, line);
   };
 
   S.bismarck = function* () {
@@ -3081,7 +3082,8 @@
     if (f.dunkDue && G.state.party.includes('abe') && G.dunkReady()) { G.script.run(S.abeDunk()); return; }
     if (G.state.stats.preAbe && G.state.party.includes('abe') && G.dunkReady()) { G.script.run(S.abeHeard()); return; }
     if (f.ticketsGiven && !f.ticketsDone && f.dadBeaten) { G.script.run(S.ticketsText()); return; }
-    if (G.jackTextDue() && G.dunkReady()) { G.script.run(S.jackText()); return; }
+    const jk = G.jackTextDue();
+    if (jk != null && G.dunkReady()) { G.script.run(S.jackText(jk)); return; }
     if (!f.fcAwake && G.fcReady()) { G.script.run(S.fcWakes()); return; }
     if (f.dayIntro && !f.auroraNews && G.play.world && !['ditchFinal', 'ditchDay', 'ditchRoad'].includes(G.play.world.id)) { G.script.run(S.auroraNews()); return; }
     if (f.fcAwake && !f.hundred && G.allDone()) G.script.run(S.hundred());
@@ -5195,8 +5197,6 @@
         w.addTrigger(2, 12, 1, 2, () => { if (!flags().chemPassed) G.script.run(S.campusSafety(true)); });
       }
       w.add(new G.Sign(2, 11, 'WEST: College Hill. Shops, groceries, and {y}Tom\'s Pizza{/}.'));
-      // Hannah's friend: a very fat squirrel, working on a bagel
-      w.addProp({ img: G.spr.squirrel, tx: 15, ty: 18, solid: [15, 18, 1, 1], hit: [15, 18, 1, 1], talk: S.animalSpot('squirrel', 'A very fat squirrel, working on a whole bagel. It looks at Nate. It keeps eating.') });
       // Van Wickle Hall: the geology building (walk into the arched front door)
       w.addProp({ img: G.spr.vanWickle, tx: 26, ty: 17, h: 4 });
       w.blockTiles(26, 17, 8, 4);
@@ -14109,8 +14109,9 @@
       w.add(new G.Sign(5, 11, ['EASTON FAIRGROUNDS', 'Tonight: {y}MICRO MAYHEM WRESTLING{/}! Doors at 7.']));
       w.add(new G.Sign(18, 14, 'PARKING. Do not leave valuables in your car. Or near the wrestlers.'));
       // Hannah's friend: the fair's goat
-      w.props.push({ img: null, x: 0, y: 0, base: 11 * 16, hit: [2 * 16, 10 * 16, 4 * 16, 11 * 16], talk: S.animalSpot('goat', 'A goat, tied up by the fence. There\'s a sign around his neck: DO NOT FEED. Most of the sign is gone.'), draw(ctx, cx, cy) { ctx.drawImage(G.spr.goat[(G.tick >> 5) & 1], 2 * 16 + 4 - cx, 11 * 16 - 22 - cy); } });
-      w.blockTiles(2, 10, 2, 1);
+      // (out of the way, on the grass between the Ferris wheel and the trees, by the hay bales)
+      w.props.push({ img: null, x: 0, y: 0, base: 7 * 16, hit: [36 * 16, 6 * 16, 38 * 16, 7 * 16], talk: S.animalSpot('goat', 'A goat, tied up by the hay bales. There\'s a sign around his neck: DO NOT FEED. Most of the sign is gone.'), draw(ctx, cx, cy) { ctx.drawImage(G.spr.goat[(G.tick >> 5) & 1], 36 * 16 + 4 - cx, 7 * 16 - 22 - cy); } });
+      w.blockTiles(36, 6, 2, 1);
 
       const styles = ['red', 'blue', 'gold', 'green'];
       [[6, 21], [12, 21], [14, 26], [27, 24], [32, 26], [30, 13], [35, 14]].forEach(([x, y], i) =>
@@ -22009,8 +22010,6 @@
       lines: [['Hannah', 'Is this Daisy? Hi, Daisy! Who\'s a good girl?'], ['Nate', 'He\'s a boy.'], ['Hannah', '...Daisy?'], ['Nate', 'Everybody found out after.'], ['Hannah', 'Who\'s a good BOY?'], [null, 'Daisy thumps one back foot. Hannah nods like that was a full sentence.'], ['Hannah', 'He says that blanket needs washing.']] },
     { id: 'hens', name: 'The Hens', where: 'Home', art: () => G.spr.chickens.white.right[0], how: 'Mom\'s hens, in the garden.', note: 'They remember what Nate did. Hannah has asked them to let it go. They have not.',
       lines: [[null, 'Every hen in the garden stops scratching and lines up in front of Hannah.'], ['Nate', 'They\'ve never done that. They chased me across the yard.'], ['Hannah', 'What did you do?'], ['Nate', '...I hit one with a hammer. A few times.'], [null, 'Hannah looks at him. So do the hens.']] },
-    { id: 'squirrel', name: 'The Campus Squirrel', where: 'Lafayette', art: () => G.spr.squirrel, how: 'On the quad at Lafayette, working on a bagel.', note: 'Put down a bagel when Hannah told it to. Nobody has ever gotten a campus squirrel to do that.',
-      lines: [[null, 'A very fat squirrel is sitting on the lawn, working on a whole bagel.'], ['Hannah', 'You are NOT supposed to be eating that.'], [null, 'The squirrel puts down the bagel.'], ['Nate', '...How did you do that?'], ['Hannah', 'I have talked a lot of people out of a lot of things.']] },
     { id: 'goat', name: 'The Fair Goat', where: 'Easton Fair', art: () => G.spr.goat[0], how: 'In a pen at the Easton Fair. He eats anything.', note: 'Ate the last chapter of her book. She forgave him. He doesn\'t know what he did.',
       lines: [['Hannah', 'Hello, handsome. Yes. Hello. Look at that face.'], [null, 'The goat leans in and takes a bite out of the paperback in her bag.'], ['Hannah', '...'], ['Nate', 'Was that...'], ['Hannah', 'That was the last chapter.'], ['Nate', 'Are you okay?'], ['Hannah', 'He didn\'t know. He didn\'t KNOW, Nate.'], [null, 'She scratches him behind the ears anyway. Her hand is shaking a little.']] },
     { id: 'turtle', name: 'The Ditch Turtle', where: 'The Ditch', art: () => G.spr.turtle, how: 'Somebody has been at the Number One Ditch a lot longer than any of you.', note: 'Saw the whole thing. Has not said what he thought.',
