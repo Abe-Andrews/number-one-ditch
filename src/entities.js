@@ -118,7 +118,12 @@
       if (this.inv > 0) this.inv--;
       if (this.noT > 0) this.noT--;
       if (this.relayCd > 0) this.relayCd--;
-      if (G.script.busy) { if (!this.walking) this.moving = false; return; }
+      if (G.script.busy) {
+        if (!this.walking) this.moving = false;
+        // (a swing that sets off a cutscene puts the hammer away, instead of freezing mid-swing)
+        if (this.state === 'swing') { this.state = 'walk'; this.t = 0; this.hitSet.clear(); }
+        return;
+      }
       const inp = G.input;
 
       // cradled like a baby (possessed Hannah has him): every button mashed wiggles him a little closer to free
