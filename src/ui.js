@@ -1692,7 +1692,7 @@
         TXT(ctx, '???', 125, 27, C.cyan);
         TXT(ctx, rar.name, 125, 37, rar.color);
         ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 48, 107, 1);
-        F().wrap(r.how || 'Not found yet. Keep exploring the Andover mines.', 104).slice(0, 8).forEach((l, i) => TXT(ctx, l, 125, 52 + i * 9, C.dim));
+        F().wrap(r.how || (s.visited && s.visited.andover ? 'Not found yet. Keep exploring the Andover mines.' : 'Not found yet. Keep exploring.'), 104).slice(0, 8).forEach((l, i) => TXT(ctx, l, 125, 52 + i * 9, C.dim));
         return;
       }
       slot(ctx, 124, 25, 32, 28, rar.color);

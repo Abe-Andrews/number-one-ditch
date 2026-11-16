@@ -721,7 +721,7 @@
       add('Doron\'s spare tickets', f.ticketsDone, left ? G.sayable(left) + ' left' : 'Tell Doron', 'Lafayette + Easton Fair', left ? 'Offer the tickets to people around campus and the fair. Most say no. Anyone you\'re still doing a favor for won\'t take one until it\'s done.' + (f.dadBeaten ? ' (They\'re for next week\'s show now.)' : '') : 'All given away! Go tell Doron.', [4 - left, 4]);
     }
     if (f.rockShopOpen && !f.rockShopSeen) side.push({ name: 'Nate\'s Rock Shop', status: 'Open on College Hill', kind: 'rumor', where: 'Lafayette - College Hill', hint: 'Prof. Sunderlin gave Nate the empty shop on College Hill, past Tom\'s Pizza. Every rock he finds goes on display.' });
-    if (G.rocksFound()) add('Nate\'s rocks', G.rocksFound() >= G.ROCKS.length && 'All found!', G.sayable(G.rocksFound()) + '/' + G.ROCKS.length, 'Everywhere', 'Mine the Andover mines. Every other rock is a hidden secret. See the ROCKS page.', [G.rocksFound(), G.ROCKS.length]);
+    if (G.rocksFound()) add('Nate\'s rocks', G.rocksFound() >= G.ROCKS.length && 'All found!', G.sayable(G.rocksFound()) + '/' + G.ROCKS.length, 'Everywhere', 'Rocks are hidden all over the trip. Hammer them, dig them up, look everywhere. See the ROCKS page.', [G.rocksFound(), G.ROCKS.length]);
     // rumors: things going on around home that Nate hasn't looked into yet
     const leadHint = { Michelle: 'Mom is out in the garden. Something is going on with her books.', Dad: 'Dad is in his workshop (the garage). He needs something.', Lily: 'Take the trail north, past the bridge over Brady Brook.', Doron: 'Pick "The Andover mines" when you leave home.' };
     if (f.mikeyBeaten) for (const [who, , where, hint] of homeLeads()) side.push({ name: where, status: hint, kind: 'rumor', where: 'Home', hint: leadHint[who] });
@@ -1232,6 +1232,7 @@
       yield G.say('Ben', 'Rain is acidic. Life is acidic. Go save your ditch, man.');
       return;
     }
+    f.benAsked = true;
     yield G.say('Ben', 'Nate! Perfect timing. Quick chem question for you.');
     let c;
     do {
@@ -3040,7 +3041,7 @@
       row('The 2 AM Taco Bell run', f.tacoRunDone, 'Home - Lily\'s room', 'Lily\'s phone keeps buzzing on her bed. Sneak out, and don\'t wake anyone.'),
       count('Hannah\'s book club', Object.keys(s.bookClub || {}).length, G.CLUB_BOOKS.length, 'Home - the basement', 'Bring Hannah to the little door and read every book with the Globglogabgalab.'),
       row('Old Iron', f.mine_ironBeaten, 'Andover - the very bottom', 'Work down through all four levels of the mines and beat what guards the vault.'),
-      count('Every treasure chest', CHESTS.filter((id) => f['chest_' + id]).length, CHESTS.length, 'All over', 'Lafayette, the bay, and three down in the Andover mines. One of those needs the Surf Rod.'),
+      count('Every treasure chest', CHESTS.filter((id) => f['chest_' + id]).length, CHESTS.length, 'All over', s.visited && s.visited.andover ? 'Lafayette, the bay, and three down in the Andover mines. One of those needs the Surf Rod.' : 'A few around Lafayette and the bay, and more in places you haven\'t found yet.'),
       core('The old fisherman', s.items.rod, 'The Bay - the island', 'Bonk five gulls when they swoop down low, and he hands over his spare rod.'),
       count('Matt\'s fish survey', G.fishCaughtKinds(), G.FISH_ORDER.length, 'The Bay - Island 2', 'Go fishing with Matt Oliver and catch one of everything out there.'),
       row('The Two-Liter', f.popBeaten, 'The Bay - the Chesapeake Channel Tunnel', 'Beat it at the far end of the tunnel.'),
@@ -3070,6 +3071,68 @@
       f.fcAwake ? row('Father Christmas', f.fcBeaten, 'Andover - the deep stope', 'A cave-in opened up off the east stope of the tunnels.') : row('???', false, '???', 'Finish the story, every rock and every photo, and see what wakes up.'),
       f.fcBeaten ? row('Boss Rush', s.items.rushTrophy, 'The BOSS RUSH page', 'Every boss, back to back, without fainting.') : row('???', false, '???', 'One more thing comes after that.'),
     ];
+  };
+  // Rows Nate hasn't come across yet show as ??? (no name, place or hint, so the list can't spoil
+  // anything), though they still count toward 100%. A row shows once it's done, has some progress,
+  // or its own check here says Nate has found it. Rows not listed always show.
+  const SEEN = {
+    'Gus\'s lawn job': (f) => f.capQuest,
+    'Ben\'s chem question': (f) => f.benAsked,
+    'The Chem Final (perfect)': (f) => f.chemMet,
+    'The EEENGLISH exam (perfect)': (f) => f.engMet,
+    'The lab carboy': () => false,
+    'Doron\'s spare tickets': (f) => f.ticketQuest,
+    'The main event': (f) => f.doronDeal,
+    'The protesters': (f) => Object.keys(f).some((k) => k.startsWith('protest_')),
+    'Grandma Rose\'s funnel cake': (f) => f.roseRocks,
+    'The fair games': (f) => f.balloonSeen || f.duckSeen,
+    'Doron\'s fight night': (f) => f.fightMet,
+    'The boulder': (f) => f.boulderSeen,
+    'Studio B: a saved song': (f) => f.studioMet,
+    'Dad\'s hip hop class': (f) => f.hipHopMet,
+    'Badlands Chugs': (f) => f.badlandsMet,
+    'Mikey': (f) => f.mikeyMet,
+    'Mom\'s missing books': (f) => f.booksQuest,
+    'Dad\'s snacks': (f) => f.snackQuest,
+    'Ice JJ Fish': (f) => f.jjMet || f.jjGig || f.jjSeen,
+    'Mom\'s garden': (f) => f.gardenMet || f.shopOpen,
+    'Pipes made with Dad': (f) => f.pipeBench,
+    'Tobacco blended with Dad': (f) => f.pipeBench,
+    'Nate\'s bass': (f, s) => f.bassQuest || s.items.bass,
+    'The Last One Up': (f, s) => s.party.includes('abe'),
+    'The 2 AM Taco Bell run': (f) => f.tacoRunMet,
+    'Hannah\'s book club': (f) => f.clubMet,
+    'Old Iron': (f) => f.andoverMine,
+    'The old fisherman': (f, s) => f.rodQuest || s.items.rod,
+    'Matt\'s fish survey': (f) => f.mattMet,
+    'The Two-Liter': (f, s) => s.visited && s.visited.chesTunnel,
+    'Tyler': (f) => f.hoodedMet,
+    'Anette\'s thirsty plants': (f) => f.plantQuest,
+    'Romulus': (f) => f.romulusMet,
+    'Abe\'s typing test': (f, s) => s.visited && s.visited.condoUp,
+    'Abe\'s reach': (f, s) => s.party.includes('abe'),
+    'Jamming with Abe': (f) => f.jamMet,
+    'Every instrument': (f) => f.jamMet,
+    'Every guitar pedal': (f) => f.jamMet,
+    'Mecha-Baby': (f) => f.chkdArrived,
+    'Ruby, the rock kid': (f) => f.rubyMet,
+    'Hannah\'s shift': (f) => f.nicuMet,
+    'Animal Friends': (f, s) => s.party.includes('hannah'),
+    'Tyler\'s tooth': (f) => f.fin_done,
+    'The Tooth Book': (f) => f.dayIntro,
+    'The World\'s Largest August Ham': (f) => f.hamSign,
+    'The museum\'s stamp card': (f) => f.museumCard,
+    'Every pipe song': (f, s) => s.items.pipe,
+    'The Dunk Log': (f, s) => s.party.includes('abe'),
+  };
+  const rawCompletion = G.completion;
+  G.completion = () => {
+    const f = flags(), s = G.state;
+    return rawCompletion().map((r) => {
+      const check = SEEN[r.name];
+      if (!check || r.ok || (r.prog && r.prog[0] > 0) || check(f, s)) return r;
+      return Object.assign({}, r, { name: '???', where: '???', hint: 'Not discovered yet. Keep exploring.', hidden: true });
+    });
   };
   // what wakes Father Christmas, and the real thing
   G.fcReady = () => G.completion().every((c) => !c.core || c.ok);
@@ -3449,11 +3512,13 @@
   ];
   G.rockById = (id) => G.ROCKS.find((r) => r.id === id);
   G.ROCK_AREAS = [
-    { id: 'andover', name: 'ANDOVER MINES' },
-    { id: 'andoverDeep', name: 'ANDOVER DEPTHS' },
+    // (in the order of the trip)
     { id: 'lafayette', name: 'LAFAYETTE' },
     { id: 'easton', name: 'EASTON FAIR' },
     { id: 'bedminster', name: 'BEDMINSTER' },
+    // (the mines stay a surprise: ??? until Nate has been there)
+    { id: 'andover', get name() { return G.state && G.state.visited && G.state.visited.andover ? 'ANDOVER MINES' : '???'; } },
+    { id: 'andoverDeep', get name() { return G.state && G.state.visited && G.state.visited.andover ? 'ANDOVER DEPTHS' : '???'; } },
     { id: 'bay', name: 'THE BAY' },
     { id: 'chesapeake', name: 'CHESAPEAKE' },
   ];
@@ -16212,7 +16277,9 @@
   // for each place they come from. Check a case to read about a find, or get the hint for one
   // that's still out there.
   const ROCK_CASES = [
-    { area: 'andover', label: 'ANDOVER', tx: 1, ty: 3 }, { area: 'andoverDeep', label: 'DEPTHS', tx: 6, ty: 3 },
+    // (the mine cases say ??? until Nate has been to Andover)
+    { area: 'andover', get label() { return G.state.visited && G.state.visited.andover ? 'ANDOVER' : '???'; }, tx: 1, ty: 3 },
+    { area: 'andoverDeep', get label() { return G.state.visited && G.state.visited.andover ? 'DEPTHS' : '???'; }, tx: 6, ty: 3 },
     { area: 'lafayette', label: 'LAFAYETTE', tx: 11, ty: 3 }, { area: 'easton', label: 'EASTON', tx: 16, ty: 3 },
     { area: 'bedminster', label: 'BEDMINSTER', tx: 2, ty: 8 }, { area: 'bay', label: 'THE BAY', tx: 9, ty: 8 },
     { area: 'chesapeake', label: 'CHESAPEAKE', tx: 16, ty: 8 },
@@ -16242,7 +16309,7 @@
       if (i < 0) return;
       const r = rocks[i];
       if (rockFound(r.id)) { yield G.say('Nate', r.name + '.'); yield G.say(null, r.fact); }
-      else yield G.say(null, 'An empty spot with a little card: "' + (r.how || 'Not found yet. Keep exploring the Andover mines.') + '"');
+      else yield G.say(null, 'An empty spot with a little card: "' + (r.how || (G.state.visited && G.state.visited.andover ? 'Not found yet. Keep exploring the Andover mines.' : 'Not found yet. Keep exploring.')) + '"');
     }
   };
   S.rockShopSign = function* () {
