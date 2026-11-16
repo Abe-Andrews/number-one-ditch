@@ -1299,8 +1299,6 @@
   // never in a cutscene, menu, fight or minigame), in story order. A save that's already past a
   // few of them only gets the latest.
   const JACK_TEXTS = [
-    // Gus gives Nate his hat back
-    { id: 'hat', when: (f, s) => !!s.items.cap, lines: [['t', JACK, 'hey what time will you be back'], ['s', 'Nate', 'Every. Single. Time.']] },
     // the first time at the fair
     { id: 'fair', when: (f) => G.play.world && G.play.world.id === 'fair', lines: [['t', JACK, 'yo. eta?'], ['t', 'Nate', 'late'], ['t', JACK, 'perfect. take ur time'], ['s', 'Nate', 'I hate that he said perfect.']] },
     // the boulder's out of the way
