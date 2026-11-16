@@ -1132,23 +1132,26 @@
     yield G.text('Abe', 'hannah and i are right here in chesapeake. we got eyes on the ditch');
     yield G.text('Hannah', 'from the couch');
     yield G.text('Abe', 'nate get down here. not fighting a plush humpty dumpty without you');
-    yield G.text('Abe', 'and remember the rule');
-    yield G.say('Nate', '...Which rule?');
-    yield G.text('Abe', 'u know which number u cant say');
-    yield G.say('Nate', 'I\'m not going to say it, Abe.');
-    yield G.text('Abe', 'ok quick question. how many legs does an insect have?');
-    const c = yield G.ask('Nate', 'How many legs does an insect have...', ['Six!', 'More than five.', 'Not answering that.']);
+    // (no warning first: the trick lands right away, and the rule comes after)
+    yield G.text('Abe', 'oh quick question. how many legs does an insect have?');
+    const c = yield G.ask('Nate', 'How many legs does an insect have...', ['Six!', 'Eight.', 'No idea.']);
     if (c === 0) {
       yield* slip();
       yield G.text('Abe', 'GOT HIM');
       yield G.text('Lily', 'LMAOOOOO');
       yield G.text('Hannah', 'every single time');
-      yield G.say('Nate', '...That\'s unfair. That was a SCIENCE question.');
-    } else if (c === 1) {
-      yield G.text('Abe', '...he\'s learning');
-      yield G.text('Hannah', 'proud of u nate');
+      yield G.say('Nate', 'What? That\'s the RIGHT answer!');
+      yield G.text('Abe', 'u forgot the rule');
+      yield G.say('Nate', '...Oh no. THE rule.');
+      yield G.text('Abe', 'the number. u cant say it. not ever');
+      yield G.say('Nate', 'That\'s unfair. That was a SCIENCE question.');
     } else {
-      yield G.text('Abe', 'coward');
+      if (c === 1) { yield G.text('Lily', 'nate thats spiders'); yield G.text('Abe', 'close call tho'); }
+      else yield G.text('Abe', 'hm. suspicious');
+      yield G.text('Abe', 'just remember the rule');
+      yield G.say('Nate', '...Which rule?');
+      yield G.text('Abe', 'u know which number u cant say');
+      yield G.say('Nate', 'Oh. THAT rule. I\'m not going to say it, Abe.');
     }
     yield G.text('Lily', 'GO. SAVE. THE. DITCH.');
     f.readChat = true;
