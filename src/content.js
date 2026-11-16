@@ -720,6 +720,7 @@
       const left = s.items.tickets || 0;
       add('Doron\'s spare tickets', f.ticketsDone, left ? G.sayable(left) + ' left' : 'Tell Doron', 'Lafayette + Easton Fair', left ? 'Offer the tickets to people around campus and the fair. Most say no.' + (f.dadBeaten ? ' (They\'re for next week\'s show now.)' : '') : 'All given away! Go tell Doron.', [4 - left, 4]);
     }
+    if (f.rockShopOpen && !f.rockShopSeen) side.push({ name: 'Nate\'s Rock Shop', status: 'Open on College Hill', kind: 'rumor', where: 'Lafayette - College Hill', hint: 'Prof. Sunderlin gave Nate the empty shop on College Hill, past Tom\'s Pizza. Every rock he finds goes on display.' });
     if (G.rocksFound()) add('Nate\'s rocks', G.rocksFound() >= G.ROCKS.length && 'All found!', G.sayable(G.rocksFound()) + '/' + G.ROCKS.length, 'Everywhere', 'Mine the Andover mines. Every other rock is a hidden secret. See the ROCKS page.', [G.rocksFound(), G.ROCKS.length]);
     // rumors: things going on around home that Nate hasn't looked into yet
     const leadHint = { Michelle: 'Mom is out in the garden. Something is going on with her books.', Dad: 'Dad is in his workshop (the garage). He needs something.', Lily: 'Take the trail north, past the bridge over Brady Brook.', Doron: 'Pick "The Andover mines" when you leave home.' };
@@ -3083,6 +3084,7 @@
     if (f.dunkDue && G.state.party.includes('abe') && G.dunkReady()) { G.script.run(S.abeDunk()); return; }
     if (G.state.stats.preAbe && G.state.party.includes('abe') && G.dunkReady()) { G.script.run(S.abeHeard()); return; }
     if (f.ticketsGiven && !f.ticketsDone && f.dadBeaten) { G.script.run(S.ticketsText()); return; }
+    if (!f.rockShopOpen && f.readChat && !G.state.playAs && G.rocksFound() * 2 >= G.ROCKS.length && G.dunkReady()) { G.script.run(S.rockShopText()); return; }
     const jk = G.jackTextDue();
     if (jk != null && G.dunkReady()) { G.script.run(S.jackText(jk)); return; }
     if (!f.fcAwake && G.fcReady()) { G.script.run(S.fcWakes()); return; }
@@ -16183,11 +16185,14 @@
       const sp = G.spr;
       // the shops (doors at x + 3): the grocery store, Tom's Pizza, an empty one
       const shop = (img, x) => { w.addProp({ img, tx: x, ty: 2, h: 4 }); w.blockTiles(x, 2, 6, 4); };
-      shop(sp.groceryStore, 3); shop(sp.tomsPizza, 13); shop(sp.forLeaseShop, 23);
+      const rockOpen = !!flags().rockShopOpen;
+      shop(sp.groceryStore, 3); shop(sp.tomsPizza, 13); shop(rockOpen ? sp.rockShopFront : sp.forLeaseShop, 23);
       w.block[5 * w.w + 16] = 0;
       w.addWarp(16, 5, 1, 1, 'toms', 6, 8, 'up');
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [6 * 16, 5 * 16, 7 * 16, 6 * 16], talk: () => S.groceryDoor() });
-      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [26 * 16, 5 * 16, 27 * 16, 6 * 16], talk: look('An empty shop. FOR LEASE. Somebody should open a rock shop.') });
+      // the empty shop on the end, until Prof. Sunderlin hands Nate the keys (S.rockShopText)
+      if (rockOpen) { w.block[5 * w.w + 26] = 0; w.addWarp(26, 5, 1, 1, 'rockShop', 10, 12, 'up', true); }
+      else w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [26 * 16, 5 * 16, 27 * 16, 6 * 16], talk: look('An empty shop. FOR LEASE. Somebody should open a rock shop.') });
       for (const x of [10, 20]) w.addTree(x, 3);
       // lampposts along the sidewalk
       for (const x of [1, 11, 21, 28]) w.addProp({ img: sp.lamppost, tx: x, ty: 6, dx: 2, solid: [x, 6, 1, 1] });
@@ -16203,6 +16208,93 @@
       const p = G.play.player, k = (G.tick / 39) % 4;
       if (Math.abs(p.x - 6.5 * 16) < 140) w.pop(6 * 16 + 8 + (k % 2 ? 9 : -9), 4 * 16 + 10, ['*boom*', '*tss*', '*boom boom*', '*tss*'][k], '#f878d8');
     },
+  };
+
+  // ---------------------------------------------------------------- Nate's rock shop
+  // Once Nate has found half the rocks, Prof. Sunderlin texts him the keys to the empty shop on
+  // College Hill (S.rockShopText). Inside, every rock he's found is on display, in a glass case
+  // for each place they come from. Check a case to read about a find, or get the hint for one
+  // that's still out there.
+  const ROCK_CASES = [
+    { area: 'andover', label: 'ANDOVER', tx: 1, ty: 3 }, { area: 'andoverDeep', label: 'DEPTHS', tx: 6, ty: 3 },
+    { area: 'lafayette', label: 'LAFAYETTE', tx: 11, ty: 3 }, { area: 'easton', label: 'EASTON', tx: 16, ty: 3 },
+    { area: 'bedminster', label: 'BEDMINSTER', tx: 2, ty: 8 }, { area: 'bay', label: 'THE BAY', tx: 9, ty: 8 },
+    { area: 'chesapeake', label: 'CHESAPEAKE', tx: 16, ty: 8 },
+  ];
+  const rockFound = (id) => !!(G.state.rocksFound && G.state.rocksFound[id]);
+  S.rockShopText = function* () {
+    const f = flags();
+    f.rockShopOpen = true;
+    yield G.wait(20);
+    G.audio.sfx('buzz');
+    yield G.text('Prof. Sunderlin', 'Nate. Professor Sunderlin. Word around Van Wickle is you\'ve found half the rocks in this part of the world.');
+    yield G.text('Prof. Sunderlin', 'That isn\'t a collection anymore. That\'s a museum.');
+    yield G.text('Prof. Sunderlin', 'The empty shop on College Hill is yours. I talked to the landlord. He owes me for a geode.');
+    yield G.text('Prof. Sunderlin', 'Put it all on display. People should see this.');
+    yield G.say('Nate', 'My own ROCK SHOP?!');
+    yield G.say('Nate', 'The empty one on College Hill, past Tom\'s. I have to go set it up.');
+  };
+  S.rockCase = (k) => function* () {
+    const c = ROCK_CASES[k], rocks = G.ROCKS.filter((r) => r.area === c.area), have = rocks.filter((r) => rockFound(r.id));
+    if (!have.length) {
+      yield G.say(null, 'The ' + c.label + ' case. Empty, for now. ' + G.sayable(rocks.length) + ' spots, all waiting.');
+      return;
+    }
+    yield G.say(null, 'The ' + c.label + ' case: ' + G.sayable(have.length) + ' of ' + G.sayable(rocks.length) + ' found.');
+    for (;;) {
+      const i = yield* pickFrom(null, 'Which one?', rocks.map((r) => (rockFound(r.id) ? r.name : '???')));
+      if (i < 0) return;
+      const r = rocks[i];
+      if (rockFound(r.id)) { yield G.say('Nate', r.name + '.'); yield G.say(null, r.fact); }
+      else yield G.say(null, 'An empty spot with a little card: "' + (r.how || 'Not found yet. Keep exploring the Andover mines.') + '"');
+    }
+  };
+  S.rockShopSign = function* () {
+    const n = G.rocksFound(), all = G.ROCKS.length;
+    yield G.say(null, 'A hand-painted sign: NATE\'S ROCKS. Curator: Nate. ' + G.sayable(n) + ' of ' + G.sayable(all) + ' on display.');
+    if (n >= all) yield G.say('Nate', 'Every single one. Professor Sunderlin is going to cry.');
+    else yield G.say('Nate', 'Still some empty spots. They\'re out there somewhere.');
+  };
+  G.MAPS.rockShop = {
+    name: 'Nate\'s Rock Shop',
+    music: 'house',
+    tiles() {
+      const W = 22, H = 14;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 20, 2, 'N');        // stone walls (of course)
+      fill(1, 3, 20, 10, 'o');       // oak floor
+      fill(7, 11, 8, 2, 'r');        // a rug by the door
+      fill(1, 13, 7, 1, 'G'); fill(14, 13, 7, 1, 'G'); g[13][10] = 'x'; // the front windows and the door
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr, icons = sp.rockIcons;
+      ROCK_CASES.forEach((c, k) => {
+        const rocks = G.ROCKS.filter((r) => r.area === c.area);
+        w.blockTiles(c.tx, c.ty, 4, 3);
+        w.props.push({
+          img: null, x: 0, y: 0, base: (c.ty + 3) * 16 - 1, hit: [c.tx * 16, c.ty * 16, (c.tx + 4) * 16, (c.ty + 3) * 16], talk: S.rockCase(k),
+          draw(ctx, cx, cy) {
+            const x0 = c.tx * 16 - cx, y0 = c.ty * 16 - cy;
+            ctx.drawImage(sp.rockCase, x0, y0);
+            rocks.forEach((r, i) => {
+              const sx = x0 + 3 + (i % 4) * 15, sy = y0 + 3 + Math.floor(i / 4) * 13;
+              if (rockFound(r.id) && icons[r.id]) ctx.drawImage(icons[r.id], sx, sy);
+              else { ctx.fillStyle = '#1a2240'; ctx.fillRect(sx + 4, sy + 7, 6, 3); }
+            });
+            // glass glare
+            ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(x0 + 6, y0 + 4, 3, 36); ctx.fillRect(x0 + 11, y0 + 4, 1, 36);
+            G.font.draw(ctx, c.label, x0 + 32 - Math.round(G.font.width(c.label) / 2), y0 + 41, '#f0e0b0', { shadow: '#2a1810' });
+          },
+        });
+      });
+      // (the sign by the door counts what's on display)
+      const sign = w.add(new G.Sign(18, 11, ''));
+      sign.talk = () => S.rockShopSign();
+      w.addWarp(10, 13, 1, 1, 'collegeHill', 26, 6, 'down');
+    },
+    onEnter() { return (function* () { flags().rockShopSeen = true; })(); },
   };
 
   // ---------------------------------------------------------------- Dad's hip hop class
@@ -23307,7 +23399,7 @@
   // Each part of the road trip, for the name card that slides in when Nate first arrives (ui.js
   // G.regionCard). Rooms inside a region just get the little name banner.
   G.REGIONS = {
-    lafayette: { title: 'LAFAYETTE', sub: 'Lafayette College, Easton, PA', maps: ['lab', 'campus', 'science', 'pardee', 'geology', 'arts', 'studioB', 'collegeHill', 'grocery', 'toms', 'kitGail'] },
+    lafayette: { title: 'LAFAYETTE', sub: 'Lafayette College, Easton, PA', maps: ['lab', 'campus', 'science', 'pardee', 'geology', 'arts', 'studioB', 'collegeHill', 'grocery', 'toms', 'kitGail', 'rockShop'] },
     fair: { title: 'EASTON FAIR', sub: 'The fairgrounds, east of campus', maps: ['fair', 'fairCave', 'arena', 'ring', 'locker'] },
     home: { title: 'HOME', sub: 'Rattlesnake Bridge Road', maps: ['home', 'homeDown', 'homeUp', 'garage', 'basement', 'bookClub', 'north'] },
     andover: { title: 'ANDOVER MINES', sub: 'Iron country, since the 1760s', maps: ['andover', 'andoverMine', 'andoverFlood', 'andoverOld', 'andoverVault', 'andoverDeep'] },

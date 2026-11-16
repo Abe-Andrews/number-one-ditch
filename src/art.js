@@ -8027,6 +8027,29 @@
       window: (p, x0) => { p.rect(x0 + 8, 44, 14, 9, '#f6f4ee'); p.hline(x0 + 10, x0 + 19, 46, '#c82828'); p.hline(x0 + 10, x0 + 17, 48, '#3a3a40'); p.hline(x0 + 10, x0 + 18, 50, '#3a3a40'); },
     });
   }
+  // the same empty shop, once Nate opens it: ROCK SHOP, a slate-and-sand awning, rocks in the windows
+  function rockShopFront() {
+    return storefront({
+      sign: 'ROCK SHOP', signBg: '#4a5a6a', brick: '#9a6a52', seed: 25, awning: ['#5a6a7a', '#d8c8a0'],
+      window: (p, x0) => {
+        p.hline(x0 + 4, x0 + 25, 55, '#8a6a48'); p.hline(x0 + 4, x0 + 25, 56, '#5a3a24');
+        const rocks = [['#a8302a', '#d06048', 6], ['#e8e4dc', '#ffffff', 12], ['#3a8a5a', '#6ac088', 18], ['#c8a040', '#f0d070', 23]];
+        for (const [c, l, rx] of rocks) for (let y = 0; y < 5; y++) for (let x = 0; x < 6; x++) if ((x - 2.5) ** 2 / 8 + (y - 2.5) ** 2 / 6 <= 1) p.set(x0 + rx - 1 + x, 50 + y, y < 2 ? l : c);
+      },
+      door: (p) => { p.rect(42, 46, 12, 4, '#f6f0e0'); p.hline(43, 52, 47, '#4a5a6a'); p.hline(43, 52, 48, '#c8a040'); },
+    });
+  }
+  // a glass display case for Nate's rocks (64x48, seen from above): a wooden frame, navy velvet
+  // under the glass; the rocks get drawn into the glass area (4 x 3 slots, from x 2, y 4)
+  function rockCase() {
+    const p = new Pix(64, 48);
+    p.rect(0, 0, 64, 48, '#7a4a2a'); p.hline(0, 63, 0, '#a86a3a'); p.rect(0, 44, 64, 4, '#4a2a18');
+    p.rect(2, 2, 60, 40, '#5a3a24');
+    p.rect(3, 3, 58, 38, '#26304e');
+    for (let y = 3; y < 41; y++) for (let x = 3; x < 61; x++) if ((x * 3 + y * 5) % 23 === 0) p.set(x, y, '#2e3a5c');
+    p.hline(1, 62, 42, '#a86a3a'); p.set(0, 44, '#2a1810'); p.set(63, 44, '#2a1810');
+    return finish(p);
+  }
   // stainless deck ovens, stacked two high
   function deckOven() {
     const p = new Pix(32, 40), st = '#b8bcc4', sd = '#8a8e96', sl = '#e0e2e8';
@@ -11269,7 +11292,7 @@
     for (const pose of ['stand', 'walk1', 'walk2', 'raise', 'slam', 'pour']) S.twoLiter[pose] = twoLiterBrute(pose);
     S.fizzDrop = fizzDrop(); S.tollPlaza = tollPlaza();
     // Tom's Pizza
-    S.tomsPizza = tomsPizza(); S.groceryStore = groceryStore(); S.broom = broom(); S.catalogBin = catalogBin(); S.highTops = highTops(); S.goose = { right: {} }; for (const k of ['walk1', 'walk2', 'graze', 'hiss', 'fly1', 'fly2']) S.goose.right[k] = goose(k); S.goose.left = {}; for (const k in S.goose.right) S.goose.left[k] = mirror(S.goose.right[k]); S.produceStand = produceStand(); S.dairyCooler = dairyCooler(); S.aisleShelf = aisleShelf(); S.checkout = checkout(); S.boombox = [0, 1].map(boombox); S.mopBucket = mopBucket(); S.produceSign = produceSign(); S.forLeaseShop = forLeaseShop(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
+    S.tomsPizza = tomsPizza(); S.groceryStore = groceryStore(); S.broom = broom(); S.catalogBin = catalogBin(); S.highTops = highTops(); S.goose = { right: {} }; for (const k of ['walk1', 'walk2', 'graze', 'hiss', 'fly1', 'fly2']) S.goose.right[k] = goose(k); S.goose.left = {}; for (const k in S.goose.right) S.goose.left[k] = mirror(S.goose.right[k]); S.produceStand = produceStand(); S.dairyCooler = dairyCooler(); S.aisleShelf = aisleShelf(); S.checkout = checkout(); S.boombox = [0, 1].map(boombox); S.mopBucket = mopBucket(); S.produceSign = produceSign(); S.forLeaseShop = forLeaseShop(); S.rockShopFront = rockShopFront(); S.rockCase = rockCase(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
     S.pizzaBoxes = pizzaBoxes(); S.checkTable = checkTable(); S.dadTomPicture = dadTomPicture();
     // Abe and Hannah's condo
     S.condo = condoBuilding(); S.brickStep = brickStep();
