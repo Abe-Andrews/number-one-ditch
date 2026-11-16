@@ -159,7 +159,7 @@
 
   // Arriving somewhere new on the trip: a ribbon slides across with the place's name big and
   // a line under it (G.REGIONS in content.js says which maps are where).
-  const CARD_T = 140;
+  const CARD_T = 100;
   G.regionCard = {
     r: null, t: 0,
     show(r) { this.r = r; this.t = CARD_T; },
