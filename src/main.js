@@ -683,6 +683,10 @@
       this.t = 0;
       this.sel = 0;
       this.opts = (G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game']).concat('Admin');
+      // which landmarks drift by: the places the latest save has been to
+      const v = ((G.hasSave() && G.readSave(G.latestSave())) || {}).visited || {};
+      this.reached = [['campus'], ['fair'], ['home'], ['cbbtToll', 'cbbt'], ['chkd'], ['ditchFinal', 'ditchDay']]
+        .map((maps, i) => (maps.some((m) => v[m]) ? i : -1)).filter((i) => i >= 0);
       G.audio.setMix(null); G.audio.play('title');
     },
     update() {
@@ -712,9 +716,9 @@
       this.drawScene(ctx);
       // logo, with a shine that sweeps across it now and then
       this.drawLogo(ctx);
-      // Father Eggmas, peeking over the hill
-      const ey = 76 + Math.round(Math.abs(Math.sin(this.t / 20)) * -3);
-      ctx.drawImage(G.spr.eggmas, 210, ey);
+      // Father Eggmas, standing in the grass by the road, waiting
+      const eg = G.spr.eggmas;
+      ctx.drawImage(eg, 206, 92 + 31 - eg.height);
       // menu
       const w = 84, h = this.opts.length * 12 + 8, x = Math.round((G.W - w) / 2), y = this.opts.length > 3 ? 100 : this.opts.length > 2 ? 108 : 114;
       G.box(ctx, x, y, w, h);
@@ -757,13 +761,15 @@
       // far hills
       const hp = Math.floor(t * 0.15) % 480;
       ctx.drawImage(L.hills, -hp, HZ - 34); ctx.drawImage(L.hills, 480 - hp, HZ - 34);
-      // the places on the trip, in the haze: Lafayette, the fair, home, the bay, CHKD, the Ditch
-      const lp = t * 0.25, gap = 150, cyc = gap * 6;
-      for (let i = 0; i < 6; i++) {
-        let x = ((i * gap + 40 - lp) % cyc + cyc) % cyc - 40;
-        if (x > G.W + 40) continue;
-        this.landmark(ctx, i, Math.round(x), HZ - 10);
-      }
+      // (the hills carry on down behind the trees, so there's never a gap between them)
+      ctx.fillStyle = '#7a96c0'; ctx.fillRect(0, HZ + 6, G.W, 16);
+      // the places on the trip Nate has been to so far, in the haze (Lafayette, the fair, home, the
+      // bay, CHKD, the Ditch), planted behind the trees so their feet are hidden
+      const seen = this.reached || [], lp = t * 0.25, gap = 150, cyc = gap * Math.max(3, seen.length);
+      seen.forEach((id, k) => {
+        const x = ((k * gap + 40 - lp) % cyc + cyc) % cyc - 40;
+        if (x <= G.W + 40) this.landmark(ctx, id, Math.round(x), HZ + 14);
+      });
       // trees
       const tp = Math.floor(t * 0.5) % 480;
       ctx.drawImage(L.trees, -tp, HZ - 6); ctx.drawImage(L.trees, 480 - tp, HZ - 6);
@@ -796,17 +802,17 @@
         ctx.fillRect(x + 8, y - 24, 3, 6);
         ctx.fillStyle = W; ctx.fillRect(x - 9, y - 9, 3, 3); ctx.fillRect(x + 6, y - 9, 3, 3); ctx.fillStyle = D; ctx.fillRect(x - 1, y - 7, 3, 7);
       } else if (i === 3) { // the Bridge-Tunnel
-        ctx.fillRect(x - 40, y - 8, 70, 2);
-        for (let k = -36; k < 30; k += 10) ctx.fillRect(x + k, y - 6, 2, 6);
-        ctx.fillRect(x + 28, y - 14, 16, 14); ctx.fillStyle = D; ctx.fillRect(x + 32, y - 9, 8, 9);
+        ctx.fillRect(x - 40, y - 22, 70, 2);
+        for (let k = -36; k < 30; k += 10) ctx.fillRect(x + k, y - 20, 2, 20);
+        ctx.fillRect(x + 28, y - 28, 16, 28); ctx.fillStyle = D; ctx.fillRect(x + 32, y - 22, 8, 22);
       } else if (i === 4) { // CHKD
         ctx.fillRect(x - 16, y - 24, 32, 24); ctx.fillRect(x - 6, y - 30, 12, 6);
         ctx.fillStyle = W; for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) ctx.fillRect(x - 13 + c * 6, y - 21 + r * 6, 3, 3);
         ctx.fillStyle = '#d87878'; ctx.fillRect(x - 1, y - 29, 2, 4); ctx.fillRect(x - 2, y - 28, 4, 2);
       } else {              // the No.1 Ditch sign
-        ctx.fillRect(x - 1, y - 14, 2, 14);
-        ctx.fillStyle = '#3a8a5a'; ctx.fillRect(x - 13, y - 22, 26, 10);
-        F().draw(ctx, 'No.1', x - 10, y - 21, '#f4f4f0');
+        ctx.fillRect(x - 1, y - 34, 2, 34);
+        ctx.fillStyle = '#3a8a5a'; ctx.fillRect(x - 13, y - 42, 26, 10);
+        F().draw(ctx, 'No.1', x - 10, y - 41, '#f4f4f0');
       }
     },
     drawLogo(ctx) {
@@ -967,7 +973,7 @@
     pages: [
       { pic: 'ditch', text: 'Chesapeake, Virginia.' },
       { pic: 'ditch', text: 'Off a quiet road lies a ditch. But not just any ditch...' },
-      { pic: 'ditch', text: 'The {y}NUMBER ONE DITCH{/}. Apple Maps says so. The best ditch in the whole world.' },
+      { pic: 'ditch', text: 'The {y}NUMBER ONE DITCH{/}. The map says so. The best ditch in the whole world.' },
       { pic: 'dark', text: 'But deep in the Andrews\' basement, something stirred...' },
       { pic: 'eggmas', name: 'Father Eggmas', text: 'HO HO HO! The Number One Ditch shall be MINE!' },
       { pic: 'eggmas', name: 'Father Eggmas', text: 'I will turn it into... the Number {r}TWO{/} Ditch!', shake: true },

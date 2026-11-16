@@ -1291,6 +1291,44 @@
     else yield G.say(JACK, 'Totally. So what time?');
   };
 
+  // ...and wherever Nate goes, Jack texts every few minutes of play to ask the same thing. Nate
+  // hates it. (postgameTick picks the moment: never in a cutscene, menu, fight or minigame.)
+  const JACK_TEXTS = [
+    [['t', JACK, 'hey what time will you be back'], ['s', 'Nate', 'Every. Single. Time.']],
+    [['t', JACK, 'yo. eta?'], ['t', 'Nate', 'late'], ['t', JACK, 'perfect. take ur time'], ['s', 'Nate', 'I hate that he said perfect.']],
+    [['t', JACK, 'what time will you be back. no reason'], ['s', 'Nate', 'There is ALWAYS a reason.']],
+    [['t', JACK, 'are you coming back tonight or'], ['t', JACK, 'just so i know'], ['s', 'Nate', '...I\'m not answering that.']],
+    [['t', JACK, 'quick q'], ['t', JACK, 'what time will you be back'], ['s', 'Nate', 'That is not a quick question, Jack. That is THE question.']],
+    [['t', JACK, 'can u text me 10 min before u come back. would be huge'], ['s', 'Nate', 'It is my room TOO.']],
+    // (once he's a long way from campus)
+    [['t', JACK, 'what time will you be back'], ['t', 'Nate', 'im in virginia'], ['t', JACK, 'ok so like what time'], ['s', 'Nate', 'He doesn\'t even care where I am. Just WHEN.'], 'far'],
+    // (after the Ditch)
+    [['t', JACK, 'congrats on the ditch man'], ['t', JACK, 'what time will you be back'], ['s', 'Nate', 'He didn\'t even ask what the ditch was.'], 'ditch'],
+  ];
+  G.jackTextDue = () => {
+    const f = flags(), s = G.state, t = s.playTime || 0;
+    if (!f.readChat || s.playAs || s.rush || (G.night && G.night())) return false;
+    if (!f.jackNext) { f.jackNext = t + 60 * 60 * 4; return false; }
+    return t >= f.jackNext;
+  };
+  S.jackText = function* () {
+    const f = flags(), s = G.state;
+    f.jackNext = (s.playTime || 0) + 60 * 60 * (6 + Math.random() * 3);
+    const ok = JACK_TEXTS.filter((x) => {
+      const tag = typeof x[x.length - 1] === 'string' ? x[x.length - 1] : null;
+      return !tag || (tag === 'far' && f.condoArrived) || (tag === 'ditch' && f.fin_done);
+    });
+    const n = f.jackTexts || 0;
+    f.jackTexts = n + 1;
+    yield G.wait(20);
+    G.audio.sfx('buzz');
+    for (const step of ok[n % ok.length]) {
+      if (typeof step === 'string') continue;
+      const [kind, who, line] = step;
+      yield kind === 't' ? G.text(who, line) : G.say(who, line);
+    }
+  };
+
   S.bismarck = function* () {
     flags().bismarckMet = true;
     yield G.say('Bismarck', 'Did you see Pardee Hall? It\'s the Department of {y}EEENGLISH{/} now.');
@@ -3043,6 +3081,7 @@
     if (f.dunkDue && G.state.party.includes('abe') && G.dunkReady()) { G.script.run(S.abeDunk()); return; }
     if (G.state.stats.preAbe && G.state.party.includes('abe') && G.dunkReady()) { G.script.run(S.abeHeard()); return; }
     if (f.ticketsGiven && !f.ticketsDone && f.dadBeaten) { G.script.run(S.ticketsText()); return; }
+    if (G.jackTextDue() && G.dunkReady()) { G.script.run(S.jackText()); return; }
     if (!f.fcAwake && G.fcReady()) { G.script.run(S.fcWakes()); return; }
     if (f.dayIntro && !f.auroraNews && G.play.world && !['ditchFinal', 'ditchDay', 'ditchRoad'].includes(G.play.world.id)) { G.script.run(S.auroraNews()); return; }
     if (f.fcAwake && !f.hundred && G.allDone()) G.script.run(S.hundred());
@@ -19232,8 +19271,8 @@
     yield G.camFocus(boss.x, boss.y - 30, 70);
     yield G.say(null, 'HO. HO. HO.');
     yield G.say('Father Eggmas', 'Welcome, Andrews family... to the Number TWO Ditch.');
-    yield G.say('Nate', 'It\'s the Number ONE Ditch. Apple Maps says so.');
-    yield G.say('Father Eggmas', 'Apple Maps can be CHANGED, Nate.');
+    yield G.say('Nate', 'It\'s the Number ONE Ditch. The map says so.');
+    yield G.say('Father Eggmas', 'Maps can be CHANGED, Nate.');
     yield G.say('Dad', 'Is that... the egg from our MANTEL?');
     yield G.say('Father Eggmas', 'Do you know what it\'s like up on that mantel? Smiling. Every December. For YEARS.');
     yield G.say('Father Eggmas', 'And then every January... back in the box. Back in the basement. In the DARK.');
@@ -23167,7 +23206,7 @@
   // night, softer light around lamps, a warm afternoon tint at home, and a gentle vignette
   // indoors. Drawn by the play scene right after the map, before each map's own tint.
   const AMB = {
-    campus: { clouds: 1, leaves: 1 }, arts: { clouds: 1, leaves: 1 }, collegeHill: { clouds: 1 },
+    campus: { clouds: 1 }, arts: { clouds: 1 }, collegeHill: { clouds: 1 },
     fair: { clouds: 1 }, home: { clouds: 1, leaves: 1, warm: 1 }, andover: { clouds: 1, leaves: 1 },
     cbbtToll: { clouds: 1, gulls: 1 }, cbbtMid: { clouds: 1, gulls: 1 }, cbbt: { clouds: 1, gulls: 1 },
     condo: { clouds: 1, leaves: 1 }, golf: { clouds: 1, leaves: 1 }, toroLoco: { clouds: 1 }, chkd: { clouds: 1 },
