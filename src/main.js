@@ -1029,7 +1029,22 @@
   };
 
   // ================================================================ GAME OVER
+  // what each party member says to get Nate back up (the user's approved lines)
+  const FAINT_LINES = {
+    doron: 'Get up, or I\'m lifting you. I lift boulders, Nate.',
+    lily: 'Nate. Get up. You\'re embarrassing me.',
+    abe: 'You good? Blink twice if you said the number.',
+    hannah: 'Deep breath. You\'re okay. Nurse\'s orders: up you get.',
+  };
   G.gameOver = {
+    // who's there when he comes to: Nate for Lily, everyone in the party for Nate, or just Nate
+    speakers(lily) {
+      const s = G.state, nate = G.sprites[s.items.cap ? 'nate' : 'nate_nocap'].down[0];
+      if (lily) return [{ who: 'Nate', msg: 'Get up, Lily. Mikey is still singing.', face: nate }];
+      const list = G.PARTY_ORDER.filter((id) => id !== 'nate' && FAINT_LINES[id] && s.party.includes(id) && G.sprites[id])
+        .map((id) => ({ who: G.PARTY_INFO[id].name, msg: FAINT_LINES[id], face: G.sprites[id].down[0] }));
+      return list.length ? list : [{ who: 'Nate', msg: '...Five more minutes.', face: nate }];
+    },
     enter() {
       G.scene = this;
       G.fade = 0;
@@ -1099,18 +1114,20 @@
       const t1 = (lily ? 'Lily' : 'Nate') + ' fainted...';
       F().drawBig(ctx, t1, Math.round((G.W - F().bigWidth(t1, 2)) / 2), 72, 2, (r) => (r < 2 ? '#ffb0a8' : r < 4 ? '#f86858' : '#c83848'), '#1c1424');
       if (this.t < 60) return;
-      // whoever gets them back up says so, with their face in a little frame
-      const k = Math.min(1, (this.t - 60) / 10), who = lily ? 'Nate' : 'Lily';
-      const msg = lily ? 'Get up, Lily. Mikey is still singing.' : 'Get up, Nate. The ditch needs you.';
-      const face = G.sprites[lily ? (G.state.items.cap ? 'nate' : 'nate_nocap') : 'lily'].down[0];
-      const bw = 38 + Math.max(F().width(msg), F().width(who)) + 9, bx = Math.round((G.W - bw) / 2), by = 90 + Math.round((1 - k) * 6);
+      // everyone in Nate's party gets him back up, one after another, each with their face in a
+      // little frame (alone, he manages it himself)
+      const k = Math.min(1, (this.t - 60) / 10), say = this.speakers(lily);
+      let tt = this.t - 60, cur = say[0];
+      for (let n = 0; ; n = (n + 1) % say.length) { const d = 70 + say[n].msg.length / 0.9; if (tt < d || say.length === 1) { cur = say[n]; break; } tt -= d; }
+      const bw = 228, bx = 6, lines = F().wrap(cur.msg, bw - 47), bh = 16 + lines.length * 9, by = 90 + Math.round((1 - k) * 4);
       ctx.globalAlpha = k;
-      G.box(ctx, bx, by, bw, 30);
+      G.box(ctx, bx, by, bw, bh);
       ctx.fillStyle = '#0c0814'; ctx.fillRect(bx + 5, by + 3, 28, 24);
       ctx.fillStyle = '#2a2240'; ctx.fillRect(bx + 6, by + 4, 26, 22);
-      ctx.drawImage(face, 2, 1, 12, 11, bx + 7, by + 4, 24, 22);
-      F().draw(ctx, who, bx + 38, by + 5, G.NAME_COLORS[who] || '#ff98d0', { shadow: '#0c0814' });
-      F().draw(ctx, msg, bx + 38, by + 16, '#f8f8f0', { shadow: '#0c0814', max: Math.max(0, Math.floor((this.t - 66) * 0.9)) });
+      ctx.drawImage(cur.face, 2, 1, 12, 11, bx + 7, by + 4, 24, 22);
+      F().draw(ctx, cur.who, bx + 38, by + 4, G.NAME_COLORS[cur.who] || '#ff98d0', { shadow: '#0c0814' });
+      let left = Math.max(0, Math.floor((tt - 6) * 0.9));
+      lines.forEach((l, i) => { if (left > 0) F().draw(ctx, l, bx + 38, by + 14 + i * 9, '#f8f8f0', { shadow: '#0c0814', max: left }); left -= F().visibleLength(l); });
       ctx.globalAlpha = 1;
       // continue / title, in a box like the title screen's
       const w = 84, x = Math.round((G.W - w) / 2), y = 125;
