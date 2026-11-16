@@ -217,6 +217,17 @@
     start() { this.t = 0; },
     update() { this.t++; G.fade = Math.max(0, 1 - this.t / n); return this.t >= n; },
   });
+  // A circle wipe: closes in on Nate (irisOut), and opens back up around him (irisIn).
+  // G.iris is how closed it is, 0 to 1; main.js draws it.
+  G.iris = 0;
+  G.irisOut = (n = 18) => ({
+    start() { this.t = 0; },
+    update() { this.t++; G.iris = Math.min(1, this.t / n); return this.t >= n; },
+  });
+  G.irisIn = (n = 18) => ({
+    start() { this.t = 0; },
+    update() { this.t++; G.iris = Math.max(0, 1 - this.t / n); return this.t >= n; },
+  });
 
   G.emote = (ent, kind = 'bang', n = 40) => ({
     start() { this.t = n; ent.emote = G.spr[kind]; G.audio.sfx('menu'); },

@@ -130,6 +130,8 @@
     set.left = set.right.map(mirror);
     set.hold = make('down', 0, 'hold');
     set.torso = make('right', 0, 'torso');
+    // (standing still facing you, everybody blinks now and then)
+    if (!c.mask && !c.shades) set.blink = make('down', 0, 'blink');
     return set;
   }
 
@@ -247,8 +249,9 @@
       hatBack(p, c, y0, ty);
       return;
     }
-    p.set(5, y0 + 5, c.eyes); p.set(5, y0 + 6, c.eyes);
-    p.set(10, y0 + 5, c.eyes); p.set(10, y0 + 6, c.eyes);
+    // (pose 'blink': eyes shut, just the lash line)
+    if (pose === 'blink') { p.set(5, y0 + 6, c.eyes); p.set(10, y0 + 6, c.eyes); }
+    else { p.set(5, y0 + 5, c.eyes); p.set(5, y0 + 6, c.eyes); p.set(10, y0 + 5, c.eyes); p.set(10, y0 + 6, c.eyes); }
     if (c.smile && c.grin) { p.hline(5, 10, y0 + 8, c.smile); p.set(8, y0 + 8, '#5a2a24'); p.set(5, y0 + 8, c.skinD); p.set(10, y0 + 8, c.skinD); }
     else if (c.smile) { p.set(6, y0 + 8, c.skinD); p.hline(7, 8, y0 + 8, c.smile); p.set(9, y0 + 8, c.skinD); }
     else p.hline(7, 8, y0 + 8, c.skinD);

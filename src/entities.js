@@ -85,6 +85,13 @@
     ctx.fillRect(x - 2, y + 1, 5, 1);
   }
 
+  // standing still facing you: a 6-frame blink every few seconds (each one on its own beat)
+  function blinking(e, S) {
+    if (!S.blink || e.moving || e.dir !== 'down') return false;
+    if (e.blinkSeed == null) e.blinkSeed = Math.floor(Math.random() * 400);
+    return (G.tick + e.blinkSeed) % 230 < 6;
+  }
+
   function walkFrame(anim, moving) {
     return moving ? [1, 0, 2, 0][Math.floor(anim / 8) % 4] : 0;
   }
@@ -358,8 +365,13 @@
       drawShadow(ctx, this.x, this.y, cx, cy);
       if (this.inv > 0 && this.state !== 'hurt' && (this.inv >> 2) & 1) return;
       let img;
+      // left standing around long enough, Nate gets bored and looks around (just how he's drawn:
+      // which way he's facing, for talking and swinging, doesn't change)
+      if (this.moving || this.state !== 'walk' || G.script.busy || this.pose) this.stillSince = G.tick;
+      const idle = G.tick - (this.stillSince || G.tick), look = idle > 480 ? ['down', 'left', 'down', 'right', 'down', 'up'][Math.floor((idle - 480) / 55) % 6] : null;
       if (this.pose === 'hold') img = S.hold;
-      else img = S[this.dir][this.state === 'walk' ? walkFrame(this.anim, this.moving) : 0];
+      else if (look && S[look]) img = look === 'down' && S.blink && idle % 55 > 46 ? S.blink : S[look][0];
+      else img = this.state === 'walk' && blinking(this, S) ? S.blink : S[this.dir][this.state === 'walk' ? walkFrame(this.anim, this.moving) : 0];
       // (z: up in the air, e.g. Abe boosting Nate over a hedge)
       const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2 - (this.z || 0)) - cy;
       const swinging = this.state === 'swing';
@@ -486,6 +498,13 @@
       if (this.held === G.spr.wateringCan && this.dir !== this.homeDir) {
         if ((this.backT = (this.backT || 0) + 1) > 45) { this.dir = this.homeDir; this.backT = 0; }
       }
+      // people standing around glance over at Nate when he walks right up, then go back to
+      // whatever they were looking at once he's gone
+      if (!this.wander && !this.held && !this.pose && !this.hidden && this.S && this.S.right) {
+        const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy);
+        if (d < 36 && !p.hidden) { if (this.lookBack == null) this.lookBack = this.dir; this.dir = dirToward(dx, dy); }
+        else if (this.lookBack != null && d > 52) { this.dir = this.lookBack; this.lookBack = null; }
+      }
       if (!this.wander) return;
       if (--this.wt <= 0) {
         if (this.moving) {
@@ -519,6 +538,7 @@
       drawShadow(ctx, this.x, this.y, cx, cy, S.h > 24);
       // (pose 'hold': arms up, e.g. Abe with Nate over his head)
       let img = this.pose === 'hold' && S.hold ? S.hold : S[this.dir][walkFrame(this.anim, this.moving)];
+      if (this.pose !== 'hold' && blinking(this, S)) img = S.blink;
       if (this.flashT > 0 && (this.flashT >> 1) & 1) img = G.art.flash(img);
       if (this.balloons) drawBalloons(ctx, this.x - cx, this.y - S.h - cy, this.x);
       if (this.sign) ctx.drawImage(this.sign, Math.round(this.x - this.sign.width / 2 + 4) - cx, Math.round(this.y - S.h - this.sign.height + 14) - cy);
@@ -610,7 +630,8 @@
       const S = this.S;
       drawShadow(ctx, this.x, this.y, cx, cy, S.h > 24);
       // (pose 'hold': arms up, e.g. Abe reaching for something way up high)
-      ctx.drawImage(this.pose === 'hold' ? S.hold : S[this.dir][walkFrame(this.anim, this.moving)], Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
+      const img = this.pose === 'hold' ? S.hold : blinking(this, S) ? S.blink : S[this.dir][walkFrame(this.anim, this.moving)];
+      ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, Math.round(this.y - S.h - 10) - cy);
     }
   }

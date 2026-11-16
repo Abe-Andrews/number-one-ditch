@@ -212,16 +212,17 @@
       const dx = o.x + o.door, dy = o.y + o.h - 1;
       if (o.to) {
         this.block[dy * this.w + dx] = 0;
-        this.addWarp(dx, dy, 1, 1, o.to.map, o.to.x, o.to.y, 'up');
+        this.addWarp(dx, dy, 1, 1, o.to.map, o.to.x, o.to.y, 'up', true);
       } else if (o.locked) {
         this.props.push({ img: null, x: 0, y: 0, base: 0, hit: [dx * 16, dy * 16, dx * 16 + 16, dy * 16 + 16], talk: o.locked });
       }
     }
 
-    addWarp(x, y, w, h, map, tx, ty, dir) {
+    // (door: a building's front door, which swings open as Nate walks in)
+    addWarp(x, y, w, h, map, tx, ty, dir, door) {
       this.triggers.push({
-        rect: [x * 16, y * 16, (x + w) * 16, (y + h) * 16],
-        fn: () => G.play.warp(map, tx, ty, dir),
+        rect: [x * 16, y * 16, (x + w) * 16, (y + h) * 16], door: !!door,
+        fn: () => G.play.warp(map, tx, ty, dir, false, door ? { x: x * 16, y: y * 16 } : null),
       });
     }
 

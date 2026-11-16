@@ -20200,6 +20200,8 @@
   }
   const lerpCol = (a, b, u) => { const p = (h, i) => parseInt(h.slice(i, i + 2), 16), c = (i) => Math.round(p(a, i) + (p(b, i) - p(a, i)) * u); return `rgb(${c(1)},${c(3)},${c(5)})`; };
   const CREDIT_SKY = [['#0c0a24', '#1c1438'], ['#2a1a4a', '#6a3a6a'], ['#5a3a6a', '#f89878'], ['#7ab0d8', '#f8d8b0'], ['#8ac0e8', '#d8ecf0']];
+  // (also G.creditsCmd, so the trailer rig can roll them)
+  G.creditsCmd = () => creditsCmd();
   function creditsCmd() {
     const pages = creditPages(), total = pages.filter((p) => p.d < 1e8).reduce((a, p) => a + p.d, 0), FB = () => G.font;
     const center = (ctx, text, y, col) => FB().draw(ctx, text, Math.round(120 - FB().width(text) / 2), y, col || '#f8f8f0', { shadow: '#0c0814' });
@@ -20250,10 +20252,15 @@
           center(ctx, 'And', Math.round(y0) - 14, '#f8d850');
           CREDIT_NAMES.forEach((n, i) => { const y = Math.round(y0 + i * 12); if (y > 2 && y < 118) center(ctx, n, y); });
         } else if (pg.k === 'photo') {
-          const im = pg.ph.img, iw = im.naturalWidth || 82, ih = im.naturalHeight || 120, k = Math.min(1, 100 / ih), w = Math.round(iw * k), h = Math.round(ih * k), x = Math.round(120 - w / 2), y = 10;
+          // each photo fades in and slowly drifts a little bigger, like someone leaning in to look
+          const a = Math.max(0, Math.min(1, t / 24, (pg.d - t) / 24)), grow = 1 + (t / pg.d) * 0.05;
+          const im = pg.ph.img, iw = im.naturalWidth || 82, ih = im.naturalHeight || 120, k = Math.min(1, 100 / ih) * grow, w = Math.round(iw * k), h = Math.round(ih * k), x = Math.round(120 - w / 2), y = Math.round(60 - h / 2);
+          ctx.globalAlpha = a;
+          ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(x - 1, y + 1, w + 6, h + 6);
           ctx.fillStyle = '#f6f4ee'; ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
           if (im.complete && im.naturalWidth) { ctx.imageSmoothingEnabled = true; ctx.drawImage(im, x, y, w, h); ctx.imageSmoothingEnabled = false; }
-          center(ctx, pg.ph.name, y + h + 6, '#f8f8f0');
+          center(ctx, pg.ph.name, Math.min(114, y + h + 6), '#f8f8f0');
+          ctx.globalAlpha = 1;
         } else if (pg.k === 'stats') {
           const s = G.state, rows = [['Time on the road', G.playTimeText ? G.playTimeText(s.playTime) : ''], ['Shark teeth', G.sayable(s.teeth)], ['Times the sacred number was spoken', G.sayable(s.stats.slips || 0)], ['Rocks', G.sayable(G.rocksFound()) + '/' + G.sayable(G.ROCKS.length)], ['Photos', G.sayable(G.photosFound()) + '/' + G.sayable(G.PHOTOS.length)]];
           center(ctx, 'Your Trip', 20, '#f8d850');
@@ -23152,5 +23159,127 @@
       { wave: 'square', vol: 0.025, notes: 'E4:8 D4:8 | C4:8 B3:8 | C4:8 A3:8 | B3:8 D4:8 | E4:8 G4:8 | F4:8 E4:8 | D4:8 B3:8 | E4:8 E4:8 | G4:8 G4:8 | A4:8 B3:8 | C4:8 B3:8 | B3:8 D4:8 | G4:8 G4:8 | A4:8 G4:8 | B3:8 D4:8 | E4:8 E4:8' },
     ],
   };
+
+
+  // ================================================================ AMBIENCE (background motion and light)
+  // Little things that keep the world moving: cloud shadows drifting over the outdoors, leaves
+  // coming down where there are trees, sparkles on open water, gulls over the bay, fireflies at
+  // night, softer light around lamps, a warm afternoon tint at home, and a gentle vignette
+  // indoors. Drawn by the play scene right after the map, before each map's own tint.
+  const AMB = {
+    campus: { clouds: 1, leaves: 1 }, arts: { clouds: 1, leaves: 1 }, collegeHill: { clouds: 1 },
+    fair: { clouds: 1 }, home: { clouds: 1, leaves: 1, warm: 1 }, andover: { clouds: 1, leaves: 1 },
+    cbbtToll: { clouds: 1, gulls: 1 }, cbbtMid: { clouds: 1, gulls: 1 }, cbbt: { clouds: 1, gulls: 1 },
+    condo: { clouds: 1, leaves: 1 }, golf: { clouds: 1, leaves: 1 }, toroLoco: { clouds: 1 }, chkd: { clouds: 1 },
+    ditchRoad: { clouds: 1 }, ditchDay: { clouds: 1, leaves: 1 }, aurora: { clouds: 1, gulls: 1 },
+    chkdRoof: { vignette: 0.42 },
+  };
+  const OUTDOOR = new Set(Object.keys(AMB).filter((k) => k !== 'chkdRoof').concat(['north', 'goldenHour', 'ditchFinal']));
+  const NO_VIGNETTE = new Set(['andover', 'andoverMine', 'andoverFlood', 'andoverOld', 'andoverVault', 'andoverDeep', 'chesTunnel', 'cbbtTunnel', 'ring', 'locker']);
+  const LEAF_COLS = ['#d8903a', '#c8642a', '#e8b84a', '#a8b040'];
+  let vignetteCanvas = null;
+  G.ambience = (ctx, w, cam) => {
+    const a = AMB[w.id] || {}, t = G.tick, cx = Math.round(cam.x), cy = Math.round(cam.y), night = G.night && G.night();
+    // sparkles on open water (only the tiles on screen)
+    const t0x = Math.max(0, Math.floor(cx / 16)), t1x = Math.min(w.w - 1, Math.floor((cx + G.W) / 16));
+    const t0y = Math.max(0, Math.floor(cy / 16)), t1y = Math.min(w.h - 1, Math.floor((cy + G.H) / 16));
+    const beat = Math.floor(t / 10);
+    for (let ty = t0y; ty <= t1y; ty++) for (let tx = t0x; tx <= t1x; tx++) {
+      const d = G.TILE_DEFS[w.tileAt(tx, ty)];
+      if (!d || (d.k !== 'water' && d.k !== 'bay')) continue;
+      const h = G.hash(tx, ty, beat);
+      if (h > 0.05) continue;
+      const sx = tx * 16 + 3 + Math.floor(G.hash(tx, ty, beat + 7) * 10) - cx, sy = ty * 16 + 3 + Math.floor(G.hash(ty, tx, beat + 3) * 10) - cy, ph = t % 10;
+      ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(sx, sy, 1, 1);
+      if (ph > 2 && ph < 8) { ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.fillRect(sx - 1, sy, 3, 1); ctx.fillRect(sx, sy - 1, 1, 3); }
+    }
+    // cloud shadows, drifting slowly across (soft blobs, in world space so they slide past)
+    if (a.clouds && !night) {
+      ctx.fillStyle = 'rgba(16,24,48,0.07)';
+      const span = w.pw + 260;
+      for (let i = 0; i < 4; i++) {
+        const x = ((G.hash(i, 1, 3) * span + t * (0.12 + i * 0.03)) % span) - 130 - cx;
+        const y = G.hash(i, 2, 5) * w.ph - cy;
+        if (x < -140 || x > G.W + 140 || y < -80 || y > G.H + 80) continue;
+        for (const [ox, oy, rx, ry] of [[0, 0, 46, 22], [-34, 8, 30, 16], [36, 6, 34, 18], [8, -12, 30, 16]]) {
+          ctx.beginPath(); ctx.ellipse(x + ox, y + oy, rx, ry, 0, 0, Math.PI * 2); ctx.fill();
+        }
+      }
+    }
+    // leaves coming down (screen space, drifting side to side)
+    if (a.leaves && !night) for (let i = 0; i < 9; i++) {
+      const life = 420 + Math.floor(G.hash(i, 9, 1) * 300), k = (t + i * 137) % life, f = k / life;
+      const x = Math.round(G.hash(i, Math.floor((t + i * 137) / life), 4) * (G.W + 40) - 20 + Math.sin(k * 0.035 + i) * 12 + f * 30);
+      const y = Math.round(-6 + f * (G.H + 12));
+      ctx.fillStyle = LEAF_COLS[i % LEAF_COLS.length];
+      if ((k >> 4) & 1) ctx.fillRect(x, y, 2, 1); else { ctx.fillRect(x, y, 1, 2); ctx.fillRect(x + 1, y + 1, 1, 1); }
+    }
+    // gulls wheeling over the water (little Vs, flapping)
+    if (a.gulls && !night) for (let i = 0; i < 3; i++) {
+      const span = G.W + 80, x = Math.round(((t * (0.35 + i * 0.12) + i * 97) % span) - 40), y = Math.round(18 + i * 22 + Math.sin(t * 0.02 + i * 2) * 6);
+      const up = ((t >> 3) + i) & 1;
+      ctx.fillStyle = '#f4f4f0';
+      ctx.fillRect(x, y, 1, 1); ctx.fillRect(x - 1, y - up, 1, 1); ctx.fillRect(x + 1, y - up, 1, 1); ctx.fillRect(x - 2, y - up * 2 + (up ? 0 : 0), 1, 1); ctx.fillRect(x + 2, y - up * 2, 1, 1);
+      ctx.fillStyle = '#8a929a'; ctx.fillRect(x, y + 1, 1, 1);
+    }
+    // fireflies on outdoor maps at night
+    if (night && OUTDOOR.has(w.id)) {
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (let i = 0; i < 10; i++) {
+        const x = Math.round((G.hash(i, 3, 2) * G.W + Math.sin(t * 0.011 + i * 1.7) * 24 + G.W) % G.W);
+        const y = Math.round((G.hash(i, 4, 6) * G.H + Math.cos(t * 0.013 + i) * 16 + G.H) % G.H);
+        const glow = (t + i * 31) % 120;
+        if (glow > 70) continue;
+        const al = Math.sin((glow / 70) * Math.PI);
+        ctx.fillStyle = `rgba(216,248,120,${0.25 * al})`; ctx.fillRect(x - 1, y - 1, 3, 3);
+        ctx.fillStyle = `rgba(240,255,170,${0.9 * al})`; ctx.fillRect(x, y, 1, 1);
+      }
+      ctx.restore();
+    }
+    // softer, rounder light around lamps and bulbs
+    if (w.glows.length) {
+      ctx.save(); ctx.globalCompositeOperation = 'lighter';
+      for (const g of w.glows) {
+        const x = g.x - cx, y = g.y - cy;
+        if (x < -24 || y < -24 || x > G.W + 24 || y > G.H + 24 || !/^#[0-9a-f]{6}$/i.test(g.color)) continue;
+        const gr = ctx.createRadialGradient(x, y, 0, x, y, 18);
+        gr.addColorStop(0, g.color + '40'); gr.addColorStop(1, g.color + '00');
+        ctx.fillStyle = gr; ctx.fillRect(x - 18, y - 18, 36, 36);
+      }
+      ctx.restore();
+    }
+    // a warm afternoon at home
+    if (a.warm && !night) { ctx.fillStyle = 'rgba(255,190,110,0.07)'; ctx.fillRect(0, 0, G.W, G.H); }
+    // indoors (and the hospital roof at night): a soft darkening toward the corners
+    const vig = a.vignette || (!OUTDOOR.has(w.id) && !NO_VIGNETTE.has(w.id) ? 0.22 : 0);
+    if (vig) {
+      if (!vignetteCanvas) {
+        vignetteCanvas = G.canvas(G.W, G.H);
+        const vx = vignetteCanvas.getContext('2d'), gr = vx.createRadialGradient(G.W / 2, G.H / 2, G.H * 0.45, G.W / 2, G.H / 2, G.W * 0.72);
+        gr.addColorStop(0, 'rgba(10,6,20,0)'); gr.addColorStop(1, 'rgba(10,6,20,1)');
+        vx.fillStyle = gr; vx.fillRect(0, 0, G.W, G.H);
+      }
+      ctx.globalAlpha = vig; ctx.drawImage(vignetteCanvas, 0, 0); ctx.globalAlpha = 1;
+    }
+  };
+
+
+  // ================================================================ REGIONS (title cards)
+  // Each part of the road trip, for the name card that slides in when Nate first arrives (ui.js
+  // G.regionCard). Rooms inside a region just get the little name banner.
+  G.REGIONS = {
+    lafayette: { title: 'LAFAYETTE', sub: 'Lafayette College, Easton, PA', maps: ['lab', 'campus', 'science', 'pardee', 'geology', 'arts', 'studioB', 'collegeHill', 'grocery', 'toms', 'kitGail'] },
+    fair: { title: 'EASTON FAIR', sub: 'The fairgrounds, east of campus', maps: ['fair', 'fairCave', 'arena', 'ring', 'locker'] },
+    home: { title: 'HOME', sub: 'Rattlesnake Bridge Road', maps: ['home', 'homeDown', 'homeUp', 'garage', 'basement', 'bookClub', 'north'] },
+    andover: { title: 'ANDOVER MINES', sub: 'Iron country, since the 1760s', maps: ['andover', 'andoverMine', 'andoverFlood', 'andoverOld', 'andoverVault', 'andoverDeep'] },
+    bay: { title: 'THE BAY', sub: 'The Chesapeake Bay Bridge-Tunnel', maps: ['cbbtToll', 'chesTunnel', 'cbbtMid', 'cbbt', 'cbbtTunnel'] },
+    chesapeake: { title: 'CHESAPEAKE', sub: 'Abe and Hannah\'s place', maps: ['condo', 'condoDown', 'condoUp', 'condoStorage', 'golf', 'toroLoco', 'toroLocoIn'] },
+    chkd: { title: 'CHKD', sub: 'Norfolk, Virginia', maps: ['chkd', 'chkdLobby', 'chkdWard', 'chkdNicu', 'chkdRoom', 'chkdRoof'] },
+    ditch: { title: 'THE NUMBER ONE DITCH', sub: 'Chesapeake, Virginia', maps: ['ditchRoad', 'ditchFinal', 'ditchDay'] },
+    aurora: { title: 'AURORA', sub: 'Aurora, North Carolina', maps: ['aurora', 'auroraMuseum', 'hamStand'] },
+  };
+  const REGION_BY_MAP = {};
+  for (const k in G.REGIONS) for (const m of G.REGIONS[k].maps) REGION_BY_MAP[m] = G.REGIONS[k];
+  G.regionOf = (map) => REGION_BY_MAP[map] || null;
 
 })();

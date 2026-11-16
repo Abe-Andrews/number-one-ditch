@@ -157,6 +157,31 @@
     },
   };
 
+  // Arriving somewhere new on the trip: a ribbon slides across with the place's name big and
+  // a line under it (G.REGIONS in content.js says which maps are where).
+  const CARD_T = 200;
+  G.regionCard = {
+    r: null, t: 0,
+    show(r) { this.r = r; this.t = CARD_T; },
+    update() { if (this.t > 0) this.t--; },
+    draw(ctx) {
+      if (this.t <= 0 || !this.r) return;
+      const age = CARD_T - this.t, r = this.r;
+      const inK = Math.min(1, age / 16), ease = 1 - (1 - inK) ** 3, out = Math.min(1, this.t / 24);
+      const off = Math.round((1 - ease) * -G.W), y = 30, h = 44;
+      ctx.globalAlpha = out;
+      // the ribbon
+      ctx.fillStyle = 'rgba(20,14,34,0.9)'; ctx.fillRect(off, y, G.W, h);
+      ctx.fillStyle = '#f8d850'; ctx.fillRect(off, y + 1, G.W, 1); ctx.fillRect(off, y + h - 2, G.W, 1);
+      ctx.fillStyle = '#7a6a30'; ctx.fillRect(off, y + 3, G.W, 1); ctx.fillRect(off, y + h - 4, G.W, 1);
+      // the name, big if it fits, and the line under it, both centered
+      const sc = F().bigWidth(r.title, 2) <= G.W - 16 ? 2 : 1, tw = F().bigWidth(r.title, sc);
+      F().drawBig(ctx, r.title, off + Math.round((G.W - tw) / 2), y + (sc === 2 ? 9 : 13), sc, '#f8d850', '#2a1a10');
+      if (r.sub) F().draw(ctx, r.sub, off + Math.round((G.W - F().width(r.sub)) / 2), y + 30, '#c8c0d8', { shadow: SH });
+      ctx.globalAlpha = 1;
+    },
+  };
+
   // ------------------------------------------------------------ quest toasts
   // Twice a second (outside cutscenes) the side quests get compared with the
   // last look. A new quest, a new rumor or a finished one pops a little card up

@@ -100,6 +100,19 @@
   const FAINT_LAND = G.FAINT_LAND = 54;
   const FAINT_COST = 0.15;
 
+  // A front door, partway open (k = 1..6): the dark doorway widening out from the middle,
+  // with warm light spilling across the floor inside. 12x15, drawn behind Nate.
+  const doorFrames = {};
+  function doorOpen(k) {
+    if (doorFrames[k]) return doorFrames[k];
+    const c = G.canvas(12, 15), x = c.getContext('2d'), w = k * 2, x0 = 6 - k;
+    x.fillStyle = '#1c1220'; x.fillRect(x0, 0, w, 15);
+    x.fillStyle = '#3a2a2e'; x.fillRect(x0, 0, w, 2);
+    x.fillStyle = 'rgba(248,208,128,0.55)'; x.fillRect(x0, 11, w, 4);
+    x.fillStyle = 'rgba(248,224,160,0.8)'; x.fillRect(x0 + 1, 13, Math.max(0, w - 2), 2);
+    return (doorFrames[k] = c);
+  }
+
   // ================================================================ PLAY SCENE
   G.play = {
     world: null,
@@ -156,7 +169,11 @@
       // (Nate's own song, if he set one to play in the game, plays instead of the map's music)
       if (G.mixFor) G.audio.setMix(G.mixFor());
       G.audio.play(this.world.def.music);
-      G.areaBanner.show(this.world.def.name);
+      // arriving in a new part of the trip gets a title card; rooms inside it get the little name banner
+      const region = G.regionOf && !G.state.rush ? G.regionOf(id) : null;
+      if (region && region !== this.lastRegion) { G.regionCard.show(region); G.areaBanner.t = 0; }
+      else { G.regionCard.t = Math.min(G.regionCard.t, 0); G.areaBanner.show(this.world.def.name); }
+      if (region) this.lastRegion = region;
       this.snapCam();
       if (this.world.def.onEnter && !skipEnter) G.script.run(this.world.def.onEnter());
       // (Lily's Taco Bell line for some places, the first time she walks in with Nate)
@@ -214,7 +231,7 @@
       return !!this.world && this.world.ents.some((e) => e.boss && !e.dead && e.state !== 'defeated' && e.hp > 0);
     },
 
-    warp(map, tx, ty, dir, sure) {
+    warp(map, tx, ty, dir, sure, door) {
       if (this.warping) return;
       // walking out an exit in the middle of a boss fight asks first ("Keep fighting" is the
       // default, so a stray step doesn't throw the fight); cutscene warps never ask
@@ -233,10 +250,17 @@
       G.audio.sfx('door');
       const self = this;
       G.script.run((function* () {
-        yield G.fadeOut(14);
+        // a front door swings open first, behind Nate, with warm light inside
+        if (door) {
+          const prop = { img: null, x: door.x + 2, y: door.y + 1, base: door.y };
+          self.world.props.push(prop);
+          for (let t = 1; t <= 10; t++) { prop.img = doorOpen(Math.min(6, Math.ceil(t * 0.7))); yield G.wait(1); }
+        }
+        yield G.irisOut(16);
         self.loadMap(map, tx * 16 + 8, ty * 16 + 14, dir);
         self.autosave();
-        yield G.fadeIn(14);
+        yield G.wait(4);
+        yield G.irisIn(18);
         self.warping = false;
       })());
     },
@@ -510,7 +534,7 @@
     },
 
     update() {
-      G.areaBanner.update();
+      G.areaBanner.update(); G.regionCard.update();
       if (this.shakeT > 0) this.shakeT--;
 
       // fainting: a dizzy spin, a wobble, then he tips over (Player.drawFaint), the stars
@@ -610,6 +634,8 @@
       }
       this.world.draw(ctx, cam);
       if (z !== 1) ctx.restore();
+      // clouds, leaves, sparkles, softer light (content.js)
+      if (G.ambience) G.ambience(ctx, this.world, cam);
       // time-of-day tint, then glowing bulbs on top of it
       if (this.world.def.tint) this.world.def.tint(ctx);
       if (this.world.glows.length) {
@@ -641,7 +667,7 @@
       if (boss) G.hud.bossBar(ctx, boss);
       if (!this.menu) G.toasts.draw(ctx, !!boss);
       if (!this.menu && !boss && !this.overlay) G.menuLessonCard(ctx);
-      G.areaBanner.draw(ctx);
+      G.areaBanner.draw(ctx); G.regionCard.draw(ctx);
       // a full-screen minigame (Dad's pipe bench) stays up between its steps, under the dialogue
       if (this.overlay) this.overlay.draw(ctx);
       G.script.draw(ctx);
@@ -682,21 +708,13 @@
       }
     },
     draw(ctx) {
-      ctx.drawImage(G.spr.ditch, 0, 0);
-      // logo
-      const small = 'JOURNEY TO THE';
-      F().draw(ctx, small, Math.round((G.W - F().width(small)) / 2), 10, '#ffffff', { shadow: '#1c1424' });
-      const grad = (row) => ['#fff4b0', '#ffe070', '#ffd040', '#ffb830', '#ff9a28', '#f07820', '#e05818', '#c84818', '#a83810'][row] || '#a83810';
-      const l1 = 'NUMBER ONE';
-      F().drawBig(ctx, l1, Math.round((G.W - F().bigWidth(l1, 2)) / 2), 22, 2, grad, '#2a1420');
-      const l2 = 'DITCH';
-      const bob = Math.round(Math.sin(this.t / 30) * 1.5);
-      F().drawBig(ctx, l2, Math.round((G.W - F().bigWidth(l2, 3)) / 2), 42 + bob, 3, grad, '#2a1420');
-      // Father Eggmas lurking by the sign
-      const ey = 104 + Math.round(Math.abs(Math.sin(this.t / 20)) * -3);
-      ctx.drawImage(G.spr.eggmas, 208, ey);
-      // Nate looking on (shifting his weight now and then)
-      ctx.drawImage(G.sprites.nate.right[0], 34, 104 + (this.t % 90 < 10 ? 1 : 0));
+      // the road trip, rolling past: Nate walking, the places he'll go drifting by in the distance
+      this.drawScene(ctx);
+      // logo, with a shine that sweeps across it now and then
+      this.drawLogo(ctx);
+      // Father Eggmas, peeking over the hill
+      const ey = 76 + Math.round(Math.abs(Math.sin(this.t / 20)) * -3);
+      ctx.drawImage(G.spr.eggmas, 210, ey);
       // menu
       const w = 84, h = this.opts.length * 12 + 8, x = Math.round((G.W - w) / 2), y = this.opts.length > 3 ? 100 : this.opts.length > 2 ? 108 : 114;
       G.box(ctx, x, y, w, h);
@@ -707,6 +725,118 @@
       ctx.fillStyle = '#f8d850';
       ctx.fillRect(x + 8 + b, cy, 1, 5); ctx.fillRect(x + 9 + b, cy + 1, 1, 3); ctx.fillRect(x + 10 + b, cy + 2, 1, 1);
       F().draw(ctx, 'Z: select', 4, G.H - 10, '#ffffff', { shadow: '#1c1424' });
+    },
+
+    // ---- the scrolling landscape (each layer slower the farther away it is)
+    layers() {
+      if (this._layers) return this._layers;
+      const hills = G.canvas(480, 40), hx = hills.getContext('2d');
+      hx.fillStyle = '#7a96c0';
+      for (let x = 0; x < 480; x++) { const h = 14 + Math.round(Math.sin(x / 38) * 6 + Math.sin(x / 13 + 1) * 3 + Math.sin(x / 76) * 5); hx.fillRect(x, 40 - h, 1, h); }
+      const trees = G.canvas(480, 26), tx = trees.getContext('2d');
+      for (let i = 0; i < 24; i++) {
+        const x = i * 20 + (i * 7) % 9, r = 7 + (i * 5) % 4;
+        tx.fillStyle = '#2f6a3e'; tx.beginPath(); tx.arc(x, 26 - r, r, 0, Math.PI * 2); tx.fill();
+        tx.fillStyle = '#3f8a4e'; tx.beginPath(); tx.arc(x - 2, 24 - r, r - 3, 0, Math.PI * 2); tx.fill();
+      }
+      tx.fillStyle = '#2f6a3e'; tx.fillRect(0, 20, 480, 6);
+      return (this._layers = { hills, trees });
+    },
+    drawScene(ctx) {
+      const t = this.t, L = this.layers(), HZ = 92;
+      // sky, morning
+      const sky = ctx.createLinearGradient(0, 0, 0, HZ);
+      sky.addColorStop(0, '#4a78c8'); sky.addColorStop(0.65, '#8ab4e0'); sky.addColorStop(1, '#f8d8a8');
+      ctx.fillStyle = sky; ctx.fillRect(0, 0, G.W, HZ + 6);
+      // clouds, drifting
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      for (let i = 0; i < 4; i++) {
+        const x = ((i * 83 + t * (0.06 + i * 0.015)) % 300) - 40, y = 14 + i * 13 + (i % 2) * 4;
+        ctx.fillRect(Math.round(x), y, 22, 4); ctx.fillRect(Math.round(x) + 4, y - 3, 12, 3); ctx.fillRect(Math.round(x) + 14, y - 2, 6, 2);
+      }
+      // far hills
+      const hp = Math.floor(t * 0.15) % 480;
+      ctx.drawImage(L.hills, -hp, HZ - 34); ctx.drawImage(L.hills, 480 - hp, HZ - 34);
+      // the places on the trip, in the haze: Lafayette, the fair, home, the bay, CHKD, the Ditch
+      const lp = t * 0.25, gap = 150, cyc = gap * 6;
+      for (let i = 0; i < 6; i++) {
+        let x = ((i * gap + 40 - lp) % cyc + cyc) % cyc - 40;
+        if (x > G.W + 40) continue;
+        this.landmark(ctx, i, Math.round(x), HZ - 10);
+      }
+      // trees
+      const tp = Math.floor(t * 0.5) % 480;
+      ctx.drawImage(L.trees, -tp, HZ - 6); ctx.drawImage(L.trees, 480 - tp, HZ - 6);
+      // grass and the road
+      ctx.fillStyle = '#5aa850'; ctx.fillRect(0, HZ + 20, G.W, G.H - HZ - 20);
+      ctx.fillStyle = '#6ab85e'; for (let i = 0; i < 30; i++) { const x = ((i * 37 - t) % 260 + 260) % 260 - 10; ctx.fillRect(Math.round(x), HZ + 24 + (i * 11) % 8, 2, 1); }
+      ctx.fillStyle = '#5a5a66'; ctx.fillRect(0, HZ + 32, G.W, 22);
+      ctx.fillStyle = '#4a4a56'; ctx.fillRect(0, HZ + 32, G.W, 1); ctx.fillRect(0, HZ + 53, G.W, 1);
+      ctx.fillStyle = '#f8e070'; for (let x = -((t * 1) % 24); x < G.W; x += 24) ctx.fillRect(Math.round(x), HZ + 42, 12, 2);
+      // Nate, walking
+      const S = G.sprites.nate.right, fr = [1, 0, 2, 0][Math.floor(t / 8) % 4];
+      ctx.drawImage(G.spr.shadow, 40, HZ + 47);
+      ctx.drawImage(S[fr], 38, HZ + 50 - S[fr].height + 2);
+    },
+    landmark(ctx, i, x, y) {
+      const C = '#6a84ae', D = '#5a7298', W = '#9ab4d8';
+      ctx.fillStyle = C;
+      if (i === 0) {        // Lafayette's clock tower
+        ctx.fillRect(x - 4, y - 30, 8, 30); ctx.fillRect(x - 12, y - 12, 24, 12);
+        ctx.beginPath(); ctx.moveTo(x - 5, y - 30); ctx.lineTo(x, y - 38); ctx.lineTo(x + 5, y - 30); ctx.fill();
+        ctx.fillStyle = W; ctx.fillRect(x - 2, y - 26, 4, 4);
+      } else if (i === 1) { // the fair's Ferris wheel, turning
+        ctx.strokeStyle = C; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(x, y - 18, 13, 0, Math.PI * 2); ctx.stroke();
+        for (let k = 0; k < 8; k++) { const a = this.t * 0.01 + (k * Math.PI) / 4; ctx.beginPath(); ctx.moveTo(x, y - 18); ctx.lineTo(x + Math.cos(a) * 13, y - 18 + Math.sin(a) * 13); ctx.stroke(); ctx.fillRect(Math.round(x + Math.cos(a) * 13) - 1, Math.round(y - 18 + Math.sin(a) * 13), 3, 2); }
+        ctx.fillRect(x - 6, y - 6, 2, 6); ctx.fillRect(x + 4, y - 6, 2, 6);
+      } else if (i === 2) { // home
+        ctx.fillRect(x - 14, y - 12, 28, 12);
+        ctx.beginPath(); ctx.moveTo(x - 17, y - 12); ctx.lineTo(x, y - 22); ctx.lineTo(x + 17, y - 12); ctx.fill();
+        ctx.fillRect(x + 8, y - 24, 3, 6);
+        ctx.fillStyle = W; ctx.fillRect(x - 9, y - 9, 3, 3); ctx.fillRect(x + 6, y - 9, 3, 3); ctx.fillStyle = D; ctx.fillRect(x - 1, y - 7, 3, 7);
+      } else if (i === 3) { // the Bridge-Tunnel
+        ctx.fillRect(x - 40, y - 8, 70, 2);
+        for (let k = -36; k < 30; k += 10) ctx.fillRect(x + k, y - 6, 2, 6);
+        ctx.fillRect(x + 28, y - 14, 16, 14); ctx.fillStyle = D; ctx.fillRect(x + 32, y - 9, 8, 9);
+      } else if (i === 4) { // CHKD
+        ctx.fillRect(x - 16, y - 24, 32, 24); ctx.fillRect(x - 6, y - 30, 12, 6);
+        ctx.fillStyle = W; for (let r = 0; r < 3; r++) for (let c = 0; c < 5; c++) ctx.fillRect(x - 13 + c * 6, y - 21 + r * 6, 3, 3);
+        ctx.fillStyle = '#d87878'; ctx.fillRect(x - 1, y - 29, 2, 4); ctx.fillRect(x - 2, y - 28, 4, 2);
+      } else {              // the No.1 Ditch sign
+        ctx.fillRect(x - 1, y - 14, 2, 14);
+        ctx.fillStyle = '#3a8a5a'; ctx.fillRect(x - 13, y - 22, 26, 10);
+        F().draw(ctx, 'No.1', x - 10, y - 21, '#f4f4f0');
+      }
+    },
+    drawLogo(ctx) {
+      if (!this._logo) {
+        const c = G.canvas(G.W, 72), x = c.getContext('2d');
+        const small = 'JOURNEY TO THE';
+        F().draw(x, small, Math.round((G.W - F().width(small)) / 2), 4, '#ffffff', { shadow: '#1c1424' });
+        const grad = (row) => ['#fff4b0', '#ffe070', '#ffd040', '#ffb830', '#ff9a28', '#f07820', '#e05818', '#c84818', '#a83810'][row] || '#a83810';
+        const l1 = 'NUMBER ONE';
+        F().drawBig(x, l1, Math.round((G.W - F().bigWidth(l1, 2)) / 2), 16, 2, grad, '#2a1420');
+        this._logo = c;
+        const d = G.canvas(G.W, 40), dx = d.getContext('2d'), l2 = 'DITCH';
+        F().drawBig(dx, l2, Math.round((G.W - F().bigWidth(l2, 3)) / 2), 2, 3, grad, '#2a1420');
+        this._logo2 = d;
+        this._shine = G.canvas(G.W, 72);
+      }
+      const bob = Math.round(Math.sin(this.t / 30) * 1.5);
+      // the shine: a bright diagonal band, only where the letters are
+      const k = this.t % 260, sx = -40 + k * 7;
+      const sh = this._shine, s = sh.getContext('2d');
+      s.clearRect(0, 0, G.W, 72);
+      s.globalCompositeOperation = 'source-over';
+      s.drawImage(this._logo, 0, 0); s.drawImage(this._logo2, 0, 40 + bob);
+      if (k < 45) {
+        s.globalCompositeOperation = 'source-atop';
+        s.fillStyle = 'rgba(255,255,240,0.7)';
+        s.beginPath(); s.moveTo(sx, 0); s.lineTo(sx + 10, 0); s.lineTo(sx - 20, 72); s.lineTo(sx - 30, 72); s.fill();
+        s.globalCompositeOperation = 'source-over';
+      }
+      ctx.drawImage(sh, 0, 6);
     },
   };
 
@@ -1027,12 +1157,27 @@
       acc -= STEP;
     }
     G.scene.draw(ctx);
+    G.drawOverlays(ctx);
+    requestAnimationFrame(frame);
+  }
+  // the circle wipe and the fade, over everything (the trailer rig draws these too)
+  G.drawOverlays = (ctx) => {
+    if (G.iris > 0) {
+      // the circle wipe, centered on Nate (or the middle of the screen, off the map)
+      const pl = G.scene === G.play && G.play.player, cam = G.play.cam;
+      const cx = pl ? Math.round(pl.x - cam.x) : G.W / 2, cy = pl ? Math.round(pl.y - 10 - cam.y) : G.H / 2;
+      const far = Math.hypot(Math.max(cx, G.W - cx), Math.max(cy, G.H - cy)) + 4;
+      const k = G.iris, r = k >= 1 ? 0 : far * (1 - k) * (1 - k * 0.15);
+      ctx.fillStyle = '#000';
+      ctx.beginPath(); ctx.rect(0, 0, G.W, G.H);
+      if (r > 0) ctx.arc(cx, cy, r, 0, Math.PI * 2, true);
+      ctx.fill('evenodd');
+    }
     if (G.fade > 0) {
       ctx.fillStyle = `rgba(0,0,0,${G.fade})`;
       ctx.fillRect(0, 0, G.W, G.H);
     }
-    requestAnimationFrame(frame);
-  }
+  };
   requestAnimationFrame(frame);
 
   // Handy for testing from the console.
