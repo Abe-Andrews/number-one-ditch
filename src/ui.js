@@ -265,7 +265,7 @@
     { id: 'animals', name: 'Animal Friends', short: 'Animals', icon: 'paw', when: () => G.state.party.includes('hannah'), count: () => [G.animalsFound(), G.ANIMALS.length], blurb: 'Every animal Hannah has made friends with. Bring her along: animals won\'t attack her, and Z says hello.' },
     { id: 'teeth', name: 'Tooth Book', icon: 'tooth', when: () => G.state.flags.fin_done, count: () => [G.fossilsFound(), G.FOSSILS.length], blurb: 'Everything Nate has sifted out of the Number One Ditch and the pile in Aurora. Every kind is a real fossil from the old sea floor under the coast.' },
     { id: 'dunks', name: 'Dunk Log', short: 'Dunks', icon: 'splash', when: () => G.dunksFound() > 0, count: () => [G.dunksFound(), G.DUNKS.length], blurb: 'Every body of water Abe has thrown Nate into. Say the sacred number three times and he\'ll find the nearest one.' },
-    { id: 'instruments', name: 'Instruments', icon: 'guitar', count: () => [G.instrumentsCount(), G.INSTRUMENTS.length], blurb: 'Nate\'s instruments: the ones he builds, and the ones he earns jamming with Abe. More to come.' },
+    { id: 'instruments', name: 'Instruments', icon: 'guitar', count: () => [G.instrumentsCount(), G.INSTRUMENTS.length], blurb: 'Nate\'s instruments: the ones he builds, and the ones he earns jamming with Abe.' },
   ];
   const colls = () => COLLECTIONS.filter((c) => !c.when || c.when());
   // the pipes page also has the one Dad gave Nate, first
