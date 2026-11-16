@@ -718,7 +718,7 @@
     if (f.chemMet) add('The Chem Final', f.chemPerfect && 'Perfect!', f.chemPassed ? 'Retake for a heart' : 'Not passed yet', 'Lafayette - Science Center', f.chemPassed ? 'Ace it without saying the sacred number for a heart container.' : 'Dr. Nataro is giving the final in the Science Center.');
     if (f.ticketQuest) {
       const left = s.items.tickets || 0;
-      add('Doron\'s spare tickets', f.ticketsDone, left ? G.sayable(left) + ' left' : 'Tell Doron', 'Lafayette + Easton Fair', left ? 'Offer the tickets to people around campus and the fair. Most say no.' + (f.dadBeaten ? ' (They\'re for next week\'s show now.)' : '') : 'All given away! Go tell Doron.', [4 - left, 4]);
+      add('Doron\'s spare tickets', f.ticketsDone, left ? G.sayable(left) + ' left' : 'Tell Doron', 'Lafayette + Easton Fair', left ? 'Offer the tickets to people around campus and the fair. Most say no. Anyone you\'re still doing a favor for won\'t take one until it\'s done.' + (f.dadBeaten ? ' (They\'re for next week\'s show now.)' : '') : 'All given away! Go tell Doron.', [4 - left, 4]);
     }
     if (f.rockShopOpen && !f.rockShopSeen) side.push({ name: 'Nate\'s Rock Shop', status: 'Open on College Hill', kind: 'rumor', where: 'Lafayette - College Hill', hint: 'Prof. Sunderlin gave Nate the empty shop on College Hill, past Tom\'s Pizza. Every rock he finds goes on display.' });
     if (G.rocksFound()) add('Nate\'s rocks', G.rocksFound() >= G.ROCKS.length && 'All found!', G.sayable(G.rocksFound()) + '/' + G.ROCKS.length, 'Everywhere', 'Mine the Andover mines. Every other rock is a hidden secret. See the ROCKS page.', [G.rocksFound(), G.ROCKS.length]);
@@ -1751,18 +1751,13 @@
   // He bought 6. One's his, one's Nate's. Nobody ever takes the other 4.
   const TICKET_REACTIONS = {
     'Superfan': { accept: true, lines: [['', 'A FREE TICKET?! I already have one, but now I can sit in TWO seats!']] },
-    'Grandma Rose': { accept: true, lines: [['', 'Wrestling? At my age?'], ['', '...Absolutely. Do they still use the folding chairs?']] },
+    'Grandma Rose': { accept: true, busy: (f) => !f.roseTraded, lines: [['', 'Wrestling? At my age?'], ['', '...Absolutely. Do they still use the folding chairs?']] },
     'Gus': { accept: true, lines: [['', 'Haven\'t been to a wrestling show since \'89.'], ['', 'Sure. Why not. The lawn can wait.']] },
-    'Ben': { accept: true, lines: [['', 'Is this another one of Abe\'s tricks?'], ['n', 'No. It\'s one of Doron\'s.'], ['', '...Fine. I\'ll go.']] },
+    'Ben': { accept: true, busy: (f) => !f.phDone, lines: [['', 'Is this another one of Abe\'s tricks?'], ['n', 'No. It\'s one of Doron\'s.'], ['', '...Fine. I\'ll go.']] },
     'Attendant': { lines: [['', 'I\'m working, kid. Also, no.']] },
-    'Pyro Pete': { lines: [['', 'Kid, I\'m literally running the pyro.']] },
     'Big Earl': { lines: [['', 'Wrestling\'s fake.'], ['n', 'The pyro is real.'], ['', 'Still no.']] },
-    'Prof. Sunderlin': { lines: [['', 'I\'d rather watch sediment settle. And I do. Often.']] },
-    'Prof. Carley': { lines: [['', 'I would, but I\'m buried in New Zealand trip paperwork.'], ['', 'Have you sent in your passport info yet, Nate?']] },
     'Jack Braun': { lines: [['', 'Wrestling? No. But YOU should go.'], ['', 'Stay for the whole thing. What time will you be back?']] },
     'Bismarck': { lines: [['', 'Is that the show with the guy who yells about English? Hard pass.']] },
-    'Vendor': { lines: [['', 'And leave my Doosh unattended? Never.']] },
-    'Dr. Nataro': { lines: [['', 'I have 200 finals to grade. Nobody got the last question right. Again.']] },
     'Brooks': { lines: [['', 'I\'m literally in the middle of an exam.']] },
     'Referee': { lines: [['', 'I\'m already going. I\'m the REFEREE.']] },
   };
@@ -1781,7 +1776,9 @@
     if (!f.ticketQuest || f.ticketsGiven || !(s.items.tickets > 0)) return null;
     const r = TICKET_REACTIONS[npc.name];
     const key = 'ticket_' + npc.name;
-    if (!r || f[key]) return null;
+    // (people with a shop or a favor for Nate aren't in the list, or wait until the favor's done,
+    // so talking to them goes straight to their own thing)
+    if (!r || f[key] || (r.busy && r.busy(f))) return null;
     return (function* () {
       f[key] = r.accept ? 'yes' : 'no';
       yield G.say('Nate', f.dadBeaten ? 'Hey! Want a free ticket to {y}Micro Mayhem Wrestling{/}? Next week\'s show.' : 'Hey! Want a free ticket to {y}Micro Mayhem Wrestling{/}?');
@@ -3021,7 +3018,7 @@
       core('The Chem Final (perfect)', f.chemPerfect, 'Lafayette - Science Center', 'Get every question right without saying the sacred number.'),
       core('The EEENGLISH exam (perfect)', f.engPerfect, 'Lafayette - Pardee Hall', 'Get all seven right without saying the sacred number.'),
       row('The lab carboy', f.bidetBig, 'Lafayette - Science Center', 'With the Portable Bidet, check the safety station by the wall. Dr. Nataro has a spare jug.'),
-      core('Doron\'s spare tickets', f.ticketsDone, 'Lafayette + Easton Fair', 'Offer them to everybody you can find, then tell Doron how it went.'),
+      core('Doron\'s spare tickets', f.ticketsDone, 'Lafayette + Easton Fair', 'Offer them to everybody you can find (finish their favors first), then tell Doron how it went.'),
       core('The main event', f.dadBeaten, 'Easton Fair - the Expo Hall', 'Beat El EEENGLISH in the ring.'),
       core('The protesters', f.protestReward, 'Easton Fair', 'Hear out every protester at the fair. All of them. Nobody ever does.'),
       row('Grandma Rose\'s funnel cake', f.roseTraded, 'Easton Fair', 'Grandma Rose is wandering the fair, and she\'ll trade for a funnel cake.'),
@@ -14054,13 +14051,12 @@
         ctx.fillStyle = 'rgba(14,20,72,0.5)';
         ctx.fillRect(0, 0, G.W, G.H);
       } else if (f.doronDeal) {
-        // banded sunset: purple sky up top fading into orange
-        ctx.fillStyle = 'rgba(255,110,40,0.26)';
-        ctx.fillRect(0, 0, G.W, G.H);
-        ctx.fillStyle = 'rgba(80,30,130,0.26)';
-        ctx.fillRect(0, 0, G.W, 56);
-        ctx.fillStyle = 'rgba(80,30,130,0.14)';
-        ctx.fillRect(0, 56, G.W, 40);
+        // sunset: purple up top melting smoothly into orange (no hard bands)
+        const g = ctx.createLinearGradient(0, 0, 0, G.H);
+        g.addColorStop(0, 'rgba(110,40,140,0.4)');
+        g.addColorStop(0.45, 'rgba(210,80,90,0.3)');
+        g.addColorStop(1, 'rgba(255,130,50,0.28)');
+        ctx.fillStyle = g; ctx.fillRect(0, 0, G.W, G.H);
       }
     },
     setup(w) {
