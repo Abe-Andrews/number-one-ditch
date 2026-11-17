@@ -13662,7 +13662,7 @@
   // on foot, out onto the trestle (and on to the first island)
   S.tollWalkOut = function* () {
     if (!flags().tollMet) { yield* S.tollEdge('I should talk to the toll collector first.')(); return; }
-    G.play.warp('cbbt', 14, 41, 'up');
+    G.play.warp('cbbt', 14, 57, 'up');
   };
   S.tollEdge = (line) => function* () {
     const p = P();
@@ -13938,7 +13938,9 @@
     name: 'Chesapeake Bay Bridge-Tunnel',
     music: 'bay',
     tiles() {
-      const W = 30, H = 44;
+      // (H: a long run of trestle south of the island, so Nate walking out from the toll plaza
+      // has room before the first gull)
+      const W = 30, H = 60;
       const g = Array.from({ length: H }, () => Array(W).fill('y'));
       // the island: rounded, armored all the way around with riprap
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
@@ -13973,6 +13975,8 @@
       };
       lamp(12, 13, true, false); lamp(17, 17, false, true); lamp(12, 21, true); lamp(17, 25, false, false);
       lamp(12, 31, true, false); lamp(17, 35, false, true); lamp(12, 39, true, true); lamp(17, 42, false, false);
+      // the long trestle back toward the toll plaza: lights, no gulls
+      lamp(12, 47, true); lamp(17, 51, false); lamp(12, 55, true);
       // the lookout: a viewer, a bench, a trash can the gulls have been working on
       w.addProp({ img: G.spr.bayViewer, tx: 7, ty: 13, dx: 1, solid: [7, 13, 1, 1], hit: [7, 13, 1, 1], talk: S.bayViewer });
       w.addProp({ img: G.spr.teakBench, tx: 5, ty: 15, solid: [5, 15, 2, 1], hit: [5, 15, 2, 1], talk: look('A bench facing the bay. The gulls have claimed it. Nate respects that.') });
@@ -14003,7 +14007,7 @@
         yield G.itemGet(G.spr.toothGold, 'Tucked behind the rocks: {y}30 shark teeth{/}! Probably a gull\'s stash.');
         G.play.addTeeth(30);
       }));
-      w.addTrigger(13, 43, 4, 1, () => G.script.run(S.cbbtTrestleEnd()));
+      w.addTrigger(13, 59, 4, 1, () => G.script.run(S.cbbtTrestleEnd()));
     },
     onEnter() { return S.cbbtArrive(); },
   };
