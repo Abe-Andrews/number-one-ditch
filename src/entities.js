@@ -5166,7 +5166,8 @@
     constructor(p) {
       super(p.x, p.y);
       const [dx, dy] = DIRS[p.dir];
-      Object.assign(this, { owner: p, dir: p.dir, vx: dx * 4.5, vy: dy * 4.5, state: 'out', dist: 0, max: 104 });
+      // (max: how far the cast goes. It was 104, and that made the rod too strong)
+      Object.assign(this, { owner: p, dir: p.dir, vx: dx * 4.5, vy: dy * 4.5, state: 'out', dist: 0, max: 72 });
       this.x = p.x + dx * 10; this.y = p.y + dy * 6;
     }
     hookBox() { return [this.x - 5, this.y - 14, this.x + 5, this.y - 2]; }
