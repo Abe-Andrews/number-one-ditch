@@ -118,6 +118,9 @@
       if (this.inv > 0) this.inv--;
       if (this.noT > 0) this.noT--;
       if (this.relayCd > 0) this.relayCd--;
+      // out on the bay (G.MAPS.bayBoat), Nate is driving Matt's boat: a much longer box to bump around
+      const boat = !!(w.def && w.def.boat);
+      if (boat !== !!this.inBoat) { this.inBoat = boat; this.hb = boat ? { w: 40, h: 10 } : { w: 10, h: 6 }; this.state = 'walk'; this.bvx = this.bvy = 0; }
       if (G.script.busy) {
         if (!this.walking) this.moving = false;
         // (a swing that sets off a cutscene puts the hammer away, instead of freezing mid-swing)
@@ -125,6 +128,7 @@
         return;
       }
       const inp = G.input;
+      if (boat) { this.boatUpdate(w, inp); return; }
 
       // cradled like a baby (possessed Hannah has him): every button mashed wiggles him a little closer to free
       if (this.state === 'cradled') {
@@ -214,6 +218,36 @@
         inp.eat('b');
         if (!G.state.playAs) G.play.useItem();
       }
+    }
+
+    // Steering the boat: it takes a moment to get going and to stop, and bounces off the rocks.
+    // Z at a spot (G.boatInteract) fishes it, or heads in at the dock.
+    boatUpdate(w, inp) {
+      const d = inp.dir(), top = 1.9;
+      this.bvx = (this.bvx || 0) + (d.x * top - (this.bvx || 0)) * 0.035;
+      this.bvy = (this.bvy || 0) + (d.y * top * 0.8 - (this.bvy || 0)) * 0.035;
+      if (w.move(this, this.bvx, 0).hitX) this.bvx *= -0.3;
+      if (w.move(this, 0, this.bvy).hitY) this.bvy *= -0.3;
+      if (d.x) this.face = d.x < 0 ? 'left' : 'right';
+      this.dir = this.face || 'right';
+      this.moving = Math.abs(this.bvx) + Math.abs(this.bvy) > 0.15;
+      if (inp.hit('a')) { inp.eat('a'); G.boatInteract(w); } else if (inp.hit('b')) inp.eat('b');
+    }
+
+    // Matt's boat from above-ish (the side-on sprite, bow the way it's headed): Matt at the console,
+    // Nate up front, a wake out the back when it's moving
+    drawBoat(ctx, cx, cy) {
+      const left = this.face === 'left', bob = Math.round(Math.sin(G.tick * 0.08));
+      const x = Math.round(this.x - 26) - cx, y = Math.round(this.y - 16 + bob) - cy;
+      if (this.moving) {
+        ctx.fillStyle = 'rgba(240,248,252,0.85)';
+        for (let i = 1; i <= 5; i++) ctx.fillRect(left ? x + 50 + i * 5 : x - i * 5, y + 15 + ((i + (G.tick >> 3)) & 1) * (i > 2 ? 2 : 1), 3, 1);
+      }
+      const m = G.sprites.matt[left ? 'left' : 'right'][0], n = G.nateSprites()[left ? 'left' : 'right'][0];
+      ctx.drawImage(left ? G.spr.mattBoatL : G.spr.mattBoat, x, y);
+      ctx.drawImage(m, left ? x + 52 - 13 - m.width : x + 13, y + 13 - m.height);
+      ctx.drawImage(n, left ? x + 52 - 32 - n.width : x + 32, y + 13 - n.height);
+      ctx.drawImage(left ? G.spr.mattHullL : G.spr.mattHull, x, y);
     }
 
     // Cracked ice: step (or slide) into open water and Nate falls in, loses half
@@ -363,6 +397,7 @@
 
     draw(ctx, cx, cy) {
       if (this.hidden || this.state === 'cradled') return;   // (cradled: Hannah draws him in her arms)
+      if (this.inBoat) { this.drawBoat(ctx, cx, cy); return; }
       const S = this.spr;
       // (fainting comes before the after-hit blink, which would otherwise freeze him invisible)
       if (this.state === 'dead') { this.drawFaint(ctx, cx, cy); return; }
@@ -5529,7 +5564,7 @@
     constructor(x, y) {
       super(x, y);
       Object.assign(this, { enemy: true, boss: true, name: 'TYLER', hp: 26, maxHp: 26, hb: { w: 12, h: 8 }, t: 0,
-        state: 'pace', st: 60, dir: 'down', anim: 0, hurtT: 0, kb: { x: 0, y: 0 }, cycle: 0, phase: 1, goal: { x, y } });
+        state: 'pace', st: 90, dir: 'down', anim: 0, hurtT: 0, kb: { x: 0, y: 0 }, cycle: 0, phase: 1, goal: { x, y }, grace: 60 });
     }
     get S() { return G.sprites.tylerHypno; }
     hurtBox() { return [this.x - 7, this.y - 24, this.x + 7, this.y]; }
@@ -5576,7 +5611,9 @@
         G.script.run(G.SCRIPTS.tylerPhase(this));
         return;
       }
-      if (this.state !== 'dizzy' && this.state !== 'reeled' && this.state !== 'yank' && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(this.state === 'charge' ? 2 : 1, this.x, this.y);
+      // (for the first second he only backs off up the tunnel: bumping into him doesn't hurt yet)
+      if (this.grace > 0) this.grace--;
+      else if (this.state !== 'dizzy' && this.state !== 'reeled' && this.state !== 'yank' && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(this.state === 'charge' ? 2 : 1, this.x, this.y);
       this.moving = false;
       switch (this.state) {
         case 'yank': {

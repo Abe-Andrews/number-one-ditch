@@ -374,6 +374,10 @@
       kind: 'key', name: 'Abe\'s Metronome', short: 'Metronome', icon: () => G.spr.metronomeIcon, has: () => !!st().items.metronome,
       desc: 'A little wooden metronome from Abe, for keeping time in Studio B at the Williams Center. "Not your foot. Your foot lies."',
     },
+    boatKey: {
+      kind: 'key', name: 'Matt\'s Boat Key', short: 'Boat Key', icon: () => G.spr.boatKey, has: () => !!st().items.boatKey,
+      desc: 'The key to Matt Oliver\'s survey boat, on a foam float so it can\'t sink. Ask Matt on Island 2 to take the boat out, and fish anywhere on the bay.',
+    },
     rushTrophy: {
       kind: 'key', name: 'Boss Rush Trophy', short: 'Trophy', icon: () => G.spr.rushTrophy, has: () => !!st().items.rushTrophy,
       desc: () => 'Every boss, back to back, without fainting once. ' + (st().rushTime ? 'Best time: ' + G.rushClock(st().rushTime) + '. ' : '') + 'The engraving says NUMBER ONE. Doron says it\'s a participation trophy.',
@@ -527,7 +531,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'rushTrophy', 'mosasaurTooth', 'globBookmark', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'trapBook', 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'rushTrophy', 'mosasaurTooth', 'boatKey', 'globBookmark', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'trapBook', 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -1353,15 +1357,41 @@
       yield G.say('Vendor', 'I... fine. Doosh De Luche.');
       f.metVendor = true;
     }
+    yield* S.vendorSell();
+  };
+  // (the same cart, the same vendor, the same Doosh: on campus, and out on the bridge-tunnel)
+  S.vendorSell = function* () {
+    const f = flags(), s = G.state;
     const c = yield G.ask('Vendor', 'One Doosh De Luche: {y}10 shark teeth{/}. Heals 4 hearts.', ['Buy one', 'No thanks']);
     if (c !== 0) { yield G.say('Vendor', 'Come back when you\'re craving Doosh.'); return; }
     if (s.items.doosh >= 3) { yield G.say('Vendor', 'Your pockets are already full of Doosh. That\'s a lot of Doosh.'); return; }
     if (s.teeth < 10) { yield G.say('Vendor', 'That\'s not enough teeth. Try whacking some tall grass.'); return; }
     G.play.addTeeth(-10);
-    s.items.doosh++;
+    s.items.doosh = (s.items.doosh || 0) + 1;
     f.hadDoosh = true;
     if (!s.xItem) s.xItem = 'doosh';
     yield G.itemGet(G.spr.doosh, 'You got a {y}Doosh De Luche{/}! Press {y}X{/} to eat it and heal 4 hearts.');
+  };
+  S.bayVendor = function* () {
+    const f = flags();
+    if (!f.bayVendorMet) {
+      f.bayVendorMet = true;
+      if (f.metVendor) {
+        yield G.say('Vendor', 'Ice cream! Get your fresh dulce de... oh. It\'s you.');
+        yield G.say('Nate', 'You\'re on an ISLAND. In the middle of the BAY.');
+        yield G.say('Vendor', 'Summer job. I go where the people are.');
+        yield G.say('Nate', 'They closed the tunnels. There are no people.');
+        yield G.say('Vendor', 'There\'s you.');
+      } else {
+        yield G.say('Vendor', 'Ice cream! Get your fresh dulce de leche! Out here in the middle of the bay!');
+        yield G.say('Nate', 'One {y}Doosh De Luche{/}, please.');
+        yield G.say('Vendor', '...It\'s dulce de leche.');
+        yield G.say('Nate', 'That\'s what I said. Doosh De Luche.');
+        yield G.say('Vendor', 'I... fine. Doosh De Luche.');
+        f.metVendor = true;
+      }
+    }
+    yield* S.vendorSell();
   };
 
   // Groundskeeper Gus found Nate's cap. He'll trade it for 10 bonked Sixes.
@@ -4048,6 +4078,7 @@
     { name: 'Dad\'s pipe bench (workshop)', map: 'garage', at: [10, 10, 'up'] },
     { name: 'Bay Bridge-Tunnel: the toll plaza', map: 'cbbtToll', at: [17, 13, 'left'], teeth: 520 },
     { name: 'The Two-Liter (Chesapeake Channel Tunnel)', map: 'chesTunnel', at: [7, 26, 'up'], flags: { cbbtArrived: true, tollMet: true, chesSeen: true }, items: { rod: true } },
+    { name: 'Out on the bay in Matt\'s boat', map: 'bayBoat', at: [14, 6, 'right'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, rodQuest: true, fishQuest: true, mattMet: true, fishHow: true, fishHow2: true, boatOut: true }, items: { rod: true, boatKey: true }, teeth: 120 },
     { name: 'Island 2: Matt Oliver\'s boat (fishing)', map: 'cbbtMid', at: [14, 7, 'down'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, rodQuest: true, fishQuest: true }, items: { rod: true }, teeth: 120 },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
     { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [55, 1, 'down'], flags: { tylerBeaten: true } },
@@ -13010,7 +13041,9 @@
     yield* S.tylerFightStart();
   };
   S.tylerFightStart = function* () {
-    const f = flags(), w = G.play.world, h = w.hooded;
+    const f = flags(), w = G.play.world, h = w.hooded, p = P();
+    // (Nate backs off a few steps first, so the fight doesn't start with Tyler right on top of him)
+    if (p.y - h.y < 56) { yield G.walkTo(p, p.x, h.y + 56, 1.2); p.dir = 'up'; }
     yield G.camFocus(null, null, 20);
     if (!f.tylerTutorial) {
       f.tylerTutorial = true;
@@ -13162,16 +13195,27 @@
   };
   S.matt = function* () {
     const f = flags(), s = G.state;
-    const c = yield G.ask('Matt', f.fishTrips ? 'Back out on the water? Same deal: you catch them, I pay in shark teeth.' : 'Ready to head out? We fish until the tide turns.', ['Let\'s go fishing', 'Not now']);
+    const q = f.fishTrips ? 'Back out on the water? Same deal: you catch them, I pay in shark teeth.' : 'Ready to head out? We fish until the tide turns.';
+    const opts = s.items.boatKey ? ['Fish right here', 'Take the boat out', 'Not now'] : ['Let\'s go fishing', 'Not now'];
+    const c = yield G.ask('Matt', q, opts);
+    if (c === 1 && s.items.boatKey) { yield* S.boatOut(); return; }
     if (c !== 0) { yield G.say('Matt', 'I\'ll be right here. So will the fish. Probably.'); return; }
+    yield* S.mattTrip(null);
+  };
+  // one trip, off the side of the boat: tied up at Island 2 (spot null), or out at one of the
+  // spots on the bay (FISH_SPOTS), where the fish are different
+  S.mattTrip = function* (spot) {
+    const f = flags(), s = G.state;
+    sceneSpot = spot;
     yield G.fadeOut(20);
     G.play.overlay = { draw: (ctx) => bayScene(ctx, G.tick) };
     yield G.fadeIn(20);
     // (the card got new rules, so it shows once more for anybody who's fished before)
     if (!f.fishHow2) { f.fishHow = f.fishHow2 = true; yield howToCmd('FISHING WITH MATT', FISH_HOW, bayBack); }
-    const r = yield fishCmd(dadTalk(MATT_TALK, 'matt', []));
+    const r = yield fishCmd(dadTalk(MATT_TALK, 'matt', []), spot);
     yield G.fadeOut(20);
     G.play.overlay = null;
+    sceneSpot = null;
     yield G.fadeIn(20);
     f.fishTrips = (f.fishTrips || 0) + 1;
     const n = Object.keys(r.caught).reduce((a, k) => a + (k === 'boot' ? 0 : r.caught[k]), 0);
@@ -13189,11 +13233,160 @@
       yield G.say('Matt', 'Nate. You caught an Atlantic sturgeon. I have been doing this survey for YEARS.');
       yield G.say('Matt', 'They\'re endangered, and they can live sixty years. She\'s back in the bay now, safe. I\'m going to be telling people about this one forever.');
     }
+    if (r.caught.lumpsucker && !f.lumpsuckerCaught) {
+      f.lumpsuckerCaught = true;
+      yield G.say('Matt', 'Nate. A spiny lumpsucker. In the Chesapeake Bay. Nobody is going to believe this. I barely believe this.');
+      yield G.say('Matt', 'They\'re about the size of a ping-pong ball, and they\'ve got a suction cup on their belly. It stuck right to my thumb before it let go.');
+      yield G.say('Matt', 'I took eleven pictures. I am writing a paper about this.');
+    }
     if (!f.tollPaid && s.teeth >= 500) {
       yield G.say('Nate', G.sayable(s.teeth) + ' shark teeth! That\'s enough for the toll!');
       yield G.say('Matt', 'Then go get through that tunnel. And Nate? Tell your family I said hi.');
     } else if (!f.tollPaid) yield G.say('Matt', 'Want to go back out? You\'re up to ' + G.sayable(s.teeth) + '. Five hundred teeth is a lot of fish.');
+    // three trips in, Matt trusts Nate with the boat
+    if (f.fishTrips >= 3 && !s.items.boatKey) {
+      yield G.say('Matt', 'Nate. Three trips. You\'re the best deckhand I\'ve had all summer. My only deckhand, but still.');
+      s.items.boatKey = true;
+      G.audio.sfx('chest');
+      yield G.itemGet(G.spr.boatKey, 'You got {y}Matt\'s Boat Key{/}! Now you can take the boat out and fish anywhere on the bay.');
+      yield G.say('Matt', 'There are spots out there I never get to: the old wreck, the channel edge, the grass flats.');
+      yield G.say('Matt', 'And way out east, there\'s a cold, deep hole that nobody can explain. Weird things turn up out there.');
+      yield G.say('Matt', 'You drive. I\'ll hold the clipboard. Just ask me when you want to take her out.');
+    }
     G.play.autosave();
+  };
+
+  // ---- OUT ON THE BAY in Matt's boat (with Matt's boat key): Nate drives (the Player is the boat on
+  // a map with def.boat), and pulls up to spots where the fish are different. Only the cold hole way
+  // out east has the spiny lumpsucker; the channel is where the sturgeon run; cobia hang off the wreck.
+  // fish: the weights for that spot (anything missing doesn't bite there). x, y: tiles on G.MAPS.bayBoat.
+  const FISH_SPOTS = G.FISH_SPOTS = {
+    flats: { name: 'The Grass Flats', x: 16, y: 27, line: 'The grass flats. Shallow and green. Flounder and crabs love it in here.',
+      fish: { spot: 5, croaker: 3, flounder: 3.5, crab: 3.5, bluefish: 1, striper: 1, cobia: 0.2 } },
+    wreck: { name: 'The Old Wreck', x: 31, y: 18, line: 'The old wreck. A barge sank here in the fifties. Now it\'s a reef. Cobia love hanging off it.',
+      fish: { spot: 3, croaker: 4, striper: 3, bluefish: 2, crab: 1, flounder: 0.5, cobia: 1.4, sturgeon: 0.08 } },
+    channel: { name: 'The Channel Edge', x: 42, y: 7, line: 'The edge of the shipping channel. It drops off fast here. Big fish cruise the drop.',
+      fish: { spot: 2, croaker: 2, bluefish: 3, striper: 3, flounder: 0.5, crab: 0.3, cobia: 0.8, sturgeon: 0.5 } },
+    deep: { name: 'The Cold Hole', x: 45, y: 30, line: 'The cold hole. Feel how cold that water is? It shouldn\'t be this cold. Not in the Chesapeake.',
+      fish: { spot: 2, croaker: 3, striper: 1.5, bluefish: 0.5, flounder: 0.5, sturgeon: 0.5, lumpsucker: 0.18 } },
+  };
+  const BOAT_DOCK = [16, 6];
+  S.boatOut = function* () {
+    const f = flags();
+    yield G.fadeOut(20);
+    G.play.warp('bayBoat', BOAT_DOCK[0], BOAT_DOCK[1], 'right');
+    yield G.fadeIn(20);
+    if (!f.boatOut) {
+      f.boatOut = true;
+      yield G.say('Matt', 'She\'s all yours, captain. Arrow keys to steer. Pull up to a spot and press Z to fish.');
+      yield G.say('Matt', 'Look for the signs: grass in the shallows, a mast sticking up, the channel buoys, and the dark water way out east.');
+      yield G.say('Matt', 'When you want to head in, bring her back to the island.');
+    }
+  };
+  S.boatSpot = function* (id) {
+    const sp = FISH_SPOTS[id], f = flags();
+    f.spotsSeen = Object.assign({}, f.spotsSeen, { [id]: true });
+    const c = yield G.ask('Matt', sp.line, ['Fish here', 'Keep looking']);
+    if (c !== 0) return;
+    yield* S.mattTrip(id);
+  };
+  S.boatHome = function* () {
+    const c = yield G.ask('Matt', 'Back to the island?', ['Head in', 'Stay out']);
+    if (c !== 0) return;
+    yield G.fadeOut(20);
+    G.play.warp('cbbtMid', 23, 11.9, 'right');
+    yield G.fadeIn(20);
+  };
+  // nowhere in particular
+  S.boatNothing = function* () {
+    yield G.say('Matt', ['Just open water here. Look for something different: grass, a mast, buoys, dark water.', 'Nothing biting here. Try somewhere with some structure.', 'Keep cruising. The good spots look different.'][Math.floor(Math.random() * 3)]);
+  };
+
+  G.MAPS.bayBoat = {
+    name: 'Out on the Bay',
+    music: 'bay',
+    boat: true,
+    noFollower: true,
+    tiles() {
+      // open water east of the bridge-tunnel: island 2 up in the corner, the trestle heading south
+      const W = 52, H = 38;
+      const g = Array.from({ length: H }, () => Array(W).fill('y'));
+      for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+        const d = Math.abs((x - 5) / 8.5) ** 4 + Math.abs((y - 3.5) / 6.5) ** 4;
+        if (d <= 1) g[y][x] = d > 0.45 ? '^' : '.';
+      }
+      for (let y = 0; y < 10; y++) for (let x = 2; x <= 9; x++) if (g[y][x] === '.') g[y][x] = 'C';
+      for (let y = 0; y < H; y++) {
+        for (let x = 3; x <= 6; x++) if (y >= 8 || g[y][x] !== 'y') g[y][x] = x === 5 ? 't' : '+';
+        if (y >= 10) { g[y][2] = '!'; g[y][7] = '!'; }
+      }
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr;
+      // Matt's dock on the island: tie up here to head in
+      w.props.push({ base: 6 * 16, draw(ctx, cx, cy) {
+        const x = 12 * 16 + 8 - cx, y = 5 * 16 + 6 - cy;
+        ctx.fillStyle = '#8a6a48'; ctx.fillRect(x, y, 30, 10);
+        ctx.fillStyle = '#6a4e34'; for (let i = 0; i < 7; i++) ctx.fillRect(x + 1 + i * 4, y, 1, 10);
+        ctx.fillStyle = '#4a3828'; ctx.fillRect(x + 27, y + 8, 3, 6); ctx.fillRect(x + 14, y + 8, 3, 6);
+      } });
+      // the spots, each with its own look on the water
+      w.spots = [{ id: 'dock', x: 15 * 16, y: 6 * 16 + 8 }].concat(Object.keys(FISH_SPOTS).map((id) => ({ id, x: FISH_SPOTS[id].x * 16 + 8, y: FISH_SPOTS[id].y * 16 + 8 })));
+      w.props.push({ base: -1000, draw(ctx, cx, cy) {
+        const t = G.tick;
+        for (const s of w.spots) {
+          const x = s.x - cx, y = s.y - cy;
+          if (x < -60 || y < -60 || x > G.W + 60 || y > G.H + 60) continue;
+          if (s.id === 'deep') {
+            ctx.fillStyle = 'rgba(8,24,60,0.45)';
+            for (let r = 40; r > 0; r -= 10) { ctx.beginPath(); ctx.ellipse(x, y, r * 1.3, r * 0.8, 0, 0, Math.PI * 2); ctx.fill(); }
+            if ((t >> 4) % 5 === 0) { ctx.fillStyle = '#c8e4f4'; ctx.fillRect(x - 6 + ((t >> 6) % 12), y - 4, 2, 2); }
+          } else if (s.id === 'flats') {
+            ctx.fillStyle = 'rgba(120,190,120,0.35)'; ctx.beginPath(); ctx.ellipse(x, y, 48, 26, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#4a9a4a';
+            for (let i = 0; i < 14; i++) { const gx = x - 40 + ((i * 37) % 80), gy = y - 16 + ((i * 23) % 32), sw = Math.round(Math.sin(t * 0.05 + i)); ctx.fillRect(gx + sw, gy, 1, 3); ctx.fillRect(gx + 2, gy + 1, 1, 3); }
+          } else if (s.id === 'wreck') {
+            ctx.fillStyle = 'rgba(40,50,60,0.35)'; ctx.fillRect(x - 26, y - 4, 52, 12);
+            ctx.fillStyle = '#5a4a3a'; ctx.fillRect(x + 4, y - 26, 2, 26); ctx.fillRect(x - 2, y - 20, 12, 2);
+            ctx.fillStyle = '#3a2e24'; ctx.fillRect(x - 12, y - 3, 6, 3);
+          } else if (s.id === 'channel') {
+            for (const [bx, col] of [[-30, '#c83434'], [30, '#3a9a4a']]) {
+              const b = Math.round(Math.sin(t * 0.06 + bx) * 1.5);
+              ctx.fillStyle = col; ctx.fillRect(x + bx - 3, y - 12 + b, 6, 9); ctx.fillRect(x + bx - 2, y - 15 + b, 4, 3);
+              ctx.fillStyle = '#f4f4f0'; ctx.fillRect(x + bx - 4, y - 3 + b, 8, 2);
+            }
+          }
+          // a slow ring on the water: something's down there
+          if (s.id !== 'dock') {
+            const k = (t % 90) / 90;
+            ctx.strokeStyle = 'rgba(232,244,252,' + (0.5 * (1 - k)).toFixed(2) + ')'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.ellipse(x, y + 4, 6 + k * 18, 3 + k * 9, 0, 0, Math.PI * 2); ctx.stroke();
+          }
+        }
+      } });
+      // the spot's name, when the boat is close enough to fish it
+      w.props.push({ base: 1e9, draw(ctx) {
+        const s = G.boatSpotNear(w);
+        if (!s || G.script.busy) return;
+        const name = s.id === 'dock' ? 'MATT\'S DOCK' : FISH_SPOTS[s.id].name.toUpperCase(), wd = FT().width(name) + 30;
+        ctx.fillStyle = 'rgba(12,8,20,0.7)'; ctx.fillRect(Math.round((G.W - wd) / 2), 4, wd, 12);
+        FT().draw(ctx, name + '  (Z)', Math.round((G.W - wd) / 2) + 4, 6, '#f8d850', { shadow: '#000' });
+      } });
+      w.add(new G.Sign(8, 8, ['NO WAKE NEAR THE ISLAND.', 'Matt has a sticker on the console that says the same thing.']));
+    },
+  };
+  // the spot the boat's sitting on, if any (a little forgiving: the boat is long)
+  G.boatSpotNear = (w) => {
+    const p = G.play.player;
+    if (!w.spots || !p) return null;
+    let best = null, bd = 36;
+    for (const s of w.spots) { const d = Math.hypot(s.x - p.x, s.y - (p.y - 6)); if (d < bd) { bd = d; best = s; } }
+    return best;
+  };
+  G.boatInteract = (w) => {
+    const s = G.boatSpotNear(w);
+    G.script.run(!s ? S.boatNothing() : s.id === 'dock' ? S.boatHome() : S.boatSpot(s.id));
   };
 
   const FISH_SURF = 52, FISH_BOTTOM = 124, FISH_TRIP = 75 * 60, ROD_TIP = [146, 14], BOAT_X = 44;
@@ -13216,6 +13409,8 @@
     'Measure it, tag it, let it go. That\'s the survey. That\'s science.',
     'When the gulls start diving, there\'s bait in the water. And something chasing it.',
     'Atlantic sturgeon can live sixty years. In all my surveys, I\'ve caught exactly one.',
+    'Spiny lumpsuckers live up north, in cold water. Shy. You\'d have to hold the hook dead still.',
+    'Sturgeon cruise the channel edge, where it drops off deep.',
   ];
   // depth: the band it swims in; speed; pull (how hard it fights); runs (the chance it runs, each frame);
   // weight (how often it shows up); bottom: it stays down on the bottom; size: [smallest, biggest] in
@@ -13229,10 +13424,14 @@
     crab: { name: 'Blue Crab', teeth: 10, size: [4, 7], depth: [FISH_BOTTOM - 4, FISH_BOTTOM - 4], speed: 0.35, pull: 0.5, runs: 0.004, weight: 1.5, bottom: true, line: 'A blue crab! It grabbed the bait and would NOT let go. Classic crab.' },
     cobia: { name: 'Cobia', teeth: 75, size: [30, 52], depth: [84, 112], speed: 0.9, pull: 1.8, runs: 0.016, weight: 0.5, line: 'COBIA!! Nate, that\'s a COBIA! I need a picture of this!' },
     sturgeon: { name: 'Atlantic Sturgeon', teeth: 150, size: [48, 84], depth: [FISH_BOTTOM - 9, FISH_BOTTOM - 6], speed: 0.45, pull: 2.2, runs: 0.018, weight: 0.12, line: 'A STURGEON! Their family goes back to the dinosaurs. Quick, let her go gently.' },
+    // (very rare, only out at the cold hole (FISH_SPOTS), and shy: it only comes over to a hook
+    // that's held perfectly still, and it lets go fast)
+    lumpsucker: { name: 'Spiny Lumpsucker', teeth: 200, size: [2, 4], depth: [FISH_BOTTOM - 12, FISH_BOTTOM - 7], speed: 0.3, pull: 2.4, runs: 0.026, weight: 0, shy: true, bite: 16, line: 'A SPINY LUMPSUCKER! Those live way up north, in cold water! What is it doing HERE?' },
     boot: { teeth: 0, pull: 0.3, runs: 0, line: 'A boot. Not a fish. I\'ll take it anyway. It doesn\'t belong in the bay.' },
   };
   G.BAY_FISH = BAY_FISH;
-  G.FISH_ORDER = ['spot', 'croaker', 'bluefish', 'striper', 'flounder', 'crab', 'cobia', 'sturgeon'];
+  G.FISH_ORDER = ['spot', 'croaker', 'bluefish', 'striper', 'flounder', 'crab', 'cobia', 'sturgeon', 'lumpsucker'];
+  G.FISH_RARE = ['cobia', 'sturgeon', 'lumpsucker'];
   // Matt's survey log: for each kind, how many Nate has caught and the biggest one (inches)
   const fishLog = () => (G.state.fishLog = G.state.fishLog || {});
   G.fishLog = fishLog;
@@ -13241,6 +13440,7 @@
   // The bay, side on: sky, the bridge-tunnel out on the horizon, the water down to the muddy bottom,
   // and Matt's boat with Matt at the console and Nate up at the bow, rod out over the water (bent
   // over by bend 0-1, with a fish on). Returns how far the boat is bobbing (the rod tip bobs with it).
+  let sceneSpot = null;  // (which spot the trip is at: S.mattTrip sets it)
   function bayScene(ctx, t, bend = 0) {
     ctx.fillStyle = '#7ab8e8'; ctx.fillRect(0, 0, G.W, 22);
     ctx.fillStyle = '#9ccce8'; ctx.fillRect(0, 22, G.W, 14);
@@ -13267,6 +13467,20 @@
     for (const [x, n] of [[22, 3], [96, 2], [132, 3], [176, 2], [204, 3]]) for (let i = 0; i < n; i++) {
       const hgt = 8 + ((x + i * 5) % 7), sway = Math.sin(t * 0.04 + x + i) * 2;
       for (let k = 0; k < hgt; k++) ctx.fillRect(Math.round(x + i * 3 + sway * (k / hgt)), FISH_BOTTOM - k, 1, 1);
+    }
+    // (out at a spot: the old wreck on the bottom, tall grass on the flats, a buoy by the channel,
+    // cold dark water at the hole)
+    if (sceneSpot === 'wreck') {
+      ctx.fillStyle = '#3e3a34'; ctx.fillRect(130, FISH_BOTTOM - 10, 70, 10); ctx.fillRect(140, FISH_BOTTOM - 16, 22, 6); ctx.fillRect(186, FISH_BOTTOM - 22, 3, 12);
+      ctx.fillStyle = '#2a2622'; for (let x = 134; x < 196; x += 9) ctx.fillRect(x, FISH_BOTTOM - 7, 4, 3);
+    } else if (sceneSpot === 'flats') {
+      ctx.fillStyle = '#4a8a3a';
+      for (let x = 8; x < G.W; x += 9) { const hgt = 14 + (x % 9), sway = Math.sin(t * 0.04 + x) * 2; for (let k = 0; k < hgt; k++) ctx.fillRect(Math.round(x + sway * (k / hgt)), FISH_BOTTOM - k, 1, 1); }
+    } else if (sceneSpot === 'channel') {
+      const b = Math.round(Math.sin(t * 0.06) * 1.5);
+      ctx.fillStyle = '#c83434'; ctx.fillRect(214, FISH_SURF - 12 + b, 7, 10); ctx.fillRect(215, FISH_SURF - 15 + b, 5, 3);
+    } else if (sceneSpot === 'deep') {
+      ctx.fillStyle = 'rgba(6,16,44,0.4)'; ctx.fillRect(0, FISH_SURF + 3, G.W, FISH_BOTTOM - FISH_SURF - 3);
     }
     const bob = Math.round(Math.sin(t * 0.05)), by = FISH_SURF - 14 + bob, m = G.sprites.matt.right[0], n = G.sprites.nate.right[0];
     ctx.drawImage(G.spr.mattBoat, BOAT_X, by);
@@ -13323,11 +13537,15 @@
   // gets landed). Result: { teeth, caught: { kind: n }, best: [kind, size], records: [kinds], survey: done }
   // (quit: true if Nate stopped early; he's still paid).
   const STREAK_MULT = (n) => (n >= 5 ? 2 : n >= 3 ? 1.5 : 1), SURVEY_BONUS = 40;
-  function fishCmd(talk) {
-    const all = () => G.FISH_ORDER.every((k) => k === 'sturgeon' || fishLog()[k]);
+  function fishCmd(talk, spot) {
+    // (once everything else is in the log, the sturgeon and the lumpsucker turn up more often, where
+    // they live at all: the lumpsucker only out at the cold hole)
+    const all = () => G.FISH_ORDER.every((k) => k === 'sturgeon' || k === 'lumpsucker' || fishLog()[k]);
+    const W = spot && FISH_SPOTS[spot] ? FISH_SPOTS[spot].fish : null;
     const pick = () => {
-      const ks = Object.keys(BAY_FISH).filter((k) => BAY_FISH[k].weight);
-      const wt = (k) => (k === 'sturgeon' && all() ? 0.4 : BAY_FISH[k].weight);
+      const base = (k) => (W ? W[k] || 0 : BAY_FISH[k].weight || 0);
+      const wt = (k) => (base(k) > 0 && all() && k === 'sturgeon' ? Math.max(base(k), 0.4) : base(k) > 0 && all() && k === 'lumpsucker' ? Math.max(base(k), 0.35) : base(k));
+      const ks = Object.keys(BAY_FISH).filter((k) => k !== 'boot' && wt(k) > 0);
       let r = Math.random() * ks.reduce((a, k) => a + wt(k), 0);
       for (const k of ks) if ((r -= wt(k)) <= 0) return k;
       return 'spot';
@@ -13360,6 +13578,7 @@
         const f = { kind, x: x != null ? x : dir > 0 ? -40 : G.W + 40, y: K.depth[0] + Math.random() * (K.depth[1] - K.depth[0]), dir, state: 'swim', ph: Math.random() * 6, sp: K.speed * (0.8 + Math.random() * 0.4) };
         this.fish.push(f);
         if (kind === 'sturgeon') talk.say('Something BIG just went by down on the bottom. Long. Real long.');
+        if (kind === 'lumpsucker') talk.say('Wait. Something tiny and round down by the bottom. No. It can\'t be.');
         return f;
       },
       pop(m) { this.msg = m; this.msgT = 60; },
@@ -13429,7 +13648,7 @@
         // the gulls find a school (once a trip): fish boil up under them and bite fast
         const B = this.blitz;
         if (!B.t && this.t >= B.at && this.state !== 'end') {
-          B.t = 12 * 60; talk.say('Birds working! See the gulls diving? There\'s a whole school under them!');
+          B.t = 12 * 60; talk.say('Bird working! See that gull diving? There\'s a whole school under it!');
           for (let i = 0; i < 6; i++) { const f = this.spawn(B.x - 30 + Math.random() * 60, Math.random() < 0.6 ? 'bluefish' : 'spot'); f.school = true; f.y = FISH_SURF + 8 + Math.random() * 30; }
         } else if (B.t > 0 && --B.t === 0) for (const f of this.fish) f.school = false;
         // dolphins going by, out past the boat
@@ -13473,6 +13692,7 @@
         return { teeth: this.earned, caught: this.caught, best: this.best, records: this.records, survey: this.surveyDone, quit: !!quit };
       },
       fishing(inp) {
+        const moved = inp.down('left') || inp.down('right') || inp.down('up') || inp.down('down');
         if (inp.down('left')) this.hx -= 1.25; if (inp.down('right')) this.hx += 1.25;
         if (inp.down('up')) this.hy -= 1.25; if (inp.down('down')) this.hy += 1.25;
         this.hx = Math.max(12, Math.min(G.W - 8, this.hx)); this.hy = Math.max(FISH_SURF + 6, Math.min(FISH_BOTTOM - 3, this.hy));
@@ -13480,8 +13700,16 @@
         for (const f of this.fish) if (f.kind === 'boot' && f.state === 'still' && Math.abs(f.x - this.hx) < 7 && Math.abs(f.y - this.hy) < 6) { this.hookUp(f); return; }
         // a fish that sees the bait comes over for a look (one at a time; a schooling fish can't resist)...
         let ch = this.fish.find((f) => f.state === 'chase');
+        // (a shy one darts off if the hook so much as twitches, and won't look again for a bit)
+        for (const f of this.fish) if (f.spook > 0) f.spook--;
+        if (ch && BAY_FISH[ch.kind].shy && moved) {
+          Object.assign(ch, { state: 'swim', spook: 150, dir: Math.sign(ch.x - this.hx) || 1 });
+          this.pop('SPOOKED');
+          if (!this.shyTold) { this.shyTold = true; talk.say('Aw, you spooked it. Those are SHY. Hold the hook still. Not a twitch.'); }
+          ch = null;
+        }
         if (!ch) for (const f of this.fish) {
-          if (f.state !== 'swim') continue;
+          if (f.state !== 'swim' || f.spook > 0 || (BAY_FISH[f.kind].shy && moved)) continue;
           const K = BAY_FISH[f.kind], dx = this.hx - this.mouth(f)[0], dy = this.hy - f.y;
           const sees = K.bottom ? this.hy > FISH_BOTTOM - 14 && Math.abs(dx) < 40 : Math.abs(dy) < (f.school ? 30 : 22) && Math.abs(dx) < (f.school ? 64 : 50) && (f.school || Math.sign(dx) === f.dir);
           if (sees && Math.random() < (f.school ? 0.12 : 0.04)) { f.state = 'chase'; ch = f; break; }
@@ -13494,7 +13722,7 @@
         const v = Math.min(d, ch.sp * (ch.school ? 2 : 1.4) + 0.2);
         ch.x += (dx / (d || 1)) * v;
         ch.y = K.bottom ? Math.max(FISH_BOTTOM - 14, Math.min(K.depth[0], ch.y + (dy / (d || 1)) * v)) : ch.y + (dy / (d || 1)) * v;
-        if (d < 3) { this.state = 'bite'; this.on = ch; ch.state = 'bite'; this.st = K.speed > 1 ? 28 : 38; G.audio.sfx('blip'); }
+        if (d < 3) { this.state = 'bite'; this.on = ch; ch.state = 'bite'; this.st = K.bite || (K.speed > 1 ? 28 : 38); G.audio.sfx('blip'); }
       },
       // the bait jiggles: Z, quick!
       biting(inp) {
@@ -13540,9 +13768,9 @@
           if (D.t - dl < 0 || k > 0.7 || x < 112) continue;
           ctx.drawImage(mirrorDolphin(), x, FISH_SURF - 5 - Math.round(Math.sin((k / 0.7) * Math.PI) * 7));
         }
-        // the blitz: gulls wheeling and diving, the water boiling
+        // the blitz: a gull wheeling and diving, the water boiling
         if (B.t > 0) {
-          for (let i = 0; i < 3; i++) {
+          for (let i = 0; i < 1; i++) {
             const a = t * 0.05 + i * 2.1, dive = ((t + i * 40) % 120) < 20, gx = Math.round(B.x + Math.cos(a) * 22), gy = dive ? FISH_SURF - 6 + ((t + i * 40) % 20) / 4 : 32 + Math.round(Math.sin(a) * 4);
             const g = G.spr.gull[0][dive ? 'down' : (t >> 3) & 1 ? 'up' : 'down'];
             ctx.drawImage(g, gx - (g.width >> 1), gy - g.height);
@@ -13904,7 +14132,7 @@
         w.blockTiles(tx, ty, 1, 1);
         if (gull !== undefined) w.add(new G.Seagull(bx + (armRight ? 19 : -19), by + 1, 59, gull));
       };
-      lamp(12, 12, true); lamp(17, 14, false, false);
+      lamp(12, 12, true); lamp(17, 14, false);  // (no gull by Matt's boat)
       lamp(12, 20, true, true); lamp(17, 26, false, false); lamp(12, 32, true, false); lamp(17, 38, false, true);
       lamp(12, 46, true); lamp(17, 50, false, false);
       w.add(new G.Sign(18, 52, ['ISLAND 3', 'Behind you: the Chesapeake Channel Tunnel. Ahead: the Thimble Shoal Channel Tunnel.']));
@@ -13974,7 +14202,7 @@
         w.blockTiles(tx, ty, 1, 1);
         if (gull !== undefined) w.add(new G.Seagull(bx + (armRight ? 19 : -19), by + 1, 59, gull));
       };
-      lamp(12, 13, true, false); lamp(17, 17, false, true); lamp(12, 21, true); lamp(17, 25, false, false);
+      lamp(12, 13, true, false); lamp(17, 17, false); lamp(12, 21, true); lamp(17, 25, false, false);
       lamp(12, 31, true, false); lamp(17, 35, false, true); lamp(12, 39, true, true); lamp(17, 42, false, false);
       // the long trestle back toward the toll plaza: lights, no gulls
       lamp(12, 47, true); lamp(17, 51, false); lamp(12, 55, true);
@@ -14003,6 +14231,9 @@
           ctx.drawImage(G.spr.bobber, bx - 2 - cx, by - cy);
         },
       });
+      // the ice cream vendor from campus, with his cart in the empty lot (no gull on the light by it)
+      w.addProp({ img: G.spr.cart, tx: 19, ty: 18, h: 2, dx: -2, solid: [19, 18, 2, 2], hit: [19, 18, 2, 2], talk: S.bayVendor });
+      w.add(new G.NPC({ sprite: 'vendor', name: 'Vendor', x: 21 * 16 + 8, y: 19 * 16 + 14, dir: 'left', talk: S.bayVendor }));
       // (no car in the lot: the bridge-tunnel is closed to cars, so it's parked back at the toll plaza)
       w.add(new G.Chest(23, 12, 'cbbt_teeth', function* () {
         yield G.itemGet(G.spr.toothGold, 'Tucked behind the rocks: {y}30 shark teeth{/}! Probably a gull\'s stash.');
@@ -21506,7 +21737,7 @@
     [['fair', 'arena', 'ring', 'locker', 'fairCave'], 'duck'],
     [['home', 'homeDown', 'homeUp', 'garage', 'basement', 'bookClub', 'north'], 'brook'],
     [['andover', 'andoverMine', 'andoverFlood', 'andoverOld', 'andoverVault', 'andoverDeep'], 'mine'],
-    [['cbbtToll', 'cbbt', 'chesTunnel', 'cbbtMid', 'cbbtTunnel'], 'bay'],
+    [['cbbtToll', 'cbbt', 'chesTunnel', 'cbbtMid', 'cbbtTunnel', 'bayBoat'], 'bay'],
     [['condo', 'condoDown', 'condoUp', 'condoStorage', 'golf', 'toroLoco', 'toroLocoIn'], 'golf'],
     [['chkd', 'chkdLobby', 'chkdWard', 'chkdNicu', 'chkdRoom', 'chkdRoof'], 'elizabeth'],
     [['ditchRoad', 'ditchFinal', 'ditchDay'], 'ditch'],
@@ -21514,7 +21745,7 @@
   ];
   const dryDunk = (map) => { const r = DRY_DUNK.find(([maps]) => maps.includes(map)); return dunkById(r ? r[1] : 'brook'); };
   // (no throwing anybody in during a memory, a sneak-out, or a boss fight)
-  const NO_DUNK = new Set(['kitGail', 'goldenHour']);
+  const NO_DUNK = new Set(['kitGail', 'goldenHour', 'bayBoat']);
   G.dunkReady = () => {
     const pl = G.play, w = pl.world, p = pl.player;
     if (!w || !p || pl.overlay || pl.menu || pl.warping || G.state.night || G.state.rush || NO_DUNK.has(w.id) || w.def.quiet) return false;
@@ -23456,7 +23687,7 @@
   const AMB = {
     campus: { clouds: 1 }, arts: { clouds: 1 }, collegeHill: { clouds: 1 },
     fair: { clouds: 1 }, home: { clouds: 1, warm: 1 }, andover: { clouds: 1, leaves: 1 },
-    cbbtToll: { clouds: 1, gulls: 1 }, cbbtMid: { clouds: 1, gulls: 1 }, cbbt: { clouds: 1, gulls: 1 },
+    cbbtToll: { clouds: 1, gulls: 1 }, cbbtMid: { clouds: 1, gulls: 1 }, cbbt: { clouds: 1, gulls: 1 }, bayBoat: { clouds: 1, gulls: 1 },
     condo: { clouds: 1, leaves: 1 }, golf: { clouds: 1, leaves: 1 }, toroLoco: { clouds: 1 }, chkd: { clouds: 1 },
     ditchRoad: { clouds: 1 }, ditchDay: { clouds: 1, leaves: 1 }, aurora: { clouds: 1, gulls: 1 },
     chkdRoof: { vignette: 0.42 },
@@ -23559,7 +23790,7 @@
     fair: { title: 'EASTON FAIR', sub: 'The fairgrounds, east of campus', maps: ['fair', 'fairCave', 'arena', 'ring', 'locker'] },
     home: { title: 'HOME', sub: 'Rattlesnake Bridge Road', maps: ['home', 'homeDown', 'homeUp', 'garage', 'basement', 'bookClub', 'north'] },
     andover: { title: 'ANDOVER MINES', sub: 'Iron country, since the 1760s', maps: ['andover', 'andoverMine', 'andoverFlood', 'andoverOld', 'andoverVault', 'andoverDeep'] },
-    bay: { title: 'THE BAY', sub: 'The Chesapeake Bay Bridge-Tunnel', maps: ['cbbtToll', 'chesTunnel', 'cbbtMid', 'cbbt', 'cbbtTunnel'] },
+    bay: { title: 'THE BAY', sub: 'The Chesapeake Bay Bridge-Tunnel', maps: ['cbbtToll', 'chesTunnel', 'cbbtMid', 'cbbt', 'cbbtTunnel', 'bayBoat'] },
     chesapeake: { title: 'CHESAPEAKE', sub: 'Abe and Hannah\'s place', maps: ['condo', 'condoDown', 'condoUp', 'condoStorage', 'golf', 'toroLoco', 'toroLocoIn'] },
     chkd: { title: 'CHKD', sub: 'Norfolk, Virginia', maps: ['chkd', 'chkdLobby', 'chkdWard', 'chkdNicu', 'chkdRoom', 'chkdRoof'] },
     ditch: { title: 'THE NUMBER ONE DITCH', sub: 'Chesapeake, Virginia', maps: ['ditchRoad', 'ditchFinal', 'ditchDay'] },

@@ -246,6 +246,8 @@
       const ch = this.tileAt(tx, ty);
       if (ch === null) return true;
       if (this.block[ty * this.w + tx]) return true;
+      // (out on the bay in Matt's boat: open water is the only place the boat can go)
+      if (this.def && this.def.boat) return ch !== 'y';
       const d = TD[ch];
       return !!(d && d.solid);
     }

@@ -442,7 +442,7 @@
     { id: 'home', name: 'HOME', x: 36, y: 56, icon: 'house', key: 'Home',
       maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['bookClub', 'The Book Club'], ['north', 'The Frozen Pond']] },
     { id: 'andover', name: 'ANDOVER', x: 112, y: 54, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
-    { id: 'bay', name: 'THE BAY', x: 70, y: 74, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel']] },
+    { id: 'bay', name: 'THE BAY', x: 70, y: 74, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel'], ['bayBoat', 'Out on the Bay']] },
     { id: 'ches', name: 'CHESAPEAKE', x: 30, y: 92, icon: 'house', key: 'Chesapeake', maps: [['condo', 'The Condo'], ['condoDown', 'Downstairs'], ['condoUp', 'Upstairs'], ['condoStorage', 'Storage'], ['golf', 'The Golf Course'], ['toroLoco', 'El Toro Loco']] },
     { id: 'chkd', name: 'CHKD', x: 68, y: 104, labelRight: true, icon: 'college', key: 'CHKD', maps: [['chkd', 'Outside'], ['chkdLobby', 'The Lobby'], ['chkdWard', 'The Ward'], ['chkdNicu', 'The NICU'], ['chkdRoof', 'The Roof']] },
     { id: 'ditch', name: 'THE DITCH', x: 114, y: 100, icon: 'trophy', key: 'The Ditch', maps: [['ditchRoad', 'The Last Road'], ['ditchFinal', 'The Number One Ditch'], ['ditchDay', 'In the Morning']] },
@@ -455,7 +455,7 @@
     lab: () => true, campus: () => true, science: (f) => f.chemMet, pardee: (f) => f.engMet, geology: (f) => f.profTalk,
     fair: (f) => f.doronChat || f.doronDeal, arena: (f) => f.dadBeaten, fairCave: (f) => f.caveSeen, home: (f) => f.homeArrived, homeDown: (f) => f.badlandsMet,
     garage: (f) => f.snackQuest, basement: (f) => f.globMet, north: (f) => f.jjSeen, andover: (f) => f.andover || f.andoverMine,
-    andoverMine: (f) => f.andoverMine, andoverFlood: (f) => f.mineFlood, andoverOld: (f) => f.mineOld, andoverVault: (f) => f.mineVault, andoverDeep: (f) => f.fcAwake, cbbt: (f) => f.cbbtArrived, cbbtTunnel: (f) => f.tunnelSeen, cbbtToll: (f) => f.tollMet, chesTunnel: (f) => f.chesSeen, cbbtMid: (f) => f.midSeen,
+    andoverMine: (f) => f.andoverMine, andoverFlood: (f) => f.mineFlood, andoverOld: (f) => f.mineOld, andoverVault: (f) => f.mineVault, andoverDeep: (f) => f.fcAwake, cbbt: (f) => f.cbbtArrived, cbbtTunnel: (f) => f.tunnelSeen, cbbtToll: (f) => f.tollMet, chesTunnel: (f) => f.chesSeen, cbbtMid: (f) => f.midSeen, bayBoat: (f) => f.boatOut,
   };
   const beenTo = (id) => !!((G.state.visited && G.state.visited[id]) || (SEEN_IF[id] && SEEN_IF[id](G.state.flags)));
   const placeVisited = (pl) => pl.maps.some(([id]) => beenTo(id));
@@ -1594,27 +1594,26 @@
       const log = G.fishLog(), have = (k) => !!log[k];
       card(ctx, 5, 21, 112, 121, 'MATT\'S SURVEY', C.gold, G.sayable(G.fishCaughtKinds()) + '/' + G.sayable(G.FISH_ORDER.length));
       G.FISH_ORDER.forEach((k, i) => {
-        const x = 10 + (i % 4) * 26, y = 39 + Math.floor(i / 4) * 24, sel = i === this.sel && !this.onTabs;
-        slot(ctx, x, y, 24, 22, have(k) ? (k === 'sturgeon' || k === 'cobia' ? C.gold : C.cyan) : undefined);
+        const x = 10 + (i % 4) * 26, y = 39 + Math.floor(i / 4) * 23, sel = i === this.sel && !this.onTabs;
+        slot(ctx, x, y, 24, 22, have(k) ? (G.FISH_RARE.includes(k) ? C.gold : C.cyan) : undefined);
         if (have(k)) G.fishIcon(ctx, k, x + 2, y + 3, 20, 10);
         else TXT(ctx, '?', x + 10, y + 7, C.faint);
         if (have(k)) { const n = G.sayable(log[k].n); TXT(ctx, n, x + 23 - F().width(n), y + 13); }
         if (sel) brackets(ctx, x - 1, y - 1, 26, 24);
       });
       const f = G.state.flags;
-      TXT(ctx, 'Trips', 10, 92, C.soft); TXT(ctx, G.sayable(f.fishTrips || 0), 60, 92, C.gold);
-      TXT(ctx, 'Survey cards', 10, 102, C.soft); TXT(ctx, G.sayable(f.surveyCards || 0), 80, 102, C.gold);
-      F().wrap('Fish with Matt Oliver off Island 2 on the bay bridge-tunnel.', 102).slice(0, 3).forEach((l, i) => TXT(ctx, l, 10, 114 + i * 9, C.dim));
+      TXT(ctx, 'Trips', 10, 114, C.soft); TXT(ctx, G.sayable(f.fishTrips || 0), 60, 114, C.gold);
+      TXT(ctx, 'Survey cards', 10, 125, C.soft); TXT(ctx, G.sayable(f.surveyCards || 0), 80, 125, C.gold);
       const k = G.FISH_ORDER[this.sel], K = G.BAY_FISH[k];
       card(ctx, 120, 21, 115, 121);
       if (!K) return;
       if (!have(k)) {
         TXT(ctx, '???', 125, 27, C.cyan);
         ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 40, 107, 1);
-        F().wrap(k === 'sturgeon' ? 'Something huge lives down on the bottom of the bay. Matt has only ever caught one.' : 'Not caught yet.', 104).slice(0, 6).forEach((l, i) => TXT(ctx, l, 125, 44 + i * 9, C.dim));
+        F().wrap(k === 'sturgeon' ? 'Something huge lives down on the bottom of the bay. Matt has only ever caught one.' : k === 'lumpsucker' ? 'Something tiny, round and very shy. It would need cold, deep water. Way out past the island.' : 'Not caught yet.', 104).slice(0, 6).forEach((l, i) => TXT(ctx, l, 125, 44 + i * 9, C.dim));
         return;
       }
-      slot(ctx, 124, 25, 44, 22, k === 'sturgeon' || k === 'cobia' ? C.gold : C.cyan);
+      slot(ctx, 124, 25, 44, 22, G.FISH_RARE.includes(k) ? C.gold : C.cyan);
       G.fishIcon(ctx, k, 126, 27, 40, 18);
       F().wrap(K.name, 62).slice(0, 2).forEach((l, i) => TXT(ctx, l, 171, 26 + i * 9, C.cyan));
       ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 50, 107, 1);

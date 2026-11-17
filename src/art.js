@@ -6049,6 +6049,21 @@
       p.set(30, 4, '#101418');
       return finish(p);
     }
+    if (kind === 'lumpsucker') {
+      // a spiny lumpsucker: a little round green ball covered in cone-shaped bumps, a stubby tail,
+      // a big eye, and a suction cup on its belly
+      const p = new Pix(13, 11);
+      for (let y = 0; y < 11; y++) for (let x = 0; x < 13; x++) {
+        if (Math.hypot(x - 7, y - 5) <= 4.2) p.set(x, y, y < 4 ? '#3e7a3a' : y < 7 ? '#5aa04a' : '#a8c868');
+      }
+      for (const [x, y] of [[5, 0], [8, 0], [3, 1], [11, 1], [4, 9], [10, 9], [12, 7]]) p.set(x, y, '#2e5a2a');
+      for (const [x, y] of [[5, 3], [8, 2], [4, 6], [7, 5], [6, 8], [9, 7]]) p.set(x, y, '#2e5a2a');
+      p.set(1, 4, '#3e7a3a'); p.set(1, 5, '#3e7a3a'); p.set(0, 3, '#3e7a3a'); p.set(0, 6, '#3e7a3a'); p.set(6, 1, '#3e7a3a');
+      p.set(9, 3, '#f8f8f0'); p.set(9, 4, '#f8f8f0'); p.set(10, 3, '#101418'); p.set(10, 4, '#101418');
+      p.set(12, 5, '#2e5a2a');
+      p.hline(6, 8, 10, '#d8e0a0');
+      return finish(p);
+    }
     if (kind === 'boot') {
       const p = new Pix(11, 11);
       p.rect(1, 0, 5, 7, '#6a4a30'); p.rect(1, 6, 9, 3, '#6a4a30'); p.hline(1, 10, 9, '#3a2a1c'); p.hline(1, 5, 0, '#8a6a48');
@@ -6151,6 +6166,17 @@
     p.set(3, 2, '#f8e088'); p.hline(7, 14, 4, '#d8b040'); p.hline(7, 14, 5, '#a88828');
     p.vline(12, 6, 8, '#d8b040'); p.vline(14, 6, 9, '#d8b040');
     p.rect(2, 9, 6, 4, '#f4ecd8'); p.hline(3, 6, 10, '#c83030'); p.set(5, 8, '#8a8a94');
+    return finish(p);
+  }
+  // Matt's boat key, on an orange foam float so it can't sink
+  function boatKey() {
+    const p = new Pix(16, 14);
+    p.rect(1, 1, 6, 10, '#f07a28'); p.rect(2, 0, 4, 1, '#f07a28'); p.rect(2, 11, 4, 1, '#f07a28'); p.vline(2, 2, 9, '#f8a868'); p.vline(6, 2, 10, '#c85a18');
+    p.hline(2, 5, 5, '#f8f8f0');
+    p.hline(7, 9, 5, '#c8c8d0');
+    for (let y = 3; y <= 8; y++) for (let x = 9; x <= 13; x++) if ((x - 11) ** 2 + (y - 5.5) ** 2 <= 6.5) p.set(x, y, '#d8d8e0');
+    p.set(11, 5, '#5a5a64'); p.set(11, 6, '#5a5a64');
+    p.vline(11, 9, 13, '#c8c8d0'); p.set(12, 11, '#c8c8d0'); p.set(12, 13, '#c8c8d0');
     return finish(p);
   }
   function bobber() {
@@ -11394,11 +11420,11 @@
     S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);
     S.gull = [false, true].map((l) => ({ sit: gullFrame(l, 'sit'), up: gullFrame(l, 'up'), down: gullFrame(l, 'down') }));
     S.tunnelPortal = tunnelPortal(); S.tunnelPortalTS = tunnelPortal('THIMBLE SHOAL CHANNEL TUNNEL'); S.containerShip = containerShip(); S.fishingBoat = fishingBoat(); S.mattBoat = mattBoat(); S.mattHull = mattBoat(true); S.mattBoatL = mirror(S.mattBoat); S.mattHullL = mirror(S.mattHull);
-    S.bayFish = {}; for (const k of ['spot', 'croaker', 'bluefish', 'striper', 'cobia', 'flounder', 'crab', 'boot', 'sturgeon']) { const r = bayFish(k); S.bayFish[k] = { r, l: mirror(r) }; }
+    S.bayFish = {}; for (const k of ['spot', 'croaker', 'bluefish', 'striper', 'cobia', 'flounder', 'crab', 'boot', 'sturgeon', 'lumpsucker']) { const r = bayFish(k); S.bayFish[k] = { r, l: mirror(r) }; }
     S.dolphin = dolphin();
     S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
     S.bayViewer = bayViewer(); S.tunnelLight = tunnelLight(); S.tunnelSign = tunnelSign();
-    S.gateKey = gateKey(); S.rodIcon = rodIcon(); S.rodHeld = rodHeld(); S.lure = lure(); S.bobber = bobber();
+    S.gateKey = gateKey(); S.boatKey = boatKey(); S.rodIcon = rodIcon(); S.rodHeld = rodHeld(); S.lure = lure(); S.bobber = bobber();
     S.mosasaur = [mosasaurSkull(true), mosasaurSkull(false)]; S.pebble = pebble(); S.sifter = sifter();
     S.fcCrate = fcCrate(false); S.fcCrateOpen = fcCrate(true); S.mineCart = mineCart(); S.timberSet = timberSet(); S.mineLantern = mineLantern();
     S.ornaments = [ornament('#d83030'), ornament('#2e9a4a'), ornament('#d8b040')]; S.candyCane = candyCane(); S.giftBomb = giftBomb();
