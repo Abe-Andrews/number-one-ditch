@@ -1071,13 +1071,14 @@
     hannah: 'Deep breath. You\'re okay. Nurse\'s orders: up you get.',
   };
   G.gameOver = {
-    // who's there when he comes to: Nate for Lily, everyone in the party for Nate, or just Nate
+    // who's there when he comes to: Nate for Lily, whoever was following Nate when he went down,
+    // or (nobody behind him) just Nate
     speakers(lily) {
       const s = G.state, nate = G.sprites[s.items.cap ? 'nate' : 'nate_nocap'].down[0];
       if (lily) return [{ who: 'Nate', msg: 'Get up, Lily. Mikey is still singing.', face: nate }];
-      const list = G.PARTY_ORDER.filter((id) => id !== 'nate' && FAINT_LINES[id] && s.party.includes(id) && G.sprites[id])
-        .map((id) => ({ who: G.PARTY_INFO[id].name, msg: FAINT_LINES[id], face: G.sprites[id].down[0] }));
-      return list.length ? list : [{ who: 'Nate', msg: '...Five more minutes.', face: nate }];
+      const id = G.activeFollower();
+      if (id && FAINT_LINES[id] && G.sprites[id]) return [{ who: G.PARTY_INFO[id].name, msg: FAINT_LINES[id], face: G.sprites[id].down[0] }];
+      return [{ who: 'Nate', msg: '...Five more minutes.', face: nate }];
     },
     enter() {
       G.scene = this;
@@ -1148,8 +1149,8 @@
       const t1 = (lily ? 'Lily' : 'Nate') + ' fainted...';
       F().drawBig(ctx, t1, Math.round((G.W - F().bigWidth(t1, 2)) / 2), 72, 2, (r) => (r < 2 ? '#ffb0a8' : r < 4 ? '#f86858' : '#c83848'), '#1c1424');
       if (this.t < 60) return;
-      // everyone in Nate's party gets him back up, one after another, each with their face in a
-      // little frame (alone, he manages it himself)
+      // whoever was behind Nate gets him back up, with their face in a little frame (alone, he
+      // manages it himself)
       const k = Math.min(1, (this.t - 60) / 10), say = this.speakers(lily);
       let tt = this.t - 60, cur = say[0];
       for (let n = 0; ; n = (n + 1) % say.length) { const d = 70 + say[n].msg.length / 0.9; if (tt < d || say.length === 1) { cur = say[n]; break; } tt -= d; }
