@@ -4816,7 +4816,8 @@
     if (kind === 'cable' && G.with('abe')) lines.push(['Abe', 'Finally! Somebody wants one!'], ['Nate', 'It\'s trying to STRANGLE me, Abe.'], ['Abe', 'Take it anyway. Take two. Please.']);
     if (kind === 'goose' && G.with('abe')) lines.push(['Abe', 'They chased Romulus into the pond once. He still won\'t go near water.']);
     if (kind === 'goose' && G.with('hannah')) lines.push(['Hannah', 'One took my sandwich right out of my hand. I still think about it.']);
-    G.script.run((function* () { for (const [who, text] of lines) yield G.say(who, text); })());
+    // (as speech bubbles, so the game keeps going: two new enemies at once just queue up)
+    G.play.say(lines);
   };
 
   // ---------------------------------------------------------------- the Bean Incident

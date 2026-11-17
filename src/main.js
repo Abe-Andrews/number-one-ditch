@@ -142,9 +142,37 @@
       G.scene = this;
     },
 
+    // Speech bubbles: lines said out loud without stopping the game (like Nate's first look at a
+    // new enemy). They queue up and play one at a time over whoever's saying them: Nate, or a
+    // party member who's following him (anyone else's line goes over Nate).
+    say(lines) {
+      this.bubbles = this.bubbles || [];
+      for (const [who, text] of lines) this.bubbles.push({ who, text, t: 0, dur: 80 + text.length * 2 });
+    },
+    drawBubble(ctx, b, cam) {
+      const p = this.player, F = G.font;
+      const ent = (b.who && b.who !== 'Nate' && this.world.ents.find((e) => e instanceof G.Follower && !e.dead && G.PARTY_INFO[e.id] && G.PARTY_INFO[e.id].name === b.who)) || p;
+      if (!ent || ent.hidden) return;
+      const S = ent.S || ent.spr, top = Math.round(ent.y - (S ? S.h : 24) - cam.y);
+      const lines = F.wrap(b.text, 116), w = Math.max(...lines.map((l) => F.width(l))) + 10, h = lines.length * 9 + 6;
+      const sx = Math.round(ent.x - cam.x), x = Math.max(2, Math.min(G.W - w - 2, sx - Math.round(w / 2))), y = Math.max(2, top - h - 4);
+      const a = Math.min(1, b.t / 5, (b.dur - b.t) / 8);
+      ctx.globalAlpha = Math.max(0, a);
+      ctx.fillStyle = '#1c1424'; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
+      ctx.fillStyle = '#f8f6ee'; ctx.fillRect(x, y, w, h);
+      // the tail, pointing down at whoever's talking
+      const tx = Math.max(x + 3, Math.min(x + w - 6, sx - 2));
+      ctx.fillStyle = '#1c1424'; ctx.fillRect(tx - 1, y + h, 6, 1); ctx.fillRect(tx, y + h + 1, 4, 1); ctx.fillRect(tx + 1, y + h + 2, 2, 1);
+      ctx.fillStyle = '#f8f6ee'; ctx.fillRect(tx, y + h, 4, 1); ctx.fillRect(tx + 1, y + h + 1, 2, 1);
+      let left = Math.floor(b.t * 1.6);
+      lines.forEach((l, i) => { if (left > 0) F.draw(ctx, l, x + 5, y + 4 + i * 9, '#2a2030', { max: left }); left -= F.visibleLength(l); });
+      ctx.globalAlpha = 1;
+    },
+
     loadMap(id, x, y, dir, skipEnter) {
       this.camFocus = null;
       this.overlay = null;
+      this.bubbles = [];
       if (G.hidePipeBook) G.hidePipeBook();
       this.earworm = 0;
       G.pipe.active = false;
@@ -535,6 +563,8 @@
 
     update() {
       G.areaBanner.update(); G.regionCard.update();
+      // speech bubbles tick along while Nate keeps playing (they wait out cutscenes and the menu)
+      if (this.bubbles && this.bubbles.length && !G.script.busy && !this.menu) { const b = this.bubbles[0]; if (++b.t >= b.dur) this.bubbles.shift(); }
       if (this.shakeT > 0) this.shakeT--;
 
       // fainting: a dizzy spin, a wobble, then he tips over (Player.drawFaint), the stars
@@ -661,6 +691,7 @@
         ctx.globalCompositeOperation = 'source-over';
       }
       G.hud.draw(ctx);
+      if (this.bubbles && this.bubbles.length && !G.script.busy && !this.menu) this.drawBubble(ctx, this.bubbles[0], cam);
       G.pipe.draw(ctx);
       // (noBar: a boss whose fight hasn't started yet, so it stays a surprise)
       const boss = this.world.ents.find((e) => e.boss && e.state !== 'defeated' && !e.noBar && !e.hidden);
