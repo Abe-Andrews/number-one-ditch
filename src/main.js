@@ -142,30 +142,27 @@
       G.scene = this;
     },
 
-    // Speech bubbles: lines said out loud without stopping the game (like Nate's first look at a
-    // new enemy). They queue up and play one at a time over whoever's saying them: Nate, or a
-    // party member who's following him (anyone else's line goes over Nate).
+    // Subtitles: lines said out loud without stopping the game (like Nate's first look at a new
+    // enemy). They queue up and play one at a time in a slim see-through strip near the bottom of
+    // the screen, with the speaker's little face and name, so nothing covers the action.
     say(lines) {
       this.bubbles = this.bubbles || [];
       for (const [who, text] of lines) this.bubbles.push({ who, text, t: 0, dur: 80 + text.length * 2 });
     },
-    drawBubble(ctx, b, cam) {
-      const p = this.player, F = G.font;
-      const ent = (b.who && b.who !== 'Nate' && this.world.ents.find((e) => e instanceof G.Follower && !e.dead && G.PARTY_INFO[e.id] && G.PARTY_INFO[e.id].name === b.who)) || p;
-      if (!ent || ent.hidden) return;
-      const S = ent.S || ent.spr, top = Math.round(ent.y - (S ? S.h : 24) - cam.y);
-      const lines = F.wrap(b.text, 116), w = Math.max(...lines.map((l) => F.width(l))) + 10, h = lines.length * 9 + 6;
-      const sx = Math.round(ent.x - cam.x), x = Math.max(2, Math.min(G.W - w - 2, sx - Math.round(w / 2))), y = Math.max(2, top - h - 4);
-      const a = Math.min(1, b.t / 5, (b.dur - b.t) / 8);
-      ctx.globalAlpha = Math.max(0, a);
-      ctx.fillStyle = '#1c1424'; ctx.fillRect(x - 1, y - 1, w + 2, h + 2);
-      ctx.fillStyle = '#f8f6ee'; ctx.fillRect(x, y, w, h);
-      // the tail, pointing down at whoever's talking
-      const tx = Math.max(x + 3, Math.min(x + w - 6, sx - 2));
-      ctx.fillStyle = '#1c1424'; ctx.fillRect(tx - 1, y + h, 6, 1); ctx.fillRect(tx, y + h + 1, 4, 1); ctx.fillRect(tx + 1, y + h + 2, 2, 1);
-      ctx.fillStyle = '#f8f6ee'; ctx.fillRect(tx, y + h, 4, 1); ctx.fillRect(tx + 1, y + h + 1, 2, 1);
+    drawBubble(ctx, b) {
+      const F = G.font, s = G.state, who = b.who || 'Nate';
+      const id = who === 'Nate' ? (s.items.cap ? 'nate' : 'nate_nocap') : Object.keys(G.PARTY_INFO).find((k) => G.PARTY_INFO[k].name === who);
+      const face = id && G.sprites[id] ? G.sprites[id].down[0] : null;
+      const nameW = F.width(who) + 6, tx = 6 + (face ? 16 : 2) + nameW, lines = F.wrap(b.text, G.W - tx - 8);
+      const h = lines.length * 9 + 5, y = G.H - 15 - h;
+      const a = Math.max(0, Math.min(1, b.t / 5, (b.dur - b.t) / 8));
+      ctx.globalAlpha = a;
+      ctx.fillStyle = 'rgba(12,8,20,0.62)'; ctx.fillRect(2, y, G.W - 4, h);
+      ctx.fillStyle = 'rgba(248,216,80,0.5)'; ctx.fillRect(2, y, G.W - 4, 1);
+      if (face) ctx.drawImage(face, 2, 1, 12, 11, 6, y + 2, 12, 11);
+      F.draw(ctx, who, 6 + (face ? 16 : 2), y + 3, G.NAME_COLORS[who] || '#f8d850', { shadow: '#0c0814' });
       let left = Math.floor(b.t * 1.6);
-      lines.forEach((l, i) => { if (left > 0) F.draw(ctx, l, x + 5, y + 4 + i * 9, '#2a2030', { max: left }); left -= F.visibleLength(l); });
+      lines.forEach((l, k) => { if (left > 0) F.draw(ctx, l, tx, y + 3 + k * 9, '#f8f8f0', { shadow: '#0c0814', max: left }); left -= F.visibleLength(l); });
       ctx.globalAlpha = 1;
     },
 
@@ -691,7 +688,7 @@
         ctx.globalCompositeOperation = 'source-over';
       }
       G.hud.draw(ctx);
-      if (this.bubbles && this.bubbles.length && !G.script.busy && !this.menu) this.drawBubble(ctx, this.bubbles[0], cam);
+      if (this.bubbles && this.bubbles.length && !G.script.busy && !this.menu) this.drawBubble(ctx, this.bubbles[0]);
       G.pipe.draw(ctx);
       // (noBar: a boss whose fight hasn't started yet, so it stays a surprise)
       const boss = this.world.ents.find((e) => e.boss && e.state !== 'defeated' && !e.noBar && !e.hidden);
