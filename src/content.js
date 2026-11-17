@@ -5629,7 +5629,7 @@
       F.stand(sp.toilet, 22, 4, 1, look('...It\'s a toilet, Nate.'));
       F.hang(sp.houseBlessing, 19, 7, 1, look('A framed house blessing, in curly old letters. Mom reads it every time she walks by. Nate has never once read it.'), 6);
       F.hang(sp.louverDoor, 20, 7, 1, look('A louvered closet: coats, boots, and an umbrella nobody has opened in years.'), 1);
-      F.hang(sp.louverDoor, 21, 7, 1, look('The other half of the closet. More coats.'), 1);
+      // (21, 7) is the powder room's doorway: keep it clear
       w.addProp({ img: sp.basementDoor, tx: 22, ty: 7, flat: true, hit: [22, 7, 1, 1], talk: S.basementDoor });
       F.stand(sp.rollTopDesk, 19, 8, 1, look('An old roll-top desk. Roll it up and it\'s all pigeonholes, stamps and church bulletins.'));
       w.props.push({ img: sp.braidedHall, x: 19 * 16 + 4, y: 9 * 16 + 4, flat: true, base: 0 });
