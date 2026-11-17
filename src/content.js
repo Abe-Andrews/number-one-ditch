@@ -4565,6 +4565,10 @@
         G.audio.sfx('buzz');
         yield G.say('Badlands Chugs', 'NOPE. Take another sip.');
         G.audio.sfx('gulp');
+        // every wrong guess costs a heart (never down to nothing in the middle of a scene)
+        G.state.hp = Math.max(1, G.state.hp - 2);
+        G.audio.sfx('hurt');
+        w.pop(p.x, p.y - 30, '-1 heart', '#f86858');
         yield G.shakeCmd(16, 2);
       }
     }
@@ -4681,7 +4685,8 @@
     G.audio.sfx('bell');
     w.burst(bx, G.play.cam.y + 6, ['#ffffff', '#f8e868'], 8, { speed: 0.8, life: 24, size: 2 });
     yield G.wait(40);
-    w.pop(bx, G.play.cam.y + 24, '...LIKE AND SUBSCRIBE!', '#f8d850');
+    // (in the middle of the screen, low enough that it stays below the X and Z item boxes as it drifts up)
+    w.pop(G.play.cam.x + G.W / 2, G.play.cam.y + 56, '...LIKE AND SUBSCRIBE!', '#f8d850');
     yield G.wait(90);
     yield G.say('Nate', '...He went through the roof.');
     yield G.say('Lily', '{d}(from inside the fridge){/} Did he just say "like and subscribe"?!');
@@ -12014,7 +12019,8 @@
         mikey.held = G.spr.bouquet; mikey.heldAt = [-7, 3];
         w.mikey = mikey;
         if (!flags().lilySaved) w.addTrigger(38, 50, 10, 5, () => { if (!flags().mikeyMet) G.script.run(S.mikeyIntro()); });
-        else w.addTrigger(35, 46, 15, 9, () => G.script.run(S.mikeyGoldenHour()));
+        // (Nate has to walk up to him: about three tiles around where he stands by the driveway)
+        else w.addTrigger(42, 47, 7, 5, () => G.script.run(S.mikeyGoldenHour()));
       }
     },
     // "I Pray to Jesus" on the pipe, beamed at the pool: it freezes over (for this visit)
