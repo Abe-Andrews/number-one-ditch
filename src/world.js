@@ -13,7 +13,7 @@
     's': { k: 'sand', edge: true },
     '~': { k: 'water', solid: true, edge: true, anim: true },
     '#': { k: 'stone', solid: true },
-    'f': { k: 'fence', solid: true },
+    'f': { k: 'fence', solid: true, edge: true, edgeOOB: true },
     '_': { k: 'floor' },
     'w': { k: 'wallTop', solid: true },
     'v': { k: 'wallFace', solid: true },
@@ -362,7 +362,8 @@
           let mask = 0;
           if (d.edge) {
             const g = group(ch);
-            const diff = (x, y) => { const n = this.tileAt(x, y); return n !== null && group(n) !== g; };
+            // (edgeOOB: the edge of the map counts as something different, so a fence there doesn't run off it)
+            const diff = (x, y) => { const n = this.tileAt(x, y); return n === null ? !!d.edgeOOB : group(n) !== g; };
             if (diff(tx, ty - 1)) mask |= 1;
             if (diff(tx + 1, ty)) mask |= 2;
             if (diff(tx, ty + 1)) mask |= 4;

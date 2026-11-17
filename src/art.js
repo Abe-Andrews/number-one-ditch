@@ -1124,10 +1124,22 @@
         for (let x = off; x < 16; x += 8) p.vline(x, y, y + 3, P.stoneD);
       }
     },
-    fence(p, r) {
+    // A wooden rail fence that joins up with the fence next to it: rails across where it runs
+    // left and right, rails up and down where it runs that way, both at a corner, and a post in
+    // the middle of every piece.
+    fence(p, r, v, mask) {
       grassBase(p, r);
       const wood = '#c08048', woodD = '#8a5428';
-      for (const y of [5, 10]) { p.hline(0, 15, y - 1, OUT); p.hline(0, 15, y, wood); p.hline(0, 15, y + 1, woodD); p.hline(0, 15, y + 2, OUT); }
+      const L = !(mask & 8), R = !(mask & 2), U = !(mask & 1), D = !(mask & 4);
+      const horiz = L || R, vert = U || D;
+      if (horiz || !vert) {
+        const x0 = horiz && !L ? 6 : 0, x1 = horiz && !R ? 9 : 15;
+        for (const y of [5, 10]) { p.hline(x0, x1, y - 1, OUT); p.hline(x0, x1, y, wood); p.hline(x0, x1, y + 1, woodD); p.hline(x0, x1, y + 2, OUT); }
+      }
+      if (vert) {
+        const y0 = U ? 0 : 6, y1 = D ? 15 : 9;
+        for (const x of [4, 10]) { p.vline(x - 1, y0, y1, OUT); p.vline(x, y0, y1, wood); p.vline(x + 1, y0, y1, woodD); p.vline(x + 2, y0, y1, OUT); }
+      }
       p.rect(6, 2, 4, 12, wood); p.vline(9, 2, 13, woodD);
       p.vline(5, 2, 13, OUT); p.vline(10, 2, 13, OUT); p.hline(6, 9, 1, OUT); p.hline(6, 9, 14, OUT);
     },
