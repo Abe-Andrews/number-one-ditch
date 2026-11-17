@@ -3554,6 +3554,7 @@
     // Bedminster (home)
     { id: 'shale', area: 'bedminster', name: 'Passaic Red Shale', r: 0, crush: { teeth: 5 }, how: 'Red rock out on the little island in Brady Brook. If only the water would hold still.', fact: 'Red mud from the Newark Basin, Triassic and Jurassic. Dinosaurs left footprints in mud like this all over New Jersey.' },
     { id: 'basalt', area: 'bedminster', name: 'Watchung Basalt', r: 1, crush: { teeth: 15 }, how: 'The big black boulder by Brady Brook is way too heavy for Nate. Doron, though...', fact: 'Jurassic lava flows that built the Watchung Mountains just east of Bedminster.' },
+    { id: 'riprap', area: 'bay', name: 'Riprap', r: 0, crush: { teeth: 5 }, how: 'A boulder by the water at the toll plaza. Hammer it.', fact: 'Hard, speckled rock, quarried far away to armor the shore. The Eastern Shore is all sand and shell, with no bedrock.' },
     { id: 'megalodon', area: 'bay', name: 'Megalodon Tooth', r: 4, crush: null, how: 'A patch of gravel and shell on the island between the two tunnels. Too fine to pick through by hand.', fact: 'A fossil tooth from Otodus megalodon, a giant shark that lived millions of years ago. Fossil shark teeth turn up all over the Chesapeake Bay region.' },
     { id: 'chesapecten', area: 'chesapeake', name: 'Chesapecten Fossil', r: 3, crush: null, how: 'Anette, Abe and Hannah\'s neighbor, has one. Her plants look awfully thirsty.', fact: 'Chesapecten jeffersonius: a fossil scallop millions of years old, named for the Chesapeake Bay and Thomas Jefferson. It\'s the state fossil of Virginia, and back in 1687 it became the first fossil from North America ever pictured in a science book.' },
     { id: 'fairystone', area: 'chesapeake', name: 'Fairy Stone', r: 2, crush: null, how: 'Ruby, a girl on the CHKD ward, has two. She\'ll trade one for a rock from somewhere far away.', fact: 'Staurolite: brown crystals that grow twinned into little crosses. Virginia has a whole state park named for them, Fairy Stone State Park. The legend says they\'re fairy tears, turned to stone.' },
@@ -3588,6 +3589,7 @@
     vault: [['magnetite', 14], ['garnet', 12], ['pyrite', 12], ['hematite', 10]],
     cannon: [['cannonball', 1]],
     bed: [['shale', 1]],
+    bay: [['riprap', 1]],
   };
   // ---- geodes: most of what comes out of the Andover mines is a lumpy rock you can't see inside.
   // Crack them open at the jaw crusher in Van Wickle to find out what they are. Each level of the
@@ -13694,6 +13696,8 @@
       w.addProp({ img: sp.suv, tx: 17, ty: 10, h: 3, dx: 3, solid: [17, 11, 2, 2], hit: [17, 11, 2, 2], talk: S.tollCar });
       w.add(new G.Sign(16, 7, ['CHESAPEAKE BAY BRIDGE-TUNNEL', '17.6 miles across the mouth of the Chesapeake Bay. Two tunnels. Four man-made islands.']));
       w.add(new G.Sign(4, 12, ['NOTICE', 'Tolls are paid HERE, at the plaza. Never in the tunnels. Never in shark teeth.']));
+      // a chunk of riprap by the water (a rock: hammer it)
+      w.add(new G.OreVein(3 * 16, 3 * 16 + 14, 'bay'));
       w.addTrigger(7, 0, 6, 1, () => G.script.run(S.tollWalkOut()));
       w.addTrigger(5, 15, 10, 1, () => G.script.run(S.tollEdge('Home is back that way. If I\'m going home, I\'m taking the car.')()));
     },

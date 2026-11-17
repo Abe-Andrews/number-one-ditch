@@ -5178,6 +5178,7 @@
       case 'eastonite': for (let i = 0; i < 4; i++) { p.rect(2 + i, 8 - i * 2, 9, 3, i % 2 ? '#a87a3a' : '#c8984a'); p.hline(2 + i, 10 + i, 8 - i * 2, '#f0d088'); } p.set(6, 3, '#ffffff'); break;
       case 'shale': for (let i = 0; i < 3; i++) { p.rect(1 + i, 9 - i * 3, 12 - i * 2, 3, i % 2 ? '#a85040' : '#9a4a3a'); p.hline(1 + i, 12 - i, 9 - i * 3, '#c8705a'); } p.set(6, 7, '#5a2a20'); p.set(7, 7, '#5a2a20'); break;
       case 'basalt': blob('#2e2e34', '#46464e'); for (const [x, y] of [[4, 6], [8, 5], [6, 9], [10, 8]]) { p.set(x, y, '#1a1a20'); p.set(x + 1, y, '#5a5a64'); } break;
+      case 'riprap': blob('#a09498', '#c0b6b8'); for (const [x, y] of [[3, 6], [6, 4], [9, 7], [5, 9], [10, 5], [8, 10]]) { p.set(x, y, '#2a2a30'); p.set(x + 1, y, '#d8a8a0'); } break;
       case 'prehnite': blob('#2e2e34', '#46464e'); for (const [x, y] of [[4, 5], [5, 5], [6, 4], [5, 6], [8, 6], [9, 7], [8, 7]]) p.set(x, y, '#b8e898'); p.set(5, 4, '#e8fcd8'); p.set(9, 6, '#e8fcd8'); break;
       case 'chesapecten':
         // a fossil scallop: a ribbed fan of a shell, cream and tan, with its two little hinge "ears"
@@ -5453,8 +5454,10 @@
   // ---- area rocks: outcrops, quarry rubble, the big rocks only Doron can move, a gravel bar
   function outcrop(kind) {
     const p = new Pix(20, 14);
-    const c = { laf: ['#8a8c90', '#a8aaae', '#6e7074'], eas: ['#4e5058', '#6a6c74', '#3a3c44'], bed: ['#9a4a3a', '#b8624e', '#7a3a2c'] }[kind];
+    const c = { laf: ['#8a8c90', '#a8aaae', '#6e7074'], eas: ['#4e5058', '#6a6c74', '#3a3c44'], bed: ['#9a4a3a', '#b8624e', '#7a3a2c'], bay: ['#a09498', '#c0b6b8', '#7a7074'] }[kind];
     for (let y = 2; y < 14; y++) for (let x = 0; x < 20; x++) if ((x - 9.5) ** 2 / 100 + (y - 10) ** 2 / 64 <= 1) p.set(x, y, y % 3 === 0 ? c[2] : y < 6 ? c[1] : c[0]);
+    // (riprap: a blocky, speckled boulder by the water, no grass on it)
+    if (kind === 'bay') { for (const [x, y] of [[4, 8], [8, 5], [12, 9], [15, 7], [7, 11], [10, 7]]) { p.set(x, y, '#2a2a30'); p.set(x + 1, y, '#d8a8a0'); } return finish(p); }
     p.set(5, 7, '#4a7a34'); p.set(6, 7, '#5a9a40'); p.set(14, 5, '#4a7a34');
     return finish(p);
   }
@@ -11367,7 +11370,7 @@
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
     S.vanWickle = vanWickle();
-    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone', 'malachite', 'kidney', 'magCrystal', 'tommy', 'willemite', 'crystalGeode', 'placerGold']) S.rockIcons[k] = rockIcon(k);
+    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'riprap', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone', 'malachite', 'kidney', 'magCrystal', 'tommy', 'willemite', 'crystalGeode', 'placerGold']) S.rockIcons[k] = rockIcon(k);
     S.oreVein = [oreVein(0), oreVein(1), oreVein(2)]; S.dumpPile = dumpPile(false); S.slagPile = dumpPile(true);
     S.furnaceRuin = furnaceRuin(); S.adit = adit(); S.bat = [batFrame(true), batFrame(false)];
     S.batRed = [batFrameRed(true), batFrameRed(false)];
@@ -11382,7 +11385,7 @@
     S.megaphone = megaphone(); S.megaphoneL = mirror(S.megaphone); S.cavePearls = cavePearls();
     // (and pointing down, for holding it by the handle at her side)
     { const m = S.megaphone, c = G.canvas(m.height, m.width), x = c.getContext('2d'); x.translate(m.height, 0); x.rotate(Math.PI / 2); x.drawImage(m, 0, 0); S.megaphoneDown = c; }
-    S.outcrops = { laf: outcrop('laf'), eas: outcrop('eas'), bed: outcrop('bed') };
+    S.outcrops = { laf: outcrop('laf'), eas: outcrop('eas'), bed: outcrop('bed'), bay: outcrop('bay') };
     S.quarryRubble = quarryRubble(); S.bigBasalt = bigRock('basalt'); S.bigDolomite = bigRock('dolomite'); S.bigMine = bigRock('mine'); S.gravelBar = gravelBar();
     S.fc = { idle: fatherChristmas(false, false), up: fatherChristmas(true, false), idleRage: fatherChristmas(false, true), upRage: fatherChristmas(true, true), sweater: fatherChristmas(false, false, true) };
     S.diploma = diploma(); S.eggNote = eggNote(); S.candyCorn = candyCorn(); S.doritos = doritos(); S.pawPrints = pawPrints();
