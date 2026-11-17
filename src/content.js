@@ -12849,14 +12849,9 @@
     }
     yield G.say('Nate', 'Two tunnels and a whole lot of bridge between here and Chesapeake. Let\'s go.');
   };
-  S.cbbtCar = function* () {
-    const c = yield G.ask('Nate', 'Head home?', ['Head home', 'Keep going']);
-    if (c === 0) G.play.warp('home', 1, 53, 'right');
-  };
+  // back down the trestle to the toll plaza, where the car is parked
   S.cbbtTrestleEnd = function* () {
-    const p = P();
-    yield G.say('Nate', 'That\'s miles of trestle back to the Eastern Shore. If I\'m going home, I\'m taking the car.');
-    yield G.walkTo(p, p.x, p.y - 24, 1);
+    G.play.warp('cbbtToll', 9, 2, 'down');
   };
   S.bayViewer = function* () {
     yield G.say(null, 'A coin-op viewer. Nate puts in a quarter.');
@@ -13627,15 +13622,28 @@
   // ---------------------------------------------------------------- the toll plaza
   S.tollWorker = function* () {
     const f = flags();
+    // the first time: the bridge-tunnel is closed to cars, so the car stays here and Nate walks
     if (!f.tollMet) {
       f.tollMet = true;
-      yield G.say('Toll Collector', 'Welcome to the Chesapeake Bay Bridge-Tunnel! Seventeen-point-six miles, shore to shore.');
-      yield G.say('Nate', 'Do you take shark teeth?');
-      yield G.say('Toll Collector', '...We take cash, cards and E-ZPass.');
-      yield G.say('Toll Collector', 'But it\'s funny you ask. All week, people have been calling in about somebody down in the tunnels charging a toll of FIVE HUNDRED SHARK TEETH.');
+      yield G.say('Toll Collector', 'Whoa, whoa! Pull over, hon. You can\'t take that out there.');
+      yield G.say(null, 'Nate pulls into the little lot by the plaza and gets out.');
+      yield G.say('Toll Collector', 'The bridge-tunnel is CLOSED. There\'s a monster in the tunnel, and it won\'t let anybody through.');
+      yield G.say('Nate', '...A monster.');
+      yield G.say('Toll Collector', 'A soda truck tipped over in the first tunnel. Now there\'s something big and blue down there, and nobody has made it across all week.');
+      yield G.say('Toll Collector', 'And people keep calling about somebody even farther down, charging a toll of FIVE HUNDRED SHARK TEETH.');
       yield G.say('Toll Collector', 'That is NOT us. Please do not pay anybody shark teeth.');
-      yield G.say('Toll Collector', 'Oh, and drive careful. A truck full of soda tipped over somewhere past the first island. Blue soda. Very sticky.');
-      yield G.say(null, 'Dad\'s E-ZPass beeps from the windshield of the car. Nate\'s all paid up.');
+      yield G.say('Nate', 'My brother lives on the other side. I\'ll walk.');
+      yield G.say('Toll Collector', 'It\'s seventeen-point-six miles, hon.');
+      yield G.say('Nate', 'Then I\'d better get going.');
+      yield G.say('Toll Collector', 'Suit yourself. Leave your car in the lot, it\'ll be fine here. Watch out for the gulls.');
+      yield G.say(null, 'The car stays parked by the plaza. From here, Nate is on foot.');
+      return;
+    }
+    // once the tunnels are clear again
+    if (f.tylerBeaten && !f.tollThanks) {
+      f.tollThanks = true;
+      yield G.say('Toll Collector', 'They reopened the tunnels! Whatever was down there is GONE. Nobody can tell me what happened.');
+      yield G.say('Nate', 'Weird.');
       return;
     }
     f.tollLine = ((f.tollLine || 0) + 1) % 3;
@@ -13646,9 +13654,13 @@
     ][f.tollLine]);
   };
   S.tollCar = function* () {
-    const c = yield G.ask('Nate', 'The car\'s right here.', ['Drive onto the bridge', 'Head home', 'Not yet']);
-    if (c === 0) G.play.warp('cbbt', 21, 20, 'left');
-    else if (c === 1) G.play.warp('home', 1, 53, 'right');
+    const c = yield G.ask('Nate', 'The car\'s parked right here. No cars on the bridge-tunnel.', ['Head home', 'Not yet']);
+    if (c === 0) G.play.warp('home', 1, 53, 'right');
+  };
+  // on foot, out onto the trestle (and on to the first island)
+  S.tollWalkOut = function* () {
+    if (!flags().tollMet) { yield* S.tollEdge('I should talk to the toll collector first.')(); return; }
+    G.play.warp('cbbt', 14, 41, 'up');
   };
   S.tollEdge = (line) => function* () {
     const p = P();
@@ -13682,7 +13694,7 @@
       w.addProp({ img: sp.suv, tx: 17, ty: 10, h: 3, dx: 3, solid: [17, 11, 2, 2], hit: [17, 11, 2, 2], talk: S.tollCar });
       w.add(new G.Sign(16, 7, ['CHESAPEAKE BAY BRIDGE-TUNNEL', '17.6 miles across the mouth of the Chesapeake Bay. Two tunnels. Four man-made islands.']));
       w.add(new G.Sign(4, 12, ['NOTICE', 'Tolls are paid HERE, at the plaza. Never in the tunnels. Never in shark teeth.']));
-      w.addTrigger(7, 0, 6, 1, () => G.script.run(S.tollEdge('Seventeen-point-six miles of bridge. I am DRIVING.')()));
+      w.addTrigger(7, 0, 6, 1, () => G.script.run(S.tollWalkOut()));
       w.addTrigger(5, 15, 10, 1, () => G.script.run(S.tollEdge('Home is back that way. If I\'m going home, I\'m taking the car.')()));
     },
     onEnter() {
@@ -13982,8 +13994,7 @@
           ctx.drawImage(G.spr.bobber, bx - 2 - cx, by - cy);
         },
       });
-      // Nate's car in the lot
-      w.addProp({ img: G.spr.suv, tx: 20, ty: 17, h: 3, dx: 3, solid: [20, 18, 2, 2], hit: [20, 18, 2, 2], talk: S.cbbtCar });
+      // (no car in the lot: the bridge-tunnel is closed to cars, so it's parked back at the toll plaza)
       w.add(new G.Chest(23, 12, 'cbbt_teeth', function* () {
         yield G.itemGet(G.spr.toothGold, 'Tucked behind the rocks: {y}30 shark teeth{/}! Probably a gull\'s stash.');
         G.play.addTeeth(30);
