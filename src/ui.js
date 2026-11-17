@@ -836,11 +836,12 @@
           if (ph && G.photoHas(ph.id)) { this.photoView = ph; G.audio.sfx('select'); } else G.audio.sfx('bump');
         }
       } else if (this.tab === COLL_TAB && (this.coll === 'fish' || this.coll === 'teeth' || this.coll === 'animals' || this.coll === 'dunks')) {
-        const n = this.coll === 'fish' ? G.FISH_ORDER.length : this.coll === 'teeth' ? G.FOSSILS.length : this.coll === 'dunks' ? G.DUNKS.length : G.ANIMALS.length, col = this.sel % 4, row = Math.floor(this.sel / 4);
+        const n = this.coll === 'fish' ? G.FISH_ORDER.length : this.coll === 'teeth' ? G.FOSSILS.length : this.coll === 'dunks' ? G.DUNKS.length : G.ANIMALS.length;
+        const cols = this.coll === 'fish' ? 5 : 4, col = this.sel % cols, row = Math.floor(this.sel / cols);
         if (inp.hit('left') && col > 0) this.move(-1, n);
-        if (inp.hit('right') && col < 3) this.move(1, n);
-        if (inp.hit('down') && this.sel + 4 < n) this.move(4, n);
-        if (inp.hit('up')) { if (row > 0) this.move(-4, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
+        if (inp.hit('right') && col < cols - 1 && this.sel + 1 < n) this.move(1, n);
+        if (inp.hit('down') && this.sel + cols < n) this.move(cols, n);
+        if (inp.hit('up')) { if (row > 0) this.move(-cols, n); else { this.onTabs = true; G.audio.sfx('menu'); } }
       } else if (this.tab === COLL_TAB && this.coll === 'instruments') {
         const n = G.INSTRUMENTS.length, cols = instCols(), col = this.sel % cols, row = Math.floor(this.sel / cols);
         if (inp.hit('left') && col > 0) this.move(-1, n);
@@ -1594,23 +1595,23 @@
       const log = G.fishLog(), have = (k) => !!log[k];
       card(ctx, 5, 21, 112, 121, 'MATT\'S SURVEY', C.gold, G.sayable(G.fishCaughtKinds()) + '/' + G.sayable(G.FISH_ORDER.length));
       G.FISH_ORDER.forEach((k, i) => {
-        const x = 10 + (i % 4) * 26, y = 39 + Math.floor(i / 4) * 23, sel = i === this.sel && !this.onTabs;
-        slot(ctx, x, y, 24, 22, have(k) ? (G.FISH_RARE.includes(k) ? C.gold : C.cyan) : undefined);
-        if (have(k)) G.fishIcon(ctx, k, x + 2, y + 3, 20, 10);
-        else TXT(ctx, '?', x + 10, y + 7, C.faint);
-        if (have(k)) { const n = G.sayable(log[k].n); TXT(ctx, n, x + 23 - F().width(n), y + 13); }
-        if (sel) brackets(ctx, x - 1, y - 1, 26, 24);
+        const x = 9 + (i % 5) * 21, y = 39 + Math.floor(i / 5) * 22, sel = i === this.sel && !this.onTabs;
+        slot(ctx, x, y, 20, 20, have(k) ? (G.FISH_RARE.includes(k) ? C.gold : C.cyan) : undefined);
+        if (have(k)) G.fishIcon(ctx, k, x + 2, y + 2, 16, 10);
+        else TXT(ctx, '?', x + 8, y + 6, C.faint);
+        if (have(k)) { const n = G.sayable(log[k].n); TXT(ctx, n, x + 19 - F().width(n), y + 11); }
+        if (sel) brackets(ctx, x - 1, y - 1, 22, 22);
       });
       const f = G.state.flags;
-      TXT(ctx, 'Trips', 10, 114, C.soft); TXT(ctx, G.sayable(f.fishTrips || 0), 60, 114, C.gold);
-      TXT(ctx, 'Survey cards', 10, 125, C.soft); TXT(ctx, G.sayable(f.surveyCards || 0), 80, 125, C.gold);
+      TXT(ctx, 'Trips', 10, 110, C.soft); TXT(ctx, G.sayable(f.fishTrips || 0), 60, 110, C.gold);
+      TXT(ctx, 'Survey cards', 10, 121, C.soft); TXT(ctx, G.sayable(f.surveyCards || 0), 80, 121, C.gold);
       const k = G.FISH_ORDER[this.sel], K = G.BAY_FISH[k];
       card(ctx, 120, 21, 115, 121);
       if (!K) return;
       if (!have(k)) {
         TXT(ctx, '???', 125, 27, C.cyan);
         ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 40, 107, 1);
-        F().wrap(k === 'sturgeon' ? 'Something huge lives down on the bottom of the bay. Matt has only ever caught one.' : k === 'lumpsucker' ? 'Something tiny, round and very shy. It would need cold, deep water. Way out past the island.' : 'Not caught yet.', 104).slice(0, 6).forEach((l, i) => TXT(ctx, l, 125, 44 + i * 9, C.dim));
+        F().wrap(K.hint || 'Not caught yet.', 104).slice(0, 6).forEach((l, i) => TXT(ctx, l, 125, 44 + i * 9, C.dim));
         return;
       }
       slot(ctx, 124, 25, 44, 22, G.FISH_RARE.includes(k) ? C.gold : C.cyan);

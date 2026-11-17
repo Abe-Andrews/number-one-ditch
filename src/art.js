@@ -6064,6 +6064,24 @@
       p.hline(6, 8, 10, '#d8e0a0');
       return finish(p);
     }
+    if (kind === 'seahorse') {
+      // a lined seahorse, upright: a curled tail, a long snout, a little fin on its back
+      const p = new Pix(9, 14), Y = '#d8a838', D = '#a87820', L = '#f0d070';
+      p.rect(3, 1, 3, 3, Y); p.hline(6, 8, 2, Y); p.set(4, 0, D); p.set(4, 2, '#101418');
+      p.rect(2, 4, 4, 5, Y); p.vline(2, 4, 8, D); p.vline(5, 5, 8, L); p.set(1, 6, L);
+      for (const y of [5, 7]) p.hline(3, 4, y, D);
+      p.rect(3, 9, 3, 2, Y); p.set(4, 11, Y); p.set(5, 12, Y); p.set(4, 13, Y); p.set(3, 12, D);
+      return finish(p);
+    }
+    if (kind === 'toadfish') {
+      // an oyster toadfish: a big flat head, a wide frowny mouth, mottled brown, little whiskers
+      const p = new Pix(16, 7), B = '#7a6440', D = '#4e3e26', L = '#b8a070';
+      p.rect(1, 2, 13, 4, B); p.rect(8, 1, 7, 5, B); p.hline(9, 15, 6, D); p.hline(2, 13, 6, L);
+      for (const [x, y] of [[3, 3], [6, 2], [5, 4], [9, 3], [11, 2], [12, 4]]) p.set(x, y, D);
+      p.set(0, 1, D); p.set(0, 3, D); p.set(0, 5, D); p.set(13, 1, '#f0e8a0'); p.set(13, 2, '#101418');
+      p.set(15, 5, '#c8b888'); p.set(14, 6, '#c8b888');
+      return finish(p);
+    }
     if (kind === 'boot') {
       const p = new Pix(11, 11);
       p.rect(1, 0, 5, 7, '#6a4a30'); p.rect(1, 6, 9, 3, '#6a4a30'); p.hline(1, 10, 9, '#3a2a1c'); p.hline(1, 5, 0, '#8a6a48');
@@ -6076,6 +6094,10 @@
       bluefish: [18, 7, '#2a6a8a', '#7ab0c0', '#e8f0f0', '#3a7a94'],
       striper: [22, 8, '#4a5a6a', '#c0c8d0', '#f2f4f6', '#7a8898'],
       cobia: [30, 8, '#3a2e26', '#6a5a48', '#d8d0c0', '#3a2e26'],
+      spadefish: [15, 11, '#5a5e66', '#c8ccd2', '#e8ecf0', '#3a3e46'],
+      tautog: [20, 9, '#2a2c26', '#4a4c40', '#7a7a68', '#2a2c26'],
+      mackerel: [21, 6, '#2e6a8e', '#c8d8e2', '#f0f4f6', '#2e6a8e'],
+      sheepshead: [18, 10, '#5a5e64', '#d0d4d8', '#eef0f2', '#4a4e54'],
     }[kind];
     const p = new Pix(w, h + 2), cy = Math.floor(h / 2) + 1, bx0 = 3, bx1 = w - 1, mid = (bx0 + bx1) / 2, half = (bx1 - bx0) / 2;
     const top = [];
@@ -6095,6 +6117,10 @@
     if (kind === 'croaker') { for (const [x, y] of [[5, -2], [7, -1], [9, -2], [11, -1], [6, 0]]) p.set(x, cy + y, '#6a5438'); p.set(w - 2, cy + 2, '#c4ac84'); }
     if (kind === 'striper') for (const dy of [-2, 0, 2]) for (let x = 6; x <= w - 5; x++) if (p.get(x, cy + dy)) p.set(x, cy + dy, '#2a3440');
     if (kind === 'bluefish') { p.hline(w - 4, w - 1, cy + 1, '#1c2a34'); p.set(w - 2, cy, '#ffffff'); p.set(w - 4, cy, '#ffffff'); }
+    if (kind === 'spadefish' || kind === 'sheepshead') for (const x of kind === 'spadefish' ? [6, 9, 12] : [5, 8, 11, 14]) for (let y = 0; y < h + 2; y++) if (p.get(x, y)) p.set(x, y, '#22242a');
+    if (kind === 'sheepshead') { p.set(w - 1, cy, '#f8f8f0'); p.set(w - 2, cy + 1, '#f8f8f0'); }
+    if (kind === 'tautog') { for (const [x, y] of [[6, -1], [9, 1], [12, -2], [14, 0], [8, 2]]) p.set(x, cy + y, '#1a1c18'); p.set(w - 1, cy, '#c8b8a8'); }
+    if (kind === 'mackerel') for (const [x, y] of [[6, 0], [9, -1], [11, 1], [13, 0], [15, -1], [17, 0]]) p.set(x, cy + y, '#f0c838');
     if (kind === 'cobia') { for (let x = 5; x <= w - 4; x++) { if (p.get(x, cy)) p.set(x, cy, '#e8e0d0'); if (p.get(x, cy - 1)) p.set(x, cy - 1, '#1c1814'); } }
     return finish(p);
   }
@@ -7848,7 +7874,8 @@
   }
 
   // ---- the bathrooms
-  function condoVanity(tiles) {
+  // (open: Romulus knocked the left door open on his way out, and the bidet's in there)
+  function condoVanity(tiles, open) {
     const W = tiles * 16, p = new Pix(W, 22);
     p.rect(0, 0, W, 6, '#ece8e0'); p.hline(0, W - 1, 0, '#f8f6f2');
     for (let i = 0; i < W / 3; i++) p.set(Math.floor(G.hash(i, 1, 81) * W), 1 + Math.floor(G.hash(i, 2, 81) * 4), '#d8d0c4');
@@ -7856,6 +7883,13 @@
     p.rect(s, 1, 10, 4, '#f8f8f6'); p.rect(s + 1, 2, 8, 2, '#dce4ec'); p.vline(s + 5, 0, 1, '#c8ccd2');
     p.rect(0, 6, W, 16, '#f2f2ee'); p.hline(0, W - 1, 6, '#c8c8c0');
     for (let x = 2; x + 12 <= W; x += 14) { p.rect(x, 8, 12, 12, '#e4e4de'); p.rect(x + 1, 9, 10, 10, '#f2f2ee'); p.set(x + 10, 13, '#a8acb2'); }
+    if (open) {
+      p.rect(2, 8, 12, 12, '#3e3a36'); p.hline(2, 13, 8, '#2a2622'); p.hline(3, 12, 15, '#5a544c');
+      // the bidet, on the shelf: a white tank with a little nozzle
+      p.rect(5, 11, 5, 4, '#f4f4f0'); p.hline(5, 9, 11, '#ffffff'); p.vline(10, 12, 13, '#c8ccd2'); p.set(11, 12, '#c8ccd2'); p.set(6, 13, '#a8c8e0');
+      // the door, swung out
+      p.rect(0, 9, 2, 13, '#e4e4de'); p.vline(0, 9, 21, '#c8c8c0');
+    }
     return finish(p);
   }
   // a big mirror with a light box over it
@@ -11420,7 +11454,7 @@
     S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);
     S.gull = [false, true].map((l) => ({ sit: gullFrame(l, 'sit'), up: gullFrame(l, 'up'), down: gullFrame(l, 'down') }));
     S.tunnelPortal = tunnelPortal(); S.tunnelPortalTS = tunnelPortal('THIMBLE SHOAL CHANNEL TUNNEL'); S.containerShip = containerShip(); S.fishingBoat = fishingBoat(); S.mattBoat = mattBoat(); S.mattHull = mattBoat(true); S.mattBoatL = mirror(S.mattBoat); S.mattHullL = mirror(S.mattHull);
-    S.bayFish = {}; for (const k of ['spot', 'croaker', 'bluefish', 'striper', 'cobia', 'flounder', 'crab', 'boot', 'sturgeon', 'lumpsucker']) { const r = bayFish(k); S.bayFish[k] = { r, l: mirror(r) }; }
+    S.bayFish = {}; for (const k of ['spot', 'croaker', 'bluefish', 'striper', 'cobia', 'flounder', 'crab', 'boot', 'sturgeon', 'lumpsucker', 'spadefish', 'tautog', 'mackerel', 'sheepshead', 'toadfish', 'seahorse']) { const r = bayFish(k); S.bayFish[k] = { r, l: mirror(r) }; }
     S.dolphin = dolphin();
     S.pelican = pelican(); S.pelicanL = mirror(S.pelican);
     S.bayViewer = bayViewer(); S.tunnelLight = tunnelLight(); S.tunnelSign = tunnelSign();
@@ -11525,7 +11559,7 @@
     S.condoFridge = condoFridge(); S.glassRange = glassRange(); S.dishwasher = dishwasher();
     S.condoUppers = { two: condoUpperCabs(2), micro: condoUpperCabs(1, 0), three: condoUpperCabs(3) };
     S.washerFront = washerFront(); S.dryerBack = dryerBack(); S.wireShelf = wireShelf(1);
-    S.condoVanity = condoVanity(2); S.bathMirror = bathMirror(2); S.openShelves = openShelves(); S.tubCurtain = tubCurtain(); S.tubGlass = tubGlass();
+    S.condoVanity = condoVanity(2); S.condoVanityOpen = condoVanity(2, true); S.bathMirror = bathMirror(2); S.openShelves = openShelves(); S.tubCurtain = tubCurtain(); S.tubGlass = tubGlass();
     S.bifoldCloset = bifoldCloset(); S.atticHatch = atticHatch(); S.closetRods = closetRods(4);
     S.cableHeaps = [cableHeap(1), cableHeap(2), cableHeap(3)]; S.cableTotes = cableTotes(2); S.cableBox = cableBox(); S.junkPile = junkPile();
     // the last road, and the Ditch by day

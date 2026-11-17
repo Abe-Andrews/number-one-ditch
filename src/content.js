@@ -321,7 +321,7 @@
     hammer: { kind: 'gear', name: 'Rock Hammer', icon: () => G.spr.hammer.up, desc: 'A geologist\'s best friend. Always on Z.' },
     doosh: {
       kind: 'gear', equip: true, name: 'Doosh De Luche', icon: () => G.spr.doosh,
-      desc: 'Heals 4 hearts. (It\'s pronounced dulce de leche.)',
+      desc: 'Heals 4 hearts. Nate can carry three at a time. (It\'s pronounced dulce de leche.)',
       has: () => (st().items.doosh || 0) > 0 || !!fl().hadDoosh,
     },
     package: {
@@ -4057,7 +4057,7 @@
     { name: 'Dad\'s pipe bench (workshop)', map: 'garage', at: [10, 10, 'up'] },
     { name: 'Bay Bridge-Tunnel: the toll plaza', map: 'cbbtToll', at: [17, 13, 'left'], teeth: 520 },
     { name: 'The Two-Liter (Chesapeake Channel Tunnel)', map: 'chesTunnel', at: [7, 26, 'up'], flags: { cbbtArrived: true, tollMet: true, chesSeen: true }, items: { rod: true } },
-    { name: 'Out on the bay in Matt\'s boat', map: 'bayBoat', at: [14, 6, 'right'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, rodQuest: true, fishQuest: true, mattMet: true, fishHow: true, fishHow2: true, boatOut: true }, items: { rod: true, boatKey: true }, teeth: 120 },
+    { name: 'Out on the bay in Matt\'s boat', map: 'bayBoat', at: [46, 6, 'right'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, rodQuest: true, fishQuest: true, mattMet: true, fishHow: true, fishHow2: true, boatOut: true }, items: { rod: true, boatKey: true }, teeth: 120 },
     { name: 'Island 2: Matt Oliver\'s boat (fishing)', map: 'cbbtMid', at: [14, 7, 'down'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, rodQuest: true, fishQuest: true }, items: { rod: true }, teeth: 120 },
     { name: 'Tyler (in the tunnel)', map: 'cbbtTunnel', at: [7, 9, 'up'], flags: { popBeaten: true, midSeen: true, cbbtArrived: true, tunnelSeen: true, hoodedMet: true, tollPaid: true, tylerMet: true, rodQuest: true }, items: { rod: true }, teeth: 20 },
     { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [55, 1, 'down'], flags: { tylerBeaten: true } },
@@ -13261,17 +13261,30 @@
   // a map with def.boat), and pulls up to spots where the fish are different. Only the cold hole way
   // out east has the spiny lumpsucker; the channel is where the sturgeon run; cobia hang off the wreck.
   // fish: the weights for that spot (anything missing doesn't bite there). x, y: tiles on G.MAPS.bayBoat.
+  // (the map: the bridge-tunnel's trestle runs down the middle, island 2 on top of it. East of it,
+  // the ocean side; west of it, the bay side. The boat goes right under the trestle.)
   const FISH_SPOTS = G.FISH_SPOTS = {
-    flats: { name: 'The Grass Flats', x: 16, y: 27, line: 'The grass flats. Shallow and green. Flounder and crabs love it in here.',
-      fish: { spot: 5, croaker: 3, flounder: 3.5, crab: 3.5, bluefish: 1, striper: 1, cobia: 0.2 } },
-    wreck: { name: 'The Old Wreck', x: 31, y: 18, line: 'The old wreck. A barge sank here in the fifties. Now it\'s a reef. Cobia love hanging off it.',
-      fish: { spot: 3, croaker: 4, striper: 3, bluefish: 2, crab: 1, flounder: 0.5, cobia: 1.4, sturgeon: 0.08 } },
-    channel: { name: 'The Channel Edge', x: 42, y: 7, line: 'The edge of the shipping channel. It drops off fast here. Big fish cruise the drop.',
-      fish: { spot: 2, croaker: 2, bluefish: 3, striper: 3, flounder: 0.5, crab: 0.3, cobia: 0.8, sturgeon: 0.5 } },
-    deep: { name: 'The Cold Hole', x: 45, y: 30, line: 'The cold hole. Feel how cold that water is? It shouldn\'t be this cold. Not in the Chesapeake.',
+    flats: { name: 'The Grass Flats', x: 46, y: 27, line: 'The grass flats. Shallow and green. Flounder and crabs love it in here.',
+      tip: 'Look close in the grass. Seahorses hide in it. You only see them when your hook gets near.',
+      fish: { spot: 5, croaker: 3, flounder: 3.5, crab: 3.5, bluefish: 1, striper: 1, cobia: 0.2, seahorse: 1 } },
+    wreck: { name: 'The Old Wreck', x: 61, y: 18, line: 'The old wreck. A barge sank here in the fifties. Now it\'s a reef. Cobia love hanging off it.',
+      tip: 'Keep your hook off the wreck or it\'ll snag. The tautog live right up against it.',
+      fish: { spot: 3, croaker: 4, striper: 3, bluefish: 2, crab: 1, flounder: 0.5, cobia: 1.4, sturgeon: 0.08, tautog: 2 } },
+    channel: { name: 'The Channel Edge', x: 72, y: 7, line: 'The edge of the shipping channel. It drops off fast here. Big fish cruise the drop.',
+      tip: 'The current rips through here. It\'ll drag your hook downstream, so keep fighting it.', current: 0.45,
+      fish: { spot: 2, croaker: 2, bluefish: 3, striper: 3, flounder: 0.5, crab: 0.3, cobia: 0.8, sturgeon: 0.5, mackerel: 2.5 } },
+    deep: { name: 'The Cold Hole', x: 75, y: 30, line: 'The cold hole. Feel how cold that water is? It shouldn\'t be this cold. Not in the Chesapeake.',
+      tip: 'It\'s pitch dark down there. You\'ll only see what\'s right next to your hook.', dark: true,
       fish: { spot: 2, croaker: 3, striper: 1.5, bluefish: 0.5, flounder: 0.5, sturgeon: 0.5, lumpsucker: 0.18 } },
+    // the bay side, west of the bridge
+    pilings: { name: 'Under the Bridge', x: 28, y: 18, line: 'Right up against the pilings. Stripers hang around the bridge, waiting for dinner to swim by.',
+      tip: 'Mind the pilings: your hook can\'t go through them. Sheepshead steal bait fast, so be quick.', pilings: [176, 222],
+      fish: { striper: 5, bluefish: 2, croaker: 2, spot: 2, flounder: 1, cobia: 0.4, sturgeon: 0.15, sheepshead: 2 } },
+    oysters: { name: 'The Oyster Reef', x: 12, y: 24, line: 'An oyster reef. One oyster cleans fifty gallons of water a day. Everything lives around them.',
+      tip: 'Keep fish up off the bottom when you reel. Those oyster shells will cut your line.', oysters: true,
+      fish: { croaker: 4, spot: 4, crab: 3, striper: 2, flounder: 1, bluefish: 1, cobia: 0.3, sturgeon: 0.1, toadfish: 2 } },
   };
-  const BOAT_DOCK = [16, 6];
+  const BOAT_DOCK = [46, 6], TRESTLE = [32, 37], SEAL_ROCK = [18, 7];
   S.boatOut = function* () {
     const f = flags();
     yield G.fadeOut(20);
@@ -13281,6 +13294,7 @@
       f.boatOut = true;
       yield G.say('Matt', 'She\'s all yours, captain. Arrow keys to steer. Pull up to a spot and press Z to fish.');
       yield G.say('Matt', 'Look for the signs: grass in the shallows, a mast sticking up, the channel buoys, and the dark water way out east.');
+      yield G.say('Matt', 'And you can go right under the bridge. The bay side has spots too.');
       yield G.say('Matt', 'When you want to head in, bring her back to the island.');
     }
   };
@@ -13289,6 +13303,7 @@
     f.spotsSeen = Object.assign({}, f.spotsSeen, { [id]: true });
     const c = yield G.ask('Matt', sp.line, ['Fish here', 'Keep looking']);
     if (c !== 0) return;
+    if (sp.tip) yield G.say('Matt', sp.tip);
     yield* S.mattTrip(id);
   };
   S.boatHome = function* () {
@@ -13302,6 +13317,24 @@
   S.boatNothing = function* () {
     yield G.say('Matt', ['Just open water here. Look for something different: grass, a mast, buoys, dark water.', 'Nothing biting here. Try somewhere with some structure.', 'Keep cruising. The good spots look different.'][Math.floor(Math.random() * 3)]);
   };
+  // a message in a bottle, bobbing out on the bay side (once)
+  S.boatBottle = function* () {
+    const f = flags(), w = G.play.world;
+    f.bottleFound = true;
+    w.spots = w.spots.filter((q) => q.id !== 'bottle');
+    G.audio.sfx('chest');
+    yield G.say(null, 'Nate fishes a bottle out of the water. There\'s a rolled-up note inside.');
+    yield G.say(null, '"To whoever finds this: the bay has been good to me. Now it\'s your turn. Pass it on."');
+    G.play.addTeeth(30);
+    yield G.itemGet(G.spr.toothGold, 'Rolled up in the note: {y}30 shark teeth{/}!');
+    yield G.say('Matt', 'Somebody out here has a good heart. And a lot of shark teeth.');
+  };
+  // a harbor seal, asleep on a rock
+  S.boatSeal = function* () {
+    yield G.say(null, 'A harbor seal is hauled out on the rocks, belly up, sound asleep in the sun.');
+    yield G.say('Matt', 'A harbor seal! They come down from up north in the winter and sleep on these rocks. This one never left.');
+    yield G.say('Nate', 'Same.');
+  };
 
   G.MAPS.bayBoat = {
     name: 'Out on the Bay',
@@ -13309,31 +13342,55 @@
     boat: true,
     noFollower: true,
     tiles() {
-      // open water east of the bridge-tunnel: island 2 up in the corner, the trestle heading south
-      const W = 52, H = 38;
+      // island 2 up top, the trestle heading south down the middle (water under it: the deck is drawn
+      // over the boat), a rock off to the west where a seal sleeps
+      const W = 84, H = 38, [L, R] = TRESTLE;
       const g = Array.from({ length: H }, () => Array(W).fill('y'));
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-        const d = Math.abs((x - 5) / 8.5) ** 4 + Math.abs((y - 3.5) / 6.5) ** 4;
+        const d = Math.abs((x - 35) / 8.5) ** 4 + Math.abs((y - 3.5) / 6.5) ** 4;
         if (d <= 1) g[y][x] = d > 0.45 ? '^' : '.';
       }
-      for (let y = 0; y < 10; y++) for (let x = 2; x <= 9; x++) if (g[y][x] === '.') g[y][x] = 'C';
-      for (let y = 0; y < H; y++) {
-        for (let x = 3; x <= 6; x++) if (y >= 8 || g[y][x] !== 'y') g[y][x] = x === 5 ? 't' : '+';
-        if (y >= 10) { g[y][2] = '!'; g[y][7] = '!'; }
-      }
+      for (let y = 0; y < 10; y++) for (let x = 32; x <= 39; x++) if (g[y][x] === '.') g[y][x] = 'C';
+      for (let y = 0; y < H; y++) for (let x = L + 1; x <= R - 1; x++) if (g[y][x] !== 'y') g[y][x] = x === L + 3 ? 't' : '+';
+      for (const [x, y] of [[SEAL_ROCK[0], SEAL_ROCK[1]], [SEAL_ROCK[0] + 1, SEAL_ROCK[1]], [SEAL_ROCK[0], SEAL_ROCK[1] + 1], [SEAL_ROCK[0] + 1, SEAL_ROCK[1] + 1], [SEAL_ROCK[0] + 2, SEAL_ROCK[1] + 1]]) g[y][x] = '^';
       return g.map((r) => r.join(''));
     },
     setup(w) {
-      const sp = G.spr;
+      const [L, R] = TRESTLE, under = (ty) => w.tileAt(L + 1, ty) === 'y';
       // Matt's dock on the island: tie up here to head in
       w.props.push({ base: 6 * 16, draw(ctx, cx, cy) {
-        const x = 12 * 16 + 8 - cx, y = 5 * 16 + 6 - cy;
+        const x = 42 * 16 + 8 - cx, y = 5 * 16 + 6 - cy;
         ctx.fillStyle = '#8a6a48'; ctx.fillRect(x, y, 30, 10);
         ctx.fillStyle = '#6a4e34'; for (let i = 0; i < 7; i++) ctx.fillRect(x + 1 + i * 4, y, 1, 10);
         ctx.fillStyle = '#4a3828'; ctx.fillRect(x + 27, y + 8, 3, 6); ctx.fillRect(x + 14, y + 8, 3, 6);
       } });
-      // the spots, each with its own look on the water
-      w.spots = [{ id: 'dock', x: 15 * 16, y: 6 * 16 + 8 }].concat(Object.keys(FISH_SPOTS).map((id) => ({ id, x: FISH_SPOTS[id].x * 16 + 8, y: FISH_SPOTS[id].y * 16 + 8 })));
+      // the trestle over the water: its shadow on the water, pilings, and the deck itself drawn over
+      // the boat (see-through while the boat's underneath, so Nate doesn't vanish)
+      w.props.push({ base: -999, draw(ctx, cx, cy) {
+        const ty0 = Math.max(0, Math.floor(cy / 16)), ty1 = Math.min(w.h - 1, Math.floor((cy + G.H) / 16));
+        for (let ty = ty0; ty <= ty1; ty++) {
+          if (!under(ty)) continue;
+          ctx.fillStyle = 'rgba(10,30,50,0.32)'; ctx.fillRect(L * 16 + 6 - cx, ty * 16 + 8 - cy, (R - L + 1) * 16, 16);
+          if (ty % 3 === 0) { ctx.fillStyle = '#5a5e64'; for (const px of [L * 16 + 6, R * 16 + 4]) ctx.fillRect(px - cx, ty * 16 + 12 - cy, 6, 8); }
+        }
+      } });
+      w.props.push({ base: 1e8, draw(ctx, cx, cy) {
+        const p = G.play.player, beneath = p && p.x > L * 16 - 20 && p.x < (R + 1) * 16 + 20 && under(Math.floor((p.y - 4) / 16));
+        const ty0 = Math.max(0, Math.floor(cy / 16)), ty1 = Math.min(w.h - 1, Math.floor((cy + G.H) / 16));
+        ctx.globalAlpha = beneath ? 0.5 : 1;
+        for (let ty = ty0; ty <= ty1; ty++) {
+          if (!under(ty)) continue;
+          for (let tx = L; tx <= R; tx++) {
+            const k = tx === L || tx === R ? 'parapet' : tx === L + 3 ? 'laneV' : 'roadDeck';
+            ctx.drawImage(G.art.tile(k, Math.floor(G.hash(tx, ty) * 4), 0, 0), tx * 16 - cx, ty * 16 - cy);
+          }
+        }
+        ctx.globalAlpha = 1;
+      } });
+      // the spots, each with its own look on the water (plus a bottle, and the seal's rock)
+      w.spots = [{ id: 'dock', x: 45 * 16, y: 6 * 16 + 8 }, { id: 'seal', x: (SEAL_ROCK[0] + 1) * 16 + 8, y: (SEAL_ROCK[1] + 3) * 16 + 4 }]
+        .concat(flags().bottleFound ? [] : [{ id: 'bottle', x: 7 * 16 + 8, y: 33 * 16 + 8 }])
+        .concat(Object.keys(FISH_SPOTS).map((id) => ({ id, x: FISH_SPOTS[id].x * 16 + 8, y: FISH_SPOTS[id].y * 16 + 8 })));
       w.props.push({ base: -1000, draw(ctx, cx, cy) {
         const t = G.tick;
         for (const s of w.spots) {
@@ -13357,24 +13414,48 @@
               ctx.fillStyle = col; ctx.fillRect(x + bx - 3, y - 12 + b, 6, 9); ctx.fillRect(x + bx - 2, y - 15 + b, 4, 3);
               ctx.fillStyle = '#f4f4f0'; ctx.fillRect(x + bx - 4, y - 3 + b, 8, 2);
             }
+          } else if (s.id === 'oysters') {
+            // oyster shells breaking the surface at low tide
+            for (let i = 0; i < 9; i++) {
+              const ox = x - 36 + ((i * 29) % 72), oy = y - 14 + ((i * 17) % 28);
+              ctx.fillStyle = '#8a8478'; ctx.fillRect(ox, oy, 6, 3); ctx.fillStyle = '#d8d2c4'; ctx.fillRect(ox + 1, oy, 3, 1); ctx.fillRect(ox + 3, oy + 1, 2, 1);
+            }
+          } else if (s.id === 'bottle') {
+            const b = Math.round(Math.sin(t * 0.07) * 1.5);
+            ctx.fillStyle = '#3a8a5a'; ctx.fillRect(x - 5, y - 2 + b, 9, 4); ctx.fillRect(x + 4, y - 1 + b, 3, 2);
+            ctx.fillStyle = '#a8784a'; ctx.fillRect(x + 7, y - 1 + b, 1, 2);
+            ctx.fillStyle = '#f4ecd8'; ctx.fillRect(x - 3, y - 1 + b, 4, 2);
+            ctx.fillStyle = '#9adab0'; ctx.fillRect(x - 4, y - 2 + b, 6, 1);
           }
           // a slow ring on the water: something's down there
-          if (s.id !== 'dock') {
+          if (FISH_SPOTS[s.id] || s.id === 'bottle') {
             const k = (t % 90) / 90;
             ctx.strokeStyle = 'rgba(232,244,252,' + (0.5 * (1 - k)).toFixed(2) + ')'; ctx.lineWidth = 1;
             ctx.beginPath(); ctx.ellipse(x, y + 4, 6 + k * 18, 3 + k * 9, 0, 0, Math.PI * 2); ctx.stroke();
           }
         }
       } });
-      // the spot's name, when the boat is close enough to fish it
+      // the seal, belly up on its rock (it rolls over now and then)
+      w.props.push({ base: (SEAL_ROCK[1] + 2) * 16, draw(ctx, cx, cy) {
+        const x = (SEAL_ROCK[0] + 1) * 16 - 4 - cx, y = SEAL_ROCK[1] * 16 + 10 - cy, roll = (G.tick % 600) < 40;
+        ctx.fillStyle = 'rgba(0,0,0,0.25)'; ctx.fillRect(x - 2, y + 6, 26, 2);
+        ctx.fillStyle = '#5e5248'; ctx.fillRect(x, y, 18, 6); ctx.fillRect(x + 2, y - 1, 14, 1); ctx.fillRect(x + 16, y - 2, 6, 6);
+        ctx.fillStyle = roll ? '#4a4038' : '#e0d4c0'; ctx.fillRect(x + 2, y + (roll ? 0 : 1), 13, 3);
+        ctx.fillStyle = '#8a7c6c'; for (const [sx, sy] of [[4, 4], [9, 5], [14, 4], [18, 0]]) ctx.fillRect(x + sx, y + sy, 1, 1);
+        ctx.fillStyle = '#1c1c22'; ctx.fillRect(x + 20, y, 1, 1); ctx.fillRect(x + 21, y + 2, 1, 1);
+        ctx.fillStyle = '#4a4038'; ctx.fillRect(x - 3, y + 1, 3, 2); ctx.fillRect(x - 4, y, 1, 1); ctx.fillRect(x - 4, y + 3, 1, 1);
+        ctx.fillRect(x + 8, y + 6, 3, 1);
+        if (!roll && (G.tick >> 5) % 4 === 0) { ctx.fillStyle = '#f8f8f0'; ctx.fillRect(x + 22, y - 6, 1, 1); ctx.fillRect(x + 24, y - 9, 2, 2); }
+      } });
+      // the spot's name, when the boat is close enough
       w.props.push({ base: 1e9, draw(ctx) {
         const s = G.boatSpotNear(w);
         if (!s || G.script.busy) return;
-        const name = s.id === 'dock' ? 'MATT\'S DOCK' : FISH_SPOTS[s.id].name.toUpperCase(), wd = FT().width(name) + 30;
+        const name = { dock: 'MATT\'S DOCK', bottle: 'A BOTTLE', seal: 'A HARBOR SEAL' }[s.id] || FISH_SPOTS[s.id].name.toUpperCase(), wd = FT().width(name) + 30;
         ctx.fillStyle = 'rgba(12,8,20,0.7)'; ctx.fillRect(Math.round((G.W - wd) / 2), 4, wd, 12);
         FT().draw(ctx, name + '  (Z)', Math.round((G.W - wd) / 2) + 4, 6, '#f8d850', { shadow: '#000' });
       } });
-      w.add(new G.Sign(8, 8, ['NO WAKE NEAR THE ISLAND.', 'Matt has a sticker on the console that says the same thing.']));
+      w.add(new G.Sign(38, 8, ['NO WAKE NEAR THE ISLAND.', 'Matt has a sticker on the console that says the same thing.']));
     },
   };
   // the spot the boat's sitting on, if any (a little forgiving: the boat is long)
@@ -13387,7 +13468,7 @@
   };
   G.boatInteract = (w) => {
     const s = G.boatSpotNear(w);
-    G.script.run(!s ? S.boatNothing() : s.id === 'dock' ? S.boatHome() : S.boatSpot(s.id));
+    G.script.run(!s ? S.boatNothing() : s.id === 'dock' ? S.boatHome() : s.id === 'bottle' ? S.boatBottle() : s.id === 'seal' ? S.boatSeal() : S.boatSpot(s.id));
   };
 
   const FISH_SURF = 52, FISH_BOTTOM = 124, FISH_TRIP = 75 * 60, ROD_TIP = [146, 14], BOAT_X = 44;
@@ -13424,15 +13505,24 @@
     flounder: { name: 'Summer Flounder', teeth: 25, size: [14, 24], depth: [FISH_BOTTOM - 3, FISH_BOTTOM - 3], speed: 0.25, pull: 1, runs: 0.008, weight: 1.5, bottom: true, line: 'Summer flounder! Both eyes on one side. It\'s been through a lot.' },
     crab: { name: 'Blue Crab', teeth: 10, size: [4, 7], depth: [FISH_BOTTOM - 4, FISH_BOTTOM - 4], speed: 0.35, pull: 0.5, runs: 0.004, weight: 1.5, bottom: true, line: 'A blue crab! It grabbed the bait and would NOT let go. Classic crab.' },
     cobia: { name: 'Cobia', teeth: 75, size: [30, 52], depth: [84, 112], speed: 0.9, pull: 1.8, runs: 0.016, weight: 0.5, line: 'COBIA!! Nate, that\'s a COBIA! I need a picture of this!' },
-    sturgeon: { name: 'Atlantic Sturgeon', teeth: 150, size: [48, 84], depth: [FISH_BOTTOM - 9, FISH_BOTTOM - 6], speed: 0.45, pull: 2.2, runs: 0.018, weight: 0.12, line: 'A STURGEON! Their family goes back to the dinosaurs. Quick, let her go gently.' },
+    sturgeon: { hint: 'Something huge cruises the bottom of the channel edge. Matt has only ever caught one.', name: 'Atlantic Sturgeon', teeth: 150, size: [48, 84], depth: [FISH_BOTTOM - 9, FISH_BOTTOM - 6], speed: 0.45, pull: 2.2, runs: 0.018, weight: 0.12, line: 'A STURGEON! Their family goes back to the dinosaurs. Quick, let her go gently.' },
+    // one fish of its own at each place Matt's boat can go (FISH_SPOTS; the spadefish lives right off
+    // Island 2). hint: what the survey page says before it's caught. hidden: hard to see until the hook
+    // is close. home: it hangs around one spot in the scene (the wreck, the pilings).
+    spadefish: { name: 'Atlantic Spadefish', teeth: 35, size: [8, 20], depth: [60, 100], speed: 0.7, pull: 1.3, runs: 0.01, weight: 0.8, hint: 'Something tall and striped hangs around the islands. Fish right off Island 2.', line: 'Atlantic spadefish! They school up around the bridge-tunnel islands. Look at that shape.' },
+    seahorse: { name: 'Lined Seahorse', teeth: 70, size: [3, 6], depth: [FISH_BOTTOM - 24, FISH_BOTTOM - 10], speed: 0.15, pull: 0.4, runs: 0.002, weight: 0, hidden: true, hint: 'Something tiny hides in the seagrass. You\'d have to look close.', line: 'A lined seahorse! In the Chesapeake! The dad carries the babies. True story.' },
+    tautog: { name: 'Tautog', teeth: 45, size: [12, 24], depth: [FISH_BOTTOM - 20, FISH_BOTTOM - 8], speed: 0.4, pull: 1.6, runs: 0.014, weight: 0, home: [165, 46], hint: 'Something lives right up against an old wreck.', line: 'A tautog! Tog live in the wreck. They crunch crabs with teeth like a dog\'s.' },
+    mackerel: { name: 'Spanish Mackerel', teeth: 40, size: [12, 22], depth: [58, 72], speed: 1.7, pull: 1.3, runs: 0.02, weight: 0, bite: 20, hint: 'Something fast runs near the top, out where the channel current rips.', line: 'Spanish mackerel! Fastest fish in the bay. Blink and they\'re gone.' },
+    sheepshead: { name: 'Sheepshead', teeth: 50, size: [12, 24], depth: [72, 112], speed: 0.5, pull: 1.7, runs: 0.012, weight: 0, bite: 20, home: [200, 40], hint: 'Something nibbles barnacles off the bridge pilings.', line: 'A sheepshead! Look at its teeth. They look like PEOPLE teeth.' },
+    toadfish: { name: 'Oyster Toadfish', teeth: 30, size: [8, 14], depth: [FISH_BOTTOM - 4, FISH_BOTTOM - 4], speed: 0.12, pull: 1.1, runs: 0.006, weight: 0, bottom: true, hint: 'Something grunts down in the oyster reef on the bay side.', line: 'An oyster toadfish! Ugliest fish in the bay. It GRUNTS. Listen.' },
     // (very rare, only out at the cold hole (FISH_SPOTS), and shy: it only comes over to a hook
     // that's held perfectly still, and it lets go fast)
-    lumpsucker: { name: 'Spiny Lumpsucker', teeth: 200, size: [2, 4], depth: [FISH_BOTTOM - 12, FISH_BOTTOM - 7], speed: 0.3, pull: 2.4, runs: 0.026, weight: 0, shy: true, bite: 16, line: 'A SPINY LUMPSUCKER! Those live way up north, in cold water! What is it doing HERE?' },
+    lumpsucker: { hint: 'Something tiny, round and very shy. It would need cold, deep water. Way out past the island.', name: 'Spiny Lumpsucker', teeth: 200, size: [2, 4], depth: [FISH_BOTTOM - 12, FISH_BOTTOM - 7], speed: 0.3, pull: 2.4, runs: 0.026, weight: 0, shy: true, bite: 16, line: 'A SPINY LUMPSUCKER! Those live way up north, in cold water! What is it doing HERE?' },
     boot: { teeth: 0, pull: 0.3, runs: 0, line: 'A boot. Not a fish. I\'ll take it anyway. It doesn\'t belong in the bay.' },
   };
   G.BAY_FISH = BAY_FISH;
-  G.FISH_ORDER = ['spot', 'croaker', 'bluefish', 'striper', 'flounder', 'crab', 'cobia', 'sturgeon', 'lumpsucker'];
-  G.FISH_RARE = ['cobia', 'sturgeon', 'lumpsucker'];
+  G.FISH_ORDER = ['spot', 'croaker', 'bluefish', 'striper', 'flounder', 'crab', 'spadefish', 'toadfish', 'mackerel', 'sheepshead', 'tautog', 'seahorse', 'cobia', 'sturgeon', 'lumpsucker'];
+  G.FISH_RARE = ['seahorse', 'cobia', 'sturgeon', 'lumpsucker'];
   // Matt's survey log: for each kind, how many Nate has caught and the biggest one (inches)
   const fishLog = () => (G.state.fishLog = G.state.fishLog || {});
   G.fishLog = fishLog;
@@ -13478,10 +13568,15 @@
       ctx.fillStyle = '#4a8a3a';
       for (let x = 8; x < G.W; x += 9) { const hgt = 14 + (x % 9), sway = Math.sin(t * 0.04 + x) * 2; for (let k = 0; k < hgt; k++) ctx.fillRect(Math.round(x + sway * (k / hgt)), FISH_BOTTOM - k, 1, 1); }
     } else if (sceneSpot === 'channel') {
+      ctx.fillStyle = 'rgba(232,244,252,0.35)';
+      for (let i = 0; i < 9; i++) ctx.fillRect(Math.round((i * 53 + t * 1.2) % (G.W + 30)) - 20, FISH_SURF + 8 + ((i * 23) % 60), 10, 1);
       const b = Math.round(Math.sin(t * 0.06) * 1.5);
       ctx.fillStyle = '#c83434'; ctx.fillRect(214, FISH_SURF - 12 + b, 7, 10); ctx.fillRect(215, FISH_SURF - 15 + b, 5, 3);
     } else if (sceneSpot === 'deep') {
-      ctx.fillStyle = 'rgba(6,16,44,0.4)'; ctx.fillRect(0, FISH_SURF + 3, G.W, FISH_BOTTOM - FISH_SURF - 3);
+      ctx.fillStyle = 'rgba(6,16,44,0.4)'; ctx.fillRect(0, FISH_SURF + 3, G.W, FISH_BOTTOM - FISH_SURF - 3);    } else if (sceneSpot === 'pilings') {
+      for (const px of [176, 222]) { ctx.fillStyle = '#7a7e84'; ctx.fillRect(px, 36, 8, FISH_BOTTOM - 36); ctx.fillStyle = '#5a5e64'; ctx.fillRect(px + 6, 36, 2, FISH_BOTTOM - 36); ctx.fillStyle = '#4a6a5a'; ctx.fillRect(px, FISH_SURF + 2, 8, 6); }
+    } else if (sceneSpot === 'oysters') {
+      for (let x = 100; x < G.W - 10; x += 7) { const h = 3 + (x % 5); ctx.fillStyle = '#8a8478'; ctx.fillRect(x, FISH_BOTTOM - h, 6, h); ctx.fillStyle = '#d8d2c4'; ctx.fillRect(x + 1, FISH_BOTTOM - h, 3, 1); }
     }
     const bob = Math.round(Math.sin(t * 0.05)), by = FISH_SURF - 14 + bob, m = G.sprites.matt.right[0], n = G.sprites.nate.right[0];
     ctx.drawImage(G.spr.mattBoat, BOAT_X, by);
@@ -13542,7 +13637,8 @@
     // (once everything else is in the log, the sturgeon and the lumpsucker turn up more often, where
     // they live at all: the lumpsucker only out at the cold hole)
     const all = () => G.FISH_ORDER.every((k) => k === 'sturgeon' || k === 'lumpsucker' || fishLog()[k]);
-    const W = spot && FISH_SPOTS[spot] ? FISH_SPOTS[spot].fish : null;
+    const W = spot && FISH_SPOTS[spot] ? FISH_SPOTS[spot].fish : null, SP = (spot && FISH_SPOTS[spot]) || {};
+    const WRECK = [128, FISH_BOTTOM - 17, 202, FISH_BOTTOM];  // (the hull in the wreck's scene: the hook snags on it)
     const pick = () => {
       const base = (k) => (W ? W[k] || 0 : BAY_FISH[k].weight || 0);
       const wt = (k) => (base(k) > 0 && all() && k === 'sturgeon' ? Math.max(base(k), 0.4) : base(k) > 0 && all() && k === 'lumpsucker' ? Math.max(base(k), 0.35) : base(k));
@@ -13553,7 +13649,7 @@
     };
     // three different everyday kinds for the survey card
     const card = () => {
-      const pool = ['spot', 'croaker', 'bluefish', 'striper', 'flounder', 'crab'], out = [];
+      const pool = ['spot', 'croaker', 'bluefish', 'striper', 'flounder', 'crab'].filter((k) => (W ? W[k] || 0 : BAY_FISH[k].weight) > 0), out = [];
       while (out.length < 3) { const k = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; out.push({ kind: k, done: false }); }
       return out;
     };
@@ -13663,10 +13759,13 @@
             f.x += f.dir * f.sp; f.ph += 0.05;
             if (!BAY_FISH[f.kind].bottom) f.y += Math.sin(f.ph) * 0.15;
             if (f.school && Math.abs(f.x - B.x) > 34) f.dir = Math.sign(B.x - f.x);
+            const hm = BAY_FISH[f.kind].home;
+            if (hm && Math.abs(f.x - hm[0]) > hm[1] && Math.sign(hm[0] - f.x) !== f.dir) f.dir = -f.dir;
           } else if (f.state === 'flee') f.x += f.dir * 2.4;
           if (f.x < -50 || f.x > G.W + 50) f.dead = true;
         }
         this.fish = this.fish.filter((f) => !f.dead);
+        for (const f of this.fish) if (f.kind === 'toadfish' && f.state === 'swim' && (this.t + Math.round(f.ph * 40)) % 240 === 0) this.pops.push({ text: 'GRUNT', x: Math.round(f.x), y: Math.round(f.y) - 10, t: 40, col: '#c8b888' });
         for (const n of this.nettles) { n.x += n.vx; n.ph += 0.05; n.y += Math.sin(n.ph) * 0.1; if (n.x < -12) n.x = G.W + 12; if (n.x > G.W + 12) n.x = -12; }
         // the tide turns: once nothing's on the line, that's the trip
         if (this.state === 'end') { if (--this.st <= 0) { this.result = this.done(); return true; } return false; }
@@ -13696,7 +13795,10 @@
         const moved = inp.down('left') || inp.down('right') || inp.down('up') || inp.down('down');
         if (inp.down('left')) this.hx -= 1.25; if (inp.down('right')) this.hx += 1.25;
         if (inp.down('up')) this.hy -= 1.25; if (inp.down('down')) this.hy += 1.25;
+        if (SP.current) this.hx += SP.current;
+        if (SP.pilings) for (const px of SP.pilings) if (this.hx > px - 2 && this.hx < px + 10) this.hx = this.hx < px + 4 ? px - 2 : px + 10;
         this.hx = Math.max(12, Math.min(G.W - 8, this.hx)); this.hy = Math.max(FISH_SURF + 6, Math.min(FISH_BOTTOM - 3, this.hy));
+        if (spot === 'wreck' && this.hx > WRECK[0] && this.hx < WRECK[2] && this.hy > WRECK[1]) { this.pop('SNAGGED!'); this.lose('Snagged it on the wreck! Lost the bait. Keep it off the hull.', 'bump'); this.hy = WRECK[1] - 4; return; }
         for (const n of this.nettles) if (Math.abs(n.x - this.hx) < 6 && this.hy > n.y - 1 && this.hy < n.y + 13) { this.pop('STUNG!'); this.lose('Sea nettle! It stung the bait right off. Hang on, fresh bait.', 'buzz'); return; }
         for (const f of this.fish) if (f.kind === 'boot' && f.state === 'still' && Math.abs(f.x - this.hx) < 7 && Math.abs(f.y - this.hy) < 6) { this.hookUp(f); return; }
         // a fish that sees the bait comes over for a look (one at a time; a schooling fish can't resist)...
@@ -13743,6 +13845,10 @@
         if (reel) {
           this.dist -= run ? 0.08 : this.steer ? 0.85 : 0.7;
           this.tension += (run ? 3 * K.pull : 0.45 * K.pull + 0.15) * ease;
+          if (SP.oysters && f.y > FISH_BOTTOM - 12) {
+            this.tension += 0.7;
+            if (!this.oysterTold) { this.oysterTold = true; this.pops.push({ text: 'OYSTERS!', x: Math.round(f.x), y: Math.round(f.y) - 14, t: 60, col: '#f86858' }); }
+          }
           if (this.t % 5 === 0) G.audio.sfx('reel');
         } else {
           this.tension = Math.max(0, this.tension - 2.2);
@@ -13783,7 +13889,9 @@
         for (const f of this.fish) {
           if (f.state === 'landed') continue;
           const img = G.spr.bayFish[f.kind][f.dir > 0 ? 'r' : 'l'];
+          if (BAY_FISH[f.kind].hidden && f.state === 'swim' && Math.hypot(f.x - this.hx, f.y - this.hy) > 34) ctx.globalAlpha = 0.14;
           ctx.drawImage(img, Math.round(f.x - img.width / 2), Math.round(f.y - img.height / 2));
+          ctx.globalAlpha = 1;
           const mark = f.state === 'bite' ? '!' : f === this.on && this.warn > 0 ? '!!' : null;
           if (mark) FT().draw(ctx, mark, Math.round(f.x) - 2, Math.round(f.y) - 14 - ((t >> 2) % 2), mark === '!' ? '#f8d850' : '#f86858', { shadow: '#000' });
           // which way to steer: the arrow on the far side from where it's pulling
@@ -13791,6 +13899,18 @@
             const a = this.pull < 0 ? '→' : '←', ax = Math.round(f.x) + (this.pull < 0 ? 12 : -18);
             FT().draw(ctx, a, ax, Math.round(f.y) - 5, this.steer ? '#78e070' : (t >> 3) & 1 ? '#f8f8f0' : '#f8d850', { shadow: '#000' });
           }
+        }
+        // (the cold hole: dark water, with just a little light around the hook)
+        if (SP.dark) {
+          const cv = this.darkCv || (this.darkCv = G.canvas(G.W, G.H)), dc = cv.getContext('2d');
+          dc.clearRect(0, 0, G.W, G.H);
+          dc.globalCompositeOperation = 'source-over'; dc.fillStyle = 'rgba(2,6,18,0.93)'; dc.fillRect(0, FISH_SURF + 3, G.W, G.H - FISH_SURF - 3);
+          const lx0 = this.on && this.state !== 'bite' ? this.mouth(this.on)[0] : this.hx, ly0 = this.on && this.state !== 'bite' ? this.on.y : this.hy;
+          const gr = dc.createRadialGradient(lx0, ly0, 6, lx0, ly0, 34);
+          gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+          dc.globalCompositeOperation = 'destination-out'; dc.fillStyle = gr; dc.beginPath(); dc.arc(lx0, ly0, 34, 0, Math.PI * 2); dc.fill();
+          dc.globalCompositeOperation = 'source-over';
+          ctx.drawImage(cv, 0, 0);
         }
         // the line (redder the more strain), and the hook (with a worm on it, when there's bait)
         let lx = this.hx, ly = this.hy;
@@ -15032,8 +15152,15 @@
       lines: [['Abe', 'My emergency stash.'], ['Nate', 'I thought you quit Doosh De Luche.'], ['Abe', 'So does Hannah.']],
       *reward() {
         const s = G.state;
-        s.items.doosh = (s.items.doosh || 0) + 1; flags().hadDoosh = true;
+        flags().hadDoosh = true;
         G.audio.sfx('chest');
+        // (three is all Nate can carry: with full pockets, he eats this one on the spot)
+        if ((s.items.doosh || 0) >= 3) {
+          s.hp = Math.min(s.maxHp, s.hp + 8);
+          yield G.itemGet(G.spr.doosh, 'Abe hands down a {y}Doosh De Luche{/}! Nate\'s pockets are full, so he eats it right there.');
+          return;
+        }
+        s.items.doosh = (s.items.doosh || 0) + 1;
         yield G.itemGet(G.spr.doosh, 'Abe hands down a {y}Doosh De Luche{/}!');
       },
     },
@@ -15044,14 +15171,6 @@
       after: 'A tall bookshelf packed with books, flowers on top, and a little lighthouse lamp glowing on the bottom shelf.',
       lines: [['Abe', 'My shark tooth collection! From when I was a kid. I hid it up here so Romulus wouldn\'t eat it.'], ['Nate', 'Abe. Some of these are just rocks.'], ['Abe', 'Don\'t tell me which ones.']],
       *reward() { yield* S.bossStash(30, 'Abe gives you his old collection: {y}30 shark teeth{/}. (Probably.)'); },
-    },
-    kite: {
-      map: 'condo', at: [40.5, 15.75],
-      look: 'A big tree on the island in the visitor parking.',
-      high: 'There\'s a kite stuck way up in the tree, with a little pouch tied to its tail. Way too high.',
-      after: 'A big tree on the island in the visitor parking. No more kite.',
-      lines: [['Abe', 'Somebody tied a pouch of shark teeth to a kite.'], ['Nate', 'Some kid is going to be very sad.'], ['Abe', 'Some kid should have known better.']],
-      *reward() { yield* S.bossStash(20, 'The pouch has {y}20 shark teeth{/} in it.'); },
     },
     giftShop: {
       map: 'chkdLobby', at: [19.5, 11.75],
@@ -15505,9 +15624,6 @@
       // of skinny evergreens further down
       // (the big tree on the island between the two halves of the visitor parking)
       w.props.push({ img: sp.trees[1], x: 41 * 16 + 8, y: 13 * 16 - 2, base: 13 * 16 + 31 });
-      // (a kite stuck way up in it, until Abe gets it down)
-      w.props.push({ img: sp.kiteInTree, x: 42 * 16 + 6, y: 11 * 16 + 4, base: 13 * 16 + 32, draw(ctx, cx, cy) { if (!flags().reach_kite) ctx.drawImage(this.img, this.x - cx, this.y - cy); } });
-      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [41 * 16, 13 * 16, 44 * 16, 15 * 16], talk: () => S.abeReach('kite') });
       w.blockTiles(41, 13, 3, 2);
       for (const [x, y, k] of [[46, 4, 'pine'], [50, 5], [44, 8], [48, 9, 'pine'], [52, 8], [51, 12, 'pine'], [45, 13], [48, 16], [44, 18, 'pine'], [52, 16], [50, 20],
         [47, 23], [51, 25, 'pine'], [48, 28], [52, 31], [47, 33, 'pine'], [50, 36], [46, 38],
@@ -15622,8 +15738,11 @@
   S.condoSink = function* () {
     const s = G.state;
     if (s.items.bidet) { yield G.say(null, 'A long vanity under a big mirror and a light box. The cabinet under the sink has a bidet-shaped empty spot.'); return; }
-    yield G.say(null, 'A long vanity under a big mirror and a light box.');
-    yield G.say(null, 'Something is rattling around in the cabinet under the sink...');
+    if (flags().cabOpen) yield G.say(null, 'The cabinet under the sink is hanging open. There\'s something on the shelf.');
+    else {
+      yield G.say(null, 'A long vanity under a big mirror and a light box.');
+      yield G.say(null, 'Something is rattling around in the cabinet under the sink...');
+    }
     yield* S.bidetFind();
   };
   // finding the Portable Bidet (at the sink, or when Romulus knocks the cabinet open)
@@ -15632,6 +15751,8 @@
     G.audio.sfx('chest');
     s.items.bidet = true; s.items.bidetWater = G.BIDET_MAX;
     yield G.itemGet(G.spr.bidetIcon, 'You got the {y}Portable Bidet{/}!');
+    yield G.say('Nate', '...Wait. This looks familiar.');
+    yield G.say('Nate', 'This is the bidet Abe gave me for Christmas. The one he TOOK BACK.');
     yield G.say(null, 'Nate gives it a careful sniff, to see if it\'s been used.');
     yield G.say('Nate', '*sniff sniff*');
     yield G.say('Nate', '...Inconclusive.');
@@ -15784,8 +15905,8 @@
     if (spot.vanish) r.dead = true;
     else { r.state = 'hide'; r.chase = true; }
     if (spot.bidet && !G.itemHas('bidet')) {
-      yield G.say(null, 'On his way out, Romulus knocked the cabinet under the sink wide open...');
-      yield* S.bidetFind();
+      f.cabOpen = true;
+      yield G.say(null, 'On his way out, Romulus knocked the cabinet under the sink wide open. There\'s something in there.');
     }
     yield G.say('Nate', spot.line);
     if (spot.door) {
@@ -16256,7 +16377,9 @@
       // From the user's photo: the leafy shower curtain, a fluffy bath mat, a little basket on the toilet tank
       // (keep x 19, y 14-16 clear: both doors).
       F.hang(sp.bathMirror, 16, 13, 2, null, 8);
-      F.stand(sp.condoVanity, 16, 14, 2, S.condoSink);
+      // (its cabinet hangs open once Romulus has run through, until Nate takes the bidet out)
+      const vanity = F.stand(sp.condoVanity, 16, 14, 2, S.condoSink);
+      Object.defineProperty(vanity, 'img', { get: () => (flags().cabOpen && !G.state.items.bidet ? sp.condoVanityOpen : sp.condoVanity), configurable: true });
       F.hang(sp.openShelves, 18, 13, 1, look('Open shelves over the toilet.'), 4);
       F.stand(sp.toilet, 18, 14, 1, look('...It\'s a toilet, Nate.'));
       F.stand(sp.tubCurtain, 16, 17, 3, look('A bathtub with a leafy shower curtain: green leaves and little yellow flowers.'), { ht: 2 });
@@ -23439,11 +23562,11 @@
   G.rushOk = () => !G.state.playAs && !G.state.night && !G.flashback && !G.play.bossFight();
 
   // what the rests offer: healing right now, or something for later
-  const rushItem = (name, desc, icon, id, n, x) => ({ name, desc, icon, take(s) { s.items[id] = (s.items[id] || 0) + n; s.xItem = x || id; } });
+  const rushItem = (name, desc, icon, id, n, x, cap) => ({ name, desc, icon, take(s) { s.items[id] = Math.min(cap || Infinity, (s.items[id] || 0) + n); s.xItem = x || id; } });
   const RUSH_PICKS = {
     heal: { name: 'Catch Your Breath', desc: 'Two hearts back, right now.', icon: () => G.spr.heart.full, take(s) { s.hp = Math.min(s.maxHp, s.hp + RUSH_HEAL); } },
     firstAid: rushItem('First-Aid Kit', 'One patch-up for later: 3 hearts.', () => G.spr.firstAidIcon, 'firstAid', 1),
-    doosh: rushItem('Doosh De Luche', 'One for later: 4 hearts.', () => G.spr.doosh, 'doosh', 1),
+    doosh: rushItem('Doosh De Luche', 'One for later: 4 hearts.', () => G.spr.doosh, 'doosh', 1, null, 3),
     tacoBag: rushItem('Fourthmeal', 'One for later: every heart back.', () => G.spr.tacoBag, 'tacoBag', 1),
     package: rushItem('Booby-Trapped Packages', 'Three more. They stun most bosses.', () => G.spr.gift, 'package', 3),
     eggs: rushItem('A Dozen Eggs', 'Henrietta fires them from X.', () => G.spr.chickens.white.right[0], 'eggs', 12, 'chicken'),
@@ -23451,7 +23574,7 @@
   };
   function rushOffers(r) {
     const any = (list) => list[Math.floor(Math.random() * list.length)];
-    const later = r.i >= RUSH.length / 2 && !r.ateTaco ? ['firstAid', 'doosh', 'tacoBag'] : ['firstAid', 'doosh'];
+    const later = (r.i >= RUSH.length / 2 && !r.ateTaco ? ['firstAid', 'doosh', 'tacoBag'] : ['firstAid', 'doosh']).filter((k) => k !== 'doosh' || (G.state.items.doosh || 0) < 3);
     return ['heal', any(later), r.i % 5 ? any(['package', 'eggs']) : 'heart'];
   }
   // the rest between fights: pick one
@@ -23686,7 +23809,7 @@
     campus: { clouds: 1 }, arts: { clouds: 1 }, collegeHill: { clouds: 1 },
     fair: { clouds: 1 }, home: { clouds: 1, warm: 1 }, andover: { clouds: 1, leaves: 1 },
     cbbtToll: { clouds: 1, gulls: 1 }, cbbtMid: { clouds: 1, gulls: 1 }, cbbt: { clouds: 1, gulls: 1 }, bayBoat: { clouds: 1, gulls: 1 },
-    condo: { clouds: 1, leaves: 1 }, golf: { clouds: 1, leaves: 1 }, toroLoco: { clouds: 1 }, chkd: { clouds: 1 },
+    condo: { clouds: 1 }, golf: { clouds: 1 }, toroLoco: { clouds: 1 }, chkd: { clouds: 1 },
     ditchRoad: { clouds: 1 }, ditchDay: { clouds: 1, leaves: 1 }, aurora: { clouds: 1, gulls: 1 },
     chkdRoof: { vignette: 0.42 },
   };
