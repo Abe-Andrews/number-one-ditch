@@ -2560,7 +2560,7 @@
       yield G.say('Michelle', 'It was relevant in my HEAD.');
     }
     m.held = G.spr.wateringCan;
-    yield G.say('Michelle', 'Anyway! Look at these dahlias. Three weddings this month, plus the altar flowers for Sunday.');
+    yield G.say('Michelle', 'Anyway! Look at these dahlias. The biggest ones I\'ve ever grown. Don\'t tell the deer.');
     yield G.say('Michelle', 'Speaking of Sunday. A new family visited church. Guess how I got introduced.');
     yield G.say('Nate', '...As Michelle?');
     yield G.say('Michelle', '"And THIS is the pastor\'s wife!"');
@@ -2599,7 +2599,7 @@
   const MOM_EARLY = [
     'If one more person calls me "the pastor\'s wife" I\'m going to plant them in a raised bed.',
     'Watch out for the snapdragons. These ones bite. I don\'t know where they came from.',
-    'Three weddings this month. Do you know how many dahlias that is? I do. I counted.',
+    'I have four hundred dahlias out here. Do you know how I know? I counted.',
   ];
 
   const MOM_LINES = [
@@ -2790,7 +2790,7 @@
     'Dahlias, zinnias, cosmos, snapdragons... well. Not the snapdragons. Those bite.',
     'I can still hear that song sometimes. Faintly. Through the vents. I\'m going to need a vacation.',
     'People keep asking why I yelled "Jamie Lee Curtis." I don\'t KNOW why. She just lives in my head.',
-    'Who do you think does the altar flowers every Sunday? Not "the pastor\'s wife." ME.',
+    'Who do you think grows every flower at this stand? Not "the pastor\'s wife." ME.',
     'Your father\'s "Tuesday thing" always runs late. Last week he came home smelling like cantaloupe.',
   ];
   S.michelleShop = function* () {
