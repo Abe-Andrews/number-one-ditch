@@ -354,6 +354,8 @@
       const s = G.state;
       if (s.xItem === 'doosh') {
         if (s.items.doosh <= 0) { G.audio.sfx('bump'); return; }
+        // (no snacking in the middle of a boss fight)
+        if (this.bossFight()) { G.audio.sfx('bump'); this.world.pop(this.player.x, this.player.y - 30, 'No time for Doosh! Not in a boss fight.', '#f8f8f0'); return; }
         if (s.hp >= s.maxHp) {
           G.script.run((function* () { yield G.say('Nate', 'I\'m not hungry yet. (Your hearts are full.)'); })());
           return;

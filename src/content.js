@@ -335,7 +335,7 @@
     hammer: { kind: 'gear', name: 'Rock Hammer', icon: () => G.spr.hammer.up, desc: 'A geologist\'s best friend. Always on Z.' },
     doosh: {
       kind: 'gear', equip: true, name: 'Doosh De Luche', icon: () => G.spr.doosh,
-      desc: 'Heals 4 hearts. Nate can carry three at a time. (It\'s pronounced dulce de leche.)',
+      desc: 'Heals 4 hearts. Nate can carry three at a time. No time to eat it during a boss fight. (It\'s pronounced dulce de leche.)',
       has: () => (st().items.doosh || 0) > 0 || !!fl().hadDoosh,
     },
     package: {
@@ -24284,7 +24284,8 @@
   };
   function rushOffers(r) {
     const any = (list) => list[Math.floor(Math.random() * list.length)];
-    const later = (r.i >= RUSH.length / 2 && !r.ateTaco ? ['firstAid', 'doosh', 'tacoBag'] : ['firstAid', 'doosh']).filter((k) => k !== 'doosh' || (G.state.items.doosh || 0) < 3);
+    // (no Doosh: every fight in the rush is a boss fight, and Doosh can't be eaten in one)
+    const later = r.i >= RUSH.length / 2 && !r.ateTaco ? ['firstAid', 'tacoBag'] : ['firstAid'];
     return ['heal', any(later), r.i % 5 ? any(['package', 'eggs']) : 'heart'];
   }
   // the rest between fights: pick one
