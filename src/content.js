@@ -15670,7 +15670,7 @@
           },
         });
       }
-      if (f.romulusBeaten && f.sbl >= 1) w.addProp({ img: sp.fakeRock, tx: 31, ty: 11, dx: 1, dy: -2, hit: [31, 11, 1, 1], talk: () => S.sblFakeRock() });
+      if (f.romulusBeaten && f.sbl >= 1) w.addProp({ img: sp.fakeRock, tx: 31, ty: 11, dx: 1, dy: -2, solid: [31, 11, 1, 1], hit: [31, 11, 1, 1], talk: () => S.sblFakeRock() });
 
       // ---- out front: the brick step, boxwoods and azaleas in the mulch
       w.addProp({ img: sp.brickStep, tx: 22, ty: 18, dx: 4, dy: -6, flat: true });
@@ -15840,7 +15840,7 @@
     const f = flags(), p = P();
     if (!f.romulusBeaten || f.sblBeaten || G.state.night || G.state.playAs) return;
     const d = Math.hypot(p.x - SBL_DOOR[0], p.y - SBL_DOOR[1]);
-    if (!f.sblNotice && d < 84) { G.script.run(S.sblNotice()); return; }
+    if (!f.sblNotice && d < 24) { G.script.run(S.sblNotice()); return; }
     if (d < 200 && G.tick % 210 === 0) { G.audio.sfx('bump'); w.pop(29 * 16 + 8, 9 * 16 - 4, '*THWAP*', '#a8e878'); }
   };
   S.sblNotice = function* () {
@@ -15881,7 +15881,10 @@
       yield G.say('Nate', 'Who even LIVES in Unit B? And why are they so WET?');
       yield G.say(null, 'Nate looks around the stoop. One of the rocks by the door looks... off.');
       // (the fake rock shows up now)
-      w.addProp({ img: G.spr.fakeRock, tx: 31, ty: 11, dx: 1, dy: -2, hit: [31, 11, 1, 1], talk: () => S.sblFakeRock() });
+      // (and if Nate's standing right where it goes, he steps up onto the walk first)
+      const p = P();
+      if (Math.floor(p.x / 16) === 31 && Math.floor((p.y - 1) / 16) === 11) { p.y = 10 * 16 + 14; p.dir = 'down'; }
+      w.addProp({ img: G.spr.fakeRock, tx: 31, ty: 11, dx: 1, dy: -2, solid: [31, 11, 1, 1], hit: [31, 11, 1, 1], talk: () => S.sblFakeRock() });
       return;
     }
     if (f.sbl === 1) {
