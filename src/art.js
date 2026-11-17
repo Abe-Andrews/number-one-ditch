@@ -5666,6 +5666,121 @@
   // the letter (torn out of a spiral notebook, misspellings, scribbles and all,
   // with a crying self-portrait and a heart turning into a broken heart);
   // page 2 is his pencil drawing of her on loose-leaf. Full-screen pages.
+  // Nate's Book of Traps, drawn like the kid drew it (from the user's photos of the real one): a stapled
+  // booklet in pencil, big wobbly letters with his own spelling, stick figures and scribbles.
+  function trapBookPages() {
+    const PAPER = '#f6f4ee', INK = '#34343e', BG = '#1c1424';
+    const px = (x, X, Y, c, w = 1, h = 1) => { x.fillStyle = c; x.fillRect(Math.round(X), Math.round(Y), w, h); };
+    const line = (x, x0, y0, x1, y1, c = INK) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1; for (let i = 0; i <= n; i++) px(x, x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, c); };
+    const ring = (x, cx, cy, rx, ry, c = INK, a0 = 0, a1 = Math.PI * 2) => { for (let a = a0; a <= a1; a += 0.06) px(x, cx + Math.cos(a) * rx, cy + Math.sin(a) * ry, c); };
+    // a kid's big letters: one at a time, each a little up or down
+    const kid = (x, text, X, Y, sc = 2, seed = 1) => {
+      let cx = X;
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === ' ') { cx += 4 * sc; continue; }
+        const dy = Math.round(G.hash(i, seed, 51) * 3) - 1;
+        G.font.drawBig(x, ch, cx, Y + dy, sc, INK, PAPER);
+        cx += G.font.bigWidth(ch, sc) + sc + 1;
+      }
+      return cx;
+    };
+    const scribble = (x, X, Y, w, h, seed = 3) => { for (let i = 0; i < w; i += 3) { const a = G.hash(i, seed, 9), b = G.hash(i, seed, 10); line(x, X + i, Y + a * h, X + i + 2, Y + b * h); } };
+    const loops = (x, cx, cy, rx, ry, n = 2) => { for (let k = 0; k < n; k++) ring(x, cx + k * 2, cy + k, rx - k * 2, ry - k, INK, 0, Math.PI * 2); };
+    const stick = (x, X, Y, face = 0) => {
+      ring(x, X, Y, 4, 5);
+      if (face === 1) { px(x, X - 2, Y - 1, INK); px(x, X + 1, Y - 1, INK); ring(x, X, Y + 1, 2, 1.5, INK, 0.3, Math.PI - 0.3); }
+      else if (face === -1) { px(x, X - 2, Y - 1, INK); px(x, X + 1, Y - 1, INK); ring(x, X, Y + 3, 2, 1.5, INK, Math.PI + 0.3, Math.PI * 2 - 0.3); }
+      else px(x, X - 1, Y - 1, INK);
+      line(x, X, Y + 5, X, Y + 17); line(x, X - 6, Y + 9, X + 6, Y + 9); line(x, X, Y + 17, X - 5, Y + 25); line(x, X, Y + 17, X + 5, Y + 25);
+    };
+    const sheet = (x, X, W) => {
+      px(x, X, 3, PAPER, W, 154);
+      px(x, X + W - 1, 3, '#d8d4c8', 1, 154); px(x, X, 156, '#d8d4c8', W, 1);
+      px(x, X + (W >> 1), 3, 'rgba(0,0,0,0.04)', 1, 154);
+    };
+    const page = () => { const c = G.canvas(240, 160), x = c.getContext('2d'); px(x, 0, 0, BG, 240, 160); return [c, x]; };
+    const out = [];
+
+    // ---- the cover: BOOK of traPS BY Nate, and a guy about to get netted
+    {
+      const [c, x] = page(), L = 56, W = 128;
+      sheet(x, L, W);
+      for (const y of [18, 46, 74, 102, 130]) { px(x, L + 4, y, '#9a9aa4', 1, 8); px(x, L + 5, y, '#c8c8d0', 1, 8); }
+      line(x, L + 84, 14, L + 86, 92); line(x, L + 90, 14, L + 92, 92); line(x, L + 58, 22, L + 88, 14); line(x, L + 56, 92, L + 92, 92);
+      for (let i = 0; i < 9; i++) { line(x, L + 50 + i * 3, 26, L + 60 + i * 2, 54); line(x, L + 46, 30 + i * 3, L + 78, 28 + i * 3); }
+      ring(x, L + 62, 40, 15, 14, INK, -0.2, Math.PI + 0.4);
+      stick(x, L + 40, 62);
+      line(x, L + 46, 71, L + 84, 70); line(x, L + 46, 73, L + 84, 72);
+      kid(x, 'BOOK', L + 34, 97, 2, 1);
+      kid(x, 'of', L + 42, 112, 2, 2);
+      kid(x, 'traPS', L + 30, 126, 2, 3);
+      kid(x, 'BY Nate', L + 34, 145, 1, 4);
+      out.push(c);
+    }
+    // ---- trap 1: grass and a stick over a pit (and a sign, and a guy who doesn't see it)
+    {
+      const [c, x] = page(), L = 56, W = 128;
+      sheet(x, L, W);
+      kid(x, 'Grass', L + 66, 12, 1, 5);
+      kid(x, 'stikk', L + 78, 30, 1, 6);
+      line(x, L + 30, 34, L + 30, 64); px(x, L + 25, 26, INK, 11, 1); px(x, L + 25, 36, INK, 11, 1); px(x, L + 25, 26, INK, 1, 11); px(x, L + 35, 26, INK, 1, 11); ring(x, L + 30, 31, 2, 2);
+      px(x, L + 44, 62, INK, 34, 1); px(x, L + 44, 104, INK, 34, 1); px(x, L + 44, 62, INK, 1, 43); px(x, L + 77, 62, INK, 1, 43);
+      for (let i = 0; i < 7; i++) { line(x, L + 46 + i * 5, 60, L + 44 + i * 5, 78); line(x, L + 44, 64 + i * 2, L + 77, 66 + i * 2); }
+      for (let i = 0; i < 6; i++) line(x, L + 52 + i * 3, 50, L + 56 + i * 2, 62);
+      ring(x, L + 36, 96, 10, 16, INK, Math.PI * 0.4, Math.PI * 1.6); ring(x, L + 48, 114, 10, 6, INK, 0, Math.PI);
+      line(x, L + 86, 40, L + 74, 60); line(x, L + 74, 60, L + 77, 55); line(x, L + 74, 60, L + 79, 59);
+      stick(x, L + 98, 72, -1);
+      kid(x, 'traP1', L + 34, 128, 2, 7);
+      out.push(c);
+    }
+    // ---- traps 2 and 3, across the middle of the booklet: rope and a stick in a tree; a rope loop
+    {
+      const [c, x] = page();
+      sheet(x, 12, 106); sheet(x, 122, 106);
+      px(x, 119, 3, '#cfcbc0', 3, 154);
+      // trap 2
+      line(x, 50, 26, 52, 118);
+      for (let y = 34; y < 100; y += 9) { line(x, 51, y, 42, y - 2); line(x, 51, y + 4, 60, y + 2); }
+      line(x, 52, 40, 80, 28); ring(x, 74, 46, 10, 18, INK, -1.2, 1.4); line(x, 70, 64, 78, 66);
+      px(x, 66, 58, INK, 3, 3);
+      loops(x, 66, 78, 30, 9);
+      kid(x, 'ROPe', 18, 10, 1, 8); kid(x, 'stik', 76, 10, 1, 9);
+      kid(x, 'traP2', 22, 130, 2, 10);
+      // trap 3
+      line(x, 156, 40, 156, 90); line(x, 156, 40, 170, 40);
+      ring(x, 170, 46, 3, 3); px(x, 169, 45, INK, 3, 3);
+      line(x, 170, 49, 168, 66); ring(x, 166, 72, 6, 6);
+      line(x, 162, 78, 150, 96);
+      stick(x, 146, 100, 1);
+      loops(x, 168, 18, 30, 7);
+      kid(x, 'ROPe', 186, 44, 1, 11); kid(x, 'Loop', 184, 70, 1, 12);
+      kid(x, 'traP3', 132, 130, 2, 13);
+      out.push(c);
+    }
+    // ---- trap 4: electric. Scribbled out.
+    {
+      const [c, x] = page();
+      sheet(x, 12, 106); sheet(x, 122, 106);
+      px(x, 119, 3, '#cfcbc0', 3, 154);
+      kid(x, 'traP4', 26, 60, 2, 14);
+      scribble(x, 22, 54, 70, 22, 21);
+      // the outlet (with two little slots that look like eyes), a cord, a box, some string
+      px(x, 136, 104, INK, 22, 1); px(x, 136, 130, INK, 22, 1); px(x, 136, 104, INK, 1, 27); px(x, 157, 104, INK, 1, 27);
+      px(x, 142, 112, INK, 2, 4); px(x, 150, 112, INK, 2, 4);
+      px(x, 166, 104, INK, 14, 1); px(x, 166, 122, INK, 14, 1); px(x, 166, 104, INK, 1, 19); px(x, 179, 104, INK, 1, 19);
+      for (let i = 0; i < 5; i++) { line(x, 168 + i * 3, 106, 168 + i * 3, 120); line(x, 168, 108 + i * 3, 178, 108 + i * 3); }
+      ring(x, 150, 90, 14, 18, INK, -2.6, -0.2); line(x, 164, 90, 182, 72);
+      px(x, 156, 52, INK, 16, 1); px(x, 156, 66, INK, 16, 1); px(x, 156, 52, INK, 1, 15); px(x, 171, 52, INK, 1, 15);
+      ring(x, 172, 82, 7, 5); ring(x, 176, 86, 5, 4);
+      kid(x, 'outLet', 180, 20, 1, 15); line(x, 178, 26, 214, 24);
+      kid(x, 'string', 184, 46, 1, 16);
+      kid(x, 'electric', 130, 140, 1, 17);
+      out.push(c);
+    }
+    return out;
+  }
+
   function mikeyNotePages() {
     const px = (x, X, Y, c, w = 1, h = 1) => { x.fillStyle = c; x.fillRect(Math.round(X), Math.round(Y), w, h); };
     const line = (x, x0, y0, x1, y1, c) => { const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) || 1; for (let i = 0; i <= n; i++) px(x, x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, c); };
@@ -11260,7 +11375,7 @@
     S.fc = { idle: fatherChristmas(false, false), up: fatherChristmas(true, false), idleRage: fatherChristmas(false, true), upRage: fatherChristmas(true, true), sweater: fatherChristmas(false, false, true) };
     S.diploma = diploma(); S.eggNote = eggNote(); S.candyCorn = candyCorn(); S.doritos = doritos(); S.pawPrints = pawPrints();
     S.balloonBooth = balloonBooth(false); S.balloonBoothEmpty = balloonBooth(true); S.funnelCake = funnelCake(); S.rockTray = rockTray();
-    S.mikeyNote = mikeyNotePages(); S.noteIcon = noteIcon();
+    S.mikeyNote = mikeyNotePages(); S.trapBookPages = trapBookPages(); S.noteIcon = noteIcon();
     S.lampPost = lampPost(); S.lampPostL = mirror(S.lampPost);
     S.gull = [false, true].map((l) => ({ sit: gullFrame(l, 'sit'), up: gullFrame(l, 'up'), down: gullFrame(l, 'down') }));
     S.tunnelPortal = tunnelPortal(); S.tunnelPortalTS = tunnelPortal('THIMBLE SHOAL CHANNEL TUNNEL'); S.containerShip = containerShip(); S.fishingBoat = fishingBoat(); S.mattBoat = mattBoat(); S.mattHull = mattBoat(true); S.mattBoatL = mirror(S.mattBoat); S.mattHullL = mirror(S.mattHull);

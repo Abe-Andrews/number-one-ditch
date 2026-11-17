@@ -396,6 +396,11 @@
       desc: 'Folded into a very small square. Mikey gave it to Lily on his way out. Lily can\'t look at it. Press Z to read it.',
       use: () => G.SCRIPTS.readMikeyNote(),
     },
+    trapBook: {
+      kind: 'key', name: 'Book of Traps', short: 'Trap Book', icon: () => trapBookImg(), has: () => !!st().items.trapBook,
+      desc: 'Nate\'s BOOK OF TRAPS, stapled together when he was a little kid. Four traps. One is scribbled out. Press Z to read it.',
+      use: () => G.SCRIPTS.readTrapBook(),
+    },
     carbideLamp: {
       kind: 'key', name: 'Carbide Lamp', icon: () => G.spr.carbideLamp, has: () => !!st().items.carbideLamp,
       desc: 'An old miner\'s lamp from a shelf in the Continental workings. Burns bright white. Nate can see a lot farther in the Andover mines.',
@@ -521,7 +526,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'rushTrophy', 'mosasaurTooth', 'globBookmark', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'rushTrophy', 'mosasaurTooth', 'globBookmark', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'trapBook', 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -2471,15 +2476,8 @@
   };
 
   // ---- the ingredient hunt
-  // ---- the Book of Traps: a stapled booklet Nate drew when he was little (the real one, from the
-  // user's photos in Refe Photos/trap_book). Each page is the photo, with grown-up Nate's notes beside it.
-  const TRAP_PAGES = [
-    { file: 'assets/trapbook/page1.png', title: 'BOOK OF TRAPS', text: '"BOOK of traps BY Nate." On the cover, some poor guy is getting caught in a net.' },
-    { file: 'assets/trapbook/page2.png', title: 'TRAP 1: GRASS + STICK', text: 'A pit, hidden under grass and held up with a stick. Step on it and down you go.' },
-    { file: 'assets/trapbook/page3.png', title: 'TRAPS 2 + 3: ROPE', text: 'Trap 2: a rope and a stick, rigged up in a tree. Trap 3: a rope loop, the kind that grabs your foot.' },
-    { file: 'assets/trapbook/page4.png', title: 'TRAP 4: ELECTRIC', text: 'An outlet and some string. Scribbled out. Even little Nate knew that one was a bad idea.' },
-  ];
-  for (const pg of TRAP_PAGES) { pg.img = new Image(); pg.img.src = pg.file; }
+  // ---- the Book of Traps: a stapled booklet Nate drew when he was little (redrawn from the user's
+  // photos of the real one, in art.js trapBookPages, the same way as Mikey's note)
   let trapBookC = null;
   const trapBookImg = () => {
     if (trapBookC) return trapBookC;
@@ -2490,22 +2488,21 @@
     x.fillStyle = '#3a3440'; x.fillRect(4, 3, 4, 1); x.fillRect(5, 5, 3, 1); x.fillRect(4, 7, 5, 1);
     return (trapBookC = c);
   };
-  const trapPage = (pg, i) => {
-    const c = G.canvas(G.W, G.H), x = c.getContext('2d'), F = G.font;
-    x.fillStyle = '#2a2238'; x.fillRect(0, 0, G.W, G.H);
-    x.fillStyle = '#f6f4ee'; x.fillRect(6, 2, 120, 156);
-    if (pg.img.complete && pg.img.naturalWidth) { x.imageSmoothingEnabled = true; x.drawImage(pg.img, 9, 4, 114, 152); }
-    F.wrap(pg.title, 100).forEach((l, k) => F.draw(x, l, 133, 10 + k * 9, '#f8d850', { shadow: '#0c0814' }));
-    const ty = 14 + F.wrap(pg.title, 100).length * 9;
-    F.wrap(pg.text, 100).forEach((l, k) => F.draw(x, l, 133, ty + k * 9, '#f8f8f0', { shadow: '#0c0814' }));
-    F.draw(x, (i + 1) + '/' + TRAP_PAGES.length, G.W - 22, G.H - 24, '#9890a8', { shadow: '#0c0814' });
-    return c;
-  };
+  // on the floor: Nate picks it up, reads it, and keeps it (KEYS, where he can read it again)
   S.trapBook = function* () {
+    const w = G.play.world;
     yield G.say(null, 'A little stapled booklet on the carpet. The pages are soft from being folded so many times.');
     yield G.say('Nate', 'My BOOK OF TRAPS. I made this when I was a little kid.');
-    yield G.noteView(TRAP_PAGES.map(trapPage), 'Z: put it back');
-    yield G.say('Nate', 'Still holds up.');
+    yield* S.readTrapBook();
+    G.state.items.trapBook = true;
+    if (w.trapBook) { w.props = w.props.filter((pr) => pr !== w.trapBook); w.trapBook = null; }
+    yield G.itemGet(trapBookImg(), 'You got the {y}Book of Traps{/}! It\'s in {y}KEYS{/}.');
+    yield G.say('Nate', 'This is coming with me.');
+  };
+  S.readTrapBook = function* () {
+    yield G.noteView(G.spr.trapBookPages, 'Z: put it back');
+    yield G.say('Nate', 'Trap one: a pit, hidden under grass and a stick. Two and three: rope. Very advanced.');
+    yield G.say('Nate', 'We don\'t talk about trap four.');
   };
 
   S.chemDesk = function* () {
@@ -3678,7 +3675,7 @@
     {
       id: 'dadGrill', name: 'Cedar Plank Salmon', place: 'Home', file: 'assets/photos/dad-grill.png',
       how: 'Dad\'s grill, out on the patio. Check under the lid.',
-      caption: 'The cedar plank was supposed to make the salmon a little smoky. It made EVERYTHING smoky. Dad\'s fix: blow it out like a birthday candle, inches from a tower of plastic chairs. Nobody remembers how the salmon tasted.',
+      caption: 'The cedar plank was supposed to make the salmon a little smoky. It made EVERYTHING smoky. Dad\'s fix: blow it out like a birthday candle, inches from a tower of plastic chairs. The salmon still came out great. Smoky, even.',
     },
     {
       id: 'weddingSuit', name: 'Wedding Suit', place: 'Chesapeake', file: 'assets/photos/wedding-suit.png',
@@ -5765,7 +5762,7 @@
       F.stand(sp.bedMission, 27, 3, 1, () => S.nateBed(), { ht: 3 });
       F.stand(sp.chairGreen, 21, 6, 1, look('A green armchair. Mostly it\'s a place to put books.'));
       // the Book of Traps Nate made as a little kid, on the carpet by the armchair
-      w.addProp({ img: trapBookImg(), tx: 22, ty: 6, flat: true, dx: 2, dy: 4, hit: [22, 6, 1, 1], talk: () => S.trapBook() });
+      if (!G.state.items.trapBook) w.trapBook = w.addProp({ img: trapBookImg(), tx: 22, ty: 6, flat: true, dx: 2, dy: 4, hit: [22, 6, 1, 1], talk: () => S.trapBook() });
       // ---- Lily's room (from the photos), right next door: posters, drawings and polaroids all over the
       // wall, a disco ball, a white bed with navy sheets, a teal record player, a wicker bookshelf with a
       // rubber chicken on top, a clothes rack, and clothes on the floor
