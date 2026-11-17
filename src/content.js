@@ -755,6 +755,7 @@
       if (!f.tacoRunMet) side.push({ name: 'Lily\'s phone', status: 'It keeps buzzing', kind: 'rumor', where: 'Home - Lily\'s room', hint: 'Lily\'s phone keeps buzzing on her bed upstairs. It\'s always Freya.' });
       else add('The 2 AM Taco Bell run', f.tacoRunDone && 'Fourthmeal!', 'Sneak out with Lily', 'Home - Lily\'s room', 'Check Lily\'s bed. Sneak out at 2 AM without waking Mom or Dad, then order for the whole car at the drive-thru.');
     }
+    if (f.mattMet && f.tylerBeaten && !s.items.boatKey) side.push({ name: 'Matt\'s boat', status: 'Matt has something for you', kind: 'rumor', where: 'The Bay - Island 2', hint: 'The tunnel is open again. Matt Oliver is still fishing off Island 2, and he wants to see you.' });
     if (f.mattMet) add('Fishing with Matt Oliver', f.tollPaid && 'Toll paid!', G.sayable(Math.min(s.teeth, 500)) + '/500 teeth', 'The Bay - Island 2', 'Matt Oliver\'s boat is tied up on Island 2. Catch fish for his survey and he pays you in shark teeth.', [Math.min(s.teeth, 500), 500]);
     if (f.rodQuest || s.items.rod) add('The old fisherman', s.items.rod, G.sayable(Math.min(5, f.gullBonks || 0)) + '/5 gulls', 'The Bay - the island', 'Bonk gulls when they swoop down low. Five of them.', [Math.min(5, f.gullBonks || 0), 5]);
     if (s.party.includes('abe') && !f.lastUpDone) side.push({ name: 'The light switch', status: 'There\'s tape on it', kind: 'rumor', where: 'Home - the front hall', hint: 'There\'s a strip of tape by a light switch in the front hall, with Abe\'s name on it.' });
@@ -1359,7 +1360,6 @@
     }
     yield* S.vendorSell();
   };
-  // (the same cart, the same vendor, the same Doosh: on campus, and out on the bridge-tunnel)
   S.vendorSell = function* () {
     const f = flags(), s = G.state;
     const c = yield G.ask('Vendor', 'One Doosh De Luche: {y}10 shark teeth{/}. Heals 4 hearts.', ['Buy one', 'No thanks']);
@@ -1371,27 +1371,6 @@
     f.hadDoosh = true;
     if (!s.xItem) s.xItem = 'doosh';
     yield G.itemGet(G.spr.doosh, 'You got a {y}Doosh De Luche{/}! Press {y}X{/} to eat it and heal 4 hearts.');
-  };
-  S.bayVendor = function* () {
-    const f = flags();
-    if (!f.bayVendorMet) {
-      f.bayVendorMet = true;
-      if (f.metVendor) {
-        yield G.say('Vendor', 'Ice cream! Get your fresh dulce de... oh. It\'s you.');
-        yield G.say('Nate', 'You\'re on an ISLAND. In the middle of the BAY.');
-        yield G.say('Vendor', 'Summer job. I go where the people are.');
-        yield G.say('Nate', 'They closed the tunnels. There are no people.');
-        yield G.say('Vendor', 'There\'s you.');
-      } else {
-        yield G.say('Vendor', 'Ice cream! Get your fresh dulce de leche! Out here in the middle of the bay!');
-        yield G.say('Nate', 'One {y}Doosh De Luche{/}, please.');
-        yield G.say('Vendor', '...It\'s dulce de leche.');
-        yield G.say('Nate', 'That\'s what I said. Doosh De Luche.');
-        yield G.say('Vendor', 'I... fine. Doosh De Luche.');
-        f.metVendor = true;
-      }
-    }
-    yield* S.vendorSell();
   };
 
   // Groundskeeper Gus found Nate's cap. He'll trade it for 10 bonked Sixes.
@@ -12918,6 +12897,24 @@
   S.fisherman = function* () {
     const f = flags(), s = G.state;
     if (s.items.rod) {
+      // (he keeps a cooler of Doosh De Luche on the rocks, and he'll sell Nate one)
+      if (!f.fisherDoosh) {
+        f.fisherDoosh = true;
+        yield G.say('Old Fisherman', 'Hungry? I got a cooler out here. Bait on the bottom, dulce de leche on top. Don\'t mix \'em up.');
+        yield G.say('Nate', 'You have {y}Doosh De Luche{/}?!');
+        yield G.say('Old Fisherman', '...Sure. That.');
+      }
+      const c = yield G.ask('Old Fisherman', 'Doosh De Luche out of the cooler: {y}10 shark teeth{/}. Heals 4 hearts.', ['Buy one', 'Just talking']);
+      if (c === 0) {
+        if ((s.items.doosh || 0) >= 3) { yield G.say('Old Fisherman', 'Son, your pockets are full of the stuff already.'); return; }
+        if (s.teeth < 10) { yield G.say('Old Fisherman', 'Ten teeth, son. Thirty years out here, I don\'t do credit.'); return; }
+        G.play.addTeeth(-10);
+        s.items.doosh = (s.items.doosh || 0) + 1;
+        f.hadDoosh = true;
+        if (!s.xItem) s.xItem = 'doosh';
+        yield G.itemGet(G.spr.doosh, 'You got a {y}Doosh De Luche{/}! Press {y}X{/} to eat it and heal 4 hearts.');
+        return;
+      }
       f.fishLine = ((f.fishLine || 0) + 1) % 4;
       yield G.say('Old Fisherman', [
         'Catch anything yet? Stripers run in the fall. Flounder off the islands all summer.',
@@ -13195,6 +13192,20 @@
   };
   S.matt = function* () {
     const f = flags(), s = G.state;
+    // once Tyler's beaten (the tunnel's open again), Matt trusts Nate with the boat
+    if (f.tylerBeaten && !s.items.boatKey) {
+      yield G.say('Matt', 'Nate! The tunnel\'s open! Was that YOU? You took down whatever was down there?');
+      yield G.say('Nate', 'It was Tyler. He was hypnotized. It\'s a long story.');
+      yield G.say('Matt', 'Anybody who can do that can drive a boat. Here.');
+      s.items.boatKey = true;
+      G.audio.sfx('chest');
+      yield G.itemGet(G.spr.boatKey, 'You got {y}Matt\'s Boat Key{/}! Now you can take the boat out and fish anywhere on the bay.');
+      yield G.say('Matt', 'There are spots out there I never get to: the old wreck, the channel edge, the grass flats.');
+      yield G.say('Matt', 'And way out east, there\'s a cold, deep hole that nobody can explain. Weird things turn up out there.');
+      yield G.say('Matt', 'You drive. I\'ll hold the clipboard. Just ask me when you want to take her out.');
+      G.play.autosave();
+      return;
+    }
     const q = f.fishTrips ? 'Back out on the water? Same deal: you catch them, I pay in shark teeth.' : 'Ready to head out? We fish until the tide turns.';
     const opts = s.items.boatKey ? ['Fish right here', 'Take the boat out', 'Not now'] : ['Let\'s go fishing', 'Not now'];
     const c = yield G.ask('Matt', q, opts);
@@ -13243,16 +13254,6 @@
       yield G.say('Nate', G.sayable(s.teeth) + ' shark teeth! That\'s enough for the toll!');
       yield G.say('Matt', 'Then go get through that tunnel. And Nate? Tell your family I said hi.');
     } else if (!f.tollPaid) yield G.say('Matt', 'Want to go back out? You\'re up to ' + G.sayable(s.teeth) + '. Five hundred teeth is a lot of fish.');
-    // three trips in, Matt trusts Nate with the boat
-    if (f.fishTrips >= 3 && !s.items.boatKey) {
-      yield G.say('Matt', 'Nate. Three trips. You\'re the best deckhand I\'ve had all summer. My only deckhand, but still.');
-      s.items.boatKey = true;
-      G.audio.sfx('chest');
-      yield G.itemGet(G.spr.boatKey, 'You got {y}Matt\'s Boat Key{/}! Now you can take the boat out and fish anywhere on the bay.');
-      yield G.say('Matt', 'There are spots out there I never get to: the old wreck, the channel edge, the grass flats.');
-      yield G.say('Matt', 'And way out east, there\'s a cold, deep hole that nobody can explain. Weird things turn up out there.');
-      yield G.say('Matt', 'You drive. I\'ll hold the clipboard. Just ask me when you want to take her out.');
-    }
     G.play.autosave();
   };
 
@@ -14202,7 +14203,7 @@
         w.blockTiles(tx, ty, 1, 1);
         if (gull !== undefined) w.add(new G.Seagull(bx + (armRight ? 19 : -19), by + 1, 59, gull));
       };
-      lamp(12, 13, true, false); lamp(17, 17, false); lamp(12, 21, true); lamp(17, 25, false, false);
+      lamp(12, 13, true, false); lamp(17, 17, false, true); lamp(12, 21, true); lamp(17, 25, false, false);
       lamp(12, 31, true, false); lamp(17, 35, false, true); lamp(12, 39, true, true); lamp(17, 42, false, false);
       // the long trestle back toward the toll plaza: lights, no gulls
       lamp(12, 47, true); lamp(17, 51, false); lamp(12, 55, true);
@@ -14231,9 +14232,6 @@
           ctx.drawImage(G.spr.bobber, bx - 2 - cx, by - cy);
         },
       });
-      // the ice cream vendor from campus, with his cart in the empty lot (no gull on the light by it)
-      w.addProp({ img: G.spr.cart, tx: 19, ty: 18, h: 2, dx: -2, solid: [19, 18, 2, 2], hit: [19, 18, 2, 2], talk: S.bayVendor });
-      w.add(new G.NPC({ sprite: 'vendor', name: 'Vendor', x: 21 * 16 + 8, y: 19 * 16 + 14, dir: 'left', talk: S.bayVendor }));
       // (no car in the lot: the bridge-tunnel is closed to cars, so it's parked back at the toll plaza)
       w.add(new G.Chest(23, 12, 'cbbt_teeth', function* () {
         yield G.itemGet(G.spr.toothGold, 'Tucked behind the rocks: {y}30 shark teeth{/}! Probably a gull\'s stash.');
