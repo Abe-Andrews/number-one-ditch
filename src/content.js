@@ -5681,7 +5681,7 @@
       room(21, 1, 7, 7, '9', '(');   // Nate's room (carpet)
       room(29, 1, 10, 7, '0', 'o');  // Lily's room (it shares a wall with Nate's, like the real house)
       room(1, 9, 34, 4, '5', 'o');   // hallway
-      room(1, 14, 10, 6, '7', 'o');  // the giraffe room
+      room(1, 14, 10, 6, '7', 'o');  // the spare room
       room(17, 14, 10, 6, '6', 'o'); // guest room
       room(28, 14, 7, 6, '5', 'o');  // linen nook
       fill(13, 13, 2, 7, 'D');       // stairs down
@@ -5746,11 +5746,10 @@
       F.stand(sp.clothesRack, 38, 5, 1, look('A clothes rack, so full it bends in the middle.'));
       w.props.push({ img: sp.clothesPile, x: 34 * 16, y: 5 * 16 + 4, flat: true, base: 0 });
       w.props.push({ img: sp.discoBall, x: 33 * 16 + 11, y: 3 * 16 + 10, base: 7 * 16 });
-      // ---- the giraffe room (the Zillow furniture, until there are photos of it)
+      // ---- the spare room (the Zillow furniture, until there are photos of it)
       F.hang(sp.wallWindow.curtains, 4, 15, 1, null, 3);
       F.stand(sp.glider, 2, 16, 1, look('A gray glider chair. It glides.'));
       F.stand(sp.settee, 4, 16, 2, look('A floral settee under the window.'));
-      F.stand(sp.giraffe, 8, 16, 1, look('A giant stuffed giraffe. Nobody knows where it came from. Nobody dares move it.'), { ht: 2 });
       // ---- hallway
       F.hang(sp.familyPhotos, 3, 10, 2, look('Family photos all the way down the hall. School pictures, beach trips, one very bad haircut.'), 5);
       F.hang(sp.familyPhotos, 19, 10, 2, look('More family photos. Somebody is always blinking.'), 5);
