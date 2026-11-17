@@ -1321,9 +1321,10 @@
       G.SIGNALS.forEach((sg, i) => {
         const y = 95 + i * 9;
         if (!sg.known()) { TXT(ctx, '???', 118, y, C.faint); return; }
-        const a = G.arrows(sg.seq);
-        TXT(ctx, fit(sg.name, 108 - F().width(a)), 118, y, C.cyan);
-        TXT(ctx, a, 231 - F().width(a), y);
+        // (arrows drawn one by one, 7px apart, so a five-note song still leaves room for its name)
+        const aw = sg.seq.length * 7 - 2;
+        TXT(ctx, fit(sg.name, 106 - aw), 118, y, C.cyan);
+        sg.seq.forEach((d, k) => { const ar = G.arrows([d]); TXT(ctx, ar, 231 - aw + k * 7 + Math.round((5 - F().width(ar)) / 2), y); });
       });
     }
 

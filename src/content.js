@@ -514,7 +514,8 @@
   // happens. Add new ones here as the story teaches them.
   G.SIGNALS = [
     { id: 'peace', name: 'Peace Be With You', seq: ['up', 'down', 'up'], known: () => !!fl().signal_peace, effect: () => G.SCRIPTS.signalPeace() },
-    { id: 'icy', name: 'I Pray to Jesus', seq: ['left', 'right', 'up'], known: () => !!fl().signal_icy, effect: () => G.SCRIPTS.signalIcy() },
+    // (five notes, not three: the ice beam is strong, so it takes longer to puff)
+    { id: 'icy', name: 'I Pray to Jesus', seq: ['left', 'right', 'up', 'up', 'down'], known: () => !!fl().signal_icy, effect: () => G.SCRIPTS.signalIcy() },
     { id: 'jlc', name: 'Jamie Lee Curtis', seq: ['right', 'left', 'right'], known: () => !!fl().signal_jlc, effect: () => G.SCRIPTS.signalJlc() },
     // Dad's signature move, from his hip hop class at the grocery store on College Hill
     { id: 'cart', name: 'The Shopping Cart', seq: ['left', 'right', 'left'], known: () => !!fl().signal_cart, effect: () => G.SCRIPTS.signalCart() },
@@ -4364,9 +4365,9 @@
     yield G.say('Nate', '...I did feel something.');
     yield G.say('Ice JJ Fish', 'Aight. You survived the whole set. Tell your pops I\'m in. Sunday. Nine a.m.');
     yield G.say('Ice JJ Fish', 'I\'ll bring the snow.');
-    yield G.say('Ice JJ Fish', 'Hold up. Is that a pipe? Lemme teach you a little something. Three notes. Real smooth.');
+    yield G.say('Ice JJ Fish', 'Hold up. Is that a pipe? Lemme teach you a little something. Five notes. Real smooth.');
     f.signal_icy = true;
-    yield G.itemGet(G.spr.pipe, 'You learned a new pipe song: {c}I Pray to Jesus{/}  ' + G.arrows(['left', 'right', 'up']));
+    yield G.itemGet(G.spr.pipe, 'You learned a new pipe song: {c}I Pray to Jesus{/}  ' + G.arrows(G.SIGNALS.find((sg) => sg.id === 'icy').seq));
     yield G.say(null, 'Puff it on Dad\'s pipe to fire an ice beam the way you\'re facing. Whatever it hits freezes solid for a few seconds, and frozen enemies can still be bonked.');
     w.pop(boss.x, boss.y - 36, '~ I PRAY TO JESUUUS ~', '#a8e0ff');
     yield G.walkTo(boss, boss.x + 200, boss.y - 10, 1.6);
