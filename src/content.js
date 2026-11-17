@@ -5600,7 +5600,8 @@
       F.stand(sp.tripodPhone, 30, 6, 1, () => S.badlandsPhone());
       if (!f.badlandsBeaten) {
         w.badlands = w.add(new G.NPC({ sprite: 'badlands', name: 'Badlands Chugs', x: 30 * 16 + 8, y: 4 * 16 + 14, dir: 'down', talk: S.badlands }));
-        w.addTrigger(24, 3, 12, 14, () => { if (!flags().badlandsMet) G.script.run(S.badlandsIntro()); });
+        // (Nate has to walk right up to him: about three tiles around where he stands, not the whole kitchen)
+        w.addTrigger(26, 3, 9, 5, () => { if (!flags().badlandsMet) G.script.run(S.badlandsIntro()); });
       }
       // ---- DAD'S DEN: his favorite room in the house (from the family's photos). Butter-yellow walls and
       // white wainscoting, the fieldstone fireplace with a white mantel and the moonlit harbor print,
