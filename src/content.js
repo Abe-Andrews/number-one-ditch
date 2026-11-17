@@ -2311,6 +2311,8 @@
       yield G.say(null, 'All from the same grocery store on College Hill, in Easton. All on Tuesdays, around 10:45 at night.');
       yield G.say('Nate', 'That\'s an hour away. Who drives an hour to buy ONE banana? At NIGHT?');
     } else yield G.say(null, 'The cupholder is still stuffed with one-banana receipts.');
+    // ...and it runs, so it can take Nate anywhere he's been
+    yield* S.homeLeave('truck');
   };
   S.homeCoop = function* () {
     yield G.say(null, 'The chicken coop. Somebody has been laying eggs in there.');
@@ -2367,18 +2369,25 @@
   };
   // Leaving home from either end of the road: back to campus, or the long
   // drive to Chesapeake (which Mikey blocks until Lily is saved).
+  // leaving home in the car: anywhere Nate has unlocked (S.drive). Andover is always on the list (the
+  // locked gate explains itself), and until Mikey's been dealt with, "Drive to Chesapeake" is the
+  // old way (the story's in the way). Heading for the bay or the condo, the heads-up comes first.
   S.homeLeave = function* (side) {
-    const p = P(), back = side === 'west' ? 1 : -1;
-    const c = yield G.ask('Nate', 'Where to?', ['Back to Lafayette', 'Drive to Chesapeake', 'The Andover mines', 'Stay home']);
-    if (c === 0) { G.play.warp('campus', 19, 27, 'up'); return; }
-    if (c === 2) { yield* S.driveAndover(); return; }
-    if (c === 1) {
-      if (!flags().lilySaved) { yield* S.mikeyBlock(side); return; }
-      if (!flags().mikeyBeaten) { yield* S.mikeyGoldenHour(); return; }
-      yield* S.homeEast(side);
-      return;
-    }
-    yield G.walkTo(p, p.x + back * 24, p.y, 1.2);
+    const f = flags(), p = P(), back = side === 'west' ? 1 : -1;
+    const went = yield* S.drive('home', {
+      text: 'Where to?',
+      extra: { andover: true, bay: !!f.mikeyBeaten },
+      add: f.mikeyBeaten ? [] : [{ id: 'chesRoad', label: 'Drive to Chesapeake', after: 'home' }],
+      before: { bay: homeNudge, ches: homeNudge },
+      go: {
+        laf: function* () { G.play.warp('campus', 19, 27, 'up'); },
+        andover: S.driveAndover,
+        chesRoad: function* () { if (!flags().lilySaved) { yield* S.mikeyBlock(side); return; } yield* S.mikeyGoldenHour(); },
+        bay: function* () { yield G.say('Nate', 'Chesapeake. Down the Eastern Shore, then straight across the bay. Hang on, Number One Ditch.'); G.play.warp('cbbtToll', 17, 13, 'left'); },
+        ches: function* () { yield G.say(null, 'Down the Eastern Shore, across the bay, and right up to Abe and Hannah\'s.'); G.play.warp(...G.TRAVEL.ches); },
+      },
+    });
+    if (!went && side !== 'truck') yield G.walkTo(p, p.x + back * 24, p.y, 1.2);
   };
 
   // what's still going on around home (for the heads-up and the journal)
@@ -2394,24 +2403,28 @@
   // Everything at home done (Mom's books back, Dad's snacks, Ice JJ Fish booked for church): that's
   // when Dad opens his pipe bench.
   G.homeDone = () => { const f = flags(); return !!(f.shopOpen && f.snacksDone && f.jjBeaten); };
+  // the heads-up on the way to Chesapeake: once (returns whether Nate's still going)
+  function* homeNudge() {
+    const f = flags(), leads = homeLeads();
+    if (f.leaveNudge || !leads.length) return true;
+    f.leaveNudge = true;
+    G.audio.sfx('buzz');
+    yield G.say(null, 'Before Nate can even get going, his phone buzzes. And buzzes.');
+    for (const [who, line] of leads) yield G.text(who, line);
+    yield G.say('Nate', 'Huh. Sounds like there\'s still plenty going on around here.');
+    yield G.say(null, '(None of it is required. Check the {y}JOURNAL{/} for everything going on around home.)');
+    const c = yield G.ask('Nate', 'Head out anyway?', ['Head out', 'Stay a while']);
+    return c === 0;
+  }
   S.homeEast = function* () {
-    const f = flags(), p = P(), leads = homeLeads();
-    if (!f.leaveNudge && leads.length) {
-      f.leaveNudge = true;
-      G.audio.sfx('buzz');
-      yield G.say(null, 'Before Nate can even get to the car, his phone buzzes. And buzzes.');
-      for (const [who, line] of leads) yield G.text(who, line);
-      yield G.say('Nate', 'Huh. Sounds like there\'s still plenty going on around here.');
-      yield G.say(null, '(None of it is required. Check the {y}JOURNAL{/} for everything going on around home.)');
-      const c = yield G.ask('Nate', 'Head out anyway?', ['Drive to Chesapeake', 'Stay a while']);
-      if (c) { yield G.walkTo(p, p.x + (p.x < 30 * 16 ? 24 : -24), p.y, 1); return; }
-    }
+    const f = flags(), p = P();
+    if (!(yield* homeNudge())) { yield G.walkTo(p, p.x + (p.x < 30 * 16 ? 24 : -24), p.y, 1); return; }
     // once Nate's been to Abe and Hannah's, he can drive right there (or stop at the Bridge-Tunnel)
     if (f.condoArrived) {
       const c = yield G.ask('Nate', 'Where in Chesapeake?', ['Abe and Hannah\'s', 'The Bay Bridge-Tunnel', 'Stay home']);
       if (c === 0) {
         yield G.say(null, 'Down the Eastern Shore, across the bay, and right up to Abe and Hannah\'s driveway.');
-        G.play.warp('condo', 35, 16, 'left');
+        G.play.warp(...G.TRAVEL.ches);
         return;
       }
       if (c !== 1) { yield G.walkTo(p, p.x + (p.x < 30 * 16 ? 24 : -24), p.y, 1); return; }
@@ -4090,8 +4103,7 @@
     G.play.warp('andover', 27, 15, 'left');
   };
   S.andoverCar = function* () {
-    const c = yield G.ask('Nate', 'Head home?', ['Head home', 'Keep exploring']);
-    if (c === 0) G.play.warp('home', 1, 53, 'right');
+    yield* S.drive('andover', { text: 'Where to?' });
   };
 
   // ================================================================ ADMIN MODE (testing)
@@ -14076,8 +14088,8 @@
     ][f.tollLine]);
   };
   S.tollCar = function* () {
-    const c = yield G.ask('Nate', 'The car\'s parked right here. No cars on the bridge-tunnel.', ['Head home', 'Not yet']);
-    if (c === 0) G.play.warp('home', 1, 53, 'right');
+    // (no cars out on the bridge-tunnel itself: from here it's on foot)
+    yield* S.drive('bay', { text: 'The car\'s parked right here. Where to?' });
   };
   // on foot, out onto the trestle (and on to the first island)
   S.tollWalkOut = function* () {
@@ -18054,21 +18066,24 @@
     if (!f.healerTalk) { yield G.say(null, 'A silver Jeep, parked in the driveway.'); return; }
     if (!G.state.party.includes('abe')) { yield G.say(null, 'Abe\'s Jeep. Abe has the keys.'); return; }
     yield* S.callIn('abe');
-    const c = yield G.ask('Abe', f.chkdArrived ? 'Where to?' : 'Hop in. CHKD?', ['Drive to CHKD', 'Rattlesnake Bridge Rd', 'Not yet']);
-    if (c === 1) { yield* S.jeepHome(); return; }
-    if (c !== 0) return;
-    // (the heads-up about what's still going on around here comes on the way to CHKD)
-    if (!(yield* S.chesLeaveCheck())) return;
-    G.audio.sfx('door');
-    yield G.say(null, f.chkdArrived ? 'Abe drives back to CHKD.' : 'Abe drives. Fast. He doesn\'t say a word the whole way there.');
-    G.play.warp('chkd', 16, 21, 'up');
+    // (CHKD's on the list from the moment Abe says they need a healer; the heads-up about what's
+    // still going on around here comes on the way there)
+    yield* S.drive('ches', {
+      who: 'Abe', text: f.chkdArrived ? 'Where to?' : 'Hop in. CHKD first?',
+      extra: { chkd: true },
+      before: { chkd: S.chesLeaveCheck },
+      go: {
+        chkd: function* () {
+          G.audio.sfx('door');
+          yield G.say(null, f.chkdArrived ? 'Abe drives back to CHKD.' : 'Abe drives. Fast. He doesn\'t say a word the whole way there.');
+          G.play.warp('chkd', 16, 21, 'up');
+        },
+        home: S.jeepHome,
+      },
+    });
   };
   S.chkdJeep = function* () {
-    const c = yield G.ask('Abe', 'Where to?', ['Back to the condo', 'Rattlesnake Bridge Rd', 'Stay']);
-    if (c === 1) { yield* S.jeepHome(); return; }
-    if (c !== 0) return;
-    G.audio.sfx('door');
-    G.play.warp('condo', 35, 16, 'left');
+    yield* S.drive('chkd', { who: 'Abe', text: 'Where to?', go: { home: S.jeepHome } });
   };
   // Abe's Jeep, all the way home: back over the bay and up the Eastern Shore to Rattlesnake Bridge Road
   S.jeepHome = function* () {
@@ -21281,7 +21296,7 @@
     const c = yield G.ask('Dad', 'Forget something? We can head back to the condo. Nobody will mind.', ['Back to the condo', 'Keep going']);
     if (c !== 0) return;
     G.audio.sfx('door');
-    G.play.warp('condo', 35, 16, 'left', true);
+    G.play.warp(...G.TRAVEL.ches, true);
   };
   const ROAD_LIGHTS = [56, 49, 43, 38, 33, 30, 27, 24, 22, 20, 18, 16, 15];
   G.MAPS.ditchRoad = {
@@ -21869,10 +21884,7 @@
     },
   };
   S.ditchCar = function* () {
-    const c = yield G.ask('Nate', 'Abe left the Jeep for me. Back to the condo? (Or open the MAP and pick anywhere.)', ['Back to the condo', 'Stay']);
-    if (c !== 0) return;
-    G.audio.sfx('door');
-    G.play.warp('condo', 35, 16, 'left', true);
+    yield* S.drive('ditch', { text: 'Abe left the Jeep for me. Where to?' });
   };
 
   // ---- Tyler and the mosasaur tooth
@@ -21951,9 +21963,42 @@
     yield G.say('Tyler', lines[f.tylerLine]);
   };
 
+  // ================================================================ CARS: drive anywhere you've unlocked
+  // Every car (Dad's truck and the road out of home, the car at the toll plaza and at Andover, Abe's
+  // Jeep at the condo, CHKD, the Ditch and Aurora) asks "Where to?" with every place Nate has
+  // unlocked so far. (The MAP's fast travel, after the ending, uses the same arrival spots.)
+  const CAR_STOPS = [
+    { id: 'laf', label: 'Lafayette', open: () => true },
+    { id: 'fair', label: 'Easton Fair', open: (f, s) => !!(s.items.cap || f.doronChat) },
+    { id: 'home', label: 'Rattlesnake Bridge Rd', open: (f) => !!f.homeArrived },
+    { id: 'andover', label: 'The Andover mines', open: (f, s) => !!s.items.andoverKey },
+    { id: 'bay', label: 'The Bay Bridge-Tunnel', open: (f) => !!(f.mikeyBeaten && f.tollMet) },
+    { id: 'ches', label: 'Abe and Hannah\'s', open: (f) => !!f.condoArrived },
+    { id: 'chkd', label: 'CHKD', open: (f) => !!f.chkdArrived },
+    { id: 'aurora', label: 'Aurora', open: (f) => !!f.auroraNews },
+    { id: 'ditch', label: 'The Number One Ditch', open: (f) => !!(f.fin_done && f.dayIntro) },
+  ];
+  const CAR_ARRIVE = { laf: ['campus', 19, 27, 'up'], home: ['home', 1, 53, 'right'] };
+  // o: who/text (the question), extra (ids to list even if they aren't open), add (more stops:
+  // { id, label, after }), before (id: function* that returns false to cancel), go (id: function* to
+  // do instead of just driving there). Returns whether Nate drove off.
+  S.drive = function* (here, o = {}) {
+    const f = flags(), s = G.state, ex = o.extra || {};
+    const stops = CAR_STOPS.filter((st) => st.id !== here && (ex[st.id] != null ? ex[st.id] || st.open(f, s) : st.open(f, s)));
+    for (const a of o.add || []) { const i = stops.findIndex((st) => st.id === a.after); stops.splice(i < 0 ? stops.length : i + 1, 0, a); }
+    const i = yield* pickFrom(o.who || 'Nate', o.text || 'Where to?', stops.map((st) => st.label));
+    if (i < 0) return false;
+    const st = stops[i];
+    if (o.before && o.before[st.id] && !(yield* o.before[st.id]())) return false;
+    if (o.go && o.go[st.id]) { yield* o.go[st.id](); return true; }
+    G.audio.sfx('door');
+    G.play.warp(...(CAR_ARRIVE[st.id] || G.TRAVEL[st.id]).slice(0, 4), true);
+    return true;
+  };
+
   // ================================================================ DRIVING ANYWHERE
   // Once the game is finished, the MAP tab drives Nate to any place he's been: Z on a place.
-  G.TRAVEL = { laf: ['campus', 20, 24, 'down'], fair: ['fair', 20, 20, 'down'], home: ['home', 30, 41, 'up'], andover: ['andover', 27, 15, 'left'], bay: ['cbbtToll', 17, 13, 'left'], ches: ['condo', 35, 16, 'left'], chkd: ['chkd', 16, 21, 'up'], ditch: ['ditchDay', 7, 17, 'up'] };
+  G.TRAVEL = { laf: ['campus', 20, 24, 'down'], fair: ['fair', 20, 20, 'down'], home: ['home', 30, 41, 'up'], andover: ['andover', 27, 15, 'left'], bay: ['cbbtToll', 17, 13, 'left'], ches: ['condo', 26, 19, 'left'], chkd: ['chkd', 16, 21, 'up'], ditch: ['ditchDay', 7, 17, 'up'] };
   G.canTravel = (id) => {
     const f = flags(), s = G.state;
     if (!f.fin_done || !f.dayIntro || !G.TRAVEL[id] || s.playAs || s.night || G.play.bossFight() || G.script.busy) return false;
@@ -22080,10 +22125,7 @@
     },
   };
   S.auroraCar = function* () {
-    const c = yield G.ask('Nate', 'Back to the condo? (Or open the MAP and pick anywhere.)', ['Back to the condo', 'Stay']);
-    if (c !== 0) return;
-    G.audio.sfx('door');
-    G.play.warp('condo', 35, 16, 'left', true);
+    yield* S.drive('aurora', { text: 'Where to?' });
   };
 
   // the shop: the reason Nate is still upset (they walked right past it, last time)
