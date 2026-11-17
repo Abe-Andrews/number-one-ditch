@@ -1305,8 +1305,6 @@
     { id: 'fair', when: (f) => G.play.world && G.play.world.id === 'fair', lines: [['t', JACK, 'yo. eta?'], ['t', 'Nate', 'late'], ['t', JACK, 'perfect. take ur time'], ['s', 'Nate', 'I hate that he said perfect.']] },
     // the boulder's out of the way
     { id: 'boulder', when: (f) => f.boulderGone, lines: [['t', JACK, 'are you coming back tonight or'], ['t', JACK, 'just so i know'], ['s', 'Nate', '...I\'m not answering that.']] },
-    // home
-    { id: 'home', when: (f) => f.homeArrived, lines: [['t', JACK, 'quick q'], ['t', JACK, 'what time will you be back'], ['s', 'Nate', 'That is not a quick question, Jack. That is THE question.']] },
     // Mikey's sorted out, and the road south is open
     { id: 'mikey', when: (f) => f.mikeyBeaten, lines: [['t', JACK, 'can u text me 10 min before u come back. would be huge'], ['s', 'Nate', 'It is my room TOO.']] },
     // Abe and Hannah's, in Chesapeake
@@ -3759,7 +3757,11 @@
     rock.done = true;
     G.audio.sfx('boom');
     G.play.shake(24, 4);
-    w.burst(rock.x, rock.y - 10, basalt ? ['#2e2e34', '#46464e', '#5a5a64'] : ['#8a8c90', '#a8aaae', '#c0c2c6'], 20, { speed: 2, up: 1.2, g: 0.1, life: 36, size: 3 });
+    // smashed to bits: the boulder's gone (until the next visit, when there's another one)
+    const bits = basalt ? ['#2e2e34', '#46464e', '#5a5a64'] : ['#8a8c90', '#a8aaae', '#c0c2c6'];
+    w.burst(rock.x, rock.y - 10, bits, 34, { speed: 2.4, up: 1.4, g: 0.1, life: 40, size: 3 });
+    w.burst(rock.x, rock.y - 4, bits, 14, { speed: 1, up: 0.6, g: 0.12, life: 30, size: 2 });
+    rock.dead = true;
     yield G.wait(30);
     yield G.say('Doron', basalt ? 'Rock. Meet ground.' : '...SPLIT!');
     d.hold = false;
@@ -11163,7 +11165,7 @@
           return;
         }
         if (E.st === 'sleep') E.st = 'idle';
-        if (!E.raged && E.hp > 0 && E.hp < E.maxHp * 0.3) { E.raged = true; this.say(E, F.rage); this.pop('HE\'S MAD!', '#f86858'); E.cool = 0; }
+        if (!E.raged && E.hp > 0 && E.hp < E.maxHp * 0.3) { E.raged = true; this.say(E, F.rage); E.cool = 0; }
         const rage = E.raged ? 1 : 0;
         if (E.cool > 0) E.cool -= 1 + rage;
         if (E.st === 'air' && !E.used && dist < 44 && E.vy < 1) { E.used = true; this.begin(E, 'fair'); return; }
@@ -23362,7 +23364,7 @@
   // indoors. Drawn by the play scene right after the map, before each map's own tint.
   const AMB = {
     campus: { clouds: 1 }, arts: { clouds: 1 }, collegeHill: { clouds: 1 },
-    fair: { clouds: 1 }, home: { clouds: 1, leaves: 1, warm: 1 }, andover: { clouds: 1, leaves: 1 },
+    fair: { clouds: 1 }, home: { clouds: 1, warm: 1 }, andover: { clouds: 1, leaves: 1 },
     cbbtToll: { clouds: 1, gulls: 1 }, cbbtMid: { clouds: 1, gulls: 1 }, cbbt: { clouds: 1, gulls: 1 },
     condo: { clouds: 1, leaves: 1 }, golf: { clouds: 1, leaves: 1 }, toroLoco: { clouds: 1 }, chkd: { clouds: 1 },
     ditchRoad: { clouds: 1 }, ditchDay: { clouds: 1, leaves: 1 }, aurora: { clouds: 1, gulls: 1 },

@@ -4194,7 +4194,7 @@
       '~ I pray to Jesus Christ ~', '~ (Jesus) ~',
   ];
   G.JJ_SONG = JJ_SONG;
-  const JJ_OUCH = ['OUCH, BRO!', 'NOT THE MIC!', 'STILL ON KEY!', 'AYO?!', 'I\'M ICY!', 'THAT WAS FLAT!'];
+  const JJ_OUCH = ['OUCH, BRO!', 'NOT THE MIC!', 'STILL ON KEY!', 'I\'M ICY!', 'THAT WAS FLAT!'];
   class Icicle extends Ent {
     constructor(x, y) { super(x, y); this.t = 50; this.land = 0; }
     update(w) {
