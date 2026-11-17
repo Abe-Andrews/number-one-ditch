@@ -22407,7 +22407,7 @@
       lines: [['Nate', 'Can I bring one? I brought one.'], [null, 'Hannah looks at the cover. She hands it over without a word.'], [GL, 'Dry. Extremely dry. There is a chapter on feldspar. There is a SECOND chapter on feldspar.']],
       after: [
         ['Nate', 'It\'s a classic.'],
-        ['Hannah', 'Nate, honey. No.'],
+        ['Hannah', 'Nate. It\'s a textbook.'],
         ['Nate', 'Just read the part I marked.'],
         [null, 'She reads it out loud. Every rock used to be some other rock. Everything anybody has ever stood on has been melted, crushed and worn away, and made into something else, and it\'s still here.'],
         [null, 'Nobody says anything for a while.'],
@@ -22441,10 +22441,12 @@
     else if (G.with('lily')) { yield G.say('Lily', 'No.'); yield G.say(GL, 'That is not the password. But I do respect it.'); }
     else if (G.with('abe')) { yield G.say('Abe', 'Hi. Do you want a yellow guitar cable?'); yield G.say(GL, 'I have eaten four of your cables. They were chewy. That is not the password.'); }
     else { yield G.say('Nate', '...Feldspar?'); yield G.say(GL, 'That is not the password.'); }
-    yield G.say(GL, 'This door opens for a true reader. You, little bookmark, read about ROCKS.');
+    yield G.say(GL, 'The last time you came down here, little bookmark, you hit me with a hammer and took my entire library.');
+    yield G.say('Nate', 'They were my MOM\'S books.');
+    yield G.say(GL, 'This door does not open for book thieves.');
     G.audio.sfx('bump');
     yield G.say(null, 'The slot slides shut.');
-    if (s.party.includes('hannah')) yield G.say('Nate', '...I know somebody who reads.');
+    if (s.party.includes('hannah')) yield G.say('Nate', '...Maybe he\'d open it for somebody who hasn\'t hit him with a hammer.');
   };
   function* clubEnter() {
     G.audio.sfx('door');
@@ -22465,6 +22467,7 @@
     yield G.wait(60);
     yield G.say(null, 'Silence. Then, slowly, a bolt slides back.');
     yield G.say(GL, '...That is the password.');
+    yield G.say(GL, 'She may come in. The book thief may carry her bag.');
     yield* clubEnter();
     f.clubMet = true;
     yield G.say(null, 'Behind the door there\'s a room nobody knew about. Every wall is books: nibbled, licked, stacked to the ceiling.');
@@ -22473,8 +22476,8 @@
     yield G.say('Hannah', 'Did you ALPHABETIZE these?');
     yield G.say(GL, 'By author. Then by flavor.');
     yield G.say('Hannah', '...Nate. I live here now.');
-    yield G.say('Hannah', 'Nobody in this family will talk to me about books. Nate reads about ROCKS.');
-    yield G.say('Nate', 'Hey.');
+    yield G.say('Hannah', 'Nate reads more than anybody in this family, but it\'s all rocks. Nobody will read the classics with me.');
+    yield G.say('Nate', 'Rocks ARE classics.');
     yield G.say(GL, 'Nobody in this family will talk to ME about books. They only scream.');
     yield G.say('Hannah', 'I\'ve read every fantasy novel I can get my hands on. I want to read the big ones now. The ones everybody says they\'ve read.');
     yield G.say('Hannah', 'Have you actually read War and Peace?');
