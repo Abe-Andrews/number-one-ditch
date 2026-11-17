@@ -352,7 +352,7 @@
     },
     candyCorn: {
       kind: 'key', name: 'Mom\'s Candy Corn', icon: () => G.spr.candyCorn, has: () => !!st().items.candyCorn && !fl().snacksDone,
-      desc: 'A family-size bag, from behind the gravy boat in the good china. Mom does not know you have it. (She knows.)',
+      desc: 'A family-size bag, from behind the amethyst in the Natural History Museum. Mom does not know you have it. (She knows.)',
     },
     doritos: {
       kind: 'key', name: 'Blue Doritos', icon: () => G.spr.doritos, has: () => !!st().items.doritos && !fl().snacksDone,
@@ -794,7 +794,7 @@
       const np = G.pipesMadeCount(), nt = G.tinsMadeCount(), all = G.PIPES.length + G.TOBACCOS.length;
       add('Dad\'s pipe bench', np + nt >= all && 'All made!', G.sayable(np) + '/' + G.sayable(G.PIPES.length) + ' pipes, ' + G.sayable(nt) + '/' + G.sayable(G.TOBACCOS.length) + ' tins', 'Home - the workshop', 'Talk to Dad in his workshop. Turn pipes on his lathe and blend tobacco from his jars.', [np + nt, all]);
     }
-    if (f.jjMet || f.jjGig) add('Ice JJ Fish', f.jjBeaten && 'Booked!', f.jjGig ? 'Book him' : 'Wants a booking', 'Home - past the bridge', f.jjGig ? 'Survive his whole set and he\'ll play Dad\'s church.' : 'He won\'t stop singing until somebody books him. Who books singers?');
+    if (f.jjMet || f.jjGig) add('The singer on the pond', f.jjBeaten && 'Booked!', f.jjGig ? 'Book him' : 'Wants a booking', 'Home - past the bridge', f.jjGig ? 'Survive his whole set and he\'ll play Dad\'s church.' : 'He won\'t stop singing until somebody books him. Who books singers?');
     if (f.booksQuest) {
       const clues = G.clueCount();
       add('Mom\'s missing books', f.shopOpen, s.items.books ? 'Bring them to Mom' : !f.cluesDone ? G.sayable(clues) + '/' + CLUES_NEEDED + ' clues' : !f.momReport ? 'Tell Mom' : !s.items.basementKey && !f.globBeaten ? 'Find Dad\'s keys' : 'The basement',
@@ -2608,6 +2608,20 @@
     'If one more person calls me "the pastor\'s wife" I\'m going to plant them in a raised bed.',
     'Watch out for the snapdragons. These ones bite. I don\'t know where they came from.',
   ];
+  // Mom and Dad top Nate up before sending him to the basement / the frozen pond
+  G.parentHeal = function* (who, always) {
+    const s = G.state, hurt = s.hp < s.maxHp;
+    if (!hurt && !always) return;
+    s.hp = s.maxHp;
+    if (who === 'Dad') {
+      yield G.say('Dad', hurt ? 'Hold on. You look beat. Sit down a second.' : 'Hold on. Take one of these for the road.');
+      yield G.say(null, 'Dad hands Nate a cold root beer from the workshop fridge.' + (hurt ? ' All his hearts are back.' : ''));
+    } else {
+      yield G.say('Michelle', 'And you are NOT going down there on an empty stomach.');
+      yield G.say(null, 'Mom hands Nate a turkey sandwich, cut in triangles.' + (hurt ? ' All his hearts are back.' : ''));
+    }
+    if (hurt) G.audio.sfx('heart');
+  };
   S.michelle = function* () {
     const f = flags(), s = G.state;
     if (!f.michelleMet) { yield* S.michelleStartle(); return; }
@@ -2623,6 +2637,7 @@
       return;
     }
     if (!f.cluesDone) { yield G.say('Michelle', 'Find anything? Look around the house. Whatever it is, it leaves a mess.'); return; }
+    if (!f.globBeaten && s.hp < s.maxHp) { yield* G.parentHeal('Michelle'); return; }
     if (!s.items.basementKey && !f.globBeaten) { yield G.say('Michelle', 'Any luck with your father\'s keys? Garage, truck, grill. Anywhere he\'s ever held a sandwich.'); return; }
     if (!s.items.earplugs && !f.globBeaten) { yield G.say('Michelle', 'Earplugs, Nate. Cotton balls in the upstairs bathroom, wax from Lily\'s candle. Trust me.'); return; }
     f.momLine = ((f.momLine || 0) + 1) % MOM_LINES.length;
@@ -2644,6 +2659,7 @@
     s.items.bait = true;
     yield G.itemGet(G.spr.pastorBook, 'Michelle hands over {y}"Being a Wonderful Pastor\'s Wife"{/}. A gift from the church ladies.');
     yield G.say('Michelle', 'I have been waiting YEARS for a reason to get rid of that.');
+    yield* G.parentHeal('Michelle', true);
   }
 
   // ---- the clue hunt: chewed pages around the house (any 3 of 4)
@@ -3065,7 +3081,7 @@
       core('Mikey', f.mikeyBeaten, 'Home - the driveway', 'Lily has something to tell him.'),
       core('Mom\'s missing books', f.shopOpen, 'Home', 'Follow the chewed pages down to the basement and bring Mom her books.'),
       row('Dad\'s snacks', f.snacksDone, 'Home', 'Candy corn and blue Doritos, for Dad in his workshop.'),
-      core('Ice JJ Fish', f.jjBeaten, 'Home - past the bridge', 'Book him for Dad\'s church by surviving his whole set.'),
+      core('The singer on the pond', f.jjBeaten, 'Home - past the bridge', 'Book him for Dad\'s church by surviving his whole set.'),
       count('Mom\'s garden', Math.min(3, f.gardenWon || 0), 3, 'Home - Mom\'s flower stand', 'Buy everything at Mom\'s stand, then win all three nights of Not My Dahlias.'),
       count('Pipes made with Dad', G.pipesMadeCount(), G.PIPES.length, 'Home - the workshop', 'Turn every pipe on Dad\'s lathe, once everything at home is done.'),
       count('Tobacco blended with Dad', G.tinsMadeCount(), G.TOBACCOS.length, 'Home - the workshop', 'Blend every tobacco in Dad\'s pipe journal.'),
@@ -3127,7 +3143,7 @@
     'Mikey': (f) => f.mikeyMet,
     'Mom\'s missing books': (f) => f.booksQuest,
     'Dad\'s snacks': (f) => f.snackQuest,
-    'Ice JJ Fish': (f) => f.jjMet || f.jjGig || f.jjSeen,
+    'The singer on the pond': (f) => f.jjMet || f.jjGig || f.jjSeen,
     'Mom\'s garden': (f) => f.gardenMet || f.shopOpen,
     'Pipes made with Dad': (f) => f.pipeBench,
     'Tobacco blended with Dad': (f) => f.pipeBench,
@@ -4159,7 +4175,7 @@
 
   // ================================================================ DAD'S SNACKS (and booking Ice JJ Fish)
   // Dad hangs out in his workshop and needs his snacks: candy corn and blue
-  // Doritos, together. Mom hides the candy corn in the good china; a bear
+  // Doritos, together. Mom hides the candy corn in the Natural History Museum (the glass cabinet by the TV); a bear
   // walked off with the Doritos. Bring him both and he sends Nate to book the
   // man singing a hymn on the pond for Sunday service.
   S.dadWorkshop = function* () {
@@ -4184,6 +4200,7 @@
       ][f.dadLine]);
       return;
     }
+    if (f.jjGig && s.hp < s.maxHp) { yield* G.parentHeal('Dad'); yield G.say('Dad', 'Now go book that singer.'); return; }
     if (f.jjGig) { yield G.say('Dad', 'Did you book him yet? Tell him we have a fog machine. We don\'t. But we could.'); return; }
     // (Mom's looking for his keys to the basement)
     if (f.momReport && !s.items.basementKey && !f.globBeaten && !f.dadKeyHint) {
@@ -4240,24 +4257,15 @@
     else yield G.say('Nate', '...Is it snowing past the bridge?');
     yield G.say('Dad', 'Whoever he is, I need him for Sunday service. The nine o\'clock could use some energy.');
     yield G.say('Dad', 'Go out there and book him for me. Tell him the pastor is VERY interested.');
+    yield* G.parentHeal('Dad', true);
     f.jjGig = true;
     G.audio.sfx('secret');
     yield G.say(null, 'New quest: {y}book the singer on the frozen pond{/} for Dad\'s church. He\'s past the bridge, north of the yard.');
   };
 
-  // the good china: where Mom hides the candy corn
+  // the good china (the candy corn is in the Natural History Museum by the TV: S.rockCabinet)
   S.goodChina = function* () {
-    const f = flags(), s = G.state;
     yield G.say(null, 'A glass cabinet full of the good china. Nobody is allowed to use the good china.');
-    if (f.snacksDone) { yield G.say(null, 'Behind the gravy boat: a candy-corn-shaped empty spot.'); return; }
-    if (!f.snackQuest || s.items.candyCorn) return;
-    yield G.say(null, 'Nate very, very carefully moves the gravy boat...');
-    yield G.say(null, 'Behind it: a family-size bag of candy corn. And two more behind that.');
-    s.items.candyCorn = true;
-    yield G.itemGet(G.spr.candyCorn, 'You found {y}Mom\'s secret candy corn{/}!');
-    G.audio.sfx('yell');
-    yield G.say(null, 'From somewhere outside, faintly: "JAMIE LEE CURTIS!"');
-    yield G.say('Nate', '...She knows.');
   };
 
   // asking Mom about candy corn
@@ -4269,13 +4277,13 @@
     yield G.say('Michelle', 'Is this for your father? Your father is not allowed candy corn. Your father knows why.');
     yield G.say('Nate', '...She\'s definitely hiding it.');
     if (G.with('lily')) {
-      yield G.say('Lily', 'She hides the good candy in the good china. The red cupboard in the breakfast room.');
-      yield G.say('Lily', 'Nobody is allowed to touch the good china, so nobody ever looks there.');
+      yield G.say('Lily', 'She hides the good candy in the Natural History Museum. The glass cabinet by the TV.');
+      yield G.say('Lily', 'Nobody is allowed to touch the exhibits, so nobody ever looks there.');
       return;
     }
     G.audio.sfx('buzz');
-    yield G.text('Lily', 'mom hides the good candy in the good china. red cupboard in the breakfast room');
-    yield G.text('Lily', 'nobody is allowed to touch the good china so nobody ever looks');
+    yield G.text('Lily', 'mom hides the good candy in the natural history museum. glass cabinet by the tv');
+    yield G.text('Lily', 'nobody is allowed to touch the exhibits so nobody ever looks');
     // (the fridge only comes up once Nate's found her in it)
     yield G.text('Lily', f.badlandsMet && !f.lilySaved ? 'also im still in a fridge. ok bye' : 'you didnt hear it from me');
   };
@@ -4475,9 +4483,23 @@
     yield G.say(null, 'A fire crackling behind the black screen. The old stone fireplace has a white mantel, a mantel clock ticking away, and two cobalt-blue oil lamps.');
     yield G.say(null, 'Over it: a print of a harbor at night, a tall ship tied up at the wharf under the moon.');
   };
+  // the glass cabinet by the TV: the family's Natural History Museum, and where Mom hides the candy corn
   S.rockCabinet = function* () {
-    yield G.say(null, 'The glass cabinet: shelf after shelf of rocks, fossils and shells, a pair of antlers and a big hunk of amethyst.');
-    yield G.say('Nate', 'Half of these I found. The other half I found and Mom won\'t let me take back to college.');
+    const f = flags(), s = G.state;
+    yield G.say(null, 'THE NATURAL HISTORY MUSEUM, says a card taped to the glass. Rocks, fossils, shells, antlers, and a big hunk of amethyst.');
+    yield G.say(null, 'Anything Nate, Lily, Dad or Mom finds out in nature goes in here. Everything has a label.');
+    if (f.snackQuest && !s.items.candyCorn && !f.snacksDone) {
+      yield G.say(null, 'Nate very, very carefully moves the amethyst...');
+      yield G.say(null, 'Behind it: a family-size bag of candy corn. And two more behind that.');
+      s.items.candyCorn = true;
+      yield G.itemGet(G.spr.candyCorn, 'You found {y}Mom\'s secret candy corn{/}!');
+      G.audio.sfx('yell');
+      yield G.say(null, 'From somewhere outside, faintly: "JAMIE LEE CURTIS!"');
+      yield G.say('Nate', '...She knows.');
+      return;
+    }
+    if (f.snacksDone) yield G.say(null, 'Behind the amethyst: a candy-corn-shaped empty spot.');
+    else yield G.say('Nate', 'The best museum in New Jersey. Free admission. No touching the exhibits.');
   };
   S.denShelf = function* () {
     const f = flags(), s = G.state;
