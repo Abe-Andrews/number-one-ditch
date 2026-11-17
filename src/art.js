@@ -8626,29 +8626,31 @@
     p.outline();
     return p.canvas();
   }
-  // Abe's sunburst bass, held across the body the way a bass player holds it: the body down at
-  // her hip (screen left), the long maple neck angled up to the right, the headstock and its four
-  // tuners past her shoulder
+  // Abe's sunburst bass, held the way she plays it: left-handed, like Paul. The body sits at her
+  // waist (a little to the screen's right), the maple neck angles up across her to the screen's
+  // left, past her shoulder, with the headstock and its tuners off to the side of her head. Her
+  // hands are on it: one on the neck, one plucking over the pickup.
   function bassHeld() {
-    const p = new Pix(26, 16);
-    // the neck: a 2px maple strip climbing from the body to the headstock, with fret dots
-    for (let i = 0; i <= 13; i++) {
-      const x = 10 + i, y = Math.round(10 - i * 0.62);
+    const p = new Pix(21, 13), SKIN = '#f2c8a8';
+    // the neck, climbing up and to the left, with fret dots
+    for (let i = 0; i <= 10; i++) {
+      const x = 11 - i, y = Math.round(5 - i * 0.22);
       p.set(x, y, '#e0c08a'); p.set(x, y + 1, '#b8945a');
-      if (i === 4 || i === 7 || i === 10) p.set(x, y, '#5a3a20');
+      if (i === 3 || i === 6 || i === 8) p.set(x, y, '#5a3a20');
     }
     // the headstock and its tuners
-    p.rect(22, 0, 3, 3, '#3a2414'); p.set(25, 0, '#d8d8d8'); p.set(25, 2, '#d8d8d8'); p.set(23, 3, '#d8d8d8');
-    // the body: a sunburst double cut, dark at the edge, amber in the middle
-    for (let y = 4; y < 16; y++) for (let x = 0; x < 14; x++) {
-      const e = ((x - 6.5) / 6.2) ** 2 + ((y - 10.5) / 5.2) ** 2;
-      if (e <= 1 && !(x > 9 && y < 8)) p.set(x, y, e > 0.62 ? '#3a1a0a' : e > 0.3 ? '#a85a20' : '#e8a040');
+    p.rect(0, 2, 2, 2, '#3a2414'); p.set(0, 4, '#d8d8d8'); p.set(2, 2, '#d8d8d8'); p.set(1, 1, '#d8d8d8');
+    // the body: a sunburst, dark at the edge and amber in the middle
+    for (let y = 2; y < 13; y++) for (let x = 9; x < 21; x++) {
+      const e = ((x - 15) / 5.6) ** 2 + ((y - 7.5) / 4.8) ** 2;
+      if (e <= 1) p.set(x, y, e > 0.6 ? '#3a1a0a' : e > 0.28 ? '#a85a20' : '#e8a040');
     }
-    // the pickguard, the pickup, the bridge, and the strings running up the middle
-    p.rect(3, 11, 4, 3, '#f0ece0'); p.set(2, 12, '#f0ece0');
-    p.rect(7, 8, 1, 3, '#1a1a1a'); p.rect(4, 9, 1, 2, '#1a1a1a');
-    p.rect(2, 10, 1, 3, '#c8c8c8');
-    for (let x = 3; x <= 10; x++) p.set(x, Math.round(11 - (x - 3) * 0.35), '#d8d0c0');
+    // the pickguard, the pickup and the bridge, and the strings up the middle
+    p.rect(15, 8, 3, 3, '#f0ece0');
+    p.rect(13, 6, 1, 2, '#1a1a1a'); p.rect(17, 7, 2, 1, '#c8c8c8');
+    for (let x = 10; x <= 17; x++) p.set(x, Math.round(7 - (17 - x) * 0.3), '#d8d0c0');
+    // her hands: fretting up the neck, plucking over the pickup
+    p.rect(5, 3, 2, 2, SKIN); p.rect(13, 7, 2, 2, SKIN);
     p.outline();
     return p.canvas();
   }
@@ -8775,7 +8777,7 @@
     return p.canvas();
   }
   // a disco ball: little mirror tiles, one of them always catching the light
-  function discoBall(f) {
+  function partyBall(f) {
     const p = new Pix(12, 12);
     for (let y = 0; y < 12; y++) for (let x = 0; x < 12; x++) {
       if (((x - 5.5) / 5.6) ** 2 + ((y - 5.5) / 5.6) ** 2 > 1) continue;
@@ -11786,7 +11788,7 @@
     // Shoolby Bones Lumpsucker, in Unit B
     S.shoolby = { right: {} }; for (const k of ['stand', 'front', 'puff', 'dizzy', 'frozen']) S.shoolby.right[k] = shoolby(k);
     S.shoolby.left = {}; for (const k in S.shoolby.right) S.shoolby.left[k] = mirror(S.shoolby.right[k]);
-    S.fishBone = fishBone(); S.waterDrop = waterDrop(); S.spitGlob = spitGlob(); S.loogie = loogie(); S.discoBall = [0, 1, 2].map(discoBall); S.fakeRock = fakeRock(); S.kelp = [0, 1, 2].map(kelp); S.poolRocks = [0, 1, 2].map(poolRock);
+    S.fishBone = fishBone(); S.waterDrop = waterDrop(); S.spitGlob = spitGlob(); S.loogie = loogie(); S.partyBall = [0, 1, 2].map(partyBall); S.fakeRock = fakeRock(); S.kelp = [0, 1, 2].map(kelp); S.poolRocks = [0, 1, 2].map(poolRock);
     S.hamStand = hamStand(); S.cloveShot = cloveShot(); S.hamSlice = hamSlice();
     S.megToothCase = megToothCase(3); S.megJaw = megJaw(); S.falseMakoBoard = falseMakoBoard(); S.seaMural = seaMural(4); S.seaMural2 = seaMural(2); S.whaleVertebra = whaleVertebra();
     S.toothWall = toothWall(4); S.cowSharkCase = cowSharkCase(); S.whaleBones = whaleBones(); S.walrusCase = walrusCase(); S.layersPoster = layersPoster(); S.festivalPoster = festivalPoster(); S.giftShelf = giftShelf(); S.frontDesk = frontDesk(3);

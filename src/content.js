@@ -16246,7 +16246,7 @@
         draw(ctx, cx, cy) {
           const bx = 9.5 * 16 - cx, by = 3 * 16 + 4 - cy;
           ctx.fillStyle = '#a8acb8'; ctx.fillRect(Math.round(bx), 0, 1, Math.max(0, Math.round(by - 6)));
-          ctx.drawImage(sp.discoBall[(G.tick >> 3) % 3], Math.round(bx - 6), Math.round(by - 6));
+          ctx.drawImage(sp.partyBall[(G.tick >> 3) % 3], Math.round(bx - 6), Math.round(by - 6));
         },
       });
       w.props.push({
@@ -17962,7 +17962,7 @@
       w.lady = w.add(new G.NPC({ sprite: 'paulLady', name: 'Paul McCartney Lady', x: 17 * 16 + 8, y: traded ? 5 * 16 - 1 : 6 * 16 + 14, dir: 'down', talk: S.paulLady }));
       w.slothProp = { img: sp.slothPlush, x: 18 * 16, y: 6 * 16 - 2, base: 6 * 16 + 14, hide: traded, draw(ctx, cx, cy) { if (!this.hide) ctx.drawImage(this.img, this.x - cx, this.y - cy); } };
       w.props.push(w.slothProp);
-      w.heldBass = { img: sp.bassHeld, x: 0, y: 0, base: 0, show: traded, draw(ctx, cx, cy) { if (this.show) ctx.drawImage(this.img, Math.round(w.lady.x - 13) - cx, Math.round(w.lady.y - 20) - cy); } };
+      w.heldBass = { img: sp.bassHeld, x: 0, y: 0, base: 0, show: traded, draw(ctx, cx, cy) { if (this.show) ctx.drawImage(this.img, Math.round(w.lady.x - 13) - cx, Math.round(w.lady.y - 11) - cy); } };
       w.props.push(w.heldBass);
       // tables with black chairs in the middle
       for (const [x, y] of [[4, 6], [4, 9], [12, 6], [12, 9]]) F.stand(sp.toroTable, x, y, 2, look('A dark wood table with black chairs. The hot sauce is the good kind.'));
