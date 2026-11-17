@@ -15442,7 +15442,7 @@
   S.condoStreetEnd = function* () {
     const p = P();
     const c = yield G.ask('Nate', 'Head back to the Bay Bridge-Tunnel?', ['Back to the tunnel', 'Stay']);
-    if (c === 0 && (yield* S.chesLeaveCheck())) G.play.warp('cbbtTunnel', 7, 2, 'down');
+    if (c === 0) G.play.warp('cbbtTunnel', 7, 2, 'down');
     else yield G.walkTo(p, p.x, p.y + 14, 1);
   };
 
@@ -18039,6 +18039,8 @@
     const c = yield G.ask('Abe', f.chkdArrived ? 'Where to?' : 'Hop in. CHKD?', ['Drive to CHKD', 'Rattlesnake Bridge Rd', 'Not yet']);
     if (c === 1) { yield* S.jeepHome(); return; }
     if (c !== 0) return;
+    // (the heads-up about what's still going on around here comes on the way to CHKD)
+    if (!(yield* S.chesLeaveCheck())) return;
     G.audio.sfx('door');
     yield G.say(null, f.chkdArrived ? 'Abe drives back to CHKD.' : 'Abe drives. Fast. He doesn\'t say a word the whole way there.');
     G.play.warp('chkd', 16, 21, 'up');
@@ -18052,7 +18054,6 @@
   };
   // Abe's Jeep, all the way home: back over the bay and up the Eastern Shore to Rattlesnake Bridge Road
   S.jeepHome = function* () {
-    if (!(yield* S.chesLeaveCheck())) return;
     G.audio.sfx('door');
     yield G.say(null, 'Abe drives Nate all the way home: back over the bay, up the Eastern Shore, and on to Rattlesnake Bridge Road.');
     G.play.warp('home', 1, 53, 'right');
@@ -18067,8 +18068,9 @@
     return leads;
   };
   G.chesLeads = chesLeads;
-  // the heads-up on the way out (like the one at home): once for each new set of things going on.
-  // Returns whether Nate's still leaving.
+  // the heads-up on the way out to CHKD (like the one at home): once for each new set of things
+  // going on. (Heading home, back to the tunnel or in the Jeep, there's no heads-up.) Returns
+  // whether Nate's still leaving.
   S.chesLeaveCheck = function* () {
     const f = flags(), leads = chesLeads(), key = leads.join('|');
     if (!leads.length || f.chesNudge === key) return true;
