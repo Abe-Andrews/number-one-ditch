@@ -2406,6 +2406,19 @@
       const c = yield G.ask('Nate', 'Head out anyway?', ['Drive to Chesapeake', 'Stay a while']);
       if (c) { yield G.walkTo(p, p.x + (p.x < 30 * 16 ? 24 : -24), p.y, 1); return; }
     }
+    // once Nate's been to Abe and Hannah's, he can drive right there (or stop at the Bridge-Tunnel)
+    if (f.condoArrived) {
+      const c = yield G.ask('Nate', 'Where in Chesapeake?', ['Abe and Hannah\'s', 'The Bay Bridge-Tunnel', 'Stay home']);
+      if (c === 0) {
+        yield G.say(null, 'Down the Eastern Shore, across the bay, and right up to Abe and Hannah\'s driveway.');
+        G.play.warp('condo', 35, 16, 'left');
+        return;
+      }
+      if (c !== 1) { yield G.walkTo(p, p.x + (p.x < 30 * 16 ? 24 : -24), p.y, 1); return; }
+      yield G.say('Nate', 'The Bay Bridge-Tunnel. Down the Eastern Shore to the toll plaza.');
+      G.play.warp('cbbtToll', 17, 13, 'left');
+      return;
+    }
     yield G.say('Nate', 'Chesapeake. Down the Eastern Shore, then straight across the bay. Hang on, Number One Ditch.');
     G.play.warp('cbbtToll', 17, 13, 'left');
   };
@@ -12035,7 +12048,8 @@
       w.addProp({ img: G.spr.kidneyPool, tx: 46, ty: 27, h: 6, flat: true });
       w.blockTiles(48, 28, 5, 1);
       w.blockTiles(47, 29, 6, 3);
-      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [47 * 16, 28 * 16, 53 * 16, 32 * 16], talk: S.homePool });
+      // (refill: Nate can fill the bidet from the pool, facing it from the deck)
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [47 * 16, 28 * 16, 53 * 16, 32 * 16], talk: S.homePool, refill: true });
       w.addProp({ img: G.spr.teakSet, tx: 48, ty: 33, solid: [48, 33, 3, 1], hit: [48, 33, 3, 1], talk: S.homePoolSet });
       w.props.push({ img: G.spr.marketUmbrella, x: 48 * 16 + 3, y: 33 * 16 - 30, base: 34 * 16 + 1 });
       for (const x of [49, 51]) w.addProp({ img: G.spr.lounger, tx: x, ty: 26, solid: [x, 26, 1, 1], hit: [x, 26, 1, 1], talk: S.homeLounger });
@@ -16713,6 +16727,10 @@
   };
   S.bidetEmpty = function* () {
     yield G.say(null, 'The bidet is empty. Face some water (like a pond), a sink or a toilet and hold X to fill it back up. It takes a while, so keep an eye out.');
+  };
+  S.bidetPool = function* () {
+    yield G.say('Nate', 'Filling a bidet from the pool.');
+    yield G.say('Nate', 'At least there\'s chlorine in it. Some chlorine. Not as much as there should be.');
   };
   S.bidetToilet = function* () {
     yield G.say('Nate', 'Filling a bidet from a toilet.');

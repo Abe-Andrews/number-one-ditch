@@ -442,6 +442,9 @@
       const tp = [p.x + dx * 12 - 3, p.y - 4 + dy * 12 - 3, p.x + dx * 12 + 3, p.y - 4 + dy * 12 + 3];
       const fixture = w.props.find((pr) => pr.hit && G.waterFixture(pr.img) && G.overlap(pr.hit, tp));
       if (fixture) return { kind: fixture.img === G.spr.toilet ? 'toilet' : 'sink', x: fx, y: fy - 10 };
+      // (water that's drawn as a picture over blocked tiles, like the pool at home: its prop says so)
+      const pool = w.props.find((pr) => pr.refill && pr.hit && G.overlap(pr.hit, tp));
+      if (pool) return { kind: 'pool', x: fx, y: fy };
       // (a map can have water of its own that isn't a tile, like the trickle down the Number One Ditch)
       if (w.def.water && w.def.water(fx, fy)) return { kind: 'water', x: fx, y: fy };
       return d && ['water', 'bay', 'iceHole', 'mineWater'].includes(d.k) ? { kind: 'water', x: fx, y: fy } : null;
@@ -451,8 +454,9 @@
       if (src) {
         if (G.bidetWater() >= G.BIDET_MAX) { w.pop(p.x, p.y - 30, 'It\'s already full.', '#a8d8ff'); return; }
         this.refilling = { x: p.x, y: p.y, dir: p.dir };
-        w.pop(p.x, p.y - 30, src.kind === 'toilet' ? '*filling it from the toilet...*' : src.kind === 'sink' ? '*filling it at the sink...*' : '*filling...*', '#a8d8ff');
+        w.pop(p.x, p.y - 30, src.kind === 'toilet' ? '*filling it from the toilet...*' : src.kind === 'sink' ? '*filling it at the sink...*' : src.kind === 'pool' ? '*filling it from the pool...*' : '*filling...*', '#a8d8ff');
         if (src.kind === 'toilet' && !s.flags.bidetToilet) { s.flags.bidetToilet = true; G.script.run(G.SCRIPTS.bidetToilet()); }
+        if (src.kind === 'pool' && !s.flags.bidetPool) { s.flags.bidetPool = true; G.script.run(G.SCRIPTS.bidetPool()); }
         return;
       }
       if (G.bidetWater() <= 0) { G.audio.sfx('bump'); this.bidetEmpty(); return; }
