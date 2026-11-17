@@ -194,11 +194,17 @@
       // (Nate's own song, if he set one to play in the game, plays instead of the map's music)
       if (G.mixFor) G.audio.setMix(G.mixFor());
       G.audio.play(this.world.def.music);
-      // arriving in a new part of the trip gets a title card; rooms inside it get the little name banner
-      const region = G.regionOf && !G.state.rush ? G.regionOf(id) : null;
-      if (region && region !== this.lastRegion) { G.regionCard.show(region); G.areaBanner.t = 0; }
-      else { G.regionCard.t = Math.min(G.regionCard.t, 0); G.areaBanner.show(this.world.def.name); }
-      if (region) this.lastRegion = region;
+      // arriving in a new part of the trip gets a title card; rooms inside it get the little name banner.
+      // A flashback (and the step back out of one) gets neither, and doesn't count as going anywhere.
+      if (G.flashback || this.fromFlashback) {
+        G.regionCard.t = 0; G.areaBanner.t = 0;
+        this.fromFlashback = !!G.flashback;
+      } else {
+        const region = G.regionOf && !G.state.rush ? G.regionOf(id) : null;
+        if (region && region !== this.lastRegion) { G.regionCard.show(region); G.areaBanner.t = 0; }
+        else { G.regionCard.t = Math.min(G.regionCard.t, 0); G.areaBanner.show(this.world.def.name); }
+        if (region) this.lastRegion = region;
+      }
       this.snapCam();
       if (this.world.def.onEnter && !skipEnter) G.script.run(this.world.def.onEnter());
       // (Lily's Taco Bell line for some places, the first time she walks in with Nate)

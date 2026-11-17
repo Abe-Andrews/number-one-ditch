@@ -4227,10 +4227,14 @@
     return finish(p);
   }
 
-  // Nate's old chemistry desk: flasks, a burner, a lava lamp and the food coloring.
+  // Nate's old chemistry desk: flasks, the food coloring, and his stream table (a tray of sand with
+  // a little river carved through it, blue with dye, fanning out into a delta), with a water jug.
   function chemDesk(hasDye) {
     const p = new Pix(32, 30);
-    p.rect(22, 0, 5, 3, '#c8ccd2'); p.rect(21, 3, 7, 9, '#3a8ad8'); p.rect(23, 4, 3, 3, '#f86050'); p.set(24, 9, '#f86050'); p.rect(22, 12, 5, 2, '#c8ccd2');
+    p.rect(18, 7, 13, 6, '#8a8e96'); p.rect(19, 8, 11, 4, '#d8c090'); p.hline(19, 29, 8, '#e8d4a8');
+    for (const [x, y] of [[19, 9], [20, 9], [21, 10], [22, 10], [23, 9], [24, 9], [25, 10], [26, 11], [27, 11]]) p.set(x, y, '#3a7ad8');
+    p.set(28, 10, '#78a8e8'); p.set(28, 11, '#78a8e8'); p.set(29, 10, '#a8c8e8'); p.set(29, 11, '#a8c8e8');
+    p.rect(26, 1, 4, 5, '#c8dce8'); p.rect(27, 2, 2, 3, '#3a7ad8'); p.set(25, 2, '#c8dce8'); p.hline(26, 29, 1, '#e8f0f4');
     p.vline(5, 4, 9, '#d8ecf4'); p.rect(3, 9, 5, 4, '#78e070'); p.vline(11, 6, 12, '#d8ecf4'); p.rect(10, 10, 3, 3, '#f8d040');
     if (hasDye) { p.rect(15, 8, 3, 5, '#2a6ae8'); p.set(16, 7, '#f4f4f0'); }
     p.rect(0, 13, 32, 5, '#8a5a30'); p.hline(0, 31, 13, '#b07a44');

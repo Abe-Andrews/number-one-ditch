@@ -426,7 +426,7 @@
     },
     // the refrigerator game ingredients (used up once Badlands is beaten)
     milk: { kind: 'key', name: 'Milk', icon: () => G.spr.milk, has: () => !!st().items.milk && !fl().badlandsBeaten, desc: 'From Dad\'s garage fridge. The expiration date is a mystery.' },
-    dye: { kind: 'key', name: 'Blue Food Coloring', icon: () => G.spr.dye, has: () => !!st().items.dye && !fl().badlandsBeaten, desc: 'From Nate\'s old chemistry set. Turns anything the color of a smurf.' },
+    dye: { kind: 'key', name: 'Blue Food Coloring', icon: () => G.spr.dye, has: () => !!st().items.dye && !fl().badlandsBeaten, desc: 'From Nate\'s stream table, where a few drops show how the current moves through a river. Turns anything the color of a smurf.' },
     smoke: { kind: 'key', name: 'Liquid Smoke', icon: () => G.spr.liquidSmoke, has: () => !!st().items.smoke && !fl().badlandsBeaten, desc: 'Hickory flavor. From Dad\'s grill stuff. Never drink this.' },
     vodka: { kind: 'key', name: 'Vodka Shooters', icon: () => G.spr.vodka, has: () => !!st().items.vodka && !fl().badlandsBeaten, desc: 'Three tiny bottles from a gift basket somebody gave the family years ago. Nobody ever drank them. Mom finally found a use for them.' },
     chicken: {
@@ -2471,16 +2471,54 @@
   };
 
   // ---- the ingredient hunt
+  // ---- the Book of Traps: a stapled booklet Nate drew when he was little (the real one, from the
+  // user's photos in Refe Photos/trap_book). Each page is the photo, with grown-up Nate's notes beside it.
+  const TRAP_PAGES = [
+    { file: 'assets/trapbook/page1.png', title: 'BOOK OF TRAPS', text: '"BOOK of traps BY Nate." On the cover, some poor guy is getting caught in a net.' },
+    { file: 'assets/trapbook/page2.png', title: 'TRAP 1: GRASS + STICK', text: 'A pit, hidden under grass and held up with a stick. Step on it and down you go.' },
+    { file: 'assets/trapbook/page3.png', title: 'TRAPS 2 + 3: ROPE', text: 'Trap 2: a rope and a stick, rigged up in a tree. Trap 3: a rope loop, the kind that grabs your foot.' },
+    { file: 'assets/trapbook/page4.png', title: 'TRAP 4: ELECTRIC', text: 'An outlet and some string. Scribbled out. Even little Nate knew that one was a bad idea.' },
+  ];
+  for (const pg of TRAP_PAGES) { pg.img = new Image(); pg.img.src = pg.file; }
+  let trapBookC = null;
+  const trapBookImg = () => {
+    if (trapBookC) return trapBookC;
+    const c = G.canvas(12, 10), x = c.getContext('2d');
+    x.fillStyle = '#1c1424'; x.fillRect(0, 0, 12, 10);
+    x.fillStyle = '#f4f2ea'; x.fillRect(1, 1, 10, 8); x.fillStyle = '#d8d6ce'; x.fillRect(10, 1, 1, 8);
+    x.fillStyle = '#9a9aa4'; x.fillRect(2, 2, 1, 2); x.fillRect(2, 6, 1, 2);
+    x.fillStyle = '#3a3440'; x.fillRect(4, 3, 4, 1); x.fillRect(5, 5, 3, 1); x.fillRect(4, 7, 5, 1);
+    return (trapBookC = c);
+  };
+  const trapPage = (pg, i) => {
+    const c = G.canvas(G.W, G.H), x = c.getContext('2d'), F = G.font;
+    x.fillStyle = '#2a2238'; x.fillRect(0, 0, G.W, G.H);
+    x.fillStyle = '#f6f4ee'; x.fillRect(6, 2, 120, 156);
+    if (pg.img.complete && pg.img.naturalWidth) { x.imageSmoothingEnabled = true; x.drawImage(pg.img, 9, 4, 114, 152); }
+    F.wrap(pg.title, 100).forEach((l, k) => F.draw(x, l, 133, 10 + k * 9, '#f8d850', { shadow: '#0c0814' }));
+    const ty = 14 + F.wrap(pg.title, 100).length * 9;
+    F.wrap(pg.text, 100).forEach((l, k) => F.draw(x, l, 133, ty + k * 9, '#f8f8f0', { shadow: '#0c0814' }));
+    F.draw(x, (i + 1) + '/' + TRAP_PAGES.length, G.W - 22, G.H - 24, '#9890a8', { shadow: '#0c0814' });
+    return c;
+  };
+  S.trapBook = function* () {
+    yield G.say(null, 'A little stapled booklet on the carpet. The pages are soft from being folded so many times.');
+    yield G.say('Nate', 'My BOOK OF TRAPS. I made this when I was a little kid.');
+    yield G.noteView(TRAP_PAGES.map(trapPage), 'Z: put it back');
+    yield G.say('Nate', 'Still holds up.');
+  };
+
   S.chemDesk = function* () {
     const f = flags(), s = G.state;
     if (f.fridgeGame && !s.items.dye && !f.badlandsBeaten) {
-      yield G.say(null, 'Nate\'s old chemistry set. A flame test kit, a lava lamp, and a bottle of {y}blue food coloring{/} from the "make your own lava lamp" experiment.');
+      yield G.say(null, 'Nate\'s old chemistry set, and his stream table: a tray of sand with a river carved through it. A few drops of {y}blue food coloring{/} in the water show exactly how the current moves.');
+      yield G.say('Nate', 'Meanders, eddies, a little delta at the bottom where the sand drops out. Basically a tiny Number One Ditch.');
       yield* getIngredient('dye');
       const desk = G.play.world.chemDesk;
       if (desk) desk.img = G.spr.chemDeskEmpty;
       return;
     }
-    yield G.say(null, 'Nate\'s old chemistry set. This is where it all began. The scorch mark on the ceiling is from 2017.');
+    yield G.say(null, 'Nate\'s old chemistry set and his stream table. This is where it all began. The scorch mark on the ceiling is from 2017.');
   };
 
   // ================================================================ MOM (Michelle)
@@ -5726,6 +5764,8 @@
       F.hang(sp.deerSkull, 27, 2, 1, look('A deer skull mounted on a wooden plaque over the bed. It keeps an eye on things.'), 6);
       F.stand(sp.bedMission, 27, 3, 1, () => S.nateBed(), { ht: 3 });
       F.stand(sp.chairGreen, 21, 6, 1, look('A green armchair. Mostly it\'s a place to put books.'));
+      // the Book of Traps Nate made as a little kid, on the carpet by the armchair
+      w.addProp({ img: trapBookImg(), tx: 22, ty: 6, flat: true, dx: 2, dy: 4, hit: [22, 6, 1, 1], talk: () => S.trapBook() });
       // ---- Lily's room (from the photos), right next door: posters, drawings and polaroids all over the
       // wall, a disco ball, a white bed with navy sheets, a teal record player, a wicker bookshelf with a
       // rubber chicken on top, a clothes rack, and clothes on the floor
@@ -23465,7 +23505,7 @@
   // Each part of the road trip, for the name card that slides in when Nate first arrives (ui.js
   // G.regionCard). Rooms inside a region just get the little name banner.
   G.REGIONS = {
-    lafayette: { title: 'LAFAYETTE', sub: 'Lafayette College, Easton, PA', maps: ['lab', 'campus', 'science', 'pardee', 'geology', 'arts', 'studioB', 'collegeHill', 'grocery', 'toms', 'kitGail', 'rockShop'] },
+    lafayette: { title: 'LAFAYETTE', sub: 'Lafayette College, Easton, PA', maps: ['lab', 'campus', 'science', 'pardee', 'geology', 'arts', 'studioB', 'collegeHill', 'grocery', 'toms', 'rockShop'] },
     fair: { title: 'EASTON FAIR', sub: 'The fairgrounds, east of campus', maps: ['fair', 'fairCave', 'arena', 'ring', 'locker'] },
     home: { title: 'HOME', sub: 'Rattlesnake Bridge Road', maps: ['home', 'homeDown', 'homeUp', 'garage', 'basement', 'bookClub', 'north'] },
     andover: { title: 'ANDOVER MINES', sub: 'Iron country, since the 1760s', maps: ['andover', 'andoverMine', 'andoverFlood', 'andoverOld', 'andoverVault', 'andoverDeep'] },
