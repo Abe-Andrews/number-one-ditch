@@ -4721,11 +4721,23 @@
       w.burst(this.x, this.y - 8, ['#f8f4e8', '#f8d040', '#ffffff'], 8, { speed: 1.1, life: 18, size: 2 });
       w.pop(this.x, this.y - 18, 'SPLAT!', '#f8e070');
     }
+    // (eggs fly right over water: ponds, the bay, the brook, mine water, the Ditch's trickle, the pool)
+    overWater(w) {
+      const x = this.x, y = this.y, d = G.TILE_DEFS[w.tileAt(Math.floor(x / 16), Math.floor(y / 16))];
+      if (d && ['water', 'bay', 'mineWater', 'iceHole'].includes(d.k)) return true;
+      if (w.def.water && w.def.water(x, y)) return true;
+      return w.props.some((pr) => pr.refill && pr.hit && x >= pr.hit[0] && x <= pr.hit[2] && y >= pr.hit[1] && y <= pr.hit[3]);
+    }
     update(w) {
       if (G.script.busy) return;
       this.x += this.vx; this.y += this.vy;
-      if (--this.life <= 0) { this.dead = true; return; }
-      if (w.tileSolid(Math.floor(this.x / 16), Math.floor(this.y / 16))) { this.splat(w); return; }
+      if (--this.life <= 0) {
+        this.dead = true;
+        // out of steam over the water: plop
+        if (this.overWater(w)) { w.burst(this.x, this.y - 2, ['#a8d8ff', '#ffffff'], 6, { speed: 0.8, up: 0.9, g: 0.1, life: 16, size: 1 }); w.pop(this.x, this.y - 14, '*plop*', '#a8d8ff'); }
+        return;
+      }
+      if (w.tileSolid(Math.floor(this.x / 16), Math.floor(this.y / 16)) && !this.overWater(w)) { this.splat(w); return; }
       const r = [this.x - 4, this.y - 12, this.x + 4, this.y - 2];
       for (const t of w.ents) {
         if (t.dead || !t.enemy || !t.hurtBox) continue;
