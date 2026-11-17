@@ -2910,7 +2910,7 @@
       yield G.say('Michelle', 'You, hon. Everyone at church calls you the rock boy.');
       yield G.itemGet(G.spr.gateKey, 'You got the {y}Andover Mines Key{/}! Pick {y}The Andover mines{/} when you leave home.');
       yield G.say('Nate', 'Two HUNDRED teeth for a key?');
-      yield G.say('Michelle', 'It\'s a very special key. The flower fund thanks you. And wear a HELMET.');
+      yield G.say('Michelle', 'It\'s a very special key. The flower fund thanks you.');
     }]);
     if (!f.momHeart) menu.push(['Heart Container: 100', function* () {
       if (!(yield* momPay(100))) return;
@@ -20225,7 +20225,7 @@
       yield G.say(G.PARTY_INFO[id].name, line);
     }
     yield G.text('Nate', 'together');
-    yield G.text('Michelle', 'Together. And wear a HELMET.');
+    yield G.text('Michelle', 'Together.');
     G.audio.play('title');
     yield G.camFocus(ROOF_GLOW.x - 12, 104, 50);
     for (const n of Object.values(fam)) n.dir = 'up';
@@ -20588,7 +20588,7 @@
     doron: [['Father Eggmas', 'Doron. Go play with your little brother.'], ['Doron', 'LEG... DAY...']],
     dad: [['Father Eggmas', 'Christian. Show your son what EEENGLISH really means.'], ['Dad', 'Do you speak... EEENGLISH...?']],
     lily: [['Father Eggmas', 'Little one. Tell him how you feel.'], ['Lily', 'no. no. NO.']],
-    michelle: [['Father Eggmas', 'Michelle. You put me in a box every January. Now put HIM in one.'], ['Michelle', 'Wear... a... helmet...']],
+    michelle: [['Father Eggmas', 'Michelle. You put me in a box every January. Now put HIM in one.'], ['Michelle', 'Did you... eat... today...?']],
     abe: [['Father Eggmas', 'Abe. Ask him a question. You know the one.'], ['Abe', 'Quick... question...']],
     hannah: [['Father Eggmas', 'Nurse. He looks hurt. Go... HELP him.'], ['Hannah', 'This won\'t... hurt... a bit...']],
     romulus: [['Father Eggmas', 'Good boy. Now... SIC HIM.'], ['Nate', 'Romulus! Buddy! It\'s me!'], [null, 'Romulus\'s eyes glow purple. He growls. And he GROWS.'], ['Nate', 'I would NEVER hit a dog.'], ['Nate', '...But you HATE baths.']],
@@ -20668,7 +20668,7 @@
       ['Michelle', '...Nate? Oh, honey. Look at you.'], ['Michelle', 'Did I throw my good pots at you? My GOOD pots?'],
       ['Nate', 'And the chickens.'], ['Michelle', 'Henrietta! ...Well. She\'s always been a fighter.'],
       ['Michelle', 'Come here.'], [null, 'Mom hugs Nate. She smells like the garden.'],
-      ['Michelle', 'You are so brave. I\'m so proud of you.'], ['Michelle', '...You\'re not wearing a helmet.'],
+      ['Michelle', 'You are so brave. I\'m so proud of you.'],
     ],
     abe: [
       ['Abe', '...Nate?'], ['Abe', 'Did I get you with the question?'], ['Nate', '...'], ['Abe', 'I\'m going to take that as a yes.'],
@@ -20929,7 +20929,7 @@
     doron: ['GO, NATE! LEG DAY!', 'Best ditch in the world. I said it and I meant it.'],
     dad: ['Peace be with you, son.', 'I think about pH often. Here, it\'s about seven. Good ditch.'],
     lily: ['I\'m okay. I\'m okay. ...I\'m okay.', 'He\'s going in the box. FAR back in the box.'],
-    michelle: ['Be careful, honey!', 'We\'re getting you a helmet for Christmas. I\'m serious.'],
+    michelle: ['Be careful, honey!', 'I packed extra sandwiches. For after.'],
     abe: ['Nice crack. Still thinking about it.', 'How many sides on a... no. Not today. You earned a day off.'],
     hannah: ['Let me know if anything hurts.', 'I\'m going to need to check EVERYBODY when we get home.'],
     romulus: ['*wag wag wag*', '*rolls over for a belly rub*'],
@@ -21102,10 +21102,6 @@
     yield G.say('Michelle', 'Your father drove.');
     yield G.say('Dad', 'We made good time.');
     yield G.say('Michelle', 'I have never prayed so hard in my life. And I work at a CHURCH.');
-    yield G.say('Michelle', '...And you\'re not wearing a helmet.');
-    yield G.say('Nate', 'I have my Hat.');
-    yield G.say('Michelle', 'That little brown hat is not a helmet, honey.');
-    yield G.say('Nate', 'It\'s green.');
     yield G.say('Dad', 'Son. I saw that light from the highway. I know what he wants.');
     yield G.say('Dad', 'When you\'re ready, we go. All of us. But once we get down in that ditch, nobody leaves until it\'s finished.');
     yield G.say('Dad', 'So if there\'s anything you want to do first, go and do it. We\'ll be right here.');
@@ -21224,7 +21220,7 @@
     doron: ['This is leg day. I\'m calling it. This counts.', 'I\'ve marched farther than this with a full pack. In the Army.'],
     lily: ['I\'m fine. Keep walking. I\'m fine.', 'If I see that egg, I am going to say No so hard.'],
     abe: ['New rule: nobody chases anybody with anything.', 'This is the weirdest Christmas I\'ve ever been to, and it isn\'t even Christmas.'],
-    michelle: ['You STILL don\'t have a helmet.', 'Those are nice lights. I hate that they\'re nice.'],
+    michelle: ['Stay where I can see you, honey.', 'Those are nice lights. I hate that they\'re nice.'],
     dad: ['Keep going, son. We\'re right behind you.', 'The Lord is my shepherd. ...Nate, is that reindeer looking at us?'],
   };
   S.walkTalk = (id) => (function* () {
