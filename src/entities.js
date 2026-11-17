@@ -1855,8 +1855,10 @@
       const S = G.spr.romulus[this.face > 0 ? 'right' : 'left'];
       const img = this.walking ? S[RUN[(this.anim >> 2) % 4]] : S[{ lie: 'lie', happy: 'happy', alert: 'stand' }[this.state] || 'scared'];
       const j = this.state === 'hide' && this.near && !this.walking ? (G.tick >> 1) & 1 : 0;
+      if (this.alpha != null) { if (this.alpha <= 0) return; ctx.save(); ctx.globalAlpha = this.alpha; }
       drawShadow(ctx, this.x, this.y, cx, cy, false);
       ctx.drawImage(img, Math.round(this.x - img.width / 2 + j) - cx, Math.round(this.y - 22) - cy);
+      if (this.alpha != null) ctx.restore();
     }
   }
   G.Romulus = Romulus;

@@ -647,7 +647,7 @@
     { id: 'ben', name: 'Ben', tag: '{y}Friend', met: () => fl().phDone, bio: 'Nate\'s lab partner. Was paid in shark teeth to ask about the pH of rainwater. Once made the campus paper for his shirt.' },
     { id: 'bismarck', name: 'Bismarck', tag: '{y}Friend', met: () => fl().bismarckMet, bio: 'A McKelvey Scholar from Manhattan who wants to be a lawyer. He invited Nate to church.' },
     { id: 'brooks', name: 'Brooks', tag: '{y}Friend', met: () => fl().brooksMet, bio: 'Hilarious. Always asks the question everybody else is too nervous to ask.' },
-    { id: 'anette', name: 'Anette', tag: '{y}Friend', met: () => fl().anetteMet, bio: 'Abe and Hannah\'s neighbor. Keeps potted plants all up and down the street. Her knees are done with watering cans.' },
+    { id: 'anette', name: 'Anette', tag: '{y}Neighbor', met: () => fl().anetteMet, bio: 'Abe and Hannah\'s neighbor. Keeps potted plants all up and down the street, and yells at people. She yelled at Hannah once.' },
     {
       id: 'paulLady', name: 'Paul McCartney Lady', tag: '{y}Friend', met: () => fl().ladyMet,
       bio: () => 'A regular at El Toro Loco. Looks EXACTLY like Paul McCartney, and has heard it every day of her life. Plays bass, left-handed.' + (fl().bassGiven ? ' Traded Romulus\'s sloth for Abe\'s bass, and kept the bass.' : ''),
@@ -3568,6 +3568,7 @@
     { id: 'megalodon', area: 'bay', name: 'Megalodon Tooth', r: 4, crush: null, how: 'A patch of gravel and shell on the island between the two tunnels. Too fine to pick through by hand.', fact: 'A fossil tooth from Otodus megalodon, a giant shark that lived millions of years ago. Fossil shark teeth turn up all over the Chesapeake Bay region.' },
     { id: 'chesapecten', area: 'chesapeake', name: 'Chesapecten Fossil', r: 3, crush: null, how: 'Anette, Abe and Hannah\'s neighbor, has one. Her plants look awfully thirsty.', fact: 'Chesapecten jeffersonius: a fossil scallop millions of years old, named for the Chesapeake Bay and Thomas Jefferson. It\'s the state fossil of Virginia, and back in 1687 it became the first fossil from North America ever pictured in a science book.' },
     { id: 'fairystone', area: 'chesapeake', name: 'Fairy Stone', r: 2, crush: null, how: 'Ruby, a girl on the CHKD ward, has two. She\'ll trade one for a rock from somewhere far away.', fact: 'Staurolite: brown crystals that grow twinned into little crosses. Virginia has a whole state park named for them, Fairy Stone State Park. The legend says they\'re fairy tears, turned to stone.' },
+    { id: 'nelsonite', area: 'chesapeake', name: 'Nelsonite', r: 3, crush: null, how: 'Something glints in the grass outside El Toro Loco, every now and then. You\'d have to be looking.', fact: 'Virginia\'s state rock. It\'s named for Nelson County, way out in the Blue Ridge Mountains, and it\'s black ilmenite (titanium ore) speckled with white apatite. Nelson County is one of the only places in the world to find it.' },
     { id: 'prehnite', area: 'bedminster', name: 'Prehnite', r: 2, crush: { heart: 1 }, how: 'The gravel bar in Brady Brook. You\'d need a sifting screen.', fact: 'Pale green crystals that grow in the gas bubbles of New Jersey basalt. Mindat lists prehnite in Bedminster Township.' },
   ];
   G.rockById = (id) => G.ROCKS.find((r) => r.id === id);
@@ -15300,11 +15301,12 @@
       yield G.walkTo(an, 19 * 16 + 8, 7 * 16 + 12, 1);
       yield G.walkTo(an, 16 * 16 + 8, 5 * 16 + 12, 1);
       an.dir = 'up';
-      yield G.say('Anette', 'Oh! Oh my goodness. My GARDEN!');
-      yield G.say('Anette', 'That latch rusted shut years ago, and my knees can\'t get over that hedge. I\'ve been peeking at it through the leaves ever since.');
+      yield G.say('Anette', 'HEY! What are you doing in my... Oh. Oh my. My GARDEN.');
+      yield G.say('Anette', 'That latch rusted shut years ago, and my knees can\'t get over that hedge. I\'ve been peeking at it through the leaves. Don\'t tell anybody.');
       yield G.say('Nate', 'Abe gave me a boost.');
-      if (G.with('abe')) { yield G.say('Abe', 'Anette, while I\'m here: do you need a guitar cable? Any guitar cable?'); yield G.say('Anette', '...No, dear.'); }
-      yield G.say('Anette', 'My roses are still blooming! Here, dear. This has been sitting under the birdbath the whole time. I always said whoever got that gate open could have it.');
+      if (G.with('abe')) { yield G.say('Abe', 'Anette, while I\'m here: do you need a guitar cable? Any guitar cable?'); yield G.say('Anette', 'No.'); }
+      yield G.say('Anette', 'My roses are still blooming. Hmph.');
+      yield G.say('Anette', 'Here. This was under the birdbath. I said whoever got that gate open could have it, and I don\'t go back on my word. Unfortunately.');
       s.maxHp += 2; s.hp = s.maxHp;
       G.audio.sfx('heart');
       yield G.itemGet(G.spr.heartBig, 'You got a {r}Heart Container{/}! Max hearts +1.');
@@ -15453,10 +15455,11 @@
     }
     return (condoStreetArt = c);
   }
-  // Off the bottom of the map: the street (and the main road) just keep going.
+  // Off the bottom of the map: the street (and the main road) just keep going. Once Abe has sent
+  // Nate after the sloth, anywhere down there leads on to El Toro Loco.
   S.condoNeighborhood = function* () {
     const p = P();
-    if (p.x > 50 * 16 && flags().slothQuest) {
+    if (G.play.world.id === 'condo' && flags().slothQuest) {
       const c = yield G.ask('Nate', 'Walk down the main road to El Toro Loco?', ['El Toro Loco', 'Stay']);
       if (c === 0) { G.play.warp('toroLoco', 2, 1, 'down'); return; }
       yield G.walkTo(p, p.x, p.y - 18, 1);
@@ -15488,39 +15491,41 @@
     const f = flags(), n = G.plantsWatered();
     if (f.plantsDone) {
       f.anetteLine = ((f.anetteLine || 0) + 1) % 3;
-      yield G.say('Anette', ['Look at my hydrangea! I could cry.', 'You come by anytime, dear. Bring the... water thing.', 'Abe and Hannah are lucky to have you visiting.'][f.anetteLine]);
+      yield G.say('Anette', ['My hydrangea looks better than it has in years. Don\'t let it go to your head.', 'You again. Fine. Bring the... water thing next time.', 'Shouldn\'t you be bothering Abe and Hannah?'][f.anetteLine]);
       return;
     }
     if (!f.anetteMet) {
       f.anetteMet = true;
-      yield G.say('Anette', 'Oh! Hello, dear. You must be visiting Abe and Hannah.');
-      yield G.say('Anette', 'I\'m Anette. I keep potted plants all up and down this street. Everybody lets me.');
-      yield G.say('Anette', 'But it\'s been so dry, and my knees are done with watering cans. My poor plants are wilting.');
-      yield G.say('Anette', 'There are five of them. Would you give them a drink for me? I\'ll make it worth your while.');
+      yield G.say('Anette', 'You. You\'re visiting Abe and Hannah, aren\'t you.');
+      yield G.say('Nate', 'Are you the lady who yelled at Hannah?');
+      yield G.say('Anette', 'I\'ve yelled at a lot of people on this street. You\'ll have to be more specific.');
+      yield G.say('Anette', 'I\'m Anette. Those potted plants all up and down this street are mine. Don\'t touch them.');
+      yield G.say('Anette', 'Actually, DO touch them. It\'s been so dry, and my knees are done with watering cans.');
+      yield G.say('Anette', 'There are five. Water them. I\'ll give you something for it. Probably.');
       f.plantQuest = true;
       if (G.itemHas('bidet')) {
         yield G.say('Anette', '...Is that a portable bidet?');
         yield G.say('Nate', '...It sprays water.');
-        yield G.say('Anette', 'Well. Water is water, dear.');
+        yield G.say('Anette', 'Disgusting. Fine. Water is water.');
       } else {
-        yield G.say('Anette', 'You\'ll need something to carry water in. Check Abe and Hannah\'s. Everybody has SOMETHING under the bathroom sink.');
+        yield G.say('Anette', 'You\'ll need something to carry water in. Check Abe and Hannah\'s bathroom sink. Go on. Shoo.');
       }
       yield G.say(null, 'Water Anette\'s five potted plants around the street.');
       if (n < 5) return;
     }
     if (n < 5) {
       const left = ANETTE_PLANTS.filter((pl) => !f['plant_' + pl.id]);
-      yield G.say('Anette', n ? 'That\'s ' + G.sayable(n) + ' of my five! Keep going, dear.' : 'My poor plants. Five of them, all up and down the street.');
+      yield G.say('Anette', n ? 'That\'s ' + G.sayable(n) + ' of my five. I counted. Keep going.' : 'Why are you back? My plants are still thirsty.');
       yield G.say('Anette', 'Still thirsty: ' + left[0].name + (left.length > 1 ? ', and ' + (left.length - 1 === 1 ? 'one more' : G.sayable(left.length - 1) + ' more') : '') + '.');
       return;
     }
     // all five: the reward
     f.plantsDone = true;
-    yield G.say('Anette', 'All five! Look at them! They haven\'t looked this good all summer.');
-    yield G.say('Anette', 'Abe tells me you like rocks. Here, I want you to have this.');
-    yield G.say('Anette', 'I found it on the beach years ago, after a big storm. It\'s a fossil scallop. Millions of years old.');
+    yield G.say('Anette', 'All five. Hmph. They look... fine. They look fine.');
+    yield G.say('Anette', 'Abe says you like rocks. Here. Take it before I change my mind.');
+    yield G.say('Anette', 'Found it on the beach after a big storm. It\'s a fossil scallop. Millions of years old. Older than me, before you ask.');
     yield* S.rockGive('chesapecten');
-    yield G.say('Anette', 'Thank you, dear. Water them again sometime. With... whatever that is.');
+    yield G.say('Anette', 'Now get off my lawn.');
   };
 
   // ---------------------------------------------------------------- outside
@@ -15944,17 +15949,40 @@
   // the last time: he runs around back and squeezes through the trees behind the patio, onto
   // the golf course. The gap is way too small for Nate.
   S.romulusToGolf = function* (r) {
-    const f = flags(), w = G.play.world;
-    r.x = 15.5 * 16; r.y = 13.4 * 16; r.chase = false; r.hidden = null;
-    yield G.camFocus(13 * 16, 13 * 16, 40);
+    const f = flags(), w = G.play.world, T = 16, Y = 13.7 * T;
+    // he's off the screen after his last bolt: the camera goes out back first, and then he
+    // comes tearing around the side of the house, up the grass between the patio and the woods
+    r.chase = false; r.hidden = null; r.solid = false; r.alpha = null;
+    r.x = 13.3 * T; r.y = 22 * T;
+    yield G.camFocus(12.5 * T, 14 * T, 40);
     G.audio.sfx('dash');
-    yield G.walkTo(r, 13.5 * 16, 13.3 * 16, 3.4);
-    yield G.walkTo(r, 11.5 * 16, 13.2 * 16, 3.4);
-    w.burst(11 * 16, 13 * 16 - 8, ['#3a7a34', '#5a9a44', '#7a5a38'], 14, { speed: 1.4, up: 1, g: 0.1, life: 22, size: 2 });
+    yield G.walkTo(r, 13.3 * T, Y, 3.4);
+    // a look back at Nate, then he dives into the trees
+    r.dir = 'right'; r.state = 'alert';
+    yield G.wait(16);
+    r.state = 'hide';
+    // the trees right there rustle while he squeezes through
+    const trees = w.props.filter((pr) => pr.img && pr.x >= 9 * T && pr.x <= 11 * T && pr.base > 12 * T && pr.base < 16 * T);
+    for (const tr of trees) tr.draw = function (ctx, cx, cy) { ctx.drawImage(this.img, this.x + ((G.tick >> 1) & 1 ? 1 : -1) - cx, this.y - cy); };
+    G.audio.sfx('dash');
+    yield G.walkTo(r, 12.6 * T, Y, 3);
+    // into the woods: he slows down and fades in among the trunks, leaves flying
+    const x0 = r.x, x1 = 10.8 * T;
+    yield {
+      start() { r.walking = true; this.n = 0; },
+      update() {
+        r.x -= 1.4; r.dir = 'left'; r.anim = (r.anim || 0) + 1;
+        r.alpha = Math.max(0, 1 - (x0 - r.x) / (x0 - x1));
+        if (++this.n % 6 === 0) w.burst(r.x + 4, r.y - 12, ['#3a7a34', '#5a9a44', '#7a5a38'], 4, { speed: 1.2, up: 1, g: 0.1, life: 20, size: 2 });
+        return r.x <= x1;
+      },
+    };
     r.dead = true;
     w.romulus = null;
-    yield G.wait(30);
+    yield G.wait(24);
+    for (const tr of trees) delete tr.draw;
     f.romToGolf = true; f.romHide = ROM_TOTAL;
+    yield G.wait(16);
     yield G.camFocus(null, null, 30);
     yield G.say('Nate', 'Was that Romulus? Out back?');
     yield G.say('Nate', 'He squeezed through the trees behind the patio! Onto the golf course!');
@@ -16419,7 +16447,7 @@
     ['Meet at 4:30 by gate 12. Bring 2 chairs and 1 cooler.', 'Room 214 is on the 3rd floor, 2 doors past the stairs.', 'Take exit 47, go 9 miles, then turn left at the light.'],
     ['Pack 2 shirts, 4 pairs of socks, 1 toothbrush and 6 granola bars.', 'The bus leaves at 7:15, makes 9 stops and gets in at 6:40.', 'Preheat the oven to 350 and bake for 16 minutes, then let it cool.'],
   ];
-  const ABE_WPM = 104;
+  const ABE_WPM = 60;
   function typingCmd() {
     const X0 = 14, X1 = G.W - 14, Y0 = 62, LH = 13;
     return {
@@ -16587,7 +16615,7 @@
       for (const y of [4 * 16 + 4, 7 * 16 + 4]) w.props.push({ img: sp.tealCurtain, x: 16, y: y - 44, base: y });
       F.stand(sp.condoBookshelf, 1, 3, 1, () => S.abeReach('bookshelf'));
       F.stand(sp.condoFloorLamp, 2, 3, 1, look('A brass floor lamp with a pleated shade.'));
-      F.stand(sp.yellowGuitar, 3, 3, 1, look('A yellow electric guitar. Abe\'s, obviously. Nate knows better than to touch it.'));
+      F.stand(sp.yellowGuitar, 3, 3, 1, look('A yellow electric guitar. Abe\'s, obviously. It matches the cables.'));
       F.stand(sp.loftTV, 5, 3, 3, look('A big TV on a cherry console. It\'s showing the ocean. Very relaxing.'));
       F.stand(sp.grayOttoman, 5, 5, 3, look('A big gray ottoman. Somebody left a game of cards on it.'));
       F.stand(sp.loftSofaBack, 4, 7, 5, look('A light gray couch, piled with striped pillows and a fuzzy white throw.'));
@@ -17250,6 +17278,17 @@
     f[k] = ((f[k] || 0) + 1) % 2;
     yield G.say('Diner', DINER_LINES[i][f[k]]);
   };
+  // the hidden rock outside: nelsonite, in the grass behind the big sign
+  S.toroRock = function* () {
+    const f = flags();
+    if (f.nelsoniteFound) { yield G.say(null, 'Just grass. Nate already found the good rock here.'); return; }
+    yield G.say(null, 'Something glints in the grass behind the sign. Nate brushes the grass aside...');
+    yield G.say(null, 'A heavy black rock, speckled with little white grains. It doesn\'t look like anything else in this parking lot.');
+    f.nelsoniteFound = true;
+    yield* S.rockGive('nelsonite');
+    yield G.say('Nate', 'Nelsonite? HERE? This is from the mountains, all the way across Virginia!');
+    yield G.say('Nate', 'Somebody\'s landscaping truck took a VERY wrong turn.');
+  };
   S.toroLeave = function* () {
     const p = P();
     const c = yield G.ask('Nate', 'Head back up the main road to Abe and Hannah\'s?', ['Back to the condo', 'Stay']);
@@ -17302,6 +17341,20 @@
       car(sp.toroCars.white, 9, 'A little white car. Somebody\'s in there right now, eating chips.');
       car(sp.toroCars.red, 19, 'A red SUV. There\'s a bumper sticker: "I BRAKE FOR QUESO."');
       w.addProp({ img: sp.toroCars.blue, tx: 13, ty: 14, h: 3, dx: 3, dy: -2, solid: [13, 15, 2, 2], hit: [13, 15, 2, 2], talk: look('A blue SUV, backed in. Somebody wanted a quick getaway. With leftovers.') });
+      // a hidden rock in the grass behind the big sign: nothing to see but a glint, now and then
+      if (!flags().nelsoniteFound) {
+        const gx = 28 * 16 + 8, gy = 15 * 16 + 6;
+        w.props.push({
+          img: null, x: 0, y: 0, base: 0, hit: [28 * 16, 15 * 16, 29 * 16, 16 * 16], talk: () => S.toroRock(),
+          draw(ctx, cx, cy) {
+            if (flags().nelsoniteFound || G.tick % 150 >= 7) return;
+            const big = G.tick % 150 >= 2 && G.tick % 150 < 5;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(gx - cx, gy - 1 - cy, 1, 3); ctx.fillRect(gx - 1 - cx, gy - cy, 3, 1);
+            if (big) { ctx.fillRect(gx - cx, gy - 3 - cy, 1, 7); ctx.fillRect(gx - 3 - cx, gy - cy, 7, 1); }
+          },
+        });
+      }
       // up the road: back to the condo; down the road: more of Chesapeake
       w.addTrigger(0, 0, 4, 1, () => G.script.run(S.toroLeave()));
       w.addTrigger(0, 16, 4, 1, () => G.script.run(S.condoNeighborhood()));

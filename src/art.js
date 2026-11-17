@@ -5203,6 +5203,12 @@
           if (d <= r * r) p.set(x, y, d <= 1.2 && x <= ox && y <= oy ? '#ffffff' : x < ox && y < oy ? '#fbf8ee' : '#e0d8c6');
         }
         break;
+      case 'nelsonite':
+        // Virginia's state rock: heavy black ilmenite, speckled with white apatite grains
+        blob('#26262c', '#3c3c44');
+        for (const [x, y] of [[3, 6], [5, 4], [7, 7], [9, 5], [10, 8], [5, 9], [8, 10], [4, 8], [11, 6]]) p.set(x, y, '#e8e4d8');
+        p.set(6, 3, '#8a8a96'); p.set(9, 3, '#5a5a66');
+        break;
       case 'fairystone':
         // staurolite, twinned into a little cross: two dark brown crystals crossing at right angles
         p.rect(5, 0, 4, 12, '#6a3a2a'); p.rect(1, 4, 12, 4, '#6a3a2a');
@@ -7187,8 +7193,10 @@
       if (e <= 1) p.set(x, y, e > 0.82 && y < 24 ? oakL : (y + Math.floor(x / 9)) % 5 === 0 ? oakD : oak);
     }
     for (let x = 12; x <= 64; x++) { const yy = 24 + Math.round(10 * Math.sqrt(Math.max(0, 1 - ((x + 0.5 - 38) / 29) ** 2))); p.vline(x, yy, yy + 2, '#a87c48'); }
-    for (const x of [16, 59]) { p.rect(x, 36, 3, 13, leg); p.set(x + 1, 40, oakL); p.set(x + 1, 44, oakD); }
-    for (const x of [24, 51]) p.rect(x, 34, 2, 9, oakD);
+    // each leg starts right at the underside of the apron above it, so none of them float
+    const under = (x) => 24 + Math.round(10 * Math.sqrt(Math.max(0, 1 - ((x + 0.5 - 38) / 29) ** 2))) + 2;
+    for (const x of [24, 51]) { const t = Math.max(under(x), under(x + 1)); p.rect(x, t, 2, 43 - t, oakD); }
+    for (const x of [17, 57]) { const t = Math.max(under(x), under(x + 2)); p.rect(x, t, 3, 49 - t, leg); p.set(x + 1, t + 3, oakL); p.set(x + 1, t + 8, oakD); }
     side(0, 22, false); side(67, 22, true);
     return finish(p);
   }
@@ -11430,7 +11438,7 @@
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
     S.vanWickle = vanWickle();
-    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'riprap', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone', 'malachite', 'kidney', 'magCrystal', 'tommy', 'willemite', 'crystalGeode', 'placerGold']) S.rockIcons[k] = rockIcon(k);
+    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'riprap', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone', 'nelsonite', 'malachite', 'kidney', 'magCrystal', 'tommy', 'willemite', 'crystalGeode', 'placerGold']) S.rockIcons[k] = rockIcon(k);
     S.oreVein = [oreVein(0), oreVein(1), oreVein(2)]; S.dumpPile = dumpPile(false); S.slagPile = dumpPile(true);
     S.furnaceRuin = furnaceRuin(); S.adit = adit(); S.bat = [batFrame(true), batFrame(false)];
     S.batRed = [batFrameRed(true), batFrameRed(false)];
