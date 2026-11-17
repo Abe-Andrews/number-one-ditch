@@ -4360,7 +4360,6 @@
     yield G.say('Ice JJ Fish', 'Okay, okay. You got me.');
     yield G.say('Ice JJ Fish', 'That was a vibe though. You felt it, right?');
     yield G.say('Nate', '...I did feel something.');
-    yield G.say('Ice JJ Fish', 'That\'s the song, bro. Stay icy.');
     yield G.say('Ice JJ Fish', 'Aight. You survived the whole set. Tell your pops I\'m in. Sunday. Nine a.m.');
     yield G.say('Ice JJ Fish', 'I\'ll bring the snow.');
     yield G.say('Ice JJ Fish', 'Hold up. Is that a pipe? Lemme teach you a little something. Three notes. Real smooth.');
@@ -20449,7 +20448,7 @@
     ['michelle', 'Michelle', 'Not "the pastor\'s wife."'], ['romulus', 'Romulus', 'He thought it was a race.'],
   ];
   const CREDIT_OTHERS = [
-    ['badlands', 'Badlands Chugs', '...LIKE AND SUBSCRIBE!'], ['mikey', 'Mikey', 'Was it the song?'], ['icejj', 'Ice JJ Fish', 'Stay icy.'], ['tyler', 'Tyler', 'THE MOSASAUR TOOTH!'],
+    ['badlands', 'Badlands Chugs', '...LIKE AND SUBSCRIBE!'], ['mikey', 'Mikey', 'Was it the song?'], ['icejj', 'Ice JJ Fish', 'I\'ll bring the snow.'], ['tyler', 'Tyler', 'THE MOSASAUR TOOTH!'],
     ['paulLady', 'Paul McCartney Lady', 'Every single day of her life, honey.'], ['freya', 'Freya', 'Fourthmeal.'], ['matt', 'Matt Oliver', 'That\'s fishing.'], ['danHurd', 'Dan Hurd', 'Still prospecting.'],
   ];
   const CREDIT_NAMES = ['Ben', 'Bismarck', 'Brooks', 'Prof. Sunderlin', 'Dr. Nataro', 'Prof. Carley', 'Professor Pembrook', 'Groundskeeper Gus', 'Pyro Pete', 'Grandma Rose', 'Tom', 'Prof. Watts', 'Ruby', 'Anette', 'Kit and Gail', 'Charge Nurse Dot', 'The Old Fisherman', 'Henrietta', 'Daisy', 'The Globglogabgalab', 'MECHA-BABY', 'The Two-Liter', 'El Toro Loco', 'and Father Eggmas, in the box'];

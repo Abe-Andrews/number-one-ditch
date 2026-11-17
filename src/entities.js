@@ -4194,7 +4194,6 @@
       '~ I pray to Jesus Christ ~', '~ (Jesus) ~',
   ];
   G.JJ_SONG = JJ_SONG;
-  const JJ_OUCH = ['OUCH, BRO!', 'NOT THE MIC!', 'STILL ON KEY!', 'I\'M ICY!', 'THAT WAS FLAT!'];
   class Icicle extends Ent {
     constructor(x, y) { super(x, y); this.t = 50; this.land = 0; }
     update(w) {
@@ -4328,18 +4327,17 @@
         if (--this.t <= 0) { this.state = 'glide'; this.t = 60; }
       } else if (this.state === 'slide') {
         // a knee slide right across the ice
-        if (this.t === 60) { this.vx = (dx / dist) * 3.2; this.vy = (dy / dist) * 3.2; w.pop(this.x, this.y - 36, 'WHOOOO!', '#ffffff'); G.audio.sfx('dash'); this.dir = G.dirToward(dx, dy); }
+        if (this.t === 60) { this.vx = (dx / dist) * 3.2; this.vy = (dy / dist) * 3.2; G.audio.sfx('dash'); this.dir = G.dirToward(dx, dy); }
         if (this.skate(w, this.vx, 0).hitX) { this.vx = -this.vx; G.audio.sfx('bump'); }
         if (this.skate(w, 0, this.vy).hitY) { this.vy = -this.vy; G.audio.sfx('bump'); }
         this.vx *= 0.985; this.vy *= 0.985;
-        if (--this.t <= 0) { this.state = 'dizzy'; this.t = this.hyped ? 50 : 70; w.pop(this.x, this.y - 36, '...whoa.', '#ffffff'); }
+        if (--this.t <= 0) { this.state = 'dizzy'; this.t = this.hyped ? 50 : 70; }
       } else if (this.state === 'dizzy') {
         this.dir = ['down', 'left', 'up', 'right'][(this.t >> 3) % 4];
         if (--this.t <= 0) { this.state = 'glide'; this.t = 70; }
       } else if (this.state === 'icicles') {
         if (this.t % 20 === 0 && this.t > 10) {
           w.add(new Icicle(p.x + (Math.random() * 20 - 10), p.y + (Math.random() * 10 - 5)));
-          if (this.t === 100) w.pop(this.x, this.y - 36, 'IT\'S GETTING COLD IN HERE!', '#a8e0ff');
         }
         if (--this.t <= 0) { this.state = 'glide'; this.t = 70; }
       }
@@ -4353,7 +4351,7 @@
       const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
       this.kb = { x: (dx / m) * 3, y: (dy / m) * 3 };
       G.audio.sfx('hit');
-      this.world.pop(this.x, this.y - 30, JJ_OUCH[Math.floor(Math.random() * JJ_OUCH.length)], '#f8f8f0');
+      // (no comments when he's hit: he just keeps singing)
       if (this.hp <= 0) {
         this.state = 'defeated';
         G.script.run(G.SCRIPTS.jjDefeated(this));
