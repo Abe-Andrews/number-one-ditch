@@ -784,7 +784,7 @@
     if (f.rhondaKnock) add('The tan duplex', f.rhondaBeaten && 'Beaten!', 'Go in', 'Chesapeake - the tan duplex', 'Somebody in there is sure Nate is popping pills. Watch out for the spit, and don\'t look directly at the roommate.');
     if (f.sbl) {
       const st = f.sbl >= 3 ? ['Go in', 'Unit B is unlocked. Whatever lives in there is waiting.'] : f.sbl === 1 ? ['Find the password', 'Something in Unit B wants a password. One of the rocks by its door looks off.']
-        : !f.wifi ? ['Check the router', 'It\'s the WiFi password at home, typed exactly. The router is on the desk in Dad\'s den.'] : ['Type it in', 'Type the WiFi password into the keypad on Unit B\'s door. Every capital letter matters.'];
+        : !f.sblKnown ? ['Who is S.B.L.?', 'The note was signed S.B.L. Nate feels like he\'s seen those initials before, on the router in Dad\'s den at home.'] : ['Type it in', 'Type the WiFi password into the keypad on Unit B\'s door. Every capital letter matters.'];
       add('The thing in Unit B', f.sblBeaten && 'Beaten!', st[0], 'Chesapeake - Unit B', st[1]);
     }
     if (f.plantQuest) add('Anette\'s thirsty plants', f.plantsDone, f.plantsDone ? 'Done' : G.sayable(G.plantsWatered()) + '/5 watered', 'Chesapeake - the condo', G.plantsWatered() >= 5 ? 'All five are watered. Go tell Anette.' : 'Water Anette\'s five potted plants around the street with the Portable Bidet.', [G.plantsWatered(), 5]);
@@ -1097,14 +1097,19 @@
   const flags = () => G.state.flags;
 
   // Saying the sacred number is a strike. Three strikes and Abe throws Nate in the nearest water
-  // (S.abeDunk, which G.postgameTick runs once nothing else is going on).
+  // (S.abeDunk, which G.postgameTick runs once nothing else is going on). That starts the moment
+  // Nate first meets Abe at the condo (flags.condoScare), whether or not Abe has joined the party
+  // yet: even in the middle of the Romulus quests, he walks over and does it.
+  G.abeMet = () => G.state.party.includes('abe') || !!G.state.flags.condoScare;
+  // the Abe standing in this room right now (the one at the condo, before he joins), if there is one
+  const abeInRoom = () => { const w = G.play.world; return w && w.ents.find((e) => e instanceof G.NPC && e.name === 'Abe' && !e.hidden && !e.dead); };
   function* slip() {
     const st = G.state.stats, f = flags(), s = G.state;
     G.audio.sfx('slip');
     yield G.shakeCmd(30, 3);
     st.slips++;
-    // before Abe joins, nobody says anything; it just adds up, and he brings it up once he's with Nate (S.abeHeard)
-    if (!s.party.includes('abe') && !f.dunkDue) {
+    // before Nate meets Abe, nobody says anything; it just adds up, and Abe brings it up when they meet
+    if (!G.abeMet() && !f.dunkDue) {
       st.preAbe = (st.preAbe || 0) + 1;
       yield G.banner('THE SACRED NUMBER WAS SPOKEN', 'Said ' + st.preAbe + (st.preAbe === 1 ? ' time' : ' times'), 150);
       return;
@@ -1112,9 +1117,8 @@
     st.strikes = Math.min(3, (st.strikes || 0) + 1);
     yield G.banner('THE SACRED NUMBER WAS SPOKEN', 'Strike ' + st.strikes + ' of 3', 150);
     if (f.dunkDue) return; // (he's already coming)
-    const third = st.strikes >= 3, inParty = s.party.includes('abe');
-    if (third) { f.dunkDue = true; if (!inParty) f.dunkLate = true; else return; } // (he says that one in person)
-    const w = G.play.world, here = G.with('abe') || (w && w.ents.some((e) => e instanceof G.NPC && e.name === 'Abe' && !e.hidden && !e.dead));
+    const third = st.strikes >= 3, inParty = s.party.includes('abe'), here = G.with('abe') || !!abeInRoom();
+    if (third) { f.dunkDue = true; if (!inParty && !here) f.dunkLate = true; else return; } // (he says that one in person)
     if (here) yield G.say('Abe', ['That\'s one.', 'Two. You know what happens at three.'][st.strikes - 1]);
     else {
       G.audio.sfx('buzz');
@@ -3245,8 +3249,8 @@
   G.postgameTick = () => {
     const f = flags();
     if (G.state.playAs || G.play.dying) return;
-    if (f.dunkDue && G.state.party.includes('abe') && G.dunkReady()) { G.script.run(S.abeDunk()); return; }
-    if (G.state.stats.preAbe && G.state.party.includes('abe') && G.dunkReady()) { G.script.run(S.abeHeard()); return; }
+    if (f.dunkDue && G.abeMet() && G.dunkReady()) { G.script.run(S.abeDunk(0, abeInRoom())); return; }
+    if (G.state.stats.preAbe && G.abeMet() && G.dunkReady()) { G.script.run(S.abeHeard()); return; }
     if (f.ticketsGiven && !f.ticketsDone && f.dadBeaten) { G.script.run(S.ticketsText()); return; }
     if (!f.rockShopOpen && f.readChat && !G.state.playAs && G.rocksFound() * 2 >= G.ROCKS.length && G.dunkReady()) { G.script.run(S.rockShopText()); return; }
     const jk = G.jackTextDue();
@@ -4109,7 +4113,7 @@
     { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [55, 1, 'down'], flags: { tylerBeaten: true } },
     { name: 'Romulus: hide and seek outside', map: 'condo', at: [24, 20, 'down'], flags: { condoArrived: true, condoScare: true, romulusMet: true, romHide: 4 }, items: { bidet: true } },
     { name: 'El Toro Loco: Romulus\'s sloth', map: 'toroLoco', at: [11, 8, 'up'], flags: { romHide: 8, romToGolf: true, slothQuest: 1 } },
-    { name: 'Shoolby: the door to Unit B', map: 'condo', at: [31, 10, 'left'], flags: { romulusBeaten: true, healerTalk: true, sblNotice: true, sbl: 2, wifi: true } },
+    { name: 'Shoolby: the door to Unit B', map: 'condo', at: [31, 10, 'left'], flags: { romulusBeaten: true, healerTalk: true, sblNotice: true, sbl: 2, wifi: true, sblKnown: true } },
     { name: 'Shoolby Bones Lumpsucker (Unit B)', map: 'unitB', at: [9, 10, 'up'], flags: { romulusBeaten: true, healerTalk: true, sblNotice: true, sbl: 3 } },
     { name: 'Rhonda: the tan duplex', map: 'condo', at: [19, 31, 'up'], flags: { romulusBeaten: true, healerTalk: true, sblNotice: true, sbl: 3, sblMet: true, sblBeaten: true } },
     { name: 'Rhonda (inside)', map: 'rhondaCondo', at: [9, 10, 'up'], flags: { romulusBeaten: true, healerTalk: true, sblNotice: true, sbl: 3, sblMet: true, sblBeaten: true, rhondaNotice: true, rhondaKnock: true } },
@@ -15137,10 +15141,16 @@
     }
     yield G.say('Abe', 'You made it! Welcome to Chesapeake.');
     // he's been counting the whole way down: three or more and Nate goes in the water, right now
-    if ((G.state.stats.preAbe || 0) >= 3) {
+    const road = G.state.stats.preAbe || 0;
+    if (road >= 3) {
       yield G.say('Abe', 'Oh. One more thing.');
-      yield* S.abeDunk(G.state.stats.preAbe, abe);
+      yield* S.abeDunk(road, abe);
       yield G.say('Abe', 'Okay. NOW welcome to Chesapeake.');
+    } else if (road) {
+      // once or twice: those count, starting now
+      G.state.stats.preAbe = 0; G.state.stats.strikes = road;
+      yield G.say('Abe', 'Oh. You said it ' + TIMES[road] + ' on the way down. I heard.');
+      yield G.say('Abe', ['That\'s one.', 'Two. You know what happens at three.'][road - 1]);
     }
     yield G.say('Nate', 'Where\'s Hannah?');
     yield G.say('Abe', 'At work. She\'ll be home later.');
@@ -15150,7 +15160,7 @@
       yield* slip();
       yield G.say('Abe', 'GOT HIM.');
       // (and if that was the third time, it's straight in the water)
-      if ((G.state.stats.preAbe || 0) >= 3) yield* S.abeDunk(G.state.stats.preAbe, abe);
+      if (flags().dunkDue) yield* S.abeDunk(0, abe);
     } else if (c === 1) {
       yield G.say('Abe', '...He\'s learning.');
     } else {
@@ -15432,7 +15442,7 @@
   S.condoStreetEnd = function* () {
     const p = P();
     const c = yield G.ask('Nate', 'Head back to the Bay Bridge-Tunnel?', ['Back to the tunnel', 'Stay']);
-    if (c === 0) G.play.warp('cbbtTunnel', 7, 2, 'down');
+    if (c === 0 && (yield* S.chesLeaveCheck())) G.play.warp('cbbtTunnel', 7, 2, 'down');
     else yield G.walkTo(p, p.x, p.y + 14, 1);
   };
 
@@ -15882,9 +15892,9 @@
       yield G.say('Nate', 'That rock by the door is bugging me.');
       return;
     }
-    if (!f.wifi) {
+    if (!f.sblKnown) {
       yield G.say('???', 'Password.');
-      yield G.say('Nate', 'It\'s our WiFi password at home. But I don\'t remember exactly how it\'s typed, and every capital letter matters.');
+      yield G.say('Nate', 'S.B.L.... I KNOW I\'ve seen those initials before. On the router at home, maybe.');
       yield G.say('Nate', 'The router\'s on the desk in Dad\'s den. I need to go look.');
       return;
     }
@@ -15915,22 +15925,20 @@
     yield G.say(null, 'There\'s no key inside. Just a soggy note, in very fancy handwriting:');
     yield G.say(null, '"Only my creator knows the password. It is my NAME. -S.B.L."');
     yield G.say('Nate', 'S.B.L.?');
-    yield G.say('Nate', '...Shoolby. Lily and I made up that word.');
-    yield G.say('Nate', 'No. No WAY.');
+    yield G.say('Nate', 'I feel like I\'ve seen those initials before. Somewhere at home...');
+    yield G.say('Nate', '...On the router? In Dad\'s den?');
     f.sbl = 2;
-    G.audio.sfx('buzz');
-    yield G.text('Nate', 'lily. our wifi password');
-    yield G.text('Lily', 'ShoolbyBonesLumpSucker. why');
-    yield G.text('Nate', 'i think hes real');
-    yield G.text('Lily', 'who');
-    yield G.text('Nate', 'shoolby');
-    yield G.text('Lily', 'nate');
-    yield G.text('Lily', 'type it EXACTLY like the router. capitals matter');
-    if (f.wifi) yield G.say('Nate', 'I know exactly how it\'s typed. I read it right off the router in Dad\'s den.');
-    else yield G.say('Nate', 'Exactly like the router. The router\'s in Dad\'s den, at home.');
   };
+  // the router, once Nate's seen the note: S.B.L. finally clicks
   S.sblWifiLine = function* () {
-    if (flags().sbl === 2) yield G.say('Nate', 'Capital S, capital B, capital L... and a capital S on Sucker. That\'s the password for Unit B!');
+    const f = flags();
+    if (f.sbl !== 2) return;
+    if (f.sblKnown) { yield G.say('Nate', 'ShoolbyBonesLumpSucker. Capital S, capital B, capital L, and a capital S on Sucker.'); return; }
+    f.sblKnown = true;
+    yield G.say('Nate', 'S... B... L...');
+    yield G.say('Nate', 'SHOOLBY. BONES. LUMPSUCKER. S.B.L.!');
+    yield G.say('Nate', 'Lily and I made him up. And he\'s living in Unit B?! That\'s the password!');
+    yield G.say('Nate', 'Capital S, capital B, capital L... and a capital S on Sucker. Every capital letter matters.');
   };
   // the fight: inside Unit B
   S.sblIntro = function* () {
@@ -18025,17 +18033,48 @@
     if (!f.healerTalk) { yield G.say(null, 'A silver Jeep, parked in the driveway.'); return; }
     if (!G.state.party.includes('abe')) { yield G.say(null, 'Abe\'s Jeep. Abe has the keys.'); return; }
     yield* S.callIn('abe');
-    const c = yield G.ask('Abe', f.chkdArrived ? 'Back to CHKD?' : 'Hop in. CHKD?', ['Drive to CHKD', 'Not yet']);
+    const c = yield G.ask('Abe', f.chkdArrived ? 'Where to?' : 'Hop in. CHKD?', ['Drive to CHKD', 'Rattlesnake Bridge Rd', 'Not yet']);
+    if (c === 1) { yield* S.jeepHome(); return; }
     if (c !== 0) return;
     G.audio.sfx('door');
     yield G.say(null, f.chkdArrived ? 'Abe drives back to CHKD.' : 'Abe drives. Fast. He doesn\'t say a word the whole way there.');
     G.play.warp('chkd', 16, 21, 'up');
   };
   S.chkdJeep = function* () {
-    const c = yield G.ask('Abe', 'Head back to the condo?', ['Back to the condo', 'Stay']);
+    const c = yield G.ask('Abe', 'Where to?', ['Back to the condo', 'Rattlesnake Bridge Rd', 'Stay']);
+    if (c === 1) { yield* S.jeepHome(); return; }
     if (c !== 0) return;
     G.audio.sfx('door');
     G.play.warp('condo', 35, 16, 'left');
+  };
+  // Abe's Jeep, all the way home: back over the bay and up the Eastern Shore to Rattlesnake Bridge Road
+  S.jeepHome = function* () {
+    if (!(yield* S.chesLeaveCheck())) return;
+    G.audio.sfx('door');
+    yield G.say(null, 'Abe drives Nate all the way home: back over the bay, up the Eastern Shore, and on to Rattlesnake Bridge Road.');
+    G.play.warp('home', 1, 53, 'right');
+  };
+  // what's still going on around Abe and Hannah's (for the heads-up on the way out of Chesapeake)
+  const chesLeads = () => {
+    const f = flags(), s = G.state, leads = [];
+    if (f.plantQuest && !f.plantsDone) leads.push('Anette\'s potted plants are still thirsty.');
+    if (f.anetteMet && !f.gardenOpen && s.party.includes('abe')) leads.push('Anette\'s old garden is still locked up behind that tall hedge.');
+    if (f.romulusBeaten && !f.sblBeaten) leads.push('Cold seawater is still seeping out under Unit B\'s door.');
+    if (f.sblBeaten && !f.rhondaBeaten) leads.push('Disco music is still coming from the tan duplex.');
+    return leads;
+  };
+  G.chesLeads = chesLeads;
+  // the heads-up on the way out (like the one at home): once for each new set of things going on.
+  // Returns whether Nate's still leaving.
+  S.chesLeaveCheck = function* () {
+    const f = flags(), leads = chesLeads(), key = leads.join('|');
+    if (!leads.length || f.chesNudge === key) return true;
+    f.chesNudge = key;
+    yield G.say('Nate', 'Huh. Feels like there\'s still plenty going on around here.');
+    for (const l of leads) yield G.say(null, l);
+    yield G.say(null, '(None of it is required. Check the {y}JOURNAL{/} for everything going on in Chesapeake.)');
+    const c = yield G.ask('Nate', 'Head out anyway?', ['Head out', 'Stay a while']);
+    return c === 0;
   };
 
   // ---------------------------------------------------------------- outside
@@ -22614,8 +22653,15 @@
     if (n >= 3) { yield* S.abeDunk(n); return; }
     // once or twice: those carry over as strikes, and he lets Nate know
     st.strikes = n;
-    const abe = G.play.world.ents.find((e) => e instanceof G.Follower && e.id === 'abe' && !e.dead), p = P();
-    if (abe) { abe.dir = G.dirToward(p.x - abe.x, p.y - abe.y); p.dir = G.dirToward(abe.x - p.x, abe.y - p.y); }
+    const abe = G.play.world.ents.find((e) => e instanceof G.Follower && e.id === 'abe' && !e.dead) || abeInRoom(), p = P();
+    if (!abe) {
+      // (he isn't here: he says it in the group chat)
+      G.audio.sfx('buzz');
+      yield G.say(null, '{c}~ FAMILY GROUP CHAT ~{/}');
+      yield G.text('Abe', 'u said it ' + TIMES[n] + '. ' + ['thats one.', 'two. u know what happens at three'][n - 1]);
+      return;
+    }
+    abe.dir = G.dirToward(p.x - abe.x, p.y - abe.y); p.dir = G.dirToward(abe.x - p.x, abe.y - p.y);
     yield G.say('Abe', 'You said it ' + TIMES[n] + '.');
     yield G.say('Abe', ['That\'s one.', 'Two. You know what happens at three.'][n - 1]);
   };
