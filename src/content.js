@@ -281,6 +281,20 @@
     shirt: '#f4f4f0', pattern: 'stars', necklace: '#c8c8d0', pants: '#2a3a5a', shoes: '#f0f0f0', torso: 7, legs: 4,
   };
 
+  // Rhonda (a real person: a stranger who yelled at Abe on a train to New York, on the way to a Racoma
+  // concert, spit at him, and kept insisting he was popping pills and needed rehab; he was not) and
+  // her roommate (somebody else Abe saw that same night: an afro wig, high heels, a thong and a very
+  // shiny behind). They live together in the tan duplex on Abe and Hannah's street.
+  G.CAST.rhonda = {
+    skin: '#6a4028', eyes: '#1a100c', hair: '#1a1210', hairStyle: 'shoulder', earring: '#e8c060',
+    shirt: '#8a2e5e', sleeves: 'long', pants: '#2e3a58', shoes: '#f0f0f0', torso: 6, legs: 3,
+  };
+  G.CAST.rhondaRoomie = {
+    skin: '#4e2e20', eyes: '#140c0a', hair: '#1c1412', hairStyle: 'buzz', smile: '#ffffff',
+    shirt: '#e8c048', pants: '#4e2e20', shoes: '#f05898', torso: 7, legs: 4,
+    post: (set, c) => G.art.roomieDress(set, c),
+  };
+
   // Lafayette students, protesting the event village on the quad.
   Object.assign(G.CAST, {
     protest1: { skin: '#e8b890', hair: '#c86a30', hairStyle: 'long', shirt: '#8a2034', pants: '#384058', shoes: '#f0f0f0', torso: 5, legs: 3 },
@@ -637,6 +651,25 @@
         ? 'Sang "I Pray to Jesus" on the frozen pond north of the bridge until Nate knocked the mic out of his hands. Taught Nate how to play it on the pipe.'
         : 'Singing "I Pray to Jesus" on a frozen pond north of the bridge. It snows there and nowhere else.'),
     },
+    {
+      id: 'sbl', name: 'Shoolby Bones Lumpsucker', met: () => fl().sblMet, img: () => G.spr.shoolby.right.stand,
+      tag: () => (fl().sblBeaten ? '{o}Boss: beaten' : '{r}Boss'),
+      bio: () => (fl().sblBeaten
+        ? 'Nate and Lily made up the word "Shoolby." He grew up, moved into Unit B and flooded it. Went home to the bay. Very formal. The WiFi is still named after him.'
+        : 'Nate and Lily made up the word "Shoolby." He grew up. Now he lives in Unit B, and the whole condo is a tide pool.'),
+    },
+    {
+      id: 'rhonda', name: 'Rhonda', met: () => fl().rhondaMet, img: () => G.sprites.rhonda.down[0],
+      tag: () => (fl().rhondaBeaten ? '{o}Boss: beaten' : '{r}Boss'),
+      bio: () => (fl().rhondaBeaten
+        ? 'Yelled at Abe on a train to New York, on the way to a Racoma concert, and spit at him. Abe was not popping pills. Lives in the tan duplex. Has decided Nate is NOT on drugs.'
+        : 'Yelled at Abe on a train to New York, on the way to a Racoma concert, and spit at him. Sure everybody is popping pills. Sure everybody needs rehab.'),
+    },
+    {
+      id: 'roomie', name: 'Rhonda\'s Roommate', met: () => fl().roomieMet, img: () => G.sprites.rhondaRoomie.down[0],
+      tag: () => (fl().rhondaBeaten ? '{o}Boss: beaten' : '{r}Boss'),
+      bio: 'Abe saw him that same night. An afro wig, high heels, a thong, and the shiniest behind in Virginia. It fires light beams. Nobody knows how. Lives with Rhonda.',
+    },
     { id: 'jack', name: 'Jack Braun', tag: '{y}Roommate', met: () => fl().jackTalk, bio: 'Nate\'s roommate. Always wants to know what time Nate will be back. Nate has stopped asking why.' },
     { id: 'gus', name: 'Gus', tag: '{y}Friend', met: () => fl().capQuest, bio: 'Lafayette\'s groundskeeper. Protector of petunias. Found Nate\'s hat.' },
     { id: 'nataro', name: 'Dr. Nataro', tag: '{y}Friend', met: () => fl().chemMet, bio: 'Chemistry professor. Nobody has ever gotten the last question on his final right.' },
@@ -746,6 +779,14 @@
       add('The Andover depths', f.mine_ironBeaten && 'Old Iron beaten!', 'Deepest: level ' + G.sayable(deep) + ' of 4', 'Andover', hint, [deep, 4]);
     }
     if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number, and Nate can\'t say it.');
+    if (f.romulusBeaten && !f.sbl && !f.sblBeaten) side.push({ name: 'Next door', status: 'Something wet', kind: 'rumor', where: 'Chesapeake - the condo street', hint: 'Cold seawater is seeping out under the neighbors\' front door, Unit B. Something in there keeps going *THWAP*.' });
+    if (f.sblBeaten && !f.rhondaKnock && !f.rhondaBeaten) side.push({ name: 'Two doors down', status: 'Disco music', kind: 'rumor', where: 'Chesapeake - the condo street', hint: 'Disco music and flashing lights are coming out from under the door of the tan duplex with the two garage doors.' });
+    if (f.rhondaKnock) add('The tan duplex', f.rhondaBeaten && 'Beaten!', 'Go in', 'Chesapeake - the tan duplex', 'Somebody in there is sure Nate is popping pills. Watch out for the spit, and don\'t look directly at the roommate.');
+    if (f.sbl) {
+      const st = f.sbl >= 3 ? ['Go in', 'Unit B is unlocked. Whatever lives in there is waiting.'] : f.sbl === 1 ? ['Find the password', 'Something in Unit B wants a password. One of the rocks by its door looks off.']
+        : !f.wifi ? ['Check the router', 'It\'s the WiFi password at home, typed exactly. The router is on the desk in Dad\'s den.'] : ['Type it in', 'Type the WiFi password into the keypad on Unit B\'s door. Every capital letter matters.'];
+      add('The thing in Unit B', f.sblBeaten && 'Beaten!', st[0], 'Chesapeake - Unit B', st[1]);
+    }
     if (f.plantQuest) add('Anette\'s thirsty plants', f.plantsDone, f.plantsDone ? 'Done' : G.sayable(G.plantsWatered()) + '/5 watered', 'Chesapeake - the condo', G.plantsWatered() >= 5 ? 'All five are watered. Go tell Anette.' : 'Water Anette\'s five potted plants around the street with the Portable Bidet.', [G.plantsWatered(), 5]);
     if (f.hipHopMet) add('Dad\'s hip hop class', f.hipHopDone, G.sayable(f.hipHopRound || 0) + '/3 rounds', 'College Hill', 'It\'s REAL. Talk to Dad at the grocery store and copy his moves with the arrows.', [f.hipHopRound || 0, 3]);
     if (f.mobileBeaten && !f.rubyMet) side.push({ name: 'The rock doctor', status: 'Someone needs one', kind: 'rumor', where: 'CHKD - the ward', hint: 'The nurse on the ward says the girl behind the green door keeps asking for a "rock doctor."' });
@@ -3064,7 +3105,7 @@
   // 100%: everything there is to do. The `core` rows are the story, the first side quests, every rock
   // and every photo: finishing those wakes him. They can't be the whole list, because he and the Boss
   // Rush he unlocks are on it too (and minigames never hold the story up). Add anything new here.
-  const CHESTS = ['campus_teeth', 'minePocket', 'mineGrotto', 'mineVault', 'mineSump', 'cbbt_teeth'], HEARTS = 14;
+  const CHESTS = ['campus_teeth', 'minePocket', 'mineGrotto', 'mineVault', 'mineSump', 'cbbt_teeth'], HEARTS = 16;
   G.completion = () => {
     const f = flags(), s = G.state, FS = s.fights || {}, J = s.jams || {}, N = s.nicu || {};
     const row = (name, ok, where, hint) => ({ name, ok: !!ok, where, hint });
@@ -3107,6 +3148,8 @@
       core('Tyler', f.tylerBeaten, 'The Bay - the Thimble Shoal tunnel', 'Snap him out of it.'),
       row('Anette\'s thirsty plants', f.plantsDone, 'Chesapeake - the condo street', 'Water all five of her potted plants with the bidet, then tell her.'),
       row('Romulus', f.romulusBeaten, 'Chesapeake - the golf course', 'He\'s huge, and he hates water.'),
+      row('Shoolby Bones Lumpsucker', f.sblBeaten, 'Chesapeake - Unit B', 'Something wet moved in next door to Abe and Hannah. Get past the door.'),
+      row('Rhonda', f.rhondaBeaten, 'Chesapeake - the tan duplex', 'Disco music, two doors down. Somebody in there thinks everybody needs rehab.'),
       row('Abe\'s typing test', f.typingDone || f.typingBest, 'Chesapeake - Abe\'s office', 'Check Abe\'s desk upstairs and finish all three rounds of the typing test.'),
       count('Abe\'s reach', G.abeReachCount(), G.ABE_REACH_TOTAL, 'Anywhere', 'With Abe along, check everything way up high.'),
       count('Jamming with Abe', G.JAM_SONGS.filter((sg) => J[sg.id]).length, G.JAM_SONGS.length, 'Chesapeake - Abe\'s office', 'Pass every song, on every page.'),
@@ -3135,6 +3178,8 @@
   // anything), though they still count toward 100%. A row shows once it's done, has some progress,
   // or its own check here says Nate has found it. Rows not listed always show.
   const SEEN = {
+    'Shoolby Bones Lumpsucker': (f) => f.sbl,
+    'Rhonda': (f) => f.rhondaKnock,
     'Gus\'s lawn job': (f) => f.capQuest,
     'Ben\'s chem question': (f) => f.benAsked,
     'The Chem Final (perfect)': (f) => f.chemMet,
@@ -4064,6 +4109,10 @@
     { name: 'Chesapeake: Abe & Hannah\'s', map: 'condo', at: [55, 1, 'down'], flags: { tylerBeaten: true } },
     { name: 'Romulus: hide and seek outside', map: 'condo', at: [24, 20, 'down'], flags: { condoArrived: true, condoScare: true, romulusMet: true, romHide: 4 }, items: { bidet: true } },
     { name: 'El Toro Loco: Romulus\'s sloth', map: 'toroLoco', at: [11, 8, 'up'], flags: { romHide: 8, romToGolf: true, slothQuest: 1 } },
+    { name: 'Shoolby: the door to Unit B', map: 'condo', at: [31, 10, 'left'], flags: { romulusBeaten: true, healerTalk: true, sblNotice: true, sbl: 2, wifi: true } },
+    { name: 'Shoolby Bones Lumpsucker (Unit B)', map: 'unitB', at: [9, 10, 'up'], flags: { romulusBeaten: true, healerTalk: true, sblNotice: true, sbl: 3 } },
+    { name: 'Rhonda: the tan duplex', map: 'condo', at: [19, 31, 'up'], flags: { romulusBeaten: true, healerTalk: true, sblNotice: true, sbl: 3, sblMet: true, sblBeaten: true } },
+    { name: 'Rhonda (inside)', map: 'rhondaCondo', at: [9, 10, 'up'], flags: { romulusBeaten: true, healerTalk: true, sblNotice: true, sbl: 3, sblMet: true, sblBeaten: true, rhondaNotice: true, rhondaKnock: true } },
     { name: 'Romulus (the golf course)', map: 'golf', at: [20, 26, 'up'], flags: { slothQuest: 4, ladyMet: true, bassGiven: true, romGap: true }, items: { abeBass: true, yellowCable: true, sloth: true } },
     { name: 'Abe joined: his reach', map: 'condo', at: [16, 13, 'right'], flags: { romulusBeaten: true }, party: ['abe'], follower: 'abe' },
     { name: 'The Last One Up (the tape in the hall)', map: 'homeDown', at: [21, 15, 'down'], flags: { homeArrived: true } },
@@ -4394,6 +4443,7 @@
     const f = flags();
     if (f.wifi) {
       yield G.say(null, 'The router. Still {y}ShoolbyBonesLumpSucker{/}. Every capital letter matters.');
+      yield* S.sblWifiLine();
       return;
     }
     f.wifi = true;
@@ -4410,6 +4460,7 @@
       yield G.say('Doron', 'I\'ve been typing "SchoolbyBones" for three years.');
       yield G.say('Nate', 'There\'s no C, Doron.');
     }
+    yield* S.sblWifiLine();
   };
 
   // Students protesting Lafayette's event village (and whatever else).
@@ -15594,7 +15645,22 @@
       // off the bottom, where the street and the main road keep going
       for (let x = 0; x < w.w; x++) if (R.onRoad(x * 16 + 8, (w.h - 1) * 16 + 8)) w.addTrigger(x, w.h - 1, 1, 1, () => G.script.run(S.condoNeighborhood()));
       // the neighbors' front door
-      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [29 * 16, 9 * 16, 30 * 16, 12 * 16], talk: look('The neighbors\' front door. They get the street side.') });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [29 * 16, 9 * 16, 30 * 16, 12 * 16], talk: () => S.unitBDoor() });
+      // after Romulus: cold seawater seeping out under Unit B's door, and (once Nate's
+      // been told off through the door) the fake rock by the stoop
+      if (f.romulusBeaten && !f.sblBeaten) {
+        w.props.push({
+          img: null, x: 0, y: 0, base: 0, flat: true,
+          draw(ctx, cx, cy) {
+            const x0 = 30 * 16 - cx, y0 = 10 * 16 + 2 - cy;
+            ctx.fillStyle = 'rgba(120,184,232,0.55)';
+            for (let j = 0; j < 9; j++) { const half = Math.round(Math.sqrt(1 - ((j - 4) / 4.6) ** 2) * (14 + (j % 3))); ctx.fillRect(x0, y0 + j * 2 - 8, half + 2, 2); }
+            ctx.fillStyle = 'rgba(232,248,255,0.8)';
+            if ((G.tick >> 4) % 3 === 0) ctx.fillRect(x0 + 6, y0 - 3, 2, 1);
+          },
+        });
+      }
+      if (f.romulusBeaten && f.sbl >= 1) w.addProp({ img: sp.fakeRock, tx: 31, ty: 11, dx: 1, dy: -2, hit: [31, 11, 1, 1], talk: () => S.sblFakeRock() });
 
       // ---- out front: the brick step, boxwoods and azaleas in the mulch
       w.addProp({ img: sp.brickStep, tx: 22, ty: 18, dx: 4, dy: -6, flat: true });
@@ -15612,7 +15678,20 @@
       w.addProp({ img: sp.condoTan, tx: 17, ty: 22, h: 8 });
       // (blocked to the roof's shape: the gable on the left goes up to y 22, the garage roof only to 24)
       w.blockTiles(17, 22, 5, 8); w.blockTiles(22, 24, 5, 6); w.blockTiles(27, 26, 1, 4);
-      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [18 * 16, 29 * 16, 21 * 16, 30 * 16], talk: look('The neighbors\' front door. Nobody\'s home.') });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [18 * 16, 29 * 16, 21 * 16, 30 * 16], talk: () => S.tanDoor() });
+      // after Shoolby: disco lights spilling out under the tan duplex's door (Rhonda's place)
+      if (f.sblBeaten && !f.rhondaBeaten) {
+        w.props.push({
+          img: null, x: 0, y: 0, base: 0, flat: true,
+          draw(ctx, cx, cy) {
+            const cols = ['#f86858', '#f8e070', '#78e070', '#78c8f8', '#f8a0d0'];
+            for (let i = 0; i < 7; i++) {
+              const k = (G.tick * 0.05 + i * 0.9) % 6.28, x = 19.5 * 16 + Math.cos(k) * (10 + i * 2), y = 30 * 16 + 4 + Math.sin(k * 1.3) * 4;
+              ctx.fillStyle = cols[(i + (G.tick >> 4)) % cols.length]; ctx.fillRect(Math.round(x) - cx, Math.round(y) - cy, 2, 1);
+            }
+          },
+        });
+      }
       w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [21 * 16, 29 * 16, 27 * 16, 30 * 16], talk: look('Two garage doors. The neighbors take their cars seriously.') });
       for (const x of [17, 18]) shrub(sp.boxwood, x, 30, boxwood);
       // ---- cars: a silver Jeep in their driveway, the neighbors' black SUV, and two in the visitor spots
@@ -15724,6 +15803,8 @@
     // the school bus comes down the main road every so often (it stops and honks if Nate's in the way)
     tick(w) {
       if (G.script.busy) return;
+      S.sblTick(w);
+      S.rhondaTick(w);
       const b = w.bus, p = G.play.player, R = CONDO_STREET;
       if (!b) { if (--w.busT <= 0) w.bus = { y: -90, honk: 0 }; return; }
       const inWay = Math.abs(p.x - R.lane) < 22 && p.y > b.y - 4 && p.y < b.y + 30;
@@ -15733,6 +15814,470 @@
       w.busProp.base = b.y;
       if (b.y > w.ph + 100) { w.bus = null; w.busT = 1500 + Math.floor(Math.random() * 900); }
     },
+  };
+
+  // ================================================================ SHOOLBY BONES LUMPSUCKER (Unit B)
+  // After Romulus, something moves into Unit B, the other half of Abe and Hannah's duplex: cold
+  // seawater seeps out under its door and something inside goes *THWAP*. Getting in takes a few
+  // steps (flags.sbl): 1 the voice through the door wants a password; 2 the fake rock by the stoop
+  // has a note from "S.B.L." and Lily says it's the WiFi password at home; then the router in Dad's
+  // den (flags.wifi) shows exactly how it's typed, and the keypad on the door takes it, capital
+  // letters and all; 3 the door's open. Inside: Shoolby Bones Lumpsucker, Nate and Lily's made-up
+  // word, all grown up (a spiny lumpsucker the size of a beach ball), and the condo is a tide pool.
+  const SBL = 'Shoolby Bones Lumpsucker', SBL_DOOR = [30 * 16, 10 * 16];
+  G.SBL_PASSWORDS = ['SchoolbyBonesLumpSucker', 'ShoolbyBonesLumpsucker', 'ShoolbyBonesLumpSucker', 'Leave it'];
+  S.sblTick = (w) => {
+    const f = flags(), p = P();
+    if (!f.romulusBeaten || f.sblBeaten || G.state.night || G.state.playAs) return;
+    const d = Math.hypot(p.x - SBL_DOOR[0], p.y - SBL_DOOR[1]);
+    if (!f.sblNotice && d < 84) { G.script.run(S.sblNotice()); return; }
+    if (d < 200 && G.tick % 210 === 0) { G.audio.sfx('bump'); w.pop(29 * 16 + 8, 9 * 16 - 4, '*THWAP*', '#a8e878'); }
+  };
+  S.sblNotice = function* () {
+    const f = flags(), w = G.play.world;
+    f.sblNotice = true;
+    G.audio.sfx('bump'); w.pop(29 * 16 + 8, 9 * 16 - 4, '*THWAP*', '#a8e878');
+    yield G.wait(20);
+    yield G.say('Nate', 'Is that... water? Coming out from under the neighbors\' door?');
+    if (G.with('abe')) {
+      yield G.say('Abe', 'Again?!');
+      yield G.say('Nate', 'Didn\'t their water heater break and flood your place once?');
+    }
+    yield G.say('Nate', 'It\'s cold. And it smells like the bay at low tide.');
+    G.audio.sfx('bump'); w.pop(29 * 16 + 8, 9 * 16 - 4, '*THWAP*', '#a8e878');
+    yield G.say('Nate', '...And something in there keeps going THWAP.');
+  };
+  S.unitBDoor = function* () {
+    const f = flags(), w = G.play.world;
+    if (!f.romulusBeaten) { yield G.say(null, 'The neighbors\' front door. They get the street side.'); return; }
+    if (f.sblBeaten) { yield G.say(null, 'Unit B\'s front door. The puddles are finally drying up. The neighbors are going to have questions.'); return; }
+    const thwap = () => { G.audio.sfx('bump'); w.pop(29 * 16 + 8, 9 * 16 - 4, '*THWAP*', '#a8e878'); };
+    if (f.sbl >= 3) {
+      const c = yield G.ask(null, 'Unit B. The door is unlocked, and cold air is pouring out.', ['Go in', 'Not yet']);
+      if (c === 0) G.play.warp('unitB', 9, 10, 'up');
+      return;
+    }
+    if (!f.sbl) {
+      f.sbl = 1;
+      yield G.say(null, 'Cold seawater is seeping out from under the door. There\'s a brass keypad on the lock.');
+      yield G.say(null, 'Nate knocks.');
+      thwap();
+      yield G.say('???', 'WHO DARES.');
+      yield G.say('Nate', 'Um. Nate. I\'m visiting Abe and Hannah, next door.');
+      yield G.say('???', 'Nobody comes in without the PASSWORD.');
+      yield G.say('Nate', '...Please?');
+      yield G.say('???', 'That is NOT the password.');
+      thwap();
+      yield G.say('Nate', 'Who even LIVES in Unit B? And why are they so WET?');
+      yield G.say(null, 'Nate looks around the stoop. One of the rocks by the door looks... off.');
+      // (the fake rock shows up now)
+      w.addProp({ img: G.spr.fakeRock, tx: 31, ty: 11, dx: 1, dy: -2, hit: [31, 11, 1, 1], talk: () => S.sblFakeRock() });
+      return;
+    }
+    if (f.sbl === 1) {
+      yield G.say('???', 'Password.');
+      yield G.say('Nate', 'I still don\'t know it.');
+      yield G.say('???', 'Then GO AWAY.');
+      thwap();
+      yield G.say('Nate', 'That rock by the door is bugging me.');
+      return;
+    }
+    if (!f.wifi) {
+      yield G.say('???', 'Password.');
+      yield G.say('Nate', 'It\'s our WiFi password at home. But I don\'t remember exactly how it\'s typed, and every capital letter matters.');
+      yield G.say('Nate', 'The router\'s on the desk in Dad\'s den. I need to go look.');
+      return;
+    }
+    yield G.say(null, 'The keypad lights up.');
+    const c = yield G.ask('Nate', 'Type in the password?', G.SBL_PASSWORDS);
+    if (c === 3 || c < 0) return;
+    if (c !== 2) {
+      G.audio.sfx('buzz');
+      w.pop(29 * 16 + 8, 9 * 16 - 4, 'BZZT!', '#f86858');
+      thwap();
+      yield G.say('???', c === 0 ? 'There is no C. There has NEVER been a C.' : 'WRONG. Capital letters MATTER.');
+      return;
+    }
+    f.sbl = 3;
+    G.audio.sfx('door');
+    yield G.say(null, '*click* The lock opens. Air as cold as the bottom of the bay pours out.');
+    yield G.say('???', '...Fine. Come in. Wipe your feet.');
+    const go = yield G.ask(null, 'Go into Unit B?', ['Go in', 'Not yet']);
+    if (go === 0) G.play.warp('unitB', 9, 10, 'up');
+  };
+  // the fake rock by the stoop
+  S.sblFakeRock = function* () {
+    const f = flags();
+    if (f.sbl >= 2) { yield G.say(null, 'The fake rock. Empty now, except for a little sand.'); return; }
+    yield G.say(null, 'A rock by the neighbors\' door.');
+    yield G.say('Nate', 'Wait. That\'s not a real rock. It\'s PLASTIC. Polystyrene, with a paint job.');
+    yield G.say('Nate', 'Nobody fools a geologist. People hide spare keys in these.');
+    yield G.say(null, 'There\'s no key inside. Just a soggy note, in very fancy handwriting:');
+    yield G.say(null, '"Only my creator knows the password. It is my NAME. -S.B.L."');
+    yield G.say('Nate', 'S.B.L.?');
+    yield G.say('Nate', '...Shoolby. Lily and I made up that word.');
+    yield G.say('Nate', 'No. No WAY.');
+    f.sbl = 2;
+    G.audio.sfx('buzz');
+    yield G.text('Nate', 'lily. our wifi password');
+    yield G.text('Lily', 'ShoolbyBonesLumpSucker. why');
+    yield G.text('Nate', 'i think hes real');
+    yield G.text('Lily', 'who');
+    yield G.text('Nate', 'shoolby');
+    yield G.text('Lily', 'nate');
+    yield G.text('Lily', 'type it EXACTLY like the router. capitals matter');
+    if (f.wifi) yield G.say('Nate', 'I know exactly how it\'s typed. I read it right off the router in Dad\'s den.');
+    else yield G.say('Nate', 'Exactly like the router. The router\'s in Dad\'s den, at home.');
+  };
+  S.sblWifiLine = function* () {
+    if (flags().sbl === 2) yield G.say('Nate', 'Capital S, capital B, capital L... and a capital S on Sucker. That\'s the password for Unit B!');
+  };
+  // the fight: inside Unit B
+  S.sblIntro = function* () {
+    const f = flags(), w = G.play.world, b = w.sbl;
+    if (!b) return;
+    yield G.wait(20);
+    if (!f.sblMet) {
+      f.sblMet = true;
+      yield G.say(null, 'Unit B has turned into a tide pool. The floor is flooded, kelp hangs from the ceiling fan, and it is FREEZING.');
+      yield G.camFocus(b.x, b.y - 16, 50);
+      yield G.say('???', 'Ah. My creator. At last.');
+      yield G.say('Nate', '...Shoolby Bones Lumpsucker?');
+      yield G.say(SBL, 'In the flesh. Mostly bones, actually.');
+      yield G.say('Nate', 'I MADE YOU UP. Me and Lily.');
+      yield G.say(SBL, 'And then you left me in your head for YEARS. Do you know how cramped it is in there? It\'s all rocks.');
+      yield G.say(SBL, 'So I let myself out. The neighbors are away, and this condo is MINE now.');
+      if (f.lumpsuckerCaught) {
+        yield G.say(SBL, 'Also. You caught my cousin. In the BAY.');
+        yield G.say('Nate', '...He was very spiny.');
+        yield G.say(SBL, 'We ALL are.');
+      }
+      yield G.say(SBL, 'Now. Prepare to be stuck to.');
+      yield G.camFocus(null, null, 30);
+    } else {
+      yield G.say(SBL, 'Back again? Wipe your feet.');
+    }
+    G.audio.play('boss');
+    w.sblFight = true;
+    yield G.banner('SHOOLBY BONES LUMPSUCKER', 'a made-up word, all grown up', 150);
+    b.wake();
+  };
+  // the bidet heals him
+  S.sblWetHint = function* () {
+    const f = flags();
+    if (f.sblWetHint) return;
+    f.sblWetHint = true;
+    yield G.say(SBL, 'Ahh. Seawater would be better, but I\'m not picky.');
+    yield G.say('Nate', 'He\'s a FISH. Water is his whole thing. Spraying him just HEALS him.');
+    if (flags().signal_icy) yield G.say('Nate', '...He likes it cold, though. I know a song that\'s VERY cold.');
+  };
+  S.sblDefeated = function* (b) {
+    const f = flags(), w = G.play.world, s = G.state;
+    G.audio.stop();
+    b.noBar = true;
+    for (const e of w.ents) if (e instanceof G.Shot) e.dead = true;
+    G.audio.sfx('bell');
+    yield G.shakeCmd(30, 3);
+    yield G.wait(40);
+    w.sblFight = false;
+    f.sblBeaten = true;
+    yield G.banner('YOU WIN!', 'unstuck at last', 150);
+    yield G.say(SBL, 'Ow. OW. Fine. You win, creator.');
+    yield G.say(SBL, 'I only wanted somewhere to be. You made me up, and then you grew up.');
+    yield G.say('Nate', 'I didn\'t forget you. You\'re our WiFi password.');
+    yield G.say(SBL, '...You named the WiFi after me?');
+    yield G.say('Nate', 'Every capital letter.');
+    yield G.say(SBL, 'That is the nicest thing anybody has ever done for a lumpsucker.');
+    yield G.say(SBL, 'Here. I found it at the bottom of the bay. For your trouble.');
+    s.maxHp += 2; s.hp = s.maxHp;
+    G.audio.sfx('heart');
+    yield G.itemGet(G.spr.heartBig, 'You got a {r}Heart Container{/}! Max hearts +1.');
+    yield* S.bossStash(50, 'He left a pile of shark teeth in the kelp: {y}50 shark teeth{/}.');
+    yield G.say(SBL, 'I\'ll go home to the bay. It\'s too warm for a lumpsucker here anyway.');
+    yield G.say(SBL, 'Tell Lily I said hello. Formally.');
+    b.state = 'defeated';
+    yield G.walkTo(b, 9 * 16 + 8, 11 * 16 + 8, 1.6);
+    G.audio.sfx('door');
+    b.dead = true;
+    w.sbl = null;
+    G.audio.play('house');
+    yield G.wait(20);
+    G.audio.sfx('buzz');
+    yield G.text('Nate', '[1 photo]');
+    yield G.text('Lily', 'IS THAT SHOOLBY');
+    yield G.text('Nate', 'he says hello. formally');
+    yield G.text('Lily', 'i KNEW he was real');
+    G.play.autosave();
+  };
+  // Unit B: the other half of Abe and Hannah's duplex, flooded into a freezing tide pool, with three
+  // pools in the floor (left, right, and one in the middle) and kelp everywhere
+  const SBL_POOLS = [[2, 5, 3, 2], [15, 5, 3, 2], [8, 7, 4, 2]];
+  G.MAPS.unitB = {
+    name: 'Unit B',
+    get music() { const w = G.play.world; return flags().sblBeaten ? 'house' : w && w.sblFight ? 'boss' : 'bay'; },
+    tiles() {
+      const W = 20, H = 13;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 18, 2, '$'); fill(1, 3, 18, 9, '*');
+      for (const [x, y, w, h] of SBL_POOLS) fill(x, y, w, h, '~');
+      g[12][9] = '>';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr, f = flags();
+      // kelp hanging down the back wall, and growing up out of the pools
+      for (const [x, n] of [[2, 0], [6, 1], [12, 2], [16, 0]]) w.props.push({ img: sp.kelp[n], x: x * 16 + 4, y: 16, base: 0, flat: true });
+      for (const [x, y, n] of [[2, 7, 1], [17, 7, 2], [7, 9, 0], [12, 7, 1]]) w.props.push({ img: sp.kelp[n], x: x * 16 + 3, y: y * 16 - 20, base: y * 16 + 6 });
+      for (const [x, y, n] of [[1, 7, 0], [18, 4, 1], [12, 9, 2], [7, 6, 0]]) w.props.push({ img: sp.poolRocks[n], x: x * 16 - 1, y: y * 16 + 2, base: y * 16 + 13 });
+      // puddles all over the floor
+      w.props.push({
+        img: null, x: 0, y: 0, base: 0, flat: true,
+        draw(ctx, cx, cy) {
+          ctx.fillStyle = 'rgba(120,184,232,0.35)';
+          for (const [x, y, r] of [[96, 72, 10], [210, 160, 14], [60, 160, 12], [250, 130, 9], [150, 176, 8], [196, 70, 8]]) for (let j = -2; j <= 2; j++) { const hw = Math.round(r * Math.sqrt(1 - (j / 2.6) ** 2)); ctx.fillRect(x - hw - cx, y + j * 2 - cy, hw * 2, 2); }
+        },
+      });
+      for (const [x, y, ww, hh] of SBL_POOLS) w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [x * 16, y * 16, (x + ww) * 16, (y + hh) * 16], talk: look('A tide pool. In a living room. It is FREEZING.') });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [16, 16, 19 * 16, 48], talk: look('Kelp, hanging off everything. The ceiling fan is wearing some.') });
+      w.addWarp(9, 12, 1, 1, 'condo', 30, 10, 'right');
+      if (!f.sblBeaten) {
+        const bounds = [30, 92, 290, 186], pools = SBL_POOLS.map(([x, y, ww, hh]) => ({ x: (x + ww / 2) * 16, y: (y + hh) * 16 - 6, r: [x * 16, y * 16, (x + ww) * 16, (y + hh) * 16] }));
+        w.sbl = w.add(new G.ShoolbyBones(10 * 16, 6 * 16 + 4, bounds, pools));
+        w.sbl.face = 1;
+      }
+    },
+    // it's freezing in here: a faint blue chill
+    tint(ctx) { ctx.fillStyle = 'rgba(150,200,240,0.10)'; ctx.fillRect(0, 0, G.W, G.H); },
+    // I Pray to Jesus freezes him solid
+    onIcy(w, p, r) {
+      const b = w.sbl;
+      if (b && !b.dead && G.overlap(r, b.hurtBox()) && b.freeze()) w.burst(b.x, b.y - 12, ['#ffffff', '#d8f4ff', '#a8e0ff'], 10, { speed: 1, life: 22, size: 2 });
+    },
+    onEnter() { return (function* () { if (!flags().sblBeaten) yield* S.sblIntro(); })(); },
+  };
+
+  // ================================================================ RHONDA (the tan duplex)
+  // A real person: a stranger who yelled at Abe on a train to New York, on the way to a Racoma
+  // concert. She spit at him and kept insisting he was popping pills and needed to go to rehab. He
+  // tried to talk to her; she kept yelling. (He was not popping pills.) Her roommate is somebody
+  // else they saw that same night: an afro wig, high heels, a thong, and a very shiny behind. Here
+  // they live together in the tan duplex with the two garage doors, two doors down from Abe and
+  // Hannah. It opens up after Shoolby: disco music, and lights under the door. Flags: rhondaNotice,
+  // rhondaKnock, rhondaMet, roomieMet, rhondaBeaten.
+  const TAN_DOOR = [19.5 * 16, 30 * 16];
+  S.rhondaTick = (w) => {
+    const f = flags(), p = P();
+    if (!f.sblBeaten || f.rhondaBeaten || G.state.night || G.state.playAs) return;
+    const d = Math.hypot(p.x - TAN_DOOR[0], p.y - TAN_DOOR[1]);
+    if (!f.rhondaNotice && d < 90) { G.script.run(S.rhondaNotice()); return; }
+    if (d < 200 && G.tick % 90 === 0) w.pop(TAN_DOOR[0], TAN_DOOR[1] - 30, ['*thump thump*', '*thump*', '~ disco ~'][(G.tick / 90 | 0) % 3], '#f8a0d0');
+  };
+  S.rhondaNotice = function* () {
+    flags().rhondaNotice = true;
+    yield G.wait(10);
+    yield G.say('Nate', 'Is that... disco music? Coming from the neighbors with the two garage doors?');
+    yield G.say('Nate', 'There are lights flashing under the door. Somebody\'s having a party.');
+  };
+  S.tanDoor = function* () {
+    const f = flags();
+    if (!f.sblBeaten) { yield G.say(null, 'The neighbors\' front door. Nobody\'s home.'); return; }
+    if (f.rhondaBeaten) { yield G.say(null, 'Rhonda\'s front door. Inside, the disco music is going. Somebody is yelling about rehab. Nate keeps walking.'); return; }
+    if (!f.rhondaKnock) {
+      f.rhondaKnock = true;
+      yield G.say(null, 'Nate knocks. The disco music stops.');
+      yield G.say('???', 'WHO IS IT.');
+      yield G.say('Nate', 'Um. Nate. I\'m visiting Abe and Hannah, down the street.');
+      yield G.say('???', '...');
+      yield G.say('???', 'Are you popping pills?');
+      yield G.say('Nate', 'What? No!');
+      yield G.say('???', 'Get in here.');
+    }
+    const c = yield G.ask(null, 'The door\'s open a crack. Disco lights. Go in?', ['Go in', 'Not yet']);
+    if (c === 0) G.play.warp('rhondaCondo', 9, 10, 'up');
+  };
+  // the fight starts the minute Nate walks in
+  S.rhondaIntro = function* () {
+    const f = flags(), w = G.play.world, r = w.rhonda, p = P();
+    if (!r) return;
+    yield G.wait(20);
+    if (!f.rhondaMet) {
+      f.rhondaMet = true;
+      yield G.say(null, 'A disco ball spins over the living room. A woman gets up off the couch and marches right up to Nate.');
+      yield G.walkTo(r, p.x, p.y - 44, 1.4);
+      r.dir = 'down';
+      yield G.say('Rhonda', 'Are you popping pills?');
+      yield G.say('Nate', 'No!');
+      yield G.say('Rhonda', 'Look at your eyes. You are DEFINITELY popping pills.');
+      if (G.with('abe')) {
+        yield G.say('Abe', 'Wait. I KNOW her.');
+        yield G.say('Abe', 'From the TRAIN. To New York. We were on our way to see Racoma.');
+        yield G.say('Rhonda', 'YOU.');
+        yield G.say('Rhonda', 'You were popping pills on that train.');
+        yield G.say('Abe', 'I was NOT popping pills.');
+        yield G.say('Rhonda', 'You need to go to REHAB.');
+        yield G.say('Abe', 'I tried to talk to her. She just kept yelling.');
+        yield G.say('Rhonda', 'REHAB. BOTH of you.');
+      } else {
+        yield G.say('Rhonda', 'You need to go to REHAB.');
+        yield G.say('Nate', 'I\'m not on anything! I\'m a geology major!');
+        yield G.say('Rhonda', 'That\'s what they ALL say.');
+      }
+      w.pop(r.x, r.y - 32, '*HAWK*', '#d8e8d0');
+      yield G.wait(24);
+      G.audio.sfx('pop');
+      w.pop(r.x, r.y - 32, 'PTOO!', '#d8e8d0');
+      w.burst(p.x, p.y - 20, ['#d8e8d0', '#ffffff'], 6, { speed: 0.8, up: 0.4, life: 16, size: 1 });
+      yield G.wait(16);
+      yield G.say('Nate', 'Did she just SPIT on me?!');
+      if (G.with('abe')) yield G.say('Abe', 'She did that on the train, too.');
+    } else {
+      r.x = p.x; r.y = p.y - 44; r.dir = 'down';
+      yield G.say('Rhonda', 'You again. Still popping pills?');
+    }
+    G.audio.play('boss');
+    w.rhondaFight = true;
+    yield G.banner('RHONDA', 'she thinks you need rehab', 150);
+    r.wake();
+  };
+  // Rhonda's had enough: to the couch, and out comes the roommate
+  S.rhondaTired = function* (r) {
+    const f = flags(), w = G.play.world, m = w.roomie, p = P();
+    for (const e of w.ents) if (e instanceof G.Shot || e instanceof G.Loogie) e.dead = true;
+    G.audio.sfx('bell');
+    yield G.wait(20);
+    yield G.say('Rhonda', 'I need to SIT DOWN. You are stressing me OUT.');
+    yield G.walkTo(r, RHONDA_SEAT[0], RHONDA_SEAT[1] + 10, 1.6);
+    yield G.walkTo(r, RHONDA_SEAT[0], RHONDA_SEAT[1], 1);
+    r.state = 'couch'; r.dir = 'down'; r.walking = false;
+    yield G.say('Rhonda', 'BABY! Get out here! This one is on DRUGS!');
+    G.audio.sfx('door');
+    yield G.wait(20);
+    m.hidden = false; m.dir = 'down';
+    w.disco = 2;
+    for (const [x, y] of [[ROOMIE_DOOR[0] - 30, ROOMIE_DOOR[1]], [ROOMIE_DOOR[0] - 60, ROOMIE_DOOR[1] + 14]]) {
+      const walk = G.walkTo(m, x, y, 0.9);
+      yield { start() { walk.start(); this.n = 0; }, update() { if (++this.n % 14 === 0) w.pop(m.x, m.y - 6, '*click*', '#f8a0d0'); return walk.update(); } };
+    }
+    m.dir = 'down'; m.walking = false;
+    f.roomieMet = true;
+    yield G.say('Nate', '...Is he wearing a THONG?');
+    m.dir = 'up';
+    G.audio.sfx('secret'); G.play.shake(6, 1);
+    w.pop(m.x, m.y - 36, '*TING!*', '#fff8c0');
+    w.burst(m.x, m.y - 8, ['#ffffff', '#fff8c0', '#f8e070'], 12, { speed: 1.6, up: 0.6, g: 0, life: 20, size: 1 });
+    yield G.wait(30);
+    yield G.say('Nate', 'Why is it so SHINY?!');
+    yield G.say('Rhonda', 'Don\'t look directly at it.');
+    yield G.banner('RHONDA\'S ROOMMATE', 'shiny side out', 140);
+    m.wake();
+  };
+  S.rhondaDefeated = function* (m) {
+    const f = flags(), w = G.play.world, s = G.state, r = w.rhonda;
+    G.audio.stop();
+    m.noBar = true;
+    for (const e of w.ents) if (e instanceof G.Shot || e instanceof G.Loogie || e instanceof G.LightBeam || e instanceof G.SpitPuddle) e.dead = true;
+    G.audio.sfx('bell');
+    yield G.shakeCmd(30, 3);
+    yield G.wait(40);
+    w.rhondaFight = false;
+    f.rhondaBeaten = true;
+    yield G.walkTo(m, RHONDA_SEAT[0] + 32, RHONDA_SEAT[1] + 16, 1.2);
+    m.dir = 'down';
+    yield G.banner('YOU WIN!', 'nobody needs rehab', 150);
+    yield G.say('Rhonda', '...Fine. FINE. You\'re not on drugs.');
+    yield G.say('Nate', 'THANK you.');
+    if (G.with('abe')) {
+      yield G.say('Rhonda', 'HIM, though.');
+      yield G.say('Abe', 'I was going to see RACOMA.');
+      yield G.say('Rhonda', 'Rehab.');
+    }
+    yield G.say('Rhonda', 'Here. For your recovery.');
+    s.maxHp += 2; s.hp = s.maxHp;
+    G.audio.sfx('heart');
+    yield G.itemGet(G.spr.heartBig, 'You got a {r}Heart Container{/}! Max hearts +1.');
+    yield* S.bossStash(60, 'The roommate tosses Nate a little bag of shark teeth: {y}60 shark teeth{/}.');
+    m.dir = 'up';
+    G.audio.sfx('secret');
+    w.pop(m.x, m.y - 36, '*ting*', '#fff8c0');
+    yield G.wait(30);
+    m.dir = 'down';
+    yield G.say('Rhonda', 'Now get out. We\'re having a party.');
+    G.audio.play('house');
+    G.play.autosave();
+  };
+  // after: the two of them, home, with the disco ball going
+  S.rhondaTalk = function* () {
+    const f = flags();
+    f.rhondaLine = ((f.rhondaLine || 0) + 1) % 3;
+    yield G.say('Rhonda', ['Are you STILL popping pills?', 'Rehab is not a bad word.', 'Don\'t look directly at it.'][f.rhondaLine]);
+    if (f.rhondaLine === 0) yield G.say('Nate', 'I never WAS.');
+  };
+  S.roomieTalk = function* () {
+    yield G.say(null, '*click click* He does a little turn. The light catches. Nate looks away just in time.');
+  };
+  // their place: the tan duplex's living room, with a disco ball, the purple couch and a rug, and a
+  // doorway up to the bedroom (where the roommate comes out of)
+  const RHONDA_SEAT = [2 * 16 + 24, 9 * 16 + 2], ROOMIE_DOOR = [19 * 16 + 10, 8 * 16 + 14];
+  G.MAPS.rhondaCondo = {
+    name: 'Rhonda\'s',
+    get music() { const w = G.play.world; return w && w.rhondaFight ? 'boss' : 'house'; },
+    tiles() {
+      const W = 20, H = 13;
+      const g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 18, 2, '$'); fill(1, 3, 18, 9, '*');
+      g[8][19] = '*';
+      g[12][9] = '>';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr, f = flags();
+      // the doorway to the bedroom (dark), the rug, the couch, a TV console, a lamp, a plant
+      w.props.push({ img: null, x: 0, y: 0, base: 0, flat: true, draw(ctx, cx, cy) { ctx.fillStyle = '#2a2230'; ctx.fillRect(19 * 16 + 4 - cx, 7 * 16 + 6 - cy, 12, 26); ctx.fillStyle = '#4a3a2a'; ctx.fillRect(19 * 16 + 3 - cx, 7 * 16 + 6 - cy, 1, 26); } });
+      w.props.push({ img: sp.livingRug, x: 6 * 16, y: 6 * 16, base: 0, flat: true });
+      F.stand(sp.studioCouch, 2, 8, 3, look('A purple couch. Rhonda\'s spot is the middle cushion. Nobody else sits there.'));
+      F.stand(sp.tvConsole, 11, 3, 2, look('The TV is off. The disco music is coming from somewhere else.'));
+      F.stand(sp.amberLampTable, 7, 3, 1, look('A lamp with an amber shade. It\'s losing the battle with the disco ball.'));
+      F.stand(sp.monstera, 18, 3, 1, look('A big plant. It looks like it has seen things.'));
+      // the disco ball, and the lights it throws all over the room
+      w.props.push({
+        img: null, x: 0, y: 0, base: 99500,
+        draw(ctx, cx, cy) {
+          const bx = 9.5 * 16 - cx, by = 3 * 16 + 4 - cy;
+          ctx.fillStyle = '#a8acb8'; ctx.fillRect(Math.round(bx), 0, 1, Math.max(0, Math.round(by - 6)));
+          ctx.drawImage(sp.discoBall[(G.tick >> 3) % 3], Math.round(bx - 6), Math.round(by - 6));
+        },
+      });
+      w.props.push({
+        img: null, x: 0, y: 0, base: 0, flat: true,
+        draw(ctx, cx, cy) {
+          const cols = ['#f86858', '#f8e070', '#78e070', '#78c8f8', '#f8a0d0'], n = w.disco === 2 ? 26 : 14;
+          ctx.save(); ctx.globalAlpha = 0.6;
+          for (let i = 0; i < n; i++) {
+            const a = G.tick * (w.disco === 2 ? 0.02 : 0.012) + i * 2.4, rr = 30 + (i * 37) % 120;
+            const x = 9.5 * 16 + Math.cos(a) * rr * 1.3, y = 7 * 16 + Math.sin(a) * rr * 0.55;
+            ctx.fillStyle = cols[i % cols.length]; ctx.fillRect(Math.round(x) - cx, Math.round(y) - cy, 3, 2);
+          }
+          ctx.restore();
+        },
+      });
+      w.addWarp(9, 12, 1, 1, 'condo', 19, 30, 'down');
+      const bounds = [30, 104, 290, 186];
+      if (!f.rhondaBeaten) {
+        w.rhonda = w.add(new G.Rhonda(RHONDA_SEAT[0], RHONDA_SEAT[1] + 14));
+        w.roomie = w.add(new G.RhondaRoomie(ROOMIE_DOOR[0], ROOMIE_DOOR[1], bounds));
+      } else {
+        w.disco = 2;
+        w.add(new G.NPC({ sprite: 'rhonda', name: 'Rhonda', x: RHONDA_SEAT[0], y: RHONDA_SEAT[1] + 16, dir: 'down', talk: S.rhondaTalk }));
+        w.add(new G.NPC({ sprite: 'rhondaRoomie', name: 'Rhonda\'s Roommate', x: RHONDA_SEAT[0] + 32, y: RHONDA_SEAT[1] + 16, dir: 'down', talk: S.roomieTalk }));
+      }
+    },
+    // I Pray to Jesus freezes whoever it hits
+    onIcy(w, p, r) {
+      for (const b of [w.rhonda, w.roomie]) if (b && !b.dead && !b.hidden && G.overlap(r, b.hurtBox()) && b.freeze()) w.burst(b.x, b.y - 12, ['#ffffff', '#d8f4ff', '#a8e0ff'], 10, { speed: 1, life: 22, size: 2 });
+    },
+    onEnter() { return (function* () { if (!flags().rhondaBeaten) yield* S.rhondaIntro(); })(); },
   };
 
   // ================================================================ ROMULUS
@@ -17238,7 +17783,7 @@
     // up onto the stage for her number
     w.slothProp.hide = true;
     yield G.walkTo(lady, 16 * 16 + 8, 5 * 16 + 10, 1.2);
-    yield G.walkTo(lady, 17 * 16 + 8, 4 * 16 + 2, 1.2);
+    yield G.walkTo(lady, 17 * 16 + 8, 5 * 16 - 1, 1.2);
     lady.dir = 'down';
     w.heldBass.show = true;
     yield G.wait(20);
@@ -17413,10 +17958,11 @@
       const traded = (f.slothQuest || 0) >= 3;
       const ladyBooth = look('Her booth. She left a few chips. Nate respects that.');
       booth(17, 6, true, () => ((flags().slothQuest || 0) >= 3 ? ladyBooth() : S.paulLady()));
-      w.lady = w.add(new G.NPC({ sprite: 'paulLady', name: 'Paul McCartney Lady', x: 17 * 16 + 8, y: traded ? 4 * 16 + 2 : 6 * 16 + 14, dir: 'down', talk: S.paulLady }));
+      // (on the stage she stands right at its front edge, so the X and Z item slots never cover her)
+      w.lady = w.add(new G.NPC({ sprite: 'paulLady', name: 'Paul McCartney Lady', x: 17 * 16 + 8, y: traded ? 5 * 16 - 1 : 6 * 16 + 14, dir: 'down', talk: S.paulLady }));
       w.slothProp = { img: sp.slothPlush, x: 18 * 16, y: 6 * 16 - 2, base: 6 * 16 + 14, hide: traded, draw(ctx, cx, cy) { if (!this.hide) ctx.drawImage(this.img, this.x - cx, this.y - cy); } };
       w.props.push(w.slothProp);
-      w.heldBass = { img: sp.bassHeld, x: 0, y: 0, base: 0, show: traded, draw(ctx, cx, cy) { if (this.show) ctx.drawImage(this.img, Math.round(w.lady.x - 10) - cx, Math.round(w.lady.y - 12) - cy); } };
+      w.heldBass = { img: sp.bassHeld, x: 0, y: 0, base: 0, show: traded, draw(ctx, cx, cy) { if (this.show) ctx.drawImage(this.img, Math.round(w.lady.x - 13) - cx, Math.round(w.lady.y - 20) - cy); } };
       w.props.push(w.heldBass);
       // tables with black chairs in the middle
       for (const [x, y] of [[4, 6], [4, 9], [12, 6], [12, 9]]) F.stand(sp.toroTable, x, y, 2, look('A dark wood table with black chairs. The hot sauce is the good kind.'));
@@ -20876,7 +21422,7 @@
     ['badlands', 'Badlands Chugs', '...LIKE AND SUBSCRIBE!'], ['mikey', 'Mikey', 'Was it the song?'], ['icejj', 'Ice JJ Fish', 'I\'ll bring the snow.'], ['tyler', 'Tyler', 'THE MOSASAUR TOOTH!'],
     ['paulLady', 'Paul McCartney Lady', 'Every single day of her life, honey.'], ['freya', 'Freya', 'Fourthmeal.'], ['matt', 'Matt Oliver', 'That\'s fishing.'], ['danHurd', 'Dan Hurd', 'Still prospecting.'],
   ];
-  const CREDIT_NAMES = ['Ben', 'Bismarck', 'Brooks', 'Prof. Sunderlin', 'Dr. Nataro', 'Prof. Carley', 'Professor Pembrook', 'Groundskeeper Gus', 'Pyro Pete', 'Grandma Rose', 'Tom', 'Prof. Watts', 'Ruby', 'Anette', 'Kit and Gail', 'Charge Nurse Dot', 'The Old Fisherman', 'Henrietta', 'Daisy', 'The Globglogabgalab', 'MECHA-BABY', 'The Two-Liter', 'El Toro Loco', 'and Father Eggmas, in the box'];
+  const CREDIT_NAMES = ['Ben', 'Bismarck', 'Brooks', 'Prof. Sunderlin', 'Dr. Nataro', 'Prof. Carley', 'Professor Pembrook', 'Groundskeeper Gus', 'Pyro Pete', 'Grandma Rose', 'Tom', 'Prof. Watts', 'Ruby', 'Anette', 'Kit and Gail', 'Charge Nurse Dot', 'The Old Fisherman', 'Henrietta', 'Daisy', 'The Globglogabgalab', 'MECHA-BABY', 'The Two-Liter', 'El Toro Loco', 'Shoolby Bones Lumpsucker', 'Rhonda', 'Rhonda\'s Roommate', 'and Father Eggmas, in the box'];
   function creditPages() {
     const pg = [{ k: 'title', d: 300 }, { k: 'head', d: 150, text: 'The Family' }];
     for (const c of CREDIT_FAMILY) pg.push({ k: 'walk', d: 250, id: c[0], name: c[1], line: c[2] });
@@ -21912,7 +22458,7 @@
     [['home', 'homeDown', 'homeUp', 'garage', 'basement', 'bookClub', 'north'], 'brook'],
     [['andover', 'andoverMine', 'andoverFlood', 'andoverOld', 'andoverVault', 'andoverDeep'], 'mine'],
     [['cbbtToll', 'cbbt', 'chesTunnel', 'cbbtMid', 'cbbtTunnel', 'bayBoat'], 'bay'],
-    [['condo', 'condoDown', 'condoUp', 'condoStorage', 'golf', 'toroLoco', 'toroLocoIn'], 'golf'],
+    [['condo', 'condoDown', 'condoUp', 'condoStorage', 'golf', 'toroLoco', 'toroLocoIn', 'unitB', 'rhondaCondo'], 'golf'],
     [['chkd', 'chkdLobby', 'chkdWard', 'chkdNicu', 'chkdRoom', 'chkdRoof'], 'elizabeth'],
     [['ditchRoad', 'ditchFinal', 'ditchDay'], 'ditch'],
     [['aurora', 'auroraMuseum', 'hamStand'], 'pamlico'],
@@ -23595,6 +24141,10 @@
       } },
     { name: 'ROMULUS', map: 'golf', at: [24, 16, 'right'], song: 'boss', x: 'bidet', hp: 1, flags: { romulusBeaten: false },
       start(w) { const r = w.romulus; w.romFight = true; r.pose = null; r.state = 'roam'; r.st = 90; return r; } },
+    { name: 'SHOOLBY BONES LUMPSUCKER', map: 'unitB', at: [9, 10, 'up'], song: 'boss', hp: 1.25, flags: { sblBeaten: false, sblMet: true },
+      start(w) { const b = w.sbl; w.sblFight = true; b.wake(); return b; } },
+    { name: 'RHONDA', map: 'rhondaCondo', at: [9, 10, 'up'], song: 'boss', hp: 1.25, flags: { rhondaBeaten: false, rhondaMet: true },
+      start(w) { const r = w.rhonda; w.rhondaFight = true; r.y = 7 * 16; r.wake(); return r; } },
     { name: 'MECHA-BABY', map: 'chkdNicu', at: [7, 9, 'up'], song: 'mecha', hp: 1.25, flags: { mobileBeaten: false },
       start(w) { const m = w.mech; m.hidden = false; m.face = -1; m.x = 8 * 16; m.y = 7 * 16 + 8; m.start(); return m; } },
     ...FIN_ORDER.map(famFight),
@@ -23750,8 +24300,18 @@
   }
   // in a rush, every boss ends the same way, and nobody stops to explain anything
   const inRush = (name, fn) => { const story = S[name]; S[name] = function (...a) { return G.state.rush ? fn(...a) : story.apply(this, a); }; };
-  for (const name of ['mikeyDefeated', 'dadDefeated', 'globDefeated', 'jjDefeated', 'oldIronDefeated', 'popDefeated', 'tylerDefeated', 'romulusBeaten', 'mechDefeated', 'finFreed', 'finTagOut', 'hamDefeated', 'fcDefeated']) inRush(name, (b) => S.rushDown(b));
-  for (const name of ['finishHint', 'romulusHint', 'tylerBlockHint', 'popRefillHint', 'hamHint']) inRush(name, function* () {});
+  for (const name of ['mikeyDefeated', 'dadDefeated', 'globDefeated', 'jjDefeated', 'oldIronDefeated', 'popDefeated', 'tylerDefeated', 'romulusBeaten', 'mechDefeated', 'finFreed', 'finTagOut', 'hamDefeated', 'fcDefeated', 'sblDefeated', 'rhondaDefeated']) inRush(name, (b) => S.rushDown(b));
+  for (const name of ['finishHint', 'romulusHint', 'tylerBlockHint', 'popRefillHint', 'hamHint', 'sblWetHint']) inRush(name, function* () {});
+  // (Rhonda's down: straight to the couch, and out comes the roommate, with the rush's extra health)
+  inRush('rhondaTired', function* (r) {
+    const w = G.play.world, m = w.roomie;
+    r.x = RHONDA_SEAT[0]; r.y = RHONDA_SEAT[1]; r.state = 'couch'; r.dir = 'down'; r.walking = false;
+    m.x = ROOMIE_DOOR[0] - 60; m.y = ROOMIE_DOOR[1] + 14; m.hidden = false;
+    m.hp = m.maxHp = Math.ceil(m.maxHp * 1.25);
+    w.disco = 2;
+    yield* rushPhase('boss', 'RHONDA\'S ROOMMATE!', '#f8a0d0');
+    m.wake();
+  });
   inRush('tylerPhase', () => rushPhase('tyler2', 'THE MOSASAUR TOOTH!!!', '#ff6a5a'));
   inRush('fcPhase', (b, ph) => rushPhase(ph === 2 ? 'fc2' : 'fc3', ph === 2 ? null : 'NAUGHTY LIST', '#f86858'));
 
@@ -23965,7 +24525,7 @@
     home: { title: 'HOME', sub: 'Rattlesnake Bridge Road', maps: ['home', 'homeDown', 'homeUp', 'garage', 'basement', 'bookClub', 'north'] },
     andover: { title: 'ANDOVER MINES', sub: 'Iron country, since the 1760s', maps: ['andover', 'andoverMine', 'andoverFlood', 'andoverOld', 'andoverVault', 'andoverDeep'] },
     bay: { title: 'THE BAY', sub: 'The Chesapeake Bay Bridge-Tunnel', maps: ['cbbtToll', 'chesTunnel', 'cbbtMid', 'cbbt', 'cbbtTunnel', 'bayBoat'] },
-    chesapeake: { title: 'CHESAPEAKE', sub: 'Abe and Hannah\'s place', maps: ['condo', 'condoDown', 'condoUp', 'condoStorage', 'golf', 'toroLoco', 'toroLocoIn'] },
+    chesapeake: { title: 'CHESAPEAKE', sub: 'Abe and Hannah\'s place', maps: ['condo', 'condoDown', 'condoUp', 'condoStorage', 'golf', 'toroLoco', 'toroLocoIn', 'unitB', 'rhondaCondo'] },
     chkd: { title: 'CHKD', sub: 'Norfolk, Virginia', maps: ['chkd', 'chkdLobby', 'chkdWard', 'chkdNicu', 'chkdRoom', 'chkdRoof'] },
     ditch: { title: 'THE NUMBER ONE DITCH', sub: 'Chesapeake, Virginia', maps: ['ditchRoad', 'ditchFinal', 'ditchDay'] },
     aurora: { title: 'AURORA', sub: 'Aurora, North Carolina', maps: ['aurora', 'auroraMuseum', 'hamStand'] },

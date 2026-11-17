@@ -1791,6 +1791,654 @@
     }
   }
   G.AugustHam = AugustHam;
+
+  // ============================================================== SHOOLBY BONES LUMPSUCKER (Unit B)
+  // Nate and Lily's made-up word, all grown up: a spiny lumpsucker the size of a beach ball, living
+  // in the neighbors' condo, which he has flooded into a freezing tide pool. He hops at Nate,
+  // throws fish bones, leaps up to stick to the ceiling with his suction cup (his shadow follows
+  // Nate) and belly-flops down on him
+  // (then he's stuck to the floor for a moment), and dives into one tide pool and bursts out of
+  // another. At half health he puffs up into a spiny ball and pinballs around the room (the hammer
+  // just bounces off) until he runs out of air. Water HEALS him (he's a fish): the bidet is no
+  // help. The ice beam freezes him solid, and packages stun him.
+  const SBL_PLAN = ['bones', 'wall', 'dive', 'bones', 'wall', 'puff'];
+  class ShoolbyBones extends Ent {
+    constructor(x, y, bounds, pools) {
+      super(x, y);
+      Object.assign(this, { enemy: true, boss: true, name: 'SHOOLBY BONES LUMPSUCKER', hp: 24, maxHp: 24, hb: { w: 20, h: 8 }, bounds, pools,
+        t: 0, state: 'idle', st: 0, phase: 1, hurtT: 0, z: 0, air: 0, airN: 0, hops: 0, plan: 0, face: -1, vx: 0, vy: 0, squashT: 0, noBar: true, healT: 0, bounces: 0 });
+    }
+    get puffed() { return this.state === 'inflate' || this.state === 'roll'; }
+    hurtBox() { const r = this.puffed ? 16 : 12; return [this.x - r, this.y - this.z - r * 2, this.x + r, this.y - this.z]; }
+    bodyBox() { const r = this.puffed ? 15 : 11; return [this.x - r, this.y - 14, this.x + r, this.y + 2]; }
+    wake() { Object.assign(this, { state: 'hop', st: 30, hops: 0, noBar: false }); }
+    inPool(x, y) { return this.pools.some((q) => x > q.r[0] - 10 && x < q.r[2] + 10 && y > q.r[1] - 4 && y < q.r[3] + 10); }
+    // a hop (or a leap, or a belly flop): from where he is to (tx, ty), over n frames, peaking at h
+    jump(tx, ty, n, h) { Object.assign(this, { jx0: this.x, jy0: this.y, jx1: tx, jy1: ty, airN: n, air: n, jh: h }); }
+    flyStep() {
+      const k = 1 - --this.air / this.airN;
+      this.x = this.jx0 + (this.jx1 - this.jx0) * k; this.y = this.jy0 + (this.jy1 - this.jy0) * k;
+      this.z = Math.round(Math.sin(k * Math.PI) * this.jh);
+      if (this.jx1 !== this.jx0) this.face = this.jx1 > this.jx0 ? 1 : -1;
+      return this.air <= 0;
+    }
+    hit(dmg) {
+      if (['defeated', 'idle', 'under', 'leap', 'drop', 'wall'].includes(this.state) || this.z > 8) return;
+      const w = this.world;
+      if (this.puffed) {
+        if (G.tick - (this.thunkT || -99) > 12) { this.thunkT = G.tick; G.audio.sfx('clank'); w.pop(this.x, this.y - 44, ['TOO SPINY!', '*boing*', 'OW! (you)'][Math.floor(Math.random() * 3)], '#f4f0dc'); }
+        return;
+      }
+      this.hp = Math.max(0, this.hp - dmg);
+      this.hurtT = 12;
+      G.audio.sfx('hit');
+      w.burst(this.x, this.y - 14, ['#5aa04a', '#a8c868', '#f4f0dc'], 6, { speed: 1.4, up: 0.6, g: 0.06, life: 20, size: 2 });
+      if (Math.random() < 0.35) w.pop(this.x, this.y - 40, ['HOW RUDE!', 'MY BONES!', '*squish*', 'I BEG YOUR PARDON!'][Math.floor(Math.random() * 4)], '#a8e878');
+      if (this.phase === 1 && this.hp <= this.maxHp / 2 && this.hp > 0) {
+        // half health: he puffs right up
+        this.phase = 2; this.stunT = 0;
+        Object.assign(this, { state: 'inflate', st: 40, z: 0, air: 0 });
+        w.pop(this.x, this.y - 48, 'PUFFED UP!', '#f86858');
+        G.audio.sfx('crack'); G.play.shake(10, 2);
+      }
+      if (this.hp <= 0) { this.state = 'defeated'; this.stunT = 0; this.z = 0; G.script.run(G.SCRIPTS.sblDefeated(this)); }
+    }
+    bomb() {
+      if (['defeated', 'idle', 'under', 'leap', 'drop', 'wall'].includes(this.state)) return;
+      if (this.puffed) { Object.assign(this, { state: 'dizzy', st: 110 }); this.world.pop(this.x, this.y - 48, '*pfffft*', '#f8e070'); return; }
+      G.stun(this, 120); this.hp = Math.max(1, this.hp - 2); this.hurtT = 12;
+    }
+    // water is home: the bidet heals him
+    onSpray() {
+      if (['defeated', 'idle', 'under'].includes(this.state)) return;
+      const w = this.world;
+      if (--this.healT > 0) return;
+      this.healT = 24;
+      if (this.hp < this.maxHp) this.hp++;
+      w.pop(this.x, this.y - 44, ['AHH. REFRESHING.', '+1', 'MORE, PLEASE.', '+1'][Math.floor(Math.random() * 4)], '#78e070');
+      if (!G.state.flags.sblWetHint && !G.state.rush) G.script.run(G.SCRIPTS.sblWetHint());
+    }
+    // I Pray to Jesus: frozen solid for a few seconds (and wide open)
+    freeze() {
+      if (['defeated', 'idle', 'under', 'wall'].includes(this.state) || this.z > 8) return false;
+      Object.assign(this, { state: 'frozen', st: this.phase === 2 ? 110 : 150, z: 0, air: 0 });
+      this.world.pop(this.x, this.y - 44, 'BRRR! JUST LIKE HOME!', '#a8e0ff');
+      return true;
+    }
+    next(w, p) {
+      let kind = SBL_PLAN[this.plan++ % SBL_PLAN.length];
+      if (kind === 'puff' && this.phase === 1) kind = 'bones';
+      if (kind === 'bones') Object.assign(this, { state: 'bones', st: this.phase === 2 ? 70 : 56 });
+      else if (kind === 'wall') {
+        // straight up, out of sight: he suction-cups himself to the ceiling
+        Object.assign(this, { state: 'leap', vz: 7, air: 0 }); G.audio.sfx('dash');
+        w.pop(this.x, this.y - 40, 'UP I GO!', '#a8e878');
+      } else if (kind === 'dive') {
+        // into the nearest tide pool...
+        const q = this.pools.slice().sort((a, b2) => Math.hypot(a.x - this.x, a.y - this.y) - Math.hypot(b2.x - this.x, b2.y - this.y))[0];
+        this.poolIn = q; this.jump(q.x, q.y, 22, 22); this.state = 'diveIn'; G.audio.sfx('dash');
+      } else { Object.assign(this, { state: 'inflate', st: 34 }); w.pop(this.x, this.y - 44, 'PUFF!', '#f86858'); G.audio.sfx('fuse'); }
+    }
+    update(w) {
+      if (G.script.busy || this.state === 'defeated' || this.state === 'idle') return;
+      this.t++;
+      const p = G.play.player, b = this.bounds, hot = this.phase === 2;
+      if (this.hurtT > 0) this.hurtT--;
+      if (this.squashT > 0) this.squashT--;
+      if (this.healT > 0 && G.tick % 2) this.healT--;
+      if (this.stunT > 0) { this.stunT--; this.z = Math.max(0, this.z - 2); return; }
+      // bumping into him hurts (not while he's dizzy, frozen, stuck to the floor, or underwater)
+      const calm = ['dizzy', 'frozen', 'stuck', 'under', 'wall'].includes(this.state);
+      if (!calm && this.z < 6 && G.overlap(this.bodyBox(), p.hurtBox())) p.hurt(this.state === 'roll' ? 2 : 1, this.x, this.y);
+      const land = () => {
+        this.z = 0; this.squashT = 6;
+        G.audio.sfx('bump'); G.play.shake(4, 1);
+        w.pop(this.x, this.y - 30, '*thwap*', '#a8e878');
+        w.burst(this.x, this.y, ['#78b8e8', '#d8f0ff'], 4, { speed: 0.8, up: 0.4, life: 14, size: 1 });
+      };
+      switch (this.state) {
+        case 'hop': {
+          if (this.air > 0) {
+            if (this.flyStep()) {
+              land(); this.hops++;
+              // puffed-up mad: a couple of bones fly off every landing
+              if (hot) for (const s of [-1, 1]) { const a = Math.atan2(p.y - this.y, p.x - this.x) + s * 0.6; w.add(new Shot(this.x, this.y - 6, Math.cos(a) * 1.9, Math.sin(a) * 1.9, G.spr.fishBone, { life: 110, dmg: 1, z: 10 })); }
+            }
+          } else if (--this.st <= 0) {
+            if (this.hops >= (hot ? 2 : 3)) { this.hops = 0; this.next(w, p); break; }
+            // the next hop: a stride toward Nate (never into a pool)
+            // (if a pool's in the way, he hops around it: the closest angle that lands on dry floor)
+            const d = Math.hypot(p.x - this.x, p.y - this.y) || 1, s = Math.min(d, hot ? 40 : 32), a0 = Math.atan2(p.y - this.y, p.x - this.x);
+            let tx = this.x, ty = this.y;
+            for (const da of [0, 0.5, -0.5, 1, -1, 1.5, -1.5, 2.2, -2.2]) {
+              const x = G.clamp(this.x + Math.cos(a0 + da) * s, b[0], b[2]), y = G.clamp(this.y + Math.sin(a0 + da) * s, b[1], b[3]);
+              if (!this.inPool(x, y) && Math.hypot(x - this.x, y - this.y) > 8) { tx = x; ty = y; break; }
+            }
+            this.jump(tx, ty, hot ? 18 : 22, 14); this.st = hot ? 10 : 18;
+          }
+          break;
+        }
+        case 'bones':
+          this.face = p.x > this.x ? 1 : -1;
+          if (this.st === 40 || this.st === 20 || (hot && this.st === 60)) {
+            G.audio.sfx('swing');
+            const n = hot ? 5 : 3, a0 = Math.atan2(p.y - this.y, p.x - this.x);
+            for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * 0.26; w.add(new Shot(this.x, this.y - 8, Math.cos(a) * 2.2, Math.sin(a) * 2.2, G.spr.fishBone, { life: 130, dmg: 1, z: 12 })); }
+            if (this.st === 40) w.pop(this.x, this.y - 40, ['HAVE A BONE!', 'CATCH!', 'BONES!'][Math.floor(Math.random() * 3)], '#f4f0dc');
+          }
+          if (--this.st <= 0) Object.assign(this, { state: 'hop', st: 16, hops: 0 });
+          break;
+        case 'leap':
+          this.z += this.vz; this.vz += 0.4;
+          if (this.z >= 170) {
+            Object.assign(this, { state: 'wall', st: hot ? 40 : 54, z: 170 });
+            this.target = { x: this.x, y: this.y };
+            G.audio.sfx('bump'); G.play.shake(5, 1);
+            w.pop(G.clamp(this.x, G.play.cam.x + 30, G.play.cam.x + G.W - 30), G.play.cam.y + 40, 'THWAP! (the ceiling)', '#a8e878');
+          }
+          break;
+        case 'wall': {
+          // stuck to the ceiling by his suction cup: his shadow creeps after Nate...
+          const tg = this.target, tx = G.clamp(p.x, b[0], b[2]), ty = G.clamp(p.y, b[1], b[3]), k = hot ? 0.09 : 0.065;
+          tg.x += (tx - tg.x) * k; tg.y += (ty - tg.y) * k;
+          if (--this.st <= 0) {
+            // ...and then he lets go (never into a pool)
+            if (this.inPool(tg.x, tg.y)) tg.y = G.clamp(tg.y + 26, b[1], b[3]);
+            Object.assign(this, { state: 'drop', x: tg.x, y: tg.y, vz: 2 });
+            G.audio.sfx('fuse');
+          }
+          break;
+        }
+        case 'drop':
+          this.z = Math.max(0, this.z - this.vz); this.vz += 0.55;
+          if (this.z <= 0) {
+            // the belly flop: a shockwave, and then he's stuck to the floor for a bit
+            land(); G.audio.sfx('boom'); G.play.shake(12, 3);
+            w.fx.push({ x: this.x, y: this.y - 4, vx: 0, vy: 0, shock: true, r: 30, max: 18, life: 18, color: '#a8d8f8' });
+            if (Math.hypot(p.x - this.x, (p.y - this.y) * 1.4) < 30) p.hurt(2, this.x, this.y);
+            if (hot) for (let i = 0; i < 6; i++) { const a = (i / 6) * Math.PI * 2; w.add(new Shot(this.x, this.y - 4, Math.cos(a) * 1.6, Math.sin(a) * 1.6, G.spr.waterDrop, { life: 70, dmg: 1, z: 6 })); }
+            Object.assign(this, { state: 'stuck', st: hot ? 60 : 80 });
+            w.pop(this.x, this.y - 40, 'STUCK!', '#f8e070');
+          }
+          break;
+        case 'stuck':
+          if (--this.st <= 0) { w.pop(this.x, this.y - 34, '*schlorp*', '#a8e878'); Object.assign(this, { state: 'hop', st: 14, hops: 0 }); }
+          break;
+        case 'diveIn':
+          if (this.flyStep()) {
+            G.audio.sfx('splash');
+            w.burst(this.x, this.y - 2, ['#78b8e8', '#d8f0ff', '#ffffff'], 14, { speed: 1.6, up: 1.2, g: 0.1, life: 24, size: 2 });
+            w.pop(this.x, this.y - 24, '*SPLOOSH*', '#a8d8f8');
+            const out = this.pools.filter((q) => q !== this.poolIn);
+            this.poolOut = out[Math.floor(Math.random() * out.length)] || this.poolIn;
+            Object.assign(this, { state: 'under', st: hot ? 50 : 66 });
+          }
+          break;
+        case 'under': {
+          // bubbles in the pool he's about to come out of
+          const q = this.poolOut;
+          if (this.st % 8 === 0) w.burst(q.x + (Math.random() * 20 - 10), q.y - 2, ['#d8f0ff', '#ffffff'], 2, { speed: 0.4, up: 0.8, g: -0.02, life: 16, size: 1 });
+          if (--this.st <= 0) {
+            this.x = q.x; this.y = q.y;
+            G.audio.sfx('splash');
+            w.burst(this.x, this.y - 2, ['#78b8e8', '#d8f0ff', '#ffffff'], 16, { speed: 1.8, up: 1.4, g: 0.1, life: 26, size: 2 });
+            // out he comes, straight at Nate (and a ring of seawater with him, once he's mad)
+            if (hot) for (let i = 0; i < 8; i++) { const a = (i / 8) * Math.PI * 2; w.add(new Shot(this.x, this.y - 4, Math.cos(a) * 1.7, Math.sin(a) * 1.7, G.spr.waterDrop, { life: 90, dmg: 1, z: 8 })); }
+            let tx = G.clamp(p.x, b[0], b[2]), ty = G.clamp(p.y, b[1], b[3]);
+            const dx = tx - this.x, dy = ty - this.y, d = Math.hypot(dx, dy) || 1, s = Math.min(d, 64);
+            tx = this.x + (dx / d) * s; ty = this.y + (dy / d) * s;
+            if (this.inPool(tx, ty)) { tx = G.clamp(this.x, b[0], b[2]); ty = G.clamp(q.r[3] + 14, b[1], b[3]); }
+            this.jump(tx, ty, 26, 30); this.state = 'surface';
+          }
+          break;
+        }
+        case 'surface':
+          if (this.flyStep()) { land(); Object.assign(this, { state: 'hop', st: 20, hops: 0 }); }
+          break;
+        case 'inflate':
+          this.z = 0;
+          if (--this.st <= 0) {
+            const dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1, sp = 2.6;
+            Object.assign(this, { state: 'roll', vx: (dx / d) * sp, vy: (dy / d) * sp, bounces: 4, st: 170 });
+            G.audio.sfx('dash');
+          }
+          break;
+        case 'roll': {
+          // a spiny pinball: off the walls and around the pools until he runs out of air
+          const nx = this.x + this.vx, ny = this.y + this.vy;
+          let hitX = nx < b[0] || nx > b[2] || this.inPool(nx, this.y), hitY = ny < b[1] || ny > b[3] || this.inPool(this.x, ny);
+          if (hitX) this.vx = -this.vx; else this.x = nx;
+          if (hitY) this.vy = -this.vy; else this.y = ny;
+          if (hitX || hitY) { this.bounces--; G.audio.sfx('bump'); G.play.shake(4, 1); }
+          this.face = this.vx > 0 ? 1 : -1;
+          if (this.bounces < 0 || --this.st <= 0) {
+            G.audio.sfx('fuse');
+            w.pop(this.x, this.y - 44, '*pfffffft*', '#f8e070');
+            Object.assign(this, { state: 'dizzy', st: 100 });
+          }
+          break;
+        }
+        case 'dizzy':
+        case 'frozen':
+          if (--this.st <= 0) Object.assign(this, { state: 'hop', st: 16, hops: 0 });
+          break;
+      }
+    }
+    draw(ctx, cx, cy) {
+      if (this.state === 'under') return;
+      const st = this.state, S = G.spr.shoolby[this.face > 0 ? 'right' : 'left'];
+      // where the belly flop will land: his shadow, growing as he comes down
+      if (st === 'wall' || st === 'drop') {
+        const tg = st === 'drop' ? this : this.target, k = st === 'drop' ? 1 - this.z / 170 : 0.15 + ((G.tick >> 3) & 1) * 0.05;
+        ctx.globalAlpha = 0.4 + 0.4 * k;
+        ctx.drawImage(G.spr.shadowBig, Math.round(tg.x - 10 - k * 8) - cx, Math.round(tg.y - 4) - cy, Math.round(20 + k * 16), 8);
+        ctx.globalAlpha = 1;
+        if (st === 'wall') return;
+      }
+      let img = st === 'drop' || st === 'stuck' ? S.front : this.puffed ? S.puff : st === 'frozen' ? S.frozen : st === 'dizzy' || this.stunT > 0 || st === 'defeated' ? S.dizzy : S.stand;
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      if (st !== 'drop') ctx.drawImage(G.spr.shadowBig, Math.round(this.x - 13) - cx, Math.round(this.y - 4) - cy, 26, 7);
+      const sq = this.squashT > 0 ? 1 : 0, wob = st === 'inflate' ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
+      const iw = img.width + sq * 4, ih = img.height - sq * 4;
+      ctx.drawImage(img, Math.round(this.x - iw / 2 + wob) - cx, Math.round(this.y - this.z - ih + 3) - cy, iw, ih);
+      if (st === 'dizzy' || this.stunT > 0) {
+        const top = Math.round(this.y - this.z - ih - 2) - cy;
+        for (let i = 0; i < 3; i++) {
+          const a = G.tick * 0.15 + (i * Math.PI * 2) / 3, s = G.spr.tinyStars[i];
+          ctx.drawImage(s, Math.round(this.x + Math.cos(a) * 12 - s.width / 2) - cx, Math.round(top + Math.sin(a) * 3 - s.height / 2));
+        }
+      }
+    }
+  }
+  G.ShoolbyBones = ShoolbyBones;
+
+  // ============================================================== RHONDA AND HER ROOMMATE (the tan duplex)
+  // Rhonda: a stranger who yelled at Abe on a train to New York, spit at him, and was sure he was
+  // popping pills. She spits volleys at Nate, yells words at him (they fly), and lobs big wads that
+  // leave a slippery puddle. Beat her and she sits down on the couch (still spitting now and then),
+  // and her roommate struts out: afro wig, high heels, a thong, and a behind so shiny it fires light
+  // beams. He telegraphs every beam (a dotted line, and the glint) before it fires.
+  class SpitPuddle extends Ent {
+    constructor(x, y) { super(x, y); Object.assign(this, { life: 360, r: 2, max: 15, flat: true }); }
+    update() {
+      if (G.script.busy) return;
+      if (this.r < this.max) this.r += 0.7;
+      if (--this.life <= 0) { this.dead = true; return; }
+      const p = G.play.player;
+      if (((p.x - this.x) / this.r) ** 2 + ((p.y - 2 - this.y) / (this.r * 0.55)) ** 2 <= 1) {
+        if (!p.sticky && G.tick - (this.popT || -99) > 50) { this.popT = G.tick; this.world.pop(p.x, p.y - 30, 'ew. spit.', '#d8e8d0'); }
+        p.sticky = 3;
+      }
+    }
+    draw(ctx, cx, cy) {
+      const a = Math.min(1, this.life / 60) * 0.85, x = this.x - cx, y = this.y - cy;
+      ctx.save(); ctx.globalAlpha = a;
+      ctx.fillStyle = '#8aa080'; ctx.beginPath(); ctx.ellipse(x, y, this.r + 1, this.r * 0.55 + 1, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#d0e0c4'; ctx.beginPath(); ctx.ellipse(x, y, this.r, this.r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(x - this.r * 0.4), Math.round(y - 1), 2, 1); ctx.fillRect(Math.round(x + this.r * 0.3), Math.round(y + 1), 1, 1);
+      ctx.restore();
+    }
+  }
+  G.SpitPuddle = SpitPuddle;
+  // a big wad, lobbed in an arc: it lands where Nate was standing and leaves a puddle
+  class Loogie extends Ent {
+    constructor(x, y, tx, ty) { super(x, y); Object.assign(this, { x0: x, y0: y, tx, ty, t: 0, n: 42, z: 18 }); }
+    update(w) {
+      if (G.script.busy) return;
+      const k = ++this.t / this.n;
+      this.x = this.x0 + (this.tx - this.x0) * k; this.y = this.y0 + (this.ty - this.y0) * k;
+      this.z = Math.sin(k * Math.PI) * 44 + 18 * (1 - k);
+      if (this.t >= this.n) {
+        this.dead = true;
+        G.audio.sfx('splash');
+        w.add(new SpitPuddle(this.tx, this.ty));
+        w.burst(this.tx, this.ty - 2, ['#d8e8d0', '#ffffff'], 8, { speed: 1.2, up: 0.8, g: 0.1, life: 18, size: 1 });
+        const p = G.play.player;
+        if (Math.hypot(p.x - this.tx, (p.y - this.ty) * 1.4) < 12) p.hurt(1, this.tx, this.ty);
+      }
+    }
+    draw(ctx, cx, cy) {
+      drawShadow(ctx, this.x, this.y, cx, cy);
+      const img = G.spr.loogie;
+      ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - this.z - img.height / 2) - cy);
+    }
+  }
+  G.Loogie = Loogie;
+  // words she yells fly at Nate, as words
+  const WORD_IMG = {};
+  const wordImg = (t) => WORD_IMG[t] || (WORD_IMG[t] = (() => {
+    const F = G.font, c = G.canvas(F.width(t) + 4, 11), x = c.getContext('2d');
+    F.draw(x, t, 2, 1, '#f86858', { shadow: '#1c1424' });
+    return c;
+  })());
+  class WordShot extends Shot {
+    constructor(x, y, vx, vy, t) { super(x, y, vx, vy, wordImg(t), { life: 170, dmg: 1, z: 16 }); }
+    update(w) {
+      if (G.script.busy) return;
+      this.x += this.vx; this.y += this.vy;
+      if (--this.life <= 0 || w.tileSolid(Math.floor(this.x / 16), Math.floor(this.y / 16))) { this.dead = true; return; }
+      const p = G.play.player, hw = this.img.width / 2 - 2;
+      if (G.overlap([this.x - hw, this.y - 6, this.x + hw, this.y], p.hurtBox())) { this.dead = true; p.hurt(this.dmg, this.x, this.y); }
+    }
+  }
+  G.WordShot = WordShot;
+  // a beam of light off the roommate's behind: a dotted warning line first, then the beam
+  class LightBeam extends Ent {
+    constructor(src, ang, warn, fire, spin) { super(src.x, src.y); Object.assign(this, { src, ang, warn, fire, spin: spin || 0, t: 0 }); }
+    get base() { return 99000; }
+    ends(w) {
+      const x0 = this.src.x, y0 = this.src.y - 6, dx = Math.cos(this.ang), dy = Math.sin(this.ang);
+      let len = 8;
+      while (len < 340) { const tx = Math.floor((x0 + dx * len) / 16), ty = Math.floor((y0 + 6 + dy * len) / 16); if (w.tileSolid(tx, ty)) break; len += 4; }
+      return [x0, y0, x0 + dx * len, y0 + dy * len];
+    }
+    update(w) {
+      if (G.script.busy) return;
+      const b = this.src;
+      if (b.dead || b.state === 'defeated' || b.state === 'soaked' || b.state === 'frozen' || b.stunT > 0) { this.dead = true; return; }
+      this.t++;
+      if (this.t === this.warn + 1) { G.audio.sfx('bell'); G.play.shake(3, 1); }
+      if (this.t > this.warn) this.ang += this.spin;
+      if (this.t > this.warn + this.fire) { this.dead = true; return; }
+      if (this.t > this.warn) {
+        // anything within a few pixels of the beam gets zapped
+        const p = G.play.player, [x0, y0, x1, y1] = this.ends(w), px = p.x, py = p.y - 8;
+        const vx = x1 - x0, vy = y1 - y0, k = G.clamp(((px - x0) * vx + (py - y0) * vy) / (vx * vx + vy * vy || 1), 0, 1);
+        if (Math.hypot(px - (x0 + vx * k), py - (y0 + vy * k)) < 7) p.hurt(1, x0 + vx * k, y0 + vy * k);
+      }
+    }
+    draw(ctx, cx, cy) {
+      const w = this.world, [x0, y0, x1, y1] = this.ends(w), len = Math.hypot(x1 - x0, y1 - y0), ux = (x1 - x0) / len, uy = (y1 - y0) / len;
+      if (this.t <= this.warn) {
+        // the warning: a dotted line, blinking faster as it gets close
+        if (this.t > this.warn - 12 && (G.tick >> 1) & 1) return;
+        ctx.fillStyle = '#fff8c0';
+        for (let d = 6; d < len; d += 6) ctx.fillRect(Math.round(x0 + ux * d) - cx, Math.round(y0 + uy * d) - cy, 1, 1);
+        return;
+      }
+      const k = 1 - (this.t - this.warn) / this.fire;
+      ctx.save();
+      ctx.globalAlpha = 0.35 + 0.3 * k; ctx.fillStyle = '#f8e070';
+      for (let d = 2; d < len; d += 2) ctx.fillRect(Math.round(x0 + ux * d - 3) - cx, Math.round(y0 + uy * d - 3) - cy, 6, 6);
+      ctx.globalAlpha = 1; ctx.fillStyle = '#ffffff';
+      for (let d = 2; d < len; d += 1) ctx.fillRect(Math.round(x0 + ux * d - 1) - cx, Math.round(y0 + uy * d - 1) - cy, 2, 2);
+      ctx.restore();
+    }
+  }
+  G.LightBeam = LightBeam;
+
+  const RHONDA_PLAN = ['spit', 'yell', 'loogie', 'spit', 'loogie', 'yell'];
+  const RHONDA_WORDS = ['REHAB!', 'PILLS?!', 'YOU NEED HELP!', 'REHAB!!', 'POPPING PILLS!'];
+  class Rhonda extends Ent {
+    constructor(x, y) {
+      super(x, y);
+      Object.assign(this, { enemy: true, boss: true, name: 'RHONDA', hp: 18, maxHp: 18, hb: { w: 12, h: 8 },
+        t: 0, state: 'idle', st: 0, plan: 0, dir: 'down', anim: 0, hurtT: 0, kb: { x: 0, y: 0 }, noBar: true, word: 0, wetT: 0 });
+    }
+    get S() { return G.sprites.rhonda; }
+    get hot() { return this.hp <= this.maxHp / 2; }
+    hurtBox() { return [this.x - 7, this.y - 22, this.x + 7, this.y]; }
+    wake() { Object.assign(this, { state: 'walk', st: 50, noBar: false }); }
+    look(p) { this.dir = G.dirToward(p.x - this.x, p.y - this.y); }
+    spit(w, p, n) {
+      const a0 = Math.atan2(p.y - this.y, p.x - this.x);
+      for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * 0.24; w.add(new Shot(this.x, this.y - 1, Math.cos(a) * 2.3, Math.sin(a) * 2.3, G.spr.spitGlob, { life: 120, dmg: 1, z: 17 })); }
+      G.audio.sfx('pop');
+      w.pop(this.x, this.y - 32, 'PTOO!', '#d8e8d0');
+    }
+    yell(w, p) {
+      const t = RHONDA_WORDS[this.word++ % RHONDA_WORDS.length], dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1, sp = this.hot ? 1.5 : 1.25;
+      w.add(new WordShot(this.x, this.y - 1, (dx / d) * sp, (dy / d) * sp, t));
+      G.audio.sfx('yell');
+    }
+    hit(dmg, sx, sy) {
+      if (['idle', 'tired', 'defeated'].includes(this.state)) return;
+      const w = this.world;
+      if (this.state === 'couch') { if (G.tick - (this.thunkT || -99) > 30) { this.thunkT = G.tick; w.pop(this.x, this.y - 30, 'I\'M SITTING DOWN!', '#f86858'); } return; }
+      this.hp = Math.max(0, this.hp - dmg);
+      this.hurtT = 16;
+      const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
+      this.kb = { x: (dx / m) * 2.6, y: (dy / m) * 2.6 };
+      G.audio.sfx('hit');
+      if (Math.random() < 0.4) w.pop(this.x, this.y - 32, ['EXCUSE ME?!', 'DON\'T TOUCH ME!', 'REHAB!!', 'I KNEW IT!'][Math.floor(Math.random() * 4)], '#f86858');
+      if (this.hp <= 0) { Object.assign(this, { state: 'tired', stunT: 0, noBar: true }); G.script.run(G.SCRIPTS.rhondaTired(this)); }
+    }
+    bomb() { if (['idle', 'tired', 'defeated', 'couch'].includes(this.state)) return; G.stun(this, 110); this.hp = Math.max(1, this.hp - 2); this.hurtT = 12; }
+    // the bidet: she does NOT like being sprayed (she stops to wring out her shirt, then spits back)
+    onSpray() {
+      if (['idle', 'tired', 'defeated', 'couch', 'soaked'].includes(this.state) || this.wetT > G.tick) return;
+      this.wetT = G.tick + 120;
+      Object.assign(this, { state: 'soaked', st: 50 });
+      this.world.pop(this.x, this.y - 32, 'ARE YOU SPRAYING ME?!', '#a8d8ff');
+    }
+    freeze() {
+      if (['idle', 'tired', 'defeated', 'couch'].includes(this.state)) return false;
+      Object.assign(this, { state: 'frozen', st: 130 });
+      this.world.pop(this.x, this.y - 32, '...COLD!', '#a8e0ff');
+      return true;
+    }
+    update(w) {
+      if (G.script.busy || ['idle', 'tired', 'defeated'].includes(this.state)) return;
+      this.t++;
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1;
+      if (this.state === 'couch') {
+        // from the couch, she still has opinions (and spit)
+        this.dir = 'down';
+        if (this.t % 200 === 100) { w.pop(this.x, this.y - 30, '*HAWK*', '#d8e8d0'); }
+        if (this.t % 200 === 120) { if ((this.t / 200 | 0) % 2) this.yell(w, p); else this.spit(w, p, 3); }
+        return;
+      }
+      if (this.hurtT > 0) {
+        this.hurtT--;
+        w.move(this, this.kb.x, 0); w.move(this, 0, this.kb.y);
+        this.kb.x *= 0.88; this.kb.y *= 0.88;
+        return;
+      }
+      if (this.stunT > 0) { this.stunT--; return; }
+      if (!['soaked', 'frozen'].includes(this.state) && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
+      switch (this.state) {
+        case 'walk': {
+          // she keeps right in Nate's face, but not TOO close
+          this.look(p);
+          const sp = this.hot ? 1.0 : 0.8, want = 64;
+          if (dist > want + 8) { w.move(this, (dx / dist) * sp, 0); w.move(this, 0, (dy / dist) * sp); this.anim++; }
+          else if (dist < want - 20) { w.move(this, -(dx / dist) * sp, 0); w.move(this, 0, -(dy / dist) * sp); this.anim++; }
+          this.walking = dist > want + 8 || dist < want - 20;
+          if (this.y < 100) w.move(this, 0, 100 - this.y);
+          if (this.t % 120 === 0) w.pop(this.x, this.y - 32, ['ARE YOU POPPING PILLS?', 'LOOK AT YOUR EYES.', 'YOU NEED HELP.', 'REHAB!'][Math.floor(Math.random() * 4)], '#f8a0a0');
+          if (--this.st <= 0) {
+            const k = RHONDA_PLAN[this.plan++ % RHONDA_PLAN.length];
+            this.walking = false;
+            Object.assign(this, { state: k, st: k === 'spit' ? (this.hot ? 56 : 36) : k === 'yell' ? 60 : 50 });
+          }
+          break;
+        }
+        case 'spit':
+          this.look(p);
+          if (this.st === 34 || this.st === 54) w.pop(this.x, this.y - 32, '*HAWK*', '#d8e8d0');
+          if (this.st === 20 || this.st === 40) this.spit(w, p, this.hot ? 5 : 3);
+          if (--this.st <= 0) Object.assign(this, { state: 'walk', st: 70 });
+          break;
+        case 'yell':
+          this.look(p);
+          if (this.st === 50 || this.st === 32 || this.st === 14 || (this.hot && this.st === 23)) this.yell(w, p);
+          if (--this.st <= 0) Object.assign(this, { state: 'walk', st: 70 });
+          break;
+        case 'loogie':
+          this.look(p);
+          if (this.st === 48) { w.pop(this.x, this.y - 32, '*HAAAAAWK*', '#d8e8d0'); G.audio.sfx('fuse'); }
+          if (this.st === 14) {
+            w.add(new Loogie(this.x, this.y, p.x, p.y));
+            if (this.hot) w.add(new Loogie(this.x, this.y, G.clamp(p.x + (Math.random() < 0.5 ? -30 : 30), 40, w.pw - 40), p.y));
+            G.audio.sfx('pop'); w.pop(this.x, this.y - 32, 'PTOO!', '#d8e8d0');
+          }
+          if (--this.st <= 0) Object.assign(this, { state: 'walk', st: 70 });
+          break;
+        case 'soaked':
+          // wringing out her shirt... and then right back at him
+          if (--this.st <= 0) { this.look(p); this.spit(w, p, 5); Object.assign(this, { state: 'walk', st: 50 }); }
+          break;
+        case 'frozen':
+          if (--this.st <= 0) Object.assign(this, { state: 'walk', st: 40 });
+          break;
+      }
+    }
+    draw(ctx, cx, cy) {
+      const S = this.S;
+      let img = S[this.dir][walkFrame(this.anim, this.walking && this.state === 'walk')];
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2) - cy;
+      if (this.state === 'couch') {
+        // sitting: just her top half, on the cushion
+        const top = 1 + 10 + 6;
+        ctx.drawImage(S.down[0], 0, 0, 16, top, sx, Math.round(this.y - 9 - top) - cy, 16, top);
+        return;
+      }
+      drawShadow(ctx, this.x, this.y, cx, cy);
+      ctx.drawImage(img, sx, sy);
+      if (this.state === 'frozen' || this.state === 'soaked') { ctx.globalAlpha = this.state === 'frozen' ? 0.55 : 0.3; ctx.drawImage(G.art.flash(img), sx, sy); ctx.globalAlpha = 1; }
+      if (this.state === 'soaked' && this.t % 6 < 3) { ctx.fillStyle = '#a8d8ff'; ctx.fillRect(sx + 4, sy + 14 + (this.t % 6), 1, 2); ctx.fillRect(sx + 11, sy + 16 + (this.t % 5), 1, 2); }
+      if (this.stunT > 0) {
+        for (let i = 0; i < 3; i++) {
+          const a = G.tick * 0.15 + (i * Math.PI * 2) / 3, st = G.spr.tinyStars[i];
+          ctx.drawImage(st, Math.round(this.x + Math.cos(a) * 10 - st.width / 2) - cx, Math.round(this.y - 26 + Math.sin(a) * 3 - st.height / 2) - cy);
+        }
+      }
+    }
+  }
+  G.Rhonda = Rhonda;
+
+  const ROOMIE_PLAN = ['shine', 'strut', 'stomp', 'shine', 'sweep', 'strut'];
+  class RhondaRoomie extends Ent {
+    constructor(x, y, bounds) {
+      super(x, y);
+      Object.assign(this, { enemy: true, boss: true, name: 'RHONDA\'S ROOMMATE', hp: 22, maxHp: 22, hb: { w: 12, h: 8 }, bounds,
+        t: 0, state: 'wait', st: 0, plan: 0, dir: 'down', anim: 0, hurtT: 0, kb: { x: 0, y: 0 }, noBar: true, hidden: true, z: 0, wetT: 0 });
+    }
+    get S() { return G.sprites.rhondaRoomie; }
+    get hot() { return this.hp <= this.maxHp / 2; }
+    hurtBox() { return [this.x - 7, this.y - this.z - 24, this.x + 7, this.y - this.z]; }
+    wake() { Object.assign(this, { state: 'strut', st: 60, noBar: false, hidden: false }); this.pickSpot(); }
+    pickSpot() { const b = this.bounds; this.goal = { x: b[0] + Math.random() * (b[2] - b[0]), y: b[1] + Math.random() * (b[3] - b[1]) }; }
+    hit(dmg, sx, sy) {
+      if (['wait', 'defeated'].includes(this.state) || this.hidden) return;
+      const w = this.world;
+      this.hp = Math.max(0, this.hp - dmg);
+      this.hurtT = 14;
+      const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
+      this.kb = { x: (dx / m) * 2.6, y: (dy / m) * 2.6 };
+      G.audio.sfx('hit');
+      if (Math.random() < 0.4) w.pop(this.x, this.y - 34, ['MY HEELS!', 'WATCH THE WIG!', 'RUDE!', '*click*'][Math.floor(Math.random() * 4)], '#f8a0d0');
+      if (!this.wasHot && this.hot) { this.wasHot = true; w.pop(this.x, this.y - 40, 'TURN IT UP!', '#f8e070'); G.play.shake(8, 2); }
+      if (this.hp <= 0) { this.state = 'defeated'; this.stunT = 0; this.z = 0; G.script.run(G.SCRIPTS.rhondaDefeated(this)); }
+    }
+    bomb() { if (['wait', 'defeated'].includes(this.state)) return; G.stun(this, 110); this.hp = Math.max(1, this.hp - 2); this.hurtT = 12; }
+    onSpray() {
+      if (['wait', 'defeated', 'soaked'].includes(this.state) || this.wetT > G.tick) return;
+      this.wetT = G.tick + 140;
+      Object.assign(this, { state: 'soaked', st: 60, z: 0 });
+      this.world.pop(this.x, this.y - 34, 'NOT THE SEQUINS!', '#a8d8ff');
+    }
+    freeze() {
+      if (['wait', 'defeated'].includes(this.state)) return false;
+      Object.assign(this, { state: 'frozen', st: 120, z: 0 });
+      this.world.pop(this.x, this.y - 34, 'FROZEN FABULOUS!', '#a8e0ff');
+      return true;
+    }
+    update(w) {
+      if (G.script.busy || ['wait', 'defeated'].includes(this.state)) return;
+      this.t++;
+      const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, dist = Math.hypot(dx, dy) || 1, hot = this.hot;
+      if (this.hurtT > 0) {
+        this.hurtT--;
+        w.move(this, this.kb.x, 0); w.move(this, 0, this.kb.y);
+        this.kb.x *= 0.88; this.kb.y *= 0.88;
+        return;
+      }
+      if (this.stunT > 0) { this.stunT--; return; }
+      if (!['soaked', 'frozen'].includes(this.state) && this.z < 6 && G.overlap(this.hurtBox(), p.hurtBox())) p.hurt(1, this.x, this.y);
+      const next = () => {
+        const k = ROOMIE_PLAN[this.plan++ % ROOMIE_PLAN.length];
+        this.walking = false;
+        if (k === 'strut') { this.pickSpot(); Object.assign(this, { state: 'strut', st: 70 }); }
+        else if (k === 'stomp') Object.assign(this, { state: 'stomp', st: 40 });
+        else if (k === 'sweep' && !hot) Object.assign(this, { state: 'shine', st: 60 });
+        else Object.assign(this, { state: k, st: k === 'sweep' ? 110 : 60 });
+      };
+      switch (this.state) {
+        case 'strut': {
+          // heels on hardwood
+          const gx = this.goal.x - this.x, gy = this.goal.y - this.y, gd = Math.hypot(gx, gy);
+          if (gd > 3) { const r1 = w.move(this, (gx / gd) * 1.2, 0), r2 = w.move(this, 0, (gy / gd) * 1.2); this.dir = G.dirToward(gx, gy); this.anim++; this.walking = true; if (r1.hitX || r2.hitY) this.pickSpot(); }
+          else { this.walking = false; this.dir = G.dirToward(dx, dy); }
+          if (this.t % 14 === 0 && this.walking) w.pop(this.x, this.y - 6, '*click*', '#f8a0d0');
+          if (--this.st <= 0) next();
+          break;
+        }
+        case 'shine':
+          // he turns around, the glint, and then the beams
+          this.dir = 'up';
+          if (this.st === 60) {
+            G.audio.sfx('secret');
+            w.pop(this.x, this.y - 36, '*TING!*', '#fff8c0');
+            const a0 = Math.atan2(p.y - 8 - (this.y - 6), p.x - this.x);
+            const angs = hot ? [a0 - 0.38, a0, a0 + 0.38] : [a0];
+            for (const a of angs) w.add(new LightBeam(this, a, 32, 18));
+          }
+          if (--this.st <= 0) next();
+          break;
+        case 'sweep':
+          // (turned up) one long beam that sweeps across the room
+          this.dir = 'up';
+          if (this.st === 110) {
+            G.audio.sfx('secret');
+            w.pop(this.x, this.y - 36, '*TIIIING!*', '#fff8c0');
+            const a0 = Math.atan2(p.y - 8 - (this.y - 6), p.x - this.x), side = Math.random() < 0.5 ? -1 : 1;
+            w.add(new LightBeam(this, a0 - side * 1.1, 34, 64, side * 0.034));
+          }
+          if (--this.st <= 0) next();
+          break;
+        case 'stomp':
+          // a little hop, and a heel stomp that sends a ring across the floor
+          this.z = this.st > 16 ? Math.round(Math.sin(((40 - this.st) / 24) * Math.PI) * 10) : 0;
+          if (this.st === 16) {
+            G.audio.sfx('boom'); G.play.shake(8, 2);
+            w.pop(this.x, this.y - 30, '*CLACK!*', '#f8a0d0');
+            w.fx.push({ x: this.x, y: this.y - 2, vx: 0, vy: 0, shock: true, r: 34, max: 18, life: 18, color: '#f8a0d0' });
+            if (Math.hypot(dx, dy * 1.4) < 34) p.hurt(1, this.x, this.y);
+          }
+          if (--this.st <= 0) next();
+          break;
+        case 'soaked':
+        case 'frozen':
+          if (--this.st <= 0) Object.assign(this, { state: 'strut', st: 40 }), this.pickSpot();
+          break;
+      }
+    }
+    draw(ctx, cx, cy) {
+      if (this.hidden) return;
+      const S = this.S;
+      let img = S[this.dir][walkFrame(this.anim, this.walking)];
+      if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
+      const sx = Math.round(this.x - S.w / 2) - cx, sy = Math.round(this.y - this.z - S.h + 2) - cy;
+      drawShadow(ctx, this.x, this.y, cx, cy);
+      ctx.drawImage(img, sx, sy);
+      if (this.state === 'frozen' || this.state === 'soaked') { ctx.globalAlpha = this.state === 'frozen' ? 0.55 : 0.3; ctx.drawImage(G.art.flash(img), sx, sy); ctx.globalAlpha = 1; }
+      // the glint, while he's lining up a shot
+      if ((this.state === 'shine' || this.state === 'sweep') && this.dir === 'up') {
+        const gx = Math.round(this.x) - cx, gy = Math.round(this.y - this.z - 6) - cy, big = (G.tick >> 2) & 1;
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(gx - (big ? 4 : 2), gy, big ? 9 : 5, 1); ctx.fillRect(gx, gy - (big ? 4 : 2), 1, big ? 9 : 5);
+      }
+      if (this.stunT > 0) {
+        for (let i = 0; i < 3; i++) {
+          const a = G.tick * 0.15 + (i * Math.PI * 2) / 3, st = G.spr.tinyStars[i];
+          ctx.drawImage(st, Math.round(this.x + Math.cos(a) * 11 - st.width / 2) - cx, Math.round(this.y - 32 + Math.sin(a) * 3 - st.height / 2) - cy);
+        }
+      }
+    }
+  }
+  G.RhondaRoomie = RhondaRoomie;
   // the Two-Liter's slam warning and shockwave, drawn flat on the road under everything
   class SlamZone extends Ent {
     constructor(boss) { super(boss.x, boss.y); this.boss = boss; this.flat = true; }

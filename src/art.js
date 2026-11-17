@@ -132,6 +132,7 @@
     set.torso = make('right', 0, 'torso');
     // (standing still facing you, everybody blinks now and then)
     if (!c.mask && !c.shades) set.blink = make('down', 0, 'blink');
+    if (c.post) c.post(set, c);
     return set;
   }
 
@@ -8625,14 +8626,214 @@
     p.outline();
     return p.canvas();
   }
+  // Abe's sunburst bass, held across the body the way a bass player holds it: the body down at
+  // her hip (screen left), the long maple neck angled up to the right, the headstock and its four
+  // tuners past her shoulder
   function bassHeld() {
-    const p = new Pix(20, 8);
-    p.hline(0, 11, 3, '#8a5a30'); p.hline(0, 11, 4, '#6a4020'); p.rect(0, 2, 2, 4, '#2a1a10');
-    for (let y = 0; y < 8; y++) for (let x = 10; x < 20; x++) {
-      const e = ((x - 15) / 4.8) ** 2 + ((y - 4) / 3.8) ** 2;
-      if (e <= 1) p.set(x, y, e > 0.6 ? '#3a1a0a' : e > 0.3 ? '#a85a20' : '#e8a040');
+    const p = new Pix(26, 16);
+    // the neck: a 2px maple strip climbing from the body to the headstock, with fret dots
+    for (let i = 0; i <= 13; i++) {
+      const x = 10 + i, y = Math.round(10 - i * 0.62);
+      p.set(x, y, '#e0c08a'); p.set(x, y + 1, '#b8945a');
+      if (i === 4 || i === 7 || i === 10) p.set(x, y, '#5a3a20');
     }
-    p.vline(14, 2, 6, '#f0f0f0');
+    // the headstock and its tuners
+    p.rect(22, 0, 3, 3, '#3a2414'); p.set(25, 0, '#d8d8d8'); p.set(25, 2, '#d8d8d8'); p.set(23, 3, '#d8d8d8');
+    // the body: a sunburst double cut, dark at the edge, amber in the middle
+    for (let y = 4; y < 16; y++) for (let x = 0; x < 14; x++) {
+      const e = ((x - 6.5) / 6.2) ** 2 + ((y - 10.5) / 5.2) ** 2;
+      if (e <= 1 && !(x > 9 && y < 8)) p.set(x, y, e > 0.62 ? '#3a1a0a' : e > 0.3 ? '#a85a20' : '#e8a040');
+    }
+    // the pickguard, the pickup, the bridge, and the strings running up the middle
+    p.rect(3, 11, 4, 3, '#f0ece0'); p.set(2, 12, '#f0ece0');
+    p.rect(7, 8, 1, 3, '#1a1a1a'); p.rect(4, 9, 1, 2, '#1a1a1a');
+    p.rect(2, 10, 1, 3, '#c8c8c8');
+    for (let x = 3; x <= 10; x++) p.set(x, Math.round(11 - (x - 3) * 0.35), '#d8d0c0');
+    p.outline();
+    return p.canvas();
+  }
+  // ---- Shoolby Bones Lumpsucker (Nate and Lily's made-up word, all grown up): a spiny lumpsucker
+  // the size of a beach ball. Round and green, covered in bone-white tubercles (the "Bones"), a big
+  // smug eye, skeletal fins, a red bow tie (he is very formal), and a suction cup on his belly.
+  // Poses: stand (side view, facing right), front (stuck to the wall, looking at you), puff (blown
+  // up, every tubercle a spike), dizzy, and frozen (iced over by I Pray to Jesus).
+  function shoolby(pose) {
+    const puff = pose === 'puff', front = pose === 'front';
+    const W = puff ? 40 : 32, H = puff ? 38 : 28, p = new Pix(W, H);
+    const cx = puff ? 20 : 15, cy = puff ? 20 : 15, r = puff ? 13 : 10;
+    const ice = pose === 'frozen';
+    const G1 = ice ? '#7aa8c8' : '#3e7a3a', G2 = ice ? '#a8d0e8' : '#5aa04a', G3 = ice ? '#d8f0fc' : '#a8c868', GD = ice ? '#5a88a8' : '#2e5a2a';
+    const BONE = '#f4f0dc', BONE_D = '#c8c0a0';
+    // the tubercles: bony cones all the way around (long spikes when he's puffed)
+    const spikes = puff ? 16 : 11;
+    for (let i = 0; i < spikes; i++) {
+      const a = (i / spikes) * Math.PI * 2 + 0.2;
+      if (!puff && !front && Math.sin(a) > 0.55) continue; // (none on his belly: that's the suction cup)
+      const len = puff ? 5 : 2.6;
+      for (let k = 0; k <= len; k += 0.5) {
+        const x = cx + Math.cos(a) * (r + k), y = cy + Math.sin(a) * (r + k) * (front ? 1 : 0.92);
+        p.set(x, y, k > len - 1.2 ? BONE : BONE_D);
+        if (k < len - 1.5) p.set(x + Math.sin(a) * 0.8, y - Math.cos(a) * 0.8, BONE_D);
+      }
+    }
+    // the tail: a stubby fan of white fin rays (side view only)
+    if (!front && !puff) for (let j = -3; j <= 3; j++) for (let k = 0; k < 5; k++) if (j % 2 === 0 || k < 2) p.set(cx - r - 1 - k, cy + j + Math.round(j * k * 0.15), k < 2 ? G1 : BONE);
+    // the body
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const dx = x - cx, dy = (y - cy) / (front || puff ? 1 : 0.92);
+      if (dx * dx + dy * dy > r * r) continue;
+      const v = dy / r - dx / (r * 3);
+      p.set(x, y, v < -0.35 ? G1 : v < 0.35 ? G2 : G3);
+    }
+    // little bony bumps on the body too
+    for (const [ox, oy] of [[-5, -5], [0, -7], [-2, -2], [3, -3], [-6, 1], [1, 2], [-3, 5]]) {
+      if (puff) { p.set(cx + ox * 1.3, cy + oy * 1.3, BONE); continue; }
+      p.set(cx + ox, cy + oy, BONE); p.set(cx + ox, cy + oy + 1, GD);
+    }
+    const eye = (ex, ey, look) => {
+      p.rect(ex - 2, ey - 2, 5, 5, '#ffffff'); p.set(ex - 2, ey - 2, null); p.set(ex + 2, ey - 2, null);
+      if (pose === 'dizzy') { p.set(ex - 1, ey - 1, '#101418'); p.set(ex + 1, ey + 1, '#101418'); p.set(ex, ey, '#101418'); p.set(ex + 1, ey - 1, '#101418'); p.set(ex - 1, ey + 1, '#101418'); }
+      else { p.rect(ex + look, ey - 1, 2, 3, '#101418'); p.set(ex + look, ey - 1, '#ffffff'); }
+      // a smug eyebrow (an angry one when he's puffed)
+      for (let i = -2; i <= 2; i++) p.set(ex + i, ey - 4 + (puff ? (i < 0 ? -1 : 0) + (i > 0 ? 1 : 0) : (i > 0 ? -1 : 0)), GD);
+    };
+    if (front) {
+      eye(cx - 4, cy - 3, 0); eye(cx + 4, cy - 3, -1);
+      p.hline(cx - 2, cx + 2, cy + 3, GD); p.set(cx + 3, cy + 2, GD);
+      // the bow tie, right under his chin
+      p.rect(cx - 4, cy + 6, 3, 3, '#d83040'); p.rect(cx + 2, cy + 6, 3, 3, '#d83040'); p.rect(cx - 1, cy + 7, 3, 2, '#a81828');
+      p.set(cx - 4, cy + 6, '#f05060'); p.set(cx + 2, cy + 6, '#f05060');
+    } else {
+      eye(cx + 4, cy - 3, 1);
+      // the mouth: a little smirk at the front
+      p.hline(cx + 6, cx + 9, cy + 3, GD); p.set(cx + 6, cy + 2, GD);
+      if (puff) { p.rect(cx + 7, cy + 2, 3, 3, '#1a2a1a'); }
+      // the bow tie, under his chin
+      const bx = cx + (puff ? 6 : 5), by = cy + (puff ? 8 : 6);
+      p.rect(bx - 3, by, 3, 3, '#d83040'); p.rect(bx + 1, by, 3, 3, '#d83040'); p.rect(bx, by + 1, 1, 2, '#a81828');
+      p.set(bx - 3, by, '#f05060'); p.set(bx + 1, by, '#f05060');
+      // a skeletal pectoral fin: bone-white rays, fanned out
+      if (!puff) for (let j = 0; j < 4; j++) for (let k = 0; k < 4; k++) p.set(cx - 2 - k + j, cy + 3 + j + Math.round(k * 0.5), (k + j) % 2 ? BONE : null);
+      // the suction cup on his belly
+      if (!puff) { p.hline(cx - 4, cx + 3, cy + r, '#d8e0a0'); p.hline(cx - 3, cx + 2, cy + r + 1, BONE_D); }
+    }
+    if (ice) for (const [x, y] of [[cx - 5, cy - 6], [cx + 6, cy - 2], [cx - 2, cy + 4]]) { p.set(x, y, '#ffffff'); p.set(x + 1, y, '#ffffff'); p.set(x, y + 1, '#ffffff'); }
+    p.outline();
+    return p.canvas();
+  }
+  // ---- Rhonda's roommate (the tan duplex): a big afro wig, a gold sequin top, pink high heels,
+  // and a thong over the shiniest behind in Virginia (it fires light beams; strictly slapstick,
+  // like a disco ball). The cast builder makes him; this puts the wig behind his head (the canvas
+  // grows to 20x(h+4) to fit it), the thong's pink band at his hips, and the shine on his back side.
+  function roomieDress(set, c) {
+    const H = set.h, W2 = 20, ly = 1 + 10 + c.torso, BAND = '#f05898', L = shade(c.skin, 0.75);
+    const dress = (src, dir) => {
+      const p = new Pix(W2, H + 4), cxh = dir === 'right' ? 8.6 : 9.5;
+      for (let y = 0; y < 14; y++) for (let x = 0; x < W2; x++) {
+        if (((x + 0.5 - cxh) / 8.4) ** 2 + ((y + 0.5 - 6.6) / 6.4) ** 2 > 1) continue;
+        p.set(x, y, (x * 3 + y * 5) % 11 === 0 ? '#3a2a24' : (x + y) % 2 ? '#1c1412' : '#241a16');
+      }
+      p.outline();
+      const cv = p.canvas(), ctx = cv.getContext('2d');
+      ctx.drawImage(src, 2, 4);
+      const px = (x, y, col) => { ctx.fillStyle = col; ctx.fillRect(x + 2, y + 4, 1, 1); };
+      if (dir === 'up') {
+        // from behind: the band, the string, and a lot of shine
+        for (let x = 5; x <= 10; x++) px(x, ly, BAND);
+        px(7, ly + 1, BAND); px(8, ly + 1, BAND);
+        for (const x of [5, 6, 9, 10]) { px(x, ly + 1, L); px(x, ly + 2, L); }
+        px(5, ly + 1, '#ffffff'); px(6, ly + 1, '#ffffff'); px(9, ly + 1, '#ffffff'); px(10, ly + 1, '#ffffff');
+        px(4, ly, '#fff8c0'); px(11, ly + 2, '#fff8c0');
+      } else if (dir === 'right') {
+        for (let x = 6; x <= 9; x++) px(x, ly, BAND);
+        px(6, ly + 1, L); px(6, ly + 1, '#ffffff');
+      } else {
+        for (let x = 5; x <= 10; x++) px(x, ly, BAND);
+        px(7, ly + 1, BAND); px(8, ly + 1, BAND);
+      }
+      return cv;
+    };
+    for (const dir of ['down', 'up', 'right']) set[dir] = set[dir].map((cv) => dress(cv, dir));
+    set.left = set.right.map(mirror);
+    if (set.hold) set.hold = dress(set.hold, 'down');
+    if (set.torso) set.torso = dress(set.torso, 'right');
+    if (set.blink) set.blink = dress(set.blink, 'down');
+    set.w = W2; set.h = H + 4;
+  }
+  // Rhonda's spit: a little bubbly glob, and the big wad she lobs (it leaves a puddle)
+  function spitGlob() {
+    const p = new Pix(5, 5);
+    p.rect(1, 0, 3, 5, '#d8e8d0'); p.rect(0, 1, 5, 3, '#d8e8d0'); p.set(1, 1, '#ffffff'); p.set(3, 3, '#a8c0a0');
+    p.outline('#4a5a48');
+    return p.canvas();
+  }
+  function loogie() {
+    const p = new Pix(9, 8);
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 9; x++) if (((x - 4) / 4.4) ** 2 + ((y - 4) / 3.8) ** 2 <= 1) p.set(x, y, y < 3 ? '#e8f0e0' : '#c0d8b0');
+    p.set(2, 2, '#ffffff'); p.set(3, 1, '#ffffff'); p.set(6, 5, '#98b088'); p.set(4, 6, '#98b088');
+    p.outline('#4a5a48');
+    return p.canvas();
+  }
+  // a disco ball: little mirror tiles, one of them always catching the light
+  function discoBall(f) {
+    const p = new Pix(12, 12);
+    for (let y = 0; y < 12; y++) for (let x = 0; x < 12; x++) {
+      if (((x - 5.5) / 5.6) ** 2 + ((y - 5.5) / 5.6) ** 2 > 1) continue;
+      p.set(x, y, (x + y + f) % 4 === 0 ? '#ffffff' : (x + y) % 2 ? '#a8acb8' : '#c8ccd8');
+    }
+    for (let x = 1; x <= 10; x++) if (p.get(x, 5)) p.set(x, 5, '#7a7e8a');
+    p.set(3 + f, 3, '#fff8c0'); p.set(8 - f, 8, '#f8c8e8');
+    p.outline();
+    return p.canvas();
+  }
+  // a drop of cold seawater (Shoolby splashes them out of the tide pools)
+  function waterDrop() {
+    const p = new Pix(5, 7);
+    p.set(2, 0, '#d8f0ff'); p.hline(1, 3, 1, '#a8d8f8'); p.rect(0, 2, 5, 3, '#78b8e8'); p.hline(1, 3, 5, '#5898d0'); p.set(1, 2, '#ffffff');
+    p.outline('#28486a');
+    return p.canvas();
+  }
+  // a fish bone he throws: a little white fish skeleton (head, spine, ribs, tail)
+  function fishBone() {
+    const p = new Pix(11, 7), B = '#f4f0dc';
+    p.hline(2, 8, 3, B); for (const x of [3, 5, 7]) { p.set(x, 2, B); p.set(x, 4, B); p.set(x, 1, '#c8c0a0'); p.set(x, 5, '#c8c0a0'); }
+    p.rect(8, 2, 2, 3, B); p.set(10, 3, B); p.set(9, 2, '#101418');
+    p.set(1, 2, B); p.set(0, 1, B); p.set(1, 4, B); p.set(0, 5, B);
+    p.outline();
+    return p.canvas();
+  }
+  // a fake rock, the kind people hide a spare key in (Nate can tell: it's plastic)
+  function fakeRock() {
+    const p = new Pix(14, 9);
+    for (let y = 0; y < 9; y++) for (let x = 0; x < 14; x++) {
+      const e = ((x - 6.5) / 6.8) ** 2 + ((y - 5) / 4.6) ** 2;
+      if (e <= 1) p.set(x, y, y < 4 ? '#a8a4a0' : y < 7 ? '#8c8884' : '#6e6a66');
+    }
+    p.set(4, 2, '#c8c4c0'); p.set(5, 2, '#c8c4c0'); p.set(9, 4, '#6e6a66'); p.set(3, 6, '#6e6a66');
+    p.hline(1, 12, 7, '#5a5652');
+    p.outline();
+    return p.canvas();
+  }
+  // a strand of kelp, hanging or growing (Unit B is a tide pool now)
+  function kelp(n) {
+    const p = new Pix(9, 28), K = '#5a6a2a', KL = '#8a9a3a', KD = '#3a4a1a';
+    for (let y = 0; y < 28; y++) {
+      const x = 4 + Math.round(Math.sin(y * 0.35 + n) * 2);
+      p.set(x, y, K); p.set(x + 1, y, KD);
+      if (y % 6 === 3) { p.set(x - 1, y, KL); p.set(x - 2, y + 1, KL); p.set(x - 1, y + 1, K); }
+      if (y % 6 === 0) { p.set(x + 2, y, KL); p.set(x + 3, y + 1, KL); p.set(x + 2, y + 1, K); }
+    }
+    return p.canvas();
+  }
+  // a barnacled tide-pool rock
+  function poolRock(n) {
+    const W = 18, H = 12, p = new Pix(W, H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const e = ((x - 8.5) / 8.4) ** 2 + ((y - 6.5) / (5.4 - (n % 2))) ** 2;
+      if (e <= 1) p.set(x, y, y < 5 ? '#7a7a80' : y < 9 ? '#5e5e66' : '#46464e');
+    }
+    for (const [x, y] of [[4, 4], [8, 3], [12, 5], [6, 7], [11, 8], [14, 6]].slice(0, 4 + (n % 3))) { p.set(x, y, '#e8e4d8'); p.set(x + 1, y, '#c8c4b8'); }
+    p.set(3 + n, 8, '#e86a3a'); p.set(4 + n, 8, '#e86a3a'); p.set(4 + n, 9, '#c84a2a');
     p.outline();
     return p.canvas();
   }
@@ -11284,7 +11485,7 @@
   }
 
   G.art = {
-    OUT, shade, Pix, fromRows, mirror, flash, person, P, scale2, buildingExtra, pipeArt, pipeProfile, PIPE_GEO, familyPortrait,
+    OUT, shade, Pix, fromRows, mirror, flash, person, roomieDress, P, scale2, buildingExtra, pipeArt, pipeProfile, PIPE_GEO, familyPortrait,
     tile, tree, building,
   };
 
@@ -11582,6 +11783,10 @@
     // Aurora, NC
     S.auroraMuseum = auroraMuseum(); S.tailingsPile = tailingsPile(); S.fossilIdBoard = fossilIdBoard(); S.siftScreens = siftScreens(); S.hamBillboard = hamBillboard(); S.hamShop = hamShop();
     S.augustHam = {}; for (const k of ['stand', 'squash', 'dizzy', 'glaze', 'spiral', 'sleep']) S.augustHam[k] = augustHam(k);
+    // Shoolby Bones Lumpsucker, in Unit B
+    S.shoolby = { right: {} }; for (const k of ['stand', 'front', 'puff', 'dizzy', 'frozen']) S.shoolby.right[k] = shoolby(k);
+    S.shoolby.left = {}; for (const k in S.shoolby.right) S.shoolby.left[k] = mirror(S.shoolby.right[k]);
+    S.fishBone = fishBone(); S.waterDrop = waterDrop(); S.spitGlob = spitGlob(); S.loogie = loogie(); S.discoBall = [0, 1, 2].map(discoBall); S.fakeRock = fakeRock(); S.kelp = [0, 1, 2].map(kelp); S.poolRocks = [0, 1, 2].map(poolRock);
     S.hamStand = hamStand(); S.cloveShot = cloveShot(); S.hamSlice = hamSlice();
     S.megToothCase = megToothCase(3); S.megJaw = megJaw(); S.falseMakoBoard = falseMakoBoard(); S.seaMural = seaMural(4); S.seaMural2 = seaMural(2); S.whaleVertebra = whaleVertebra();
     S.toothWall = toothWall(4); S.cowSharkCase = cowSharkCase(); S.whaleBones = whaleBones(); S.walrusCase = walrusCase(); S.layersPoster = layersPoster(); S.festivalPoster = festivalPoster(); S.giftShelf = giftShelf(); S.frontDesk = frontDesk(3);
