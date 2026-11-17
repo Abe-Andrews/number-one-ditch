@@ -11984,8 +11984,11 @@
       const at = (Kind, x, y) => w.add(new Kind(x * 16 + 8, y * 16 + 14));
       for (const [x, y] of [[47, 44], [22, 47], [20, 41], [33, 45], [10, 45]]) at(G.Snapdragon, x, y); // (none in Mom's garden)
       for (const [x, y] of [[6, 33], [27, 42], [51, 38], [50, 46]]) at(G.Gourd, x, y);
-      const bear = at(G.Bear, 12, 14);
-      if (flags().snackQuest && !G.state.items.doritos && !flags().snacksDone) bear.bag = true;
+      // (the bear only turns up once Dad's asked for his snacks: it's the one that took the Doritos)
+      if (flags().snackQuest) {
+        const bear = at(G.Bear, 12, 14);
+        if (!G.state.items.doritos && !flags().snacksDone) bear.bag = true;
+      }
 
       // the hens, free-ranging inside the garden fence
       const pen = [27 * 16 + 6, 19 * 16 + 4, 40 * 16 - 6, 23 * 16 - 2];
