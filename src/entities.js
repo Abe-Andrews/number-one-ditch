@@ -2475,6 +2475,97 @@
     }
   }
   G.RhondaRoomie = RhondaRoomie;
+
+  // ============================================================== OUTSIDE CHKD: a little life
+  // a pigeon on the plaza: pecks around its spot, scatters when Nate gets close, and comes back
+  // once he's wandered off
+  class Pigeon extends Ent {
+    constructor(x, y) { super(x, y); Object.assign(this, { home: { x, y }, state: 'peck', t: Math.floor(Math.random() * 60), z: 0, face: Math.random() < 0.5 ? -1 : 1, vx: 0 }); }
+    update(w) {
+      if (G.script.busy) return;
+      this.t++;
+      const p = G.play.player, d = Math.hypot(p.x - this.x, p.y - this.y);
+      if (this.state === 'peck') {
+        if (this.t % 50 === 0) { this.x = this.home.x + (Math.random() * 10 - 5); this.face = Math.random() < 0.5 ? -1 : 1; }
+        if (d < 30) {
+          Object.assign(this, { state: 'fly', vx: (this.x < p.x ? -1 : 1) * (1.2 + Math.random() * 0.6), t: 0 });
+          this.face = this.vx > 0 ? 1 : -1;
+          if (!w.flapT || G.tick - w.flapT > 20) { w.flapT = G.tick; w.pop(this.x, this.y - 18, '*flap flap*', '#c8c8d0'); }
+        }
+      } else if (this.state === 'fly') {
+        this.x += this.vx; this.z += 1.4;
+        if (this.z > 90) Object.assign(this, { state: 'gone', t: 0 });
+      } else if (this.state === 'gone') {
+        // back once Nate's well away from its spot
+        if (this.t > 360 && Math.hypot(p.x - this.home.x, p.y - this.home.y) > 110) Object.assign(this, { state: 'land', x: this.home.x + (Math.random() < 0.5 ? -40 : 40), z: 50, t: 0 });
+      } else if (this.state === 'land') {
+        this.x += (this.home.x - this.x) * 0.05; this.z = Math.max(0, this.z - 1.2); this.face = this.home.x > this.x ? 1 : -1;
+        if (this.z <= 0) Object.assign(this, { state: 'peck', t: 0 });
+      }
+    }
+    draw(ctx, cx, cy) {
+      if (this.state === 'gone') return;
+      const S = G.spr.pigeon[this.face > 0 ? 'right' : 'left'];
+      const img = this.state === 'peck' ? S[(this.t >> 4) % 3 === 0 ? 1 : 0] : S[2 + ((this.t >> 2) & 1)];
+      if (this.z < 40) { ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(Math.round(this.x - 3) - cx, Math.round(this.y) - cy, 6, 1); }
+      ctx.drawImage(img, Math.round(this.x - 5) - cx, Math.round(this.y - 7 - this.z) - cy);
+    }
+  }
+  G.Pigeon = Pigeon;
+  // a car driving past on the street: it stops (and honks) if Nate's standing in front of it
+  class TrafficCar extends Ent {
+    constructor(lane, dir, startX, w) {
+      super(startX, lane);
+      Object.assign(this, { dir, speed: 1.1 + Math.random() * 0.5, honk: 0, img: G.spr.traffic[dir > 0 ? 'right' : 'left'][Math.floor(Math.random() * 4)], mapW: w.pw });
+    }
+    update(w) {
+      if (G.script.busy) return;
+      const p = G.play.player, half = this.img.width / 2, front = this.x + this.dir * half;
+      const inLane = p.y > this.y - this.img.height + 4 && p.y < this.y + 6;
+      const ahead = this.dir > 0 ? p.x > front - 4 && p.x < front + 26 : p.x < front + 4 && p.x > front - 26;
+      if (inLane && ahead) {
+        if (this.honk-- <= 0) { this.honk = 100; G.audio.sfx('honk'); w.pop(this.x, this.y - this.img.height - 6, 'HONK!', '#f8d850'); }
+        return;
+      }
+      this.honk = Math.min(this.honk, 20);
+      this.x += this.dir * this.speed;
+      // around again, a new car
+      if (this.dir > 0 ? this.x > this.mapW + 60 : this.x < -60) {
+        this.x = this.dir > 0 ? -60 - Math.random() * 200 : this.mapW + 60 + Math.random() * 200;
+        this.speed = 1.1 + Math.random() * 0.5;
+        this.img = G.spr.traffic[this.dir > 0 ? 'right' : 'left'][Math.floor(Math.random() * 4)];
+      }
+    }
+    draw(ctx, cx, cy) {
+      const img = this.img;
+      ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy);
+    }
+  }
+  G.TrafficCar = TrafficCar;
+  // a kid racing back and forth across the plaza (two of them: "I WIN!" "NO, *I* WIN!")
+  class Runner extends Ent {
+    constructor(sprite, y, x0, x1, speed, line) {
+      super(x0, y);
+      Object.assign(this, { sprite, x0, x1, speed, line, goal: x1, wait: 30, anim: 0, dir: 'right' });
+    }
+    update(w) {
+      if (G.script.busy) return;
+      if (this.wait > 0) { this.wait--; return; }
+      const d = this.goal - this.x;
+      if (Math.abs(d) <= this.speed) {
+        this.x = this.goal; this.goal = this.goal === this.x1 ? this.x0 : this.x1; this.wait = 50;
+        w.pop(this.x, this.y - 30, this.line[Math.floor(Math.random() * this.line.length)], '#f8f8f0');
+        return;
+      }
+      this.x += Math.sign(d) * this.speed; this.dir = d > 0 ? 'right' : 'left'; this.anim++;
+    }
+    draw(ctx, cx, cy) {
+      const S = G.sprites[this.sprite];
+      drawShadow(ctx, this.x, this.y, cx, cy);
+      ctx.drawImage(S[this.wait > 0 ? 'down' : this.dir][this.wait > 0 ? 0 : walkFrame(this.anim, true)], Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
+    }
+  }
+  G.Runner = Runner;
   // the Two-Liter's slam warning and shockwave, drawn flat on the road under everything
   class SlamZone extends Ent {
     constructor(boss) { super(boss.x, boss.y); this.boss = boss; this.flat = true; }

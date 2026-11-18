@@ -3648,6 +3648,7 @@
     { id: 'megalodon', area: 'bay', name: 'Megalodon Tooth', r: 4, crush: null, how: 'A patch of gravel and shell on the island between the two tunnels. Too fine to pick through by hand.', fact: 'A fossil tooth from Otodus megalodon, a giant shark that lived millions of years ago. Fossil shark teeth turn up all over the Chesapeake Bay region.' },
     { id: 'chesapecten', area: 'chesapeake', name: 'Chesapecten Fossil', r: 3, crush: null, how: 'Anette, Abe and Hannah\'s neighbor, has one. Her plants look awfully thirsty.', fact: 'Chesapecten jeffersonius: a fossil scallop millions of years old, named for the Chesapeake Bay and Thomas Jefferson. It\'s the state fossil of Virginia, and back in 1687 it became the first fossil from North America ever pictured in a science book.' },
     { id: 'fairystone', area: 'chesapeake', name: 'Fairy Stone', r: 2, crush: null, how: 'Ruby, a girl on the CHKD ward, has two. She\'ll trade one for a rock from somewhere far away.', fact: 'Staurolite: brown crystals that grow twinned into little crosses. Virginia has a whole state park named for them, Fairy Stone State Park. The legend says they\'re fairy tears, turned to stone.' },
+    { id: 'unakite', area: 'chesapeake', name: 'Unakite', r: 2, crush: null, how: 'Something glints in the flower bed outside CHKD, now and then.', fact: 'Pink feldspar, green epidote and bits of clear quartz, all in one rock. It\'s named for the Unaka Mountains, and it turns up in the Blue Ridge, here in Virginia. People polish it into beads.' },
     { id: 'nelsonite', area: 'chesapeake', name: 'Nelsonite', r: 3, crush: null, how: 'Something glints in the grass outside El Toro Loco, every now and then. You\'d have to be looking.', fact: 'Virginia\'s state rock. It\'s named for Nelson County, way out in the Blue Ridge Mountains, and it\'s black ilmenite (titanium ore) speckled with white apatite. Nelson County is one of the only places in the world to find it.' },
     { id: 'prehnite', area: 'bedminster', name: 'Prehnite', r: 2, crush: { heart: 1 }, how: 'The gravel bar in Brady Brook. You\'d need a sifting screen.', fact: 'Pale green crystals that grow in the gas bubbles of New Jersey basalt. Mindat lists prehnite in Bedminster Township.' },
   ];
@@ -18094,6 +18095,11 @@
   G.CAST.chkdNurse = { skin: '#f0c8a8', hair: '#6a4028', hairStyle: 'shoulder', shirt: '#7ac8b8', pants: '#7ac8b8', shoes: '#f0f0f0', torso: 5, legs: 3, smile: '#ffffff' };
   // Ruby, the rock kid on the ward: seven, pink glasses, a hospital gown with little stars, a cast
   G.CAST.rockKid = { skin: '#c88a60', eyes: '#1a1010', hair: '#2a1a14', hairStyle: 'shoulder', glasses: '#e04888', blush: true, smile: '#ffffff', shirt: '#9ad0f0', pants: '#9ad0f0', shoes: '#f0f0f0', torso: 4, legs: 2 };
+  // out front, once everything's back to normal: a grandma and her granddaughter, two racing kids
+  G.CAST.chkdGrandma = { skin: '#c88a60', hair: '#d8d4dc', hairStyle: 'cropped', glasses: '#8a5a8a', smile: '#ffffff', blush: true, shirt: '#e8d8b8', coat: '#5a8aa8', pants: '#5a5a68', shoes: '#f0f0f0', torso: 6, legs: 3 };
+  G.CAST.chkdGranddaughter = { skin: '#c88a60', hair: '#2a1a14', hairStyle: 'pony', smile: '#ffffff', blush: true, shirt: '#f8a0c8', pants: '#5a7ab8', shoes: '#f8f8f0', torso: 4, legs: 2 };
+  G.CAST.chkdKid1 = { skin: '#f0c8a8', hair: '#c8a46c', hairStyle: 'short', shirt: '#e85858', pants: '#3a4a6a', shoes: '#f0f0f0', torso: 4, legs: 2 };
+  G.CAST.chkdKid2 = { skin: '#8a5a3a', hair: '#1a1010', hairStyle: 'buzz', shirt: '#58b858', pants: '#3a3a44', shoes: '#f0f0f0', torso: 4, legs: 2 };
   for (const id of ['chkdDad', 'chkdReception', 'chkdGuard', 'chkdNurse', 'hannah']) G.CAST[id + 'Hypno'] = Object.assign({}, G.CAST[id], { swirl: true, smile: null, blush: false });
 
   CRITTER_LINES.baby = [
@@ -18188,8 +18194,43 @@
     yield G.say('Abe', 'It\'s a children\'s hospital. It is NEVER quiet.');
     yield G.say('Nate', '...Is that guy okay?');
   };
+  // the outside of CHKD: the garage, the guard, the nurse, the grandma, the rock
+  S.chkdGarage = function* () {
+    if (flags().mobileBeaten) yield G.say(null, 'The parking garage. A visitor is standing in front of it like he just climbed a mountain.');
+    else yield G.say(null, 'The parking garage. The arm is down. A sign: PLEASE TAKE A TICKET. Nobody has taken a ticket in days.');
+  };
+  S.chkdGuardOut = function* () {
+    if (!flags().mobileBeaten) { yield G.say('Security', 'Nobody... in... Nobody... out...'); yield G.say('Nate', 'His eyes are spirals too.'); return; }
+    const f = flags(); f.guardLine = ((f.guardLine || 0) + 1) % 2;
+    yield G.say('Security', ['Welcome to CHKD. Elevators are past the fish tank. Do NOT tap on the glass.', 'Some kid was in here yesterday trying to name every rock in the garden. Good kid.'][f.guardLine]);
+  };
+  S.chkdNurseOut = function* () {
+    if (!flags().mobileBeaten) { yield G.say('Nurse', 'Coffee... cold... forever...'); return; }
+    const f = flags(); f.nurseLine = ((f.nurseLine || 0) + 1) % 2;
+    yield G.say('Nurse', ['Fifteen minutes of fresh air. That\'s my whole break. I\'m spending it with these pigeons.', 'Twelve-hour shift. Coffee number four. It\'s not even lunch.'][f.nurseLine]);
+  };
+  S.chkdGrandma = function* () { yield G.say('Grandma', 'We just met the new baby! A boy! Eight pounds, and he already has opinions.'); };
+  S.chkdGranddaughter = function* () { yield G.say('Kid', 'I\'m a BIG SISTER now. That means I\'m in charge.'); };
+  S.chkdRock = function* () {
+    const f = flags();
+    if (f.unakiteFound) { yield G.say(null, 'Mulch, and some very nice landscaping. Nate already found the good rock here.'); return; }
+    yield G.say(null, 'Something glints in the flower bed. Nate brushes the mulch aside...');
+    yield G.say(null, 'A rock, pink and green all at once, like a slice of watermelon.');
+    f.unakiteFound = true;
+    yield* S.rockGive('unakite');
+    yield G.say('Nate', 'Unakite! From the mountains. Somebody used it in the landscaping. Fancy.');
+  };
   S.chkdDad = function* () {
     const f = flags();
+    if (f.mobileBeaten && !f.dadGarage) {
+      // he finally found it
+      f.dadGarage = true;
+      yield G.say('Visitor', 'THERE it is. The parking garage.');
+      yield G.say('Visitor', 'It was right here. The whole time. Next to the door.');
+      yield G.say('Nate', 'How long were you looking?');
+      yield G.say('Visitor', 'Since this MORNING. I came out for the car seat.');
+      return;
+    }
     if (f.mobileBeaten) {
       f.dadLine = ((f.dadLine || 0) + 1) % 2;
       yield G.say('Visitor', ['I came out to get the car seat. That was this MORNING. Where did the day go?', 'My wife had a baby! A little girl! ...I should probably go back inside.'][f.dadLine]);
@@ -19110,10 +19151,11 @@
     name: 'CHKD',
     get music() { return flags().mobileBeaten ? 'home' : 'hospital'; },
     tiles() {
-      const W = 40, H = 26;
+      const W = 40, H = 30;
       const g = Array.from({ length: H }, () => Array(W).fill('C'));
       const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
       fill(0, 20, W, 6, 'a');          // the streets
+      fill(0, 27, W, 3, 'y');          // the Elizabeth River, past the riverwalk (row 26)
       fill(32, 14, 8, 6, 'a');         // the lot by the drop-off
       fill(1, 12, 11, 3, '<');         // the bed along the left wing
       fill(23, 13, 8, 4, '<');         // the garden with the statues
@@ -19162,10 +19204,68 @@
       // cars: Abe's Jeep at the curb, and two in the lot by the drop-off
       w.addProp({ img: sp.condoCars.jeep, tx: 12, ty: 21, h: 2, dy: -3, solid: [12, 21, 3, 2], hit: [12, 21, 3, 2], talk: () => S.chkdJeep() });
       for (const [img, x, y] of [[sp.chkdCars.red, 33, 15], [sp.chkdCars.white, 36, 18]]) w.addProp({ img, tx: x, ty: y, h: 2, dy: -3, solid: [x, y, 3, 2], hit: [x, y, 3, 2], talk: look('A car in the lot. Parked. Very, very crooked.') });
-      // a hypnotized dad with a car seat, wandering the plaza
-      w.add(new G.NPC({ sprite: f.mobileBeaten ? 'chkdDad' : 'chkdDadHypno', name: 'Visitor', x: 17 * 16 + 8, y: 16 * 16 + 12, dir: 'down', wander: f.mobileBeaten ? 0 : 40, held: sp.carSeat, heldAt: [8, 8], talk: S.chkdDad }));
-      // the street goes on (left and right)
-      for (const x of [0, w.w - 1]) w.addTrigger(x, 20, 1, 6, () => G.script.run((function* () { const p = P(); yield G.say('Nate', 'Not without the Jeep. Abe parked it at the curb.'); yield G.walkTo(p, p.x + (p.x < 100 ? 18 : -18), p.y, 1); })()));
+      // a dad, wandering the plaza looking for the parking garage (hypnotized); once Mecha-Baby's
+      // down, he's found it at last, standing right in front of it
+      const well = f.mobileBeaten;
+      w.add(new G.NPC({ sprite: well ? 'chkdDad' : 'chkdDadHypno', name: 'Visitor', x: well ? 38 * 16 + 8 : 17 * 16 + 8, y: well ? 17 * 16 + 12 : 16 * 16 + 12, dir: well ? 'up' : 'down', wander: well ? 0 : 40, talk: S.chkdDad }));
+      // ---- the parking garage, off the drop-off lot (its arm down across the entrance)
+      w.addProp({ img: sp.parkingGarage, tx: 37, ty: 14, h: 3, solid: [37, 14, 3, 3], hit: [37, 14, 3, 3], talk: () => S.chkdGarage() });
+      w.props.push({ img: sp.garageArm, x: 37 * 16 + 4, y: 17 * 16 - 13, base: 17 * 16 });
+      // ---- the people out front: a security guard by the doors, a nurse on her break by the bench,
+      // and (once things are back to normal) a grandma and her granddaughter with a balloon, and two
+      // kids racing each other across the plaza
+      w.add(new G.NPC({ sprite: well ? 'chkdGuard' : 'chkdGuardHypno', name: 'Security', x: 16 * 16 + 8, y: 11 * 16 + 12, dir: 'down', talk: S.chkdGuardOut }));
+      w.add(new G.NPC({ sprite: well ? 'chkdNurse' : 'chkdNurseHypno', name: 'Nurse', x: 6 * 16 + 8, y: 16 * 16 + 12, dir: 'left', talk: S.chkdNurseOut }));
+      if (well) {
+        w.add(new G.NPC({ sprite: 'chkdGrandma', name: 'Grandma', x: 26 * 16 + 8, y: 19 * 16 + 12, dir: 'down', wander: 20, talk: S.chkdGrandma }));
+        w.add(new G.NPC({ sprite: 'chkdGranddaughter', name: 'Kid', x: 27 * 16 + 12, y: 19 * 16 + 12, dir: 'down', wander: 20, held: sp.heartRed, heldAt: [7, -18], talk: S.chkdGranddaughter }));
+        w.add(new G.Runner('chkdKid1', 19 * 16 + 12, 3 * 16, 11 * 16, 1.5, ['I WIN!', 'BEAT YOU!', 'AGAIN!']));
+        w.add(new G.Runner('chkdKid2', 19 * 16 + 8, 3 * 16, 11 * 16, 1.35, ['NO, *I* WIN!', 'NO FAIR!', 'BEST OF THREE!']));
+      }
+      // ---- pigeons on the plaza
+      for (const [x, y] of [[10.5, 16.8], [11.6, 17.5], [13.2, 16.6], [19.4, 17.3], [20.6, 16.5]]) w.add(new G.Pigeon(x * 16, y * 16));
+      // ---- traffic on the street (it stops and honks if Nate's in the way)
+      w.add(new G.TrafficCar(24.4 * 16, 1, 6 * 16, w)); w.add(new G.TrafficCar(24.4 * 16, 1, -200, w));
+      w.add(new G.TrafficCar(26 * 16 - 2, -1, 30 * 16, w)); w.add(new G.TrafficCar(26 * 16 - 2, -1, w.pw + 160, w));
+      // ---- CHKD banners on the lamp posts
+      for (const x of [15, 22]) w.props.push({ img: null, x: 0, y: 0, base: 14 * 16 + 1, draw(ctx, cx, cy) { const bx = x * 16 + 10 - cx, by = 13 * 16 - 14 - cy, sway = (G.tick >> 5) & 1; ctx.fillStyle = '#1c1424'; ctx.fillRect(bx - 1, by - 1, 7, 13); ctx.fillStyle = '#3a8ad8'; ctx.fillRect(bx, by, 5, 11 - sway); ctx.fillStyle = '#f0c830'; ctx.fillRect(bx, by + 4, 5, 2); ctx.fillStyle = '#ffffff'; ctx.fillRect(bx + 2, by + 1, 1, 2); } });
+      // ---- the riverwalk and the Elizabeth River: a railing along the water, and gulls going by
+      w.props.push({
+        img: null, x: 0, y: 0, base: 27 * 16,
+        draw(ctx, cx, cy) {
+          const y0 = 27 * 16 - cy;
+          ctx.fillStyle = '#4a4e58'; ctx.fillRect(-cx, y0 - 9, w.pw, 2); ctx.fillRect(-cx, y0 - 4, w.pw, 1);
+          ctx.fillStyle = '#7a7e88'; ctx.fillRect(-cx, y0 - 9, w.pw, 1);
+          for (let x = 4; x < w.pw; x += 16) { ctx.fillStyle = '#4a4e58'; ctx.fillRect(x - cx, y0 - 9, 2, 10); }
+        },
+      });
+      w.props.push({
+        img: null, x: 0, y: 0, base: 99000,
+        draw(ctx, cx, cy) {
+          for (let i = 0; i < 3; i++) {
+            const t = G.tick * (0.5 + i * 0.15) + i * 260, x = (t % (w.pw + 120)) - 60, y = 27.6 * 16 + i * 10 + Math.sin(t * 0.03) * 3;
+            const g = G.spr.gull[1][(G.tick >> 3) & 1 ? 'up' : 'down'];
+            ctx.drawImage(g, Math.round(x - g.width / 2) - cx, Math.round(y - g.height) - cy);
+          }
+        },
+      });
+      w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [0, 26 * 16 + 8, w.pw, 28 * 16], talk: look('The Elizabeth River, right behind the hospital. Big ships go by out there. Right now it\'s mostly gulls.') });
+      // ---- a hidden rock in the flower bed along the left wing: nothing but a glint, now and then
+      if (!f.unakiteFound) {
+        const gx = 6 * 16 + 8, gy = 14 * 16 + 8;
+        w.props.push({
+          img: null, x: 0, y: 0, base: 0, hit: [6 * 16, 14 * 16, 7 * 16, 15 * 16], talk: () => S.chkdRock(),
+          draw(ctx, cx, cy) {
+            if (flags().unakiteFound || (G.tick + 70) % 150 >= 7) return;
+            const big = (G.tick + 70) % 150 >= 2 && (G.tick + 70) % 150 < 5;
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(gx - cx, gy - 1 - cy, 1, 3); ctx.fillRect(gx - 1 - cx, gy - cy, 3, 1);
+            if (big) { ctx.fillRect(gx - cx, gy - 3 - cy, 1, 7); ctx.fillRect(gx - 3 - cx, gy - cy, 7, 1); }
+          },
+        });
+      }
+      // the street goes on (left and right), and so does the riverwalk
+      for (const x of [0, w.w - 1]) w.addTrigger(x, 20, 1, 7, () => G.script.run((function* () { const p = P(); yield G.say('Nate', 'Not without the Jeep. Abe parked it at the curb.'); yield G.walkTo(p, p.x + (p.x < 100 ? 18 : -18), p.y, 1); })()));
     },
     onEnter() { return S.chkdArrive(); },
   };
@@ -22609,7 +22709,7 @@
   const dunkById = (id) => G.DUNKS.find((d) => d.id === id);
   // which log entry the water on a level is (home has two: the pond up top, and the brook)
   const LEVEL_DUNK = { campus: 'quad', north: 'frozen', fair: 'duck', fairCave: 'cave', andoverFlood: 'mine', andoverOld: 'mine', andoverVault: 'mine',
-    cbbtToll: 'bay', cbbt: 'bay', cbbtMid: 'bay', golf: 'golf', ditchFinal: 'ditch', ditchDay: 'ditch' };
+    cbbtToll: 'bay', cbbt: 'bay', cbbtMid: 'bay', golf: 'golf', chkd: 'elizabeth', ditchFinal: 'ditch', ditchDay: 'ditch' };
   const levelDunk = (map, tx, ty) => (map === 'home' ? (tx <= 12 && ty <= 6 ? 'homePond' : 'brook') : LEVEL_DUNK[map]);
   // and for dry levels, the nearest water for each area
   const DRY_DUNK = [

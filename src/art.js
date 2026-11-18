@@ -5204,6 +5204,13 @@
           if (d <= r * r) p.set(x, y, d <= 1.2 && x <= ox && y <= oy ? '#ffffff' : x < ox && y < oy ? '#fbf8ee' : '#e0d8c6');
         }
         break;
+      case 'unakite':
+        // pink feldspar and green epidote, speckled with clear quartz
+        blob('#d87a7a', '#e89a90');
+        for (const [x, y] of [[3, 5], [4, 6], [8, 4], [9, 5], [6, 8], [7, 9], [10, 8], [3, 8]]) p.set(x, y, '#5a9a5a');
+        for (const [x, y] of [[5, 4], [9, 7], [5, 9]]) p.set(x, y, '#e8f0f0');
+        p.set(4, 3, '#f8c8c0');
+        break;
       case 'nelsonite':
         // Virginia's state rock: heavy black ilmenite, speckled with white apatite grains
         blob('#26262c', '#3c3c44');
@@ -6927,6 +6934,45 @@
     p.rect(4, 15, 18, 13, c); p.vline(6, 16, 27, '#9aa0a8'); p.vline(19, 16, 27, '#9aa0a8');
     p.rect(4, 28, 18, 4, glass);
     p.rect(3, 33, 20, 5, D); p.set(3, 36, '#e03030'); p.set(22, 36, '#e03030');
+    p.outline();
+    return p.canvas();
+  }
+  // the hospital's parking garage, off to the side of the drop-off: two concrete decks with dark
+  // openings, a big blue P, and the entrance at the bottom (the striped arm is drawn on its own)
+  function parkingGarage() {
+    const W = 48, H = 52, p = new Pix(W, H), C = '#b8b4ac', CL = '#d0ccc4', CD = '#8a8680', DK = '#2a2830';
+    p.rect(0, 4, W, H - 4, C); p.hline(0, W - 1, 4, CL);
+    for (const y of [10, 24]) { p.rect(2, y, W - 4, 8, DK); for (let x = 2; x < W - 2; x += 9) p.rect(x, y, 2, 8, C); p.hline(2, W - 3, y + 8, CL); }
+    p.hline(0, W - 1, 22, CD); p.hline(0, W - 1, 36, CD);
+    // the entrance, and the sign over it
+    p.rect(14, 38, 20, 14, DK); p.hline(14, 33, 38, CD);
+    p.rect(30, 0, 14, 12, '#2a5ab8'); p.rect(31, 1, 12, 10, '#3a6ac8');
+    p.rect(34, 2, 2, 8, '#ffffff'); p.rect(36, 2, 3, 1, '#ffffff'); p.rect(38, 3, 1, 3, '#ffffff'); p.rect(36, 5, 3, 1, '#ffffff');
+    p.vline(36, 12, 13, CD);
+    p.outline();
+    return p.canvas();
+  }
+  // the striped arm across the garage entrance (and its little ticket box)
+  function garageArm() {
+    const p = new Pix(28, 14);
+    p.rect(0, 4, 6, 10, '#d8c848'); p.rect(1, 5, 4, 3, '#2a2830'); p.set(2, 6, '#e85858');
+    for (let x = 6; x < 28; x++) { p.set(x, 7, Math.floor(x / 3) % 2 ? '#e83030' : '#f4f4f0'); p.set(x, 8, Math.floor(x / 3) % 2 ? '#c82020' : '#d8d8d0'); }
+    p.outline();
+    return p.canvas();
+  }
+  // a pigeon: standing, pecking, and flying (two wing frames)
+  function pigeon(f) {
+    const p = new Pix(10, 8), G1 = '#8a8a98', G2 = '#a8a8b8', G3 = '#5a5a68', N = '#6a9a8a';
+    if (f < 2) {
+      p.rect(2, 3, 6, 3, G2); p.hline(3, 6, 6, G1); p.set(1, 4, G3); p.set(0, 4, G3);
+      if (f === 0) { p.rect(7, 1, 2, 3, G1); p.set(8, 2, '#101418'); p.set(9, 2, '#d8a848'); p.set(7, 3, N); }
+      else { p.rect(7, 4, 2, 2, G1); p.set(8, 5, '#d8a848'); p.set(7, 4, N); }
+      p.set(4, 7, '#d87858'); p.set(6, 7, '#d87858');
+    } else {
+      p.rect(3, 3, 5, 2, G2); p.rect(7, 2, 2, 2, G1); p.set(9, 3, '#d8a848');
+      if (f === 2) { p.rect(3, 0, 3, 3, G1); p.set(3, 0, G3); } else { p.rect(3, 5, 3, 3, G1); p.set(3, 7, G3); }
+      p.set(1, 4, G3); p.set(2, 4, G1);
+    }
     p.outline();
     return p.canvas();
   }
@@ -11670,7 +11716,7 @@
     S.pines = [pineTree(4), pineTree(5)];
     S.snowPines = S.pines.map(snowCap);
     S.vanWickle = vanWickle();
-    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'riprap', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone', 'nelsonite', 'malachite', 'kidney', 'magCrystal', 'tommy', 'willemite', 'crystalGeode', 'placerGold']) S.rockIcons[k] = rockIcon(k);
+    S.rockIcons = {}; for (const k of ['hematite', 'magnetite', 'calcite', 'marble', 'quartz', 'jasper', 'garnet', 'pyrite', 'slag', 'sphalerite', 'galena', 'chalcopyrite', 'specular', 'lodestone', 'cannonball', 'dolomite', 'gneiss', 'stromatolite', 'cementrock', 'serpentine', 'eastonite', 'shale', 'basalt', 'prehnite', 'riprap', 'cavepearl', 'megalodon', 'chesapecten', 'fairystone', 'nelsonite', 'unakite', 'malachite', 'kidney', 'magCrystal', 'tommy', 'willemite', 'crystalGeode', 'placerGold']) S.rockIcons[k] = rockIcon(k);
     S.oreVein = [oreVein(0), oreVein(1), oreVein(2)]; S.dumpPile = dumpPile(false); S.slagPile = dumpPile(true);
     S.furnaceRuin = furnaceRuin(); S.adit = adit(); S.bat = [batFrame(true), batFrame(false)];
     S.batRed = [batFrameRed(true), batFrameRed(false)];
@@ -11754,6 +11800,9 @@
     S.toroBar = toroBar(); S.toroBottles = toroBottles(); S.barStool = barStool(); S.toroStage = toroStage(); S.openMicSign = openMicSign();
     // CHKD
     S.carSeat = carSeat(); S.chkdCars = { red: rot90(suvTop('#b83030')), white: rot90(suvTop('#eceef0'), false) };
+    // traffic going past CHKD (nose right, and nose left), the garage, and the plaza's pigeons
+    S.traffic = { right: ['#3a6ab8', '#e8c040', '#5a8a4a', '#6a6a74'].map((c) => rot90(suvTop(c))), left: ['#b83030', '#eceef0', '#2a2a30', '#a86a3a'].map((c) => rot90(suvTop(c), false)) };
+    S.parkingGarage = parkingGarage(); S.garageArm = garageArm(); S.pigeon = { right: [0, 1, 2, 3].map(pigeon) }; S.pigeon.left = S.pigeon.right.map(mirror);
     S.chkdFront = chkdFront(); S.chkdCanopy = chkdCanopy(); S.redBall = redBall(); S.yellowBench = yellowBench(); S.kidStatues = kidStatues(); S.chkdFlag = chkdFlag(); S.chkdLamp = chkdLamp();
     S.receptionDesk = receptionDesk(); S.elevatorDoors = elevatorDoors(); S.elevatorButtons = elevatorButtons(); S.fishTank = fishTank(); S.bigTeddy = bigTeddy(); S.kidChairs = kidChairs();
     S.blockStack = blockStack(); S.giftShop = giftShop(); S.nurseStation = nurseStation(); S.roomDoors = ['#8ab8e8', '#f4a8c8', '#a8d8a0', '#f8d890'].map(roomDoor);
