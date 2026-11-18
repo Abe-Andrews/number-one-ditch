@@ -7624,8 +7624,8 @@
   };
 
   // ================================================================ JAMMING WITH ABE (instruments)
-  // Once everything at the condo is done (G.condoDone: Romulus home, Anette's plants watered and her
-  // garden gate open), Abe will jam with Nate at the little amp in his office, upstairs. A rhythm
+  // Once Romulus is home and Abe has joined the party (G.condoDone), Abe will jam with Nate at the
+  // little amp in his office, upstairs. (It used to wait for Anette's plants and garden too.) A rhythm
   // game: notes slide down a fretboard on four strings (← ↓ ↑ →), and Nate hits them
   // on the beat while Abe plays bass (and dances) and the drums keep time. Three songs, each one
   // faster (finish one to unlock the next), and each one wins one of Abe's electric guitars, on loan:
@@ -7645,7 +7645,7 @@
   // State: s.jams ({ song id: best stars }), s.instruments ({ id: true }; the bass is s.items.bass,
   // a guitar or drum is also had once its song is passed), s.guitar (the one Nate plays).
   // Flags: jamTease, jamMet, jamDrum_<song>.
-  G.condoDone = () => { const f = flags(); return !!(f.romulusBeaten && f.plantsDone && f.gardenOpen); };
+  G.condoDone = () => { const f = flags(); return !!(f.romulusBeaten || G.state.party.includes('abe')); };
   // Nate has gotten through at least one song with Abe (opens the path to the Williams Center)
   G.jammedOnce = () => Object.keys(G.state.jams || {}).length > 0;
   const bassDone = () => !!(G.state && G.state.flags.bassDone);
@@ -9074,7 +9074,7 @@
     };
   }
 
-  // The little amp in Abe's office: once everything at the condo is done, Abe jams with Nate here.
+  // The little amp in Abe's office: once Abe's in the party, he jams with Nate here.
   S.abeAmp = function* () {
     const f = flags(), s = G.state, J = jamState();
     if (!G.condoDone()) {
@@ -9089,7 +9089,7 @@
     yield* S.callIn('abe', 'Did somebody say amp?');
     if (!f.jamMet) {
       f.jamMet = true;
-      yield G.say('Abe', 'Romulus is home. Anette has her garden. It\'s finally quiet. Let\'s play.');
+      yield G.say('Abe', 'Romulus is home. It\'s finally quiet. Let\'s play.');
       yield G.say(null, 'Abe opens a tweed case lined with red fur like it\'s a museum exhibit. Inside: a black guitar with a white pickguard.');
       yield G.say('Abe', 'My \'84 Strat. Hold it like a baby bird. Carefully. CAREFULLY.');
       yield G.say('Abe', 'I\'ll play bass, you take guitar. Three songs, three of my guitars. Get through a song and its guitar is yours. On loan.');
