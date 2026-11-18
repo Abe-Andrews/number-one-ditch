@@ -284,14 +284,14 @@
   // Rhonda (a real person: a stranger who yelled at Abe on a train to New York, on the way to a Racoma
   // concert, spit at him, and kept insisting he was popping pills and needed rehab; he was not) and
   // her roommate (somebody else Abe saw that same night: an afro wig, high heels, a thong and a very
-  // shiny behind; shirtless, with a thin gold chain). They live together in the tan duplex on Abe and Hannah's street.
+  // shiny behind; shirtless, and buff). They live together in the tan duplex on Abe and Hannah's street.
   G.CAST.rhonda = {
     skin: '#6a4028', eyes: '#1a100c', hair: '#1a1210', hairStyle: 'shoulder', earring: '#e8c060',
     shirt: '#8a2e5e', sleeves: 'long', pants: '#2e3a58', shoes: '#f0f0f0', torso: 6, legs: 3,
   };
   G.CAST.rhondaRoomie = {
     skin: '#4e2e20', eyes: '#140c0a', hair: '#1c1412', hairStyle: 'buzz', smile: '#ffffff',
-    shirt: '#4e2e20', sleeves: 0, pants: '#4e2e20', shoes: '#f05898', torso: 7, legs: 4,
+    shirt: '#4e2e20', sleeves: 0, pants: '#4e2e20', shoes: '#f05898', big: true, torso: 7, legs: 4,
     post: (set, c) => G.art.roomieDress(set, c),
   };
 

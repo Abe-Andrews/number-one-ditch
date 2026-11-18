@@ -8723,12 +8723,13 @@
     p.outline();
     return p.canvas();
   }
-  // ---- Rhonda's roommate (the tan duplex): a big afro wig, shirtless with a thin gold chain, pink high heels,
+  // ---- Rhonda's roommate (the tan duplex): a big afro wig, shirtless and BUFF, pink high heels,
   // and a thong over the shiniest behind in Virginia (it fires light beams; strictly slapstick,
   // like a disco ball). The cast builder makes him; this puts the wig behind his head (the canvas
   // grows to 20x(h+4) to fit it), the thong's pink band at his hips, and the shine on his back side.
   function roomieDress(set, c) {
     const H = set.h, W2 = 20, ly = 1 + 10 + c.torso, BAND = '#f05898', L = shade(c.skin, 0.75);
+    const MD = shade(c.skin, -0.35), ML = shade(c.skin, 0.28), hx0 = c.big ? 4 : 5, hx1 = c.big ? 11 : 10;
     const dress = (src, dir) => {
       const p = new Pix(W2, H + 4), cxh = dir === 'right' ? 8.6 : 9.5;
       for (let y = 0; y < 14; y++) for (let x = 0; x < W2; x++) {
@@ -8739,24 +8740,33 @@
       const cv = p.canvas(), ctx = cv.getContext('2d');
       ctx.drawImage(src, 2, 4);
       const px = (x, y, col) => { ctx.fillStyle = col; ctx.fillRect(x + 2, y + 4, 1, 1); };
+      const ty = 11;
       if (dir === 'up') {
-        // from behind: the band, the string, and a lot of shine
-        for (let x = 5; x <= 10; x++) px(x, ly, BAND);
+        // from behind: broad shoulders, the shoulder blades, the spine...
+        px(5, ty + 2, MD); px(6, ty + 3, MD); px(10, ty + 2, MD); px(9, ty + 3, MD);
+        for (let y = ty + 2; y <= ty + 5; y++) px(7, y, MD);
+        px(4, ty + 1, ML); px(11, ty + 1, ML);
+        // ...then the band, the string, and a lot of shine
+        for (let x = hx0; x <= hx1; x++) px(x, ly, BAND);
         px(7, ly + 1, BAND); px(8, ly + 1, BAND);
         for (const x of [5, 6, 9, 10]) { px(x, ly + 1, L); px(x, ly + 2, L); }
         px(5, ly + 1, '#ffffff'); px(6, ly + 1, '#ffffff'); px(9, ly + 1, '#ffffff'); px(10, ly + 1, '#ffffff');
         px(4, ly, '#fff8c0'); px(11, ly + 2, '#fff8c0');
       } else if (dir === 'right') {
+        // from the side: a big chest out front, a bulging bicep
+        px(9, ty + 1, ML); px(9, ty + 2, MD); px(7, ty + 2, ML); px(7, ty + 3, MD);
         for (let x = 6; x <= 9; x++) px(x, ly, BAND);
         px(6, ly + 1, L); px(6, ly + 1, '#ffffff');
       } else {
-        for (let x = 5; x <= 10; x++) px(x, ly, BAND);
+        // from the front: pecs, a six-pack, and big shoulders
+        for (const x of [4, 5, 6, 9, 10, 11]) px(x, ty + 2, MD);
+        px(5, ty + 1, ML); px(10, ty + 1, ML);
+        for (const y of [ty + 3, ty + 5]) { px(6, y, MD); px(9, y, MD); }
+        for (let y = ty + 3; y <= ty + 5; y++) { px(7, y, MD); }
+        px(3, ty + 1, ML); px(12, ty + 1, ML);
+        for (let x = hx0; x <= hx1; x++) px(x, ly, BAND);
         px(7, ly + 1, BAND); px(8, ly + 1, BAND);
-        // a thin gold chain
-        const ty = 11;
-        px(6, ty, '#f0c838'); px(7, ty + 1, '#f0c838'); px(8, ty + 1, '#f0c838'); px(9, ty, '#f0c838'); px(7, ty + 2, '#f8e070');
       }
-      if (dir === 'right') { px(9, 11, '#f0c838'); px(10, 12, '#f0c838'); }
       return cv;
     };
     for (const dir of ['down', 'up', 'right']) set[dir] = set[dir].map((cv) => dress(cv, dir));
