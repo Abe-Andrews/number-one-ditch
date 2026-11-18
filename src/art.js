@@ -6937,18 +6937,27 @@
     p.outline();
     return p.canvas();
   }
-  // the hospital's parking garage, off to the side of the drop-off: two concrete decks with dark
-  // openings, a big blue P, and the entrance at the bottom (the striped arm is drawn on its own)
+  // the hospital's parking garage, across the street (the way it really is): the long concrete front
+  // of a two-deck garage, with dark openings between the columns, a big blue P sign, and the
+  // entrance in the middle (the striped arm is drawn on its own)
   function parkingGarage() {
-    const W = 48, H = 52, p = new Pix(W, H), C = '#b8b4ac', CL = '#d0ccc4', CD = '#8a8680', DK = '#2a2830';
+    const W = 256, H = 52, p = new Pix(W, H), C = '#b8b4ac', CL = '#d0ccc4', CD = '#8a8680', DK = '#2a2830';
+    const ex0 = 112, ex1 = 143;
     p.rect(0, 4, W, H - 4, C); p.hline(0, W - 1, 4, CL);
-    for (const y of [10, 24]) { p.rect(2, y, W - 4, 8, DK); for (let x = 2; x < W - 2; x += 9) p.rect(x, y, 2, 8, C); p.hline(2, W - 3, y + 8, CL); }
-    p.hline(0, W - 1, 22, CD); p.hline(0, W - 1, 36, CD);
-    // the entrance, and the sign over it
-    p.rect(14, 38, 20, 14, DK); p.hline(14, 33, 38, CD);
-    p.rect(30, 0, 14, 12, '#2a5ab8'); p.rect(31, 1, 12, 10, '#3a6ac8');
-    p.rect(34, 2, 2, 8, '#ffffff'); p.rect(36, 2, 3, 1, '#ffffff'); p.rect(38, 3, 1, 3, '#ffffff'); p.rect(36, 5, 3, 1, '#ffffff');
-    p.vline(36, 12, 13, CD);
+    for (const y of [10, 26]) {
+      p.rect(2, y, W - 4, 9, DK);
+      for (let x = 2; x < W - 2; x += 16) p.rect(x, y, 3, 9, C);
+      p.hline(2, W - 3, y + 9, CL);
+      // a few cars parked up on the decks
+      for (const [x, c] of [[22, '#b83030'], [70, '#3a6ab8'], [166, '#eceef0'], [214, '#5a8a4a']]) p.rect(x + (y === 26 ? 24 : 0), y + 4, 9, 5, c);
+    }
+    p.hline(0, W - 1, 24, CD); p.hline(0, W - 1, 40, CD);
+    // the entrance, in the middle
+    p.rect(ex0, 40, ex1 - ex0 + 1, 12, DK); p.hline(ex0, ex1, 40, CD);
+    // the sign: a big blue P, and PARKING
+    p.rect(ex0 - 2, 0, 36, 12, '#2a5ab8'); p.rect(ex0 - 1, 1, 34, 10, '#3a6ac8');
+    p.rect(ex0 + 2, 2, 2, 8, '#ffffff'); p.rect(ex0 + 4, 2, 3, 1, '#ffffff'); p.rect(ex0 + 6, 3, 1, 3, '#ffffff'); p.rect(ex0 + 4, 5, 3, 1, '#ffffff');
+    for (let i = 0; i < 6; i++) p.rect(ex0 + 11 + i * 4, 5, 2, 2, '#e8f0ff');
     p.outline();
     return p.canvas();
   }
@@ -11800,8 +11809,7 @@
     S.toroBar = toroBar(); S.toroBottles = toroBottles(); S.barStool = barStool(); S.toroStage = toroStage(); S.openMicSign = openMicSign();
     // CHKD
     S.carSeat = carSeat(); S.chkdCars = { red: rot90(suvTop('#b83030')), white: rot90(suvTop('#eceef0'), false) };
-    // traffic going past CHKD (nose right, and nose left), the garage, and the plaza's pigeons
-    S.traffic = { right: ['#3a6ab8', '#e8c040', '#5a8a4a', '#6a6a74'].map((c) => rot90(suvTop(c))), left: ['#b83030', '#eceef0', '#2a2a30', '#a86a3a'].map((c) => rot90(suvTop(c), false)) };
+    // the garage by the drop-off, and the plaza's pigeons
     S.parkingGarage = parkingGarage(); S.garageArm = garageArm(); S.pigeon = { right: [0, 1, 2, 3].map(pigeon) }; S.pigeon.left = S.pigeon.right.map(mirror);
     S.chkdFront = chkdFront(); S.chkdCanopy = chkdCanopy(); S.redBall = redBall(); S.yellowBench = yellowBench(); S.kidStatues = kidStatues(); S.chkdFlag = chkdFlag(); S.chkdLamp = chkdLamp();
     S.receptionDesk = receptionDesk(); S.elevatorDoors = elevatorDoors(); S.elevatorButtons = elevatorButtons(); S.fishTank = fishTank(); S.bigTeddy = bigTeddy(); S.kidChairs = kidChairs();

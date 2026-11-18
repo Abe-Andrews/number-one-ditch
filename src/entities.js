@@ -2512,36 +2512,6 @@
     }
   }
   G.Pigeon = Pigeon;
-  // a car driving past on the street: it stops (and honks) if Nate's standing in front of it
-  class TrafficCar extends Ent {
-    constructor(lane, dir, startX, w) {
-      super(startX, lane);
-      Object.assign(this, { dir, speed: 1.1 + Math.random() * 0.5, honk: 0, img: G.spr.traffic[dir > 0 ? 'right' : 'left'][Math.floor(Math.random() * 4)], mapW: w.pw });
-    }
-    update(w) {
-      if (G.script.busy) return;
-      const p = G.play.player, half = this.img.width / 2, front = this.x + this.dir * half;
-      const inLane = p.y > this.y - this.img.height + 4 && p.y < this.y + 6;
-      const ahead = this.dir > 0 ? p.x > front - 4 && p.x < front + 26 : p.x < front + 4 && p.x > front - 26;
-      if (inLane && ahead) {
-        if (this.honk-- <= 0) { this.honk = 100; G.audio.sfx('honk'); w.pop(this.x, this.y - this.img.height - 6, 'HONK!', '#f8d850'); }
-        return;
-      }
-      this.honk = Math.min(this.honk, 20);
-      this.x += this.dir * this.speed;
-      // around again, a new car
-      if (this.dir > 0 ? this.x > this.mapW + 60 : this.x < -60) {
-        this.x = this.dir > 0 ? -60 - Math.random() * 200 : this.mapW + 60 + Math.random() * 200;
-        this.speed = 1.1 + Math.random() * 0.5;
-        this.img = G.spr.traffic[this.dir > 0 ? 'right' : 'left'][Math.floor(Math.random() * 4)];
-      }
-    }
-    draw(ctx, cx, cy) {
-      const img = this.img;
-      ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy);
-    }
-  }
-  G.TrafficCar = TrafficCar;
   // a kid racing back and forth across the plaza (two of them: "I WIN!" "NO, *I* WIN!")
   class Runner extends Ent {
     constructor(sprite, y, x0, x1, speed, line) {
