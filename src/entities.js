@@ -3031,7 +3031,8 @@
       const S = G.spr.babies[this.badge ? 'badge' : this.kind], r = this.face > 0;
       const img = this.state === 'cry' && !this.paci ? (r ? S.cryR : S.cryL) : (r ? S.right : S.left)[this.paci ? 0 : (this.t >> 3) & 1];
       this.drawSprite(ctx, cx, cy, img, this.state === 'cry' || this.paci ? 0 : (this.t >> 3) & 1);
-      if (this.paci) ctx.drawImage(G.spr.pacifierShot, Math.round(this.x + this.face * 4 - 5) - cx, Math.round(this.y - 12) - cy);
+      // (right on its mouth: the mouth's low on the front of its face)
+      if (this.paci) ctx.drawImage(G.spr.pacifierSmall, Math.round(this.x + (this.face > 0 ? 3 : -4) - 3) - cx, Math.round(this.y - 5 - 2) - cy);
     }
   }
   G.HypnoBaby = HypnoBaby;
@@ -3078,7 +3079,7 @@
     draw(ctx, cx, cy) {
       const img = G.spr.bassinetBaby, jx = this.paci ? 0 : (this.t >> 2) & 1;
       this.drawSprite(ctx, cx, cy, img, jx);
-      if (this.paci) ctx.drawImage(G.spr.pacifierShot, Math.round(this.x - 5) - cx, Math.round(this.y - 20) - cy);
+      if (this.paci) ctx.drawImage(G.spr.pacifierSmall, Math.round(this.x - 3) - cx, Math.round(this.y - 18 - 2) - cy);
     }
   }
   G.BassinetBaby = BassinetBaby;

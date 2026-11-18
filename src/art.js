@@ -9721,6 +9721,14 @@
     return p.canvas();
   }
   // a pacifier (the bottle cannon fires these)
+  // a little pacifier, in a baby's mouth: just the pink shield and the ring (the nipple's inside)
+  function pacifierSmall() {
+    const p = new Pix(6, 5);
+    p.hline(0, 5, 1, '#f4a8c8'); p.hline(1, 4, 0, '#f8c8e0'); p.hline(1, 4, 2, '#e888b0');
+    p.set(2, 3, '#e8c8a0'); p.set(3, 3, '#e8c8a0'); p.set(2, 4, '#c8a880'); p.set(3, 4, '#c8a880');
+    p.outline();
+    return p.canvas();
+  }
   function pacifierShot() {
     const p = new Pix(10, 10);
     p.rect(3, 0, 4, 1, '#f8f8f4'); p.rect(3, 1, 4, 2, '#f8f8f4'); p.rect(4, 1, 2, 1, '#d8d8d0');
@@ -11826,7 +11834,7 @@
     S.bassinetBaby = bassinetBaby(); S.hypnoSpiral = [0, 1].map(hypnoSpiral); S.tinyStars = [tinyStar('#f8e070'), tinyStar('#f8c8e8'), tinyStar('#a8d8f8')];
     S.mech = { right: { idle: [mechBody('idle', 1), mechBody('idle', 2)], raise: mechBody('raise'), smash: mechBody('smash') } };
     S.mech.left = { idle: S.mech.right.idle.map(mirror), raise: mirror(S.mech.right.raise), smash: mirror(S.mech.right.smash) };
-    S.mechDome = { hypno: mechDome('hypno'), cry: mechDome('cry'), asleep: mechDome('asleep'), empty: mechDome('empty') }; S.pacifierShot = pacifierShot();
+    S.mechDome = { hypno: mechDome('hypno'), cry: mechDome('cry'), asleep: mechDome('asleep'), empty: mechDome('empty') }; S.pacifierShot = pacifierShot(); S.pacifierSmall = pacifierSmall();
     // the finale (the Number One Ditch)
     S.eggThrone = eggThrone(); S.culvert = culvert(); S.ditchSign = ditchSign(); S.cattails = cattails(); S.bean = bean();
     S.goldenEgg = [goldenEgg(false), goldenEgg(true)]; S.egglet = { right: [egglet(0), egglet(1)] }; S.egglet.left = S.egglet.right.map(mirror);
