@@ -20385,6 +20385,9 @@
     f.roofSeen = true;
     yield G.banner('TOGETHER', 'the Number One Ditch is waiting', 200);
     yield G.camFocus(null, null, 30);
+    // (where to go next, out loud)
+    yield G.say('Nate', 'They\'ll come straight to Abe and Hannah\'s. Let\'s get back to the condo and meet them there.');
+    yield G.say(null, 'Abe\'s Jeep is parked out front of the hospital.');
     G.play.autosave();
   };
   // up on the roof, after: everybody's at the ledge, still looking
