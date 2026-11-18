@@ -1853,7 +1853,7 @@
         w.pop(this.x, this.y - 48, 'PUFFED UP!', '#f86858');
         G.audio.sfx('crack'); G.play.shake(10, 2);
       }
-      if (this.hp <= 0) { this.state = 'defeated'; this.stunT = 0; this.z = 0; G.script.run(G.SCRIPTS.sblDefeated(this)); }
+      if (this.hp <= 0) { this.state = 'defeated'; this.stunT = 0; this.z = 0; this.hurtT = 0; G.script.run(G.SCRIPTS.sblDefeated(this)); }
     }
     bomb() {
       if (['defeated', 'idle', 'under', 'leap', 'drop', 'wall'].includes(this.state)) return;
@@ -2070,7 +2070,7 @@
   // leave a slippery puddle. Beat her and she sits down on the couch (still spitting now and then),
   // and her roommate struts out: afro wig, high heels, a thong, and a behind so shiny it fires light
   // beams. He telegraphs every beam (a dotted line, and the glint) before it fires.
-  // her spit is acidic: the puddle sizzles and bubbles, slows Nate down, and burns (a heart at a
+  // her spit looks like spit, but it stings: the puddle bubbles, slows Nate down, and burns (a heart at a
   // time, with the usual moment of safety after each)
   class SpitPuddle extends Ent {
     constructor(x, y) { super(x, y); Object.assign(this, { life: 330, r: 2, max: 15, flat: true }); }
@@ -2078,11 +2078,11 @@
       if (G.script.busy) return;
       if (this.r < this.max) this.r += 0.7;
       if (--this.life <= 0) { this.dead = true; return; }
-      if (G.tick % 9 === 0) w.burst(this.x + (Math.random() - 0.5) * this.r * 1.4, this.y - 1, ['#d0f858', '#f0ffb0'], 1, { speed: 0.2, up: 0.5, g: -0.02, life: 14, size: 1 });
-      if (G.tick % 70 === 0) w.pop(this.x, this.y - 10, '*sizzle*', '#b8e838');
+      if (G.tick % 9 === 0) w.burst(this.x + (Math.random() - 0.5) * this.r * 1.4, this.y - 1, ['#ffffff', '#d8e4ea'], 1, { speed: 0.2, up: 0.5, g: -0.02, life: 14, size: 1 });
+      if (G.tick % 70 === 0) w.pop(this.x, this.y - 10, '*sizzle*', '#e4ecf0');
       const p = G.play.player;
       if (((p.x - this.x) / this.r) ** 2 + ((p.y - 2 - this.y) / (this.r * 0.55)) ** 2 <= 1) {
-        if (G.tick - (this.popT || -99) > 50) { this.popT = G.tick; this.world.pop(p.x, p.y - 30, ['ACID!', 'IT BURNS!', 'OW OW OW!'][Math.floor(Math.random() * 3)], '#b8e838'); }
+        if (G.tick - (this.popT || -99) > 50) { this.popT = G.tick; this.world.pop(p.x, p.y - 30, ['GROSS!', 'IT BURNS!', 'OW OW OW!'][Math.floor(Math.random() * 3)], '#e4ecf0'); }
         p.sticky = 3;
         p.hurt(1, this.x, this.y);
       }
@@ -2090,10 +2090,10 @@
     draw(ctx, cx, cy) {
       const a = Math.min(1, this.life / 60) * 0.85, x = this.x - cx, y = this.y - cy;
       ctx.save(); ctx.globalAlpha = a;
-      ctx.fillStyle = '#4a7a10'; ctx.beginPath(); ctx.ellipse(x, y, this.r + 1, this.r * 0.55 + 1, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#a8e030'; ctx.beginPath(); ctx.ellipse(x, y, this.r, this.r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#8a9aa2'; ctx.beginPath(); ctx.ellipse(x, y, this.r + 1, this.r * 0.55 + 1, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#d8e4ea'; ctx.beginPath(); ctx.ellipse(x, y, this.r, this.r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
       // bubbles popping up out of it
-      ctx.fillStyle = '#f0ffb0';
+      ctx.fillStyle = '#ffffff';
       for (let i = 0; i < 3; i++) { const k = (G.tick * 0.05 + i * 2.1) % 6.28; ctx.fillRect(Math.round(x + Math.cos(k) * this.r * 0.55), Math.round(y + Math.sin(k * 1.7) * this.r * 0.25), 1, 1); }
       ctx.fillRect(Math.round(x - this.r * 0.4), Math.round(y - 1), 2, 1);
       ctx.restore();
@@ -2112,8 +2112,8 @@
         this.dead = true;
         G.audio.sfx('splash');
         w.add(new SpitPuddle(this.tx, this.ty));
-        w.burst(this.tx, this.ty - 2, ['#b8e838', '#f0ffb0'], 8, { speed: 1.2, up: 0.8, g: 0.1, life: 18, size: 1 });
-        w.pop(this.tx, this.ty - 14, '*HISSS*', '#b8e838');
+        w.burst(this.tx, this.ty - 2, ['#e4ecf0', '#ffffff'], 8, { speed: 1.2, up: 0.8, g: 0.1, life: 18, size: 1 });
+        w.pop(this.tx, this.ty - 14, '*SPLAT*', '#e4ecf0');
         const p = G.play.player;
         if (Math.hypot(p.x - this.tx, (p.y - this.ty) * 1.4) < 12) p.hurt(1, this.tx, this.ty);
       }
@@ -2205,7 +2205,7 @@
       const a0 = Math.atan2(p.y - this.y, p.x - this.x);
       for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * 0.24; w.add(new Shot(this.x, this.y - 1, Math.cos(a) * 2.3, Math.sin(a) * 2.3, G.spr.spitGlob, { life: 120, dmg: 1, z: 17 })); }
       G.audio.sfx('pop');
-      w.pop(this.x, this.y - 32, 'PTOO!', '#b8e838');
+      w.pop(this.x, this.y - 32, 'PTOO!', '#e4ecf0');
     }
     yell(w, p) {
       const t = RHONDA_WORDS[this.word++ % RHONDA_WORDS.length], dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1, sp = this.hot ? 1.5 : 1.25;
@@ -2222,7 +2222,7 @@
       this.kb = { x: (dx / m) * 2.6, y: (dy / m) * 2.6 };
       G.audio.sfx('hit');
       if (Math.random() < 0.4) w.pop(this.x, this.y - 32, ['EXCUSE ME?!', 'DON\'T TOUCH ME!', 'REHAB!!', 'I KNEW IT!'][Math.floor(Math.random() * 4)], '#f86858');
-      if (this.hp <= 0) { Object.assign(this, { state: 'tired', stunT: 0, noBar: true }); G.script.run(G.SCRIPTS.rhondaTired(this)); }
+      if (this.hp <= 0) { Object.assign(this, { state: 'tired', stunT: 0, noBar: true, hurtT: 0 }); G.script.run(G.SCRIPTS.rhondaTired(this)); }
     }
     bomb() { if (['idle', 'tired', 'defeated', 'couch'].includes(this.state)) return; G.stun(this, 110); this.hp = Math.max(1, this.hp - 2); this.hurtT = 12; }
     // the bidet: she does NOT like being sprayed (she stops to wring out her shirt, then spits back)
@@ -2245,7 +2245,7 @@
       if (this.state === 'couch') {
         // from the couch, she still has opinions (and spit)
         this.dir = 'down';
-        if (this.t % 200 === 100) { w.pop(this.x, this.y - 30, '*HAWK*', '#b8e838'); }
+        if (this.t % 200 === 100) { w.pop(this.x, this.y - 30, '*HAWK*', '#e4ecf0'); }
         if (this.t % 200 === 120) { if ((this.t / 200 | 0) % 2) this.yell(w, p); else this.spit(w, p, 3); }
         return;
       }
@@ -2276,7 +2276,7 @@
         }
         case 'spit':
           this.look(p);
-          if (this.st === 34 || this.st === 54) w.pop(this.x, this.y - 32, '*HAWK*', '#b8e838');
+          if (this.st === 34 || this.st === 54) w.pop(this.x, this.y - 32, '*HAWK*', '#e4ecf0');
           if (this.st === 20 || this.st === 40) this.spit(w, p, this.hot ? 5 : 3);
           if (--this.st <= 0) Object.assign(this, { state: 'walk', st: 70 });
           break;
@@ -2287,11 +2287,11 @@
           break;
         case 'loogie':
           this.look(p);
-          if (this.st === 48) { w.pop(this.x, this.y - 32, '*HAAAAAWK*', '#b8e838'); G.audio.sfx('fuse'); }
+          if (this.st === 48) { w.pop(this.x, this.y - 32, '*HAAAAAWK*', '#e4ecf0'); G.audio.sfx('fuse'); }
           if (this.st === 14) {
             w.add(new Loogie(this.x, this.y, p.x, p.y));
             if (this.hot) w.add(new Loogie(this.x, this.y, G.clamp(p.x + (Math.random() < 0.5 ? -30 : 30), 40, w.pw - 40), p.y));
-            G.audio.sfx('pop'); w.pop(this.x, this.y - 32, 'PTOO!', '#b8e838');
+            G.audio.sfx('pop'); w.pop(this.x, this.y - 32, 'PTOO!', '#e4ecf0');
           }
           if (--this.st <= 0) Object.assign(this, { state: 'walk', st: 70 });
           break;
@@ -2365,9 +2365,9 @@
       const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1;
       this.kb = { x: (dx / m) * 2.6, y: (dy / m) * 2.6 };
       G.audio.sfx('hit');
-      if (Math.random() < 0.4) w.pop(this.x, this.y - 34, ['MY HEELS!', 'WATCH THE WIG!', 'RUDE!', '*click*'][Math.floor(Math.random() * 4)], '#f8a0d0');
+      if (Math.random() < 0.4) w.pop(this.x, this.y - 34, ['MY HEELS!', 'WATCH THE WIG!', 'RUDE!'][Math.floor(Math.random() * 3)], '#f8a0d0');
       if (!this.wasHot && this.hot) { this.wasHot = true; w.pop(this.x, this.y - 40, 'TURN IT UP!', '#f8e070'); G.play.shake(8, 2); }
-      if (this.hp <= 0) { this.state = 'defeated'; this.stunT = 0; this.z = 0; G.script.run(G.SCRIPTS.rhondaDefeated(this)); }
+      if (this.hp <= 0) { this.state = 'defeated'; this.stunT = 0; this.z = 0; this.hurtT = 0; G.script.run(G.SCRIPTS.rhondaDefeated(this)); }
     }
     bomb() { if (['wait', 'defeated'].includes(this.state)) return; G.stun(this, 110); this.hp = Math.max(1, this.hp - 2); this.hurtT = 12; }
     onSpray() {
@@ -2408,7 +2408,6 @@
           const gx = this.goal.x - this.x, gy = this.goal.y - this.y, gd = Math.hypot(gx, gy);
           if (gd > 3) { const r1 = w.move(this, (gx / gd) * 1.2, 0), r2 = w.move(this, 0, (gy / gd) * 1.2); this.dir = G.dirToward(gx, gy); this.anim++; this.walking = true; if (r1.hitX || r2.hitY) this.pickSpot(); }
           else { this.walking = false; this.dir = G.dirToward(dx, dy); }
-          if (this.t % 14 === 0 && this.walking) w.pop(this.x, this.y - 6, '*click*', '#f8a0d0');
           if (--this.st <= 0) next();
           break;
         }

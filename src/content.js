@@ -786,7 +786,7 @@
     if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number, and Nate can\'t say it.');
     if (f.romulusBeaten && !f.sbl && !f.sblBeaten) side.push({ name: 'Next door', status: 'Something wet', kind: 'rumor', where: 'Chesapeake - the condo street', hint: 'Cold seawater is seeping out under the neighbors\' front door, Unit B. Something in there keeps going *THWAP*.' });
     if (f.sblBeaten && !f.rhondaKnock && !f.rhondaBeaten) side.push({ name: 'Two doors down', status: 'Disco music', kind: 'rumor', where: 'Chesapeake - the condo street', hint: 'Disco music and flashing lights are coming out from under the door of the tan duplex with the two garage doors.' });
-    if (f.rhondaKnock) add('The tan duplex', f.rhondaBeaten && 'Beaten!', 'Go in', 'Chesapeake - the tan duplex', 'Somebody in there is sure Nate is popping pills. Her spit is ACIDIC: stay out of the puddles, and don\'t look directly at the roommate.');
+    if (f.rhondaKnock) add('The tan duplex', f.rhondaBeaten && 'Beaten!', 'Go in', 'Chesapeake - the tan duplex', 'Somebody in there is sure Nate is popping pills. Her spit STINGS: stay out of the puddles, and don\'t look directly at the roommate.');
     if (f.sbl) {
       const st = f.sbl >= 3 ? ['Go in', 'Unit B is unlocked. Whatever lives in there is waiting.'] : f.sbl === 1 ? ['Find the password', 'Something in Unit B wants a password. One of the rocks by its door looks off.']
         : !f.sblKnown ? ['Who is S.B.L.?', 'The note was signed S.B.L. Nate feels like he\'s seen those initials before, on the router in Dad\'s den at home.'] : ['Type it in', 'Type the WiFi password into the keypad on Unit B\'s door. Every capital letter matters.'];
@@ -16189,13 +16189,13 @@
         yield G.say('Nate', 'I\'m not on anything! I\'m a geology major!');
         yield G.say('Rhonda', 'That\'s what they ALL say.');
       }
-      w.pop(r.x, r.y - 32, '*HAWK*', '#b8e838');
+      w.pop(r.x, r.y - 32, '*HAWK*', '#e4ecf0');
       yield G.wait(24);
       G.audio.sfx('pop');
-      w.pop(r.x, r.y - 32, 'PTOO!', '#b8e838');
-      w.burst(p.x, p.y - 20, ['#b8e838', '#f0ffb0'], 6, { speed: 0.8, up: 0.4, life: 16, size: 1 });
+      w.pop(r.x, r.y - 32, 'PTOO!', '#e4ecf0');
+      w.burst(p.x, p.y - 20, ['#e4ecf0', '#ffffff'], 6, { speed: 0.8, up: 0.4, life: 16, size: 1 });
       yield G.wait(10);
-      w.pop(p.x, p.y - 34, '*sizzle*', '#b8e838');
+      w.pop(p.x, p.y - 34, '*sizzle*', '#e4ecf0');
       yield G.wait(16);
       yield G.say('Nate', 'Did she just SPIT on me?!');
       yield G.say('Nate', '...Why is it SIZZLING?!');
@@ -16216,17 +16216,19 @@
     G.audio.sfx('bell');
     yield G.wait(20);
     yield G.say('Rhonda', 'I need to SIT DOWN. You are stressing me OUT.');
-    yield G.walkTo(r, RHONDA_SEAT[0], RHONDA_SEAT[1] + 10, 1.6);
+    // (the camera follows her over to the couch, then over to the bedroom door, wherever Nate is)
+    yield G.together(G.camFocus(RHONDA_SEAT[0] + 40, RHONDA_SEAT[1] - 20, 40), G.walkTo(r, RHONDA_SEAT[0], RHONDA_SEAT[1] + 10, 1.6));
     yield G.walkTo(r, RHONDA_SEAT[0], RHONDA_SEAT[1], 1);
     r.state = 'couch'; r.dir = 'down'; r.walking = false;
     yield G.say('Rhonda', 'BABY! Get out here! This one is on DRUGS!');
+    yield G.camFocus(ROOMIE_DOOR[0] - 50, ROOMIE_DOOR[1] - 10, 40);
     G.audio.sfx('door');
     yield G.wait(20);
     m.hidden = false; m.dir = 'down';
     w.disco = 2;
     for (const [x, y] of [[ROOMIE_DOOR[0] - 30, ROOMIE_DOOR[1]], [ROOMIE_DOOR[0] - 60, ROOMIE_DOOR[1] + 14]]) {
       const walk = G.walkTo(m, x, y, 0.9);
-      yield { start() { walk.start(); this.n = 0; }, update() { if (++this.n % 14 === 0) w.pop(m.x, m.y - 6, '*click*', '#f8a0d0'); return walk.update(); } };
+      yield walk;
     }
     m.dir = 'down'; m.walking = false;
     f.roomieMet = true;
@@ -16238,6 +16240,7 @@
     yield G.wait(30);
     yield G.say('Nate', 'Why is it so SHINY?!');
     yield G.say('Rhonda', 'Don\'t look directly at it.');
+    yield G.camFocus(null, null, 30);
     yield G.banner('RHONDA\'S ROOMMATE', 'shiny side out', 140);
     m.wake();
   };
@@ -16251,7 +16254,8 @@
     yield G.wait(40);
     w.rhondaFight = false;
     f.rhondaBeaten = true;
-    yield G.walkTo(m, RHONDA_SEAT[0] + 32, RHONDA_SEAT[1] + 16, 1.2);
+    // (over to the couch, where they both end up)
+    yield G.together(G.camFocus(RHONDA_SEAT[0] + 40, RHONDA_SEAT[1] - 20, 40), G.walkTo(m, RHONDA_SEAT[0] + 32, RHONDA_SEAT[1] + 16, 1.2));
     m.dir = 'down';
     yield G.banner('YOU WIN!', 'nobody needs rehab', 150);
     yield G.say('Rhonda', '...Fine. FINE. You\'re not on drugs.');
@@ -16274,6 +16278,7 @@
     yield G.wait(30);
     m.dir = 'down';
     yield G.say('Rhonda', 'Now get out. We\'re having a party.');
+    yield G.camFocus(null, null, 30);
     G.audio.play('house');
     G.play.autosave();
   };
@@ -16302,7 +16307,7 @@
     if (f.rhondaLine === 0) yield G.say('Nate', 'I never WAS.');
   };
   S.roomieTalk = function* () {
-    yield G.say(null, '*click click* He does a little turn. The light catches. Nate looks away just in time.');
+    yield G.say(null, 'He does a little turn. The light catches. Nate looks away just in time.');
   };
   // their place: the tan duplex's living room, with a disco ball, the purple couch and a rug, and a
   // doorway up to the bedroom (where the roommate comes out of)

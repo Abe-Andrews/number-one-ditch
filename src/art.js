@@ -8776,19 +8776,19 @@
     if (set.blink) set.blink = dress(set.blink, 'down');
     set.w = W2; set.h = H + 4;
   }
-  // Rhonda's spit is ACIDIC: a little bubbly glob of glowing green, and the big wad she lobs (it
-  // leaves a sizzling puddle)
+  // Rhonda's spit: it looks like plain spit (a bubbly white glob), but it stings. And the big wad
+  // she lobs, which leaves a puddle that burns
   function spitGlob() {
     const p = new Pix(5, 5);
-    p.rect(1, 0, 3, 5, '#b8e838'); p.rect(0, 1, 5, 3, '#b8e838'); p.set(1, 1, '#f0ffb0'); p.set(3, 3, '#78a818'); p.set(3, 1, '#e0ff80');
-    p.outline('#2e4a10');
+    p.rect(1, 0, 3, 5, '#e4ecf0'); p.rect(0, 1, 5, 3, '#e4ecf0'); p.set(1, 1, '#ffffff'); p.set(3, 3, '#b8c8d0'); p.set(3, 1, '#ffffff');
+    p.outline('#5a6a72');
     return p.canvas();
   }
   function loogie() {
     const p = new Pix(9, 8);
-    for (let y = 0; y < 8; y++) for (let x = 0; x < 9; x++) if (((x - 4) / 4.4) ** 2 + ((y - 4) / 3.8) ** 2 <= 1) p.set(x, y, y < 3 ? '#d0f858' : '#98d028');
-    p.set(2, 2, '#f8ffd0'); p.set(3, 1, '#f8ffd0'); p.set(6, 5, '#68981a'); p.set(4, 6, '#68981a'); p.set(6, 2, '#e8ff90');
-    p.outline('#2e4a10');
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 9; x++) if (((x - 4) / 4.4) ** 2 + ((y - 4) / 3.8) ** 2 <= 1) p.set(x, y, y < 3 ? '#f0f4f6' : '#ccd8de');
+    p.set(2, 2, '#ffffff'); p.set(3, 1, '#ffffff'); p.set(6, 5, '#a8b8c0'); p.set(4, 6, '#a8b8c0'); p.set(6, 2, '#ffffff');
+    p.outline('#5a6a72');
     return p.canvas();
   }
   // Rhonda's pamphlet: "12 STEPS TO NOT POPPING PILLS", a tri-fold with a sad clip-art pill on it
