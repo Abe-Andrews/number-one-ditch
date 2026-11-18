@@ -927,7 +927,7 @@
       this.kb = { x: (dx / m) * 2, y: (dy / m) * 2 };
       G.audio.sfx('hit');
       if (this.hp <= 0) {
-        this.state = 'defeated';
+        this.state = 'defeated'; this.hurtT = 0;
         G.script.run(G.SCRIPTS.dadDefeated(this));
       }
     }
@@ -1127,7 +1127,7 @@
       G.audio.sfx('hit');
       w.pop(this.x, this.y - 34, MIKEY_OUCH[(this.maxHp - this.hp) % MIKEY_OUCH.length], '#f8f8f0');
       if (this.hp <= 0) {
-        this.state = 'defeated';
+        this.state = 'defeated'; this.hurtT = 0;
         G.script.run(G.SCRIPTS.mikeyDefeated(this));
       } else if (++this.hitsOpen >= 3) {
         this.t = Math.min(this.t, 10);
@@ -1487,7 +1487,7 @@
       G.audio.sfx('hit');
       this.world.burst(this.x, this.y - 40, ['#2a7ae0', '#78c0ff', '#ffffff'], 6, { speed: 1.4, up: 0.6, g: 0.06, life: 24, size: 2 });
       if (Math.random() < 0.3) this.world.pop(this.x, this.y - 84, ['*fzzt*', 'GLUG!', 'FIZZ!', '*sploosh*'][Math.floor(Math.random() * 4)], '#78c0ff');
-      if (this.hp <= 0) { this.state = 'defeated'; this.ring = null; G.script.run(G.SCRIPTS.popDefeated(this)); }
+      if (this.hp <= 0) { this.state = 'defeated'; this.hurtT = 0; this.ring = null; G.script.run(G.SCRIPTS.popDefeated(this)); }
     }
     bomb(sx, sy) { const hp = this.hp; this.hit(3, sx, sy); if (this.hp > 0 && this.hp < hp) G.stun(this, 75); }
     // pops its cap and flings out more little ones
@@ -1686,7 +1686,7 @@
       G.audio.sfx('hit');
       w.burst(this.x, this.y - 30, ['#c8682e', '#f0a838', '#f8e0c0'], 6, { speed: 1.4, up: 0.6, g: 0.06, life: 22, size: 2 });
       if (Math.random() < 0.3) w.pop(this.x, this.y - 66, ['*sizzle*', 'OOF!', '*squish*', 'HMPH!'][Math.floor(Math.random() * 4)], '#f8c050');
-      if (this.hp <= 0) { this.state = 'defeated'; this.stunT = 0; G.script.run(G.SCRIPTS.hamDefeated(this)); }
+      if (this.hp <= 0) { this.state = 'defeated'; this.hurtT = 0; this.stunT = 0; G.script.run(G.SCRIPTS.hamDefeated(this)); }
     }
     bomb(sx, sy) { if (this.state === 'perch' || this.state === 'defeated') return; G.stun(this, 120); const hp = this.hp; this.hp = Math.max(1, hp - 2); this.hurtT = 12; }
     // the next thing it does, after a few hops
@@ -3295,7 +3295,7 @@
       this.hp = Math.max(0, this.hp - Math.min(dmg, 2));
       G.audio.sfx('hit');
       this.world.burst(this.x, this.y - 30, ['#8ab8e8', '#f8e070', '#3a3a4a'], 6, { speed: 1.4, up: 0.8, g: 0.08, life: 22, size: 2 });
-      if (this.hp <= 0) { this.state = 'defeated'; G.script.run(G.SCRIPTS.mechDefeated(this)); return; }
+      if (this.hp <= 0) { this.state = 'defeated'; this.hurtT = 0; G.script.run(G.SCRIPTS.mechDefeated(this)); return; }
       if ((this.dmgHere = (this.dmgHere || 0) + (before - this.hp)) >= 4) { this.recover(); this.world.pop(this.x, this.y - 74, 'It shakes it off!', '#f8e070'); }
     }
     bomb(sx, sy) {
@@ -3889,7 +3889,7 @@
       G.audio.sfx('hit');
       this.world.burst(this.x, this.y - 28, ['#a85ae8', '#f8f0ff', '#d8a8f8'], 5, { speed: 1.2, up: 0.6, life: 20, size: 2 });
       if (this.state === 'heal') { this.world.pop(this.x, this.y - 58, 'Interrupted!', '#f8e070'); this.state = 'open'; this.st = 50; this.dmgHere = 0; }
-      if (this.hp <= 0) { this.state = 'defeated'; this.vx = this.vy = 0; G.script.run(G.SCRIPTS.finFreed(this)); return; }
+      if (this.hp <= 0) { this.state = 'defeated'; this.hurtT = 0; this.vx = this.vy = 0; G.script.run(G.SCRIPTS.finFreed(this)); return; }
       if (this.id === 'dad' && this.angry && !this.masked) { this.masked = true; this.state = 'walk'; this.st = 40; G.script.run(G.SCRIPTS.finDadMask(this)); return; }
       if ((this.dmgHere = (this.dmgHere || 0) + 1) >= 3) { this.toWalk(50); this.world.pop(this.x, this.y - 58, 'Shakes it off!', '#c8a8f8'); }
     }
@@ -4976,7 +4976,7 @@
       G.audio.sfx('hit');
       this.world.burst(this.x, this.y - 20, ['#a83a3a', '#2a4a7a', '#f4ecd8', '#e8c060'], 5, { speed: 1.4, up: 0.6, g: 0.06, life: 26, size: 2 });
       if (this.hp <= 0) {
-        this.state = 'defeated';
+        this.state = 'defeated'; this.hurtT = 0;
         G.script.run(G.SCRIPTS.globDefeated(this));
       }
     }
@@ -5179,7 +5179,7 @@
       G.audio.sfx('hit');
       // (no comments when he's hit: he just keeps singing)
       if (this.hp <= 0) {
-        this.state = 'defeated';
+        this.state = 'defeated'; this.hurtT = 0;
         G.script.run(G.SCRIPTS.jjDefeated(this));
       }
     }
@@ -5588,7 +5588,7 @@
       this.world.burst(this.x, this.y - 24, ['#ece4d0', '#fbf7ec', '#e8b898'], 5, { speed: 1.3, up: 0.6, g: 0.06, life: 26, size: 2 });
       if (Math.random() < 0.3) this.world.pop(this.x, this.y - 52, FC_OUCH[Math.floor(Math.random() * FC_OUCH.length)], '#f86858');
       if (this.hp <= 0) {
-        this.state = 'defeated';
+        this.state = 'defeated'; this.hurtT = 0;
         this.alpha = 1;
         G.script.run(G.SCRIPTS.fcDefeated(this));
       }
@@ -5923,7 +5923,7 @@
       this.kb = { x: (dx / m) * 1.2, y: (dy / m) * 1.2 };
       G.audio.sfx('clank');
       this.world.burst(this.x, this.y - 22, ['#2a2a30', '#8a3a2a', '#f89a30'], 5, { speed: 1.2, life: 14, size: 2 });
-      if (this.hp <= 0) { this.state = 'defeated'; G.script.run(G.SCRIPTS.oldIronDefeated(this)); }
+      if (this.hp <= 0) { this.state = 'defeated'; this.hurtT = 0; G.script.run(G.SCRIPTS.oldIronDefeated(this)); }
     }
     bomb(sx, sy) { this.hit(4, sx, sy); }
     draw(ctx, cx, cy) {
@@ -6512,7 +6512,7 @@
       this.hurtT = 12;
       G.audio.sfx('hit');
       this.world.burst(this.x, this.y - 16, ['#5a5c3a', '#3a2a20', '#f8f8f8'], 5, { speed: 1.3, up: 0.6, g: 0.06, life: 24, size: 2 });
-      if (this.hp <= 0) { this.state = 'defeated'; G.script.run(G.SCRIPTS.tylerDefeated(this)); }
+      if (this.hp <= 0) { this.state = 'defeated'; this.hurtT = 0; G.script.run(G.SCRIPTS.tylerDefeated(this)); }
     }
     bomb(sx, sy) {
       if (this.open || ['yank', 'dizzy', 'defeated'].includes(this.state) || !G.stun(this, 70, true)) { this.hit(3, sx, sy); return; }
