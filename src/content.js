@@ -18105,7 +18105,7 @@
   CRITTER_LINES.baby = [
     ['Nate', 'Is that a BABY? With SPIRAL EYES?'],
     ['Nate', 'Father Eggmas hypnotized the BABIES?!'],
-    ['Nate', 'Okay. Okay. A little bonk on the noggin should snap them out of it. GENTLY.'],
+    ['Nate', 'I am NOT swinging a hammer at a baby. Pacifier. Pacifiers fix everything.'],
   ];
   CRITTER_LINES.bassinet = [
     ['Nate', 'A baby in a bassinet, doing laps down the hall. Who put WHEELS on that?'],
@@ -18305,7 +18305,7 @@
     yield G.say('Nurse', 'Hannah... dropped... her badge...');
     yield G.say('Nurse', 'A baby... took it... to the... playroom...');
   };
-  // the badge baby gets bonked: Hannah's badge!
+  // the badge baby gets its pacifier: Hannah's badge!
   S.badgeFound = function* (baby) {
     const s = G.state;
     s.items.badge = true;

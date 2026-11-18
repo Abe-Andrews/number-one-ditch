@@ -282,7 +282,10 @@
       this.state = 'swing';
       this.t = 0;
       this.hitSet.clear();
-      G.audio.sfx('swing');
+      // (a baby right there: Nate doesn't swing the hammer at it, he boops a pacifier in its mouth)
+      const r = this.swingRect(), near = [r[0] - 6, r[1] - 6, r[2] + 6, r[3] + 6];
+      this.boop = !!this.world && this.world.ents.some((e) => !e.dead && e.babyish && G.overlap(near, e.hurtBox()));
+      G.audio.sfx(this.boop ? 'blip' : 'swing');
     }
 
     // Lily's only move, and it is enough: hold Z to wind it up (she can't
@@ -504,6 +507,12 @@
     }
 
     drawHammer(ctx, cx, cy) {
+      if (this.boop) {
+        // the pacifier, held out toward the baby
+        const P = G.spr.pacifierShot, [dx, dy] = DIRS[this.dir], k = this.t < 4 ? 4 : this.t < 10 ? 10 : 6;
+        ctx.drawImage(P, Math.round(this.x + dx * k - 5) - cx, Math.round(this.y - 12 + dy * k * 0.7 - 5) - cy);
+        return;
+      }
       const H = G.spr.hammer;
       const phase = this.t < 4 ? 0 : this.t < 8 ? 1 : 2;
       // [sprite, quarter turns, hand offset]
@@ -2976,16 +2985,19 @@
   // ============================================================== CHKD: the hypnotized babies
   // Father Eggmas hypnotized the whole children's hospital, babies and all. They crawl after
   // Nate (fast, for babies), and now and then sit back and WAAAH: a ring of crying rolls out.
-  // A bonk doesn't hurt them, it snaps them out of it: a giggle, a yawn, and they doze right
-  // off (poof, back to the nursery). The badge baby is teething on Hannah's work badge, and
+  // Nothing ever hits them: a swing next to a baby is a pacifier boop instead (no hammer), and a
+  // moment later they giggle, yawn and doze right off (poof, back to the nursery). The badge baby is teething on Hannah's work badge, and
   // crawls away from Nate around the playroom.
   class HypnoBaby extends Critter {
     constructor(x, y, kind = 'blue', o = {}) {
       super(x, y, 1);
-      Object.assign(this, { kind, state: 'crawl', st: 90 + Math.random() * 90, face: 1, bits: ['#f8f8f0', '#a85ae8', '#f8c8e8'], dropChance: 0.45, intro: 'baby' }, o);
+      Object.assign(this, { kind, state: 'crawl', st: 90 + Math.random() * 90, face: 1, bits: ['#f8f8f0', '#a85ae8', '#f8c8e8'], dropChance: 0.45, intro: 'baby', babyish: true }, o);
     }
     hurtBox() { return [this.x - 9, this.y - 13, this.x + 9, this.y]; }
+    // nothing ever hits a baby: a "hit" pops a pacifier in its mouth, and a moment later it dozes off
+    hit() { babyBoop(this); }
     think(w, p, dx, dy, dist) {
+      if (babyPaci(this)) return;
       if (this.badge) {
         if (dist < 72) { this.vx = -(dx / dist) * 1.05; this.vy = -(dy / dist) * 1.05; this.step(w); }
         else this.wander(w, 0.35);
@@ -3017,21 +3029,39 @@
     }
     draw(ctx, cx, cy) {
       const S = G.spr.babies[this.badge ? 'badge' : this.kind], r = this.face > 0;
-      const img = this.state === 'cry' ? (r ? S.cryR : S.cryL) : (r ? S.right : S.left)[(this.t >> 3) & 1];
-      this.drawSprite(ctx, cx, cy, img, this.state === 'cry' ? 0 : (this.t >> 3) & 1);
+      const img = this.state === 'cry' && !this.paci ? (r ? S.cryR : S.cryL) : (r ? S.right : S.left)[this.paci ? 0 : (this.t >> 3) & 1];
+      this.drawSprite(ctx, cx, cy, img, this.state === 'cry' || this.paci ? 0 : (this.t >> 3) & 1);
+      if (this.paci) ctx.drawImage(G.spr.pacifierShot, Math.round(this.x + this.face * 4 - 5) - cx, Math.round(this.y - 12) - cy);
     }
   }
   G.HypnoBaby = HypnoBaby;
+  // the pacifier boop (for every baby): no knockback, no hit sound, no flash
+  function babyBoop(b) {
+    if (b.paci || b.dead) return;
+    Object.assign(b, { paci: 44, touch: false, vx: 0, vy: 0, hurtT: 0 });
+    G.audio.sfx('blip');
+    b.world.pop(b.x, b.y - 24, '*boop*', '#f8c8e8');
+  }
+  // while it has the pacifier: *suck suck*, then a yawn, and it's asleep (returns true while it's busy)
+  function babyPaci(b) {
+    if (!b.paci) return false;
+    b.paci--;
+    if (b.paci === 26) b.world.pop(b.x, b.y - 24, '*suck suck*', '#f8c8e8');
+    if (b.paci <= 0) { b.paci = 0; b.die(); }
+    return true;
+  }
 
   // A baby in a rolling hospital bassinet, racing up and down the ward hallway. It picks up speed
-  // when Nate's in its lane. Two bonks stop it (and the baby giggles and dozes off).
+  // when Nate's in its lane. A pacifier boop stops it (and the baby giggles and dozes off).
   class BassinetBaby extends Critter {
     constructor(x, y, dir) {
       super(x, y, 2);
-      Object.assign(this, { dir: dir || 1, heavy: true, bits: ['#f8f8f0', '#cfe6f2', '#a85ae8'], dropChance: 0.6, intro: 'bassinet' });
+      Object.assign(this, { dir: dir || 1, heavy: true, bits: ['#f8f8f0', '#cfe6f2', '#a85ae8'], dropChance: 0.6, intro: 'bassinet', babyish: true });
     }
     hurtBox() { return [this.x - 11, this.y - 18, this.x + 11, this.y]; }
+    hit() { babyBoop(this); }
     think(w, p, dx, dy, dist) {
+      if (babyPaci(this)) return;
       const inLane = Math.abs(dy) < 18 && Math.sign(dx) === this.dir;
       const sp = inLane ? 2.4 : 1;
       const h = w.move(this, this.dir * sp, 0);
@@ -3046,8 +3076,9 @@
       G.play.maybeDrop(this.x, this.y, this.dropChance);
     }
     draw(ctx, cx, cy) {
-      const img = G.spr.bassinetBaby, jx = (this.t >> 2) & 1;
+      const img = G.spr.bassinetBaby, jx = this.paci ? 0 : (this.t >> 2) & 1;
       this.drawSprite(ctx, cx, cy, img, jx);
+      if (this.paci) ctx.drawImage(G.spr.pacifierShot, Math.round(this.x - 5) - cx, Math.round(this.y - 20) - cy);
     }
   }
   G.BassinetBaby = BassinetBaby;
