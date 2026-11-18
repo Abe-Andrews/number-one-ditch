@@ -395,6 +395,16 @@
       ctx.drawImage(this.state === 'hurt' && (this.t >> 1) & 1 ? G.art.flash(img) : img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - 22 - (this.z || 0)) - cy);
     }
 
+    drawCarried(ctx, cx, cy, S) {
+      const kick = (G.tick >> 3) & 1, img = S.down[kick ? 1 : 2] || S.down[0];
+      const x = Math.round(this.x) - cx, y = Math.round(this.y - (this.z || 0) - 12 + ((G.tick >> 4) & 1)) - cy;
+      ctx.save();
+      ctx.translate(x, y);
+      // head toward whichever way Abe's facing (to the right if he's facing you or away)
+      ctx.rotate(this.carryFace < 0 ? -Math.PI / 2 : Math.PI / 2);
+      ctx.drawImage(img, -8, -Math.round(S.h / 2));
+      ctx.restore();
+    }
     draw(ctx, cx, cy) {
       if (this.hidden || this.state === 'cradled') return;   // (cradled: Hannah draws him in her arms)
       if (this.inBoat) { this.drawBoat(ctx, cx, cy); return; }
@@ -402,13 +412,15 @@
       // (fainting comes before the after-hit blink, which would otherwise freeze him invisible)
       if (this.state === 'dead') { this.drawFaint(ctx, cx, cy); return; }
       if (G.state.playAs === 'romulus') { this.drawDog(ctx, cx, cy); return; }
-      drawShadow(ctx, this.x, this.y, cx, cy);
+      if (!this.noShadow) drawShadow(ctx, this.x, this.y, cx, cy);
       if (this.inv > 0 && this.state !== 'hurt' && (this.inv >> 2) & 1) return;
       let img;
       // left standing around long enough, Nate gets bored and looks around (just how he's drawn:
       // which way he's facing, for talking and swinging, doesn't change)
       if (this.moving || this.state !== 'walk' || G.script.busy || this.pose) this.stillSince = G.tick;
       const idle = G.tick - (this.stillSince || G.tick), look = idle > 480 ? ['down', 'left', 'down', 'right', 'down', 'up'][Math.floor((idle - 480) / 55) % 6] : null;
+      // (carried: Abe has him up over his head, flat on his back across Abe's hands, legs kicking)
+      if (this.carried) { this.drawCarried(ctx, cx, cy, S); return; }
       if (this.pose === 'hold') img = S.hold;
       else if (look && S[look]) img = look === 'down' && S.blink && idle % 55 > 46 ? S.blink : S[look][0];
       else img = this.state === 'walk' && blinking(this, S) ? S.blink : S[this.dir][this.state === 'walk' ? walkFrame(this.anim, this.moving) : 0];
@@ -2058,24 +2070,32 @@
   // leave a slippery puddle. Beat her and she sits down on the couch (still spitting now and then),
   // and her roommate struts out: afro wig, high heels, a thong, and a behind so shiny it fires light
   // beams. He telegraphs every beam (a dotted line, and the glint) before it fires.
+  // her spit is acidic: the puddle sizzles and bubbles, slows Nate down, and burns (a heart at a
+  // time, with the usual moment of safety after each)
   class SpitPuddle extends Ent {
-    constructor(x, y) { super(x, y); Object.assign(this, { life: 360, r: 2, max: 15, flat: true }); }
-    update() {
+    constructor(x, y) { super(x, y); Object.assign(this, { life: 330, r: 2, max: 15, flat: true }); }
+    update(w) {
       if (G.script.busy) return;
       if (this.r < this.max) this.r += 0.7;
       if (--this.life <= 0) { this.dead = true; return; }
+      if (G.tick % 9 === 0) w.burst(this.x + (Math.random() - 0.5) * this.r * 1.4, this.y - 1, ['#d0f858', '#f0ffb0'], 1, { speed: 0.2, up: 0.5, g: -0.02, life: 14, size: 1 });
+      if (G.tick % 70 === 0) w.pop(this.x, this.y - 10, '*sizzle*', '#b8e838');
       const p = G.play.player;
       if (((p.x - this.x) / this.r) ** 2 + ((p.y - 2 - this.y) / (this.r * 0.55)) ** 2 <= 1) {
-        if (!p.sticky && G.tick - (this.popT || -99) > 50) { this.popT = G.tick; this.world.pop(p.x, p.y - 30, 'ew. spit.', '#d8e8d0'); }
+        if (G.tick - (this.popT || -99) > 50) { this.popT = G.tick; this.world.pop(p.x, p.y - 30, ['ACID!', 'IT BURNS!', 'OW OW OW!'][Math.floor(Math.random() * 3)], '#b8e838'); }
         p.sticky = 3;
+        p.hurt(1, this.x, this.y);
       }
     }
     draw(ctx, cx, cy) {
       const a = Math.min(1, this.life / 60) * 0.85, x = this.x - cx, y = this.y - cy;
       ctx.save(); ctx.globalAlpha = a;
-      ctx.fillStyle = '#8aa080'; ctx.beginPath(); ctx.ellipse(x, y, this.r + 1, this.r * 0.55 + 1, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#d0e0c4'; ctx.beginPath(); ctx.ellipse(x, y, this.r, this.r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(x - this.r * 0.4), Math.round(y - 1), 2, 1); ctx.fillRect(Math.round(x + this.r * 0.3), Math.round(y + 1), 1, 1);
+      ctx.fillStyle = '#4a7a10'; ctx.beginPath(); ctx.ellipse(x, y, this.r + 1, this.r * 0.55 + 1, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#a8e030'; ctx.beginPath(); ctx.ellipse(x, y, this.r, this.r * 0.55, 0, 0, Math.PI * 2); ctx.fill();
+      // bubbles popping up out of it
+      ctx.fillStyle = '#f0ffb0';
+      for (let i = 0; i < 3; i++) { const k = (G.tick * 0.05 + i * 2.1) % 6.28; ctx.fillRect(Math.round(x + Math.cos(k) * this.r * 0.55), Math.round(y + Math.sin(k * 1.7) * this.r * 0.25), 1, 1); }
+      ctx.fillRect(Math.round(x - this.r * 0.4), Math.round(y - 1), 2, 1);
       ctx.restore();
     }
   }
@@ -2092,7 +2112,8 @@
         this.dead = true;
         G.audio.sfx('splash');
         w.add(new SpitPuddle(this.tx, this.ty));
-        w.burst(this.tx, this.ty - 2, ['#d8e8d0', '#ffffff'], 8, { speed: 1.2, up: 0.8, g: 0.1, life: 18, size: 1 });
+        w.burst(this.tx, this.ty - 2, ['#b8e838', '#f0ffb0'], 8, { speed: 1.2, up: 0.8, g: 0.1, life: 18, size: 1 });
+        w.pop(this.tx, this.ty - 14, '*HISSS*', '#b8e838');
         const p = G.play.player;
         if (Math.hypot(p.x - this.tx, (p.y - this.ty) * 1.4) < 12) p.hurt(1, this.tx, this.ty);
       }
@@ -2184,7 +2205,7 @@
       const a0 = Math.atan2(p.y - this.y, p.x - this.x);
       for (let i = 0; i < n; i++) { const a = a0 + (i - (n - 1) / 2) * 0.24; w.add(new Shot(this.x, this.y - 1, Math.cos(a) * 2.3, Math.sin(a) * 2.3, G.spr.spitGlob, { life: 120, dmg: 1, z: 17 })); }
       G.audio.sfx('pop');
-      w.pop(this.x, this.y - 32, 'PTOO!', '#d8e8d0');
+      w.pop(this.x, this.y - 32, 'PTOO!', '#b8e838');
     }
     yell(w, p) {
       const t = RHONDA_WORDS[this.word++ % RHONDA_WORDS.length], dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy) || 1, sp = this.hot ? 1.5 : 1.25;
@@ -2224,7 +2245,7 @@
       if (this.state === 'couch') {
         // from the couch, she still has opinions (and spit)
         this.dir = 'down';
-        if (this.t % 200 === 100) { w.pop(this.x, this.y - 30, '*HAWK*', '#d8e8d0'); }
+        if (this.t % 200 === 100) { w.pop(this.x, this.y - 30, '*HAWK*', '#b8e838'); }
         if (this.t % 200 === 120) { if ((this.t / 200 | 0) % 2) this.yell(w, p); else this.spit(w, p, 3); }
         return;
       }
@@ -2255,7 +2276,7 @@
         }
         case 'spit':
           this.look(p);
-          if (this.st === 34 || this.st === 54) w.pop(this.x, this.y - 32, '*HAWK*', '#d8e8d0');
+          if (this.st === 34 || this.st === 54) w.pop(this.x, this.y - 32, '*HAWK*', '#b8e838');
           if (this.st === 20 || this.st === 40) this.spit(w, p, this.hot ? 5 : 3);
           if (--this.st <= 0) Object.assign(this, { state: 'walk', st: 70 });
           break;
@@ -2266,11 +2287,11 @@
           break;
         case 'loogie':
           this.look(p);
-          if (this.st === 48) { w.pop(this.x, this.y - 32, '*HAAAAAWK*', '#d8e8d0'); G.audio.sfx('fuse'); }
+          if (this.st === 48) { w.pop(this.x, this.y - 32, '*HAAAAAWK*', '#b8e838'); G.audio.sfx('fuse'); }
           if (this.st === 14) {
             w.add(new Loogie(this.x, this.y, p.x, p.y));
             if (this.hot) w.add(new Loogie(this.x, this.y, G.clamp(p.x + (Math.random() < 0.5 ? -30 : 30), 40, w.pw - 40), p.y));
-            G.audio.sfx('pop'); w.pop(this.x, this.y - 32, 'PTOO!', '#d8e8d0');
+            G.audio.sfx('pop'); w.pop(this.x, this.y - 32, 'PTOO!', '#b8e838');
           }
           if (--this.st <= 0) Object.assign(this, { state: 'walk', st: 70 });
           break;
@@ -2283,17 +2304,33 @@
           break;
       }
     }
+    // on the couch: her head and shoulders, arms crossed (of course), her lap on the cushion, and her
+    // sneakers on the floor in front of the couch. (this.y is where her feet are.)
+    drawSitting(ctx, cx, cy) {
+      const S = this.S, src = S.down[0], c = G.CAST.rhonda;
+      const top = 1 + 10 + 6, x0 = Math.round(this.x - 8) - cx, feet = Math.round(this.y) - cy, OUT = '#1c1424';
+      const pants = c.pants, pantsD = G.art.shade(pants, -0.3), shirtD = G.art.shade(c.shirt, -0.25);
+      // her sneakers, side by side on the floor
+      ctx.drawImage(src, 0, S.h - 2, 16, 2, x0, feet - 2, 16, 2);
+      // her lap: knees forward, in jeans
+      ctx.fillStyle = OUT; ctx.fillRect(x0 + 4, feet - 6, 8, 5);
+      ctx.fillStyle = pants; ctx.fillRect(x0 + 5, feet - 5, 6, 3);
+      ctx.fillStyle = pantsD; ctx.fillRect(x0 + 7, feet - 5, 2, 1); ctx.fillRect(x0 + 5, feet - 3, 6, 1);
+      // head and shoulders, sitting up straight
+      const ty = feet - 5 - top;
+      ctx.drawImage(src, 0, 0, 16, top, x0, ty, 16, top);
+      // arms crossed over her chest
+      ctx.fillStyle = OUT; ctx.fillRect(x0 + 3, ty + 13, 10, 4);
+      ctx.fillStyle = c.shirt; ctx.fillRect(x0 + 4, ty + 14, 8, 2);
+      ctx.fillStyle = shirtD; ctx.fillRect(x0 + 4, ty + 15, 8, 1);
+      ctx.fillStyle = c.skin; ctx.fillRect(x0 + 4, ty + 14, 1, 1); ctx.fillRect(x0 + 11, ty + 15, 1, 1);
+    }
     draw(ctx, cx, cy) {
       const S = this.S;
       let img = S[this.dir][walkFrame(this.anim, this.walking && this.state === 'walk')];
       if (this.hurtT && (this.hurtT >> 1) & 1) img = G.art.flash(img);
       const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2) - cy;
-      if (this.state === 'couch') {
-        // sitting: just her top half, on the cushion
-        const top = 1 + 10 + 6;
-        ctx.drawImage(S.down[0], 0, 0, 16, top, sx, Math.round(this.y - 9 - top) - cy, 16, top);
-        return;
-      }
+      if (this.state === 'couch') { this.drawSitting(ctx, cx, cy); return; }
       drawShadow(ctx, this.x, this.y, cx, cy);
       ctx.drawImage(img, sx, sy);
       if (this.state === 'frozen' || this.state === 'soaked') { ctx.globalAlpha = this.state === 'frozen' ? 0.55 : 0.3; ctx.drawImage(G.art.flash(img), sx, sy); ctx.globalAlpha = 1; }

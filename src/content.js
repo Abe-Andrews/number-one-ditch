@@ -284,14 +284,14 @@
   // Rhonda (a real person: a stranger who yelled at Abe on a train to New York, on the way to a Racoma
   // concert, spit at him, and kept insisting he was popping pills and needed rehab; he was not) and
   // her roommate (somebody else Abe saw that same night: an afro wig, high heels, a thong and a very
-  // shiny behind). They live together in the tan duplex on Abe and Hannah's street.
+  // shiny behind; shirtless, with a thin gold chain). They live together in the tan duplex on Abe and Hannah's street.
   G.CAST.rhonda = {
     skin: '#6a4028', eyes: '#1a100c', hair: '#1a1210', hairStyle: 'shoulder', earring: '#e8c060',
     shirt: '#8a2e5e', sleeves: 'long', pants: '#2e3a58', shoes: '#f0f0f0', torso: 6, legs: 3,
   };
   G.CAST.rhondaRoomie = {
     skin: '#4e2e20', eyes: '#140c0a', hair: '#1c1412', hairStyle: 'buzz', smile: '#ffffff',
-    shirt: '#e8c048', pants: '#4e2e20', shoes: '#f05898', torso: 7, legs: 4,
+    shirt: '#4e2e20', sleeves: 0, pants: '#4e2e20', shoes: '#f05898', torso: 7, legs: 4,
     post: (set, c) => G.art.roomieDress(set, c),
   };
 
@@ -419,6 +419,11 @@
       desc: 'Nate\'s BOOK OF TRAPS, stapled together when he was a little kid. Four traps. One is scribbled out. Press Z to read it.',
       use: () => G.SCRIPTS.readTrapBook(),
     },
+    pamphlet: {
+      kind: 'key', name: 'Rehab Pamphlet', short: 'Pamphlet', icon: () => G.spr.pamphletIcon, has: () => !!st().items.pamphlet,
+      desc: 'Rhonda gave it to Nate "for his recovery." 12 STEPS TO NOT POPPING PILLS. Nate is not popping pills. Press Z to read it.',
+      use: () => G.SCRIPTS.readPamphlet(),
+    },
     carbideLamp: {
       kind: 'key', name: 'Carbide Lamp', icon: () => G.spr.carbideLamp, has: () => !!st().items.carbideLamp,
       desc: 'An old miner\'s lamp from a shelf in the Continental workings. Burns bright white. Nate can see a lot farther in the Andover mines.',
@@ -545,7 +550,7 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'rushTrophy', 'mosasaurTooth', 'boatKey', 'globBookmark', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'trapBook', 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'rushTrophy', 'mosasaurTooth', 'boatKey', 'pamphlet', 'globBookmark', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'trapBook', 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
 
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
@@ -781,7 +786,7 @@
     if (f.roseRocks) add('Grandma Rose\'s funnel cake', f.roseTraded, s.items.funnelCake ? 'Bring it to her' : 'Order one', 'Easton Fair', s.items.funnelCake ? 'Grandma Rose is wandering the fair. She\'ll trade her eastonite.' : 'Funnel cake costs the sacred number, and Nate can\'t say it.');
     if (f.romulusBeaten && !f.sbl && !f.sblBeaten) side.push({ name: 'Next door', status: 'Something wet', kind: 'rumor', where: 'Chesapeake - the condo street', hint: 'Cold seawater is seeping out under the neighbors\' front door, Unit B. Something in there keeps going *THWAP*.' });
     if (f.sblBeaten && !f.rhondaKnock && !f.rhondaBeaten) side.push({ name: 'Two doors down', status: 'Disco music', kind: 'rumor', where: 'Chesapeake - the condo street', hint: 'Disco music and flashing lights are coming out from under the door of the tan duplex with the two garage doors.' });
-    if (f.rhondaKnock) add('The tan duplex', f.rhondaBeaten && 'Beaten!', 'Go in', 'Chesapeake - the tan duplex', 'Somebody in there is sure Nate is popping pills. Watch out for the spit, and don\'t look directly at the roommate.');
+    if (f.rhondaKnock) add('The tan duplex', f.rhondaBeaten && 'Beaten!', 'Go in', 'Chesapeake - the tan duplex', 'Somebody in there is sure Nate is popping pills. Her spit is ACIDIC: stay out of the puddles, and don\'t look directly at the roommate.');
     if (f.sbl) {
       const st = f.sbl >= 3 ? ['Go in', 'Unit B is unlocked. Whatever lives in there is waiting.'] : f.sbl === 1 ? ['Find the password', 'Something in Unit B wants a password. One of the rocks by its door looks off.']
         : !f.sblKnown ? ['Who is S.B.L.?', 'The note was signed S.B.L. Nate feels like he\'s seen those initials before, on the router in Dad\'s den at home.'] : ['Type it in', 'Type the WiFi password into the keypad on Unit B\'s door. Every capital letter matters.'];
@@ -3135,7 +3140,7 @@
   // 100%: everything there is to do. The `core` rows are the story, the first side quests, every rock
   // and every photo: finishing those wakes him. They can't be the whole list, because he and the Boss
   // Rush he unlocks are on it too (and minigames never hold the story up). Add anything new here.
-  const CHESTS = ['campus_teeth', 'minePocket', 'mineGrotto', 'mineVault', 'mineSump', 'cbbt_teeth'], HEARTS = 16;
+  const CHESTS = ['campus_teeth', 'minePocket', 'mineGrotto', 'mineVault', 'mineSump', 'cbbt_teeth'], HEARTS = 15;
   G.completion = () => {
     const f = flags(), s = G.state, FS = s.fights || {}, J = s.jams || {}, N = s.nicu || {};
     const row = (name, ok, where, hint) => ({ name, ok: !!ok, where, hint });
@@ -15354,19 +15359,43 @@
     if (!s.party.includes('abe')) { yield G.say('Nate', 'There\'s no way over that. Not without a ladder. Or a boost.'); return; }
     yield* S.callIn('abe', 'Need a boost?');
     const abe = abeFollower();
-    const x = G.clamp(p.x, 14 * 16 + 8, 17 * 16 + 8);
-    yield G.walkTo(p, x, 5 * 16 + 10, 1.2);
-    p.dir = 'up';
+    const x = G.clamp(p.x, 14 * 16 + 8, 17 * 16 + 8), ay = 5 * 16 + 12, inY = 3 * 16 + 12;
+    // Abe steps up to the hedge and turns around; Nate comes up in front of him
     if (abe) {
       abe.hold = true;
-      yield G.walkTo(abe, x + 14, 5 * 16 + 12, 1.6);
-      abe.dir = 'up'; abe.pose = 'hold'; abe.moving = false;
+      yield G.walkTo(abe, x, ay, 1.6);
+      abe.dir = 'down'; abe.moving = false;
     }
+    yield G.walkTo(p, x, ay + 14, 1.2);
+    p.dir = 'up';
     yield G.say('Abe', 'Foot in my hands. On three. One, two...');
-    G.audio.sfx('swing');
-    yield hop(p, x, 3 * 16 + 12, 40, 30);
+    if (abe) {
+      // up he goes: into Abe's hands, then all the way up over Abe's head (Abe is TALL)
+      const top = G.sprites.abe.h - 5, lift = (from, to, n) => ({
+        start() { this.t = 0; },
+        update() { const k = ++this.t / n; p.z = Math.round(from + (to - from) * (1 - (1 - k) * (1 - k))); return this.t >= n; },
+      });
+      G.audio.sfx('swing');
+      p.noShadow = true;
+      p.x = abe.x; p.y = abe.y + 1;
+      yield lift(0, 9, 8);
+      abe.pose = 'hold';
+      yield lift(9, top, 16);
+      yield G.wait(14);
+      w.pop(p.x, p.y - p.z - 30, '!', '#f8f8f0');
+      yield G.wait(10);
+      // ...and over the top. (He stays in front of the hedge the whole way, then lands inside.)
+      G.audio.sfx('dash');
+      const z1 = p.y - inY;
+      yield { start() { this.t = 0; }, update() { const k = ++this.t / 26; p.z = Math.round(top + (z1 - top) * k + Math.sin(k * Math.PI) * 12); return this.t >= 26; } };
+      p.y = inY; p.z = 0; p.noShadow = false;
+      G.audio.sfx('bump');
+      abe.pose = null;
+    } else {
+      G.audio.sfx('swing');
+      yield hop(p, x, inY, 40, 30);
+    }
     p.dir = 'down';
-    if (abe) abe.pose = null;
     yield G.say('Abe', '...I didn\'t say three.');
     yield G.say('Nate', 'Whoa. A whole garden back here. Roses, a birdbath... and the gate\'s latched shut from this side.');
     f.gardenIn = true;
@@ -15772,7 +15801,7 @@
       if (f.gardenOpen) w.block[4 * w.w + 16] = 0;
       for (const [x, y, w2, h2] of [[13, 0, 6, 1], [13, 4, 6, 1], [13, 1, 1, 3], [18, 1, 1, 3]]) w.props.push({ img: null, x: 0, y: 0, base: 0, hit: [x * 16, y * 16, (x + w2) * 16, (y + h2) * 16], talk: () => S.gardenHedge() });
       w.addProp({ img: sp.stoneBench, tx: 14, ty: 1, dx: 1, solid: [14, 1, 2, 1], hit: [14, 1, 2, 1], talk: look('A stone bench, with moss on it. Nobody has sat here in years.') });
-      w.addProp({ img: sp.birdbath, tx: 16, ty: 2, solid: [16, 2, 1, 1], hit: [16, 2, 1, 1], talk: look('A stone birdbath. There\'s still a little rainwater in it.') });
+      w.addProp({ img: sp.birdbath, tx: 16, ty: 2, solid: [16, 2, 1, 1], hit: [16, 2, 1, 1], talk: look('A stone birdbath. There\'s still a little rainwater in it.') }).refill = 'birdbath';
       w.addProp({ img: sp.gardenGnome, tx: 17, ty: 3, dx: 3, solid: [17, 3, 1, 1], hit: [17, 3, 1, 1], talk: look('A garden gnome. He has seen things.') });
       for (const [x, y] of [[17, 1], [14, 2]]) w.addProp({ img: sp.roseBush, tx: x, ty: y, solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk: look('Anette\'s roses. A little wild, but still blooming.') });
       for (const pl of ANETTE_PLANTS) w.add(new G.ThirstyPlant(pl.at[0] * 16 + 8, pl.at[1] * 16 + 12, { id: pl.id, kind: pl.kind }));
@@ -16107,7 +16136,7 @@
     const f = flags(), p = P();
     if (!f.sblBeaten || f.rhondaBeaten || G.state.night || G.state.playAs) return;
     const d = Math.hypot(p.x - TAN_DOOR[0], p.y - TAN_DOOR[1]);
-    if (!f.rhondaNotice && d < 90) { G.script.run(S.rhondaNotice()); return; }
+    if (!f.rhondaNotice && d < 24) { G.script.run(S.rhondaNotice()); return; }
     if (d < 200 && G.tick % 90 === 0) w.pop(TAN_DOOR[0], TAN_DOOR[1] - 30, ['*thump thump*', '*thump*', '~ disco ~'][(G.tick / 90 | 0) % 3], '#f8a0d0');
   };
   S.rhondaNotice = function* () {
@@ -16160,13 +16189,16 @@
         yield G.say('Nate', 'I\'m not on anything! I\'m a geology major!');
         yield G.say('Rhonda', 'That\'s what they ALL say.');
       }
-      w.pop(r.x, r.y - 32, '*HAWK*', '#d8e8d0');
+      w.pop(r.x, r.y - 32, '*HAWK*', '#b8e838');
       yield G.wait(24);
       G.audio.sfx('pop');
-      w.pop(r.x, r.y - 32, 'PTOO!', '#d8e8d0');
-      w.burst(p.x, p.y - 20, ['#d8e8d0', '#ffffff'], 6, { speed: 0.8, up: 0.4, life: 16, size: 1 });
+      w.pop(r.x, r.y - 32, 'PTOO!', '#b8e838');
+      w.burst(p.x, p.y - 20, ['#b8e838', '#f0ffb0'], 6, { speed: 0.8, up: 0.4, life: 16, size: 1 });
+      yield G.wait(10);
+      w.pop(p.x, p.y - 34, '*sizzle*', '#b8e838');
       yield G.wait(16);
       yield G.say('Nate', 'Did she just SPIT on me?!');
+      yield G.say('Nate', '...Why is it SIZZLING?!');
       if (G.with('abe')) yield G.say('Abe', 'She did that on the train, too.');
     } else {
       r.x = p.x; r.y = p.y - 44; r.dir = 'down';
@@ -16230,10 +16262,12 @@
       yield G.say('Rhonda', 'Rehab.');
     }
     yield G.say('Rhonda', 'Here. For your recovery.');
-    s.maxHp += 2; s.hp = s.maxHp;
-    G.audio.sfx('heart');
-    yield G.itemGet(G.spr.heartBig, 'You got a {r}Heart Container{/}! Max hearts +1.');
-    yield* S.bossStash(60, 'The roommate tosses Nate a little bag of shark teeth: {y}60 shark teeth{/}.');
+    s.items.pamphlet = true;
+    yield G.itemGet(G.spr.pamphletIcon, 'You got a {y}Rehab Pamphlet{/}! Read it from KEY ITEMS.');
+    yield G.say('Nate', '"12 Steps to Not Popping Pills."');
+    yield G.say('Nate', 'I\'m not popping pills.');
+    yield* S.bossStash(150, 'The roommate tips Nate a whole jar of shark teeth: {y}150 shark teeth{/}.');
+    yield G.say('Rhonda', 'Don\'t spend it on pills.');
     m.dir = 'up';
     G.audio.sfx('secret');
     w.pop(m.x, m.y - 36, '*ting*', '#fff8c0');
@@ -16243,9 +16277,26 @@
     G.audio.play('house');
     G.play.autosave();
   };
+  // Rhonda's pamphlet, from KEY ITEMS
+  S.readPamphlet = function* () {
+    yield G.say(null, 'A tri-fold pamphlet: "12 STEPS TO NOT POPPING PILLS." On the front, a clip-art pill with a frowny face.');
+    yield G.say(null, 'Step 1: Admit that you are popping pills.');
+    yield G.say('Nate', 'I am NOT popping pills.');
+    yield G.say(null, 'Step 2: Stop saying you are not popping pills.');
+    yield G.say(null, 'Steps 3 through 12 are just the word REHAB, in bigger and bigger letters.');
+    yield G.say(null, 'On the back, a sticky note in gold glitter pen: "Step 13: don\'t look directly at it."');
+    yield G.say('Nate', '...Honestly, that one\'s good advice.');
+  };
   // after: the two of them, home, with the disco ball going
   S.rhondaTalk = function* () {
     const f = flags();
+    // (saves from before the pamphlet: she hands it over now)
+    if (!G.state.items.pamphlet) {
+      yield G.say('Rhonda', 'You forgot this. For your recovery.');
+      G.state.items.pamphlet = true;
+      yield G.itemGet(G.spr.pamphletIcon, 'You got a {y}Rehab Pamphlet{/}! Read it from KEY ITEMS.');
+      return;
+    }
     f.rhondaLine = ((f.rhondaLine || 0) + 1) % 3;
     yield G.say('Rhonda', ['Are you STILL popping pills?', 'Rehab is not a bad word.', 'Don\'t look directly at it.'][f.rhondaLine]);
     if (f.rhondaLine === 0) yield G.say('Nate', 'I never WAS.');
@@ -16739,6 +16790,10 @@
   };
   S.bidetEmpty = function* () {
     yield G.say(null, 'The bidet is empty. Face some water (like a pond), a sink or a toilet and hold X to fill it back up. It takes a while, so keep an eye out.');
+  };
+  S.bidetBirdbath = function* () {
+    yield G.say('Nate', 'Filling a bidet from Anette\'s birdbath.');
+    yield G.say('Nate', 'If she asks, the birds did it.');
   };
   S.bidetPool = function* () {
     yield G.say('Nate', 'Filling a bidet from the pool.');
@@ -22626,7 +22681,7 @@
     update() {
       const dx = x - abe.x, dy = y - abe.y, d = Math.hypot(dx, dy), done = d <= sp;
       if (done) { abe.x = x; abe.y = y; abe.moving = false; }
-      else { abe.x += (dx / d) * sp; abe.y += (dy / d) * sp; abe.dir = G.dirToward(dx, dy); abe.moving = true; abe.anim = (abe.anim || 0) + 1; }
+      else { abe.x += (dx / d) * sp; abe.y += (dy / d) * sp; abe.dir = G.dirToward(dx, dy); abe.moving = true; abe.anim = (abe.anim || 0) + 1; if (Math.abs(dx) > 1) p.carryFace = dx < 0 ? -1 : 1; }
       p.x = abe.x; p.y = abe.y + 1;
       return done;
     },
@@ -22751,7 +22806,7 @@
     // up he goes
     G.audio.sfx('menu');
     abe.pose = 'hold'; abe.dir = 'down';
-    p.x = abe.x; p.y = abe.y + 1; p.z = abeH - 6; p.dir = 'down';
+    p.x = abe.x; p.y = abe.y + 1; p.z = abeH - 6; p.dir = 'down'; p.carried = true; p.carryFace = 1;
     yield G.wait(24);
     const spot = levelWater(w, abe);
     let logged = null;
@@ -22768,7 +22823,7 @@
       }
       abe.dir = G.dirToward(spot.at.x - abe.x, spot.at.y - abe.y);
       yield G.wait(16);
-      abe.pose = null;
+      abe.pose = null; p.carried = false;
       yield tossCmd(p, { x: abe.x, y: abe.y + 1, z: abeH - 6 }, spot.at, 30);
       p.z = 0; p.hidden = true;
       if (spot.ice) { G.audio.sfx('crack'); w.pop(spot.at.x, spot.at.y - 40, '*CRACK*', '#e0f0f8'); }
@@ -22796,7 +22851,7 @@
       // scene's caption, so the screen never sits black waiting on a button)
       const d = dryDunk(w.id);
       yield G.fadeOut(24);
-      p.hidden = true; abe.hidden = true;
+      p.hidden = true; abe.hidden = true; p.carried = false;
       yield G.fadeIn(12);
       yield dunkTrip(d);
       yield G.fadeOut(24);
@@ -22805,7 +22860,7 @@
       logged = d;
     }
     // and then everybody's back where they were
-    p.hidden = false; p.z = 0; p.x = home.x; p.y = home.y; p.dir = home.dir;
+    p.hidden = false; p.z = 0; p.x = home.x; p.y = home.y; p.dir = home.dir; p.carried = false;
     if (spawned) abe.dead = true;
     else if (scene) Object.assign(abe, { pose: null, hidden: false }, sceneAt);
     else {

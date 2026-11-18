@@ -8723,7 +8723,7 @@
     p.outline();
     return p.canvas();
   }
-  // ---- Rhonda's roommate (the tan duplex): a big afro wig, a gold sequin top, pink high heels,
+  // ---- Rhonda's roommate (the tan duplex): a big afro wig, shirtless with a thin gold chain, pink high heels,
   // and a thong over the shiniest behind in Virginia (it fires light beams; strictly slapstick,
   // like a disco ball). The cast builder makes him; this puts the wig behind his head (the canvas
   // grows to 20x(h+4) to fit it), the thong's pink band at his hips, and the shine on his back side.
@@ -8752,7 +8752,11 @@
       } else {
         for (let x = 5; x <= 10; x++) px(x, ly, BAND);
         px(7, ly + 1, BAND); px(8, ly + 1, BAND);
+        // a thin gold chain
+        const ty = 11;
+        px(6, ty, '#f0c838'); px(7, ty + 1, '#f0c838'); px(8, ty + 1, '#f0c838'); px(9, ty, '#f0c838'); px(7, ty + 2, '#f8e070');
       }
+      if (dir === 'right') { px(9, 11, '#f0c838'); px(10, 12, '#f0c838'); }
       return cv;
     };
     for (const dir of ['down', 'up', 'right']) set[dir] = set[dir].map((cv) => dress(cv, dir));
@@ -8762,18 +8766,33 @@
     if (set.blink) set.blink = dress(set.blink, 'down');
     set.w = W2; set.h = H + 4;
   }
-  // Rhonda's spit: a little bubbly glob, and the big wad she lobs (it leaves a puddle)
+  // Rhonda's spit is ACIDIC: a little bubbly glob of glowing green, and the big wad she lobs (it
+  // leaves a sizzling puddle)
   function spitGlob() {
     const p = new Pix(5, 5);
-    p.rect(1, 0, 3, 5, '#d8e8d0'); p.rect(0, 1, 5, 3, '#d8e8d0'); p.set(1, 1, '#ffffff'); p.set(3, 3, '#a8c0a0');
-    p.outline('#4a5a48');
+    p.rect(1, 0, 3, 5, '#b8e838'); p.rect(0, 1, 5, 3, '#b8e838'); p.set(1, 1, '#f0ffb0'); p.set(3, 3, '#78a818'); p.set(3, 1, '#e0ff80');
+    p.outline('#2e4a10');
     return p.canvas();
   }
   function loogie() {
     const p = new Pix(9, 8);
-    for (let y = 0; y < 8; y++) for (let x = 0; x < 9; x++) if (((x - 4) / 4.4) ** 2 + ((y - 4) / 3.8) ** 2 <= 1) p.set(x, y, y < 3 ? '#e8f0e0' : '#c0d8b0');
-    p.set(2, 2, '#ffffff'); p.set(3, 1, '#ffffff'); p.set(6, 5, '#98b088'); p.set(4, 6, '#98b088');
-    p.outline('#4a5a48');
+    for (let y = 0; y < 8; y++) for (let x = 0; x < 9; x++) if (((x - 4) / 4.4) ** 2 + ((y - 4) / 3.8) ** 2 <= 1) p.set(x, y, y < 3 ? '#d0f858' : '#98d028');
+    p.set(2, 2, '#f8ffd0'); p.set(3, 1, '#f8ffd0'); p.set(6, 5, '#68981a'); p.set(4, 6, '#68981a'); p.set(6, 2, '#e8ff90');
+    p.outline('#2e4a10');
+    return p.canvas();
+  }
+  // Rhonda's pamphlet: "12 STEPS TO NOT POPPING PILLS", a tri-fold with a sad clip-art pill on it
+  function pamphletIcon() {
+    const p = new Pix(14, 15);
+    p.rect(1, 1, 12, 13, '#f4f2ea'); p.vline(5, 1, 13, '#d8d4c8'); p.vline(9, 1, 13, '#d8d4c8');
+    p.rect(1, 1, 12, 3, '#3a6ac8'); p.hline(2, 11, 2, '#78a0e8');
+    // the pill, frowning
+    p.rect(4, 6, 3, 3, '#e85858'); p.rect(7, 6, 3, 3, '#f4f2ea'); p.hline(4, 9, 5, '#6a3a3a'); p.hline(4, 9, 9, '#6a3a3a'); p.vline(3, 6, 8, '#6a3a3a'); p.vline(10, 6, 8, '#6a3a3a');
+    p.set(5, 7, '#1c1424'); p.set(8, 7, '#1c1424');
+    p.hline(3, 10, 11, '#a8a498'); p.hline(3, 8, 12, '#a8a498');
+    // the roommate's sticky note on the corner
+    p.rect(9, 10, 4, 4, '#f8e070'); p.set(10, 11, '#e8a8d8');
+    p.outline();
     return p.canvas();
   }
   // a disco ball: little mirror tiles, one of them always catching the light
@@ -11788,7 +11807,7 @@
     // Shoolby Bones Lumpsucker, in Unit B
     S.shoolby = { right: {} }; for (const k of ['stand', 'front', 'puff', 'dizzy', 'frozen']) S.shoolby.right[k] = shoolby(k);
     S.shoolby.left = {}; for (const k in S.shoolby.right) S.shoolby.left[k] = mirror(S.shoolby.right[k]);
-    S.fishBone = fishBone(); S.waterDrop = waterDrop(); S.spitGlob = spitGlob(); S.loogie = loogie(); S.partyBall = [0, 1, 2].map(partyBall); S.fakeRock = fakeRock(); S.kelp = [0, 1, 2].map(kelp); S.poolRocks = [0, 1, 2].map(poolRock);
+    S.fishBone = fishBone(); S.waterDrop = waterDrop(); S.spitGlob = spitGlob(); S.loogie = loogie(); S.pamphletIcon = pamphletIcon(); S.partyBall = [0, 1, 2].map(partyBall); S.fakeRock = fakeRock(); S.kelp = [0, 1, 2].map(kelp); S.poolRocks = [0, 1, 2].map(poolRock);
     S.hamStand = hamStand(); S.cloveShot = cloveShot(); S.hamSlice = hamSlice();
     S.megToothCase = megToothCase(3); S.megJaw = megJaw(); S.falseMakoBoard = falseMakoBoard(); S.seaMural = seaMural(4); S.seaMural2 = seaMural(2); S.whaleVertebra = whaleVertebra();
     S.toothWall = toothWall(4); S.cowSharkCase = cowSharkCase(); S.whaleBones = whaleBones(); S.walrusCase = walrusCase(); S.layersPoster = layersPoster(); S.festivalPoster = festivalPoster(); S.giftShelf = giftShelf(); S.frontDesk = frontDesk(3);
