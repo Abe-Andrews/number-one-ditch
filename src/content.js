@@ -18497,7 +18497,7 @@
       yield G.say('Lily', 'Freya. Every night. Every NIGHT.');
       yield G.say('Lily', '...I\'m going. Mom can\'t know. Dad can\'t know. Nobody can know.');
       yield G.say('Nate', 'I know.');
-      yield G.say('Lily', 'You don\'t count. You\'re furniture.');
+      yield G.say('Lily', 'You don\'t count. You\'re Nate.');
     } else yield G.say('Lily', f.tacoRunDone ? 'Freya again. Same plan. Same order.' : 'Freya is not going to stop until I go.');
     const c = yield G.ask('Lily', 'Sneak out at 2 AM?', ['Let\'s go', 'Not tonight']);
     if (c !== 0) { yield G.say('Lily', 'Fine. But Freya is going to be SO dramatic about it.'); return; }
