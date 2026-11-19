@@ -565,6 +565,8 @@
 
     die() {
       if (this.dying) return;
+      // (at the Number One Ditch, the family gets Nate back up instead)
+      if (G.finRescueOk && G.finRescueOk()) { G.script.run(G.SCRIPTS.finRescue()); return; }
       this.dying = 1;
       G.pipe.stop();
       this.player.state = 'dead';

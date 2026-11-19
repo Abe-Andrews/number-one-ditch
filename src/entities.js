@@ -692,7 +692,11 @@
       drawShadow(ctx, this.x, this.y, cx, cy, S.h > 24);
       // (pose 'hold': arms up, e.g. Abe reaching for something way up high)
       const img = this.pose === 'hold' ? S.hold : blinking(this, S) ? S.blink : S[this.dir][walkFrame(this.anim, this.moving)];
-      ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2) - cy);
+      // (z: up off the ground; spin: tipped over, e.g. Doron going over backward in a suplex)
+      if (this.spin) {
+        ctx.save(); ctx.translate(Math.round(this.x) - cx, Math.round(this.y - S.h / 2 - (this.z || 0)) - cy); ctx.rotate(this.spin);
+        ctx.drawImage(img, -8, -Math.round(S.h / 2) + 2); ctx.restore();
+      } else ctx.drawImage(img, Math.round(this.x - 8) - cx, Math.round(this.y - S.h + 2 - (this.z || 0)) - cy);
       if (this.emote) ctx.drawImage(this.emote, Math.round(this.x - 2) - cx, Math.round(this.y - S.h - 10) - cy);
     }
   }
@@ -3922,8 +3926,22 @@
         ctx.drawImage(ni, -Math.round(ni.width / 2), -Math.round(ni.height / 2));
         ctx.restore();
       }
-      // Mom's watering can
-      if (this.state === 'watering' || (this.state === 'open' && this.id === 'michelle' && this.st > 50)) ctx.drawImage(G.spr.wateringCan, sx + 22, sy + 30);
+      // Mom's watering can: big like her, in her hand on the right, tipped forward to pour while
+      // she waters (with a stream out of the spout), held level otherwise
+      if (this.state === 'watering' || (this.state === 'open' && this.id === 'michelle' && this.st > 50)) {
+        const can = G.spr.wateringCanR, pour = this.state === 'watering';
+        const hx = sx + img.width - 3, hy = sy + Math.round(img.height * 0.66), tilt = pour ? 0.42 + Math.sin(this.t * 0.18) * 0.07 : 0.05;
+        ctx.save(); ctx.translate(hx, hy); ctx.rotate(tilt);
+        ctx.drawImage(can, -6, -16, can.width * 2, can.height * 2);
+        ctx.restore();
+        if (pour) {
+          // the rose is at the spout's tip (the can's far right edge, low)
+          const tx = hx + Math.cos(tilt) * 26 - Math.sin(tilt) * 4, ty = hy + Math.sin(tilt) * 26 + Math.cos(tilt) * 4;
+          ctx.fillStyle = '#a8d8ff';
+          for (let i = 0; i < 6; i++) { const k = ((this.t * 2 + i * 7) % 28); ctx.fillRect(Math.round(tx + 1 + (i % 3) - 1 + k * 0.15), Math.round(ty + k), 1, 2); }
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(Math.round(tx), Math.round(ty), 2, 1);
+        }
+      }
       // Hannah's heal: a green glow
       if (this.state === 'heal') { ctx.save(); ctx.globalAlpha = 0.25 + Math.sin(this.t * 0.3) * 0.15; ctx.drawImage(tinted(img, '#78e070'), sx, sy); ctx.restore(); }
       if (this.state === 'open') {

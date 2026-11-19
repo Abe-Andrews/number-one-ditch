@@ -2012,6 +2012,9 @@
     yield G.say('Doron', 'Dad. You came to Micro Mayhem. You were the MAIN EVENT.');
     yield G.say('Dad', '...Was I good?');
     yield G.say('Doron', 'You were incredible.');
+    yield G.say('Dad', 'Boys, I shouldn\'t have done that. It\'s in the Bible: do not wrestle your neighbor.');
+    yield G.say('Doron', 'Which verse?');
+    yield G.say('Dad', 'It\'s in there.');
     yield G.say('Dad', 'Before you boys go... Nate, I made you something in my workshop.');
     yield* S.pipeGift();
     yield* S.bossStash(40, 'The promoter pays the winner of the main event: {y}40 shark teeth{/}.');
@@ -20703,7 +20706,7 @@
     const goodbye = {
       doron: 'Nate... my legs... I can\'t move my LEGS...',
       dad: 'Son... run...',
-      michelle: 'Nate! Wear a hel...',
+      michelle: 'Nate, honey, I love y...',
       abe: 'Nate, quick ques...',
       romulus: '*whimper*',
       hannah: 'Nate, GO! Get out of h...',
@@ -20913,6 +20916,42 @@
     romulus: [['Romulus', '*WOOF!*'], ['Father Eggmas', 'Bad dog. BAD DOG!'], ['Hannah', 'Don\'t you TALK to him like that!']],
     hannah: [['Hannah', 'I\'m a NICU nurse. I am not scared of a cranky little egg.'], ['Father Eggmas', 'I am NOT little!']],
     nate: [['Nate', 'My turn.'], ['Doron', 'GO, NATE!'], ['Lily', 'Crack him!'], ['Father Eggmas', 'Come on, then, rock boy. HO HO HO!']],
+  };
+  // Fainting at the Ditch: the family's got Nate. Once at least one of them is free, a faint during
+  // the fight doesn't end it: somebody runs down off the bank, gets him back up with every heart,
+  // and the fight picks up right where it was. (Before anybody's free, it's a normal faint, and
+  // the fight still resumes where it left off.)
+  const RESCUE_LINES = {
+    doron: 'Up you get! LEG DAY!', dad: 'I\'ve got you, son. Up.', lily: 'Get UP, Nate. I mean it.',
+    michelle: 'Oh, honey. Up you go. Let me look at you.', romulus: '*lick lick lick*', nate: 'I\'ve got you!',
+  };
+  const finRescuer = (w) => {
+    const fam = finFam(w), cur = G.state.playAs || 'nate';
+    for (const id of ['doron', 'dad', 'lily', 'michelle', 'romulus', 'nate']) { const n = fam[id]; if (id !== cur && n && !n.dead && (n.freed || id === 'nate')) return [id, n]; }
+    return null;
+  };
+  G.finRescueOk = () => {
+    const f = flags(), w = G.play.world;
+    return !!w && w.id === 'ditchFinal' && f.fin_intro && !f.fin_done && !G.state.rush && !w.rescuing && !!finRescuer(w);
+  };
+  S.finRescue = function* () {
+    const w = G.play.world, p = P(), s = G.state, [id, r] = finRescuer(w), home = { x: r.x, y: r.y };
+    w.rescuing = true;
+    G.finClear(w);
+    G.audio.sfx('bump'); G.play.shake(8, 2);
+    p.state = 'walk'; p.dir = 'down';
+    w.pop(p.x, p.y - 30, '*thud*', '#f8f8f0');
+    yield G.wait(20);
+    yield G.walkTo(r, p.x + (r.x < p.x ? -14 : 14), p.y, 2.6);
+    r.dir = G.dirToward(p.x - r.x, p.y - r.y);
+    if (id === 'romulus') yield G.say(null, 'Romulus licks Nate\'s face until he gets back up.');
+    yield G.say(FIN_NAME[id], RESCUE_LINES[id]);
+    s.hp = s.maxHp; p.inv = 120;
+    G.audio.sfx('heart');
+    w.burst(p.x, p.y - 14, ['#f86868', '#ffffff', '#f8a8c8'], 12, { speed: 1, up: 0.8, life: 22, size: 2 });
+    yield G.walkTo(r, home.x, home.y, 2.6);
+    r.dir = 'down';
+    w.rescuing = false;
   };
   // whoever's up takes over (they come down off the bank; whoever was fighting goes back up)
   S.finTurnStart = function* (id, resumed) {
@@ -21391,7 +21430,6 @@
   const ROAD_BEATS = [
     [52, [['Michelle', 'Every yard. Every single yard has them.'], ['Dad', 'Nobody\'s home. Not one house.'], ['Hannah', 'They\'ll be okay. I\'ve seen this. It wears off.']]],
     [38, [['Abe', 'Is it me, or is it getting thicker up here?'], ['Dad', 'It\'s sticking now.'], ['Lily', 'I can hear it. The little bells. Does everybody else hear that?']]],
-    [28, [['Dad', 'Hold up a second. All of you.'], ['Dad', 'The peace of the Lord be with you.'], ['Abe', 'And also with you.'], ['Doron', 'And also with you.'], ['Lily', '...And also with you.'], ['Dad', 'All right. Let\'s go.']]],
   ];
   // the wall of tinsel across the road: it only comes down once the last of them are beaten
   S.roadGate = function* () {
@@ -21405,16 +21443,41 @@
     yield G.say('Michelle', 'That\'s spray paint. That is a real road sign, and that is spray paint.');
     yield G.say('Dad', 'We don\'t get through that tinsel without some help.');
     yield G.say('Doron', 'Everybody stand back.');
+    // Doron marches up to the tinsel
+    const d = w.ents.find((e) => e instanceof G.FamWalker && e.id === 'doron');
+    const GX = 9.5 * 16 + 8, HEAP = G.ROAD_HEAP;
+    if (d) { d.walking = true; yield G.walkTo(d, GX, 14 * 16 + 14, 1.6); d.walking = true; d.dir = 'up'; }
     yield G.say('Nate', 'Doron.');
     yield G.say('Doron', 'I said stand BACK.');
+    // he wraps it up in a bear hug, and it shakes...
     G.audio.sfx('dash');
-    yield G.wait(30);
+    w.gateShake = 30;
+    w.pop(GX, 13 * 16 - 20, '*GRRRRRK*', '#68c8ff');
+    yield G.wait(34);
+    // ...up it comes, over his head, and he goes over backward with it: tinsel and sign arc up
+    // and over and slam down in the yard behind him
+    w.gateLift = { x: GX, y: 13 * 16 + 8, z: 0, ang: 0 };
+    if (d) d.pose = 'hold';
+    G.audio.sfx('swing');
+    yield {
+      start() { this.t = 0; }, update() {
+        const n = 46, k = Math.min(1, ++this.t / n), L = w.gateLift;
+        L.x = GX + (HEAP.x - GX) * k; L.y = 13 * 16 + 8 + (HEAP.y - 13 * 16 - 8) * k; L.z = Math.sin(k * Math.PI) * 56 + 18 * (1 - k); L.ang = -k * Math.PI * 0.9;
+        if (d) { d.z = Math.sin(Math.min(1, k * 1.4) * Math.PI) * 10; d.spin = -Math.min(1, k * 1.25) * Math.PI * 0.55; }
+        return this.t >= n;
+      },
+    };
+    w.gateLift = null;
     yield G.bigText('ARMY... SUPLEX!!!', 80, '#68c8ff');
     G.audio.sfx('boom');
     G.play.shake(24, 3);
-    w.burst(9.5 * 16 + 8, 13 * 16, ['#c8c8d8', '#a85ae8', '#f8d850', '#2e8a48'], 40, { speed: 2.4, up: 1.4, g: 0.06, life: 44, size: 2 });
+    w.burst(HEAP.x, HEAP.y - 6, ['#c8c8d8', '#a85ae8', '#f8d850', '#2e8a48'], 40, { speed: 2.4, up: 1.4, g: 0.06, life: 44, size: 2 });
+    w.burst(GX, 13 * 16, ['#c8c8d8', '#a85ae8', '#f8d850', '#2e8a48'], 18, { speed: 1.6, up: 1, g: 0.06, life: 30, size: 2 });
     w.gateDown();
-    yield G.wait(40);
+    w.heapDown = true;
+    // he rolls back up onto his feet
+    if (d) { yield G.wait(16); d.spin = 0; d.z = 0; d.pose = null; d.dir = 'down'; yield G.wait(10); d.walking = false; }
+    yield G.wait(30);
     yield G.say(null, 'The sign, both posts and most of the tinsel land in a heap in somebody\'s yard.');
     yield G.say('Doron', 'Leg day.');
     yield G.camFocus(null, null, 40);
@@ -21438,6 +21501,8 @@
     G.play.warp(...G.TRAVEL.ches, true);
   };
   const ROAD_LIGHTS = [56, 49, 43, 38, 33, 30, 27, 24, 22, 20, 18, 16, 15];
+  // where Doron's suplex lands the tinsel and the sign: the yard on the left side of the road
+  G.ROAD_HEAP = { x: 4 * 16, y: 13 * 16 + 8 };
   G.MAPS.ditchRoad = {
     name: 'The Last Road',
     music: 'lastRoad',
@@ -21479,12 +21544,43 @@
         w.blockTiles(2, 13, 16, 1);
         const gate = { img: null, x: 0, y: 0, base: 14 * 16, hit: [2 * 16, 13 * 16, 18 * 16, 14 * 16],
           talk: look('A wall of tinsel across the whole road. It won\'t budge.', 'Those decorations are still moving. Better deal with them first.'),
-          draw(ctx, cx, cy) { if (!w.gateUp) return; const im = sp.tinselWall[(G.tick >> 4) & 1]; ctx.drawImage(im, 2 * 16 - cx, 13 * 16 - 12 - cy); ctx.drawImage(im, 8 * 16 - cx, 13 * 16 - 12 - cy); ctx.drawImage(im, 12 * 16 - cx, 13 * 16 - 12 - cy); } };
+          draw(ctx, cx, cy) {
+            if (!w.gateUp) return;
+            const im = sp.tinselWall[(G.tick >> 4) & 1], j = w.gateShake > 0 ? ((G.tick >> 1) & 1 ? 1 : -1) : 0;
+            if (w.gateShake > 0 && !G.script.waitingOnInput) w.gateShake--;
+            ctx.drawImage(im, 2 * 16 + j - cx, 13 * 16 - 12 - cy); ctx.drawImage(im, 12 * 16 + j - cx, 13 * 16 - 12 - cy);
+            if (!w.gateLift) ctx.drawImage(im, 8 * 16 + j - cx, 13 * 16 - 12 - cy);
+          } };
         w.props.push(gate);
-        const sign = { img: sp.ditchSignTwo, x: 9 * 16 + 8 - 12, y: 12 * 16 - 42, base: 12 * 16 + 1, draw(ctx, cx, cy) { if (w.gateUp) ctx.drawImage(this.img, this.x - cx, this.y - cy); } };
+        const sign = { img: sp.ditchSignTwo, x: 9 * 16 + 8 - 12, y: 12 * 16 - 42, base: 12 * 16 + 1, draw(ctx, cx, cy) { if (w.gateUp && !w.gateLift) ctx.drawImage(this.img, this.x - cx, this.y - cy); } };
         w.props.push(sign);
+        // mid-suplex: the middle of the tinsel and the sign, up over Doron's head and tumbling
+        w.props.push({
+          img: null, x: 0, y: 0, base: 99000,
+          draw(ctx, cx, cy) {
+            const L = w.gateLift;
+            if (!L) return;
+            const im = sp.tinselWall[(G.tick >> 4) & 1];
+            ctx.save(); ctx.translate(Math.round(L.x) - cx, Math.round(L.y - L.z) - cy); ctx.rotate(L.ang);
+            ctx.drawImage(sp.ditchSignTwo, -12, -50); ctx.drawImage(im, -im.width / 2, -12);
+            ctx.restore();
+          },
+        });
         w.gateDown = () => { w.gateUp = false; w.unblockTiles(2, 13, 16, 1); };
       }
+      // where the suplex left it: the sign and the tinsel, in a heap in somebody's yard
+      w.props.push({
+        img: null, x: 0, y: 0, base: G.ROAD_HEAP.y + 4,
+        hit: [G.ROAD_HEAP.x - 24, G.ROAD_HEAP.y - 16, G.ROAD_HEAP.x + 24, G.ROAD_HEAP.y + 6], talk: () => (flags().roadGate || w.heapDown ? look('The sign, both posts and most of the tinsel, in a heap in somebody\'s yard. NUMBER TWO DITCH. Not anymore.')() : null),
+        draw(ctx, cx, cy) {
+          if (!(flags().roadGate && !w.gateUp) && !w.heapDown) return;
+          const H = G.ROAD_HEAP, im = sp.tinselWall[0];
+          ctx.save(); ctx.translate(Math.round(H.x) - cx, Math.round(H.y) - cy);
+          ctx.save(); ctx.rotate(-0.25); ctx.drawImage(im, -im.width / 2, -10); ctx.restore();
+          ctx.save(); ctx.rotate(-1.45); ctx.drawImage(sp.ditchSignTwo, -12, -30); ctx.restore();
+          ctx.restore();
+        },
+      });
       for (const x of [7, 12]) w.addProp({ img: sp.candyPost, tx: x, ty: 9, h: 3, dx: 1, solid: [x, 11, 1, 1] });
       w.addTrigger(8, 0, 4, 1, () => G.script.run(S.ditchAhead()));
       for (const [i, [row, lines]] of ROAD_BEATS.entries()) {
@@ -21495,8 +21591,8 @@
           G.script.run((function* () { for (const [who, line] of lines) yield G.say(who, line); })());
         });
       }
-      // the whole family, single file behind Nate
-      ['romulus', 'doron', 'lily', 'abe', 'hannah', 'michelle', 'dad'].forEach((id, i) => w.add(new G.FamWalker(id, i, 9.5 * 16, (61 + i * 0.5) * 16, 'up')));
+      // the whole family, single file behind Nate (Romulus bringing up the rear)
+      ['doron', 'lily', 'abe', 'hannah', 'michelle', 'dad', 'romulus'].forEach((id, i) => w.add(new G.FamWalker(id, i, 9.5 * 16, (61 + i * 0.5) * 16, 'up')));
       // overhead: the night, the purple sky ahead, strings of lights, and the snow
       w.props.push({
         img: null, x: 0, y: 0, base: 99990,
