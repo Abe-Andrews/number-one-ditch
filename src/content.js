@@ -18546,9 +18546,11 @@
     const dad = w.addProp({ img: null, tx: 42, ty: 5, hit: [42, 5, 1, 1], talk: S.tacoDadLook });
     dad.night = true; dad.base = 5 * 16 + 15;
     dad.draw = function (ctx, cx, cy) {
-      const d = G.sprites.dad.down[0], x = DAD_CHAIR[0] - 8 - cx, y = DAD_CHAIR[1] - 26 - cy, nod = (G.tick >> 5) % 2;
+      // (poked awake, he sits up and sways to his own singing)
+      const wk = G.play.world.dadWake, sing = G.play.world.dadSing;
+      const d = G.sprites.dad.down[0], sway = sing ? ((G.tick >> 4) % 2 ? 1 : -1) : 0, x = DAD_CHAIR[0] - 8 - cx + sway, y = DAD_CHAIR[1] - 26 - cy - (wk ? 1 : 0), nod = wk ? 0 : (G.tick >> 5) % 2;
       ctx.drawImage(d, 0, 0, d.width, 15, x, y + nod, d.width, 15);
-      ctx.drawImage(G.spr.openBook, x + 3, y + 11 + nod);
+      ctx.drawImage(G.spr.openBook, x + 3, y + 11 + nod + (wk ? 2 : 0));
     };
     // Lily's shoes, on the mudroom bench
     const shoes = w.addProp({ img: null, tx: 37, ty: 13, hit: [37, 13, 2, 1], talk: S.tacoShoes });
@@ -18572,9 +18574,46 @@
       yield G.say('Lily', 'You already owe me.');
     } else yield G.say('Nate', 'Two bean burritos. Go. GO.');
   };
+  // Poke him and he wakes up... and sings the Make You Fussy song at her, the way he does to bug her.
+  // (A hidden one: then he's right back asleep, and won't remember a thing.)
   S.tacoDadLook = function* () {
+    const w = G.play.world, f = flags(), X = DAD_CHAIR[0], Y = DAD_CHAIR[1];
     yield G.say(null, 'Dad, asleep in his rocker by the fire, a book open on his chest.');
-    yield G.say('Lily', '*whispering* Don\'t. Wake. Up.');
+    yield G.say(null, 'Lily pokes him. Just to check.');
+    w.dadWake = true;
+    G.audio.sfx('snore'); w.pop(X, Y - 42, '*SNORT*', '#f8d850');
+    yield G.wait(30);
+    yield G.say('Dad', '...Hm? Lily?');
+    if (!f.fussySong) {
+      yield G.say('Lily', '*whispering* Nothing. Go back to sleep.');
+      yield G.say('Dad', '*a slow grin*');
+      yield G.say('Lily', '*whispering* No. Dad. Don\'t you DARE.');
+    } else {
+      yield G.say('Lily', '*whispering* Why did I do that. Why did I poke him AGAIN.');
+      yield G.say('Dad', '*the grin*');
+    }
+    f.fussySong = true;
+    w.dadSing = true;
+    const lines = ['*Dad.*', '*DAD.*', '*everyone is ASLEEP*', '*why are you like this*', '*I\'m leaving*', '*...okay that part\'s funny*'];
+    yield {
+      start() { this.h = G.audio.clip('assets/music/make-you-fussy.m4a'); this.t = 0; this.k = 0; },
+      update() {
+        this.t++;
+        if (this.t % 26 === 0) w.pop(X + 4 + (this.t % 52 ? 6 : -4), Y - 32, this.t % 52 ? '♪' : '♫', '#c8a0f0');
+        if (this.t % 190 === 95 && this.k < lines.length) { const p = G.play.player; w.pop(p.x, p.y + 14, lines[this.k++], '#f8c8e8'); }
+        // (X cuts him off)
+        if (this.t > 60 && G.input.hit('b')) { G.input.eat('b'); this.h.stop(); }
+        return this.h.done && this.t > 20;
+      },
+    };
+    w.dadSing = false;
+    yield G.say('Dad', '...Okay. Night, Lily.');
+    w.dadWake = false;
+    G.audio.sfx('snore'); w.pop(X + 6, Y - 30, 'Zzz...', '#f8d8a8');
+    yield G.wait(40);
+    yield G.say('Lily', '*whispering* He is not going to remember ANY of this.');
+    // (and he's snoring again, nice and long, so she can get going)
+    w.dadCtl = { st: 'snore', t: 260 };
   };
   S.tacoShoes = function* () {
     const N = G.state.night;

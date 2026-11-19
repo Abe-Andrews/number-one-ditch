@@ -543,6 +543,29 @@ G.audio = (function () {
     if (recSource) { try { recSource.stop(); } catch (e) { /* already stopped */ } recSource = null; }
   }
 
+  // A recording played once, over the top (Dad singing): the music stops for it and comes back after.
+  // Returns a handle: done turns true when it ends (or right away if it can't play); stop() cuts it off.
+  function clip(file) {
+    const h = { done: false, src: null, stop() { if (h.src) { try { h.src.stop(); } catch (e) { /* already stopped */ } } else h.done = true; } };
+    if (!ctx) { h.done = true; return h; }
+    const resume = want;
+    stopSong();
+    const end = () => { if (h.done) return; h.done = true; if (resume && want === resume && !song) startSong(resume); };
+    const go = (buf) => {
+      if (!buf || h.done) { end(); return; }
+      h.src = ctx.createBufferSource(); h.src.buffer = buf;
+      const g = ctx.createGain(); g.gain.value = 0.9;
+      h.src.connect(g); g.connect(master);
+      h.src.onended = end;
+      h.src.start();
+    };
+    if (file in recorded) go(recorded[file]);
+    else fetch(file).then((r) => r.arrayBuffer()).then((ab) => new Promise((ok, no) => ctx.decodeAudioData(ab, ok, no)))
+      .then((buf) => { recorded[file] = buf; go(buf); }, () => { recorded[file] = false; go(false); });
+    const stop0 = h.stop; h.stop = () => { stop0(); end(); };
+    return h;
+  }
+
   // a hidden tab stops its sound (browsers slow a hidden tab's timers, and the music would stutter)
   document.addEventListener('visibilitychange', () => {
     if (!ctx) return;
@@ -560,6 +583,7 @@ G.audio = (function () {
       if (ctx) startSong(name);
     },
     stop() { want = null; stopSong(); },
+    clip,
     // Dad's pipe: each direction is a breathy note.
     puff(dir) {
       if (!ctx || muted) return;
