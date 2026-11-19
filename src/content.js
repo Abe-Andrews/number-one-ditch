@@ -18478,7 +18478,7 @@
   const TACO_HOW = [
     'Freya freezes up at drive-thrus. Lily orders for the whole car.',
     'LISTEN as everybody says what they want (Z skips ahead), then ORDER it all from memory: ↑↓ and Z. X asks again, but the car behind you honks.',
-    'The speaker reads the order back. It gets something WRONG. Z marks a wrong line, X says "Yep, that\'s it."',
+    'The speaker reads the order back and gets something WRONG. Your order is next to each line: Z marks a wrong one, X says "Yep, that\'s it."',
     'Don\'t let the HONK bar fill up. Then catch the bags at the window!',
   ];
   G.night = () => !!(G.state && G.state.night);
@@ -18811,10 +18811,18 @@
     ctx.fillStyle = '#5a7a98'; ctx.fillRect(x + 14, y + bob, 44, 13);
     ctx.fillStyle = '#2a3448'; ctx.fillRect(x + 17, y + 2 + bob, 17, 10); ctx.fillRect(x + 37, y + 2 + bob, 18, 10);
     const fr = G.sprites.freya.right[0], li = G.sprites.lily.right[0];
-    // (lean: Lily leaning across Freya and out the window, to yell her order into the speaker)
-    if (!lean) ctx.drawImage(li, 0, 0, li.width, 10, x + 19, y + 2 + bob, li.width, 10);
-    ctx.drawImage(fr, 0, 0, fr.width, 10, x + 39, y + 2 + bob, fr.width, 10);
-    if (lean) ctx.drawImage(li, 0, 0, li.width, 11, x + 54, y - 3 + bob, li.width, 11);
+    // (lean: Lily leaning across Freya to the driver's window, her arm out to the speaker. Everything stays
+    // inside the window frame, so nobody's head pokes out through the roof)
+    if (!lean) {
+      ctx.drawImage(li, 0, 0, li.width, 10, x + 19, y + 2 + bob, li.width, 10);
+      ctx.drawImage(fr, 0, 0, fr.width, 10, x + 39, y + 2 + bob, fr.width, 10);
+    } else {
+      ctx.save(); ctx.beginPath(); ctx.rect(x + 37, y + 2 + bob, 18, 10); ctx.clip();
+      ctx.drawImage(fr, 0, 0, fr.width, 10, x + 33, y + 3 + bob, fr.width, 10);
+      ctx.drawImage(li, 0, 0, li.width, 10, x + 43, y + 3 + bob, li.width, 10);
+      ctx.restore();
+      ctx.fillStyle = '#f8d4c0'; ctx.fillRect(x + 55, y + 8 + bob, 6, 2); ctx.fillRect(x + 60, y + 7 + bob, 2, 2);
+    }
     ctx.fillStyle = '#f8f0c0'; ctx.fillRect(x + 70, y + 15 + bob, 3, 3); ctx.fillStyle = '#c83030'; ctx.fillRect(x, y + 15 + bob, 2, 3);
     for (const wx of [x + 12, x + 58]) { ctx.fillStyle = '#1c1c22'; ctx.beginPath(); ctx.arc(wx, y + 26, 6, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#8a8a94'; ctx.fillRect(wx - 1, y + 25, 3, 3); }
   }
@@ -18885,7 +18893,7 @@
       () => [['Freya', 'And also...', pick(2)], ['Doron', 'TACO BELL??? GET ME...', pick(2)], ['Abe', 'is this the group chat? ...', pick(1)], ['Lily', 'And my usual.', LILY_USUAL.slice()]],
     ];
     const TEXTERS = { Nate: 1, Doron: 1, Abe: 1 };
-    const HONK = [0.085, 0.07, 0.055];
+    const HONK = [0.05, 0.042, 0.035];
     return {
       start() { Object.assign(this, { t: 0, round: 0, sel: 0, msg: null, msgT: 0, fails: 0, misses: 0, dropped: 0 }); this.newRound(); G.play.overlay = this; },
       newRound() {
@@ -18895,13 +18903,20 @@
         this.got = []; this.honk = 0; this.phase = 'listen'; this.li = 0; this.lt = 0;
       },
       say(who, m) { this.msg = [who, m]; this.msgT = 160; },
+      // each person's order, filled in as Lily orders their things ('?' for what's still to order)
+      filled() {
+        const rows = this.orders.map((o) => ({ who: o[0], want: o[2], have: o[2].map(() => null) }));
+        for (const id of this.got) { for (const r of rows) { const k = r.want.findIndex((w, j) => w === id && !r.have[j]); if (k >= 0) { r.have[k] = id; break; } } }
+        return rows;
+      },
       // the speaker reads the order back, getting some of it wrong
       readBack() {
         this.lines = this.got.map((id) => ({ id, wrong: false, mark: false }));
         const n = this.round === 2 ? 2 : 1, idx = [...this.lines.keys()].sort(() => Math.random() - 0.5).slice(0, n);
-        for (const i of idx) { const L = this.lines[i]; let id; do { id = TACO_MENU[Math.floor(Math.random() * TACO_MENU.length)].id; } while (id === L.id); L.id = id; L.wrong = true; }
-        // (read back in a jumbled order: check it against what she ordered, down in the bottom bar)
-        this.lines.sort(() => Math.random() - 0.5);
+        // (a wrong line is always something nobody ordered, so it can't look like a right one)
+        const off = TACO_MENU.map((m) => m.id).filter((id) => !this.got.includes(id));
+        for (const i of idx) { if (!off.length) break; const L = this.lines[i]; L.said = L.id; L.id = off.splice(Math.floor(Math.random() * off.length), 1)[0]; L.wrong = true; }
+        for (const L of this.lines) if (!L.said) L.said = L.id;
         this.phase = 'readback'; this.sel2 = 0; G.audio.sfx('buzz');
       },
       update() {
@@ -19001,22 +19016,34 @@
           const n = G.sayable(this.li + 1) + '/' + G.sayable(this.orders.length);
           FT().draw(ctx, n, 114 - FT().width(n), 75, '#9890a8', sh);
         } else if (this.phase === 'order') {
-          FT().draw(ctx, 'ORDER IT ALL!', 6, 76, '#f8d850', sh);
-          FT().draw(ctx, '↑↓ pick   Z order', 6, 88, '#c8c0d8', sh);
-          FT().draw(ctx, 'X  say it again', 6, 99, '#c8c0d8', sh);
-          FT().draw(ctx, 'ENTER  give up', 6, 110, '#9890a8', sh);
+          const rows = this.filled(), left = this.total - this.got.length;
+          // (four people fill the whole box: then the header gives way)
+          const big = rows.length > 3, n = G.sayable(left) + ' to go';
+          if (!big) FT().draw(ctx, 'ORDER IT ALL!', 6, 75, '#f8d850', sh);
+          FT().draw(ctx, n, 114 - FT().width(n), 75, '#9890a8', sh);
+          rows.forEach((r, k) => {
+            const y = big ? 76 + k * 12 : 87 + k * 12;
+            FT().draw(ctx, r.who, 6, y + 1, G.NAME_COLORS[r.who] || '#f8f8f0', sh);
+            r.have.forEach((id, j) => {
+              const ix = 48 + j * 13;
+              if (id) ctx.drawImage(G.spr.menuIcon[id], ix, y - 2);
+              else { ctx.fillStyle = '#2a2240'; ctx.fillRect(ix, y - 2, 12, 11); FT().draw(ctx, '?', ix + 4, y, '#6a6080'); }
+            });
+          });
         } else if (this.phase === 'readback') {
           // the speaker, reading it back (with mistakes)
           ctx.fillStyle = 'rgba(12,8,20,0.94)'; ctx.fillRect(2, 2, 116, 120);
-          FT().draw(ctx, '*kshh* SO THAT\'S...', 6, 5, '#a8e8a8', sh);
+          FT().draw(ctx, '*kshh* SO THAT\'S...', 6, 4, '#a8e8a8', sh);
+          FT().draw(ctx, 'SPEAKER', 6, 14, '#6a8a6a'); FT().draw(ctx, 'YOU', 116 - FT().width('YOU'), 14, '#ff98d0');
           this.lines.forEach((L, k) => {
-            const y = 17 + k * 12, on = k === this.sel2;
-            if (on) { ctx.fillStyle = '#3a2a5a'; ctx.fillRect(4, y - 1, 112, 12); }
+            const y = 25 + k * 13, on = k === this.sel2;
+            if (on) { ctx.fillStyle = '#3a2a5a'; ctx.fillRect(4, y - 2, 112, 13); }
             ctx.drawImage(G.spr.menuIcon[L.id], 6, y - 1);
             FT().draw(ctx, tacoShort(L.id), 21, y + 2, L.mark ? '#f86858' : '#f0e8ff', sh);
-            if (L.mark) { ctx.fillStyle = '#f86858'; ctx.fillRect(20, y + 5, FT().width(tacoShort(L.id)) + 2, 1); FT().draw(ctx, 'X', 108, y + 2, '#f86858', sh); }
+            if (L.mark) { ctx.fillStyle = '#f86858'; ctx.fillRect(20, y + 5, FT().width(tacoShort(L.id)) + 2, 1); }
+            // (what Lily actually said, at the end of the line)
+            ctx.globalAlpha = 0.85; ctx.drawImage(G.spr.menuIcon[L.said], 103, y - 1); ctx.globalAlpha = 1;
           });
-          FT().draw(ctx, 'Z wrong!   X yep', 6, 112, '#f8d850', sh);
         } else if (this.phase === 'window' || this.phase === 'done') {
           // catch the bags: the marker swings over a hand
           FT().draw(ctx, this.phase === 'done' ? 'GOT EVERYTHING!' : 'CATCH IT! (Z)', 6, 76, '#f8d850', sh);
@@ -19035,10 +19062,11 @@
         }
         // the bottom bar: what Lily's ordered so far, and the honk meter
         ctx.fillStyle = '#0c0814'; ctx.fillRect(0, 124, G.W, 36);
+        if (this.phase === 'window') FT().draw(ctx, 'Z when it\'s over the green', 4, 142, '#f8d850', sh);
         FT().draw(ctx, this.phase === 'window' || this.phase === 'done' ? 'THE WINDOW' : 'ROUND ' + G.sayable(Math.min(this.round + 1, 3)) + '/3', 4, 127, '#c8c0d8', sh);
         if (this.phase !== 'window' && this.phase !== 'done') {
-          this.got.forEach((id, k) => ctx.drawImage(G.spr.menuIcon[id], 4 + k * 13, 141));
-          for (let k = this.got.length; k < this.total; k++) { ctx.fillStyle = '#2a2240'; ctx.fillRect(4 + k * 13, 141, 12, 12); }
+          const hint = { listen: 'Remember it!   Z: next', order: '↑↓ pick   Z: order   X: ask again', readback: 'Z: that\'s wrong!   X: yep, that\'s it', between: 'Nice!', fail: 'Around again...' }[this.phase];
+          if (hint) FT().draw(ctx, hint, 4, 142, '#f8d850', sh);
           FT().draw(ctx, 'HONK', 168, 127, '#f86858', sh);
           ctx.fillStyle = '#2a2240'; ctx.fillRect(168, 142, 68, 8);
           ctx.fillStyle = this.honk > 70 ? '#f86858' : '#f8d850'; ctx.fillRect(168, 142, Math.round(68 * Math.min(1, this.honk / 100)), 8);
