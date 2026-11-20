@@ -3945,6 +3945,23 @@
     return p.canvas();
   }
 
+  // RHONDA'S: a round 70s shag rug, rings of burnt orange, mustard and brown, all fuzz
+  function rhondaRug(tw, th) {
+    const W = tw * 16, H = th * 16, p = new Pix(W, H), cx = (W - 1) / 2, cy = (H - 1) / 2;
+    const rings = ['#7a3a1c', '#d8742c', '#e8b040', '#a8501c', '#f0c868', '#d8742c', '#7a3a1c'];
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const d = Math.sqrt(((x - cx) / (W / 2)) ** 2 + ((y - cy) / (H / 2)) ** 2);
+      // (shag: the edge is ragged, and the pile is speckled)
+      const fuzz = ((x * 7 + y * 13) % 5) / 60;
+      if (d + fuzz > 1) continue;
+      const ring = Math.min(rings.length - 1, Math.floor((1 - d) * rings.length * 1.15));
+      let c = rings[ring];
+      if ((x * 3 + y * 5) % 7 === 0) c = ring % 2 ? '#f8d888' : '#5a2a14';
+      p.set(x, y, c);
+    }
+    return p.canvas();
+  }
+
   // NATE'S ROOM: a deer skull mounted on a plaque, two little art tiles, a Mission bed with a navy and
   // green plaid comforter, a small table with an amber glass lamp, a dark dresser with rocks lined up
   // on top, a green armchair and stacks of books on the floor.
@@ -11673,7 +11690,7 @@
     S.braidedHall = braidedRug(40, 76); S.braidedLiving = braidedRug(60, 18);
     S.livingFireplace = livingFireplace(); S.birdChart = schoolChart('birds'); S.mushroomChart = schoolChart('mushrooms'); S.rockCurio = rockCurio();
     S.folkChest = folkChest(); S.tvConsole = tvConsole(); S.armoire = armoire(); S.roundLampTable = roundLampTable(); S.sectionalBack = sectionalBack();
-    S.coffeeDark = coffeeDark(); S.floorLampSilver = floorLampSilver(); S.livingRug = livingRug(10, 5);
+    S.coffeeDark = coffeeDark(); S.floorLampSilver = floorLampSilver(); S.livingRug = livingRug(10, 5); S.rhondaRug = rhondaRug(10, 5);
     S.wingCream = armchair('#e6dccb', { wing: true, leg: '#5a3020' }); S.chairTufted = armchair('#7a5236', { studs: true }); S.chairGreen = armchair('#3e5038', { leg: '#c8a070' });
     S.deerSkull = deerSkull(); S.artTiles = artTiles(); S.amberLampTable = amberLampTable(); S.dresserRocks = dresserRocks(); S.bookStacks = bookStacks();
     S.bedMission = homeBed({ w: 16, h: 48, quilt: '#2a3a5a', pattern: 'plaid', patC: '#4a6a4a', pillows: ['#f4f4f0'], head: '#4a2a1a', slats: true });

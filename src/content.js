@@ -16332,7 +16332,7 @@
       const F = furnish(w), sp = G.spr, f = flags();
       // the doorway to the bedroom (dark), the rug, the couch, a TV console, a lamp, a plant
       w.props.push({ img: null, x: 0, y: 0, base: 0, flat: true, draw(ctx, cx, cy) { ctx.fillStyle = '#2a2230'; ctx.fillRect(19 * 16 + 4 - cx, 7 * 16 + 6 - cy, 12, 26); ctx.fillStyle = '#4a3a2a'; ctx.fillRect(19 * 16 + 3 - cx, 7 * 16 + 6 - cy, 1, 26); } });
-      w.props.push({ img: sp.livingRug, x: 6 * 16, y: 6 * 16, base: 0, flat: true });
+      w.props.push({ img: sp.rhondaRug, x: 6 * 16, y: 6 * 16, base: 0, flat: true });
       F.stand(sp.studioCouch, 2, 8, 3, look('A purple couch. Rhonda\'s spot is the middle cushion. Nobody else sits there.'));
       F.stand(sp.tvConsole, 11, 3, 2, look('The TV is off. The disco music is coming from somewhere else.'));
       F.stand(sp.amberLampTable, 7, 3, 1, look('A lamp with an amber shade. It\'s losing the battle with the disco ball.'));
