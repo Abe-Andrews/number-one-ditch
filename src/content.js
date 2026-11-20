@@ -23652,6 +23652,26 @@
   // State: s.bookClub ({ book id: bites }).
   const GL = 'Globglogabgalab', BITES = ['NO BITES', 'ONE BITE', 'TWO BITES', 'THREE BITES', 'FOUR BITES', 'FIVE BITES'];
   G.CLUB_BOOKS = [
+    // (Hannah's real favorites: Pride and Prejudice, Wuthering Heights, Normal People and the Throne of
+    // Glass series, plus Jane Austen in general in CLUB_CHATS)
+    { id: 'pride', title: 'Pride and Prejudice', short: 'Pride and Prejudice', bites: 5,
+      lines: [[GL, 'Tea. Lace. Very good manners. And under every one of them, a slap.']],
+      after: [
+        ['Hannah', 'This is it. This is my favorite.'],
+        [GL, 'I could tell. The corners are soft. Somebody has loved this copy half to death.'],
+        ['Hannah', 'She meets him at a dance, and he\'s rude, and she decides right then that he\'s the worst man in England.'],
+        [GL, 'And he decides she\'s beneath him. Two people, completely sure of themselves. Completely wrong.'],
+        ['Hannah', 'And then the first proposal. Glob. He lists everything that\'s wrong with her family. WHILE he\'s proposing.'],
+        [GL, 'A catastrophe. I had to stop eating for a moment.'],
+        ['Hannah', 'But then he writes her the letter, and she reads it, and she sees she was wrong about him too. That\'s the part. They BOTH have to change.'],
+        [GL, 'The title is about both of them, you know. She isn\'t only the prejudice, and he isn\'t only the pride.'],
+        ['Hannah', 'Everybody says it\'s a love story. It is. But really it\'s about being brave enough to change your mind about somebody.'],
+        [GL, '...I have made a great many first impressions in this house, dear. Mostly screaming.'],
+        ['Hannah', 'Then give them a second chapter.'],
+        ['Nate', 'Is there a fight in it?'],
+        ['Hannah', 'There\'s a very tense walk.'],
+        ['Nate', '...Okay.'],
+      ] },
     { id: 'oldman', title: 'The Old Man and the Sea', short: 'Old Man and the Sea', bites: 4,
       lines: [[GL, 'Salt. Clean. Not one wasted word. I barely had to chew.']],
       after: [
@@ -23680,6 +23700,23 @@
         ['Hannah', '...Perhaps.'],
         [GL, 'I think you are in that book, dear. Somewhere around page nine hundred, carrying something down a hallway.'],
       ] },
+    { id: 'wuthering', title: 'Wuthering Heights', short: 'Wuthering Heights', bites: 4,
+      lines: [[GL, 'Wind. Wet moors. A door slamming somewhere upstairs. It tastes like a storm that never quite ends.']],
+      after: [
+        ['Hannah', 'People always ask me how I can love this one AND Pride and Prejudice.'],
+        [GL, 'One is a drawing room. The other is a moor in a gale.'],
+        ['Hannah', 'And nobody in it is nice! Not one person. He\'s horrible. She\'s horrible. I couldn\'t put it down.'],
+        [GL, 'Two children who grow up wild on the moors together, and decide they are the same person.'],
+        ['Hannah', 'And then they spend their whole lives too proud to say so.'],
+        [GL, 'Pride again. You do have a type, dear.'],
+        ['Hannah', 'And it all gets passed down. Everything they did to each other lands on their kids.'],
+        [GL, 'Until the last two. The young ones. She teaches him to read.'],
+        ['Hannah', 'That\'s the ending I love. After all of that, two kids by a window with a book.'],
+        [GL, 'Yes. Well. I am partial to that sort of ending.'],
+        ['Nate', 'Wait. Is there a GHOST in it?'],
+        ['Hannah', 'Maybe.'],
+        ['Nate', 'Why didn\'t anybody LEAD with that?'],
+      ] },
     { id: 'odyssey', title: 'The Odyssey', short: 'The Odyssey', bites: 5,
       lines: [[GL, 'Very old. Honey and salt water. It has been chewed by a great many people before me, and it\'s better for it.']],
       after: [
@@ -23695,6 +23732,24 @@
         [GL, 'The goddess at his shoulder, then. In scrubs.'],
         ['Hannah', 'I\'ll take it.'],
       ] },
+    { id: 'throne', title: 'the Throne of Glass series', short: 'Throne of Glass', bites: 5, pick: true,
+      lines: [['Hannah', 'This month, I pick. And I\'m not picking a classic.'], [null, 'Hannah sets down a stack of thick fantasy paperbacks. The whole series. He licks the first page of the first one.'], [GL, 'An assassin. A glass castle. Swords. ...It tastes like a very long night of not going to sleep.']],
+      after: [
+        ['Hannah', 'This is what I read for fun. Throne of Glass. All of them.'],
+        [GL, 'A young assassin, dragged out of a prison mine to fight in a contest for the king.'],
+        ['Hannah', 'And she\'s the best in the world at it, and she knows it. She\'s funny. She\'s a little mean. She loves dessert.'],
+        [GL, 'A woman of taste.'],
+        ['Hannah', 'It starts out as one contest in one castle, and every book it gets bigger. By the end it\'s the whole world.'],
+        [GL, 'I noticed. The first one is a snack. The last ones are a holiday dinner.'],
+        ['Hannah', 'And everything she\'s been running from catches up with her. She has to stop hiding who she is.'],
+        [GL, 'Hm. A creature, hiding in a small room from who she really is.'],
+        ['Hannah', 'Don\'t make it about you.'],
+        [GL, 'It is a LITTLE bit about me.'],
+        ['Hannah', '...It\'s a little bit about you.'],
+        ['Nate', 'Are there rocks in it?'],
+        ['Hannah', 'There are a LOT of mountains.'],
+        ['Nate', 'I\'ll allow it.'],
+      ] },
     { id: 'moby', title: 'Moby-Dick', short: 'Moby-Dick', bites: 3,
       lines: [[GL, 'Enormous. Oily. There are a hundred pages in here about rope, and I ate every one, and I want you to know that.']],
       after: [
@@ -23707,6 +23762,23 @@
         [GL, 'And who lives, at the end? Not the captain. The one who made a friend. He floats home on the coffin that his friend had built.'],
         ['Hannah', 'So the whole book is the world\'s biggest whale, and what saves you is having somebody.'],
         [GL, 'It took him a hundred pages of rope to say so. But yes.'],
+      ] },
+    { id: 'normal', title: 'Normal People', short: 'Normal People', bites: 4,
+      lines: [[GL, 'Modern. Sharp. There are no quotation marks anywhere in it, so I kept looking for the talking. Then I realized it was ALL talking.']],
+      after: [
+        ['Hannah', 'Sally Rooney. Two kids from the same small town. At school she\'s the strange one and he\'s the popular one, and they\'re the only two people who really get each other.'],
+        [GL, 'And then, for the entire rest of the book, they keep ALMOST saying it.'],
+        ['Hannah', 'YES. Every time. One of them almost says it, and doesn\'t, and there goes another year.'],
+        [GL, 'I shouted at the pages. I nearly ate them out of frustration.'],
+        ['Hannah', 'That\'s why I love it, though. It\'s not big. Nobody fights a dragon. It\'s just how hard it is to tell somebody what you need.'],
+        [GL, 'And how much better a person gets, once somebody finally understands them.'],
+        ['Hannah', 'They make each other better. Even when they\'re apart.'],
+        [GL, '...You know, dear, all of your favorites are about the same thing.'],
+        ['Hannah', 'What thing?'],
+        [GL, 'Two people who have to stop being proud long enough to say how they feel.'],
+        ['Hannah', '...Shut up, Glob.'],
+        [GL, 'Fondly?'],
+        ['Hannah', 'Fondly.'],
       ] },
     { id: 'quixote', title: 'Don Quixote', short: 'Don Quixote', bites: 4,
       lines: [[GL, 'Dry, with a very good finish. A man reads so many books about knights that he loses his mind and goes out to become one.']],
@@ -23775,6 +23847,7 @@
     [[GL, 'Who is your favorite?'], ['Hannah', 'You can\'t ask me that. You can\'t just ASK me that.'], [GL, 'I shall tell you mine if you tell me yours.'], ['Hannah', 'On three.'], [null, 'They both say it at the same time. They both gasp.'], ['Hannah', 'I KNEW you were a good person.'], [GL, 'I am a worm, dear. But thank you.']],
     [['Hannah', 'Abe asked me what this one was about, and I talked for forty minutes.'], [GL, 'Did he listen?'], ['Hannah', 'He fell asleep with his eyes open. He\'s very good at it.'], [GL, 'I would have listened.'], ['Hannah', 'I know you would, Glob.']],
     [[GL, 'I have been meaning to tell you. The seed catalogs upstairs have a remarkable plot.'], ['Hannah', 'You read Michelle\'s seed catalogs?'], [GL, 'Will she order the heirloom tomatoes, Hannah? WILL she?'], ['Hannah', '...Did she?'], [GL, 'I can\'t say. I ate the ending.']],
+    [[GL, 'I ate all of Jane Austen in one weekend.'], ['Hannah', 'ALL of her? Glob. You\'re supposed to SAVOR Jane Austen.'], [GL, 'I savored. Then I had seconds.'], ['Hannah', 'Which one was your favorite?'], [GL, 'Persuasion. A woman gets a second chance, eight years late, and she takes it.'], ['Hannah', '...Okay. You get to stay in the book club.']],
     [['Hannah', 'Do you ever reread anything?'], [GL, 'Constantly. It\'s a digestive matter.'], ['Hannah', 'I\'m going to pretend you didn\'t say that.'], [GL, 'Everybody does.']],
     [['Hannah', 'I got to the end of a chapter last night and it was a cliffhanger. So I started the next one. It was four AM. I work at seven.'], [GL, 'What did you do?'], ['Hannah', 'I read one more chapter.'], [GL, 'That\'s my girl.']],
     [[GL, 'Nobody has ever asked me what I thought of a book before.'], ['Hannah', 'Well, what did you think?'], [GL, 'I thought it was delicious.'], [GL, '...And I thought I would like to have a friend.'], ['Hannah', 'You\'ve got one, Glob.'], ['Nate', 'Am I in the book club?'], ['Hannah', 'No.'], [GL, 'No, little bookmark.']],
@@ -23865,14 +23938,15 @@
     const b = first[c], glob = G.play.world.ents.find((e) => e.name === GL);
     // (Frankenstein: the one book that stops him dancing)
     if (b.noLick && glob) glob.still = true;
-    if (!b.nate && !b.noLick) yield G.say(null, 'Hannah opens ' + b.title + ' to the first page and holds it out. He licks it. Once.');
+    if (!b.nate && !b.noLick && !b.pick) yield G.say(null, 'Hannah opens ' + b.title + ' to the first page and holds it out. He licks it. Once.');
     for (const [who, line] of b.lines) yield G.say(who, line);
     G.audio.sfx('secret');
     yield G.bigText(BITES[b.bites], 70, !b.bites ? '#c898ff' : b.bites >= 5 ? '#f8d850' : b.bites >= 3 ? '#78e070' : '#f86858');
     Club[b.id] = b.bites;
     for (const [who, line] of b.after || []) yield G.say(who, line);
     if (glob) glob.still = false;
-    if (Object.keys(Club).length >= G.CLUB_BOOKS.length) yield* S.clubDone();
+    // (the bookmark comes once: saves that finished the club before her favorites were added keep theirs)
+    if (!f.clubDone && Object.keys(Club).length >= G.CLUB_BOOKS.length) yield* S.clubDone();
     G.play.autosave();
   };
   S.clubDone = function* () {
