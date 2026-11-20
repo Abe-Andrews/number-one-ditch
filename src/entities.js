@@ -2938,21 +2938,21 @@
       if (this.stage <= 0) drawShadow(ctx, this.x, this.y, cx, cy, true);
       else { ctx.fillStyle = 'rgba(20,40,20,0.28)'; ctx.beginPath(); ctx.ellipse(Math.round(this.x) - cx, Math.round(this.y) - cy, 10 * s, 2.2 * s, 0, 0, Math.PI * 2); ctx.fill(); }
       const X = Math.round(this.x - img.width / 2 + jx) - cx, Y = Math.round(this.y - 22.1 * s - this.z) - cy;
+      // (possessed, in the finale: a purple outline around him, his own colors inside)
+      if (this.outline && st !== 'defeated') purpleEdge(ctx, img, X, Y, this.outline);
       ctx.drawImage(img, X, Y);
-      // (possessed, in the finale: glowing purple)
-      if (this.tint && st !== 'defeated') { ctx.save(); ctx.globalAlpha = 0.4; ctx.drawImage(tinted(img, this.tint), X, Y); ctx.restore(); }
     }
   }
   G.GiantRomulus = GiantRomulus;
 
   // ROMULUS, possessed (the finale, at the Number One Ditch): the golf course fight again, in the
-  // ditch, glowing purple, pony-sized. Nate still won't hit a dog, and he still HATES water: soak
+  // ditch, pony-sized, in his own colors with a purple outline. Nate still won't hit a dog, and he still HATES water: soak
   // him with the bidet (the trickle down the middle of the ditch fills it back up), and when he's
   // shrunk back to his own size, the possession comes off him (S.finFreed).
   class PossessedRomulus extends GiantRomulus {
     constructor(x, y, b) {
       super(x, y, { x0: b.x0 + 10, y0: b.y0, x1: b.x1 - 10, y1: b.y1, pond: { x: -9999, y: -9999, rx: 1, ry: 1 } });
-      Object.assign(this, { id: 'romulus', stage: 1, hp: 1, maxHp: 1, noBar: true, barkColor: '#c898ff', tint: '#a85ae8' });
+      Object.assign(this, { id: 'romulus', stage: 1, hp: 1, maxHp: 1, noBar: true, barkColor: '#c898ff', outline: '#a85ae8' });
     }
     // (one size, so it takes a good long soak: more than one tank, without the lab carboy)
     get need() { return 200; }
@@ -2969,7 +2969,7 @@
 
   // Romulus as one of the family at the Ditch (walks in with them, gets possessed in the lineup,
   // sits on the bank once he's free): the dog instead of a person, facing the way he last went
-  // sideways. `possessed`: glowing purple.
+  // sideways. `possessed`: the stalking pose, with a purple outline.
   class DogNPC extends NPC {
     constructor(o) { super(o); this.face = 1; this.hb = { w: 18, h: 8 }; }
     get S() { return { h: 24 }; }
@@ -2980,8 +2980,8 @@
       const pose = this.moving ? RUN[Math.floor((this.anim || 0) / 5) % 4] : this.pose || (this.possessed ? 'stalk' : 'happy');
       const img = set[pose] || set.stand, X = Math.round(this.x - img.width / 2) - cx, Y = Math.round(this.y - 22 - (this.z || 0)) - cy;
       drawShadow(ctx, this.x, this.y, cx, cy, true);
+      if (this.possessed) purpleEdge(ctx, img, X, Y, '#a85ae8');
       ctx.drawImage(img, X, Y);
-      if (this.possessed) { ctx.save(); ctx.globalAlpha = 0.4; ctx.drawImage(tinted(img, '#a85ae8'), X, Y); ctx.restore(); }
     }
   }
   G.DogNPC = DogNPC;
@@ -3363,6 +3363,11 @@
     const c = G.canvas(img.width, img.height), x = c.getContext('2d');
     x.drawImage(img, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = color; x.fillRect(0, 0, img.width, img.height);
     return (m[color] = c);
+  }
+  // a 1-pixel outline in one color around a sprite (drawn first, the sprite goes on top)
+  function purpleEdge(ctx, img, X, Y, color) {
+    const t = tinted(img, color);
+    ctx.drawImage(t, X - 1, Y); ctx.drawImage(t, X + 1, Y); ctx.drawImage(t, X, Y - 1); ctx.drawImage(t, X, Y + 1);
   }
   // twice-size frames of anyone's sprite, cached
   const bigCache = {};
