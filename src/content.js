@@ -20951,7 +20951,9 @@
     yield G.walkTo(npc, sx, sy, 2);
     npc.dir = sx < MID ? 'right' : 'left'; npc.homeDir = npc.dir;
     f.fin_freed = (f.fin_freed || 0) + 1;
-    G.play.autosave();
+    // (no save between family fights: a faint starts the gauntlet over. Freeing the last one saves,
+    // and that's the checkpoint for the relay)
+    if (f.fin_freed >= FIN_ORDER.length) G.play.autosave();
     if (f.fin_freed < FIN_ORDER.length) yield* S.finNextFight(false);
     else yield* S.finRelayStart();
   };
@@ -20984,42 +20986,10 @@
     hannah: [['Hannah', 'I\'m a NICU nurse. I am not scared of a cranky little egg.'], ['Father Eggmas', 'I am NOT little!']],
     nate: [['Nate', 'My turn.'], ['Doron', 'GO, NATE!'], ['Lily', 'Crack him!'], ['Father Eggmas', 'Come on, then, rock boy. HO HO HO!']],
   };
-  // Fainting at the Ditch: the family's got Nate. Once at least one of them is free, a faint during
-  // the fight doesn't end it: somebody runs down off the bank, gets him back up with every heart,
-  // and the fight picks up right where it was. (Before anybody's free, it's a normal faint, and
-  // the fight still resumes where it left off.)
-  const RESCUE_LINES = {
-    doron: 'Up you get! LEG DAY!', dad: 'I\'ve got you, son. Up.', lily: 'Get UP, Nate. I mean it.',
-    michelle: 'Oh, honey. Up you go. Let me look at you.', romulus: '*lick lick lick*', nate: 'I\'ve got you!',
-  };
-  const finRescuer = (w) => {
-    const fam = finFam(w), cur = G.state.playAs || 'nate';
-    for (const id of ['doron', 'dad', 'lily', 'michelle', 'romulus', 'nate']) { const n = fam[id]; if (id !== cur && n && !n.dead && (n.freed || id === 'nate')) return [id, n]; }
-    return null;
-  };
-  G.finRescueOk = () => {
-    const f = flags(), w = G.play.world;
-    return !!w && w.id === 'ditchFinal' && f.fin_intro && !f.fin_done && !G.state.rush && !w.rescuing && !!finRescuer(w);
-  };
-  S.finRescue = function* () {
-    const w = G.play.world, p = P(), s = G.state, [id, r] = finRescuer(w), home = { x: r.x, y: r.y };
-    w.rescuing = true;
-    G.finClear(w);
-    G.audio.sfx('bump'); G.play.shake(8, 2);
-    p.state = 'walk'; p.dir = 'down';
-    w.pop(p.x, p.y - 30, '*thud*', '#f8f8f0');
-    yield G.wait(20);
-    yield G.walkTo(r, p.x + (r.x < p.x ? -14 : 14), p.y, 2.6);
-    r.dir = G.dirToward(p.x - r.x, p.y - r.y);
-    if (id === 'romulus') yield G.say(null, 'Romulus licks Nate\'s face until he gets back up.');
-    yield G.say(FIN_NAME[id], RESCUE_LINES[id]);
-    s.hp = s.maxHp; p.inv = 120;
-    G.audio.sfx('heart');
-    w.burst(p.x, p.y - 14, ['#f86868', '#ffffff', '#f8a8c8'], 12, { speed: 1, up: 0.8, life: 22, size: 2 });
-    yield G.walkTo(r, home.x, home.y, 2.6);
-    r.dir = 'down';
-    w.rescuing = false;
-  };
+  // Fainting at the Ditch is a normal faint. Continue goes back to the last save, and the fight only
+  // saves at two points: the start of the fight (after the intro), so a faint against the family starts
+  // the gauntlet over from Doron; and the start of the family's turns against Father Eggmas (the
+  // checkpoint), so a faint in the relay starts the relay over from the first turn.
   // whoever's up takes over (they come down off the bank; whoever was fighting goes back up)
   S.finTurnStart = function* (id, resumed) {
     const f = flags(), w = G.play.world, p = P(), s = G.state, boss = w.eggmas, fam = finFam(w);
@@ -21059,7 +21029,8 @@
     yield G.banner(FIN_TITLE[id] + '\'S TURN', G.FIN_TURNS[id].tip, 150);
     if (id === 'doron') for (let i = 0; i < 3; i++) w.add(new G.LiftRock(56 + i * 64, 200 + (i % 2) * 40));
     if (!resumed && (f.fin_relay || 0) === 0) G.audio.play('eggmas');
-    G.play.autosave();
+    // (the checkpoint: only the first turn of the relay saves, so a faint starts the relay over)
+    if (!(f.fin_relay || 0)) G.play.autosave();
     boss.beginTurn(id);
   };
   // whoever's turn it was got their hits in
