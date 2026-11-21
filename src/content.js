@@ -21203,7 +21203,8 @@
         const b = w.finBoss && !w.finBoss.dead ? w.finBoss : w.eggmas && !w.eggmas.hidden && w.eggmas.state !== 'throne' ? w.eggmas : null;
         if (!b) return 0;
         const top = b instanceof G.EggmasBoss ? b.y - b.h - 70 : b.y - 50;
-        return G.clamp(p.y - 84 - top, 0, 60);
+        // (no more than 40: any lower on the screen and Nate would be behind the boss's health bar)
+        return G.clamp(p.y - 84 - top, 0, 40);
       };
       // the trickle of water down the middle of the ditch
       w.props.push({

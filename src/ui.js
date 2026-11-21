@@ -109,6 +109,11 @@
       if (bt.hold > 0) bt.hold--;
       else if (bt.trail > b.hp) bt.trail = Math.max(b.hp, bt.trail - b.maxHp / 80);
       if (bt.flash > 0) bt.flash--;
+      // (it goes see-through while Nate is behind it, so it never hides him)
+      const pl = G.play && G.play.player, cam = G.play && G.play.cam;
+      const under = !!(pl && cam && Math.abs(pl.x - cam.x - G.W / 2) < w / 2 + 12 && pl.y - cam.y > y - 13 && pl.y - 28 - cam.y < y + 8);
+      bt.fade = (bt.fade || 0) + ((under ? 1 : 0) - (bt.fade || 0)) * 0.2;
+      ctx.save(); ctx.globalAlpha = 1 - 0.65 * bt.fade;
       const ease = 1 - (1 - bt.show) * (1 - bt.show);
       const frac = (v) => Math.max(0, Math.min(1, v / b.maxHp)) * ease, iw = w - 2;
       // the name on a little plate
@@ -137,6 +142,7 @@
       // quarter marks
       ctx.fillStyle = 'rgba(12,8,20,0.55)';
       for (let q = 1; q < 4; q++) ctx.fillRect(x + 1 + Math.round((iw * q) / 4), y + 1, 1, 4);
+      ctx.restore();
     },
   };
 
