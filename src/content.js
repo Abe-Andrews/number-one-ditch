@@ -23925,19 +23925,38 @@
     f.clubChat = (k + 1) % CLUB_CHATS.length;
     for (const [who, line] of CLUB_CHATS[k]) yield G.say(who, line);
   };
+  // Glob's chair: something new off the stack, or talking one they've already read over again
+  // (every book's talk can be had as many times as you like; only the first read counts for the club)
   S.bookClub = function* () {
-    const f = flags(), s = G.state, Club = clubState(), left = G.CLUB_BOOKS.filter((b) => Club[b.id] == null);
+    const f = flags(), Club = clubState(), left = G.CLUB_BOOKS.filter((b) => Club[b.id] == null), read = G.CLUB_BOOKS.filter((b) => Club[b.id] != null);
     if (!left.length) {
       f.clubLine = ((f.clubLine || 0) + 1) % 3;
       yield G.say(GL, ['Same time next month. She is bringing Anna Karenina. I have been warned.', 'I still think about the old man. I think about him during the day.', 'I think about your feldspar chapters, little bookmark. I do not want to. But I do.'][f.clubLine]);
-      return;
     }
-    const first = left.filter((b) => !b.nate).slice(0, 3).concat(left.length === 1 ? left : []);
-    const c = yield G.ask('Hannah', 'What are we reading, Glob?', first.map((b) => b.short).concat(['Not today']));
-    if (c >= first.length) { yield G.say(GL, 'I shall be here. I am always here.'); return; }
-    const b = first[c], glob = G.play.world.ents.find((e) => e.name === GL);
+    let b = null, again = false;
+    if (read.length) {
+      const opts = (left.length ? ['Something new'] : []).concat(['One we\'ve read', 'Not today']);
+      const c = yield G.ask('Hannah', left.length ? 'What are we reading, Glob?' : 'Want to talk about one again, Glob?', opts);
+      if (c === opts.length - 1) { yield G.say(GL, 'I shall be here. I am always here.'); return; }
+      if (opts[c] !== 'Something new') {
+        const k = yield* pickFrom('Hannah', 'Which one?', read.map((x) => x.short));
+        if (k < 0) { yield G.say(GL, 'I shall be here. I am always here.'); return; }
+        b = read[k]; again = true;
+      }
+    }
+    if (!b) {
+      const first = left.filter((x) => !x.nate).slice(0, 3).concat(left.length === 1 ? left : []);
+      const c = yield G.ask('Hannah', 'What are we reading, Glob?', first.map((x) => x.short).concat(['Not today']));
+      if (c >= first.length) { yield G.say(GL, 'I shall be here. I am always here.'); return; }
+      b = first[c];
+    }
+    yield* clubRead(b, again);
+  };
+  function* clubRead(b, again) {
+    const f = flags(), Club = clubState(), glob = G.play.world.ents.find((e) => e.name === GL);
     // (Frankenstein: the one book that stops him dancing)
     if (b.noLick && glob) glob.still = true;
+    if (again) { yield G.say('Hannah', 'Can we talk about ' + b.title + ' again?'); yield G.say(GL, 'I was hoping you would ask.'); }
     if (!b.nate && !b.noLick && !b.pick) yield G.say(null, 'Hannah opens ' + b.title + ' to the first page and holds it out. He licks it. Once.');
     for (const [who, line] of b.lines) yield G.say(who, line);
     G.audio.sfx('secret');
@@ -23948,7 +23967,7 @@
     // (the bookmark comes once: saves that finished the club before her favorites were added keep theirs)
     if (!f.clubDone && Object.keys(Club).length >= G.CLUB_BOOKS.length) yield* S.clubDone();
     G.play.autosave();
-  };
+  }
   S.clubDone = function* () {
     const f = flags(), s = G.state;
     f.clubDone = true;
