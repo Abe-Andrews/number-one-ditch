@@ -448,7 +448,11 @@
       const pool = w.props.find((pr) => pr.refill && pr.hit && G.overlap(pr.hit, tp));
       if (pool) return { kind: pool.refill === 'birdbath' ? 'birdbath' : 'pool', x: fx, y: fy };
       // (a map can have water of its own that isn't a tile, like the trickle down the Number One Ditch)
-      if (w.def.water && w.def.water(fx, fy)) return { kind: 'water', x: fx, y: fy };
+      // (forgiving: where he's facing, a little to either side of that, or right under his feet)
+      if (w.def.water) {
+        const sx = dy ? 6 : 0, sy = dx ? 6 : 0;
+        for (const [x, y] of [[fx, fy], [fx + sx, fy + sy], [fx - sx, fy - sy], [p.x + dx * 6, p.y - 2 + dy * 6], [p.x, p.y]]) if (w.def.water(x, y)) return { kind: 'water', x, y };
+      }
       return d && ['water', 'bay', 'iceHole', 'mineWater'].includes(d.k) ? { kind: 'water', x: fx, y: fy } : null;
     },
     bidetStart() {
@@ -470,9 +474,11 @@
       const r = this.refilling;
       if (!r) return;
       const s = G.state, p = this.player, w = this.world, src = this.bidetSource();
-      if (!G.input.down('b') || p.state !== 'walk' || s.xItem !== 'bidet' || !src || p.dir !== r.dir || Math.hypot(p.x - r.x, p.y - r.y) > 2) { this.refilling = null; return; }
+      // (he can shuffle around or turn while he fills, as long as he's still at the water)
+      if (!G.input.down('b') || p.state !== 'walk' || s.xItem !== 'bidet' || !src) { this.refilling = null; return; }
       if (G.script.busy) return;
-      s.items.bidetWater = Math.min(G.BIDET_MAX, G.bidetWater() + G.BIDET_FILL);
+      // (a map's own water can fill it faster: the Ditch's trickle does, mid-fight)
+      s.items.bidetWater = Math.min(G.BIDET_MAX, G.bidetWater() + G.BIDET_FILL * (src.kind === 'water' && w.def.waterFill || 1));
       if (G.tick % 24 === 0) { G.audio.sfx('blip'); w.burst(src.x, src.y, ['#5aa8e8', '#a8d8ff', '#ffffff'], 2, { speed: 0.6, up: 0.8, g: 0.1, life: 14, size: 1 }); }
       if (G.bidetWater() >= G.BIDET_MAX) {
         this.refilling = null;
@@ -491,6 +497,12 @@
       return [nx + dx * d, p.y + dy * d - h];
     },
     bidetTick() {
+      // still holding X after it ran dry (or after getting knocked around) and now at water: start filling
+      if (!this.spraying && !this.refilling && G.input.down('b') && G.state.xItem === 'bidet' && !G.script.busy && this.player.state === 'walk' && G.bidetWater() < G.BIDET_MAX && this.world.def.water && this.bidetSource()) {
+        const p = this.player;
+        this.refilling = { x: p.x, y: p.y, dir: p.dir };
+        this.world.pop(p.x, p.y - 30, '*filling...*', '#a8d8ff');
+      }
       if (!this.spraying) return;
       const s = G.state, p = this.player, w = this.world;
       if (!G.input.down('b') || G.script.busy || p.state !== 'walk' || s.xItem !== 'bidet') { this.spraying = false; return; }
@@ -521,7 +533,7 @@
     },
     bidetEmpty() {
       const p = this.player;
-      this.world.pop(p.x, p.y - 30, 'EMPTY!', '#a8d8ff');
+      this.world.pop(p.x, p.y - 30, this.world.def.water ? 'EMPTY! Get to the water!' : 'EMPTY!', '#a8d8ff');
       if (!G.state.flags.bidetEmptyHint) { G.state.flags.bidetEmptyHint = true; G.script.run(G.SCRIPTS.bidetEmpty()); }
     },
 

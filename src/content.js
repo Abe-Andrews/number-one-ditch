@@ -21182,6 +21182,7 @@
     noFollower: true,
     // the trickle of water down the middle of the ditch (drawn in setup): the bidet fills up at it
     water(x, y) { return y > 4 * 16 && y < 18 * 16 && Math.abs(x - (MID + Math.sin(y * 0.05) * 10 + Math.sin(y * 0.13) * 4)) < 10; },
+    waterFill: 1.5,   // (the bidet fills a little faster here: it's mid-fight)
     get music() { const f = flags(); return f.fin_done ? 'title' : f.fin_intro ? 'possessed' : 'home'; },
     tiles() {
       const W = 15, H = 21;
