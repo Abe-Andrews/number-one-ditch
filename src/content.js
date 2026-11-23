@@ -20713,7 +20713,7 @@
     for (const e of w.ents) {
       if (e instanceof G.Lob || e instanceof G.BarkRing || e instanceof G.HypnoShot || e instanceof G.HypnoRing || e instanceof G.EnemyNo || e instanceof G.FinBalloon
         || e instanceof G.HenMinion || e instanceof G.Snapdragon || e instanceof G.BeanBomb || e instanceof G.BandageStrip || e instanceof G.Letter || e instanceof G.Egglet
-        || e instanceof G.GoldenEgg || e instanceof G.LightWire || e instanceof G.RelayShot || e instanceof G.LiftRock || e instanceof G.NoShot || e instanceof G.EggShot
+        || e instanceof G.GoldenEgg || e instanceof G.LightWire || e instanceof G.RelayShot || e instanceof G.LiftRock || e instanceof G.NoShot || e instanceof G.CatalogShot || e instanceof G.EggShot
         || (e.constructor && e.constructor.name === 'Shot')) {
         e.dead = true;
       }
@@ -20979,7 +20979,8 @@
   const FIN_TURN_IN = {
     doron: [['Doron', 'Rocks. This ditch is FULL of rocks.']],
     dad: [['Dad', 'I carved this pipe myself. Let\'s see how it does against an egg.'], ['Father Eggmas', 'HO HO HO. Smoke can\'t crack a shell, Christian.']],
-    lily: [['Father Eggmas', 'Remember me, little one? HO HO HO.'], ['Lily', '...I remember.'], ['Lily', 'I\'ve been scared of you my whole life.'], ['Lily', 'I\'m still scared.'], ['Lily', 'I\'m doing it anyway.']],
+    lily: [['Father Eggmas', 'Remember me, little one? HO HO HO.'], ['Lily', '...I remember.'], ['Lily', 'I\'ve been scared of you my whole life.'], ['Lily', 'I\'m still scared.'], ['Lily', 'I\'m doing it anyway.'],
+      [null, 'Lily has a stack of taxidermy catalogs under her arm. Every one still in its plastic.'], ['Lily', 'I knew these would be good for something.']],
     michelle: [['Michelle', 'You took my family, you took my ditch, and you broke my GOOD pots.'], ['Michelle', 'Henrietta. Get him.'], [null, '*BAWK*']],
     abe: [['Father Eggmas', 'HO HO HO! Come to chase somebody with me, Abe?'], ['Abe', 'Buddy. That was a BIT.']],
     romulus: [['Romulus', '*WOOF!*'], ['Father Eggmas', 'Bad dog. BAD DOG!'], ['Hannah', 'Don\'t you TALK to him like that!']],

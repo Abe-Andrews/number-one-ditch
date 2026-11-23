@@ -300,6 +300,8 @@
 
     releaseNo() {
       const full = this.t >= NO_FULL;
+      // (her turn against Father Eggmas: she flings a taxidermy catalog instead)
+      if (G.relayLilyThrow && G.relayLilyThrow(this, full)) { this.state = 'walk'; this.noT = 8; return; }
       this.state = 'walk';
       this.noT = 8;
       const [dx, dy] = DIRS[this.dir];
@@ -3974,7 +3976,9 @@
     // (Dad's smoke rings don't aim themselves, Eggmas ducks out of their way, and he aims his ornaments
     // right where Dad's standing and yanks his lights across Dad's row: standing still and mashing Z doesn't cut it)
     dad: { weapon: 'smoke', need: 10, h: 22, every: 75, aim: true, dodge: true, attacks: ['lob', 'lights', 'spirals', 'lob', 'egglets', 'lights'], tip: 'Z: Dad puffs his pipe. Smoke rings float the way he\'s facing: line them up with Father Eggmas!' },
-    lily: { weapon: 'no', need: 5, h: 16, every: 85, attacks: ['spirals', 'spirals', 'lob', 'egglets'], tip: 'Hold Z to wind up a "No." Let go to say it. Only a full "No." counts!' },
+    // (Lily flings the taxidermy catalogs she's never opened: hold Z to wind up, let go to throw)
+    lily: { weapon: 'catalog', need: 5, h: 16, every: 85, attacks: ['spirals', 'spirals', 'lob', 'egglets'], tip: 'Hold Z to wind up, let go to fling a taxidermy catalog. Only a full wind-up flies far enough!',
+      hitPops: ['TAXIDERMY?!', 'WHAT ARE YOU IMPLYING?!', 'IS THAT A SQUIRREL IN A HAT?!', 'OW! THE PLASTIC!'] },
     michelle: { weapon: 'egg', need: 12, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'rain'], tip: 'Z: Henrietta fires an egg.' },
     abe: { weapon: 'reach', need: 6, h: 50, every: 80, attacks: ['lights', 'lob', 'spirals', 'lights'], tip: 'He\'s floating too high for anybody else. Z: Abe reaches up and bonks him!' },
     hannah: { weapon: 'needle', need: 9, h: 22, every: 72, attacks: ['spirals', 'rain', 'lights', 'egglets'], tip: 'Z: throw a needle. Little pinch!' },
@@ -4110,7 +4114,8 @@
       this.hurtT = 14;
       G.audio.sfx('hit'); G.play.shake(5, 2);
       this.world.burst(this.x, this.y - this.h - 36, ['#f2ead6', '#7a1e2c', '#f8e070'], 8, { speed: 1.6, up: 0.8, g: 0.06, life: 24, size: 2 });
-      this.world.pop(this.x, this.y - this.h - 78, ['OOF!', 'HOW DARE YOU!', 'MY PAISLEY!', 'OW! OW!'][this.turnHits % 4], '#f86858');
+      const pops = this.td.hitPops || ['OOF!', 'HOW DARE YOU!', 'MY PAISLEY!', 'OW! OW!'];
+      this.world.pop(this.x, this.y - this.h - 78, pops[(this.turnHits - 1) % pops.length], '#f86858');
       if (this.turnHits >= this.need) { this.state = 'tagout'; G.script.run(G.SCRIPTS.finTagOut(this)); }
       return true;
     }
@@ -4338,6 +4343,54 @@
   // what Z does for each of the family on their turn (Lily's is her "No.", built in)
   G.RELAY_LABEL = { doron: 'ROCK', dad: 'PIPE', lily: 'NO.', michelle: 'EGG', abe: 'BONK', romulus: 'WOOF', hannah: 'SHOT' };
   const eggmasIn = (w) => w.ents.find((e) => e instanceof EggmasBoss && !e.dead);
+  // (Lily's Z says "No." everywhere else, so her label only changes on her turn against Father Eggmas)
+  const lilyRelay = (w) => { const b = w && eggmasIn(w); return !!b && b.turn === 'lily'; };
+  Object.defineProperty(G.RELAY_LABEL, 'lily', { get: () => (G.play && lilyRelay(G.play.world) ? 'TOSS' : 'NO.'), enumerable: true });
+
+  // Lily's turn: a taxidermy catalog, flung like a frisbee. A full wind-up sails straight out the way
+  // she's facing; let go early and it flops onto the ditch a little way in front of her.
+  class CatalogShot extends Ent {
+    constructor(x, y, dir, full, k) {
+      super(x, y);
+      // (a flop goes a little farther the longer she held it)
+      const [dx, dy] = DIRS[dir], sp = full ? 3 : 1 + 1.4 * (k || 0);
+      Object.assign(this, { vx: dx * sp, vy: dy * sp, full, life: full ? 70 : 22, age: 0, z: 10 });
+    }
+    update(w) {
+      if (G.script.busy) return;
+      this.age++;
+      this.x += this.vx; this.y += this.vy;
+      if (!this.full) {
+        // a flop: it slows, drops and lands with a slap
+        this.vx *= 0.9; this.vy *= 0.9; this.z = Math.max(0, this.z - 0.6);
+        if (--this.life <= 0) { this.dead = true; G.audio.sfx('bump'); w.pop(this.x, this.y - 14, '*flop*', '#c8b8d0'); w.burst(this.x, this.y - 2, ['#e8dcc0', '#8a3a2a'], 4, { speed: 0.6, up: 0.4, life: 12, size: 1 }); }
+        return;
+      }
+      if (--this.life <= 0 || w.tileSolid(Math.floor(this.x / 16), Math.floor((this.y - 6) / 16))) { this.dead = true; return; }
+      const r = [this.x - 9, this.y - 20, this.x + 9, this.y - 2];
+      for (const e of w.ents) {
+        if (e.dead) continue;
+        if (e instanceof EggmasBoss) { if (G.overlap(r, e.hurtBox()) && e.relayHit('catalog')) { this.dead = true; w.burst(this.x, this.y - 12, ['#e8dcc0', '#8a3a2a', '#ffffff'], 8, { speed: 1.4, up: 0.8, life: 18, size: 2 }); return; } }
+        else if (e.enemy && e.hurtBox && !e.boss && G.overlap(r, e.hurtBox())) { e.hit(1, this.x - this.vx * 4, this.y - this.vy * 4); this.dead = true; return; }
+      }
+    }
+    draw(ctx, cx, cy) {
+      // spinning: it squashes side to side as it goes round
+      const img = G.spr.catalog, k = this.full ? Math.abs(Math.cos(this.age * 0.45)) : 1, W = Math.max(2, Math.round(img.width * k));
+      drawShadow(ctx, this.x, this.y, cx, cy, false);
+      ctx.drawImage(img, Math.round(this.x - W / 2) - cx, Math.round(this.y - img.height - this.z) - cy, W, img.height);
+    }
+  }
+  G.CatalogShot = CatalogShot;
+  G.relayLilyThrow = (p, full) => {
+    const w = p.world;
+    if (!lilyRelay(w)) return false;
+    const [dx, dy] = DIRS[p.dir];
+    w.add(new CatalogShot(p.x + dx * 8, p.y + dy * 6, p.dir, full, Math.min(1, p.t / 34)));
+    G.audio.sfx(full ? 'swing' : 'blip');
+    if (full) w.pop(p.x, p.y - 34, ['Here. Read it.', 'I never opened it.', 'One every month.', 'Take it. TAKE IT.'][(p.tossN = ((p.tossN || 0) + 1)) % 4], '#ff98d0');
+    return true;
+  };
   G.RELAY_MOVE = {
     // Doron: pick up a rock (Z), throw it at Father Eggmas (Z)
     doron(p, w) {
