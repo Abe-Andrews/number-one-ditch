@@ -1089,11 +1089,32 @@
     abe: 'You good? Blink twice if you said the number.',
     hannah: 'Deep breath. You\'re okay. Nurse\'s orders: up you get.',
   };
+  // Fainting at the Number One Ditch (the finale): whoever went down, Nate cheers them back up
+  // (and if it was Nate, he talks himself back up)
+  const FIN_FAINT = {
+    nate: 'Not yet. Not at the Number One Ditch. Get UP, Nate.',
+    doron: 'Doron! Get up! You lift boulders. You can lift you.',
+    dad: 'Dad! Get up! You carved that pipe yourself. Show him what it can do.',
+    lily: 'Lily! Get up! You\'ve still got a whole stack of catalogs.',
+    michelle: 'Mom! Get up! Henrietta still believes in you.',
+    abe: 'Abe! Get up! He\'s floating. Nobody else can reach him.',
+    romulus: 'Romulus! Buddy! Up! Who\'s a good boy? YOU are!',
+    hannah: 'Hannah! You\'re a NICU nurse! You\'re not scared of a cranky little egg!',
+  };
+  const FIN_FAINT_NAME = { nate: 'Nate', doron: 'Doron', dad: 'Dad', lily: 'Lily', michelle: 'Mom', abe: 'Abe', romulus: 'Romulus', hannah: 'Hannah' };
+  const atDitch = () => !!(G.play && G.play.world && G.play.world.def === G.MAPS.ditchFinal && !G.state.flags.fin_done);
   G.gameOver = {
-    // who's there when he comes to: Nate for Lily, whoever was following Nate when he went down,
-    // or (nobody behind him) just Nate
+    // who fainted (on the screen it says "<name> fainted...")
+    fainter() {
+      const id = G.state.playAs || 'nate';
+      if (atDitch()) return FIN_FAINT_NAME[id] || 'Nate';
+      return id === 'lily' ? 'Lily' : 'Nate';
+    },
+    // who's there when he comes to: at the Ditch, Nate cheering on whoever went down; Nate for Lily;
+    // whoever was following Nate when he went down; or (nobody behind him) just Nate
     speakers(lily) {
       const s = G.state, nate = G.sprites[s.items.cap ? 'nate' : 'nate_nocap'].down[0];
+      if (atDitch()) return [{ who: 'Nate', msg: FIN_FAINT[s.playAs || 'nate'] || FIN_FAINT.nate, face: nate }];
       if (lily) return [{ who: 'Nate', msg: 'Get up, Lily. Mikey is still singing.', face: nate }];
       const id = G.activeFollower();
       if (id && FAINT_LINES[id] && G.sprites[id]) return [{ who: G.PARTY_INFO[id].name, msg: FAINT_LINES[id], face: G.sprites[id].down[0] }];
@@ -1165,7 +1186,7 @@
         F().draw(ctx, tt, tx + 10, 14, '#f86858', { shadow: '#1c1424' });
       }
       const lily = G.state.playAs === 'lily';
-      const t1 = (lily ? 'Lily' : 'Nate') + ' fainted...';
+      const t1 = this.fainter() + ' fainted...';
       F().drawBig(ctx, t1, Math.round((G.W - F().bigWidth(t1, 2)) / 2), 72, 2, (r) => (r < 2 ? '#ffb0a8' : r < 4 ? '#f86858' : '#c83848'), '#1c1424');
       if (this.t < 60) return;
       // whoever was behind Nate gets him back up, with their face in a little frame (alone, he
