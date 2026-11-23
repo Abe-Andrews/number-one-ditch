@@ -3383,7 +3383,7 @@
   class Lob extends Ent {
     constructor(x, y, tx, ty, img, o = {}) {
       super(x, y);
-      Object.assign(this, { fx: x, fy: y, tx, ty, img, t: 0, n: o.n || 50, h: o.h || 40, z0: o.z0 || 16, dmg: o.dmg == null ? 1 : o.dmg, onLand: o.onLand, color: o.color || '#f86858' });
+      Object.assign(this, { fx: x, fy: y, tx, ty, img, t: 0, n: o.n || 50, h: o.h || 40, z0: o.z0 || 16, dmg: o.dmg == null ? 1 : o.dmg, onLand: o.onLand, onFly: o.onFly, color: o.color || '#f86858' });
       this.z = this.z0;
     }
     update(w) {
@@ -3391,6 +3391,8 @@
       const k = ++this.t / this.n;
       this.x = this.fx + (this.tx - this.fx) * k; this.y = this.fy + (this.ty - this.fy) * k;
       this.z = this.z0 * (1 - k) + Math.sin(k * Math.PI) * this.h;
+      // (onFly: something it can hit on the way; returning true stops it right there)
+      if (k < 1 && this.onFly && this.onFly(w, this)) { this.dead = true; return; }
       if (k < 1) return;
       this.dead = true;
       const p = G.play.player;
@@ -4338,9 +4340,19 @@
       const boss = eggmasIn(w);
       if (p.carry) {
         p.carry = false; p.pose = null; p.relayCd = 18;
-        const tx = boss ? boss.x : p.x, ty = boss ? boss.y : p.y - 60;
+        const tx = boss ? boss.x : p.x, ty = boss ? boss.y : p.y - 60, py0 = p.y;
         G.audio.sfx('swing'); w.pop(p.x, p.y - 34, 'HRNGH!', '#68c8ff');
-        w.add(new Lob(p.x, p.y - 26, tx, ty, G.spr.tossRock, { n: 34, h: 30, z0: 22, dmg: 0, color: null, onLand: (ww, x, y) => {
+        w.add(new Lob(p.x, p.y - 26, tx, ty, G.spr.tossRock, { n: 34, h: 30, z0: 22, dmg: 0, color: null,
+          // an egglet in the way (anywhere along the path from Doron's feet to the target) takes the rock instead of Father Eggmas
+          onFly: (ww, L) => {
+            const gy = py0 + (ty - py0) * (L.t / L.n);
+            const e = ww.ents.find((q) => q instanceof Egglet && !q.dead && Math.abs(q.x - L.x) < 11 && Math.abs(q.y - gy) < 10);
+            if (!e) return false;
+            e.hit(1, L.x, L.y);
+            G.audio.sfx('bump'); ww.burst(L.x, L.y - 3, ['#a8a49c', '#5a5650'], 7, { speed: 1.1, up: 0.8, life: 18, size: 2 });
+            return true;
+          },
+          onLand: (ww, x, y) => {
           G.audio.sfx('bump'); ww.burst(x, y - 3, ['#a8a49c', '#5a5650'], 7, { speed: 1.1, up: 0.8, life: 18, size: 2 });
           const bb = eggmasIn(ww);
           if (bb && Math.abs(bb.x - x) < 26 && Math.abs(bb.y - y) < 22) bb.relayHit('rock');
