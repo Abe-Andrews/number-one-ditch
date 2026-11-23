@@ -298,6 +298,19 @@
       })());
     },
 
+    // anything hostile on screen goes in s.seen, by its class name. (A save from before this
+    // starts out with whatever its visited maps say it must have run into: G.seedSeen, manual.js.)
+    noteSeen() {
+      const s = G.state, w = this.world, c = this.cam;
+      if (!s || !w || s.rush) return;
+      if (!s.seen) { s.seen = {}; if (G.seedSeen) G.seedSeen(s); }
+      for (const e of w.ents) {
+        if (!(e.enemy || e.boss) || e.dead || e.hidden) continue;
+        if (e.x < c.x - 8 || e.x > c.x + G.W + 8 || e.y < c.y - 8 || e.y > c.y + G.H + 32) continue;
+        const k = e.constructor && e.constructor.name;
+        if (k && !s.seen[k]) s.seen[k] = 1;
+      }
+    },
     autosave() {
       const s = G.state, p = this.player;
       if (p) { s.x = p.x; s.y = p.y; s.dir = p.dir; s.map = this.world.id; }
@@ -636,6 +649,8 @@
 
       G.script.update();
       this.world.update();
+      // remember every enemy and boss Nate has run into (the manual's ENEMIES and BOSSES pages)
+      if (G.tick % 15 === 0) this.noteSeen();
       this.bidetTick();
       this.refillTick();
 

@@ -103,6 +103,20 @@
   #mb .item.locked b { color: #8a8298; letter-spacing: .1em; }
   #mb .item.locked p { color: #8a8298; font-style: italic; }
 
+  /* ---- enemies and bosses */
+  #mb .foes { display: grid; grid-template-columns: 1fr 1fr; gap: .75em .9em; }
+  #mb .foe { display: flex; gap: .55em; align-items: flex-start; }
+  #mb .foe .pic { flex: none; width: 3.3em; height: 3.3em; border-radius: .5em; display: flex; align-items: center; justify-content: center; overflow: hidden;
+    background: radial-gradient(circle at 50% 40%, #fff 0%, color-mix(in srgb, var(--ac) 22%, #fff) 75%); border: .14em solid color-mix(in srgb, var(--ac) 60%, #fff); position: relative; }
+  #mb .foe b { display: block; font: 800 .7em/1.15 "Futura", "Century Gothic", Arial, sans-serif; color: #2a2238; margin-top: .1em; }
+  #mb .foe p { margin: .15em 0 0; font-size: .6em; line-height: 1.3; }
+  #mb .foe.locked .pic { background: #8a8298; border-color: #6a6278; }
+  #mb .foe.locked .pic i { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 900 1.5em/1 "Futura", "Century Gothic", Arial, sans-serif;
+    color: #fff; font-style: normal; text-shadow: 0 .08em 0 #2a2238, 0 0 .3em rgba(0,0,0,.6); }
+  #mb .foe.locked b { color: #8a8298; letter-spacing: .1em; }
+  #mb .foe.locked p { color: #8a8298; font-style: italic; }
+  #mb .foe .pic.purple img { filter: drop-shadow(0 0 .12em #a85ae8) drop-shadow(0 0 .12em #a85ae8); }
+
   /* ---- the keyboard */
   #mb .kb { position: relative; margin: .4em 0 0; }
   #mb .key { position: absolute; border-radius: .3em; background: linear-gradient(180deg, #fff 0%, #e4e0ea 100%); border: .1em solid #8a8298; box-sizing: border-box;
@@ -273,12 +287,92 @@
     }
     return blacked.get(c);
   }
+  // ---- enemies and bosses: each gets its picture and blurb once some save file has run into it
+  // (s.seen, kept by G.play.noteSeen); until then it's blacked out with a "?"
+  function firstCanvas(o, depth = 0) {
+    if (!o || depth > 4) return null;
+    if (o instanceof HTMLCanvasElement || o instanceof HTMLImageElement) return o;
+    if (typeof o === 'object') for (const k of Object.keys(o)) { const c = firstCanvas(o[k], depth + 1); if (c) return c; }
+    return null;
+  }
+  const art = (f) => pick(() => firstCanvas(f()));
+  // where each kind of enemy lives (for saves from before s.seen: having been there counts)
+  const FOES = [
+    { k: 'Six', name: 'Sixes', art: () => S().six, maps: ['campus'], d: 'The sacred number, loose on campus. Bonk them. Do NOT say them.' },
+    { k: 'Corncob', name: 'Corncobs', art: () => S().corncob, maps: ['homeDown', 'homeUp'], d: 'Corn on the cob. Hops after you and spits kernels.' },
+    { k: 'CerealBox', name: 'Cereal Boxes', art: () => S().cereal, maps: ['homeDown', 'homeUp'], d: 'Shuffles around. Line up with one and it tips over and pours.' },
+    { k: 'Firework', name: 'Fireworks', art: () => S().rocket, maps: ['homeDown', 'homeUp'], d: 'One of Nate\'s own. Bonk it before the fuse is lit.' },
+    { k: 'Snapdragon', name: 'Snapdragons', art: () => S().snapdragon, maps: ['home'], d: 'Rooted in place. Bites anything that gets close and spits pollen.' },
+    { k: 'Gourd', name: 'Birdhouse Gourds', art: () => S().gourd, maps: ['home'], d: 'Wobbles after you. Crack it open and something comes out.' },
+    { k: 'Bird', name: 'Sparrows', art: () => S().bird, maps: ['home'], d: 'Swoops once or twice, then flies off.' },
+    { k: 'Bear', name: 'The Bear', art: () => S().bear, maps: ['home'], d: 'Roams the woods by the brook, growls, charges. Nobody hurts the bear.' },
+    { k: 'Bat', name: 'Brown Bats', art: () => S().bat, maps: ['andoverOld', 'andoverMine', 'andoverFlood', 'andoverDeep'], d: 'Hangs still until your lantern gets close. The deeper, the meaner.' },
+    { k: 'Mimic', name: 'Fool\'s Gold', art: () => S().mimic, maps: ['andoverMine', 'andoverFlood', 'andoverDeep'], d: 'Looks exactly like a mineral vein. Right up until it doesn\'t.' },
+    { k: 'Tommyknocker', name: 'Tommyknockers', art: () => S().knocker, maps: ['andoverMine', 'andoverFlood', 'andoverDeep'], d: 'Little miner spirits from the old stories. They keep their distance and throw rocks.' },
+    { k: 'Seagull', name: 'Seagulls', art: () => S().gull, maps: ['cbbt', 'cbbtMid'], d: 'Perched on the light poles. Screeches, dives, misses, tries again.' },
+    { k: 'RofoPop', name: 'Fizzers', art: () => S().rofo, maps: ['chesTunnel'], d: 'Little bottles of RoFo Pop. They shake themselves up and FWOOSH.' },
+    { k: 'YellowCable', name: 'Yellow Cables', art: () => S().cableIcon, maps: ['condoStorage'], d: 'Abe bought way too many. Now they slither, lunge and tangle you up.' },
+    { k: 'Goose', name: 'Canada Geese', art: () => S().goose, maps: ['condo'], d: 'HONK. Not scared of anything. Well, almost anything.' },
+    { k: 'HypnoBaby', name: 'Hypnotized Babies', art: () => S().babies, maps: ['chkdLobby', 'chkdWard'], d: 'Crawling fast, crying in rings. Nobody hits a baby: boop them with a pacifier.' },
+    { k: 'BassinetBaby', name: 'Bassinet Babies', art: () => S().bassinetBaby, maps: ['chkdWard'], d: 'Racing up and down the ward in a rolling bassinet. A pacifier stops it.' },
+    { k: 'BlowupSnowman', name: 'Blow-Up Snowmen', art: () => S().blowupSnowman, maps: ['ditchRoad'], d: 'Yard decorations, come to life. Bounces after you. Goes down with a long PFFFT.' },
+    { k: 'WireDeer', name: 'Wire Reindeer', art: () => S().wireDeer, maps: ['ditchRoad'], d: 'Grazes on the lawn until you line up with it. Then it charges.' },
+    { k: 'Nutcracker', name: 'Nutcrackers', art: () => S().nutcracker, maps: ['ditchRoad'], d: 'Marches back and forth, halts, and spits walnuts.' },
+    { k: 'HenMinion', name: 'Henrietta\'s Sisters', art: () => S().chickens, maps: ['ditchFinal'], d: 'Mom\'s other chickens. They run around and fire eggs at you.' },
+    { k: 'Egglet', name: 'Egglets', art: () => S().egglet, maps: ['ditchFinal'], d: '"Go, my little eggs!" Little Father Eggmases. One bonk pops one.' },
+  ];
+  const BOSSES = [
+    { name: 'Mikey', art: () => P().mikey.down[0], met: (f) => f.mikeyMet, d: 'Showed up at the end of the driveway with flowers, heart balloons and a song. Won\'t leave until he talks to Lily.' },
+    { name: 'El EEENGLISH', art: () => P().elenglish.down[0], met: (f) => f.mainEvent, d: 'A luchador in a navy mask. Fires letters and dropkicks off the ropes. Sounds a lot like Dad.' },
+    { name: 'Badlands Chugs', art: () => P().badlands.down[0], met: (f) => f.badlandsMet, d: 'Famous chugger. Locked Lily in the kitchen fridge for a video. Challenged to the refrigerator game.' },
+    { name: 'The Globglogabgalab', art: () => S().globglog && S().globglog[1], met: (f) => f.globMet, d: 'Something pink in the basement, eating Mom\'s books and singing. He loves books. Bring earplugs.' },
+    { name: 'Ice JJ Fish', art: () => P().icejj.down[0], met: (f) => f.jjMet, d: 'Singing on a frozen pond north of the bridge. It snows there and nowhere else.' },
+    { name: 'Old Iron', art: () => S().oldIron, met: (f, sn) => f.mine_ironBeaten || sn.OldIron, d: 'A hulk of magnetite at the bottom of the mines. Slams, hurls iron, and pulls you in like a magnet.' },
+    { name: 'The Two-Liter', art: () => S().twoLiter, met: (f, sn) => f.popBeaten || sn.TwoLiter, d: 'A giant RoFo Pop with arms and legs at the end of the tunnel. Slow. Hits like a truck.' },
+    { name: (f) => (f.tollPaid || f.tylerBeaten ? 'Tyler' : 'The Hooded Figure'), art: () => (P().tyler || P().hooded).down[0], met: (f, sn) => f.hoodedMet || sn.TylerBoss, d: (f) => (f.tollPaid || f.tylerBeaten ? 'A shark tooth hunter, hypnotized. Thinks Nate stole his mosasaur tooth. Throws shark teeth. Hard.' : 'Hooded. No face, just glowing eyes. Blocks the tunnel. The toll is 500 shark teeth.') },
+    { name: 'Romulus', art: () => S().romulus && S().romulus.right.stand, met: (f, sn) => f.romulusBeaten || sn.Romulus, d: 'Loose on the golf course and having the time of his life. Never hit a dog. He does hate baths, though.' },
+    { name: 'Shoolby Bones Lumpsucker', art: () => S().shoolby && S().shoolby.right.stand, met: (f) => f.sblMet, d: 'Nate and Lily made up the word "Shoolby." He grew up. Now he lives in Unit B, and it\'s a tide pool.' },
+    { name: 'Rhonda', art: () => P().rhonda.down[0], met: (f) => f.rhondaMet, d: 'Yelled at Abe on a train once and spit at him. Sure everybody is popping pills.' },
+    { name: 'Mecha-Baby', art: () => S().mech, met: (f, sn) => f.mobileBeaten || sn.MechaBaby, d: 'A hypnotized baby piloting a mech suit through the NICU. Break the mech. Never the baby.' },
+    { name: 'The Family?!', art: () => P().doron.down[0], purple: true, met: (f, sn) => f.fin_intro || sn.Possessed, d: 'Father Eggmas got to them. They\'re still in there. Snap them out of it.' },
+    { name: 'Father Eggmas', art: () => S().eggmas, met: (f, sn) => f.fin_intro || sn.EggmasBoss, d: 'A plush Christmas egg from a thrift store. Wants the Number One Ditch to be Number Two.' },
+    { name: 'August Ham', art: () => S().augustHam, met: (f, sn) => f.hamBeaten || sn.AugustHam, d: 'Glazed, enormous and furious, at the ham stand in Aurora. Throws cloves. Mind the glaze.' },
+    { name: 'Father Christmas', art: () => S().fc && S().fc.idle, met: (f) => f.fcMet, d: 'The original Christmas doll. Vanished in the move. Furious that Eggmas took his mantel.' },
+  ];
+  // a save from before s.seen: count the enemies of every map it has been to
+  G.seedSeen = (s) => { const v = s.visited || {}; for (const e of FOES) if (e.maps.some((m) => v[m])) s.seen[e.k] = 1; };
+  const val = (x, f) => (typeof x === 'function' ? x(f) : x);
+  let met = { foes: new Set(), bosses: new Map() };
+  function metAll() {
+    const foes = new Set(), bosses = new Map();
+    for (let n = 1; n <= (G.SAVE_FILES || 3); n++) {
+      const sv = G.readSave(n);
+      if (!sv) continue;
+      const f = sv.flags || {}, v = sv.visited || {}, sn = sv.seen || {};
+      for (const e of FOES) if (sn[e.k] || (!sv.seen && e.maps.some((m) => v[m]))) foes.add(e.k);
+      // (a boss's name and blurb can change with the story: the furthest-along save wins)
+      BOSSES.forEach((b, i) => { try { if (b.met(f, sn)) bosses.set(i, f); } catch (e) { /* (an old save) */ } });
+    }
+    return { foes, bosses };
+  }
+  // the picture, scaled to fit its box (2x at most... unless it's tiny)
+  function fit(c, box = 48) { if (!c) return ''; const k = Math.min(box / c.width, box / c.height, 3); return px(c, k); }
+  function foeCard(on, c, name, text, ac, purple) {
+    return on ? `<div class="foe"><div class="pic${purple ? ' purple' : ''}">${fit(c)}</div><div><b>${name}</b><p>${text}</p></div></div>`
+      : `<div class="foe locked"><div class="pic">${fit(blackout(c))}<i>?</i></div><div><b>???</b><p>${ac}</p></div></div>`;
+  }
+  const foeCards = (from, to) => FOES.slice(from, to).map((e) => foeCard(met.foes.has(e.k), art(e.art), e.name, e.d, 'You haven\'t run into this one yet.')).join('');
+  const bossCards = (from, to) => BOSSES.slice(from, to).map((b, j) => {
+    const i = from + j, f = met.bosses.get(i);
+    return foeCard(!!f, art(b.art), f ? val(b.name, f) : '', f ? val(b.d, f) : '', 'You haven\'t faced this one yet.', b.purple);
+  }).join('');
+
   const gear = (id, icon, name, text) => found.has(id) ? item(icon, name, text)
     : `<div class="item locked"><div class="ic">${px(blackout(icon), 2)}<i>?</i></div><div><b>???</b><p>You haven't found this yet.</p></div></div>`;
   const key = (x, y, w, h, label, n) => `<div class="key${n ? ' hot' : ''}" style="left:${x}em;top:${y}em;width:${w}em;height:${h}em"><span>${label}</span>${n ? `<i class="kn">${n}</i>` : ''}</div>`;
 
   function buildPages() {
-    found = foundGear();
+    found = foundGear(); met = metAll();
     const sp = S(), shotTitle = titleShot(), shotPlay = playShot();
     const pages = [];
 
@@ -304,7 +398,7 @@
     // ---- 2: contents
     const TOC = [['The Story', 3, AC.red], ['Controls', 4, AC.blue], ['Getting Started', 5, AC.green], ['The Game Screen', 6, AC.teal], ['The Pause Menu', 7, AC.indigo],
       ['Fainting and Healing', 8, AC.pink], ['The Family', 9, AC.orange], ['Your Gear', 11, AC.gold], ['Shark Teeth and Collectables', 13, AC.teal], ['The Road Trip', 14, AC.green],
-      ['Beware!', 15, AC.purple], ['Hints and Tips', 16, AC.blue], ['Credits', 17, AC.red]];
+      ['Enemies', 15, AC.purple], ['Bosses', 18, AC.red], ['Hints and Tips', 20, AC.blue], ['Credits', 21, AC.red]];
     pages.push({ html: (side, n) => frame('Contents', AC.indigo, `
       <ul class="toc">${TOC.map(([t, p, c]) => `<li><span class="sw" style="background:${c}"></span>${t}<span class="dots"></span><span class="p">${pageNo(p)}</span></li>`).join('')}</ul>
       <div class="box" style="--ac:${AC.indigo}"><span class="tag">ABOUT THIS BOOKLET</span>
@@ -454,17 +548,15 @@
       </ul>
       <div class="box" style="--ac:${AC.green}"><span class="tag">TIP</span><p>The <b>MAP</b> page shows where you are. If you're not sure where to go next, check <b>QUESTS</b>.</p></div>`, side, n) });
 
-    // ---- 15: beware
-    pages.push({ html: (side, n) => frame('Beware!', AC.purple, `
-      <div class="row" style="align-items:center">
-        <div style="flex:none;width:34%">${px(sp.eggmas, 3.4, 'width:100%;filter:drop-shadow(0 0 .5em rgba(138,58,168,.7))')}</div>
-        <div class="col"><h3 style="margin-top:0">Father Eggmas</h3><p>The egg on the mantel. Jolly. Paisley. Up to something. He says "HO HO HO" a lot, and he never means it in a nice way.</p></div></div>
-      <div class="row" style="align-items:center;margin-top:.6em">
-        <div style="flex:none;width:18%;display:flex;justify-content:center">${px(pick(() => sp.egglet.right[0]), 3.2)}</div>
-        <div class="col"><h3 style="margin-top:0">Egglets</h3><p>"Go, my little eggs!" They waddle, they chase, they say "ho ho." One good bonk is all it takes.</p></div></div>
-      <div class="box" style="--ac:${AC.purple}"><span class="tag">WARNING</span><p>Nobody in the family has been acting quite like themselves lately. If somebody you love says something strange, they might need your help more than you think.</p></div>`, side, n) });
+    // ---- 15-17: enemies, 18-19: bosses (blacked out until some save has run into them)
+    pages.push({ html: (side, n) => frame('Enemies', AC.purple, `<p>Everything out there that wants a piece of Nate. Run into one and it gets its entry here.</p><div class="foes">${foeCards(0, 8)}</div>`, side, n) });
+    pages.push({ html: (side, n) => frame('Enemies', AC.purple, `<div class="foes">${foeCards(8, 16)}</div>`, side, n) });
+    pages.push({ html: (side, n) => frame('Enemies', AC.purple, `<div class="foes">${foeCards(16, 22)}</div>
+      <div class="box" style="--ac:${AC.purple}"><span class="tag">TIP</span><p>Some troublemakers drop a heart or a shark tooth when you bonk them. Some of them are better left alone.</p></div>`, side, n) });
+    pages.push({ html: (side, n) => frame('Bosses', AC.red, `<p>The big ones. Face one and it gets its entry here.</p><div class="foes">${bossCards(0, 8)}</div>`, side, n) });
+    pages.push({ html: (side, n) => frame('Bosses', AC.red, `<div class="foes">${bossCards(8, 16)}</div>`, side, n) });
 
-    // ---- 15+1: hints and tips
+    // ---- 20: hints and tips
     pages.push({ html: (side, n) => frame('Hints & Tips', AC.blue, `
       <ul class="legend">
         <li><span class="num">1</span><p><b>Talk to everyone.</b> Twice. People say new things as the story goes on.</p></li>
@@ -477,7 +569,7 @@
       </ul>
       <div class="box" style="--ac:${AC.blue}"><span class="tag">FROM THE FAMILY GROUP CHAT</span><p style="font-style:italic">"Be the light you wish to see in the world. Also wear a jacket." &nbsp;&mdash; Nani</p></div>`, side, n) });
 
-    // ---- 17: credits
+    // ---- 21: credits
     pages.push({ html: (side, n) => frame('Credits', AC.red, `
       <div style="text-align:center;margin-top:.4em">
         <p style="font:italic 900 1.15em/1.2 'Futura','Century Gothic',Arial,sans-serif;color:#2a2238;margin-bottom:.2em">Made by Abe</p>
@@ -491,7 +583,7 @@
         <p style="font-size:.7em;line-height:1.6">Everybody in the family group chat, Nani's inspirational messages, Tyler and his sifter, and the Number One Ditch, for being the best ditch in the world.</p>
       </div>`, side, n) });
 
-    // ---- 18, 19: notes (two of them, like the real ones, and just as empty)
+    // ---- 22, 23: notes (two of them, like the real ones, and just as empty)
     pages.push({ html: (side, n) => frame('Notes', AC.slate, `<div class="lines"></div>`, side, n) });
     pages.push({ html: (side, n) => frame('Notes', AC.slate, `<div class="lines"></div>`, side, n, { wide: true }) });
 
