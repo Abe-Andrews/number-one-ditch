@@ -103,6 +103,32 @@
   #mb .item.locked b { color: #8a8298; letter-spacing: .1em; }
   #mb .item.locked p { color: #8a8298; font-style: italic; }
 
+  #mb .who.locked .pic { position: relative; background: #8a8298; border-color: #6a6278; }
+  #mb .who.locked .pic i { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 900 1.7em/1 "Futura", "Century Gothic", Arial, sans-serif;
+    color: #fff; font-style: normal; text-shadow: 0 .08em 0 #2a2238, 0 0 .3em rgba(0,0,0,.6); }
+  #mb .who.locked .nm { color: #8a8298; letter-spacing: .1em; }
+  #mb .who.locked p { color: #8a8298; font-style: italic; }
+
+  /* ---- the road trip map */
+  #mb .map { display: block; width: 100%; border-radius: .5em; border: .2em solid #2a2630; box-shadow: 0 .2em .5em rgba(0,0,0,.25); background: #9ac8e8; }
+  #mb .stops { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .42em; margin: 0; list-style: none; padding: 0; }
+  #mb .stops li { display: flex; gap: .4em; align-items: flex-start; }
+  #mb .stops li p { margin: 0; font-size: .6em; line-height: 1.28; }
+  #mb .stops li.locked p { color: #8a8298; font-style: italic; }
+
+  /* ---- pipe songs */
+  #mb .song { display: flex; gap: .7em; align-items: center; padding: .55em .6em; border-radius: .6em; margin-bottom: .55em;
+    background: color-mix(in srgb, var(--ac) 8%, #fff); border: .12em solid color-mix(in srgb, var(--ac) 35%, #fff); }
+  #mb .song .arrows { flex: none; display: flex; gap: .2em; width: 8.6em; }
+  #mb .song .arrows span { width: 1.55em; height: 1.55em; border-radius: .3em; background: linear-gradient(180deg, #fff, #e4e0ea); border: .1em solid #8a8298; box-sizing: border-box;
+    box-shadow: 0 .14em 0 #8a8298; display: flex; align-items: center; justify-content: center; font: 900 .8em/1 Arial, sans-serif; color: #3a3048; }
+  #mb .song b { display: block; font: 800 .74em/1.2 "Futura", "Century Gothic", Arial, sans-serif; color: #2a2238; }
+  #mb .song p { margin: .12em 0 0; font-size: .64em; line-height: 1.3; }
+  #mb .song.locked { background: #f0eef2; border-color: #d8d4dc; }
+  #mb .song.locked .arrows span { background: #8a8298; color: #fff; border-color: #6a6278; box-shadow: 0 .14em 0 #6a6278; }
+  #mb .song.locked b, #mb .song.locked p { color: #8a8298; }
+  #mb .song.locked p { font-style: italic; }
+
   /* ---- enemies and bosses */
   #mb .foes { display: grid; grid-template-columns: 1fr 1fr; gap: .75em .9em; }
   #mb .foe { display: flex; gap: .55em; align-items: flex-start; }
@@ -129,7 +155,7 @@
 
   /* ---- contents */
   #mb .toc { list-style: none; padding: 0; margin: .4em 0 0; }
-  #mb .toc li { display: flex; align-items: baseline; gap: .4em; font: 700 .82em/2.05 "Futura", "Century Gothic", "Avenir Next", Arial, sans-serif; color: #2a2238; }
+  #mb .toc li { display: flex; align-items: baseline; gap: .4em; font: 700 .8em/1.78 "Futura", "Century Gothic", "Avenir Next", Arial, sans-serif; color: #2a2238; }
   #mb .toc li .dots { flex: 1; border-bottom: .14em dotted #b8b0c4; transform: translateY(-.3em); }
   #mb .toc li .sw { width: .7em; height: .7em; border-radius: 50%; flex: none; transform: translateY(.05em); }
   #mb .toc li .p { font-weight: 900; color: #6a6078; }
@@ -258,8 +284,12 @@
       <div class="ftr">${side === 'left' ? `<span class="pn">${pageNo(n)}</span>Journey to the Number One Ditch` : `Instruction Booklet<span class="pn">${pageNo(n)}</span>`}</div></div>`;
   }
 
-  const who = (id, name, tag, bio, skill, art) => `<div class="who"><div class="pic">${art || px(face(id), 3.2, 'margin-bottom:.15em')}</div><div>
-    <div class="nm">${name}<small>${tag}</small></div><p>${bio}</p>${skill ? `<div class="sk"><b>Along for the ride:</b> ${skill}</div>` : ''}</div></div>`;
+  // (somebody Nate hasn't met yet: a silhouette and a "?")
+  const who = (id, name, tag, bio, skill, art) => (met.fam.has(id)
+    ? `<div class="who"><div class="pic">${art || px(face(id), 3.2, 'margin-bottom:.15em')}</div><div>
+    <div class="nm">${name}<small>${tag}</small></div><p>${bio}</p>${skill ? `<div class="sk"><b>Along for the ride:</b> ${skill}</div>` : ''}</div></div>`
+    : `<div class="who locked"><div class="pic">${id === 'romulus' ? px(blackout(pick(() => S().romulus.right.stand)), 2.6, 'margin-bottom:.5em') : px(blackout(face(id)), 3.2, 'margin-bottom:.15em')}<i>?</i></div><div>
+    <div class="nm">???</div><p>You haven't met them yet.</p></div></div>`);
   const item = (icon, name, text) => `<div class="item"><div class="ic">${px(icon, 2)}</div><div><b>${name}</b><p>${text}</p></div></div>`;
   // Gear nobody's found yet stays a secret: blacked out, with a "?" (no spoilers). "Found" means on
   // any of the save files (the booklet opens from the title screen, so there's no game going).
@@ -339,12 +369,58 @@
     { name: 'August Ham', art: () => S().augustHam, met: (f, sn) => f.hamBeaten || sn.AugustHam, d: 'Glazed, enormous and furious, at the ham stand in Aurora. Throws cloves. Mind the glaze.' },
     { name: 'Father Christmas', art: () => S().fc && S().fc.idle, met: (f) => f.fcMet, d: 'The original Christmas doll. Vanished in the move. Furious that Eggmas took his mantel.' },
   ];
+  // ---- the family: who's been met (the same checks as the PEOPLE page and the party)
+  const FAMILY_MET = {
+    doron: (f, party) => party.includes('doron'), lily: (f, party) => party.includes('lily'), abe: (f, party) => party.includes('abe'),
+    hannah: (f, party) => party.includes('hannah'), romulus: (f) => f.romulusMet || f.romulusBeaten, dad: (f) => f.readChat, michelle: (f) => f.michelleMet,
+  };
+  // ---- the road trip: each stop, where its pin goes on the map (a 200 x 260 drawing of the coast,
+  // not to scale), and which maps count as having been there
+  const STOPS = [
+    { id: 'lafayette', name: 'Lafayette', d: 'Lafayette College, Easton, PA. Where it all starts.', x: 86, y: 40, lx: -1 },
+    { id: 'fair', name: 'Easton Fair', d: 'The fairgrounds, east of campus.', x: 96, y: 52, lx: -1 },
+    { id: 'home', name: 'Home', d: 'Rattlesnake Bridge Road.', x: 122, y: 44, lx: 1 },
+    { id: 'andover', name: 'Andover Mines', d: 'Iron country, since colonial times.', x: 114, y: 22, lx: 1 },
+    { id: 'bay', name: 'The Bay', d: 'The Chesapeake Bay Bridge-Tunnel.', x: 92, y: 184, lx: 1 },
+    { id: 'chkd', name: 'CHKD', d: 'Norfolk, Virginia.', x: 84, y: 197, lx: 1 },
+    { id: 'chesapeake', name: 'Chesapeake', d: 'Abe and Hannah\'s place.', x: 72, y: 205, lx: -1 },
+    { id: 'ditch', name: 'The Number One Ditch', d: 'Chesapeake, Virginia. The best ditch in the world.', x: 82, y: 218, lx: 1, star: true },
+    { id: 'aurora', name: 'Aurora', d: 'A little town in North Carolina. A detour.', x: 64, y: 246, lx: 1, extra: true },
+  ];
+  for (const st of STOPS) st.maps = (G.REGIONS && G.REGIONS[st.id] && G.REGIONS[st.id].maps) || [];
+  // ---- Dad's pipe songs (G.SIGNALS has the arrows; these say what they do)
+  const SONGS = [
+    { id: 'peace', d: 'Calms every enemy nearby for about ten seconds.' },
+    { id: 'icy', d: 'An ice beam the way you\'re facing. Anything it touches freezes for a few seconds. So does water.' },
+    { id: 'jlc', d: 'Everything nearby gets the fright of its life and runs from you.' },
+    { id: 'cart', d: 'Anything nearby has to stop and dance for a few seconds. (Bosses don\'t. Nate does.)' },
+    { id: 'crack', d: 'For something that really, really needs cracking.' },
+  ];
+  // ---- the optional games: found by the same checks the 100% list uses to stop hiding a row
+  const EXTRAS = [
+    { name: 'The Fair Games', art: () => S().goldenDuck, seen: (f) => f.balloonSeen || f.duckSeen, d: 'Balloons, a duck pond and a water-gun race at the Easton Fair.' },
+    { name: 'Doron\'s Fight Night', art: () => P().doron.down[0], seen: (f) => f.fightMet, d: 'Five fighters in the Expo Hall locker room. Doron\'s in your corner.' },
+    { name: 'The Exams', art: () => S().diploma, seen: (f) => f.chemMet || f.engMet, d: 'A chemistry final and an EEENGLISH exam. Don\'t say the sacred number.' },
+    { name: 'Studio B', art: () => S().mic, seen: (f) => f.studioMet, d: 'Record a song of your own at the console, and save it.' },
+    { name: 'Dad\'s Hip Hop Class', art: () => P().dad.down[0], seen: (f) => f.hipHopMet, d: 'It\'s REAL. Copy his moves.' },
+    { name: 'The Refrigerator Game', art: () => S().milk, seen: (f) => f.badlandsMet, d: 'Mix the drink. Win the game.' },
+    { name: 'Not My Dahlias', art: () => S().snapdragon, seen: (f) => f.gardenMet || f.shopOpen, d: 'Mom\'s garden at night. Plant flowers and keep the critters off the dahlias.' },
+    { name: 'Dad\'s Workshop', art: () => S().pipe, seen: (f) => f.pipeBench, d: 'Turn pipes on the lathe and blend tobacco from Dad\'s journal.' },
+    { name: 'The 2 AM Taco Bell Run', art: () => S().tacoBag, seen: (f) => f.tacoRunMet, d: 'Sneak out. Don\'t wake anyone. Get the order right.' },
+    { name: 'Hannah\'s Book Club', art: () => S().bookmarkIcon, seen: (f) => f.clubMet, d: 'Read a book, talk about it, earn some teeth.' },
+    { name: 'Fishing with Matt', art: () => S().rodIcon, seen: (f) => f.mattMet, d: 'Out on the bay. Catch one of everything for his survey.' },
+    { name: 'Jamming with Abe', art: () => S().abeBassIcon, seen: (f) => f.jamMet, d: 'Hit the notes, keep the groove, win the instruments.' },
+    { name: 'Abe\'s Typing Test', art: () => P().abe.down[0], seen: (f, sv) => sv.visited && sv.visited.condoUp, d: 'Three rounds at Abe\'s desk. Type fast.' },
+    { name: 'Hannah\'s Shift', art: () => S().badgeIcon, seen: (f) => f.nicuMet, d: 'A shift in the NICU. Three stars a shift if you\'re good.' },
+    { name: 'Sifting the Ditch', art: () => S().sifter, seen: (f) => f.dayIntro, d: 'Shake the gravel through a sifter and fill the Tooth Book.' },
+    { name: 'Boss Rush', art: () => S().hammerGold && S().hammerGold.up, seen: (f) => f.fcBeaten, d: 'Every boss, back to back, no fainting. There\'s a prize.' },
+  ];
   // a save from before s.seen: count the enemies of every map it has been to
   G.seedSeen = (s) => { const v = s.visited || {}; for (const e of FOES) if (e.maps.some((m) => v[m])) s.seen[e.k] = 1; };
   const val = (x, f) => (typeof x === 'function' ? x(f) : x);
-  let met = { foes: new Set(), bosses: new Map() };
+  let met = { foes: new Set(), bosses: new Map(), fam: new Set(), places: new Set(), songs: new Set(), extras: new Set() };
   function metAll() {
-    const foes = new Set(), bosses = new Map();
+    const foes = new Set(), bosses = new Map(), fam = new Set(['nate']), places = new Set(['lafayette', 'ditch']), songs = new Set(), extras = new Set();
     for (let n = 1; n <= (G.SAVE_FILES || 3); n++) {
       const sv = G.readSave(n);
       if (!sv) continue;
@@ -352,8 +428,13 @@
       for (const e of FOES) if (sn[e.k] || (!sv.seen && e.maps.some((m) => v[m]))) foes.add(e.k);
       // (a boss's name and blurb can change with the story: the furthest-along save wins)
       BOSSES.forEach((b, i) => { try { if (b.met(f, sn)) bosses.set(i, f); } catch (e) { /* (an old save) */ } });
+      const party = sv.party || [];
+      for (const [id, ok] of Object.entries(FAMILY_MET)) { try { if (ok(f, party)) fam.add(id); } catch (e) { /* (an old save) */ } }
+      for (const st of STOPS) if (st.maps.some((m) => v[m])) places.add(st.id);
+      for (const sg of SONGS) if (f['signal_' + sg.id]) songs.add(sg.id);
+      EXTRAS.forEach((x, i) => { try { if (x.seen(f, sv)) extras.add(i); } catch (e) { /* (an old save) */ } });
     }
-    return { foes, bosses };
+    return { foes, bosses, fam, places, songs, extras };
   }
   // the picture, scaled to fit its box (2x at most... unless it's tiny)
   function fit(c, box = 48) { if (!c) return ''; const k = Math.min(box / c.width, box / c.height, 3); return px(c, k); }
@@ -398,7 +479,7 @@
     // ---- 2: contents
     const TOC = [['The Story', 3, AC.red], ['Controls', 4, AC.blue], ['Getting Started', 5, AC.green], ['The Game Screen', 6, AC.teal], ['The Pause Menu', 7, AC.indigo],
       ['Fainting and Healing', 8, AC.pink], ['The Family', 9, AC.orange], ['Your Gear', 11, AC.gold], ['Shark Teeth and Collectables', 13, AC.teal], ['The Road Trip', 14, AC.green],
-      ['Enemies', 15, AC.purple], ['Bosses', 18, AC.red], ['Hints and Tips', 20, AC.blue], ['Credits', 21, AC.red]];
+      ['Enemies', 15, AC.purple], ['Bosses', 18, AC.red], ['Songs', 20, AC.teal], ['Extras', 21, AC.pink], ['Hints and Tips', 23, AC.blue], ['Credits', 24, AC.red]];
     pages.push({ html: (side, n) => frame('Contents', AC.indigo, `
       <ul class="toc">${TOC.map(([t, p, c]) => `<li><span class="sw" style="background:${c}"></span>${t}<span class="dots"></span><span class="p">${pageNo(p)}</span></li>`).join('')}</ul>
       <div class="box" style="--ac:${AC.indigo}"><span class="tag">ABOUT THIS BOOKLET</span>
@@ -491,7 +572,7 @@
       ${gear('doosh', sp.doosh, 'Doosh De Luche', 'Heals 4 hearts. Nate can carry three. (It\'s pronounced dulce de leche.)')}
       ${gear('firstAid', sp.firstAidIcon, 'Hannah\'s First-Aid Kit', 'Patches Nate up for 3 hearts. Holds 3 uses, and any supply closet at CHKD restocks it.')}
       ${gear('tacoBag', sp.tacoBag, 'Fourthmeal', 'Every heart back, all at once. From a certain late-night drive-thru.')}
-      <div class="box" style="--ac:${AC.pink}"><span class="tag">TIP</span><p>Hannah heals Nate a little while she's following him. Nurse's orders.</p></div>`, side, n) });
+      <div class="box" style="--ac:${AC.pink}"><span class="tag">TIP</span><p>${met.fam.has('hannah') ? 'Hannah heals Nate a little while she\'s following him. Nurse\'s orders.' : 'Some people are good at keeping Nate on his feet. Keep an eye out.'}</p></div>`, side, n) });
 
     // ---- 9, 10: the family
     pages.push({ html: (side, n) => frame('The Family', AC.orange, `
@@ -535,18 +616,33 @@
         <li><span class="num">&#9670;</span><p><b>Animal Friends</b> and <b>Instruments</b>, and a few more you'll find on your own.</p></li>
       </ul>`, side, n) });
 
-    // ---- 14: the road trip
-    const STOPS = [['Lafayette', 'Lafayette College, Easton, PA. Where it all starts.'], ['Easton Fair', 'The fairgrounds, east of campus. Games, rides and a main event.'],
-      ['Home', 'Rattlesnake Bridge Road. Mom, Dad, Lily, and a workshop.'], ['Andover Mines', 'Iron country, since colonial times.'],
-      ['The Bay', 'The Chesapeake Bay Bridge-Tunnel. Bring a fishing rod.'], ['Chesapeake', 'Abe and Hannah\'s place.'],
-      ['CHKD', 'Norfolk, Virginia. Where Hannah works.'], ['The Number One Ditch', 'Chesapeake, Virginia. The best ditch in the world.']];
-    pages.push({ html: (side, n) => frame('The Road Trip', AC.green, `
-      <p>From a college lab in Pennsylvania to a ditch in Virginia, with a few stops along the way:</p>
-      <ul class="legend" style="position:relative;margin-left:.2em">
-        <span style="position:absolute;left:.52em;top:.6em;bottom:.9em;width:.16em;background:color-mix(in srgb, ${AC.green} 45%, #fff)"></span>
-        ${STOPS.map(([t, d], i) => `<li style="position:relative"><span class="num" style="${i === STOPS.length - 1 ? `background:${AC.red}` : ''}">${i === STOPS.length - 1 ? '&#9733;' : '&#9679;'}</span><p><b>${t}:</b> ${d}</p></li>`).join('')}
-      </ul>
-      <div class="box" style="--ac:${AC.green}"><span class="tag">TIP</span><p>The <b>MAP</b> page shows where you are. If you're not sure where to go next, check <b>QUESTS</b>.</p></div>`, side, n) });
+    // ---- 14: the road trip, on a map (stops you haven't reached are a "?" pin)
+    pages.push({ html: (side, n) => {
+      const on = (st) => met.places.has(st.id), route = STOPS.filter((st) => !st.extra);
+      const path = 'M' + route.map((st, i) => (i === 4 ? `122,60 L114,100 L104,150 L94,180 L${st.x},${st.y}` : `${st.x},${st.y}`)).join(' L');
+      const pins = STOPS.map((st, i) => {
+        const o = on(st), c = st.star ? AC.red : o ? AC.green : '#8a8298', lab = o ? st.name : '???';
+        const tx = st.x + st.lx * 7, anchor = st.lx > 0 ? 'start' : 'end';
+        return `<g><circle cx="${st.x}" cy="${st.y}" r="5.2" fill="${c}" stroke="#fff" stroke-width="1.4"/>
+          <text x="${st.x}" y="${st.y + 2.3}" font-size="6.2" font-weight="900" text-anchor="middle" fill="#fff" font-family="Arial">${o ? (st.star ? '&#9733;' : '&#9679;') : '?'}</text>
+          <text x="${tx}" y="${st.y + 2.2}" font-size="${st.star ? 7 : 6.2}" font-weight="800" text-anchor="${anchor}" fill="${o ? '#2a2238' : '#8a8298'}" font-family="Futura, Century Gothic, Arial" paint-order="stroke" stroke="#f4ecd8" stroke-width="2.2">${lab}</text></g>`;
+      }).join('');
+      const svg = `<svg class="map" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
+        <defs><pattern id="mbWaves" width="16" height="9" patternUnits="userSpaceOnUse"><path d="M0 5 Q4 2 8 5 T16 5" fill="none" stroke="#c4e0f2" stroke-width=".8"/></pattern></defs>
+        <rect width="200" height="260" fill="#9ac8e8"/><rect width="200" height="260" fill="url(#mbWaves)"/>
+        <path d="M0,0 L150,0 L152,10 L150,30 L146,52 L140,70 L128,92 L118,80 L110,72 L114,92 L118,110 L116,130 L110,150 L100,170 L94,182 L90,184 L88,186 L92,200 L96,220 L100,238 L98,260 L0,260 Z" fill="#f4ecd8" stroke="#b8a888" stroke-width="1"/>
+        <path d="M90,184 L86,170 L84,150 L82,120 L80,95 L78,80 L74,90 L72,120 L74,150 L78,170 L84,184 Z" fill="#9ac8e8" stroke="#b8a888" stroke-width=".8"/>
+        <line x1="94" y1="182" x2="88" y2="187" stroke="#5a5064" stroke-width="1.2" stroke-dasharray="1.5 1"/>
+        <g font-family="Futura, Century Gothic, Arial" font-weight="800" fill="#c8b898" font-size="9" letter-spacing="1"><text x="40" y="34">PA</text><text x="128" y="20">NJ</text><text x="34" y="190">VA</text><text x="30" y="250">NC</text></g>
+        <text x="150" y="150" font-family="Futura, Century Gothic, Arial" font-style="italic" font-weight="800" font-size="7.5" fill="#5a8ab0" letter-spacing="1.5" transform="rotate(-70 150 150)">ATLANTIC OCEAN</text>
+        <g transform="translate(180,30)"><circle r="11" fill="#f4ecd8" stroke="#5a5064" stroke-width=".8"/><path d="M0,-9 L2.6,0 L0,9 L-2.6,0 Z" fill="#5a5064"/><path d="M0,-9 L2.6,0 L-2.6,0 Z" fill="${AC.red}"/><text y="-12.5" font-size="6" font-weight="900" text-anchor="middle" fill="#5a5064" font-family="Arial">N</text></g>
+        <path d="${path}" fill="none" stroke="${AC.red}" stroke-width="1.6" stroke-dasharray="4 2.5" stroke-linecap="round" stroke-linejoin="round" opacity=".85"/>
+        <path d="M82,218 L64,246" fill="none" stroke="#8a8298" stroke-width="1.2" stroke-dasharray="1.5 2.5"/>
+        ${pins}</svg>`;
+      const legend = STOPS.map((st, i) => `<li class="${on(st) ? '' : 'locked'}"><span class="num" style="background:${st.star ? AC.red : on(st) ? AC.green : '#8a8298'};font-size:.62em">${on(st) ? (st.star ? '&#9733;' : '&#9679;') : '?'}</span><p>${on(st) ? `<b>${st.name}:</b> ${st.d}` : 'Somewhere you haven\'t been yet.'}</p></li>`).join('');
+      return frame('The Road Trip', AC.green, `<div class="row" style="gap:.7em"><div style="flex:none;width:64%">${svg}</div><ul class="stops">${legend}</ul></div>
+        <div class="box" style="--ac:${AC.green}"><span class="tag">TIP</span><p>The <b>MAP</b> page in the pause menu shows where you are. Not sure where to go next? Check <b>QUESTS</b>.</p></div>`, side, n);
+    } });
 
     // ---- 15-17: enemies, 18-19: bosses (blacked out until some save has run into them)
     pages.push({ html: (side, n) => frame('Enemies', AC.purple, `<p>Everything out there that wants a piece of Nate. Run into one and it gets its entry here.</p><div class="foes">${foeCards(0, 8)}</div>`, side, n) });
@@ -556,20 +652,37 @@
     pages.push({ html: (side, n) => frame('Bosses', AC.red, `<p>The big ones. Face one and it gets its entry here.</p><div class="foes">${bossCards(0, 8)}</div>`, side, n) });
     pages.push({ html: (side, n) => frame('Bosses', AC.red, `<div class="foes">${bossCards(8, 16)}</div>`, side, n) });
 
-    // ---- 20: hints and tips
+    // ---- 20: pipe songs (each one blacked out until it's been learned)
+    const ARROW = { up: '&uarr;', down: '&darr;', left: '&larr;', right: '&rarr;' };
+    pages.push({ html: (side, n) => {
+      const pipe = found.has('pipe'), list = SONGS.map((sg) => {
+        const def = (G.SIGNALS || []).find((x) => x.id === sg.id), on = met.songs.has(sg.id) && def;
+        const keys = (def ? def.seq : ['up', 'up', 'up']).map((d) => `<span>${on ? ARROW[d] : '?'}</span>`).join('');
+        return `<div class="song${on ? '' : ' locked'}"><div class="arrows">${keys}</div><div><b>${on ? def.name : '???'}</b><p>${on ? sg.d : 'You haven\'t learned this one yet.'}</p></div></div>`;
+      }).join('');
+      return frame('Songs', AC.teal, `<p>${pipe ? 'Set <b>Dad\'s Pipe</b> to X and press X to start puffing. Each direction is its own note: play a song\'s notes in order and something happens.' : 'Some songs can do more than sound nice. You\'ll need something to play them on first.'} People teach them along the way.</p>${list}
+        <div class="box" style="--ac:${AC.teal}"><span class="tag">TIP</span><p>Ask around, and don't skip the side quests. That's where most of the songs are.</p></div>`, side, n);
+    } });
+
+    // ---- 21, 22: extras (the optional games, blacked out until found)
+    const extraCards = (from, to) => EXTRAS.slice(from, to).map((x, j) => foeCard(met.extras.has(from + j), art(x.art), x.name, x.d, 'You haven\'t found this yet.')).join('');
+    pages.push({ html: (side, n) => frame('Extras', AC.pink, `<p>Games inside the game. Every one of them is optional: none of them hold up the story. Find one and it gets its entry here.</p><div class="foes">${extraCards(0, 8)}</div>`, side, n) });
+    pages.push({ html: (side, n) => frame('Extras', AC.pink, `<div class="foes">${extraCards(8, 16)}</div>`, side, n) });
+
+    // ---- 23: hints and tips
     pages.push({ html: (side, n) => frame('Hints & Tips', AC.blue, `
       <ul class="legend">
         <li><span class="num">1</span><p><b>Talk to everyone.</b> Twice. People say new things as the story goes on.</p></li>
         <li><span class="num">2</span><p><b>Look at everything.</b> Press Z on shelves, signs, trash cans and photos. You never know.</p></li>
         <li><span class="num">3</span><p><b>Check QUESTS</b> when you're stuck. It knows what you should be doing.</p></li>
-        <li><span class="num">4</span><p><b>Bring the right person.</b> Some places need Doron's muscle, Abe's reach or Lily's "No."</p></li>
+        <li><span class="num">4</span><p><b>Bring the right person.</b> Some places need a particular member of the family. Try the others.</p></li>
         <li><span class="num">5</span><p><b>Optional means optional.</b> Minigames and side quests are never required. They're just fun (and sometimes worth shark teeth).</p></li>
         <li><span class="num">5+1</span><p><b>Watch the number.</b> If somebody asks you a question with an obvious answer, think before you answer.</p></li>
         <li><span class="num">7</span><p><b>Try your gear on everything.</b> Most items do more than one thing.</p></li>
       </ul>
       <div class="box" style="--ac:${AC.blue}"><span class="tag">FROM THE FAMILY GROUP CHAT</span><p style="font-style:italic">"Be the light you wish to see in the world. Also wear a jacket." &nbsp;&mdash; Nani</p></div>`, side, n) });
 
-    // ---- 21: credits
+    // ---- 24: credits
     pages.push({ html: (side, n) => frame('Credits', AC.red, `
       <div style="text-align:center;margin-top:.4em">
         <p style="font:italic 900 1.15em/1.2 'Futura','Century Gothic',Arial,sans-serif;color:#2a2238;margin-bottom:.2em">Made by Abe</p>
@@ -583,9 +696,8 @@
         <p style="font-size:.7em;line-height:1.6">Everybody in the family group chat, Nani's inspirational messages, Tyler and his sifter, and the Number One Ditch, for being the best ditch in the world.</p>
       </div>`, side, n) });
 
-    // ---- 22, 23: notes (two of them, like the real ones, and just as empty)
+    // ---- 25: notes (like the real ones, and just as empty)
     pages.push({ html: (side, n) => frame('Notes', AC.slate, `<div class="lines"></div>`, side, n) });
-    pages.push({ html: (side, n) => frame('Notes', AC.slate, `<div class="lines"></div>`, side, n, { wide: true }) });
 
     // ---- the inside back cover: the warranty
     pages.push({ html: (side, n) => frame('Warranty', AC.slate, `
