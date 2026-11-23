@@ -735,7 +735,8 @@
       G.fade = 0;
       this.t = 0;
       this.sel = 0;
-      this.opts = (G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game']).concat('Admin');
+      // (Manual: the instruction booklet, src/manual.js)
+      this.opts = (G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game']).concat('Admin', 'Manual');
       // which landmarks drift by: the places the latest save has been to
       const v = ((G.hasSave() && G.readSave(G.latestSave())) || {}).visited || {};
       this.reached = [['campus'], ['fair'], ['home'], ['cbbtToll', 'cbbt'], ['chkd'], ['ditchFinal', 'ditchDay']]
@@ -745,7 +746,8 @@
     update() {
       this.t++;
       const inp = G.input;
-      if (inp.hit('up') || inp.hit('down')) { this.sel = (this.sel + 1) % this.opts.length; G.audio.sfx('menu'); }
+      // (up goes up and down goes down, wrapping around)
+      if (inp.hit('up') || inp.hit('down')) { this.sel = (this.sel + (inp.hit('up') ? this.opts.length - 1 : 1)) % this.opts.length; G.audio.sfx('menu'); }
       if (inp.hit('a') || inp.hit('start')) {
         inp.eat('a'); inp.eat('start');
         G.audio.sfx('select');
@@ -757,6 +759,8 @@
           G.files.enter('load');
         } else if (opt === 'Admin') {
           G.adminPick.enter();
+        } else if (opt === 'Manual') {
+          G.manual.enter(this);
         } else if (G.hasSave()) {
           G.files.enter('new');
         } else {
@@ -773,12 +777,13 @@
       const eg = G.spr.eggmas;
       ctx.drawImage(eg, 206, 92 + 31 - eg.height);
       // menu
-      const w = 84, h = this.opts.length * 12 + 8, x = Math.round((G.W - w) / 2), y = this.opts.length > 3 ? 100 : this.opts.length > 2 ? 108 : 114;
+      // (five options: the rows close up a little so the box still clears the logo and the bottom)
+      const n = this.opts.length, rh = n > 4 ? 11 : 12, w = 84, h = n * rh + 8, x = Math.round((G.W - w) / 2), y = n > 4 ? 90 : n > 3 ? 100 : n > 2 ? 108 : 114;
       G.box(ctx, x, y, w, h);
       this.opts.forEach((o, i) => {
-        F().draw(ctx, o, x + 18, y + 5 + i * 12, i === this.sel ? '#f8d850' : o === 'Admin' ? '#9890a8' : '#f8f8f0', { shadow: '#0c0814' });
+        F().draw(ctx, o, x + 18, y + 5 + i * rh, i === this.sel ? '#f8d850' : o === 'Admin' ? '#9890a8' : '#f8f8f0', { shadow: '#0c0814' });
       });
-      const cy = y + 6 + this.sel * 12, b = (this.t >> 3) & 1;
+      const cy = y + 6 + this.sel * rh, b = (this.t >> 3) & 1;
       ctx.fillStyle = '#f8d850';
       ctx.fillRect(x + 8 + b, cy, 1, 5); ctx.fillRect(x + 9 + b, cy + 1, 1, 3); ctx.fillRect(x + 10 + b, cy + 2, 1, 1);
       F().draw(ctx, 'Z: select', 4, G.H - 10, '#ffffff', { shadow: '#1c1424' });
