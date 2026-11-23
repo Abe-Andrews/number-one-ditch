@@ -4343,11 +4343,12 @@
   G.LiftRock = LiftRock;
 
   // what Z does for each of the family on their turn (Lily's is her "No.", built in)
-  G.RELAY_LABEL = { doron: 'ROCK', dad: 'PIPE', lily: 'NO.', michelle: 'EGG', abe: 'BONK', romulus: 'WOOF', hannah: 'SHOT' };
+  // (title case: in capitals, most of these are too wide for the 20px inside the HUD's Z box)
+  G.RELAY_LABEL = { doron: 'Rock', dad: 'Pipe', lily: 'NO.', michelle: 'Egg', abe: 'Bonk', romulus: 'Woof', hannah: 'Shot' };
   const eggmasIn = (w) => w.ents.find((e) => e instanceof EggmasBoss && !e.dead);
   // (Lily's Z says "No." everywhere else, so her label only changes on her turn against Father Eggmas)
   const lilyRelay = (w) => { const b = w && eggmasIn(w); return !!b && b.turn === 'lily'; };
-  Object.defineProperty(G.RELAY_LABEL, 'lily', { get: () => (G.play && lilyRelay(G.play.world) ? 'TOSS' : 'NO.'), enumerable: true });
+  Object.defineProperty(G.RELAY_LABEL, 'lily', { get: () => (G.play && lilyRelay(G.play.world) ? 'Toss' : 'NO.'), enumerable: true });
 
   // Lily's turn: a taxidermy catalog, flung like a frisbee. A full wind-up sails straight out the way
   // she's facing; let go early and it flops onto the ditch a little way in front of her.

@@ -54,7 +54,9 @@
         // playing as Lily: no items, just her "No."
         itemBox(ctx, G.W - 52, 5, 'X', null);
         itemBox(ctx, G.W - 27, 5, 'Z', null);
-        if (!(s.night && s.night.abe)) F().draw(ctx, (G.RELAY_LABEL && G.RELAY_LABEL[s.playAs]) || 'NO.', G.W - 24, 13, '#ffffff', { shadow: '#c83878' });
+        // (centered in the Z box)
+        const zl = (G.RELAY_LABEL && G.RELAY_LABEL[s.playAs]) || 'NO.';
+        if (!(s.night && s.night.abe)) F().draw(ctx, zl, G.W - 27 + 11 - Math.ceil(F().width(zl) / 2), 13, '#ffffff', { shadow: '#c83878' });
       } else {
         itemBox(ctx, G.W - 52, 5, 'X', xi ? xi.icon() : null, xCount);
         // the chicken needs a moment between eggs
