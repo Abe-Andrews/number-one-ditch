@@ -112,13 +112,6 @@
     border-radius: .8em; background: var(--ac); color: #fff; text-align: center; box-shadow: 0 .1em .2em rgba(0,0,0,.3); }
   #mb .key.hot { background: linear-gradient(180deg, #fff 0%, color-mix(in srgb, var(--ac) 25%, #fff) 100%); border-color: var(--ac); box-shadow: 0 .2em 0 var(--ac), 0 .3em .4em rgba(0,0,0,.2); color: #2a2238; }
 
-  /* ---- the warning page */
-  #mb .warn { border: .2em solid #2a2630; padding: .7em .85em .2em; margin-bottom: .7em; }
-  #mb .warn h4 { margin: 0 0 .5em; font: 900 1.05em/1.1 Arial, sans-serif; letter-spacing: .04em; display: flex; align-items: center; gap: .45em; }
-  #mb .warn h4 i { font-style: normal; display: inline-flex; width: 1.3em; height: 1.15em; background: #f8d040; color: #2a2630; clip-path: polygon(50% 0, 100% 100%, 0 100%);
-    align-items: flex-end; justify-content: center; font-size: .9em; padding-bottom: .05em; }
-  #mb .warn p { font-size: .66em; line-height: 1.38; text-align: justify; }
-  #mb .caps { text-transform: uppercase; font-weight: 800; letter-spacing: .03em; }
 
   /* ---- contents */
   #mb .toc { list-style: none; padding: 0; margin: .4em 0 0; }
@@ -133,11 +126,6 @@
 
   /* ---- covers */
   #mb .cover { position: absolute; inset: 0; overflow: hidden; color: #fff; }
-  #mb .cover .band { position: absolute; left: 0; right: 0; top: 0; height: 7.5%; background: #16121e; display: flex; align-items: center; padding-left: 5%; gap: .55em;
-    box-shadow: 0 .2em .4em rgba(0,0,0,.4); z-index: 3; }
-  #mb .cover .band .cube { width: 1.5em; height: 1.5em; }
-  #mb .cover .band span { font: 800 .62em/1 "Futura", "Century Gothic", Arial, sans-serif; letter-spacing: .28em; color: #e8e0f8; }
-  #mb .cover .band span b { color: #ffb830; font-weight: 900; }
   #mb .cover .sky { position: absolute; inset: 0; background: linear-gradient(180deg, #1a1236 0%, #3a2058 26%, #8a3a6a 50%, #f07848 70%, #ffc070 82%, #ffe0a0 100%); }
   #mb .cover .sun { position: absolute; left: 50%; top: 61%; width: 46%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%;
     background: radial-gradient(circle, #fff6c8 0%, #ffd070 40%, rgba(255,160,80,0) 70%); }
@@ -153,7 +141,7 @@
   #mb .cover .ditch { position: absolute; left: 30%; right: 30%; bottom: 0; height: 15%; background: linear-gradient(180deg, #5a4630, #2a2018);
     clip-path: polygon(18% 0, 82% 0, 100% 100%, 0 100%); }
   #mb .cover .water { position: absolute; left: 46%; right: 46%; bottom: 0; height: 15%; background: linear-gradient(180deg, #8ab8e0, #3a6a9a); clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%); opacity: .9; }
-  #mb .cover .logo { position: absolute; left: 4%; right: 4%; top: 11%; z-index: 2; filter: drop-shadow(0 .3em 0 rgba(30,10,30,.55)) drop-shadow(0 0 1.2em rgba(255,200,120,.35)); }
+  #mb .cover .logo { position: absolute; left: 4%; right: 4%; top: 7%; z-index: 2; filter: drop-shadow(0 .3em 0 rgba(30,10,30,.55)) drop-shadow(0 0 1.2em rgba(255,200,120,.35)); }
   #mb .cover .logo img { width: 100%; }
   #mb .cover .egg { position: absolute; left: 50%; top: 34%; transform: translateX(-50%); width: 27%; z-index: 1;
     filter: drop-shadow(0 0 1em rgba(170,90,232,.85)) drop-shadow(0 0 .3em rgba(170,90,232,.9)); }
@@ -297,9 +285,7 @@
     // ---- the front cover
     pages.push({ cover: true, html: () => {
       const fam = ['doron', 'lily', 'nate', 'abe', 'hannah'].map((id) => px(face(id), id === 'nate' ? 4.2 : 3.6)).join('') + px(pick(() => sp.romulus.right.stand), 3.3);
-      const cube = `<svg class="cube" viewBox="0 0 20 20"><polygon points="10,1 19,5.5 10,10 1,5.5" fill="#ffb830"/><polygon points="1,5.5 10,10 10,19 1,14.5" fill="#e05818"/><polygon points="19,5.5 10,10 10,19 19,14.5" fill="#a83810"/><text x="10" y="8.2" font-size="5.5" font-weight="900" text-anchor="middle" fill="#2a1420" font-family="Arial">1</text></svg>`;
       return `<div class="cover"><div class="sky"></div><div class="stars"></div><div class="rays"></div><div class="sun"></div>
-        <div class="band">${cube}<span><b>FAMILY</b> ENTERTAINMENT SYSTEM</span></div>
         <div class="egg">${px(sp.eggmas, 7, 'width:100%')}</div>
         <div class="logo"><img class="px" src="${src(logo())}" alt=""></div>
         <div class="tagline">THE BEST DITCH IN THE WORLD IS IN DANGER</div>
@@ -308,22 +294,12 @@
         <div class="foot"><b>INSTRUCTION BOOKLET</b><span>FOR 1 PLAYER<br>AND THE WHOLE FAMILY</span></div><div class="gloss"></div></div>`;
     } });
 
-    // ---- 1: the warning
+    // ---- 1: before you play (just Abe's Rule #1)
     pages.push({ html: (side, n) => frame('Please Read', AC.slate, `
-      <div class="warn"><h4><i>!</i>WARNING</h4>
-        <p class="caps">Please read this booklet before playing.</p>
-        <p>A very small percentage of players may experience a sudden, overwhelming urge to drive to Chesapeake, Virginia. If you or any member of your family experiences this, stop playing and text the family group chat immediately.</p>
-        <p>This game contains bonking, a booby-trapped Christmas present or two, at least one 2 AM Taco Bell run, mild egg-related peril and a very large amount of EEENGLISH.</p></div>
-      <div class="warn"><h4><i>!</i>EARWORM ADVISORY</h4>
-        <p>Some songs in this game may stay stuck in your head for days. Earplugs are recommended where noted. The makers of this game are not responsible for any humming.</p></div>
-      <h3 style="color:#2a2630">Precautions</h3>
-      <ul class="legend" style="margin-top:.2em">
-        <li><span class="num" style="background:#2a2630">&#9632;</span><p>Take a 15-minute break every hour, or whenever Romulus needs to go out.</p></li>
-        <li><span class="num" style="background:#2a2630">&#9632;</span><p>Play in a well-lit room, at a safe distance from the screen and from Doron's luchador masks.</p></li>
-        <li><span class="num" style="background:#2a2630">&#9632;</span><p>Do not try any of Nate's fireworks at home. Or at the fair.</p></li>
-      </ul>
-      <div class="box" style="--ac:${AC.orange}"><span class="tag">ABE'S RULE #1</span>
-        <p><b>Nate may not say the sacred number.</b> Not out loud, not in a text, not even on the HUD. Any number that would contain it is written as a sum instead. This booklet follows the rule too: check the page numbers.</p></div>`, side, n) });
+      <div class="box" style="--ac:${AC.orange};margin-top:1.4em"><span class="tag">ABE'S RULE #1</span>
+        <p><b>Nate may not say the sacred number.</b> Not out loud, not in a text, not even on the HUD. Any number that would contain it is written as a sum instead. This booklet follows the rule too: check the page numbers.</p></div>
+      <div style="display:flex;justify-content:center;margin-top:2.4em">${px(face('abe'), 5.5, 'filter:drop-shadow(0 .3em .3em rgba(0,0,0,.25))')}</div>
+      <p style="text-align:center;font-style:italic;color:#6a6070;margin-top:.8em">Abe, Keeper of the Sacred Number</p>`, side, n) });
 
     // ---- 2: contents
     const TOC = [['The Story', 3, AC.red], ['Controls', 4, AC.blue], ['Getting Started', 5, AC.green], ['The Game Screen', 6, AC.teal], ['The Pause Menu', 7, AC.indigo],
