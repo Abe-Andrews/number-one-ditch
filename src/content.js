@@ -20978,7 +20978,7 @@
   };
   const FIN_TURN_IN = {
     doron: [['Doron', 'Rocks. This ditch is FULL of rocks.']],
-    dad: [['Dad', 'Father Eggmas. Do YOU speak EEENGLISH?'], ['Father Eggmas', 'I speak EGGLISH. HO HO HO.']],
+    dad: [['Dad', 'I carved this pipe myself. Let\'s see how it does against an egg.'], ['Father Eggmas', 'HO HO HO. Smoke can\'t crack a shell, Christian.']],
     lily: [['Father Eggmas', 'Remember me, little one? HO HO HO.'], ['Lily', '...I remember.'], ['Lily', 'I\'ve been scared of you my whole life.'], ['Lily', 'I\'m still scared.'], ['Lily', 'I\'m doing it anyway.']],
     michelle: [['Michelle', 'You took my family, you took my ditch, and you broke my GOOD pots.'], ['Michelle', 'Henrietta. Get him.'], [null, '*BAWK*']],
     abe: [['Father Eggmas', 'HO HO HO! Come to chase somebody with me, Abe?'], ['Abe', 'Buddy. That was a BIT.']],

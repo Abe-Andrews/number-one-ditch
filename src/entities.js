@@ -3971,9 +3971,9 @@
   // finishes the job.
   const TURNS = {
     doron: { weapon: 'rock', need: 5, h: 22, every: 100, attacks: ['lob', 'spirals', 'egglets', 'lob'], tip: 'Z: pick up a rock. Z again: throw it at Father Eggmas!' },
-    // (Dad's letters don't aim themselves, Eggmas ducks out of their way, and he aims his ornaments
+    // (Dad's smoke rings don't aim themselves, Eggmas ducks out of their way, and he aims his ornaments
     // right where Dad's standing and yanks his lights across Dad's row: standing still and mashing Z doesn't cut it)
-    dad: { weapon: 'letter', need: 10, h: 22, every: 75, aim: true, dodge: true, attacks: ['lob', 'lights', 'spirals', 'lob', 'egglets', 'lights'], tip: 'Z: "EEENGLISH!" Letters fly the way Dad faces. Line them up with Father Eggmas!' },
+    dad: { weapon: 'smoke', need: 10, h: 22, every: 75, aim: true, dodge: true, attacks: ['lob', 'lights', 'spirals', 'lob', 'egglets', 'lights'], tip: 'Z: Dad puffs his pipe. Smoke rings float the way he\'s facing: line them up with Father Eggmas!' },
     lily: { weapon: 'no', need: 5, h: 16, every: 85, attacks: ['spirals', 'spirals', 'lob', 'egglets'], tip: 'Hold Z to wind up a "No." Let go to say it. Only a full "No." counts!' },
     michelle: { weapon: 'egg', need: 12, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'rain'], tip: 'Z: Henrietta fires an egg.' },
     abe: { weapon: 'reach', need: 6, h: 50, every: 80, attacks: ['lights', 'lob', 'spirals', 'lights'], tip: 'He\'s floating too high for anybody else. Z: Abe reaches up and bonks him!' },
@@ -4300,7 +4300,7 @@
       if (G.script.busy) return;
       this.x += this.vx; this.y += this.vy;
       if (--this.life <= 0 || w.tileSolid(Math.floor(this.x / 16), Math.floor((this.y - 6) / 16))) { this.dead = true; return; }
-      const r = [this.x - 6, this.y - 16, this.x + 6, this.y - 2];
+      const hw = this.kind === 'smoke' ? 9 : 6, r = [this.x - hw, this.y - 18, this.x + hw, this.y - 2];
       for (const e of w.ents) {
         if (e.dead) continue;
         if (e instanceof EggmasBoss) { if (G.overlap(r, e.hurtBox()) && e.relayHit(this.kind)) { this.dead = true; return; } }
@@ -4308,7 +4308,12 @@
       }
     }
     draw(ctx, cx, cy) {
-      if (this.kind === 'letter') G.font.drawBig(ctx, this.ch || 'E', Math.round(this.x - 4) - cx, Math.round(this.y - 18) - cy, 1, '#f8d850', '#5a1020');
+      if (this.kind === 'smoke') {
+        // Dad's smoke ring: it spreads out a little and wobbles as it floats
+        const img = G.spr.smokeRing, age = 130 - this.life, k = Math.min(1.5, 1 + age * 0.006), W = Math.round(img.width * k), H = Math.round(img.height * k);
+        ctx.save(); ctx.globalAlpha = Math.min(1, this.life / 30);
+        ctx.drawImage(img, Math.round(this.x - W / 2) - cx, Math.round(this.y - 10 - H / 2 + Math.sin(age * 0.2)) - cy, W, H); ctx.restore();
+      } else if (this.kind === 'letter') G.font.drawBig(ctx, this.ch || 'E', Math.round(this.x - 4) - cx, Math.round(this.y - 18) - cy, 1, '#f8d850', '#5a1020');
       else if (this.kind === 'bark') {
         // a woof, rolling out in rings
         const age = 90 - this.life;
@@ -4331,7 +4336,7 @@
   G.LiftRock = LiftRock;
 
   // what Z does for each of the family on their turn (Lily's is her "No.", built in)
-  G.RELAY_LABEL = { doron: 'ROCK', dad: 'ENG', lily: 'NO.', michelle: 'EGG', abe: 'BONK', romulus: 'WOOF', hannah: 'SHOT' };
+  G.RELAY_LABEL = { doron: 'ROCK', dad: 'PIPE', lily: 'NO.', michelle: 'EGG', abe: 'BONK', romulus: 'WOOF', hannah: 'SHOT' };
   const eggmasIn = (w) => w.ents.find((e) => e instanceof EggmasBoss && !e.dead);
   G.RELAY_MOVE = {
     // Doron: pick up a rock (Z), throw it at Father Eggmas (Z)
@@ -4365,14 +4370,15 @@
       rock.dead = true; p.carry = true; p.pose = 'hold';
       G.audio.sfx('bump'); w.pop(p.x, p.y - 34, 'ROCK!', '#68c8ff');
     },
-    // Dad: "EEENGLISH!" three letters fly out the way he's facing, in a little fan (no aiming for him:
-    // he has to line up with Father Eggmas)
+    // Dad: a puff on his pipe sends a smoke ring floating out the way he's facing (no aiming for
+    // him: he has to line up with Father Eggmas). Each way he faces is its own note, like Nate's pipe songs.
     dad(p, w) {
       if (p.relayCd > 0) return;
-      p.relayCd = 34;
-      const base = Math.atan2(G.DIRS[p.dir][1], G.DIRS[p.dir][0]);
-      'ENG'.split('').forEach((ch, i) => { const a = base + (i - 1) * 0.1; const s = w.add(new RelayShot(p.x, p.y - 2, Math.cos(a) * 2.4, Math.sin(a) * 2.4, 'letter')); s.ch = ch; s.life = 100; });
-      G.audio.sfx('yell'); w.pop(p.x, p.y - 34, 'EEENGLISH!', '#f8d850');
+      p.relayCd = 30;
+      const [dx, dy] = G.DIRS[p.dir], s = w.add(new RelayShot(p.x + dx * 6, p.y - 2 + dy * 4, dx * 1.9, dy * 1.9, 'smoke'));
+      s.life = 130;
+      G.audio.puff(p.dir); w.pop(p.x, p.y - 34, '*puff*', '#d8d8e0');
+      w.burst(p.x + dx * 6, p.y - 16, ['#d8d8e0', '#a8a8b4'], 3, { speed: 0.4, up: 0.5, g: -0.02, life: 18, size: 1 });
     },
     // Mom: Henrietta fires an egg
     michelle(p, w) {
