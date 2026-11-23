@@ -97,6 +97,11 @@
     border: .14em solid #4a3e5c; box-shadow: inset 0 0 0 .1em #120e18, 0 .12em .25em rgba(0,0,0,.25); }
   #mb .item b { font: 800 .74em/1.2 "Futura", "Century Gothic", Arial, sans-serif; color: #2a2238; display: block; }
   #mb .item p { margin: .1em 0 0; font-size: .68em; line-height: 1.32; }
+  #mb .item.locked .ic { position: relative; background: #8a8298; border-color: #6a6278; }
+  #mb .item.locked .ic i { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font: 900 1.3em/1 "Futura", "Century Gothic", Arial, sans-serif;
+    color: #fff; font-style: normal; text-shadow: 0 .08em 0 #2a2238, 0 0 .3em rgba(0,0,0,.6); }
+  #mb .item.locked b { color: #8a8298; letter-spacing: .1em; }
+  #mb .item.locked p { color: #8a8298; font-style: italic; }
 
   /* ---- the keyboard */
   #mb .kb { position: relative; margin: .4em 0 0; }
@@ -221,8 +226,10 @@
       F.draw(x, label, bx + 2, 2, '#f8d850', { shadow: '#1c1424' });
       if (count != null) F.draw(x, String(count), bx + 15, 18, '#f8f8f0', { shadow: '#1c1424' });
     };
-    box(G.W - 52, 'X', pick(() => sp.chickens.white.right[0]), 12);
-    box(G.W - 27, 'Z', pick(() => sp.hammer.up));
+    // (only gear that's been found: the first one, or an empty box)
+    const xs = [['chicken', () => sp.chickens.white.right[0], 12], ['package', () => sp.gift, 5], ['doosh', () => sp.doosh, 3]].find(([id]) => found.has(id));
+    box(G.W - 52, 'X', xs ? pick(xs[1]) : null, xs ? xs[2] : null);
+    box(G.W - 27, 'Z', found.has('hammer') ? pick(() => sp.hammer.up) : null);
     x.drawImage(sp.tooth, 5, G.H - 14);
     F.draw(x, '047', 15, G.H - 13, '#f8f8f0', { shadow: '#1c1424' });
     return c;
@@ -252,9 +259,38 @@
   const who = (id, name, tag, bio, skill, art) => `<div class="who"><div class="pic">${art || px(face(id), 3.2, 'margin-bottom:.15em')}</div><div>
     <div class="nm">${name}<small>${tag}</small></div><p>${bio}</p>${skill ? `<div class="sk"><b>Along for the ride:</b> ${skill}</div>` : ''}</div></div>`;
   const item = (icon, name, text) => `<div class="item"><div class="ic">${px(icon, 2)}</div><div><b>${name}</b><p>${text}</p></div></div>`;
+  // Gear nobody's found yet stays a secret: blacked out, with a "?" (no spoilers). "Found" means on
+  // any of the save files (the booklet opens from the title screen, so there's no game going).
+  let found = new Set();
+  function foundGear() {
+    const keep = G.state, got = new Set();
+    try {
+      for (let n = 1; n <= (G.SAVE_FILES || 3); n++) {
+        const sv = G.readSave(n);
+        if (!sv) continue;
+        G.state = sv;
+        for (const id of G.GEAR_SLOTS) if (id) { try { if (G.itemHas(id)) got.add(id); } catch (e) { /* (an item that can't tell) */ } }
+      }
+    } finally { G.state = keep; }
+    return got;
+  }
+  // the icon as a solid black shape
+  const blacked = new Map();
+  function blackout(c) {
+    if (!c) return null;
+    if (!blacked.has(c)) {
+      const b = G.canvas(c.width, c.height), x = b.getContext('2d');
+      x.drawImage(c, 0, 0); x.globalCompositeOperation = 'source-atop'; x.fillStyle = '#0c0a10'; x.fillRect(0, 0, c.width, c.height);
+      blacked.set(c, b);
+    }
+    return blacked.get(c);
+  }
+  const gear = (id, icon, name, text) => found.has(id) ? item(icon, name, text)
+    : `<div class="item locked"><div class="ic">${px(blackout(icon), 2)}<i>?</i></div><div><b>???</b><p>You haven't found this yet.</p></div></div>`;
   const key = (x, y, w, h, label, n) => `<div class="key${n ? ' hot' : ''}" style="left:${x}em;top:${y}em;width:${w}em;height:${h}em"><span>${label}</span>${n ? `<i class="kn">${n}</i>` : ''}</div>`;
 
   function buildPages() {
+    found = foundGear();
     const sp = S(), shotTitle = titleShot(), shotPlay = playShot();
     const pages = [];
 
@@ -327,7 +363,7 @@
       const rows = [
         ['Arrow keys / WASD', 'Walk. In menus, move the cursor.'],
         ['Z', 'Swing the rock hammer. Talk, read signs, look at things and pick them up. Confirm.'],
-        ['X', 'Use whatever item is set to X. Hold it for the bidet. Back out of menus.'],
+        ['X', 'Use whatever item is set to X (some work while you hold it). Back out of menus.'],
         ['Enter', 'Open the pause menu.'],
         ['Q / E', 'Flip between the pause menu\'s pages.'],
         ['M', 'Mute or unmute the sound.'],
@@ -382,9 +418,9 @@
       <p>Fainting costs a little: about <b>15%</b> of the shark teeth Nate is carrying fall out of his pockets.</p>
       <h3>Getting hearts back</h3>
       ${item(sp.heart.full, 'Hearts', 'Some troublemakers drop a heart when you bonk them. Walk over it to pick it up.')}
-      ${item(sp.doosh, 'Doosh De Luche', 'Heals 4 hearts. Nate can carry three. (It\'s pronounced dulce de leche.)')}
-      ${item(sp.firstAidIcon, 'Hannah\'s First-Aid Kit', 'Patches Nate up for 3 hearts. Holds 3 uses, and any supply closet at CHKD restocks it.')}
-      ${item(sp.tacoBag, 'Fourthmeal', 'Every heart back, all at once. From a certain late-night drive-thru.')}
+      ${gear('doosh', sp.doosh, 'Doosh De Luche', 'Heals 4 hearts. Nate can carry three. (It\'s pronounced dulce de leche.)')}
+      ${gear('firstAid', sp.firstAidIcon, 'Hannah\'s First-Aid Kit', 'Patches Nate up for 3 hearts. Holds 3 uses, and any supply closet at CHKD restocks it.')}
+      ${gear('tacoBag', sp.tacoBag, 'Fourthmeal', 'Every heart back, all at once. From a certain late-night drive-thru.')}
       <div class="box" style="--ac:${AC.pink}"><span class="tag">TIP</span><p>Hannah heals Nate a little while she's following him. Nurse's orders.</p></div>`, side, n) });
 
     // ---- 9, 10: the family
@@ -401,18 +437,18 @@
 
     // ---- 11, 12: gear
     pages.push({ html: (side, n) => frame('Your Gear', AC.gold, `
-      <p>Nate finds gear all over the road trip. Set one to <b>X</b> from the <b>ITEMS</b> page of the pause menu. The rock hammer is always on <b>Z</b>.</p>
-      ${item(pick(() => sp.hammer.up), 'Rock Hammer', 'A geologist\'s best friend. Bonks troublemakers, smashes rocks open, and breaks things that are asking for it.')}
-      ${item(sp.gift, 'Booby-Trapped Package', 'Set one down with X. It goes BANG a few seconds later. Merry Christmas!')}
-      ${item(pick(() => sp.chickens.white.right[0]), 'The Chicken', 'Henrietta, from Mom\'s flower stand. Press X and she fires an egg. Eggs sold separately.')}
-      ${item(sp.pipe, 'Dad\'s Pipe', 'Hand-carved by Dad. Press X and puff a song: each direction is a different note.')}
-      ${item(sp.bidetIcon, 'Portable Bidet', 'Hold X to spray. When it runs dry, face water, a sink or a toilet and hold X to fill it back up.')}`, side, n) });
+      <p>Nate finds gear all over the road trip. Set one to <b>X</b> from the <b>ITEMS</b> page of the pause menu. Gear you haven't found yet stays a secret.</p>
+      ${gear('hammer', pick(() => sp.hammer.up), 'Rock Hammer', 'A geologist\'s best friend. Bonks troublemakers, smashes rocks open, and breaks things that are asking for it.')}
+      ${gear('package', sp.gift, 'Booby-Trapped Package', 'Set one down with X. It goes BANG a few seconds later. Merry Christmas!')}
+      ${gear('chicken', pick(() => sp.chickens.white.right[0]), 'The Chicken', 'Henrietta, from Mom\'s flower stand. Press X and she fires an egg. Eggs sold separately.')}
+      ${gear('pipe', sp.pipe, 'Dad\'s Pipe', 'Hand-carved by Dad. Press X and puff a song: each direction is a different note.')}
+      ${gear('bidet', sp.bidetIcon, 'Portable Bidet', 'Hold X to spray. When it runs dry, face water, a sink or a toilet and hold X to fill it back up.')}`, side, n) });
     pages.push({ html: (side, n) => frame('Your Gear', AC.gold, `
-      ${item(sp.rodIcon, 'Surf Rod', 'Press X to cast. Whatever you hook gets reeled in: fish, gulls, teeth... people.')}
-      ${item(sp.sifter, 'Sifter', 'Press X to shake the gravel in front of you through it. Good for finding the small stuff.')}
-      ${item(sp.doosh, 'Doosh De Luche', 'A snack that heals 4 hearts. No time to eat it during a boss fight.')}
-      ${item(sp.firstAidIcon, 'First-Aid Kit', 'Gauze, tape, ice packs and dinosaur bandages.')}
-      ${item(sp.tacoBag, 'Fourthmeal', 'Bean burritos and somebody\'s Crunchwrap. Eat it to get every heart back.')}
+      ${gear('rod', sp.rodIcon, 'Surf Rod', 'Press X to cast. Whatever you hook gets reeled in: fish, gulls, teeth... people.')}
+      ${gear('sifter', sp.sifter, 'Sifter', 'Press X to shake the gravel in front of you through it. Good for finding the small stuff.')}
+      ${gear('doosh', sp.doosh, 'Doosh De Luche', 'A snack that heals 4 hearts. No time to eat it during a boss fight.')}
+      ${gear('firstAid', sp.firstAidIcon, 'First-Aid Kit', 'Gauze, tape, ice packs and dinosaur bandages.')}
+      ${gear('tacoBag', sp.tacoBag, 'Fourthmeal', 'Bean burritos and somebody\'s Crunchwrap. Eat it to get every heart back.')}
       <div class="box" style="--ac:${AC.gold}"><span class="tag">KEY ITEMS</span><p>Some things you find aren't gear: a keyring, a library book, a slobbery badge. They go on the <b>KEYS</b> page, and they're usually for somebody. Talk to people.</p></div>`, side, n, { wide: true }) });
 
     // ---- 13: shark teeth and collectables
@@ -461,7 +497,7 @@
         <li><span class="num">4</span><p><b>Bring the right person.</b> Some places need Doron's muscle, Abe's reach or Lily's "No."</p></li>
         <li><span class="num">5</span><p><b>Optional means optional.</b> Minigames and side quests are never required. They're just fun (and sometimes worth shark teeth).</p></li>
         <li><span class="num">5+1</span><p><b>Watch the number.</b> If somebody asks you a question with an obvious answer, think before you answer.</p></li>
-        <li><span class="num">7</span><p><b>Water refills the bidet.</b> Ponds, pools, sinks and, yes, toilets.</p></li>
+        <li><span class="num">7</span><p><b>Try your gear on everything.</b> Most items do more than one thing.</p></li>
       </ul>
       <div class="box" style="--ac:${AC.blue}"><span class="tag">FROM THE FAMILY GROUP CHAT</span><p style="font-style:italic">"Be the light you wish to see in the world. Also wear a jacket." &nbsp;&mdash; Nani</p></div>`, side, n) });
 
@@ -486,7 +522,7 @@
     // ---- the inside back cover: the warranty
     pages.push({ html: (side, n) => frame('Warranty', AC.slate, `
       <h3>Limited Warranty</h3>
-      <p style="font-size:.66em;text-align:justify">This game is warranted to be a gift. It may not be returned, exchanged or regifted, and it is not the bidet. (The bidet was a gift too, and then it was taken back. That will not happen here.)</p>
+      <p style="font-size:.66em;text-align:justify">This game is warranted to be a gift. It may not be returned, exchanged or regifted. (Some gifts in this family get taken back. This one won't.)</p>
       <p style="font-size:.66em;text-align:justify">This warranty does not cover damage caused by fireworks, booby-trapped packages, refrigerators, alligators, geese, or saying the sacred number.</p>
       <h3>Customer Service</h3>
       <p style="font-size:.66em;text-align:justify">Stuck? Text the family group chat. Response times vary. Nani will reply first, with something inspirational. Dad will ask if you speak EEENGLISH. Somebody will send a picture of Romulus.</p>

@@ -54,6 +54,8 @@
       // ...and from the first Hannah's shift (?v=182), which kept grades and knitted hats
       if (s.nicu) for (const k in s.nicu) if (typeof s.nicu[k] !== 'object') delete s.nicu[k];
       delete s.hats;
+      // ...and from when clearing the Boss Rush gave a trophy (it's a golden rock hammer now)
+      if (s.items.rushTrophy) { s.items.goldHammer = true; delete s.items.rushTrophy; }
       s.slot = n;
       return s;
     } catch (e) { return null; }

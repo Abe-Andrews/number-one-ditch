@@ -515,7 +515,7 @@
         ctx.drawImage(P, Math.round(this.x + dx * k - 5) - cx, Math.round(this.y - 12 + dy * k * 0.7 - 5) - cy);
         return;
       }
-      const H = G.spr.hammer;
+      const H = G.hammerArt();
       const phase = this.t < 4 ? 0 : this.t < 8 ? 1 : 2;
       // [sprite, quarter turns, hand offset]
       const table = {

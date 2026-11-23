@@ -332,7 +332,11 @@
       desc: 'A Taco Bell bag from Lily\'s 2 AM run: bean burritos and somebody\'s Crunchwrap. Press X to eat it and get every heart back. Holds 2. Lily can always do another run.',
       has: () => (st().items.tacoBag || 0) > 0 || !!fl().tacoRunDone,
     },
-    hammer: { kind: 'gear', name: 'Rock Hammer', icon: () => G.spr.hammer.up, desc: 'A geologist\'s best friend. Always on Z.' },
+    // (golden once the Boss Rush is cleared: same hammer, same hits, just gold)
+    hammer: {
+      kind: 'gear', get name() { return st().items.goldHammer ? 'Golden Rock Hammer' : 'Rock Hammer'; }, icon: () => G.hammerArt().up,
+      get desc() { return st().items.goldHammer ? 'For clearing the Boss Rush: every boss, back to back, without fainting once. ' + (st().rushTime ? 'Best time: ' + G.rushClock(st().rushTime) + '. ' : '') + 'Hits exactly as hard as it always did. It just looks better doing it. Always on Z.' : 'A geologist\'s best friend. Always on Z.'; },
+    },
     doosh: {
       kind: 'gear', equip: true, name: 'Doosh De Luche', icon: () => G.spr.doosh,
       desc: 'Heals 4 hearts. Nate can carry three at a time. No time to eat it during a boss fight. (It\'s pronounced dulce de leche.)',
@@ -391,10 +395,6 @@
     boatKey: {
       kind: 'key', name: 'Matt\'s Boat Key', short: 'Boat Key', icon: () => G.spr.boatKey, has: () => !!st().items.boatKey,
       desc: 'The key to Matt Oliver\'s survey boat, on a foam float so it can\'t sink. Ask Matt on Island 2 to take the boat out, and fish anywhere on the bay.',
-    },
-    rushTrophy: {
-      kind: 'key', name: 'Boss Rush Trophy', short: 'Trophy', icon: () => G.spr.rushTrophy, has: () => !!st().items.rushTrophy,
-      desc: () => 'Every boss, back to back, without fainting once. ' + (st().rushTime ? 'Best time: ' + G.rushClock(st().rushTime) + '. ' : '') + 'The engraving says NUMBER ONE. Doron says it\'s a participation trophy.',
     },
     bmf: {
       kind: 'key', name: 'BMF Belt', short: 'BMF Belt', icon: () => G.spr.bmfIcon, has: () => !!st().items.bmf,
@@ -550,8 +550,10 @@
   ];
   // (a slot can be shared by items that are never held at the same time: the
   // vodka is used up before Mikey's note, the basement key before the Andover key)
-  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'rushTrophy', 'mosasaurTooth', 'boatKey', 'pamphlet', 'globBookmark', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'trapBook', 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
+  G.KEY_SLOTS = ['phone', 'hat', 'badge', 'mosasaurTooth', 'boatKey', 'pamphlet', 'globBookmark', 'abeBass', 'yellowCable', 'sloth', 'tickets', 'chemFinal', 'milk', 'dye', 'smoke', ['vodka', 'mikeyNote'], 'trapBook', 'books', ['basementKey', 'andoverKey'], 'bait', 'earplugs', 'candyCorn', 'doritos', 'engDiploma', 'pipeBook', 'belt', 'bmf', 'metronome', 'pedals', 'carbideLamp'];
 
+  // the rock hammer's art: gold once the Boss Rush is cleared
+  G.hammerArt = () => (G.state && G.state.items && G.state.items.goldHammer ? G.spr.hammerGold : G.spr.hammer);
   G.itemHas = (id) => {
     const def = G.ITEMS[id];
     if (!def) return false;
@@ -3209,7 +3211,7 @@
       count('Every heart container', Math.floor((s.maxHp - 6) / 2), HEARTS, 'Everywhere', 'Gus, the Chem Final, Mom\'s stand, the rock crusher, and most of the hardest things on this list.'),
       count('Everyone you can meet', met[0], met[1], 'Everywhere', 'Talk to people. See the PEOPLE page.'),
       f.fcAwake ? row('Father Christmas', f.fcBeaten, 'Andover - the deep stope', 'A cave-in opened up off the east stope of the tunnels.') : row('???', false, '???', 'Finish the story, every rock and every photo, and see what wakes up.'),
-      f.fcBeaten ? row('Boss Rush', s.items.rushTrophy, 'The BOSS RUSH page', 'Every boss, back to back, without fainting.') : row('???', false, '???', 'One more thing comes after that.'),
+      f.fcBeaten ? row('Boss Rush', s.items.goldHammer, 'The BOSS RUSH page', 'Every boss, back to back, without fainting.') : row('???', false, '???', 'One more thing comes after that.'),
     ];
   };
   // Rows Nate hasn't come across yet show as ??? (no name, place or hint, so the list can't spoil
@@ -24569,7 +24571,8 @@
   // flips only change the copy. Bosses have more health (RUSH_HP, or a fight's own hp), hearts don't
   // drop, and Hannah can't patch anyone up. Between fights the player takes a little healing or an
   // item (rushRest). Faint once and the run is over (G.rushEnd). Each boss's usual ending, hints and
-  // phase scenes are swapped out at the bottom of this section. The prize, the first time: the trophy.
+  // phase scenes are swapped out at the bottom of this section. The prize, the first time: a golden rock
+  // hammer (s.items.goldHammer: same hits as the old one, just gold).
   // State (on the real save): s.rushBest, s.rushWins, s.rushTime. On the copy: s.rush.
   const RUSH_HP = 1.5, RUSH_HEAL = 4;
   const famFight = (id, k) => ({
@@ -24799,13 +24802,13 @@
       G.script.reset();
       G.scene = this;
       G.fade = 0;
-      Object.assign(this, { t: 0, sel: 0, won, quit, beaten: r.i, time: (cur.playTime || 0) - r.t0, foe: RUSH[Math.min(r.i, RUSH.length - 1)].name, who: cur.playAs === 'lily' ? 'Lily' : 'Nate', first: won && !home.items.rushTrophy });
+      Object.assign(this, { t: 0, sel: 0, won, quit, beaten: r.i, time: (cur.playTime || 0) - r.t0, foe: RUSH[Math.min(r.i, RUSH.length - 1)].name, who: cur.playAs === 'lily' ? 'Lily' : 'Nate', first: won && !home.items.goldHammer });
       home.playTime = cur.playTime;
       home.rushBest = Math.max(home.rushBest || 0, r.i);
       if (won) {
         home.rushWins = (home.rushWins || 0) + 1;
         home.rushTime = home.rushTime ? Math.min(home.rushTime, this.time) : this.time;
-        home.items.rushTrophy = true;
+        home.items.goldHammer = true;
       }
       this.best = home.rushBest;
       G.state = home;
@@ -24834,12 +24837,12 @@
       glow.addColorStop(0, this.won ? 'rgba(200,150,40,0.4)' : 'rgba(120,30,50,0.45)'); glow.addColorStop(1, 'rgba(12,8,20,0)');
       ctx.fillStyle = glow; ctx.fillRect(0, 0, G.W, G.H);
       const n = G.sayable(RUSH.length), title = this.won ? 'BOSS RUSH CLEAR!' : this.quit ? 'Called it off' : this.who + ' fainted...';
-      if (this.won) ctx.drawImage(G.spr.rushTrophy, 96, 8, 48, 48);
+      if (this.won) ctx.drawImage(G.spr.hammerGold.up, 96, 8, 48, 48);
       FB.drawBig(ctx, title, Math.round((G.W - FB.bigWidth(title, 2)) / 2), this.won ? 62 : 34, 2, (r) => (this.won ? (r < 2 ? '#fff0a8' : r < 4 ? '#f8d850' : '#c89838') : r < 2 ? '#ffb0a8' : r < 4 ? '#f86858' : '#c83848'), '#1c1424');
       if (this.won) {
         mid('All ' + n + ' bosses, back to back.', 84);
         mid('Time: ' + rushClock(this.time), 96, '#78e8e8');
-        if (this.first) mid('The trophy is in your KEY ITEMS.', 108, '#f8d850');
+        if (this.first) mid('Nate\'s rock hammer is GOLD now!', 108, '#f8d850');
       } else {
         mid((this.quit ? 'You stopped at ' : 'Fell to ') + this.foe, 58, '#f86858');
         mid('Bosses beaten: ' + G.sayable(this.beaten) + ' of ' + n, 72);

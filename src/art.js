@@ -839,8 +839,9 @@
     '...oooooo...',
   ];
 
-  function hammerSprites() {
-    const wood = '#b87840', grip = '#3858c8', steel = '#a8b0c0', steelL = '#e8f0f8', steelD = '#707888';
+  // (gold: the golden rock hammer, for clearing the Boss Rush. Same shape, all gold)
+  function hammerSprites(gold) {
+    const [wood, grip, steel, steelL, steelD] = gold ? ['#e0a830', '#b87818', '#f8c830', '#fff4b0', '#c08a1c'] : ['#b87840', '#3858c8', '#a8b0c0', '#e8f0f8', '#707888'];
     // pointing up, hand at (8, 15)
     const up = new Pix(16, 16);
     up.rect(7, 5, 2, 10, wood);
@@ -11048,16 +11049,6 @@
     p.rect(2, 9, 3, 2, L); p.rect(12, 9, 3, 2, L); p.rect(0, 8, 2, 1, L);
     return finish(p);
   }
-  // the Boss Rush trophy: a gold cup with a shark tooth on it
-  function rushTrophy() {
-    const p = new Pix(16, 16), Y = '#f8d850', O = '#c89838', H = '#fff0a8';
-    p.rect(4, 1, 8, 7, Y); p.rect(5, 8, 6, 1, Y); p.rect(6, 9, 4, 1, O); p.rect(7, 10, 2, 2, O); p.rect(5, 12, 6, 1, Y); p.rect(4, 13, 8, 2, O);
-    p.vline(1, 2, 5, Y); p.vline(14, 2, 5, Y); p.hline(1, 3, 1, Y); p.hline(12, 14, 1, Y); p.hline(2, 3, 6, Y); p.hline(12, 13, 6, Y);
-    p.vline(5, 2, 6, H); p.vline(11, 1, 7, O);
-    p.rect(7, 2, 3, 2, '#f4ecd8'); p.set(8, 4, '#f4ecd8'); p.hline(7, 9, 5, '#8a5a34');
-    p.outline();
-    return finish(p);
-  }
   // the little door in the basement wall: a stone arch, iron straps, a slot for the eyes with a bookmark
   // hanging out of it, and lamplight underneath. The bottom rows are a step, which sits on the floor.
   function clubDoor() {
@@ -11620,7 +11611,7 @@
     S.tooth = toothIcon(false);
     S.toothGold = toothIcon(true);
     S.doosh = fromRows(dooshRows, DOOSH_PAL).canvas();
-    S.hammer = hammerSprites();
+    S.hammer = hammerSprites(); S.hammerGold = hammerSprites(true);
     S.six = sixFrames();
     S.chest = chestSprites();
     S.sign = signSprite();
@@ -11904,7 +11895,7 @@
     S.gravelSpots = [0, 1, 2, 3, 4].map(gravelSpot); S.eggCartons = eggCartons(); S.numberTwoDitch = numberTwoDitch();
     S.fossils = {}; for (const id in FOSSIL_ROWS) S.fossils[id] = fossil(id);
     S.natesBassDone = natesBassDone(); S.switchPlate = switchPlate(); S.switchTape = switchTape();
-    S.squirrel = squirrel(); S.goat = [goat(0), goat(1)]; S.turtle = turtle(); S.bookmarkIcon = bookmarkIcon(); S.clubDoor = clubDoor(); S.rushTrophy = rushTrophy();
+    S.squirrel = squirrel(); S.goat = [goat(0), goat(1)]; S.turtle = turtle(); S.bookmarkIcon = bookmarkIcon(); S.clubDoor = clubDoor();
     S.gardenDeer = { left: [gardenDeer(0), gardenDeer(1)] }; S.gardenDeer.right = S.gardenDeer.left.map(mirror); S.rainBarrel = rainBarrel(); S.marigold = marigold(); S.wetBlanket = wetBlanket();
     // Aurora, NC
     S.auroraMuseum = auroraMuseum(); S.tailingsPile = tailingsPile(); S.fossilIdBoard = fossilIdBoard(); S.siftScreens = siftScreens(); S.hamBillboard = hamBillboard(); S.hamShop = hamShop();
