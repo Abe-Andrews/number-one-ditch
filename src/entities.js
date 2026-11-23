@@ -3969,7 +3969,9 @@
   // finishes the job.
   const TURNS = {
     doron: { weapon: 'rock', need: 5, h: 22, every: 100, attacks: ['lob', 'spirals', 'egglets', 'lob'], tip: 'Z: pick up a rock. Z again: throw it at Father Eggmas!' },
-    dad: { weapon: 'letter', need: 10, h: 22, every: 90, attacks: ['spirals', 'lob', 'egglets', 'lob'], tip: 'Z: "EEENGLISH!" Letters fly at Father Eggmas.' },
+    // (Dad's letters don't aim themselves, Eggmas ducks out of their way, and he aims his ornaments
+    // right where Dad's standing and yanks his lights across Dad's row: standing still and mashing Z doesn't cut it)
+    dad: { weapon: 'letter', need: 10, h: 22, every: 75, aim: true, dodge: true, attacks: ['lob', 'lights', 'spirals', 'lob', 'egglets', 'lights'], tip: 'Z: "EEENGLISH!" Letters fly the way Dad faces. Line them up with Father Eggmas!' },
     lily: { weapon: 'no', need: 5, h: 16, every: 85, attacks: ['spirals', 'spirals', 'lob', 'egglets'], tip: 'Hold Z to wind up a "No." Let go to say it. Only a full "No." counts!' },
     michelle: { weapon: 'egg', need: 12, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'rain'], tip: 'Z: Henrietta fires an egg.' },
     abe: { weapon: 'reach', need: 6, h: 50, every: 80, attacks: ['lights', 'lob', 'spirals', 'lights'], tip: 'He\'s floating too high for anybody else. Z: Abe reaches up and bonks him!' },
@@ -4024,7 +4026,29 @@
       }
       // floating around the ditch in a slow figure-eight
       const b = this.bounds, sp = 0.012 + this.cracks * 0.003 + (this.turn === 'nate' ? 0.004 : 0);
-      const tx = (b.x0 + b.x1) / 2 + Math.sin(this.t * sp) * (b.x1 - b.x0) * 0.38, ty = b.y0 + 40 + (Math.sin(this.t * sp * 2) + 1) * (b.y1 - b.y0 - 80) * 0.3;
+      let tx = (b.x0 + b.x1) / 2 + Math.sin(this.t * sp) * (b.x1 - b.x0) * 0.38, ty = b.y0 + 40 + (Math.sin(this.t * sp * 2) + 1) * (b.y1 - b.y0 - 80) * 0.3;
+      // a turn with `dodge` (Dad's): for four seconds he floats out of the line Dad's facing, then
+      // stops where he is for one to catch his breath. Standing still and mashing doesn't get him; moving does.
+      if (this.td.dodge) {
+        const p = G.play.player, ph = this.t % 300, [fx, fy] = G.DIRS[p.dir];
+        if (ph === 0) w.pop(this.x, this.y - this.h - 74, 'Can\'t catch me! HO HO!', '#f86858');
+        if (ph === 240) w.pop(this.x, this.y - this.h - 74, '*huff* *puff*', '#f8e070');
+        if (ph < 240) {
+          // (he picks a side of Dad's line and stays on it the whole time, so he never floats across it)
+          if (fy) {
+            if (this.dodgeAx !== 'x' || ph === 0) { this.dodgeAx = 'x'; this.dodgeSide = this.x >= p.x ? 1 : -1; }
+            if (p.x + this.dodgeSide * 52 < b.x0 || p.x + this.dodgeSide * 52 > b.x1) this.dodgeSide = -this.dodgeSide;
+            tx = p.x + this.dodgeSide * Math.max(52, Math.abs(tx - p.x));
+          }
+          // (facing sideways: his whole body stays above or below the letters' row)
+          if (fx) {
+            const lo = p.y + this.h / 2 - 46, hi = p.y + this.h / 2 + 78;
+            if (this.dodgeAx !== 'y' || ph === 0) { this.dodgeAx = 'y'; this.dodgeSide = this.y >= (lo + hi) / 2 ? 1 : -1; }
+            if ((this.dodgeSide > 0 && hi > b.y1) || (this.dodgeSide < 0 && lo < b.y0)) this.dodgeSide = -this.dodgeSide;
+            ty = this.dodgeSide > 0 ? Math.max(ty, hi) : Math.min(ty, lo);
+          }
+        } else { tx = this.x; ty = this.y; } // (catching his breath right where he is: walk over and get him)
+      }
       this.x += (tx - this.x) * 0.04; this.y += (ty - this.y) * 0.04;
       if (--this.atkT <= 0) {
         const a = this.td.attacks[this.cycle++ % this.td.attacks.length];
@@ -4038,8 +4062,10 @@
         const n = a === 'rain' ? 6 : 3;
         for (let i = 0; i < n; i++) {
           const near = i === 0 || a === 'lob';
-          const tx = near ? G.clamp(p.x + (Math.random() * 60 - 30), b.x0, b.x1) : b.x0 + Math.random() * (b.x1 - b.x0);
-          const ty = near ? G.clamp(p.y + (Math.random() * 40 - 20), b.y0, b.y1) : b.y0 + Math.random() * (b.y1 - b.y0);
+          // (a turn with `aim` puts the first one right on top of whoever's fighting, the rest close by)
+          const spread = this.td.aim ? (i === 0 ? 0 : 0.5) : 1;
+          const tx = near ? G.clamp(p.x + (Math.random() * 60 - 30) * spread, b.x0, b.x1) : b.x0 + Math.random() * (b.x1 - b.x0);
+          const ty = near ? G.clamp(p.y + (Math.random() * 40 - 20) * spread, b.y0, b.y1) : b.y0 + Math.random() * (b.y1 - b.y0);
           w.add(new Lob(this.x, this.y - this.h - 30, tx, ty, G.spr.ornaments[i % 3], { n: 48 + i * 6, h: 50, z0: this.h + 30, onLand: (ww, x, y) => G.ornamentShatter(ww, x, y) }));
         }
         G.audio.sfx('swing');
@@ -4327,12 +4353,13 @@
       rock.dead = true; p.carry = true; p.pose = 'hold';
       G.audio.sfx('bump'); w.pop(p.x, p.y - 34, 'ROCK!', '#68c8ff');
     },
-    // Dad: "EEENGLISH!" three letters fly at Father Eggmas
+    // Dad: "EEENGLISH!" three letters fly out the way he's facing, in a little fan (no aiming for him:
+    // he has to line up with Father Eggmas)
     dad(p, w) {
       if (p.relayCd > 0) return;
       p.relayCd = 34;
-      const boss = eggmasIn(w), base = boss ? Math.atan2(boss.y - p.y, boss.x - p.x) : Math.atan2(G.DIRS[p.dir][1], G.DIRS[p.dir][0]);
-      'ENG'.split('').forEach((ch, i) => { const a = base + (i - 1) * 0.22; const s = w.add(new RelayShot(p.x, p.y - 2, Math.cos(a) * 2.4, Math.sin(a) * 2.4, 'letter')); s.ch = ch; s.life = 100; });
+      const base = Math.atan2(G.DIRS[p.dir][1], G.DIRS[p.dir][0]);
+      'ENG'.split('').forEach((ch, i) => { const a = base + (i - 1) * 0.1; const s = w.add(new RelayShot(p.x, p.y - 2, Math.cos(a) * 2.4, Math.sin(a) * 2.4, 'letter')); s.ch = ch; s.life = 100; });
       G.audio.sfx('yell'); w.pop(p.x, p.y - 34, 'EEENGLISH!', '#f8d850');
     },
     // Mom: Henrietta fires an egg

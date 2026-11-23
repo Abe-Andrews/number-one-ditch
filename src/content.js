@@ -21036,7 +21036,7 @@
   // whoever's turn it was got their hits in
   const FIN_TURN_OUT = {
     doron: [['Doron', 'That\'s for my little brother!'], ['Doron', 'Dad! You\'re up!']],
-    dad: [['Dad', 'Peace be with YOU.'], ['Dad', 'Lily. Your turn, sweetheart.'], ['Lily', '...Okay.']],
+    dad: [['Dad', 'Lily. Your turn, sweetheart.'], ['Lily', '...Okay.']],
     lily: [['Lily', 'I\'m not scared of you anymore.'], ['Lily', '...Okay, a LITTLE. But not as much.'], ['Lily', 'Mom!']],
     michelle: [['Michelle', 'That\'s for my pots.'], ['Michelle', 'Abe, honey, he\'s floating away!']],
     romulus: [['Hannah', 'GOOD BOY! Who\'s a good boy?!'], ['Abe', 'He is. He is the good boy.'], ['Hannah', 'My turn.']],
