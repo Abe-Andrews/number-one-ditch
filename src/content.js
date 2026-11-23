@@ -18634,13 +18634,13 @@
     N.tries = (N.tries || 0) + 1;
     G.audio.stop();
     if (who === 'momSaw') {
-      yield G.say('Michelle', 'Lily? Honey? What are you doing in the hall?');
+      yield G.say('Michelle', 'Lily? Bones? What are you doing in the hall?');
       yield G.say('Lily', '...Sleepwalking.');
       yield G.say('Michelle', 'Sleepwalk back to bed.');
     } else if (who === 'mom') {
       yield G.say('Michelle', '...Lily? Is that you?');
       yield G.say('Lily', '*whispering* ...No.');
-      yield G.say('Michelle', 'Go back to bed, honey.');
+      yield G.say('Michelle', 'Go back to bed, Bones.');
     } else {
       yield G.say('Dad', '*snort* ...Lily? What are you doing up?');
       yield G.say('Lily', 'Water.');
@@ -21037,7 +21037,7 @@
   // whoever's turn it was got their hits in
   const FIN_TURN_OUT = {
     doron: [['Doron', 'That\'s for my little brother!'], ['Doron', 'Dad! You\'re up!']],
-    dad: [['Dad', 'Lily. Your turn, sweetheart.'], ['Lily', '...Okay.']],
+    dad: [['Dad', 'Lily. Your turn, Bones.'], ['Lily', '...Okay.']],
     lily: [['Lily', 'I\'m not scared of you anymore.'], ['Lily', '...Okay, a LITTLE. But not as much.'], ['Lily', 'Mom!']],
     michelle: [['Michelle', 'That\'s for my pots.'], ['Michelle', 'Abe, honey, he\'s floating away!']],
     romulus: [['Hannah', 'GOOD BOY! Who\'s a good boy?!'], ['Abe', 'He is. He is the good boy.'], ['Hannah', 'My turn.']],

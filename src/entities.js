@@ -4196,7 +4196,9 @@
       this.dead = true;
       G.audio.sfx('poof');
       this.world.burst(this.x, this.y - 8, this.bits, 10, { speed: 1.2, life: 20, size: 2 });
-      if (Math.random() < this.dropChance) this.world.add(new Pickup(this.x, this.y, G.state.hp < G.state.maxHp ? 'heart' : 'tooth'));
+      // (a heart half as often as a tooth: 22.5% when you're hurt, a tooth 45% of the time when you're not)
+      const hurt = G.state.hp < G.state.maxHp;
+      if (Math.random() < this.dropChance * (hurt ? 0.5 : 1)) this.world.add(new Pickup(this.x, this.y, hurt ? 'heart' : 'tooth'));
     }
     draw(ctx, cx, cy) {
       const img = G.spr.egglet[this.face > 0 ? 'right' : 'left'][(this.t >> 3) & 1];
@@ -4360,6 +4362,15 @@
       if (G.script.busy) return;
       this.age++;
       this.x += this.vx; this.y += this.vy;
+      // egglets in the way get knocked out (a full throw keeps going through them, on to Father Eggmas)
+      const r = [this.x - 9, this.y - 20, this.x + 9, this.y - 2];
+      for (const e of w.ents) {
+        if (e.dead || !(e instanceof Egglet) || (this.hitSet && this.hitSet.has(e)) || !G.overlap(r, e.hurtBox())) continue;
+        e.hit(1, this.x - this.vx * 4, this.y - this.vy * 4);
+        (this.hitSet = this.hitSet || new Set()).add(e);
+        G.audio.sfx('hit'); w.burst(this.x, this.y - 10, ['#e8dcc0', '#8a3a2a'], 5, { speed: 1, up: 0.6, life: 14, size: 1 });
+        if (!this.full) { this.dead = true; return; }
+      }
       if (!this.full) {
         // a flop: it slows, drops and lands with a slap
         this.vx *= 0.9; this.vy *= 0.9; this.z = Math.max(0, this.z - 0.6);
@@ -4367,12 +4378,8 @@
         return;
       }
       if (--this.life <= 0 || w.tileSolid(Math.floor(this.x / 16), Math.floor((this.y - 6) / 16))) { this.dead = true; return; }
-      const r = [this.x - 9, this.y - 20, this.x + 9, this.y - 2];
-      for (const e of w.ents) {
-        if (e.dead) continue;
-        if (e instanceof EggmasBoss) { if (G.overlap(r, e.hurtBox()) && e.relayHit('catalog')) { this.dead = true; w.burst(this.x, this.y - 12, ['#e8dcc0', '#8a3a2a', '#ffffff'], 8, { speed: 1.4, up: 0.8, life: 18, size: 2 }); return; } }
-        else if (e.enemy && e.hurtBox && !e.boss && G.overlap(r, e.hurtBox())) { e.hit(1, this.x - this.vx * 4, this.y - this.vy * 4); this.dead = true; return; }
-      }
+      const b = eggmasIn(w);
+      if (b && G.overlap(r, b.hurtBox()) && b.relayHit('catalog')) { this.dead = true; w.burst(this.x, this.y - 12, ['#e8dcc0', '#8a3a2a', '#ffffff'], 8, { speed: 1.4, up: 0.8, life: 18, size: 2 }); }
     }
     draw(ctx, cx, cy) {
       // spinning: it squashes side to side as it goes round
