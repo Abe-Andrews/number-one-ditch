@@ -21787,7 +21787,7 @@
     ['michelle', 'Michelle', 'Not "the pastor\'s wife."'], ['romulus', 'Romulus', 'Still unsure about Nate.'],
   ];
   const CREDIT_OTHERS = [
-    ['badlands', 'Badlands Chugs', '...LIKE AND SUBSCRIBE!'], ['mikey', 'Mikey', 'Was it the song?'], ['icejj', 'Ice JJ Fish', 'I\'ll bring the snow.'], ['tyler', 'Tyler', 'THE MOSASAUR TOOTH!'],
+    ['badlands', 'Badlands Chugs', '...LIKE AND SUBSCRIBE!'], ['mikey', 'Mikey', 'Was it the song?'], ['icejj', 'Ice JJ Fish', 'Praying to Jesus.'], ['tyler', 'Tyler', 'THE MOSASAUR TOOTH!'],
     ['paulLady', 'Paul McCartney Lady', 'Every single day of her life, honey.'], ['freya', 'Freya', 'Fourthmeal.'], ['matt', 'Matt Oliver', 'That\'s fishing.'], ['danHurd', 'Dan Hurd', 'Still prospecting.'],
   ];
   const CREDIT_NAMES = ['Ben', 'Bismarck', 'Brooks', 'Prof. Sunderlin', 'Dr. Nataro', 'Prof. Carley', 'Professor Pembrook', 'Groundskeeper Gus', 'Pyro Pete', 'Grandma Rose', 'Tom', 'Prof. Watts', 'Ruby', 'Anette', 'Kit and Gail', 'Charge Nurse Dot', 'The Old Fisherman', 'Henrietta', 'Daisy', 'The Globglogabgalab', 'MECHA-BABY', 'The Two-Liter', 'El Toro Loco', 'Shoolby Bones Lumpsucker', 'Rhonda', 'Rhonda\'s Roommate', 'and Father Eggmas, in the box'];
