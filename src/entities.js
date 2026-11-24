@@ -4238,10 +4238,10 @@
       this.dead = true;
       G.audio.sfx('poof');
       this.world.burst(this.x, this.y - 8, this.bits, 10, { speed: 1.2, life: 20, size: 2 });
-      // (hearts are rare: 1 egglet in 16 or so when you're hurt, so a fight can't be healed through
-      // by popping eggs. A tooth 45% of the time when you're not hurt)
+      // (a heart 15% of the time when you're hurt, so a fight can't be healed through just by popping
+      // eggs. A tooth 45% of the time when you're not hurt)
       const hurt = G.state.hp < G.state.maxHp;
-      if (Math.random() < (hurt ? 0.06 : this.dropChance)) this.world.add(new Pickup(this.x, this.y, hurt ? 'heart' : 'tooth'));
+      if (Math.random() < (hurt ? 0.15 : this.dropChance)) this.world.add(new Pickup(this.x, this.y, hurt ? 'heart' : 'tooth'));
     }
     draw(ctx, cx, cy) {
       const img = G.spr.egglet[this.face > 0 ? 'right' : 'left'][(this.t >> 3) & 1];
