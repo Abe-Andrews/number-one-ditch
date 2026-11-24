@@ -21782,7 +21782,7 @@
   // A road trip: everybody walks across the screen while the sky goes from night to morning, then
   // the photos you found, your numbers, and the picture from the Ditch. Hold Z to hurry it along.
   const CREDIT_FAMILY = [
-    ['nate', 'Nate', 'Thinks about pH often.'], ['lily', 'Lily', 'No.'], ['doron', 'Doron', 'Best ditch in the world. He said it and he meant it.'],
+    ['nate', 'Nate', 'Thinks about pH often.'], ['lily', 'Lily', 'Thinks about Taco Bell often.'], ['doron', 'Doron', 'Best ditch in the world. He said it and he meant it.'],
     ['abe', 'Abe', 'Has a cable for you.'], ['hannah', 'Hannah', 'One more chapter.'], ['dad', 'Dad', 'Do you speak EEENGLISH?'],
     ['michelle', 'Michelle', 'Not "the pastor\'s wife."'], ['romulus', 'Romulus', 'He thought it was a race.'],
   ];
