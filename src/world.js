@@ -5,7 +5,7 @@
   // char -> tile kind. `edge` makes the tile draw borders against different neighbors.
   const TD = G.TILE_DEFS = {
     '.': { k: 'grass' },
-    ',': { k: 'flowers' },
+    ',': { k: 'flowers', sway: true },
     '"': { k: 'tallgrass', cut: true },
     'c': { k: 'cut' },
     'b': { k: 'bush', solid: true, cut: true },
@@ -372,7 +372,8 @@
             if (diff(tx - 1, ty)) mask |= 8;
           }
           const variant = d.anim ? 0 : Math.floor(G.hash(tx, ty) * 4);
-          const img = G.art.tile(d.k, variant, mask, d.anim ? frame : 0);
+          // (sway: a tile that moves in the breeze but keeps its variety, like the flowers)
+          const img = G.art.tile(d.k, variant, mask, d.anim || d.sway ? frame : 0);
           ctx.drawImage(img, tx * 16 - Math.round(cam.x), ty * 16 - Math.round(cam.y));
         }
       }

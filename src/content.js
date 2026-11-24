@@ -5370,7 +5370,9 @@
       });
       w.add(new G.Chest(10, 6, 'lab_hammer', function* () {
         G.state.items.hammer = true;
-        yield G.itemGet(G.spr.hammer.up, 'You got the {y}Rock Hammer{/}! A geologist\'s best friend.');
+        // (New Game+: it's the golden one)
+        if (G.state.items.goldHammer) yield G.itemGet(G.spr.hammerGold.up, 'You got the {y}Golden Rock Hammer{/}! Same hammer. More shine.');
+        else yield G.itemGet(G.spr.hammer.up, 'You got the {y}Rock Hammer{/}! A geologist\'s best friend.');
         yield G.say(null, 'Press {y}Z{/} to swing it. Great for rocks, tall grass... and anything shaped like the sacred number.');
         yield G.say('Nate', 'Hammer: check. Hat: ...wait. Where\'s my {y}hat{/}?!');
         yield G.say('Nate', 'I never go anywhere without my hat. Maybe it blew away on the quad...');

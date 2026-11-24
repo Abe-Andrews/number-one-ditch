@@ -279,6 +279,7 @@
       if (G.state.playAs && G.RELAY_MOVE[G.state.playAs]) { G.RELAY_MOVE[G.state.playAs](this, this.world); return; }
       if (G.state.playAs === 'lily') { this.chargeNo(); return; }
       if (!G.state.items.hammer) return;
+      G.state.stats.swings = (G.state.stats.swings || 0) + 1;
       this.state = 'swing';
       this.t = 0;
       this.hitSet.clear();
@@ -350,6 +351,8 @@
 
     hurt(dmg, sx, sy) {
       if (this.inv > 0 || G.script.busy || this.state === 'dead' || G.state.god) return;
+      // (New Game+: everything hits half again as hard, rounded up)
+      if (G.state.flags.ngPlus && !G.state.rush) dmg = Math.ceil(dmg * 1.5);
       if (this.state === 'pipe') G.pipe.stop(); // a hit knocks the pipe out of his mouth
       G.state.hp = Math.max(0, G.state.hp - dmg);
       G.audio.sfx('hurt');
@@ -565,8 +568,20 @@
       // whatever they were looking at once he's gone
       if (!this.wander && !this.held && !this.pose && !this.hidden && this.S && this.S.right) {
         const p = G.play.player, dx = p.x - this.x, dy = p.y - this.y, d = Math.hypot(dx, dy);
-        if (d < 36 && !p.hidden) { if (this.lookBack == null) this.lookBack = this.dir; this.dir = dirToward(dx, dy); }
+        if (d < 36 && !p.hidden) {
+          if (this.idleDir) { this.dir = this.idleDir; this.idleDir = null; }
+          if (this.lookBack == null) this.lookBack = this.dir;
+          this.dir = dirToward(dx, dy); this.idleT = 0;
+        }
         else if (this.lookBack != null && d > 52) { this.dir = this.lookBack; this.lookBack = null; }
+        // ...and now and then, with nobody around, glance off to one side for a moment and back
+        else if (this.lookBack == null && !this.sign && !this.balloons) {
+          if (this.idleT == null) this.idleT = -Math.floor(Math.random() * 300);
+          this.idleT++;
+          if (this.idleT === 300) { this.idleDir = this.dir; const side = { down: ['left', 'right'], up: ['left', 'right'], left: ['down', 'up'], right: ['down', 'up'] }[this.dir]; this.dir = this.glanceDir = side[Math.floor(Math.random() * 2)]; }
+          // (back the way they were facing, unless a scene has turned them somewhere else meanwhile)
+          else if (this.idleT >= 380) { if (this.idleDir && this.dir === this.glanceDir) this.dir = this.idleDir; this.idleDir = null; this.idleT = -Math.floor(Math.random() * 360); }
+        }
       }
       if (!this.wander) return;
       if (--this.wt <= 0) {
@@ -1307,7 +1322,7 @@
       const dx = this.x - sx, dy = this.y - sy, m = Math.hypot(dx, dy) || 1, k = this.rooted ? 0 : this.heavy ? 1.2 : 3;
       this.kb = { x: (dx / m) * k, y: (dy / m) * k };
       G.audio.sfx('hit');
-      if (this.hp <= 0) this.die();
+      if (this.hp <= 0) { const st = G.state.stats; st.bonked = (st.bonked || 0) + 1; this.die(); }
     }
     // a beaten house critter never comes back
     markGone() {

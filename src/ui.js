@@ -195,14 +195,52 @@
   // last look. A new quest, a new rumor or a finished one pops a little card up
   // from the bottom of the screen, and new ones say NEW on the QUESTS page
   // until Nate looks at it.
-  const TOAST = { active: ['NEW QUEST', '#f8d850'], rumor: ['NEW RUMOR', '#78e8e8'], done: ['QUEST COMPLETE', '#78e070'] };
+  const TOAST = { active: ['NEW QUEST', '#f8d850'], rumor: ['NEW RUMOR', '#78e8e8'], done: ['QUEST COMPLETE', '#78e070'], achieve: ['ACHIEVEMENT', '#ff98d0'] };
   const TOAST_T = 170;
+
+  // ---- achievements: little milestones, kept in s.achieved, with a toast when one lands. Listed on
+  // the STATS page (secret ones say ??? until they're earned, so they can't spoil anything).
+  const stat = (s, k) => (s.stats && s.stats[k]) || 0;
+  G.ACHIEVEMENTS = [
+    { id: 'firstBonk', name: 'First Bonk', desc: 'Bonk your first troublemaker.', ok: (s) => stat(s, 'bonked') + stat(s, 'sixes') >= 1 },
+    { id: 'sixes50', name: 'Number Cruncher', desc: 'Bonk 50 sacred numbers.', ok: (s) => stat(s, 'sixes') >= 50 },
+    { id: 'bonk250', name: 'Bonk Hound', desc: 'Bonk 250 troublemakers.', ok: (s) => stat(s, 'bonked') + stat(s, 'sixes') >= 250 },
+    { id: 'swings', name: 'Geologist', desc: 'Swing the rock hammer 1,000 times.', ok: (s) => stat(s, 'swings') >= 1000 },
+    { id: 'teeth', name: 'Shark Week', desc: 'Earn 1,000 shark teeth, all told.', ok: (s) => stat(s, 'teethEarned') >= 1000 },
+    { id: 'steps', name: 'Road Trip', desc: 'Walk 10,000 steps.', ok: (s) => stat(s, 'walked') / 8 >= 10000 },
+    { id: 'faint', name: 'Get Up, Nate', desc: 'Faint for the first time. It happens to everybody.', ok: (s) => stat(s, 'faints') >= 1 },
+    { id: 'family', name: 'Family Reunion', desc: 'Get the whole family together.', ok: (s) => ['doron', 'lily', 'abe', 'hannah'].every((id) => (s.party || []).includes(id)) },
+    { id: 'puffs', name: 'Smoke Signals', desc: 'Puff 50 songs on the pipe.', ok: (s) => stat(s, 'songs') >= 50, secret: true },
+    { id: 'songs', name: 'Songbird', desc: 'Learn every pipe song.', ok: () => G.SIGNALS.every((sg) => sg.known()), secret: true },
+    { id: 'taco', name: 'Fourthmeal', desc: 'Make the 2 AM Taco Bell run.', ok: (s) => s.flags.tacoRunDone, secret: true },
+    { id: 'hiphop', name: 'The Shopping Cart', desc: 'Make it through Dad\'s hip hop class.', ok: (s) => s.flags.hipHopDone, secret: true },
+    { id: 'club', name: 'Bookworm', desc: 'Read every book in Hannah\'s book club.', ok: (s) => s.flags.clubDone, secret: true },
+    { id: 'dunk', name: 'Splash Zone', desc: 'Get thrown in the water by Abe.', ok: () => G.dunksFound() >= 1, secret: true },
+    { id: 'rocks', name: 'Rock Hound', desc: 'Find every rock.', ok: () => G.rocksFound() >= G.ROCKS.length },
+    { id: 'photos', name: 'Family Album', desc: 'Find every old family photo.', ok: () => G.photosFound() >= G.PHOTOS.length },
+    { id: 'story', name: 'Number One', desc: 'Save the Number One Ditch.', ok: (s) => s.flags.fin_done, secret: true },
+    { id: 'clean', name: 'Never Said It', desc: 'Save the Ditch without saying the sacred number even once.', ok: (s) => s.flags.fin_done && !stat(s, 'slips'), secret: true },
+    { id: 'golden', name: 'Golden', desc: 'Clear the Boss Rush.', ok: (s) => s.items.goldHammer, secret: true },
+    { id: 'again', name: 'Again!', desc: 'Start a New Game+.', ok: (s) => s.flags.ngPlus, secret: true },
+    { id: 'all', name: 'Every Last Thing', desc: 'Do absolutely everything. 100%.', ok: () => G.completion().every((r) => r.ok), secret: true, slow: true },
+  ];
+  G.checkAchievements = () => {
+    const s = G.state;
+    if (!s || s.admin || s.rush || G.scene !== G.play) return;
+    s.achieved = s.achieved || {};
+    for (const a of G.ACHIEVEMENTS) {
+      if (s.achieved[a.id] || (a.slow && G.tick % 300 !== 7)) continue;
+      let ok = false;
+      try { ok = !!a.ok(s); } catch (e) { /* (not ready yet) */ }
+      if (ok) { s.achieved[a.id] = s.playTime || 1; G.toasts.list.push({ kind: 'achieve', name: a.name }); }
+    }
+  };
   G.toasts = {
     list: [], t: 0, dur: TOAST_T,
     update() {
       if (!this.list.length || G.script.busy) return;
       // (quicker when there's a line of them)
-      if (this.t === 0) { this.dur = this.list.length > 1 ? 120 : TOAST_T; G.audio.sfx(this.list[0].kind === 'done' ? 'secret' : 'select'); }
+      if (this.t === 0) { this.dur = this.list.length > 1 ? 120 : TOAST_T; G.audio.sfx(this.list[0].kind === 'done' || this.list[0].kind === 'achieve' ? 'secret' : 'select'); }
       if (++this.t >= this.dur) { this.list.shift(); this.t = 0; }
     },
     clear() { this.list = []; this.t = 0; },
@@ -225,6 +263,7 @@
       ctx.fillStyle = 'rgba(255,255,255,0.45)'; ctx.fillRect(bx + 1, by + 1, 12, 2);
       ctx.fillStyle = '#1c1424';
       if (q.kind === 'done') [[3, 7], [4, 8], [5, 9], [6, 8], [7, 7], [8, 6], [9, 5], [10, 4]].forEach(([dx, dy]) => ctx.fillRect(bx + dx, by + dy, 1, 2));
+      else if (q.kind === 'achieve') { ctx.fillRect(bx + 6, by + 2, 2, 10); ctx.fillRect(bx + 2, by + 5, 10, 2); ctx.fillRect(bx + 4, by + 4, 6, 6); ctx.fillRect(bx + 3, by + 10, 2, 2); ctx.fillRect(bx + 9, by + 10, 2, 2); }
       else F().draw(ctx, q.kind === 'active' ? '!' : '?', bx + 7 - Math.floor(F().width(q.kind === 'active' ? '!' : '?') / 2), by + 4, '#1c1424');
       F().draw(ctx, label, x + 22, y + 3, col, { shadow: SH });
       F().draw(ctx, name, x + 22, y + 12, '#f8f8f0', { shadow: SH });
@@ -306,7 +345,8 @@
   const SEL = { bg: '#3a3058', border: '#f8d850', inner: '#7a6a30' };
   const TXT = (ctx, str, x, y, col) => F().draw(ctx, str, x, y, col || '#f8f8f0', { shadow: SH });
   const C = { gold: '#f8d850', cyan: '#78e8e8', green: '#78e070', red: '#f86858', dim: '#9890a8', faint: '#5a4e70', soft: '#c8c0d8', pink: '#ff98d0' };
-  const QMODES = ['ACTIVE', '100%', 'RULES'], GOAL_ROWS = 3, READ_ROWS = 12;
+  // (STATS has Abe's Rules at the top, then the numbers and the achievements; LOG is the dialogue log)
+  const QMODES = ['ACTIVE', '100%', 'STATS', 'LOG'], GOAL_ROWS = 3, READ_ROWS = 12;
   let lastTab = QUEST_TAB;
 
   // ---- tiny 9x9 pixel icons for the tabs and stats (drawn once)
@@ -785,7 +825,15 @@
         }
         // left/right flips between active quests, the 100% checklist and Abe's Rules; up/down picks a
         // row, and Z opens it to read all of it
-        for (const [d, by] of [['left', -1], ['right', 1]]) if (inp.hit(d)) { this.qmode = (this.qmode + by + QMODES.length) % QMODES.length; this.qsel = 0; this.qscroll = 0; G.audio.sfx('menu'); }
+        for (const [d, by] of [['left', -1], ['right', 1]]) if (inp.hit(d)) { this.qmode = (this.qmode + by + QMODES.length) % QMODES.length; this.qsel = 0; this.qscroll = 0; this.sscroll = this.qmode === 3 ? 1e9 : 0; G.audio.sfx('menu'); }
+        // STATS and LOG just scroll (up off the top goes to the tabs)
+        if (this.qmode >= 2) {
+          const max = Math.max(0, (this.scrollMax || 0));
+          this.sscroll = this.sscroll || 0;
+          if (inp.hit('down') && this.sscroll < max) { this.sscroll++; G.audio.sfx('menu'); }
+          if (inp.hit('up')) { if ((this.sscroll || 0) > 0) { this.sscroll--; G.audio.sfx('menu'); } else { this.onTabs = true; G.audio.sfx('menu'); } }
+          return false;
+        }
         const n = this.questRows().length;
         if (inp.hit('a')) { inp.eat('a'); if (this.qmode < 2) { this.qread = { top: 0, lines: this.questText() }; G.audio.sfx('select'); } }
         if (inp.hit('down') && this.qsel < n - 1) { this.qsel++; G.audio.sfx('menu'); }
@@ -1127,7 +1175,8 @@
       if (count) TXT(ctx, count, RX + RW - 5 - F().width(count), ly + 4, C.dim);
       ctx.fillStyle = '#3e3460'; ctx.fillRect(RX + 1, ly + 14, RW - 2, 1);
 
-      if (this.qmode === 2) { this.drawRules(ctx, RX, ly, RW, lh); return; }
+      if (this.qmode === 2) { this.drawStats(ctx, RX, ly, RW, lh); return; }
+      if (this.qmode === 3) { this.drawLog(ctx, RX, ly, RW, lh); return; }
       const detail = rows.length ? 21 : 0;
       const top = ly + 17, RH = 10, vis = Math.max(1, Math.floor((lh - 18 - detail) / RH));
       this.qsel = Math.min(this.qsel, Math.max(0, rows.length - 1));
@@ -1185,21 +1234,74 @@
       }
     }
 
-    // Abe's Rules, and how they're going
-    drawRules(ctx, x, y, w, h) {
-      const s = G.state;
-      TXT(ctx, 'ABE\'S RULES', x + 6, y + 18, '#ffa848');
-      let ry = y + 28;
-      for (const r of ['1. Nate and Lily may not say the sacred number.', '2. Abe is the Master. See rule 1.']) for (const l of F().wrap(r, w - 14)) { TXT(ctx, l, x + 8, ry); ry += 8; }
-      ry += 3;
-      ctx.fillStyle = '#3e3460'; ctx.fillRect(x + 4, ry - 2, w - 8, 1);
-      for (const [label, val, col] of [['Slips', s.stats.slips, C.red], ['Sacred numbers bonked', s.stats.sixes || 0, C.gold], ['Pins', s.stats.pins || 0, C.gold]]) {
-        if (ry + 8 > y + h - 2) break;
-        TXT(ctx, label, x + 8, ry, C.soft);
-        const v = G.sayable(val);
-        TXT(ctx, v, x + w - 8 - F().width(v), ry, col);
-        ry += 9;
+    // A scrolling list of rows: [kind, ...] where kind is 'head' (a heading), 'text' (wrapped lines),
+    // 'stat' (label and number), 'rule' (a divider) or 'ach' (an achievement: name, description, got).
+    // Up/down scroll it a row at a time (this.sscroll); this.scrollMax says how far it can go.
+    drawRows(ctx, x, y, w, h, items) {
+      const lines = [];
+      for (const it of items) {
+        if (it[0] === 'head') lines.push(['head', it[1], it[2]]);
+        else if (it[0] === 'rule') lines.push(['rule']);
+        else if (it[0] === 'text') for (const l of F().wrap(it[1], w - 16)) lines.push(['text', l, it[2]]);
+        else if (it[0] === 'stat') lines.push(it);
+        else if (it[0] === 'ach') { lines.push(['achName', it[1], it[3]]); for (const l of F().wrap(it[2], w - 22)) lines.push(['achText', l, it[3]]); }
       }
+      const top = y + 18, RH = 9, vis = Math.max(1, Math.floor((h - 20) / RH));
+      this.scrollMax = Math.max(0, lines.length - vis);
+      this.sscroll = Math.min(this.sscroll || 0, this.scrollMax);
+      lines.slice(this.sscroll, this.sscroll + vis).forEach((l, k) => {
+        const ly = top + k * RH;
+        if (l[0] === 'head') TXT(ctx, l[1], x + 6, ly, l[2] || '#ffa848');
+        else if (l[0] === 'rule') { ctx.fillStyle = '#3e3460'; ctx.fillRect(x + 4, ly + 3, w - 8, 1); }
+        else if (l[0] === 'text') TXT(ctx, l[1], x + 8, ly, l[2] || C.soft);
+        else if (l[0] === 'stat') { TXT(ctx, l[1], x + 8, ly, C.soft); const v = String(l[2]); TXT(ctx, v, x + w - 8 - F().width(v), ly, l[3] || C.gold); }
+        else if (l[0] === 'achName') {
+          // a little star: gold if it's been earned
+          ctx.fillStyle = l[2] ? C.gold : C.faint;
+          ctx.fillRect(x + 10, ly + 1, 1, 5); ctx.fillRect(x + 8, ly + 3, 5, 1); ctx.fillRect(x + 9, ly + 2, 3, 3);
+          TXT(ctx, l[1], x + 16, ly, l[2] ? C.gold : C.dim);
+        } else TXT(ctx, l[1], x + 16, ly, l[2] ? C.soft : C.faint);
+      });
+      // a scroll bar, when there's more than fits
+      if (this.scrollMax > 0) {
+        const bh = Math.max(8, Math.round((h - 22) * vis / lines.length)), by = top - 2 + Math.round((h - 22 - bh) * this.sscroll / this.scrollMax);
+        ctx.fillStyle = '#2a2240'; ctx.fillRect(x + w - 4, top - 2, 2, h - 22);
+        ctx.fillStyle = C.dim; ctx.fillRect(x + w - 4, by, 2, bh);
+      }
+    }
+
+    // STATS: Abe's Rules, how they're going, the numbers, and the achievements
+    drawStats(ctx, x, y, w, h) {
+      const s = G.state, st = s.stats || {}, n = (v) => G.sayable(Math.floor(v || 0));
+      const pt = Math.floor((s.playTime || 0) / 60), clock = Math.floor(pt / 3600) + 'h ' + String(Math.floor(pt / 60) % 60).padStart(2, '0') + 'm';
+      const list = G.ACHIEVEMENTS || [], got = s.achieved || {}, have = list.filter((a) => got[a.id]).length;
+      const items = [
+        ['head', 'ABE\'S RULES'],
+        ['text', '1. Nate and Lily may not say the sacred number.'], ['text', '2. Abe is the Master. See rule 1.'],
+        ['stat', 'Slips', n(st.slips), C.red], ['stat', 'Sacred numbers bonked', n(st.sixes), C.gold], ['stat', 'Pins', n(st.pins), C.gold],
+        ['rule'], ['head', 'THE NUMBERS', C.cyan],
+        ['stat', 'Play time', clock.replace(/\d+/g, (d) => G.sayable(+d))], ['stat', 'Steps walked', n((st.walked || 0) / 8)], ['stat', 'Hammer swings', n(st.swings)],
+        ['stat', 'Troublemakers bonked', n(st.bonked)], ['stat', 'Shark teeth earned', n(st.teethEarned)], ['stat', 'Times fainted', n(st.faints), C.red],
+        ['stat', 'Pipe songs puffed', n(st.songs)], ['stat', 'Dunks', n(G.dunksFound ? G.dunksFound() : 0)],
+        ['rule'], ['head', 'ACHIEVEMENTS  ' + G.sayable(have) + '/' + G.sayable(list.length), C.pink],
+      ];
+      for (const a of list) {
+        const ok = !!got[a.id];
+        items.push(['ach', ok || !a.secret ? a.name : '???', ok || !a.secret ? a.desc : 'A secret. Keep playing.', ok]);
+      }
+      this.drawRows(ctx, x, y, w, h, items);
+    }
+
+    // LOG: the last things anybody said (newest at the bottom; it opens scrolled all the way down)
+    drawLog(ctx, x, y, w, h) {
+      const log = G.dialogLog || [];
+      if (!log.length) { TXT(ctx, 'Nobody has said anything yet.', x + 8, y + 20, C.dim); this.scrollMax = 0; return; }
+      const items = [];
+      for (const l of log) {
+        if (l.who) items.push(['head', l.who, l.phone ? C.cyan : G.NAME_COLORS[l.who] || C.gold]);
+        items.push(['text', l.text, C.soft]);
+      }
+      this.drawRows(ctx, x, y, w, h, items);
     }
 
     // ---- MAP: the road trip so far

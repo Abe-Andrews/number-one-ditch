@@ -1053,15 +1053,18 @@
       p.rect(0, 0, 16, 16, P.grass);
       for (let i = 0; i < 7; i++) { const x = r() * 14 + 1, y = r() * 13 + 2; p.set(x, y, P.grassDD); p.set(x, y - 1, P.grassD); }
     },
-    flowers(p, r) {
+    // (frame: the breeze. Each flower nods a pixel to the side on its own beat, so a field of them
+    // ripples instead of moving all at once)
+    flowers(p, r, v, mask, frame) {
       grassBase(p, r);
       const cols = [['#ffffff', '#f8d040'], ['#ff8890', '#ffffff'], ['#ffe060', '#e07020']];
       for (let i = 0; i < 2; i++) {
-        const x = 3 + Math.floor(r() * 10), y = 3 + Math.floor(r() * 10);
+        const x0 = 3 + Math.floor(r() * 10), y = 3 + Math.floor(r() * 10);
         const [petal, mid] = cols[Math.floor(r() * cols.length)];
+        const x = x0 + (((frame || 0) + (v || 0) + i) % 3 === 1 ? 1 : 0);
         p.set(x - 1, y, petal); p.set(x + 1, y, petal); p.set(x, y - 1, petal); p.set(x, y + 1, petal);
         p.set(x, y, mid);
-        p.set(x, y + 2, P.grassDD);
+        p.set(x0, y + 2, P.grassDD);
       }
     },
     tallgrass(p, r) {

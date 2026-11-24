@@ -309,6 +309,13 @@
         if (e.x < c.x - 8 || e.x > c.x + G.W + 8 || e.y < c.y - 8 || e.y > c.y + G.H + 32) continue;
         const k = e.constructor && e.constructor.name;
         if (k && !s.seen[k]) s.seen[k] = 1;
+        // (New Game+: every boss has half again as much health. Left as they are: the relay's Father
+        // Eggmas, who counts hits a turn at a time, and bosses with only a few hit points, like Romulus,
+        // whose fights are about soaking him, not hitting him)
+        if (s.flags.ngPlus && e.boss && !e.ngScaled && e.maxHp >= 6 && !(e instanceof G.EggmasBoss)) {
+          e.ngScaled = true;
+          e.maxHp = Math.ceil(e.maxHp * 1.5); e.hp = Math.ceil(e.hp * 1.5);
+        }
       }
     },
     autosave() {
@@ -554,6 +561,7 @@
 
     addTeeth(n) {
       const s = G.state, skipped = moveTeeth(s, n);
+      if (n > 0) s.stats.teethEarned = (s.stats.teethEarned || 0) + n;
       // the joke about it only ever plays once on this device (not again for every new game or admin start)
       if (skipped && !s.flags.skipNote) {
         s.flags.skipNote = true;
@@ -657,9 +665,14 @@
       // remember Nate's footsteps for the party to follow
       const pl = this.player, t0 = this.trail[0];
       if (pl.x !== t0.x || pl.y !== t0.y) {
+        // (and how far he's walked, for the STATS page: a step is 8 pixels, warps don't count)
+        const d = Math.hypot(pl.x - t0.x, pl.y - t0.y);
+        if (d < 6 && !G.state.rush) G.state.stats.walked = (G.state.stats.walked || 0) + d;
         this.trail.unshift({ x: pl.x, y: pl.y, dir: pl.dir });
         if (this.trail.length > 90) this.trail.pop();
       }
+      // achievements: checked a couple of times a second
+      if (G.tick % 30 === 7 && G.checkAchievements) G.checkAchievements();
 
       // heal over time
       if (this.healQ > 0 && G.tick % 5 === 0) {
@@ -753,7 +766,9 @@
       this.t = 0;
       this.sel = 0;
       // (Manual: the instruction booklet, src/manual.js)
-      this.opts = (G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game']).concat('Admin', 'Manual');
+      // (New Game+ shows up once any file has cleared the Boss Rush: it has the golden hammer)
+      const ngReady = [1, 2, 3].some((n) => { const sv = G.readSave(n); return sv && sv.items && sv.items.goldHammer && !sv.admin; });
+      this.opts = (G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game']).concat(ngReady ? ['New Game+'] : [], 'Admin', 'Manual');
       // which landmarks drift by: the places the latest save has been to
       const v = ((G.hasSave() && G.readSave(G.latestSave())) || {}).visited || {};
       this.reached = [['campus'], ['fair'], ['home'], ['cbbtToll', 'cbbt'], ['chkd'], ['ditchFinal', 'ditchDay']]
@@ -778,6 +793,8 @@
           G.adminPick.enter();
         } else if (opt === 'Manual') {
           G.manual.enter(this);
+        } else if (opt === 'New Game+') {
+          G.files.enter('new', true);
         } else if (G.hasSave()) {
           G.files.enter('new');
         } else {
@@ -794,8 +811,8 @@
       const eg = G.spr.eggmas;
       ctx.drawImage(eg, 206, 92 + 31 - eg.height);
       // menu
-      // (five options: the rows close up a little so the box still clears the logo and the bottom)
-      const n = this.opts.length, rh = n > 4 ? 11 : 12, w = 84, h = n * rh + 8, x = Math.round((G.W - w) / 2), y = n > 4 ? 90 : n > 3 ? 100 : n > 2 ? 108 : 114;
+      // (five or six options: the rows close up a little so the box still clears the logo and the bottom)
+      const n = this.opts.length, rh = n > 4 ? 11 : 12, w = 84, h = n * rh + 8, x = Math.round((G.W - w) / 2), y = n > 5 ? 80 : n > 4 ? 90 : n > 3 ? 100 : n > 2 ? 108 : 114;
       G.box(ctx, x, y, w, h);
       this.opts.forEach((o, i) => {
         F().draw(ctx, o, x + 18, y + 5 + i * rh, i === this.sel ? '#f8d850' : o === 'Admin' ? '#9890a8' : '#f8f8f0', { shadow: '#0c0814' });
@@ -804,6 +821,8 @@
       ctx.fillStyle = '#f8d850';
       ctx.fillRect(x + 8 + b, cy, 1, 5); ctx.fillRect(x + 9 + b, cy + 1, 1, 3); ctx.fillRect(x + 10 + b, cy + 2, 1, 1);
       F().draw(ctx, 'Z: select', 4, G.H - 10, '#ffffff', { shadow: '#1c1424' });
+      // (which version this is: handy when somebody reports a bug)
+      if (G.version) F().draw(ctx, G.version, G.W - 4 - F().width(G.version), G.H - 10, '#c8c0d8', { shadow: '#1c1424' });
     },
 
     // ---- the scrolling landscape (each layer slower the farther away it is)
@@ -985,10 +1004,11 @@
 
   // ================================================================ FILE SELECT
   G.files = {
-    enter(mode) {
+    enter(mode, ng) {
       G.scene = this;
       G.fade = 0;
       this.mode = mode;
+      this.ng = !!ng;
       this.sel = 0;
       this.t = 0;
       this.confirm = false;
@@ -996,10 +1016,11 @@
       if (mode === 'load') this.sel = Math.max(0, G.latestSave() - 1);
       else { const empty = this.saves.findIndex((s) => !s); this.sel = empty < 0 ? 0 : empty; }
     },
-    // a brand-new game in file n
+    // a brand-new game in file n (New Game+: the golden hammer comes along, and it's tougher)
     start(n) {
       G.audio.sfx('select');
       G.state = newState();
+      if (this.ng) { G.state.flags.ngPlus = true; G.state.items.goldHammer = true; }
       G.writeSave(n);
       G.intro.enter();
     },
@@ -1034,7 +1055,7 @@
       ctx.drawImage(G.spr.ditch, 0, 0);
       ctx.fillStyle = 'rgba(12,8,20,0.72)';
       ctx.fillRect(0, 0, G.W, G.H);
-      const title = this.mode === 'load' ? 'LOAD A FILE' : 'NEW GAME: PICK A FILE';
+      const title = this.mode === 'load' ? 'LOAD A FILE' : this.ng ? 'NEW GAME+: PICK A FILE' : 'NEW GAME: PICK A FILE';
       F().draw(ctx, title, Math.round((G.W - F().width(title)) / 2), 6, '#f8d850', { shadow: '#0c0814' });
       for (let i = 0; i < 3; i++) G.drawFileCard(ctx, 8, 20 + i * 40, 224, this.saves[i], i + 1, i === this.sel);
       let help = this.mode === 'load' ? 'Z: load   X: back' : 'Z: start a new game here   X: back';
@@ -1152,8 +1173,15 @@
       // (an admin run's save is the copy it keeps in memory)
       const cur = G.state, saved = cur.admin ? G.adminSnap : G.loadSave(cur.slot);
       this.lost = Math.floor(((saved || cur).teeth || 0) * FAINT_COST);
-      if (saved && this.lost) {
-        moveTeeth(saved, -this.lost);
+      if (saved) {
+        if (this.lost) moveTeeth(saved, -this.lost);
+        // the counters, the enemies met and the achievements earned since the last save aren't lost
+        // with the faint (and the faint itself counts)
+        saved.stats = saved.stats || {};
+        for (const k in cur.stats || {}) if (typeof cur.stats[k] === 'number') saved.stats[k] = Math.max(saved.stats[k] || 0, cur.stats[k]);
+        saved.stats.faints = (saved.stats.faints || 0) + 1;
+        if (cur.seen) saved.seen = Object.assign({}, saved.seen || {}, cur.seen);
+        if (cur.achieved) saved.achieved = Object.assign({}, saved.achieved || {}, cur.achieved);
         if (!cur.admin) { G.state = saved; G.writeSave(saved.slot || cur.slot); G.state = cur; }
       }
     },
@@ -1265,21 +1293,84 @@
   G.state = newState();
   G.title.enter();
 
+  // (a fixed 60 steps a second, whatever the screen's refresh rate: 120Hz screens don't run fast)
   const STEP = 1000 / 60;
   let acc = 0, last = performance.now();
   function frame(now) {
     acc += Math.min(100, now - last);
     last = now;
+    if (G.paused) acc = 0;
     while (acc >= STEP) {
       G.tick++;
+      if (G.input.hit('bug')) { G.input.eat('bug'); G.bugReport(); }
+      if (G.input.hit('pause')) { G.input.eat('pause'); G.pause(true); acc = 0; break; }
       G.scene.update();
       G.input.endTick();
       acc -= STEP;
     }
     G.scene.draw(ctx);
     G.drawOverlays(ctx);
+    if (G.paused) G.drawPaused(ctx);
     requestAnimationFrame(frame);
   }
+
+  // ---- pausing: the game stops (and goes quiet) when its tab or window loses focus, or on P.
+  // Any key or a click picks it back up (that key doesn't also do anything in the game).
+  G.paused = false;
+  G.pause = (on) => {
+    if (G.paused === on) return;
+    G.paused = on;
+    G.audio.hold(on);
+    for (const k of ['a', 'b', 'start', 'up', 'down', 'left', 'right']) G.input.eat(k);
+  };
+  addEventListener('blur', () => G.pause(true));
+  document.addEventListener('visibilitychange', () => { if (document.hidden) G.pause(true); });
+  addEventListener('keydown', (e) => { if (!G.paused || e.code === 'KeyM') return; e.preventDefault(); e.stopImmediatePropagation(); if (e.code !== 'KeyP' || !e.repeat) G.pause(false); }, true);
+  addEventListener('pointerdown', () => { if (G.paused) G.pause(false); }, true);
+  G.drawPaused = (ctx) => {
+    ctx.fillStyle = 'rgba(12,8,20,0.72)'; ctx.fillRect(0, 0, G.W, G.H);
+    const t = 'PAUSED', w = F().bigWidth(t, 2);
+    F().drawBig(ctx, t, Math.round((G.W - w) / 2), 58, 2, (r) => (r < 2 ? '#fff0a8' : r < 4 ? '#f8d850' : '#c89838'), '#1c1424');
+    const s = 'Press any key to keep going', sw = F().width(s);
+    if ((performance.now() >> 9) & 1) F().draw(ctx, s, Math.round((G.W - sw) / 2), 86, '#f8f8f0', { shadow: '#1c1424' });
+  };
+
+  // ---- the version (on the title screen) and the bug report: B copies a snapshot of where things
+  // stand (version, scene, map, position, the last line of dialogue, every story flag) to the
+  // clipboard, to paste into a text to Abe
+  G.version = (() => { const sc = [...document.scripts].find((x) => /main\.js\?v=/.test(x.src)); return sc ? 'v' + sc.src.split('?v=')[1] : 'dev'; })();
+  G.notice = null;
+  G.bugReport = () => {
+    const s = G.state || {}, w = G.play && G.play.world, p = G.play && G.play.player, f = s.flags || {};
+    const sceneName = G.scene === G.play ? 'playing' : G.scene === G.title ? 'title screen' : G.scene === G.gameOver ? 'fainted' : G.scene === G.manual ? 'manual' : 'menu';
+    const last = (G.dialogLog || []).slice(-3).map((l) => (l.who ? l.who + ': ' : '') + l.text).join(' / ');
+    const lines = [
+      'Journey to the Number One Ditch: bug report', 'Version: ' + G.version, 'When: ' + new Date().toString(), 'Where: ' + sceneName,
+      w && G.scene === G.play ? 'Map: ' + w.id + ' (' + (w.def.name || '') + ') at tile ' + Math.floor(p.x / 16) + ',' + Math.floor(p.y / 16) + ' facing ' + p.dir : null,
+      'Playing as: ' + (s.playAs || 'Nate') + ' | hearts ' + s.hp + '/' + s.maxHp + ' | teeth ' + s.teeth + (s.admin ? ' | admin run' : ''),
+      'In a scene: ' + (G.script && G.script.busy ? 'yes' : 'no'),
+      last ? 'Last lines: ' + last : null,
+      'Flags: ' + Object.keys(f).filter((k) => f[k]).sort().join(', '),
+    ].filter(Boolean);
+    const text = lines.join('\n');
+    // (if the browser won't copy it, the report comes up in a box to copy by hand)
+    const showBox = () => {
+      let box = document.getElementById('bugbox');
+      if (!box) {
+        box = document.createElement('div'); box.id = 'bugbox';
+        box.style.cssText = 'position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;background:rgba(12,8,20,.8);font:13px/1.4 ui-monospace,Menlo,monospace;color:#f0e8ff';
+        box.innerHTML = '<div style="background:#2a2236;border:2px solid #5a4e70;border-radius:10px;padding:14px;width:min(560px,92vw)"><div style="margin-bottom:8px">Copy this and paste it in a text to Abe:</div><textarea style="width:100%;height:220px;box-sizing:border-box;background:#120e18;color:#f0e8ff;border:1px solid #5a4e70;border-radius:6px;padding:8px;font:inherit"></textarea><div style="text-align:right;margin-top:8px"><button style="font:inherit;padding:4px 14px;border-radius:6px;border:1px solid #5a4e70;background:#3a3048;color:#fff;cursor:pointer">Done</button></div></div>';
+        box.querySelector('button').onclick = () => { box.style.display = 'none'; };
+        document.body.appendChild(box);
+      }
+      box.style.display = 'flex';
+      const ta = box.querySelector('textarea'); ta.value = text; ta.focus(); ta.select();
+    };
+    const done = (ok) => { G.notice = { t: 200, text: ok ? 'Bug report copied! Paste it in a text to Abe.' : 'Copy the bug report from the box.' }; G.audio.sfx(ok ? 'select' : 'bump'); if (!ok) showBox(); };
+    const fallback = () => { try { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); const ok = document.execCommand('copy'); ta.remove(); done(ok); } catch (e) { done(false); } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(() => done(true), fallback); else fallback();
+    G.lastBugReport = text;
+  };
   // the circle wipe and the fade, over everything (the trailer rig draws these too)
   G.drawOverlays = (ctx) => {
     if (G.iris > 0) {
@@ -1296,6 +1387,16 @@
     if (G.fade > 0) {
       ctx.fillStyle = `rgba(0,0,0,${G.fade})`;
       ctx.fillRect(0, 0, G.W, G.H);
+    }
+    // a little message along the top (the bug report)
+    if (G.notice && G.notice.t > 0) {
+      const n = G.notice, a = Math.min(1, n.t / 20), w = F().width(n.text) + 12;
+      ctx.globalAlpha = a;
+      ctx.fillStyle = '#1e1830'; ctx.fillRect(Math.round((G.W - w) / 2), 3, w, 13);
+      ctx.fillStyle = '#f8d850'; ctx.fillRect(Math.round((G.W - w) / 2), 15, w, 1);
+      F().draw(ctx, n.text, Math.round((G.W - w) / 2) + 6, 6, '#f8f8f0', { shadow: '#0c0814' });
+      ctx.globalAlpha = 1;
+      if (!G.paused) n.t--;
     }
   };
   requestAnimationFrame(frame);

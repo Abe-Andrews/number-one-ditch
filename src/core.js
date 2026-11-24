@@ -50,14 +50,17 @@ G.input = (function () {
     KeyQ: 'l', BracketLeft: 'l',
     KeyE: 'r', BracketRight: 'r',
     KeyM: 'mute',
+    KeyB: 'bug', KeyP: 'pause',
     Digit6: 'six', Numpad6: 'six',
   };
   const held = {};
   const pressed = {};
 
+  // (keys typed into a text box, like the bug report's, belong to the box)
+  const typing = (e) => e.target && /^(TEXTAREA|INPUT)$/.test(e.target.tagName);
   addEventListener('keydown', (e) => {
     const b = KEYMAP[e.code];
-    if (!b) return;
+    if (!b || typing(e)) return;
     e.preventDefault();
     if (!held[b]) pressed[b] = true;
     held[b] = true;
@@ -66,7 +69,7 @@ G.input = (function () {
   });
   addEventListener('keyup', (e) => {
     const b = KEYMAP[e.code];
-    if (!b) return;
+    if (!b || typing(e)) return;
     e.preventDefault();
     held[b] = false;
   });
@@ -890,6 +893,8 @@ G.audio = (function () {
       muted = !muted;
       if (master) master.gain.value = muted ? 0 : 0.5;
     },
+    // everything holds still while the game is paused (and picks up right where it was)
+    hold(on) { if (!ctx) return; if (on) ctx.suspend(); else ctx.resume(); },
     get muted() { return muted; },
   };
 })();

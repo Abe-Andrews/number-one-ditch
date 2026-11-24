@@ -96,6 +96,26 @@
   const OPEN_T = 5;
 
   // ------------------------------------------------------------ say / ask
+  // ---- the dialogue log (the LOG page in the pause menu) and the lines already read. Lines read
+  // before (on this device: any save, any playthrough) can be skipped by holding X, so nothing new
+  // is ever skipped by accident.
+  G.dialogLog = [];
+  const strip = (t) => String(t).replace(/\{\/?[a-zA-Z]*\}/g, '');
+  const lineKey = (name, text) => { const str = (name || '') + '|' + text; let h = 5381; for (let i = 0; i < str.length; i++) h = ((h * 33) ^ str.charCodeAt(i)) >>> 0; return h.toString(36); };
+  const READ_KEY = 'number-one-ditch-read-lines';
+  let readLines = null, readSaveT = null;
+  const read = () => {
+    if (!readLines) { readLines = new Set(); try { for (const k of JSON.parse(localStorage.getItem(READ_KEY) || '[]')) readLines.add(k); } catch (e) { /* no storage */ } }
+    return readLines;
+  };
+  const markRead = (k) => {
+    if (read().has(k)) return;
+    readLines.add(k);
+    clearTimeout(readSaveT);
+    readSaveT = setTimeout(() => { try { localStorage.setItem(READ_KEY, JSON.stringify([...readLines])); } catch (e) { /* no storage */ } }, 800);
+  };
+  G.lineRead = (name, text) => read().has(lineKey(name, text));
+
   function dialog(name, text, opts = {}) {
     const style = STYLES[opts.style || 'normal'];
     const pages = [];
@@ -106,12 +126,18 @@
       start() {
         const pl = G.play && G.play.player;
         this.top = opts.top != null ? opts.top : (!G.play.camFocus && pl && pl.y - G.play.cam.y > 96);
+        this.key = lineKey(name, text);
+        this.seen = !opts.options && read().has(this.key);
+        G.dialogLog.push({ who: name || '', text: strip(text), phone: opts.style === 'phone' });
+        if (G.dialogLog.length > 120) G.dialogLog.shift();
         // the box pops open at the start of a conversation (not between lines of one)
         this.openT = G.tick - lastDialogEnd <= 3 ? OPEN_T : 0;
       },
       pageLen() { return this.pages[this.page].reduce((n, l) => n + F().visibleLength(l), 0); },
       update() {
         const inp = G.input;
+        // (a line you've read before: hold X and it goes right by)
+        if (this.seen && inp.down('b')) { lastDialogEnd = G.tick; return true; }
         if (this.openT < OPEN_T) { this.openT++; return false; }
         const len = this.pageLen();
         if (this.chars < len) {
@@ -126,12 +152,12 @@
         if (last && opts.options) {
           if (inp.hit('up')) { this.choice = (this.choice + opts.options.length - 1) % opts.options.length; G.audio.sfx('menu'); }
           if (inp.hit('down')) { this.choice = (this.choice + 1) % opts.options.length; G.audio.sfx('menu'); }
-          if (inp.hit('a')) { inp.eat('a'); G.audio.sfx('select'); this.result = this.choice; lastDialogEnd = G.tick; return true; }
+          if (inp.hit('a')) { inp.eat('a'); G.audio.sfx('select'); this.result = this.choice; lastDialogEnd = G.tick; markRead(this.key); return true; }
           return false;
         }
         if (inp.hit('a') || inp.hit('b')) {
           inp.eat('a'); inp.eat('b');
-          if (last) { lastDialogEnd = G.tick; return true; }
+          if (last) { lastDialogEnd = G.tick; markRead(this.key); return true; }
           this.page++;
           this.chars = 0;
         }
@@ -163,6 +189,10 @@
           F().draw(ctx, line, BOX.x + 8, y + 7 + i * BOX.lineH, style.text, { max: left, shadow: style.shadow });
           left -= n;
         });
+        if (this.seen) {
+          const h = 'hold X: skip', hw = F().width(h), hy = this.top ? y + BOX.h + 2 : y - 9;
+          F().draw(ctx, h, BOX.x + BOX.w - hw - 2, hy, '#c8c0d8', { shadow: '#0c0814' });
+        }
         const done = this.chars >= this.pageLen() && this.wait <= 0;
         if (done && !(opts.options && this.page === this.pages.length - 1)) {
           ctx.fillStyle = opts.style === 'phone' ? '#2a2238' : '#f8d850';
@@ -374,6 +404,7 @@
         if (--this.matchT > 0) return;
         const sig = G.SIGNALS.find((sg) => sg.id === this.matched);
         this.stop();
+        G.state.stats.songs = (G.state.stats.songs || 0) + 1;
         const it = sig.effect();
         if (it && typeof it.next === 'function') G.script.run(it);
         return;
