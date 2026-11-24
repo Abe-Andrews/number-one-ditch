@@ -1282,6 +1282,9 @@
   G.art.init();
   G.sprites = {};
   for (const id in G.CAST) G.sprites[id] = G.art.person(G.CAST[id]);
+  // Hannah wears her scrubs only inside the hospital; everywhere else, jeans and a tee.
+  { const scrubs = G.sprites.hannah, casual = G.sprites.hannahCasual, WORK = { chkdLobby: 1, chkdWard: 1, chkdNicu: 1, chkdRoom: 1, chkdRoof: 1 };
+    Object.defineProperty(G.sprites, 'hannah', { get: () => (G.state && WORK[G.state.map] ? scrubs : casual), set: () => {}, enumerable: true }); }
   // Romulus, for when Nate plays as him (the finale): his dog frames, shaped like a person's set
   // (the player draws him as a dog; this is for anything else that asks, like fainting)
   { const R = G.spr.romulus, fr = (d) => [R[d].stand, R[d].run1, R[d].run3]; G.sprites.romulus = { right: fr('right'), left: fr('left'), down: fr('right'), up: fr('left'), h: 25, hold: R.right.happy }; }

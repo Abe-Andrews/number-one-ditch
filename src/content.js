@@ -32,6 +32,11 @@
       skin: '#f6d0bc', hair: '#c8995a', hairStyle: 'wavy', hairEnd: 3, blush: true, smile: '#ffffff',
       shirt: '#2e56a6', neckline: true, logo: '#f4f0e8', pants: '#2e56a6', shoes: '#f0f0ec', torso: 5, legs: 3,
     },
+    // ...and off shift (anywhere but inside CHKD): jeans and a coral tee.
+    hannahCasual: {
+      skin: '#f6d0bc', hair: '#c8995a', hairStyle: 'wavy', hairEnd: 3, blush: true, smile: '#ffffff',
+      shirt: '#d8706a', neckline: true, pants: '#3e5a8a', shoes: '#f0f0ec', torso: 5, legs: 3,
+    },
     // 6'2", army, fitness: gray polo, earring.
     doron: {
       skin: '#5c3626', eyes: '#100808', hair: '#141014', hairStyle: 'buzz',
@@ -20701,7 +20706,7 @@
   // (the bottom of the ditch stays clear of the boss's health bar)
   const FIN_BOUNDS = { x0: 2 * 16 + 12, y0: 7 * 16, x1: 13 * 16 - 12, y1: 16 * 16 };
   const MID = 7.5 * 16;
-  for (const id of FIN_ORDER) if (G.CAST[id]) G.CAST[id + 'Possessed'] = Object.assign({}, G.CAST[id], { swirl: true, smile: null, blush: false });
+  for (const id of FIN_ORDER) if (G.CAST[id]) G.CAST[id + 'Possessed'] = Object.assign({}, G.CAST[id === 'hannah' ? 'hannahCasual' : id], { swirl: true, smile: null, blush: false });
   // a family member at the Ditch (Romulus is a dog: G.DogNPC); possessed: spiral eyes / glowing purple
   const finNew = (w, id, o = {}) => {
     const base = Object.assign({ name: FIN_NAME[id], dir: 'down' }, o);
