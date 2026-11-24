@@ -21788,7 +21788,7 @@
   ];
   const CREDIT_OTHERS = [
     ['badlands', 'Badlands Chugs', '...LIKE AND SUBSCRIBE!'], ['mikey', 'Mikey', 'Was it the song?'], ['icejj', 'Ice JJ Fish', 'Praying to Jesus.'], ['tyler', 'Tyler', 'THE MOSASAUR TOOTH!'],
-    ['paulLady', 'Paul McCartney Lady', 'Still has Abe\'s bass.'], ['freya', 'Freya', '2 AM. Taco Bell. Every night.'], ['matt', 'Matt Oliver', 'That\'s fishing.'], ['danHurd', 'Dan Hurd', 'Still prospecting.'],
+    ['paulLady', 'Paul McCartney Lady', 'Still has Abe\'s bass.'], ['freya', 'Freya', '2 AM. Taco Bell. Every night.'], ['matt', 'Matt Oliver', 'Pays in shark teeth.'], ['danHurd', 'Dan Hurd', 'Still prospecting.'],
   ];
   const CREDIT_NAMES = ['Ben', 'Bismarck', 'Brooks', 'Prof. Sunderlin', 'Dr. Nataro', 'Prof. Carley', 'Professor Pembrook', 'Groundskeeper Gus', 'Pyro Pete', 'Grandma Rose', 'Tom', 'Prof. Watts', 'Ruby', 'Anette', 'Kit and Gail', 'Charge Nurse Dot', 'The Old Fisherman', 'Henrietta', 'Daisy', 'The Globglogabgalab', 'MECHA-BABY', 'The Two-Liter', 'El Toro Loco', 'Shoolby Bones Lumpsucker', 'Rhonda', 'Rhonda\'s Roommate', 'and Father Eggmas, in the box'];
   function creditPages() {
