@@ -20688,7 +20688,7 @@
   // Abe teaches him Nice Crack on Dad's pipe; Hannah patches him all the way up. Then the
   // relay: every one of them takes a turn against Father Eggmas with their own move (Doron
   // throws rocks, Dad shouts EEENGLISH, Lily says "No.", Mom fires Henrietta's eggs, Abe
-  // reaches up and bonks him (and Lily: "Nice crack, Abe!"), Hannah throws needles), and
+  // cracks a yellow guitar cable at him like a whip (and Lily: "Nice crack, Abe!"), Hannah throws needles), and
   // Nate goes last: egg tennis, then Nice Crack.
   // Flags: fin_intro, fin_freed (0-7), fin_relay (whose turn, 0-7), fin_done, signal_crack.
   // (Romulus came with Abe and Hannah: he's fought between them, and takes a turn in the relay)
@@ -20767,7 +20767,6 @@
     yield G.say('Abe', 'I mean... that\'s just how Christmas decorations work.');
     yield G.say('Father Eggmas', 'And YOU. Every Christmas, you chased the little one around the house with me.');
     yield G.say('Lily', '...He did.');
-    yield G.say('Abe', 'That was a BIT.');
     yield G.say('Father Eggmas', 'So I thought... why be part of the family for one month a year...');
     G.audio.sfx('possess');
     yield G.say('Father Eggmas', '...when I can HAVE the family. Forever.');
@@ -20986,7 +20985,7 @@
     lily: [['Father Eggmas', 'Remember me, little one? HO HO HO.'], ['Lily', '...I remember.'], ['Lily', 'I\'ve been scared of you my whole life.'], ['Lily', 'I\'m still scared.'], ['Lily', 'I\'m doing it anyway.'],
       [null, 'Lily has a stack of taxidermy catalogs under her arm. Every one still in its plastic.'], ['Lily', 'I knew these would be good for something.']],
     michelle: [['Michelle', 'You took my family, you took my ditch, and you broke my GOOD pots.'], ['Michelle', 'Henrietta. Black Black. Get him.'], [null, '*BAWK* *BAWK*']],
-    abe: [['Father Eggmas', 'HO HO HO! Come to chase somebody with me, Abe?'], ['Abe', 'Buddy. That was a BIT.']],
+    abe: [['Father Eggmas', 'HO HO HO! What are you going to do, Abe? Throw a guitar cable at me?'], ['Abe', 'I have thousands of them. Don\'t tempt me.']],
     romulus: [['Romulus', '*WOOF!*'], ['Father Eggmas', 'Bad dog. BAD DOG!'], ['Hannah', 'Don\'t you TALK to him like that!']],
     hannah: [['Hannah', 'I\'m a NICU nurse. I am not scared of a cranky little egg.'], ['Father Eggmas', 'I am NOT little!']],
     nate: [['Nate', 'My turn.'], ['Doron', 'GO, NATE!'], ['Lily', 'Crack him!'], ['Father Eggmas', 'Come on, then, rock boy. HO HO HO!']],
@@ -21738,7 +21737,6 @@
     yield G.say('Lily', 'Let me see.');
     yield G.wait(50);
     yield G.say('Lily', 'ABE.');
-    yield G.say('Abe', 'That was a BIT.');
     yield G.say('Doron', 'Is that the EGG? Did you bring the EGG?');
     yield G.say('Lily', 'It\'s going in the box, Abe. FAR back in the box.');
     G.audio.sfx('heart');

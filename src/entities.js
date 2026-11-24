@@ -160,7 +160,7 @@
       // puffing Dad's pipe: Nate stands still, the world keeps going
       if (this.state === 'pipe') { G.pipe.update(); return; }
 
-      // Abe's reach (the finale): arms up, bonking whatever's over his head
+      // Abe's cable whip (the finale): cracked up over his head, hitting whatever's up there
       if (this.state === 'reach') {
         this.t++;
         if (this.t >= 4 && this.t <= 10) G.relayReach(this, w);
@@ -459,6 +459,8 @@
       if (hens) for (const h of hens) if (!h.back) ctx.drawImage(h.img, h.x, h.y);
       // (Doron, in the finale, with a rock over his head)
       if (this.carry) ctx.drawImage(G.spr.tossRock, sx + 2, sy - 8);
+      // (Abe, in the finale, cracking his cable whip)
+      if (this.state === 'reach') G.drawWhip(ctx, this, sx, sy);
       if (this.state === 'charge') {
         // wind-up meter over Lily's head
         const k = Math.min(1, this.t / NO_FULL), bx = Math.round(this.x - 8) - cx, by = sy - 6;
@@ -4014,9 +4016,10 @@
     lily: { weapon: 'catalog', need: 5, h: 16, every: 85, attacks: ['spirals', 'spirals', 'lob', 'egglets'], tip: 'Hold Z to wind up, let go to fling a taxidermy catalog. Only a full wind-up flies far enough!',
       hitPops: ['TAXIDERMY?!', 'WHAT ARE YOU IMPLYING?!', 'IS THAT A SQUIRREL IN A HAT?!', 'OW! THE PLASTIC!'] },
     michelle: { weapon: 'egg', need: 12, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'rain'], tip: 'Z: Henrietta and Black Black take turns firing eggs.' },
-    abe: { weapon: 'reach', need: 6, h: 50, every: 80, attacks: ['lights', 'lob', 'spirals', 'lights'], tip: 'He\'s floating too high for anybody else. Z: Abe reaches up and bonks him!' },
-    hannah: { weapon: 'needle', need: 9, h: 22, every: 72, attacks: ['spirals', 'rain', 'lights', 'egglets'], tip: 'Z: throw a needle. Little pinch!' },
-    romulus: { weapon: 'bark', need: 6, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'egglets'], tip: 'Z: BARK! Woof right at Father Eggmas. (Egglets too.)' },
+    abe: { weapon: 'reach', need: 6, h: 50, every: 80, attacks: ['lights', 'lob', 'spirals', 'lights'], tip: 'He\'s floating too high for anybody else. Z: Abe cracks a guitar cable like a whip!',
+      hitPops: ['IS THAT A CABLE?!', 'OW! MY PAISLEY!', 'HOW MANY OF THOSE DO YOU HAVE?!', 'STOP THAT!', 'WHERE DO YOU GET THESE?!', 'OW! OW!'] },
+    hannah: { weapon: 'needle', need: 9, h: 22, every: 72, attacks: ['spirals', 'rain', 'lights', 'egglets'], tip: 'Z: throw a needle the way you\'re facing. Line it up. Little pinch!' },
+    romulus: { weapon: 'bark', need: 6, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'egglets'], tip: 'Z: BARK! It goes the way he\'s facing, so line up with Father Eggmas. (Egglets too.)' },
     nate: { weapon: 'crack', need: 3, h: 22, every: 70, attacks: ['golden', 'lob', 'spirals', 'golden', 'lights', 'egglets'], tip: 'Bat the golden egg back with your hammer until it knocks him down. Then puff NICE CRACK (X: down, down, left)!' },
   };
   G.FIN_TURNS = TURNS;
@@ -4034,6 +4037,9 @@
     }
     get td() { return TURNS[this.turn]; }
     get need() { return this.td.need + (this.extraNeed || 0); } // (the boss rush asks for more)
+    // how far into the relay this is: 0 on Doron's turn up to 7 on Nate's. Each turn he gets a little
+    // nastier: he attacks more often, moves faster, and throws more of everything.
+    get ramp() { return Math.max(0, G.FIN_RELAY.indexOf(this.turn)); }
     // what can hit him: everything near him on the ground (his shadow and up through him), or
     // only his body when he's floating high (Abe's turn)
     hurtBox() {
@@ -4065,7 +4071,7 @@
         w.burst(r.x, r.y - 4, ['#a8a49c', '#5a4e40'], 6, { speed: 0.8, up: 0.8, life: 16, size: 1 });
       }
       // floating around the ditch in a slow figure-eight
-      const b = this.bounds, sp = 0.012 + this.cracks * 0.003 + (this.turn === 'nate' ? 0.004 : 0);
+      const b = this.bounds, sp = 0.012 + this.cracks * 0.003 + this.ramp * 0.0012 + (this.turn === 'nate' ? 0.004 : 0);
       let tx = (b.x0 + b.x1) / 2 + Math.sin(this.t * sp) * (b.x1 - b.x0) * 0.38, ty = b.y0 + 40 + (Math.sin(this.t * sp * 2) + 1) * (b.y1 - b.y0 - 80) * 0.3;
       // a turn with `dodge` (Dad's): for four seconds he floats out of the line Dad's facing, then
       // stops where he is for one to catch his breath. Standing still and mashing doesn't get him; moving does.
@@ -4093,13 +4099,13 @@
       if (--this.atkT <= 0) {
         const a = this.td.attacks[this.cycle++ % this.td.attacks.length];
         this.attack(w, a);
-        this.atkT = this.td.every;
+        this.atkT = Math.round(this.td.every * (1 - 0.04 * this.ramp));
       }
     }
     attack(w, a) {
       const p = G.play.player, b = this.bounds;
       if (a === 'lob' || a === 'rain') {
-        const n = a === 'rain' ? 6 : 3;
+        const n = a === 'rain' ? 6 + Math.floor(this.ramp / 3) : 3 + (this.ramp >= 4 ? 1 : 0);
         for (let i = 0; i < n; i++) {
           const near = i === 0 || a === 'lob';
           // (a turn with `aim` puts the first one right on top of whoever's fighting, the rest close by)
@@ -4111,13 +4117,15 @@
         G.audio.sfx('swing');
         w.pop(this.x, this.y - this.h - 74, a === 'rain' ? 'DECK THE HALLS!' : 'HO HO HO!', '#f86858');
       } else if (a === 'spirals') {
-        const n = this.cracks ? 4 : 3, base = Math.atan2(p.y - this.y, p.x - this.x);
-        for (let i = 0; i < n; i++) { const ang = base + (i - (n - 1) / 2) * 0.7; w.add(new HypnoShot(this.x, this.y - this.h - 30, Math.cos(ang) * 1, Math.sin(ang) * 1)); }
+        const n = (this.cracks ? 4 : 3) + (this.ramp >= 5 ? 1 : 0), base = Math.atan2(p.y - this.y, p.x - this.x), v = 1 + this.ramp * 0.05;
+        for (let i = 0; i < n; i++) { const ang = base + (i - (n - 1) / 2) * 0.7; w.add(new HypnoShot(this.x, this.y - this.h - 30, Math.cos(ang) * v, Math.sin(ang) * v)); }
         G.audio.sfx('whine');
       } else if (a === 'egglets') {
         const alive = w.ents.filter((e) => e instanceof Egglet && !e.dead).length;
-        for (let i = 0; i < Math.min(2, 4 - alive); i++) {
-          const e = w.add(new Egglet(this.x + (i ? 16 : -16), this.y + 4));
+        // (more of them, and more at once, later in the relay)
+        const cap = 4 + Math.floor(this.ramp / 3), batch = 2 + (this.ramp >= 3 ? 1 : 0);
+        for (let i = 0; i < Math.min(batch, cap - alive); i++) {
+          const e = w.add(new Egglet(this.x + (i - (batch - 1) / 2) * 24, this.y + 4));
           w.burst(e.x, e.y - 8, ['#f2ead6', '#7a1e2c'], 6, { speed: 1, life: 16, size: 2 });
         }
         w.pop(this.x, this.y - this.h - 74, 'Go, my little eggs!', '#f86858');
@@ -4230,9 +4238,10 @@
       this.dead = true;
       G.audio.sfx('poof');
       this.world.burst(this.x, this.y - 8, this.bits, 10, { speed: 1.2, life: 20, size: 2 });
-      // (a heart half as often as a tooth: 22.5% when you're hurt, a tooth 45% of the time when you're not)
+      // (hearts are rare: 1 egglet in 16 or so when you're hurt, so a fight can't be healed through
+      // by popping eggs. A tooth 45% of the time when you're not hurt)
       const hurt = G.state.hp < G.state.maxHp;
-      if (Math.random() < this.dropChance * (hurt ? 0.5 : 1)) this.world.add(new Pickup(this.x, this.y, hurt ? 'heart' : 'tooth'));
+      if (Math.random() < (hurt ? 0.06 : this.dropChance)) this.world.add(new Pickup(this.x, this.y, hurt ? 'heart' : 'tooth'));
     }
     draw(ctx, cx, cy) {
       const img = G.spr.egglet[this.face > 0 ? 'right' : 'left'][(this.t >> 3) & 1];
@@ -4378,7 +4387,7 @@
 
   // what Z does for each of the family on their turn (Lily's is her "No.", built in)
   // (title case: in capitals, most of these are too wide for the 20px inside the HUD's Z box)
-  G.RELAY_LABEL = { doron: 'Rock', dad: 'Pipe', lily: 'NO.', michelle: 'Egg', abe: 'Bonk', romulus: 'Woof', hannah: 'Shot' };
+  G.RELAY_LABEL = { doron: 'Rock', dad: 'Pipe', lily: 'NO.', michelle: 'Egg', abe: 'Whip', romulus: 'Woof', hannah: 'Shot' };
   const eggmasIn = (w) => w.ents.find((e) => e instanceof EggmasBoss && !e.dead);
   // (Lily's Z says "No." everywhere else, so her label only changes on her turn against Father Eggmas)
   const lilyRelay = (w) => { const b = w && eggmasIn(w); return !!b && b.turn === 'lily'; };
@@ -4483,37 +4492,59 @@
       w.add(new G.EggShot(p.x, p.y, p.dir));
       G.audio.sfx('bawk');
     },
-    // Abe: he's 6'5". He reaches up and bonks him
+    // Abe: one of his yellow guitar cables (he has thousands), cracked like a whip, way up over his
+    // head where Father Eggmas is floating
     abe(p, w) {
       if (p.relayCd > 0 || p.state !== 'walk') return;
       p.relayCd = 22; p.state = 'reach'; p.t = 0; p.pose = 'hold'; p.hitSet.clear();
+      p.whipLean = p.dir === 'left' ? -1 : p.dir === 'right' ? 1 : (p.whipLean || 1) > 0 ? -0.4 : 0.4;
       G.audio.sfx('swing');
     },
-    // Romulus: WOOF. A bark rolls out at Father Eggmas (and knocks egglets over on the way)
+    // Romulus: WOOF. A bark rolls out the way he's facing (and knocks egglets over on the way).
+    // No aiming for him: he has to line up with Father Eggmas.
     romulus(p, w) {
       if (p.relayCd > 0) return;
       p.relayCd = 24; p.barkUntil = G.tick + 16;
-      const boss = eggmasIn(w), a = boss ? Math.atan2(boss.y - p.y, boss.x - p.x) : Math.atan2(G.DIRS[p.dir][1], G.DIRS[p.dir][0]);
+      const a = Math.atan2(G.DIRS[p.dir][1], G.DIRS[p.dir][0]);
       const sh = w.add(new RelayShot(p.x, p.y - 4, Math.cos(a) * 2.4, Math.sin(a) * 2.4, 'bark')); sh.life = 90;
       G.audio.sfx('woof'); w.pop(p.x, p.y - 30, 'WOOF!', '#f8f8f0');
     },
-    // Hannah: a needle
+    // Hannah: a needle, thrown the way she's facing (no aiming for her either)
     hannah(p, w) {
       if (p.relayCd > 0) return;
       p.relayCd = 26;
-      const boss = eggmasIn(w), a = boss ? Math.atan2(boss.y - p.y, boss.x - p.x) : Math.atan2(G.DIRS[p.dir][1], G.DIRS[p.dir][0]);
+      const a = Math.atan2(G.DIRS[p.dir][1], G.DIRS[p.dir][0]);
       w.add(new RelayShot(p.x, p.y - 2, Math.cos(a) * 2.4, Math.sin(a) * 2.4, 'needle'));
       G.audio.sfx('swing');
     },
   };
-  // Abe's reach: a tall box straight up over his head
+  // Abe's cable whip: where it lands (a tall strip over his head, leaning the way he cracked it)
   G.relayReach = (p, w) => {
-    const r = [p.x - 14, p.y - 96, p.x + 14, p.y - 8];
+    const lx = (p.whipLean || 0) * 14, r = [p.x - 16 + lx, p.y - 104, p.x + 16 + lx, p.y - 8];
     for (const e of w.ents) {
       if (e.dead || p.hitSet.has(e)) continue;
-      if (e instanceof EggmasBoss) { if (G.overlap(r, e.hurtBox())) { p.hitSet.add(e); if (e.relayHit('reach')) w.pop(p.x, p.y - 60, 'BONK!', '#ffa848'); } }
-      else if (e.enemy && e.hurtBox && !e.boss && G.overlap([p.x - 16, p.y - 30, p.x + 16, p.y + 6], e.hurtBox())) { p.hitSet.add(e); e.hit(1, p.x, p.y); }
+      if (e instanceof EggmasBoss) { if (G.overlap(r, e.hurtBox())) { p.hitSet.add(e); if (e.relayHit('reach')) w.pop(p.x + lx, p.y - 70, 'SNAP!', '#f8d040'); } }
+      else if (e.enemy && e.hurtBox && !e.boss && G.overlap([p.x - 18, p.y - 30, p.x + 18, p.y + 6], e.hurtBox())) { p.hitSet.add(e); e.hit(1, p.x, p.y); }
     }
+  };
+  // ...and how it looks: a yellow cable from his hand, lashing up into a curve and back, with the
+  // plug on the end
+  G.drawWhip = (ctx, p, sx, sy) => {
+    const t = p.t, ext = t < 7 ? t / 7 : t < 11 ? 1 : Math.max(0, 1 - (t - 11) / 5), e = 1 - (1 - ext) * (1 - ext);
+    if (e <= 0.02) return;
+    const lean = p.whipLean || 0, hx = sx + 8 + lean * 4, hy = sy + 3, len = 92 * e;
+    const tx = hx + lean * len * 0.38, ty = hy - len, cxp = (hx + tx) / 2 - lean * 16 + (t < 7 ? 10 : -6) * (lean || 1), cyp = (hy + ty) / 2;
+    const pts = [];
+    const n = Math.max(12, Math.ceil(len * 1.4));
+    for (let i = 0; i <= n; i++) { const k = i / n, a = (1 - k) * (1 - k), b = 2 * (1 - k) * k, c = k * k; pts.push([Math.round(a * hx + b * cxp + c * tx), Math.round(a * hy + b * cyp + c * ty)]); }
+    ctx.fillStyle = '#4a3a10'; for (const [x, y] of pts) ctx.fillRect(x - 1, y - 1, 3, 3);
+    ctx.fillStyle = '#f8d040'; for (const [x, y] of pts) ctx.fillRect(x, y, 2, 2);
+    ctx.fillStyle = '#fff4a0'; for (let i = 0; i < pts.length; i += 7) ctx.fillRect(pts[i][0], pts[i][1], 1, 1);
+    // the plug
+    ctx.fillStyle = '#1c1424'; ctx.fillRect(tx - 2, ty - 4, 5, 6);
+    ctx.fillStyle = '#a8b0c0'; ctx.fillRect(tx - 1, ty - 3, 3, 4); ctx.fillStyle = '#e8f0f8'; ctx.fillRect(tx, ty - 5, 1, 2);
+    // a little flash at the snap
+    if (t >= 6 && t <= 8) { ctx.fillStyle = '#ffffff'; for (const [dx, dy] of [[-4, 0], [4, 0], [0, -4], [-3, -3], [3, -3]]) ctx.fillRect(tx + dx, ty - 2 + dy, 1, 1); }
   };
 
 
