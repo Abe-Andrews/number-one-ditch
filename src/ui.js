@@ -240,7 +240,9 @@
     update() {
       if (!this.list.length || G.script.busy) return;
       // (quicker when there's a line of them)
-      if (this.t === 0) { this.dur = this.list.length > 1 ? 120 : TOAST_T; G.audio.sfx(this.list[0].kind === 'done' || this.list[0].kind === 'achieve' ? 'secret' : 'select'); }
+      // (quicker when there's a line of them, but only achievements hurry: a new quest or rumor always
+      // gets its full time on screen, even with achievements waiting behind it)
+      if (this.t === 0) { this.dur = this.list.length > 1 && this.list[0].kind === 'achieve' ? 120 : TOAST_T; G.audio.sfx(this.list[0].kind === 'done' || this.list[0].kind === 'achieve' ? 'secret' : 'select'); }
       if (++this.t >= this.dur) { this.list.shift(); this.t = 0; }
     },
     clear() { this.list = []; this.t = 0; },
@@ -312,7 +314,9 @@
       const was = s.questLog[q.name];
       if (was === q.kind || was === 'done' || (was && q.kind === 'rumor')) continue;
       s.questLog[q.name] = q.kind;
-      G.toasts.list.push({ kind: q.kind, name: q.name });
+      // (ahead of any achievements still waiting their turn, but not ahead of the one on screen)
+      const T = G.toasts, wait = T.list.findIndex((x, i) => x.kind === 'achieve' && (i > 0 || !T.t));
+      if (wait >= 0) T.list.splice(wait, 0, { kind: q.kind, name: q.name }); else T.list.push({ kind: q.kind, name: q.name });
       if (q.kind === 'done') delete s.questNew[q.name];
       else s.questNew[q.name] = 1;
     }
