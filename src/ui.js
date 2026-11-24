@@ -971,6 +971,8 @@
       } else if (this.tab === SAVE_TAB && G.state.admin) {
         return this.updateAdmin(inp);
       } else if (this.tab === SAVE_TAB) {
+        // C: watch the credits again (once the game is beaten)
+        if (inp.hit('c') && G.creditsOk && G.creditsOk()) { inp.eat('c'); G.audio.sfx('select'); G.script.run(G.SCRIPTS.rewatchCredits()); return true; }
         if (inp.hit('down')) this.move(1, G.SAVE_FILES);
         if (inp.hit('up')) { if (this.sel > 0) this.move(-1, G.SAVE_FILES); else { this.onTabs = true; G.audio.sfx('menu'); } }
         if (inp.hit('a')) {
@@ -1068,8 +1070,11 @@
       else if (this.tab === COLL_TAB && this.instView && act === 'play it') pairs.push(['X', 'put away']);
       else if (!admin && !G.state.rush && !this.qread && !this.pread && !(this.tab === COLL_TAB && (this.photoView || this.instView))) pairs.push(['X', 'quick save']);
       else if (this.tab === SAVE_TAB && this.admList) pairs.push(['X', 'back']);
+      // (the game's beaten: C on the SAVE page watches the credits again, in place of the pages hint)
+      const credits = this.tab === SAVE_TAB && G.creditsOk && G.creditsOk();
+      if (credits) pairs.push(['C', 'credits']);
       // (no room for the pages hint next to a guitar's play it / put away)
-      if (!(this.tab === COLL_TAB && this.instView && act === 'play it')) pairs.push(['Q/E', 'pages']);
+      else if (!(this.tab === COLL_TAB && this.instView && act === 'play it')) pairs.push(['Q/E', 'pages']);
       pairs.push(['ENTER', 'close']);
       let x = 5;
       for (const [key, label] of pairs) {

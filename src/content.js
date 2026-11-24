@@ -21784,7 +21784,7 @@
   const CREDIT_FAMILY = [
     ['nate', 'Nate', 'Thinks about pH often.'], ['lily', 'Lily', 'Thinks about Taco Bell often.'], ['doron', 'Doron', 'Best ditch in the world. He said it and he meant it.'],
     ['abe', 'Abe', 'Has a cable for you.'], ['hannah', 'Hannah', 'One more chapter.'], ['dad', 'Dad', 'Do you speak EEENGLISH?'],
-    ['michelle', 'Michelle', 'Not "the pastor\'s wife."'], ['romulus', 'Romulus', 'He thought it was a race.'],
+    ['michelle', 'Michelle', 'Not "the pastor\'s wife."'], ['romulus', 'Romulus', 'Still unsure about Nate.'],
   ];
   const CREDIT_OTHERS = [
     ['badlands', 'Badlands Chugs', '...LIKE AND SUBSCRIBE!'], ['mikey', 'Mikey', 'Was it the song?'], ['icejj', 'Ice JJ Fish', 'I\'ll bring the snow.'], ['tyler', 'Tyler', 'THE MOSASAUR TOOTH!'],
@@ -21807,6 +21807,17 @@
   const CREDIT_SKY = [['#0c0a24', '#1c1438'], ['#2a1a4a', '#6a3a6a'], ['#5a3a6a', '#f89878'], ['#7ab0d8', '#f8d8b0'], ['#8ac0e8', '#d8ecf0']];
   // (also G.creditsCmd, so the trailer rig can roll them)
   G.creditsCmd = () => creditsCmd();
+  // watching them again, from the pause menu's SAVE page (C), once the game is beaten: they roll,
+  // Z on the last picture puts them away, and the game picks up right where it was
+  G.creditsOk = () => !!(G.state && G.state.flags.photoDone && !G.state.rush && !G.state.playAs);
+  S.rewatchCredits = function* () {
+    yield G.fadeOut(30);
+    yield creditsCmd();
+    yield G.fadeOut(30);
+    G.play.overlay = null;
+    G.audio.play(G.play.world.def.music);
+    yield G.fadeIn(30);
+  };
   function creditsCmd() {
     const pages = creditPages(), total = pages.filter((p) => p.d < 1e8).reduce((a, p) => a + p.d, 0), FB = () => G.font;
     const center = (ctx, text, y, col) => FB().draw(ctx, text, Math.round(120 - FB().width(text) / 2), y, col || '#f8f8f0', { shadow: '#0c0814' });
