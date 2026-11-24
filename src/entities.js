@@ -367,6 +367,20 @@
 
     hurtBox() { return [this.x - 6, this.y - 14, this.x + 6, this.y]; }
 
+    // Mom's two chickens, one under each arm (Henrietta, the white one, flaps when she fires an
+    // egg). Facing down or up, there's one on each side; facing sideways, one's in front of her
+    // and one's behind. They bob a little when she walks.
+    momHens(sx, sy) {
+      const C = G.spr.chickens, bob = this.moving && (this.anim >> 3) & 1 ? 1 : 0, flap = (this.relayCd || 0) > 8 ? 1 : 0, y = sy + 7 + bob;
+      const W = (side) => C.white[side][flap], B = (side) => C.brown[side][0];
+      switch (this.dir) {
+        case 'down': return [{ img: W('left'), x: sx - 8, y }, { img: B('right'), x: sx + 10, y }];
+        case 'up': return [{ img: W('right'), x: sx + 10, y: y - 1, back: true }, { img: B('left'), x: sx - 8, y: y - 1, back: true }];
+        case 'left': return [{ img: B('left'), x: sx + 4, y: y - 1, back: true }, { img: W('left'), x: sx - 6, y }];
+        default: return [{ img: B('right'), x: sx - 2, y: y - 1, back: true }, { img: W('right'), x: sx + 8, y }];
+      }
+    }
+
     // Fainting (G.play.dying counts the frames): a dizzy spin, a wobble, then he tips
     // over onto his back and the stars come out.
     drawFaint(ctx, cx, cy) {
@@ -436,8 +450,13 @@
       const sx = Math.round(this.x - 8) - cx, sy = Math.round(this.y - S.h + 2 - (this.z || 0)) - cy;
       const swinging = this.state === 'swing';
       if (swinging && this.dir === 'up') this.drawHammer(ctx, cx, cy);
+      // (Mom, on her turn against Father Eggmas: a chicken under each arm. Whichever one is behind
+      // her gets drawn first)
+      const hens = G.state.playAs === 'michelle' ? this.momHens(sx, sy) : null;
+      if (hens) for (const h of hens) if (h.back) ctx.drawImage(h.img, h.x, h.y);
       const charged = this.state === 'charge' && this.t >= NO_FULL && (G.tick >> 2) & 1;
       ctx.drawImage((this.state === 'hurt' && (this.t >> 1) & 1) || charged ? G.art.flash(img) : img, sx, sy);
+      if (hens) for (const h of hens) if (!h.back) ctx.drawImage(h.img, h.x, h.y);
       // (Doron, in the finale, with a rock over his head)
       if (this.carry) ctx.drawImage(G.spr.tossRock, sx + 2, sy - 8);
       if (this.state === 'charge') {
