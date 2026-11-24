@@ -21302,6 +21302,9 @@
         },
       });
       if (f.fin_done) w.addTrigger(6, 20, 3, 1, () => G.play.warp('ditchDay', 7, 17, 'up', true));
+      // until it's over, nobody leaves: the way up the south bank to the road is shut (scenes that
+      // walk people around ignore it)
+      else w.blockTiles(7, 18, 2, 1);
     },
     onEnter() { return S.finEnter(); },
     tick(w) {
