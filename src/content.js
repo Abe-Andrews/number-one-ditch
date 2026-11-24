@@ -21029,6 +21029,19 @@
     // a fresh fighter: full hearts
     s.hp = s.maxHp;
     if (!resumed) for (const [who, text] of FIN_TURN_IN[id]) yield G.say(who, text);
+    // right before Nate's turn, Abe makes sure he knows the song that finishes it (he teaches it if
+    // Nate somehow doesn't, and reminds him either way; after a faint, only if he still doesn't know it)
+    if (id === 'nate' && (!resumed || !f.signal_crack)) {
+      const fam2 = finFam(w), abe = fam2.abe;
+      if (abe) { abe.dir = G.dirToward(p.x - abe.x, p.y - abe.y); }
+      yield G.say('Abe', 'Nate! Hang on. The song.');
+      yield G.say('Abe', 'Down, down, left. Bat that golden egg back until he goes down, then puff it on Dad\'s pipe.');
+      if (!f.signal_crack) {
+        f.signal_crack = true;
+        G.audio.sfx('secret');
+        yield G.itemGet(G.spr.pipe, 'You learned {y}Nice Crack{/}! (down, down, left) Puff it on Dad\'s pipe.');
+      } else yield G.say('Nate', 'Down, down, left. Got it.');
+    }
     if (id === 'nate' && G.ITEMS.pipe.has()) s.xItem = 'pipe';
     yield G.banner(FIN_TITLE[id] + '\'S TURN', G.FIN_TURNS[id].tip, 150);
     if (id === 'doron') for (let i = 0; i < 3; i++) w.add(new G.LiftRock(56 + i * 64, 200 + (i % 2) * 40));
