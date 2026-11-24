@@ -4017,7 +4017,7 @@
     // (Lily flings the taxidermy catalogs she's never opened: hold Z to wind up, let go to throw)
     lily: { weapon: 'catalog', need: 5, h: 16, every: 85, attacks: ['spirals', 'spirals', 'lob', 'egglets'], tip: 'Hold Z to wind up, let go to fling a taxidermy catalog. Only a full wind-up flies far enough!',
       hitPops: ['TAXIDERMY?!', 'WHAT ARE YOU IMPLYING?!', 'IS THAT A SQUIRREL IN A HAT?!', 'OW! THE PLASTIC!'] },
-    michelle: { weapon: 'egg', need: 24, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'rain'], tip: 'Z: Henrietta and Black Black take turns firing eggs.' },
+    michelle: { weapon: 'egg', need: 18, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'rain'], tip: 'Z: Henrietta and Black Black take turns firing eggs.' },
     abe: { weapon: 'reach', need: 6, h: 50, every: 80, attacks: ['lights', 'lob', 'spirals', 'lights'], tip: 'He\'s floating too high for anybody else. Z: Abe cracks a guitar cable like a whip!',
       hitPops: ['IS THAT A CABLE?!', 'OW! MY PAISLEY!', 'HOW MANY OF THOSE DO YOU HAVE?!', 'STOP THAT!', 'WHERE DO YOU GET THESE?!', 'OW! OW!'] },
     hannah: { weapon: 'needle', need: 9, h: 22, every: 72, attacks: ['spirals', 'rain', 'lights', 'egglets'], tip: 'Z: throw a needle the way you\'re facing. Line it up. Little pinch!' },
