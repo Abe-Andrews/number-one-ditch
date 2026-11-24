@@ -21087,7 +21087,7 @@
       if (!G.state.rush) {
         yield G.say(null, 'CRACK!');
         yield G.say('Lily', 'NICE CRACK!');
-        yield G.say('Father Eggmas', 'STOP. CRACKING. ME.');
+        yield G.say('Father Eggmas', 'NOT. THE. SHELL.');
       }
       boss.state = 'fight'; boss.targetH = boss.td.h;
     }
