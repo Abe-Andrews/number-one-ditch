@@ -1172,7 +1172,9 @@
       });
       const count = this.qmode === 0 ? G.sayable(rows.filter((q) => q.kind === 'active').length) + ' active'
         : this.qmode === 1 ? G.sayable(rows.filter((c) => c.ok).length) + '/' + G.sayable(rows.length) : '';
-      if (count) TXT(ctx, count, RX + RW - 5 - F().width(count), ly + 4, C.dim);
+      // (only if it fits after the last tab: with STATS and LOG up there, it usually doesn't, and the
+      // list and the ring on the left already say as much)
+      if (count && cx + 4 <= RX + RW - 5 - F().width(count)) TXT(ctx, count, RX + RW - 5 - F().width(count), ly + 4, C.dim);
       ctx.fillStyle = '#3e3460'; ctx.fillRect(RX + 1, ly + 14, RW - 2, 1);
 
       if (this.qmode === 2) { this.drawStats(ctx, RX, ly, RW, lh); return; }
