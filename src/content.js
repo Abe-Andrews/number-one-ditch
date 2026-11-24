@@ -20985,7 +20985,7 @@
     dad: [['Dad', 'I carved this pipe myself. Let\'s see how it does against an egg.'], ['Father Eggmas', 'HO HO HO. Smoke can\'t crack a shell, Christian.']],
     lily: [['Father Eggmas', 'Remember me, little one? HO HO HO.'], ['Lily', '...I remember.'], ['Lily', 'I\'ve been scared of you my whole life.'], ['Lily', 'I\'m still scared.'], ['Lily', 'I\'m doing it anyway.'],
       [null, 'Lily has a stack of taxidermy catalogs under her arm. Every one still in its plastic.'], ['Lily', 'I knew these would be good for something.']],
-    michelle: [['Michelle', 'You took my family, you took my ditch, and you broke my GOOD pots.'], ['Michelle', 'Henrietta. Get him.'], [null, '*BAWK*']],
+    michelle: [['Michelle', 'You took my family, you took my ditch, and you broke my GOOD pots.'], ['Michelle', 'Henrietta. Black Black. Get him.'], [null, '*BAWK* *BAWK*']],
     abe: [['Father Eggmas', 'HO HO HO! Come to chase somebody with me, Abe?'], ['Abe', 'Buddy. That was a BIT.']],
     romulus: [['Romulus', '*WOOF!*'], ['Father Eggmas', 'Bad dog. BAD DOG!'], ['Hannah', 'Don\'t you TALK to him like that!']],
     hannah: [['Hannah', 'I\'m a NICU nurse. I am not scared of a cranky little egg.'], ['Father Eggmas', 'I am NOT little!']],
@@ -21043,7 +21043,7 @@
     doron: [['Doron', 'That\'s for my little brother!'], ['Doron', 'Dad! You\'re up!']],
     dad: [['Dad', 'Lily. Your turn, Bones.'], ['Lily', '...Okay.']],
     lily: [['Lily', 'I\'m not scared of you anymore.'], ['Lily', '...Okay, a LITTLE. But not as much.'], ['Lily', 'Mom!']],
-    michelle: [['Michelle', 'That\'s for my pots.'], ['Michelle', 'Abe, honey, he\'s floating away!']],
+    michelle: [['Michelle', 'That\'s for my pots.'], ['Michelle', 'Abe! He\'s floating away!']],
     romulus: [['Hannah', 'GOOD BOY! Who\'s a good boy?!'], ['Abe', 'He is. He is the good boy.'], ['Hannah', 'My turn.']],
     hannah: [['Hannah', 'Nurse\'s orders.'], ['Hannah', 'Nate. Finish it.']],
   };
@@ -23368,7 +23368,7 @@
     const N = G.state.night, k = N.woke++ % 3;
     N.noise = 0; N.decay = 0;
     if (k === 0) { yield G.say('Dad', '(from upstairs) Abe? What was that?'); yield G.say('Abe', 'Nothing, Dad! Turning off the lights!'); yield G.say('Dad', '(from upstairs) ...Okay.'); }
-    else if (k === 1) { yield G.say('Michelle', '(from upstairs) Abe, honey. Whatever that is, please stop.'); yield G.say('Abe', 'Almost done, Michelle!'); }
+    else if (k === 1) { yield G.say('Michelle', '(from upstairs) Abe. Whatever that is, please stop.'); yield G.say('Abe', 'Almost done, Michelle!'); }
     else { yield G.say('Dad', '(from upstairs) How long does it take to turn off the lights?'); yield G.say('Abe', 'Not long! Probably!'); }
   };
   function* lastUpNoise() {

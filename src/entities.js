@@ -367,12 +367,12 @@
 
     hurtBox() { return [this.x - 6, this.y - 14, this.x + 6, this.y]; }
 
-    // Mom's two chickens, one under each arm (Henrietta, the white one, flaps when she fires an
-    // egg). Facing down or up, there's one on each side; facing sideways, one's in front of her
-    // and one's behind. They bob a little when she walks.
+    // Mom's two chickens, one under each arm: Henrietta (white) and Black Black (black). They take
+    // turns firing eggs, and whichever just fired flaps. Facing down or up, there's one on each
+    // side; facing sideways, one's in front of her and one's behind. They bob when she walks.
     momHens(sx, sy) {
-      const C = G.spr.chickens, bob = this.moving && (this.anim >> 3) & 1 ? 1 : 0, flap = (this.relayCd || 0) > 8 ? 1 : 0, y = sy + 7 + bob;
-      const W = (side) => C.white[side][flap], B = (side) => C.brown[side][0];
+      const C = G.spr.chickens, bob = this.moving && (this.anim >> 3) & 1 ? 1 : 0, firing = (this.relayCd || 0) > 8, y = sy + 7 + bob;
+      const W = (side) => C.white[side][firing && this.henTurn !== 'black' ? 1 : 0], B = (side) => C.black[side][firing && this.henTurn === 'black' ? 1 : 0];
       switch (this.dir) {
         case 'down': return [{ img: W('left'), x: sx - 8, y }, { img: B('right'), x: sx + 10, y }];
         case 'up': return [{ img: W('right'), x: sx + 10, y: y - 1, back: true }, { img: B('left'), x: sx - 8, y: y - 1, back: true }];
@@ -4013,7 +4013,7 @@
     // (Lily flings the taxidermy catalogs she's never opened: hold Z to wind up, let go to throw)
     lily: { weapon: 'catalog', need: 5, h: 16, every: 85, attacks: ['spirals', 'spirals', 'lob', 'egglets'], tip: 'Hold Z to wind up, let go to fling a taxidermy catalog. Only a full wind-up flies far enough!',
       hitPops: ['TAXIDERMY?!', 'WHAT ARE YOU IMPLYING?!', 'IS THAT A SQUIRREL IN A HAT?!', 'OW! THE PLASTIC!'] },
-    michelle: { weapon: 'egg', need: 12, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'rain'], tip: 'Z: Henrietta fires an egg.' },
+    michelle: { weapon: 'egg', need: 12, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'rain'], tip: 'Z: Henrietta and Black Black take turns firing eggs.' },
     abe: { weapon: 'reach', need: 6, h: 50, every: 80, attacks: ['lights', 'lob', 'spirals', 'lights'], tip: 'He\'s floating too high for anybody else. Z: Abe reaches up and bonks him!' },
     hannah: { weapon: 'needle', need: 9, h: 22, every: 72, attacks: ['spirals', 'rain', 'lights', 'egglets'], tip: 'Z: throw a needle. Little pinch!' },
     romulus: { weapon: 'bark', need: 6, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'egglets'], tip: 'Z: BARK! Woof right at Father Eggmas. (Egglets too.)' },
@@ -4475,10 +4475,11 @@
       G.audio.puff(p.dir); w.pop(p.x, p.y - 34, '*puff*', '#d8d8e0');
       w.burst(p.x + dx * 6, p.y - 16, ['#d8d8e0', '#a8a8b4'], 3, { speed: 0.4, up: 0.5, g: -0.02, life: 18, size: 1 });
     },
-    // Mom: Henrietta fires an egg
+    // Mom: Henrietta and Black Black take turns firing eggs
     michelle(p, w) {
       if (p.relayCd > 0) return;
       p.relayCd = 16;
+      p.henTurn = p.henTurn === 'white' ? 'black' : 'white';
       w.add(new G.EggShot(p.x, p.y, p.dir));
       G.audio.sfx('bawk');
     },

@@ -6578,7 +6578,10 @@
     p.rect(2, hy, 4, 3, color);
     p.set(3, hy - 1, '#d83030'); p.set(4, hy - 1, '#d83030');
     p.set(1, hy + 1, '#f0a020');
-    p.set(3, hy + 1, '#1c1c22');
+    // (a black hen, like Black Black: a light eye so it doesn't disappear, and a green-purple sheen)
+    const dark = color === '#2e2a34';
+    p.set(3, hy + 1, dark ? '#f0e8d8' : '#1c1c22');
+    if (dark) { for (const [sx, sy] of [[8, 4], [9, 4], [10, 5], [7, 5], [11, 6]]) p.set(sx, sy, (sx + sy) % 2 ? '#4a6a5a' : '#5a4a78'); p.set(3, hy, '#4a4458'); }
     p.set(2, hy + 3, '#d83030');
     p.vline(7, 10, 11, '#e8a020'); p.vline(9, 10, 11, '#e8a020'); p.set(6, 11, '#e8a020'); p.set(10, 11, '#e8a020');
     p.outline();
@@ -11795,7 +11798,7 @@
     S.boulders = {}; for (const k of ['gneiss', 'limestone', 'conglomerate', 'sandstone']) S.boulders[k] = gardenRock(k);
     S.mic = micSprite(); S.snowflake = snowflake(); S.icicle = icicle(); S.snowman = snowman();
     S.chickens = {};
-    for (const [k, col] of [['white', '#f4f2ec'], ['brown', '#b8683a']]) {
+    for (const [k, col] of [['white', '#f4f2ec'], ['brown', '#b8683a'], ['black', '#2e2a34']]) {
       const a = chicken(col, false), b = chicken(col, true);
       S.chickens[k] = { left: [a, b], right: [mirror(a), mirror(b)] };
     }
