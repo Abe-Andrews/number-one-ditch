@@ -21735,7 +21735,7 @@
     const snap = function* (take, hint) { G.audio.sfx('blip'); G.play.whiteout = 1; yield G.wait(40); yield G.noteView([G.photoFull(take)], hint); };
     yield* snap(1, 'Z: one more');
     yield G.say('Michelle', 'The phone slid down the rock. That\'s a lovely picture of everybody\'s feet.');
-    yield G.say('Abe', 'Those are good feet.');
+    yield G.say('Abe', 'Frame that one too.');
     yield G.say('Michelle', 'One more.');
     G.audio.sfx('blip');
     yield G.wait(50);
