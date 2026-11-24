@@ -3211,7 +3211,7 @@
       count('Every heart container', Math.floor((s.maxHp - 6) / 2), HEARTS, 'Everywhere', 'Gus, the Chem Final, Mom\'s stand, the rock crusher, and most of the hardest things on this list.'),
       count('Everyone you can meet', met[0], met[1], 'Everywhere', 'Talk to people. See the PEOPLE page.'),
       f.fcAwake ? row('Father Christmas', f.fcBeaten, 'Andover - the deep stope', 'A cave-in opened up off the east stope of the tunnels.') : row('???', false, '???', 'Finish the story, every rock and every photo, and see what wakes up.'),
-      f.fcBeaten ? row('Boss Rush', s.items.goldHammer, 'The BOSS RUSH page', 'Every boss, back to back, without fainting.') : row('???', false, '???', 'One more thing comes after that.'),
+      f.fcBeaten ? row('Boss Rush', s.items.goldHammer, 'Aurora - Dan Hurd', 'Dan Hurd has it, at the fossil pile in Aurora. Every boss, back to back, without fainting.') : row('???', false, '???', 'One more thing comes after that.'),
     ];
   };
   // Rows Nate hasn't come across yet show as ??? (no name, place or hint, so the list can't spoil
@@ -3484,7 +3484,7 @@
     yield G.walkTo(m, 20 * 16 + 8, 5 * 16 + 14, 1);
     m.dead = true;
     G.audio.sfx('bell');
-    yield G.say(null, 'A new page just opened up in the menu: {y}BOSS RUSH{/}. Every boss, back to back. Good luck.');
+    yield G.say(null, 'Nate\'s phone buzzes: a message from {y}Dan Hurd{/}. "Heard about the big doll. Come find me at the fossil pile in Aurora. Got one more pan for you."');
     G.play.autosave();
   };
 
@@ -21795,7 +21795,12 @@
     const pg = [{ k: 'title', d: 300 }, { k: 'head', d: 150, text: 'The Family' }];
     for (const c of CREDIT_FAMILY) pg.push({ k: 'walk', d: 250, id: c[0], name: c[1], line: c[2] });
     pg.push({ k: 'head', d: 150, text: 'Along the Way' });
-    for (const c of CREDIT_OTHERS) if (G.sprites[c[0]]) pg.push({ k: 'walk', d: 210, id: c[0], name: c[1], line: c[2] });
+    // (everybody "along the way" only walks by if Nate actually met them: the same checks as the
+    // PEOPLE page. Some of them, like Dan Hurd in the mines or Freya on the 2 AM run, are easy to miss)
+    const F2 = flags();
+    const metOk = { badlands: () => F2.badlandsMet, mikey: () => F2.mikeyMet, icejj: () => F2.jjMet, tyler: () => F2.hoodedMet,
+      paulLady: () => F2.ladyMet, freya: () => F2.tacoRunDone, matt: () => F2.mattMet, danHurd: () => F2.danMet };
+    for (const c of CREDIT_OTHERS) if (G.sprites[c[0]] && (!metOk[c[0]] || metOk[c[0]]())) pg.push({ k: 'walk', d: 210, id: c[0], name: c[1], line: c[2] });
     pg.push({ k: 'names', d: 60 + CREDIT_NAMES.length * 40 });
     const found = G.PHOTOS.filter((ph) => G.photoHas(ph.id) && ph.id !== 'familyPhoto');
     if (found.length) pg.push({ k: 'head', d: 120, text: 'From the Family Album' });
@@ -22405,7 +22410,8 @@
       if (s.party.includes('abe')) npc('abe', 'Abe', 16, 14, 'left', S.auroraAbe);
       if (s.party.includes('hannah')) npc('hannah', 'Hannah', 9, 16, 'up', S.auroraHannah);
       w.tyler = npc('tyler', 'Tyler', 12, 11, 'down', S.auroraTyler);
-      if (f.danMet) { w.dan = npc('danHurd', 'Dan Hurd', 5, 16, 'up', S.auroraDan); w.dan.held = sp.goldPan; w.dan.heldAt = [5, 5]; }
+      // (Dan's here if Nate met him in the mines, or once Father Christmas is beaten: he hands out the Boss Rush)
+      if (f.danMet || f.fcBeaten) { w.dan = npc('danHurd', 'Dan Hurd', 5, 16, 'up', S.auroraDan); w.dan.held = sp.goldPan; w.dan.heldAt = [5, 5]; }
       w.dale = npc('dale', 'Dale', 17, 12, 'left', S.auroraDale);
       npc('pitKid', 'Kid', 15, 16, 'up', look(['Kid', 'I found a megalodon tooth once. It was this big.'], 'He holds his fingers about an inch apart.', ['Kid', 'It was a baby one.']), { wander: 10 });
       // the Jeep, parked on Main Street
@@ -22536,8 +22542,19 @@
       f.auroraDan = true;
       yield G.say('Nate', 'DAN HURD?! At the AURORA PIT?!');
       yield G.say('Dan Hurd', 'Well, hey there! Somebody told me there\'s a pile here where anybody can dig for free. I had to see it for myself.');
-      yield G.say('Nate', 'Twice. I\'ve met Dan Hurd TWICE.');
-      yield G.say('Dan Hurd', DAN_AURORA[0]);
+      if (f.danMet) yield G.say('Nate', 'Twice. I\'ve met Dan Hurd TWICE.');
+      else { f.danMet = true; yield G.say('Nate', 'I\'ve watched every one of your videos.'); yield G.say('Dan Hurd', 'Well, then you already know everything I\'m about to tell you.'); }
+      if (!(f.fcBeaten && !f.rushUnlocked)) { yield G.say('Dan Hurd', DAN_AURORA[0]); return; }
+    }
+    // after Father Christmas: one more pan (the Boss Rush)
+    if (f.fcBeaten && !f.rushUnlocked) {
+      yield G.say('Dan Hurd', 'Heard about that big Christmas doll down in the deep stope. That was you?');
+      yield G.say('Nate', 'That was me.');
+      yield G.say('Dan Hurd', 'On the river, we say the good stuff is always one more pan down.');
+      yield G.say('Dan Hurd', 'So here\'s one more pan. Every big thing you\'ve beaten, back to back. No fainting.');
+      f.rushUnlocked = true;
+      G.audio.sfx('secret');
+      yield G.say(null, 'A new page just opened up in the menu: {y}BOSS RUSH{/}. Every boss, back to back. Good luck.');
       return;
     }
     yield G.say('Dan Hurd', DAN_AURORA[1 + Math.floor(Math.random() * (DAN_AURORA.length - 1))]);

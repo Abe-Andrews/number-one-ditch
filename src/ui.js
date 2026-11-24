@@ -329,7 +329,10 @@
   const TABS = ['QUESTS', 'MAP', 'ITEMS', 'KEYS', 'PEOPLE', 'COLLECTABLES', 'SAVE', 'BOSS RUSH'];
   const QUEST_TAB = 0, MAP_TAB = 1, ITEM_TAB = 2, KEY_TAB = 3, PEOPLE_TAB = 4, COLL_TAB = 5, SAVE_TAB = 6, RUSH_TAB = 7;
   // which pages are open right now (in the middle of a boss rush: only the gear, and the way out)
-  const tabList = () => (G.state.rush ? [ITEM_TAB, RUSH_TAB] : TABS.map((_, i) => i).filter((i) => i !== RUSH_TAB || G.state.flags.fcBeaten));
+  // (BOSS RUSH: once Dan Hurd hands it over at Aurora, after Father Christmas. Saves that already had
+  // it keep it, and admin runs always have it)
+  const rushOpen = () => { const s = G.state, f = s.flags; return !!(f.rushUnlocked || s.admin || s.items.goldHammer || s.rushBest); };
+  const tabList = () => (G.state.rush ? [ITEM_TAB, RUSH_TAB] : TABS.map((_, i) => i).filter((i) => i !== RUSH_TAB || rushOpen()));
   const COLS = 4, ROWS = 3, RCOLS = 5, PCOLS = 3;
   // COLLECTABLES opens on a list of sections; Z opens one, X backs out. Add new kinds here.
   const COLLECTIONS = [

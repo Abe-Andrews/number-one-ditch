@@ -413,7 +413,7 @@
     { name: 'Abe\'s Typing Test', art: () => P().abe.down[0], seen: (f, sv) => sv.visited && sv.visited.condoUp, d: 'Three rounds at Abe\'s desk. Type fast.' },
     { name: 'Hannah\'s Shift', art: () => S().badgeIcon, seen: (f) => f.nicuMet, d: 'A shift in the NICU. Three stars a shift if you\'re good.' },
     { name: 'Sifting the Ditch', art: () => S().sifter, seen: (f) => f.dayIntro, d: 'Shake the gravel through a sifter and fill the Tooth Book.' },
-    { name: 'Boss Rush', art: () => S().hammerGold && S().hammerGold.up, seen: (f) => f.fcBeaten, d: 'Every boss, back to back, no fainting. There\'s a prize.' },
+    { name: 'Boss Rush', art: () => S().hammerGold && S().hammerGold.up, seen: (f) => f.rushUnlocked || f.fcBeaten, d: 'Every boss, back to back, no fainting. There\'s a prize.' },
   ];
   // a save from before s.seen: count the enemies of every map it has been to
   G.seedSeen = (s) => { const v = s.visited || {}; for (const e of FOES) if (e.maps.some((m) => v[m])) s.seen[e.k] = 1; };
