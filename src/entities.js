@@ -163,7 +163,8 @@
       // Abe's cable whip (the finale): cracked up over his head, hitting whatever's up there
       if (this.state === 'reach') {
         this.t++;
-        if (this.t >= 4 && this.t <= 10) G.relayReach(this, w);
+        // (winds up for 6 frames, then the crack lands)
+        if (this.t >= 7 && this.t <= 11) G.relayReach(this, w);
         if (this.t >= 16) { this.state = 'walk'; this.pose = this.carry ? 'hold' : null; }
         return;
       }
@@ -443,7 +444,8 @@
       const idle = G.tick - (this.stillSince || G.tick), look = idle > 480 ? ['down', 'left', 'down', 'right', 'down', 'up'][Math.floor((idle - 480) / 55) % 6] : null;
       // (carried: Abe has him up over his head, flat on his back across Abe's hands, legs kicking)
       if (this.carried) { this.drawCarried(ctx, cx, cy, S); return; }
-      if (this.pose === 'hold') img = S.hold;
+      if (this.state === 'reach' && S.whipUp) img = this.t < 6 ? S.whipUp : S.whipOut;
+      else if (this.pose === 'hold') img = S.hold;
       else if (look && S[look]) img = look === 'down' && S.blink && idle % 55 > 46 ? S.blink : S[look][0];
       else img = this.state === 'walk' && blinking(this, S) ? S.blink : S[this.dir][this.state === 'walk' ? walkFrame(this.anim, this.moving) : 0];
       // (z: up in the air, e.g. Abe boosting Nate over a hedge)
@@ -4495,7 +4497,8 @@
     // head where Father Eggmas is floating
     abe(p, w) {
       if (p.relayCd > 0 || p.state !== 'walk') return;
-      p.relayCd = 22; p.state = 'reach'; p.t = 0; p.pose = 'hold'; p.hitSet.clear();
+      // (a short breather between cracks)
+      p.relayCd = 40; p.state = 'reach'; p.t = 0; p.pose = null; p.hitSet.clear();
       p.whipLean = p.dir === 'left' ? -1 : p.dir === 'right' ? 1 : (p.whipLean || 1) > 0 ? -0.4 : 0.4;
       G.audio.sfx('swing');
     },
@@ -4519,7 +4522,8 @@
   };
   // Abe's cable whip: where it lands (a tall strip over his head, leaning the way he cracked it)
   G.relayReach = (p, w) => {
-    const lx = (p.whipLean || 0) * 14, r = [p.x - 16 + lx, p.y - 104, p.x + 16 + lx, p.y - 8];
+    // (it comes off his right hand and reaches about 64px, a little to whichever side he cracked it)
+    const lx = (p.whipLean || 0) * 22, r = [p.x - 10 + lx, p.y - 86, p.x + 24 + lx, p.y - 16];
     for (const e of w.ents) {
       if (e.dead || p.hitSet.has(e)) continue;
       if (e instanceof EggmasBoss) { if (G.overlap(r, e.hurtBox())) { p.hitSet.add(e); if (e.relayHit('reach')) w.pop(p.x + lx, p.y - 70, 'SNAP!', '#f8d040'); } }
@@ -4529,21 +4533,32 @@
   // ...and how it looks: a yellow cable from his hand, lashing up into a curve and back, with the
   // plug on the end
   G.drawWhip = (ctx, p, sx, sy) => {
-    const t = p.t, ext = t < 7 ? t / 7 : t < 11 ? 1 : Math.max(0, 1 - (t - 11) / 5), e = 1 - (1 - ext) * (1 - ext);
+    const t = p.t, lean = p.whipLean || 0;
+    // the cable: a curve from (ax, ay) through (bx, by) to (cx2, cy2), with the plug on the end
+    const cable = (ax, ay, bx, by, cx2, cy2, len) => {
+      const pts = [], n = Math.max(10, Math.ceil(len * 1.4));
+      for (let i = 0; i <= n; i++) { const k = i / n, a = (1 - k) * (1 - k), b = 2 * (1 - k) * k, c = k * k; pts.push([Math.round(a * ax + b * bx + c * cx2), Math.round(a * ay + b * by + c * cy2)]); }
+      ctx.fillStyle = '#4a3a10'; for (const [x, y] of pts) ctx.fillRect(x - 1, y - 1, 3, 3);
+      ctx.fillStyle = '#f8d040'; for (const [x, y] of pts) ctx.fillRect(x, y, 2, 2);
+      ctx.fillStyle = '#fff4a0'; for (let i = 0; i < pts.length; i += 7) ctx.fillRect(pts[i][0], pts[i][1], 1, 1);
+      ctx.fillStyle = '#1c1424'; ctx.fillRect(cx2 - 2, cy2 - 3, 5, 6);
+      ctx.fillStyle = '#a8b0c0'; ctx.fillRect(cx2 - 1, cy2 - 2, 3, 4); ctx.fillStyle = '#e8f0f8'; ctx.fillRect(cx2, cy2 - 4, 1, 2);
+    };
+    if (t < 6) {
+      // the wind-up: arm up over his head, the cable trailing down behind him
+      const hx = sx + 14, hy = sy + 1;
+      cable(hx, hy, hx + 7, hy - 6, hx - 8 - t, hy + 12 - t, 20);
+      return;
+    }
+    // the crack: the arm snaps out and the cable lashes up and out (64px at full stretch), holds,
+    // and comes back
+    const ext = t < 9 ? (t - 6) / 3 : t < 11 ? 1 : Math.max(0, 1 - (t - 11) / 5), e = 1 - (1 - ext) * (1 - ext);
     if (e <= 0.02) return;
-    const lean = p.whipLean || 0, hx = sx + 8 + lean * 4, hy = sy + 3, len = 92 * e;
-    const tx = hx + lean * len * 0.38, ty = hy - len, cxp = (hx + tx) / 2 - lean * 16 + (t < 7 ? 10 : -6) * (lean || 1), cyp = (hy + ty) / 2;
-    const pts = [];
-    const n = Math.max(12, Math.ceil(len * 1.4));
-    for (let i = 0; i <= n; i++) { const k = i / n, a = (1 - k) * (1 - k), b = 2 * (1 - k) * k, c = k * k; pts.push([Math.round(a * hx + b * cxp + c * tx), Math.round(a * hy + b * cyp + c * ty)]); }
-    ctx.fillStyle = '#4a3a10'; for (const [x, y] of pts) ctx.fillRect(x - 1, y - 1, 3, 3);
-    ctx.fillStyle = '#f8d040'; for (const [x, y] of pts) ctx.fillRect(x, y, 2, 2);
-    ctx.fillStyle = '#fff4a0'; for (let i = 0; i < pts.length; i += 7) ctx.fillRect(pts[i][0], pts[i][1], 1, 1);
-    // the plug
-    ctx.fillStyle = '#1c1424'; ctx.fillRect(tx - 2, ty - 4, 5, 6);
-    ctx.fillStyle = '#a8b0c0'; ctx.fillRect(tx - 1, ty - 3, 3, 4); ctx.fillStyle = '#e8f0f8'; ctx.fillRect(tx, ty - 5, 1, 2);
+    const hx = sx + 15, hy = sy + 12, len = 64 * e;
+    const tx = Math.round(hx + lean * len * 0.45), ty = Math.round(hy - len * 0.9);
+    cable(hx, hy, Math.round((hx + tx) / 2 + 12), Math.round((hy + ty) / 2 + 6), tx, ty, len);
     // a little flash at the snap
-    if (t >= 6 && t <= 8) { ctx.fillStyle = '#ffffff'; for (const [dx, dy] of [[-4, 0], [4, 0], [0, -4], [-3, -3], [3, -3]]) ctx.fillRect(tx + dx, ty - 2 + dy, 1, 1); }
+    if (t >= 8 && t <= 10) { ctx.fillStyle = '#ffffff'; for (const [dx, dy] of [[-4, 0], [4, 0], [0, -4], [-3, -3], [3, -3]]) ctx.fillRect(tx + dx, ty - 2 + dy, 1, 1); }
   };
 
 

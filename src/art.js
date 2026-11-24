@@ -129,6 +129,7 @@
     for (const dir of ['down', 'up', 'right']) set[dir] = [0, 1, 2].map((s) => make(dir, s));
     set.left = set.right.map(mirror);
     set.hold = make('down', 0, 'hold');
+    set.whipUp = make('down', 0, 'whipUp'); set.whipOut = make('down', 0, 'whipOut');
     set.torso = make('right', 0, 'torso');
     // (standing still facing you, everybody blinks now and then)
     if (!c.mask && !c.shades) set.blink = make('down', 0, 'blink');
@@ -228,7 +229,13 @@
     }
 
     // arms
-    if (pose === 'hold') {
+    // (whipUp / whipOut: Abe's cable whip in the finale. The left arm hangs as usual; the right one
+    // winds up over his head, then snaps out to the side)
+    if (pose === 'whipUp' || pose === 'whipOut') {
+      for (let y = ty + 1; y <= ly - 1; y++) p.set(ax0, y, y === ly - 1 ? c.skin : c.coat || (c.sleeves === 'long' || y < ty + 1 + c.sleeves ? armColor(c, ax0, y, ty) : c.skin));
+      if (pose === 'whipUp') for (let y = y0 + 1; y <= ty; y++) p.set(13, y, y > ty - 3 ? (c.coat || armColor(c, 13, y, ty)) : c.skin);
+      else for (let x = ax1; x <= 15; x++) p.set(x, ty + 1, x >= 14 ? c.skin : (c.coat || armColor(c, x, ty + 1, ty)));
+    } else if (pose === 'hold') {
       for (const ax of [2, 13]) {
         for (let y = y0 + 1; y <= ty; y++) {
           const sleeve = y > ty - 3;
