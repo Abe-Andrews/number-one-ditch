@@ -4022,7 +4022,7 @@
       hitPops: ['IS THAT A CABLE?!', 'OW! MY PAISLEY!', 'HOW MANY OF THOSE DO YOU HAVE?!', 'STOP THAT!', 'WHERE DO YOU GET THESE?!', 'OW! OW!'] },
     hannah: { weapon: 'needle', need: 9, h: 22, every: 72, attacks: ['spirals', 'rain', 'lights', 'egglets'], tip: 'Z: throw a needle the way you\'re facing. Line it up. Little pinch!' },
     romulus: { weapon: 'bark', need: 6, h: 22, every: 80, attacks: ['egglets', 'lob', 'spirals', 'egglets'], tip: 'Z: BARK! It goes the way he\'s facing, so line up with Father Eggmas. (Egglets too.)' },
-    nate: { weapon: 'crack', need: 3, h: 22, every: 70, attacks: ['golden', 'lob', 'spirals', 'golden', 'lights', 'egglets'], tip: 'Bat the golden egg back with your hammer until it knocks him down. Then puff NICE CRACK (X: down, down, left)!' },
+    nate: { weapon: 'crack', need: 3, h: 22, every: 70, attacks: ['golden', 'lob', 'spirals', 'golden', 'lights', 'egglets'], tip: 'Bat the golden egg back until it knocks him down. Then puff NICE CRACK: X, down, down, left!' },
   };
   G.FIN_TURNS = TURNS;
   G.FIN_RELAY = ['doron', 'dad', 'lily', 'michelle', 'abe', 'romulus', 'hannah', 'nate'];

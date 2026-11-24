@@ -21046,8 +21046,9 @@
     yield G.banner(FIN_TITLE[id] + '\'S TURN', G.FIN_TURNS[id].tip, 150);
     if (id === 'doron') for (let i = 0; i < 3; i++) w.add(new G.LiftRock(56 + i * 64, 200 + (i % 2) * 40));
     if (!resumed && (f.fin_relay || 0) === 0) G.audio.play('eggmas');
-    // (the checkpoint: only the first turn of the relay saves, so a faint starts the relay over)
-    if (!(f.fin_relay || 0)) G.play.autosave();
+    // (the checkpoints: the first turn of the relay saves, so a faint starts the relay over, and so
+    // does Nate's turn, so a faint on the very last turn starts it over from his turn)
+    if (!(f.fin_relay || 0) || id === 'nate') G.play.autosave();
     boss.beginTurn(id);
   };
   // whoever's turn it was got their hits in
