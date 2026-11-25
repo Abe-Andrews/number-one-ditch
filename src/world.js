@@ -125,6 +125,20 @@
     // home: the breakfast room's walls, and the navy lattice rug in Dad's den
     '\u00ef': { k: 'faceDining', solid: true, edge: true },
     '\u00e2': { k: 'rugDen', edge: true },
+    // Renaissance Church (Springfield, NJ)
+    'ã': { k: 'faceRenWhite', solid: true, edge: true },
+    'å': { k: 'renConcrete' },
+    'ý': { k: 'renSeatCarpet' },
+    'þ': { k: 'renStageWhite', edge: true },
+    'æ': { k: 'faceRenBrickW', solid: true, edge: true },
+    'ì': { k: 'renVinyl' },
+    'ÿ': { k: 'faceLounge', solid: true, edge: true },
+    'û': { k: 'renRug', edge: true },
+    'ð': { k: 'faceChapel', solid: true, edge: true },
+    'ô': { k: 'renSlate' },
+    'õ': { k: 'renStageGray', edge: true },
+    'ø': { k: 'faceWoodPanel', solid: true, edge: true },
+    'À': { k: 'renLightWood' },
     // the 2 AM Taco Bell run: a floorboard that creaks
     '\u00ee': { k: 'creakFloor' },
     '\u00f2': { k: 'creakStairs' },

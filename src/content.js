@@ -4183,6 +4183,12 @@
   ];
   // Places the admin menu can warp to (with whatever the story state is).
   G.ADMIN_PLACES = [
+    { name: 'Renaissance Church (outside)', map: 'renaissance', at: [12, 9, 'up'] },
+    { name: 'Renaissance Church: lobby', map: 'renLobby', at: [10, 11, 'up'] },
+    { name: 'Renaissance Church: sanctuary', map: 'renSanctuary', at: [12, 17, 'up'] },
+    { name: 'Renaissance Church: renkids hall', map: 'renHall', at: [3, 5, 'right'] },
+    { name: 'Renaissance Church: Mom\'s Sunday school', map: 'renClass', at: [7, 9, 'up'] },
+    { name: 'Renaissance Church: the chapel (Ice JJ)', map: 'renChapel', at: [10, 21, 'up'] },
     { name: 'Nate\'s lab', map: 'lab', at: [3, 4, 'down'] },
     { name: 'Lafayette campus', map: 'campus', at: [20, 10, 'down'] },
     { name: 'Science Center', map: 'science', at: [7, 8, 'up'] },
@@ -24157,6 +24163,539 @@
       glob.hb = { w: 24, h: 8 };
       glob.draw = function (ctx, cx, cy) { const img = G.spr.globglog[this.still ? 1 : (G.tick >> 4) % 3]; ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy); };
       w.addWarp(7, 10, 1, 1, 'basement', 10, 3, 'down');
+    },
+  };
+
+  // ================================================================ RENAISSANCE CHURCH
+  // Dad's church: Renaissance Church in Springfield, NJ, built from the user's own photos and
+  // walk-through videos. The front and its parking lot; the lobby (polished concrete, the Connect
+  // Center, a flocked tree); the main sanctuary (rows of chairs, a stage in blue light with an LED
+  // wall of stars); downstairs, renkids (a white brick hall of classrooms, with paper snowflakes
+  // hanging everywhere), and Mom's Sunday school class in the chill room; and at the end of the
+  // hall, the old wooden chapel, where Ice JJ Fish is playing. A draft: only in ADMIN > places
+  // for now, not linked into the story yet.
+  const REN_KIDS = [
+    { name: 'Theo', skin: '#f2c8a8', hair: '#c89858', hairStyle: 'mop', smile: '#ffffff', shirt: '#3a78d8', pants: '#4a4a58', shoes: '#f8f8f0' },
+    { name: 'Ellie', skin: '#f4d0b8', hair: '#8a5a30', hairStyle: 'pony', smile: '#ffffff', blush: true, shirt: '#e85868', pants: '#5a7ab8', shoes: '#f0a0c0' },
+    { name: 'Marcus', skin: '#8a5a3c', hair: '#1a1210', hairStyle: 'buzz', smile: '#ffffff', shirt: '#d84030', pants: '#3a3a44', shoes: '#e8e8e4' },
+    { name: 'Priya', skin: '#c8946c', hair: '#1e1410', hairStyle: 'shoulder', smile: '#ffffff', blush: true, shirt: '#8a58c8', pattern: 'stripes', pants: '#2e3a5a', shoes: '#f0f0ec' },
+    { name: 'Sam', skin: '#f0c4a4', hair: '#d8a048', hairStyle: 'short', smile: '#ffffff', shirt: '#f0c838', pants: '#6a6a74', shoes: '#2a2a30' },
+    { name: 'June', skin: '#e8bc98', hair: '#5a3018', hairStyle: 'long', smile: '#ffffff', blush: true, shirt: '#48b060', pants: '#f0f0ec', shoes: '#e85848' },
+  ];
+  REN_KIDS.forEach((k, i) => { const c = Object.assign({ torso: 4, legs: 2 }, k); delete c.name; G.CAST['renKid' + i] = c; });
+  [
+    { skin: '#f0c8a8', hair: '#3a2a20', hairStyle: 'short', beard: '#3a2a20', smile: '#ffffff', shirt: '#2a2a30', pants: '#4a6a9a', shoes: '#3a3a40' },
+    { skin: '#f4d4bc', hair: '#e0c088', hairStyle: 'long', smile: '#ffffff', coat: '#efe8d8', shirt: '#efe8d8', pants: '#d8ccb4', shoes: '#c8a888' },
+    { skin: '#e8bc98', hair: '#5a3a24', hairStyle: 'shoulder', smile: '#ffffff', coat: '#7a9ac8', shirt: '#f0f0ec', pants: '#e888a8', shoes: '#c8a888' },
+    { skin: '#6a4028', hair: '#16100e', hairStyle: 'cropped', smile: '#ffffff', shirt: '#3a5a3a', pants: '#2a2a30', shoes: '#1e1e22' },
+  ].forEach((k, i) => { G.CAST['renAdult' + i] = Object.assign({ torso: 6, legs: 4 }, k); });
+  // paper snowflakes hanging from the ceiling, drawn over everything (map tint): [x, y] in tiles
+  const renFlakes = (ctx, spots) => {
+    const cam = G.play.cam, img = G.spr.renPaperFlake;
+    for (const [tx, ty] of spots) {
+      const x = Math.round(tx * 16 - cam.x), y = Math.round(ty * 16 - cam.y + Math.sin((G.tick + tx * 40) * 0.03) * 1.5);
+      if (x < -16 || y < -16 || x > G.W + 16 || y > G.H + 16) continue;
+      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(x + 5, y - 10, 1, 10);
+      ctx.drawImage(img, x, y);
+    }
+  };
+  const renNpc = (sprite, name, tx, ty, dir, lines) => (w) => w.add(new G.NPC({ sprite, name, x: tx * 16 + 8, y: ty * 16 + 14, dir, talk: function* () { for (const l of lines) yield Array.isArray(l) ? G.say(l[0], l[1]) : G.say(name, l); } }));
+
+  // ---- the front
+  G.MAPS.renaissance = {
+    name: 'Renaissance Church',
+    music: 'home',
+    noFollower: true,
+    tiles() {
+      const W = 26, H = 18, g = Array.from({ length: H }, () => Array(W).fill('.'));
+      const set = (x, y, c) => { if (x >= 0 && y >= 0 && x < W && y < H) g[y][x] = c; };
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) set(x + i, y + j, c); };
+      fill(5, 7, 15, 1, 'C');                                  // the walk along the front
+      for (const x of [5, 6, 18, 19]) set(x, 7, 'H');          // shrubs along the walls
+      fill(1, 8, 24, 8, 'a');                                  // the parking lot
+      fill(2, 9, 8, 2, 'l'); fill(16, 9, 8, 2, 'l');           // spaces along the front
+      fill(2, 13, 8, 2, 'l'); fill(16, 13, 8, 2, 'l');         // and across the lot
+      fill(1, 16, 24, 1, 'C');
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const sp = G.spr;
+      for (const [x, y] of [[0, 0], [2, 0], [20, 0], [22, 0], [24, 0], [0, 2], [24, 2], [0, 4], [24, 4]]) w.addTree(x, y);
+      w.addProp({ img: sp.renFront, tx: 6, ty: 1, h: 6 });
+      w.blockTiles(6, 1, 13, 6); w.unblockTiles(11, 6, 3, 1);
+      w.addWarp(11, 6, 3, 1, 'renLobby', 10, 11, 'up');
+      // the bollards out front
+      for (const bx of [10 * 16 + 6, 11 * 16 + 14, 13 * 16 + 2, 14 * 16 + 10]) w.props.push({ img: sp.renBollard, x: bx, y: 7 * 16 + 1, base: 8 * 16 - 2 });
+      w.blockTiles(10, 7, 1, 1); w.blockTiles(14, 7, 1, 1);
+      // the sign by the road, lampposts
+      w.addProp({ img: sp.renMonument, tx: 10, ty: 16, h: 1, dx: Math.round((96 - sp.renMonument.width) / 2), dy: 1, solid: [10, 16, 6, 1], hit: [10, 16, 6, 1],
+        talk: look('RENAISSANCE CHURCH. Sundays at 9 and 11. Kids\' church at both. Everyone welcome.') });
+      w.addProp({ img: sp.lamppost, tx: 1, ty: 8, dx: 2, solid: [1, 8, 1, 1] });
+      w.addProp({ img: sp.lamppost, tx: 24, ty: 8, dx: 2, solid: [24, 8, 1, 1] });
+      // Sunday morning: the lot's filling up (a white truck and a dark one by the doors, like always)
+      for (const [c, x, y] of [[2, 8, 9], [5, 16, 9], [0, 2, 9], [1, 20, 9], [3, 4, 13], [4, 18, 13], [5, 22, 13]]) w.addProp({ img: sp.cars[c], tx: x, ty: y, h: 2, dx: 4, solid: [x, y, 2, 2] });
+      renNpc('renAdult2', 'Churchgoer', 13, 11, 'up', ['Good morning! The nine o\'clock is about to start. Doors are right there, hon.'])(w);
+    },
+  };
+
+  // ---- the lobby
+  G.MAPS.renLobby = {
+    name: 'Renaissance Church: the lobby',
+    music: 'house',
+    noFollower: true,
+    tiles() {
+      const W = 22, H = 14, g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 20, 2, 'ã'); fill(1, 3, 20, 10, 'å');
+      fill(9, 1, 2, 2, 'å');                                // the sanctuary doors
+      fill(1, 9, 3, 3, 'D');                                     // the stairs down to renkids
+      fill(7, 13, 8, 1, 'G'); g[13][10] = 'x'; g[13][11] = 'x';  // the glass front, and its doors
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      w.addProp({ img: sp.renSanctDoors, tx: 9, ty: 2, flat: true });
+      w.addWarp(9, 1, 2, 1, 'renSanctuary', 12, 17, 'up');
+      w.addProp({ img: sp.renPointDoors, tx: 15, ty: 2, flat: true, hit: [15, 2, 2, 1], talk: look('Big wood doors with diamond windows. Behind them: the church offices. Locked on Sunday mornings.', ['Nate', 'Dad\'s office is back there. It smells like pipe tobacco and Bible pages.']) });
+      w.blockTiles(15, 1, 2, 2);
+      F.hang(sp.renLobbyGlass, 2, 2, 2, look('Two narrow stained glass windows: green, red, gold and blue.'), 3);
+      F.hang(sp.renLogoTV, 6, 2, 2, look('A TV on the wall: the Renaissance Church logo, and this week\'s announcements. KIDS\' CHURCH DOWNSTAIRS.'), 6);
+      F.hang(sp.renConnectSign, 17, 2, 3, look('CONNECT CENTER'), 18);
+      F.stand(sp.renConnectShelf, 17, 3, 3, look('The Connect Center: wood shelves of books, devotionals, and baskets of welcome cards.', ['Nate', 'There\'s a whole shelf for new people. Somebody wrote "TAKE ONE!!" on every single card.']));
+      F.stand(sp.renXmasTree, 12, 3, 1, look('A tall flocked Christmas tree with silver and blue ornaments and a plaid ribbon.'));
+      F.stand(sp.renKidsBanner, 13, 3, 1, look('A banner: CHRISTMAS FOR KIDS.'));
+      F.stand(sp.renBin, 20, 4, 1, look('A trash can. Very clean. Somebody empties it between services.'));
+      for (const [x, y] of [[6, 6], [15, 7], [7, 10], [17, 10]]) F.stand(sp.renBistro, x, y, 1, look('A black high-top table. Perfect for a coffee and a "so how have you BEEN?"'));
+      // the stairs down to renkids, with their black railing
+      w.addProp({ img: sp.renRailing, tx: 1, ty: 8, flat: true, dy: 4 });
+      w.addProp({ img: sp.renRailingV, tx: 4, ty: 9, flat: true, dy: -2 }); w.addProp({ img: sp.renRailingV, tx: 4, ty: 10, flat: true, dy: -2 });
+      w.blockTiles(1, 8, 3, 1);
+      w.add(new G.Sign(5, 11, ['RENKIDS', 'Downstairs. Check in at the desk, then find your room!']));
+      w.addWarp(1, 9, 3, 3, 'renHall', 3, 5, 'right');
+      renNpc('renAdult0', 'Greeter', 8, 11, 'down', ['Welcome! First time? ...Oh, you\'re the pastor\'s kid. Welcome back!'])(w);
+      renNpc('renAdult1', 'Churchgoer', 16, 6, 'left', ['Nate! Your mom says you found a whole shark tooth. She showed us the picture. Twice.'])(w);
+      w.addWarp(10, 13, 2, 1, 'renaissance', 12, 8, 'down');
+    },
+  };
+
+  // ---- the main sanctuary
+  G.MAPS.renSanctuary = {
+    name: 'Renaissance Church: the sanctuary',
+    music: 'house',
+    noFollower: true,
+    tiles() {
+      const W = 26, H = 20, g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 24, 2, 'ã'); fill(1, 3, 24, 16, 'ý');
+      fill(4, 3, 18, 4, 'þ');                               // the stage
+      g[19][12] = 'x'; g[19][13] = 'x';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      // the wall: arched windows, acoustic panels, the side screens
+      for (const x of [1, 24]) F.hang(sp.renArchWin, x, 2, 1, look('A tall arched window. The morning light comes in white.'), 2);
+      for (const x of [2, 23]) F.hang(sp.renPanel, x, 2, 1, null, 4);
+      F.hang(sp.renSideScreen, 3, 2, 3, look('A side screen: the lyrics will go up here.'), 6);
+      F.hang(sp.renSideScreen, 20, 2, 3, look('The other side screen. Stars.'), 6);
+      // the LED wall, in its truss, full of stars
+      w.addProp({ img: sp.renLedWall, tx: 8, ty: 4, flat: true, dx: 8, hit: [8, 4, 10, 1], talk: look('A huge LED wall in a black truss, full of slowly drifting stars.', ['Nate', 'That\'s a lot of stars. I want to know how much this thing costs. I also don\'t.']) });
+      // blue uplight on the stage
+      w.props.push({ img: null, x: 0, y: 0, flat: true, base: 0, draw(ctx, cx, cy) {
+        for (const [lx, ly, r] of [[4 * 16, 3 * 16, 60], [22 * 16, 3 * 16, 60], [13 * 16, 4 * 16, 120]]) {
+          const gx = lx - cx, gy = ly - cy, gr = ctx.createRadialGradient(gx, gy, 2, gx, gy, r);
+          gr.addColorStop(0, 'rgba(70,90,255,0.30)'); gr.addColorStop(1, 'rgba(70,90,255,0)');
+          ctx.fillStyle = gr; ctx.fillRect(gx - r, gy - r, r * 2, r * 2);
+        }
+      } });
+      F.stand(sp.casioKeyboard, 5, 4, 3, look('A keyboard on an X stand, with a set list taped to it.'));
+      F.stand(sp.drumKit, 18, 4, 3, look('The drum kit, behind a clear shield.'));
+      F.stand(sp.microphone, 10, 5, 1, look('A mic stand at center stage.'));
+      F.stand(sp.microphone, 16, 5, 1, look('A mic stand, for the backup singer.'));
+      renNpc('dad', 'Dad', 13, 5, 'down', ['Nate! You came! Grab a seat. Not the front row. That\'s for the brave.', 'Do you speak EEENGLISH? ...Just checking.'])(w);
+      // rows of chairs, with two aisles
+      for (const y of [8, 10, 12, 14]) for (let x = 2; x <= 23; x++) if (x !== 7 && x !== 8 && x !== 17 && x !== 18) F.stand(sp.renChair, x, y, 1);
+      // the sound booth at the back
+      F.stand(sp.renBooth, 10, 16, 5, look('The sound booth: a big mixing board, two screens, and a camera on a tripod.', ['Nate', 'So many buttons. I would press all of them.']));
+      renNpc('renAdult3', 'Tech guy', 12, 17, 'up', ['Sound check in ten. If you hear feedback, it wasn\'t me.'])(w);
+      w.addWarp(12, 19, 2, 1, 'renLobby', 9, 3, 'down');
+    },
+  };
+
+  // ---- renkids: the hall downstairs
+  G.MAPS.renHall = {
+    name: 'Renaissance Church: renkids',
+    music: 'house',
+    noFollower: true,
+    tiles() {
+      const W = 47, H = 9, g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 45, 2, 'æ'); fill(1, 3, 45, 5, 'ì');
+      fill(35, 1, 6, 2, 'ÿ');                               // the lounge's gray wall
+      fill(1, 4, 2, 3, 'S');                                     // the stairs back up
+      fill(26, 1, 1, 2, 'ì');                               // the chill room's door
+      fill(46, 4, 1, 2, 'ì');                               // the way into the chapel
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      w.addWarp(1, 4, 2, 3, 'renLobby', 4, 10, 'right');
+      w.addProp({ img: sp.renRailingV, tx: 3, ty: 3, flat: true, dy: -2 });
+      F.hang(sp.renkidsSign, 3, 2, 3, look('A black sign: renkids.'), 12);
+      // classrooms along the hall, with their little black signs
+      const sign = (x, name) => w.addProp({ img: sp.renRoomSigns[name], tx: x + 1, ty: 2, flat: true, dx: 2, dy: -15 });
+      const room = (x, name, lines) => { F.hang(sp.renOakDoor, x, 2, 1, lines ? look(...lines) : null, 0); sign(x, name); };
+      room(7, 'nursery', ['The nursery. Through the window: a row of cribs, and every single baby asleep at once.', ['Nate', 'A miracle. I\'m not going in there.']]);
+      room(16, '2s & 3s', ['The 2s & 3s room. Somebody in there is singing the clean-up song. Nobody is cleaning up.']);
+      w.addProp({ img: sp.renOakDoor, tx: 26, ty: 2, flat: true }); sign(26, 'the chill room');
+      w.addWarp(26, 1, 1, 1, 'renClass', 7, 9, 'up');
+      room(31, '4s-K', ['The 4s-K room. A table of kids gluing cotton balls onto paper sheep. One kid is gluing them onto himself.']);
+      // the check-in desk, by the doors with the wreaths
+      F.hang(sp.renWreathDoors, 11, 2, 2, look('Plywood double doors with a wreath on each one.'), 0);
+      F.hang(sp.renClock, 13, 1, 1, look('A clock. 9:12. Service started twelve minutes ago. Everybody here is still checking in.'), -2);
+      F.stand(sp.renRegTable, 10, 3, 2, look('A black table with a sign: NEW FAMILY REGISTRATION. A tablet, and a jar of stickers.'));
+      F.stand(sp.renMetalShelf, 14, 3, 1, look('A black metal shelf: picture books, a Bible storybook, and a lost-and-found sneaker.'));
+      renNpc('renAdult1', 'Volunteer', 12, 4, 'left', ['Hi! Name? ...Oh, you\'re not a kid. You\'re Michelle\'s. She\'s in the chill room, hon.'])(w);
+      // Welcome, friends! in moss on the wall
+      F.hang(sp.renMossWelcome, 19, 2, 4, look('WELCOME, FRIENDS! in big green moss letters. Nate touches it. It\'s real moss.'), 8);
+      // the lounge: gray walls, a window, a black leather couch, a little tree, high-tops
+      F.hang(sp.renWindow, 37, 2, 2, look('A window. The parking lot, and a guy circling it for the third time.'), 6);
+      F.stand(sp.renCouch, 36, 3, 3, look('A black leather couch. For parents. And for dads who "just need a minute."'));
+      F.stand(sp.renXmasTree, 40, 3, 1, look('A little flocked Christmas tree in a gold pot.'));
+      F.stand(sp.renBistro, 34, 4, 1, look('A black high-top table.'));
+      const couchDad = renNpc('renAdult0', 'Dad on the couch', 37, 3, 'down', ['I\'m on nursery duty. The nursery is asleep. I\'m going to sit here very, very still.'])(w);
+      couchDad.y = 3 * 16 + 8; couchDad.x = 37 * 16 + 14;
+      couchDad.draw = function (ctx, cx, cy) { const img = G.sprites.renAdult0.down[0], cut = 7; ctx.drawImage(img, 0, 0, img.width, img.height - cut, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height + cut) - cy, img.width, img.height - cut); };
+      // the chapel, at the end of the hall
+      F.hang(sp.renRoomSigns.chapel, 44, 2, 2, look('A sign: chapel. Somebody is singing in there. Loud.'), 12);
+      w.addWarp(46, 4, 1, 2, 'renChapel', 10, 22, 'up');
+    },
+    tint(ctx) { const s = []; for (let x = 4; x < 46; x += 3) s.push([x + (x % 2) * 0.5, 3 + (x % 3) * 0.4]); renFlakes(ctx, s); },
+  };
+
+  // ---- the wooden chapel (Ice JJ Fish, playing kids' church)
+  G.MAPS.renChapel = {
+    name: 'Renaissance Church: the chapel',
+    music: 'icejj',
+    noFollower: true,
+    tiles() {
+      const W = 22, H = 24, g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 20, 3, 'ð'); fill(1, 4, 20, 13, 'ô');
+      fill(3, 4, 16, 3, 'õ'); fill(5, 7, 12, 1, 'õ');   // the stage, and its step
+      fill(1, 17, 20, 2, 'ø'); fill(10, 17, 2, 2, 'À');  // the wood partition, and its doorway
+      fill(1, 19, 20, 4, 'À');                               // the check-in room behind it
+      g[23][10] = 'x';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      // the brick end wall under the wood A-frame: tall narrow stained glass, tallest in the middle,
+      // stepping down to diamonds at the sides
+      w.addProp({ img: sp.renGable, tx: 1, ty: 3, flat: true });
+      for (const [x, k, h] of [[3, 0, 0], [5, 1, 1], [7, 2, 2], [9, 3, 3], [12, 0, 3], [14, 1, 2], [16, 2, 1], [18, 3, 0]]) F.hang(sp.renSlits[h * 4 + k], x, 3, 1, look('Stained glass: a tall, skinny window of red, gold and blue, all broken up into shapes. The light through it moves across the floor all morning.'), 2);
+      // along the sides: the feet of the big curved wood arches, and the pastel block windows between
+      for (const y of [7, 11, 15]) { w.addProp({ img: sp.renRib, tx: 1, ty: y, flat: true, dx: -3 }); w.addProp({ img: sp.renRibR, tx: 20, ty: y, flat: true, dx: 9 }); }
+      for (const y of [9, 13]) { w.addProp({ img: sp.renSideGlass, tx: 0, ty: y, flat: true, dx: 6, dy: 8 }); w.addProp({ img: sp.renSideGlass, tx: 21, ty: y, flat: true, dx: 2, dy: 8 }); }
+      // the stage: a baby grand, the keyboard, an amp, speakers, a TV, the sound table
+      F.stand(sp.renGrand, 4, 5, 2, look('A baby grand piano. Somebody left a hymnal open on it, and a juice box.'), { ht: 1 });
+      F.stand(sp.casioKeyboard, 14, 5, 3, look('A keyboard, and an amp under it.'));
+      F.stand(sp.renSpeaker, 7, 4, 1, look('A speaker on a stand, pointed right at the kids.'));
+      F.stand(sp.renSpeaker, 15, 4, 1, look('A speaker on a stand.'));
+      F.stand(sp.renStandTV, 18, 5, 1, look('A TV on a stand: the words to the song. It\'s the same four words, over and over.'));
+      F.stand(sp.renSoundTable, 19, 8, 1, look('A sound table under a black cloth. The faders are all the way up.'));
+      F.stand(sp.microphone, 9, 6, 1, look('A mic stand. Ice JJ Fish brought his own mic.'));
+      // Ice JJ Fish, center stage, singing
+      const jj = w.jjNpc = w.add(new G.NPC({ sprite: 'icejj', name: 'Ice JJ Fish', x: 11 * 16, y: 6 * 16 + 12, dir: 'down', talk: function* () {
+        yield G.say('Ice JJ Fish', 'AYY! The pastor\'s kid! Kids\' church, baby! These little guys know ALL the words.');
+        yield G.say('Nate', 'Your song only has like four words.');
+        yield G.say('Ice JJ Fish', 'And they know ALL of them.');
+      } }));
+      jj.draw = function (ctx, cx, cy) {
+        const img = G.sprites.icejj[this.dir][0], bob = Math.round(Math.abs(Math.sin(G.tick * 0.12)) * 2);
+        ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy - bob);
+      };
+      // round tables, stacks of folding chairs
+      for (const [x, y] of [[2, 9], [16, 9], [2, 13], [16, 13]]) F.stand(sp.renRoundTable, x, y, 3, look('A round table with folding chairs. Crayons in a basket, and a coloring sheet of a sheep.'), { ht: 2 });
+      for (const x of [18, 19]) F.stand(sp.renChairStack, x, 15, 1, look('A stack of folding chairs, taller than some of the kids.'));
+      // the kids, up front, dancing
+      [[7, 9, 0], [9, 10, 4], [12, 9, 5], [14, 10, 2]].forEach(([x, y, k]) => {
+        const kid = w.add(new G.NPC({ sprite: 'renKid' + k, name: REN_KIDS[k].name, x: x * 16 + 8, y: y * 16 + 12, dir: 'up', talk: function* () { yield G.say(REN_KIDS[k].name, ['THIS IS MY FAVORITE SONG.', 'I know all the words!', 'Is he famous? He seems famous.', 'Mr. Nate, DANCE.'][k % 4]); } }));
+        kid.draw = function (ctx, cx, cy) {
+          const S = G.sprites['renKid' + k], img = S[this.dir][(G.tick >> 4) % 2 ? 1 : 2] || S[this.dir][0], hop = (G.tick + k * 9) % 32 < 8 ? 2 : 0;
+          ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy - hop);
+        };
+      });
+      renNpc('renAdult2', 'Kids\' church leader', 6, 11, 'up', ['We booked a special guest this week. The kids voted. It was unanimous. I have regrets.'])(w);
+      // the back: the wood partition with windows into the chapel, the check-in room behind it
+      F.hang(sp.renChapelWindow, 2, 18, 3, null, 4); F.hang(sp.renChapelWindow, 16, 18, 3, null, 4);
+      F.hang(sp.renExitSign, 10, 17, 2, null, -2);
+      F.stand(sp.renCubbies, 4, 19, 3, look('Wood cubbies, one per kid. Somebody\'s cubby has a single shoe in it.'));
+      F.stand(sp.renCubbies, 13, 19, 3, look('More cubbies. A coat, a backpack, and half a granola bar.'));
+      F.stand(sp.renCooler, 8, 19, 1, look('A water cooler. The little paper cones are all gone.'));
+      F.stand(sp.renPaperBallTable, 17, 20, 1, look('A white table with a big ball made of paper snowflakes on it.'));
+      F.stand(sp.renRegTable, 2, 21, 2, look('The kids\' church check-in. A sign: PARENTS, PICK UP AT THE DOOR. NOT THE WINDOW.'));
+      w.addWarp(10, 23, 1, 1, 'renHall', 45, 5, 'left');
+    },
+    tick(w) {
+      const g = w.jjNpc;
+      if (!g || G.script.busy || G.tick % 70) return;
+      w.jjVerse = ((w.jjVerse == null ? -1 : w.jjVerse) + 1) % G.JJ_SONG.length;
+      w.pop(g.x, g.y - 36, G.JJ_SONG[w.jjVerse], '#a8e0ff');
+    },
+    tint(ctx) { renFlakes(ctx, [[3, 8], [8, 7.5], [13, 8.2], [18, 7.8], [5, 12], [11, 12.5], [16, 11.8], [6, 20], [15, 20.5]]); },
+  };
+
+
+  // ---- MOM'S SUNDAY SCHOOL (draft minigame), in the chill room
+  // Mom teaches; Nate is her helper. Kids raise their hands (a yellow !): walk over and press Z to
+  // call on them, and Mom answers. Meanwhile the room tries to fall apart: a kid wanders off to the
+  // toys, Goldfish crackers end up on the floor, somebody draws on the wall. Walk over and press Z
+  // to fix it before the CHAOS meter fills (it fills faster the more is going wrong). Three parts:
+  // easy questions, harder ones, then the big ones, when the room goes quiet and nothing goes
+  // wrong, and it's just Mom answering. Too much chaos and Mom stops class and starts that part
+  // over. (Mom's answers to the big questions are placeholders until the user writes them.)
+  const KID_NAME = (i) => REN_KIDS[i].name;
+  const SS_ROUNDS = [
+    { name: 'Easy questions', ask: 3, every: [230, 340], qs: [
+      { kid: 0, lines: [['K', 'Did Noah bring dinosaurs on the ark?'], ['Michelle', 'Hmm. If he did, I hope he put them at the far end of the boat.'], ['K', 'Away from the bunnies?'], ['Michelle', 'Away from EVERYBODY, hon.']] },
+      { kid: 1, lines: [['K', 'Does God sleep?'], ['Michelle', 'Nope. Never. He\'s up all night.'], ['K', 'Like you when the deer get in the garden?'], ['Michelle', '...Exactly like that.']] },
+      { kid: 2, lines: [['K', 'Can Jesus see me in the bathroom?'], ['Michelle', 'He\'s very polite about it.'], ['K', 'Oh no.'], ['Nate', 'You\'re okay, buddy.']] },
+      { kid: 3, lines: [['K', 'Did Adam and Eve have belly buttons?'], ['Nate', 'Oh, that\'s actually a really good—'], ['Michelle', 'NEXT question.']] },
+      { kid: 4, lines: [['K', 'Is it a sin if I give my broccoli to my dog?'], ['Michelle', 'It\'s not a sin. It\'s a tactic.'], ['Michelle', 'And your mom knows about the dog, Sam.']] },
+      { kid: 5, lines: [['K', 'What did Jesus eat for breakfast?'], ['Michelle', 'Probably fish. He was always hanging out with fishermen.'], ['K', 'FISH? For BREAKFAST?'], ['Nate', 'Fish is great for breakfast.'], ['K', 'Mr. Nate is weird.']] },
+    ] },
+    { name: 'Harder questions', ask: 3, every: [150, 240], qs: [
+      { kid: 1, lines: [['K', 'Will my dog go to heaven?'], ['Michelle', 'I really, really hope so, hon. A heaven with no dogs doesn\'t sound like heaven to me.']] },
+      { kid: 0, lines: [['K', 'Why can\'t I see God?'], ['Michelle', 'Can you see the wind?'], ['K', 'No.'], ['Michelle', 'But you can see the trees move. It\'s kind of like that.'], ['K', '...So God is wind?'], ['Michelle', 'That\'s not— we\'ll come back to that one.']] },
+      { kid: 5, lines: [['K', 'If God made everything, who made God?'], ['Michelle', 'Nobody. He was always there.'], ['K', 'ALWAYS always?'], ['Michelle', 'Always always.'], ['K', 'My brain hurts.'], ['Michelle', 'Mine too, bud.']] },
+      { kid: 2, lines: [['K', 'Does God love the bad guys too?'], ['Michelle', 'Yep. Even the bad guys.'], ['K', 'Even Kevin from my bus?'], ['Michelle', '...Even Kevin.']] },
+    ] },
+    { name: 'The big questions', ask: 3, every: null, qs: [
+      { kid: 3, lines: [['K', 'Miss Michelle? If God loves us... then why is there so much pain in the world?'], [null, 'The whole room goes quiet.'], ['Michelle', '...'], ['Michelle', '[Mom\'s answer goes here.]']] },
+      { kid: 4, lines: [['K', 'I prayed for my grandpa to get better. And he died anyway.'], ['K', 'Why didn\'t God listen?'], ['Michelle', '...Come here, Sam.'], ['Michelle', '[Mom\'s answer goes here.]']] },
+      { kid: 1, lines: [['K', 'How do we know it\'s all true?'], ['Michelle', '[Mom\'s answer goes here.]']] },
+    ] },
+  ];
+  const SS_IDLE = [
+    'Mr. Nate, do you have a shark tooth? Can I hold it? Can I KEEP it?', 'I\'m being SO good right now.', 'Is it snack time? It feels like snack time.',
+    'Sam is breathing on me.', 'I\'m not breathing on her. I\'m just breathing.', 'Miss Michelle says you dig up fossils. Are YOU a fossil?',
+  ];
+  const SS_SEATS = [[4, 6], [6, 6], [8, 6], [10, 6], [5, 8], [9, 8]];
+  const SS_WANDER = [[1, 4], [2, 8], [12, 4], [12, 8], [7, 8], [1, 6], [13, 6]];
+  const SS_WALL = [2, 4, 5, 8];
+  function ssState(w) { return w.ss; }
+  function ssStartRound(w, r) {
+    const ss = w.ss;
+    Object.assign(ss, { round: r, left: SS_ROUNDS[r].ask, chaos: 0, t: 0, nextHand: 90, nextEvent: 260, asked: [] });
+    ssClearTrouble(w);
+  }
+  function ssClearTrouble(w) {
+    for (const k of w.ssKids) { k.roam = null; k.hand = null; k.x = k.seat.x; k.y = k.seat.y; k.dir = 'up'; k.moving = false; }
+    w.props = w.props.filter((pr) => !pr.ssTrouble);
+  }
+  const ssTrouble = (w) => w.props.filter((pr) => pr.ssTrouble).length + w.ssKids.filter((k) => k.roam).length;
+  function ssSpill(w) {
+    const free = [[3, 4], [5, 4], [11, 4], [12, 7], [2, 7], [12, 4], [2, 5], [8, 4]].filter(([x, y]) => !w.props.some((pr) => pr.ssTrouble && pr.tx === x && pr.ty === y));
+    if (!free.length) return false;
+    const [tx, ty] = free[Math.floor(Math.random() * free.length)], x = tx * 16, y = ty * 16 + 4;
+    const pr = { img: null, x: 0, y: 0, flat: true, base: 0, ssTrouble: 'spill', tx, ty, rate: 0.035, hit: [x - 2, y - 4, x + 18, y + 14],
+      draw(ctx, cx, cy) { ctx.drawImage(G.spr.renSpill, x - cx, y - cy); },
+      talk() { const me = this; return (function* () { w.props = w.props.filter((p2) => p2 !== me); G.audio.sfx('pop'); w.pop(x + 8, y - 12, ['Cleaned up!', 'Mostly into Nate\'s mouth.', 'Goldfish: saved.'][Math.floor(Math.random() * 3)], '#f0a030'); })(); } };
+    w.props.push(pr);
+    w.pop(x + 8, y - 10, 'Uh oh. Goldfish.', '#f0a030');
+    return true;
+  }
+  function ssScribble(w) {
+    const free = SS_WALL.filter((tx) => !w.props.some((pr) => pr.ssTrouble === 'scribble' && pr.tx === tx));
+    if (!free.length) return false;
+    const tx = free[Math.floor(Math.random() * free.length)], k = Math.floor(Math.random() * 3), x = tx * 16 - 1, y = 1 * 16 + 14;
+    const pr = { img: null, x: 0, y: 0, flat: true, base: 0, ssTrouble: 'scribble', tx, rate: 0.045, hit: [x - 2, 2 * 16, x + 20, 3 * 16 + 2],
+      draw(ctx, cx, cy) { ctx.drawImage(G.spr.renScribbles[k], x - cx, y - cy); },
+      talk() { const me = this; return (function* () { w.props = w.props.filter((p2) => p2 !== me); G.audio.sfx('blip'); w.pop(x + 9, y - 6, 'Wiped off!', '#78e8e8'); })(); } };
+    w.props.push(pr);
+    w.pop(x + 9, y - 4, 'Somebody\'s drawing on the wall!', '#f86858');
+    return true;
+  }
+  function ssWander(w) {
+    const pick = w.ssKids.filter((k) => !k.roam && !k.hand);
+    if (!pick.length) return false;
+    const k = pick[Math.floor(Math.random() * pick.length)], [tx, ty] = SS_WANDER[Math.floor(Math.random() * SS_WANDER.length)];
+    k.roam = { x: tx * 16 + 8, y: ty * 16 + 12, back: false };
+    w.pop(k.x, k.y - 26, ['I\'m gonna look at the toys.', 'BRB.', 'I have to show Mr. Nate something!', 'I\'m a dinosaur now.'][Math.floor(Math.random() * 4)], '#f8d850');
+    return true;
+  }
+  function* ssCallOn(w, k) {
+    const ss = w.ss, q = k.hand;
+    k.hand = null; ss.left--; ss.asked.push(q);
+    G.audio.sfx('select');
+    for (const [who, text] of q.lines) yield G.say(who === 'K' ? KID_NAME(k.idx) : who, text);
+    ss.nextHand = ss.t + 110 + Math.floor(Math.random() * 80);
+    if (ss.left > 0) return;
+    if (ss.round < SS_ROUNDS.length - 1) yield* ssNextRound(w);
+    else yield* ssWin(w);
+  }
+  function* ssNextRound(w) {
+    const ss = w.ss, r = ss.round + 1;
+    ssClearTrouble(w);
+    if (r === 1) {
+      yield G.say('Michelle', 'Okay! Good questions, everybody. Who\'s got a harder one?');
+      yield G.say(null, 'Every hand in the room goes up.');
+      yield G.banner('PART TWO', 'the questions get harder', 120);
+    } else {
+      yield G.say('Michelle', 'Okay. Everybody sit down for a second. Criss-cross applesauce.');
+      yield G.say(null, 'Nobody wanders off. Nobody spills anything. Even Theo is sitting still.');
+      yield G.banner('PART THREE', 'the big questions', 120);
+    }
+    ssStartRound(w, r);
+  }
+  function* ssWin(w) {
+    const f = flags(), first = !f.renClassDone;
+    w.ss.phase = 'done';
+    ssClearTrouble(w);
+    yield G.say('Michelle', '...');
+    yield G.say('Michelle', 'Okay. Who wants snack?');
+    yield G.say(null, 'EVERY kid wants snack.');
+    yield G.say('June', 'Mr. Nate. I made you something.');
+    G.audio.sfx('fanfare');
+    yield G.itemGet(G.spr.renDrawing, 'June hands Nate a drawing: him, a shark tooth, and {y}MR. NAIT{/} in green crayon.');
+    yield G.say('Nate', 'It\'s perfect. I\'m putting it on the fridge.');
+    yield G.say('Michelle', 'You were good with them, hon. Same time next week?');
+    f.renClassDone = true;
+    if (first) { G.play.addTeeth(25); yield G.say(null, 'Mom slips Nate {y}25 shark teeth{/} "for gas." Nate didn\'t drive here.'); }
+  }
+  function* ssFail(w) {
+    w.ss.phase = 'fail';
+    G.audio.sfx('no');
+    yield G.say('Michelle', 'OKAY. EVERYBODY FREEZE.');
+    yield G.say(null, 'Every kid freezes. One of them is upside down on a beanbag.');
+    yield G.say('Michelle', 'Back on the rug. Hands in laps. We\'re starting this part over.');
+    ssStartRound(w, w.ss.round);
+    w.ss.phase = 'play';
+  }
+  S.renClassIntro = function* () {
+    const w = G.play.world;
+    yield G.wait(20);
+    yield G.say('Michelle', 'Nate! You made it. My helper called out, so you\'re my helper.');
+    yield G.say('Michelle', 'When somebody raises their hand, go call on them. And keep this room in one piece. Spills, wanderers, crayons on the walls.');
+    yield G.say('Nate', 'How hard can it be? It\'s a handful of kids.');
+    yield G.say('Michelle', 'Oh, hon.');
+    yield howToCmd('SUNDAY SCHOOL', ['A kid with a yellow ! has a question. Walk over and press Z to call on them.', 'Trouble: a kid wandering off, Goldfish on the floor, crayon on the wall. Walk over and press Z to fix it.', 'The more that goes wrong, the faster the CHAOS meter fills. If it fills up, Mom starts that part over.', 'Three parts: easy questions, harder ones, then the big ones.']);
+    G.play.overlay = null;
+    w.ss.phase = 'play';
+  };
+  G.MAPS.renClass = {
+    name: 'Renaissance Church: the chill room',
+    music: 'house',
+    noFollower: true,
+    tiles() {
+      const W = 15, H = 11, g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
+      fill(1, 1, 13, 2, 'æ'); fill(1, 3, 13, 7, 'ì'); fill(3, 5, 9, 4, 'û');
+      g[10][7] = 'x';
+      return g.map((r) => r.join(''));
+    },
+    setup(w) {
+      const F = furnish(w), sp = G.spr;
+      F.hang(sp.renWindow, 6, 2, 2, look('A window, up high. Somebody stuck paper snowflakes all over it.'), 6);
+      F.hang(sp.renClock, 12, 1, 1, look('A clock. It\'s been 9:20 for a while now. Probably.'), -2);
+      F.stand(sp.renToyBins, 1, 3, 2, look('Toy bins: blocks, plastic animals, a toy ark, and every crayon ever made.'));
+      F.stand(sp.renFeltBoard, 9, 3, 2, look('A felt board: a little felt boat, a lot of felt animals, and a felt rainbow.'));
+      F.stand(sp.renSnackTable, 12, 3, 2, look('The snack table: a bowl of Goldfish crackers, juice boxes, and a stack of napkins nobody will use.'));
+      F.stand(sp.renBeanbags[0], 1, 8, 1, look('A beanbag. It sighs when you look at it.'));
+      F.stand(sp.renBeanbags[1], 13, 8, 1, look('A blue beanbag.'));
+      F.stand(sp.renBeanbags[3], 13, 5, 1, look('A green beanbag, shaped like a kid sat in it all morning.'));
+      // Mom, at the front
+      w.ssMom = w.add(new G.NPC({ sprite: 'michelle', name: 'Michelle', x: 7 * 16 + 8, y: 4 * 16 + 10, dir: 'down', talk: function* () {
+        const ss = w.ss;
+        if (ss.phase === 'done') { yield G.say('Michelle', 'Snack time is the best time. Grab a juice box, hon.'); return; }
+        yield G.say('Michelle', ss.round === 2 ? 'Go on. They\'ve got the big ones.' : 'Kids with their hands up, hon. And keep the Goldfish off the floor.');
+      } }));
+      // the kids, criss-cross on the rug, facing her
+      w.ssKids = SS_SEATS.map(([tx, ty], i) => {
+        const k = w.add(new G.NPC({ sprite: 'renKid' + i, name: KID_NAME(i), x: tx * 16 + 8, y: ty * 16 + 12, dir: 'up', talk: function* () {
+          const ss = w.ss;
+          if (ss.phase === 'play' && k.roam) { k.roam.back = true; G.audio.sfx('menu'); w.pop(k.x, k.y - 26, ['Back to the rug!', 'Okaaaay.', 'I was just LOOKING.'][Math.floor(Math.random() * 3)], '#78e070'); return; }
+          if (ss.phase === 'play' && k.hand) { yield* ssCallOn(w, k); return; }
+          yield G.say(KID_NAME(i), SS_IDLE[i]);
+        } }));
+        k.idx = i; k.seat = { x: k.x, y: k.y };
+        k.draw = function (ctx, cx, cy) {
+          const S = G.sprites['renKid' + i], walking = !!this.roam || this.x !== this.seat.x || this.y !== this.seat.y;
+          const img = S[this.dir][walking && this.moving ? ((G.tick >> 3) % 2 ? 1 : 2) : 0] || S[this.dir][0];
+          const X = Math.round(this.x - img.width / 2) - cx, Y = Math.round(this.y - img.height) - cy;
+          if (walking) ctx.drawImage(img, X, Y);
+          else { const cut = 4; ctx.drawImage(img, 0, 0, img.width, img.height - cut, X, Y + cut, img.width, img.height - cut); }
+          if (this.hand) {
+            // a hand way up in the air, and a yellow ! bubble over it
+            const wave = ((G.tick >> 3) % 2) ? 1 : 0, hx = X + img.width - 3, top = Y + (walking ? 0 : 4);
+            ctx.fillStyle = '#1c1424'; ctx.fillRect(hx - 1, top - 7 - wave, 4, 9);
+            ctx.fillStyle = G.CAST['renKid' + i].skin; ctx.fillRect(hx, top - 6 - wave, 2, 8);
+            const bx = Math.round(this.x) - cx - 4, by = top - 18 - wave;
+            ctx.fillStyle = '#1c1424'; ctx.fillRect(bx - 1, by - 1, 10, 12); ctx.fillRect(bx + 3, by + 11, 3, 2);
+            ctx.fillStyle = '#f8d850'; ctx.fillRect(bx, by, 8, 10); ctx.fillRect(bx + 4, by + 10, 1, 2);
+            ctx.fillStyle = '#1c1424'; ctx.fillRect(bx + 3, by + 2, 2, 4); ctx.fillRect(bx + 3, by + 7, 2, 1);
+          }
+        };
+        return k;
+      });
+      w.ss = { phase: 'intro', round: 0, left: 0, chaos: 0, t: 0, nextHand: 90, nextEvent: 260, asked: [] };
+      ssStartRound(w, 0);
+      w.addWarp(7, 10, 1, 1, 'renHall', 26, 3, 'down');
+    },
+    onEnter() { return S.renClassIntro(); },
+    tick(w) {
+      const ss = w.ss;
+      if (!ss || G.script.busy) return;
+      // kids walking: off to the toys, or back to their spot on the rug
+      for (const k of w.ssKids) {
+        const tgt = k.roam ? (k.roam.back ? k.seat : k.roam) : (k.x !== k.seat.x || k.y !== k.seat.y ? k.seat : null);
+        if (!tgt) { k.moving = false; continue; }
+        const dx = tgt.x - k.x, dy = tgt.y - k.y, d = Math.hypot(dx, dy), sp = k.roam && !k.roam.back ? 0.45 : 1.1;
+        if (d <= sp + 0.5) {
+          k.x = tgt.x; k.y = tgt.y; k.moving = false;
+          if (tgt === k.seat) { k.roam = null; k.dir = 'up'; }
+          else { const [tx, ty] = SS_WANDER[Math.floor(Math.random() * SS_WANDER.length)]; k.roam = { x: tx * 16 + 8, y: ty * 16 + 12, back: false }; }
+          continue;
+        }
+        k.x += (dx / d) * sp; k.y += (dy / d) * sp; k.moving = true;
+        k.dir = Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? 'right' : 'left') : (dy > 0 ? 'down' : 'up');
+      }
+      if (ss.phase !== 'play') return;
+      ss.t++;
+      const R = SS_ROUNDS[ss.round];
+      // a hand goes up
+      if (ss.left > 0 && !w.ssKids.some((k) => k.hand) && ss.t >= ss.nextHand) {
+        const open = R.qs.filter((q) => !ss.asked.includes(q) && !w.ssKids[q.kid].roam);
+        const q = open.length ? open[Math.floor(Math.random() * open.length)] : null;
+        if (q) { const k = w.ssKids[q.kid]; k.hand = q; k.handT = 0; G.audio.sfx('blip'); w.pop(k.x, k.y - 28, 'Ooh! Ooh! Me!', '#f8d850'); }
+      }
+      // trouble
+      if (R.every && ss.t >= ss.nextEvent) {
+        if (ssTrouble(w) < 2 + ss.round) { const kinds = [ssWander, ssSpill, ssScribble]; kinds[Math.floor(Math.random() * kinds.length)](w); }
+        ss.nextEvent = ss.t + R.every[0] + Math.floor(Math.random() * (R.every[1] - R.every[0]));
+      }
+      // the meter: everything going wrong adds to it, and a hand left up too long makes the room antsy
+      let rate = 0;
+      for (const pr of w.props) if (pr.ssTrouble) rate += pr.rate;
+      for (const k of w.ssKids) { if (k.roam && !k.roam.back) rate += 0.055; if (k.hand && ++k.handT > 540) rate += 0.02; }
+      ss.chaos = Math.max(0, Math.min(100, ss.chaos + (rate > 0 ? rate * (ss.round ? 1.6 : 1.1) : -0.04)));
+      if (ss.chaos >= 100) G.script.run(ssFail(w));
+    },
+    tint(ctx) {
+      const w = G.play.world, ss = w && w.ss;
+      renFlakes(ctx, [[2, 3.5], [5, 4], [9.5, 3.6], [12.5, 4.2]]);
+      if (!ss || ss.phase === 'intro') return;
+      const FT = G.font, sh = { shadow: '#0c0814' };
+      // the HUD: which part, how many questions left, and the CHAOS meter
+      ctx.fillStyle = 'rgba(12,8,20,0.78)'; ctx.fillRect(84, G.H - 22, 152, 20);
+      const label = ss.phase === 'done' ? 'Class is over!' : SS_ROUNDS[ss.round].name + ': ' + G.sayable(ss.left) + ' left';
+      FT.draw(ctx, label, 88, G.H - 21, '#f8d850', sh);
+      FT.draw(ctx, 'CHAOS', 88, G.H - 12, '#c8c0d8', sh);
+      const mx = 88 + FT.width('CHAOS') + 4, mw = 232 - mx, k = ss.chaos / 100;
+      ctx.fillStyle = '#0c0814'; ctx.fillRect(mx, G.H - 11, mw, 7);
+      ctx.fillStyle = k > 0.7 ? '#f86858' : k > 0.4 ? '#f8d850' : '#78e070'; ctx.fillRect(mx + 1, G.H - 10, Math.round((mw - 2) * k), 5);
+      if (k > 0.7 && (G.tick >> 3) % 2) { ctx.fillStyle = 'rgba(248,104,88,0.12)'; ctx.fillRect(0, 0, G.W, G.H); }
     },
   };
 

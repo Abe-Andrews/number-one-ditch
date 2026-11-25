@@ -1752,6 +1752,84 @@
       p.rect(0, 0, 16, 16, '#cdc5b8');
       for (let i = 0; i < 18; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#c0b8aa' : '#d8d2c6');
     },
+    // ---- Renaissance Church
+    // the lobby and sanctuary: white walls; polished gray concrete; the sanctuary's dark carpet
+    faceRenWhite(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#f4f4f0');
+      for (let i = 0; i < 3; i++) p.set(r() * 16, r() * 16, '#eaeae4');
+      if (mask & 1) { p.rect(0, 0, 16, 2, '#fafaf8'); p.hline(0, 15, 2, '#d8d8d2'); }
+      if (mask & 4) { p.rect(0, 14, 16, 2, '#3a3a3e'); p.hline(0, 15, 14, '#56565c'); }
+    },
+    renConcrete(p, r, v) {
+      p.rect(0, 0, 16, 16, '#aeb2b4');
+      for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#a6aaac' : '#b6babc');
+      // the polish: soft light streaks from the big front windows
+      if (v === 0) { p.hline(1, 10, 6, '#bcc0c2'); p.hline(4, 14, 7, '#b8bcbe'); }
+      if (v === 2) p.hline(6, 15, 11, '#bcc0c2');
+    },
+    renSeatCarpet(p, r) {
+      p.rect(0, 0, 16, 16, '#3a4050');
+      for (let i = 0; i < 16; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#343a4a' : '#444a5c');
+    },
+    renStageWhite(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#2a2a34');
+      for (let i = 0; i < 6; i++) p.set(r() * 16, r() * 16, '#34343e');
+      if (mask & 4) { p.rect(0, 11, 16, 5, '#e8e8ec'); p.hline(0, 15, 11, '#ffffff'); p.hline(0, 15, 15, '#b8b8c0'); for (let x = 2; x < 16; x += 8) p.set(x, 13, '#7a8af8'); }
+    },
+    // renkids: white painted brick, gray wood-look vinyl, the lounge's gray walls
+    faceRenBrickW(p, r, v, mask) {
+      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const row = Math.floor(y / 4), off = row % 2 ? 4 : 0; p.set(x, y, y % 4 === 3 || (x + off) % 8 === 0 ? '#dcdcd6' : '#f6f6f2'); }
+      if (mask & 1) { p.rect(0, 0, 16, 2, '#fafaf8'); p.hline(0, 15, 2, '#d0d0ca'); }
+      if (mask & 4) { p.rect(0, 14, 16, 2, '#2a2a2e'); }
+    },
+    renVinyl(p, r, v) {
+      p.rect(0, 0, 16, 16, '#b8b2a8');
+      for (let row = 0; row < 4; row++) {
+        const y = row * 4, seam = (v * 9 + row * 5) % 16;
+        p.hline(0, 15, y, '#c0bab0'); p.hline(0, 15, y + 3, '#aca69c');
+        if ((v + row) % 2) p.vline(seam, y, y + 2, '#aca69c');
+        for (let i = 0; i < 2; i++) p.set(r() * 16, y + 1 + Math.floor(r() * 2), r() < 0.5 ? '#aca69c' : '#cac4ba');
+      }
+    },
+    faceLounge(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#5a5a5e');
+      for (let i = 0; i < 3; i++) p.set(r() * 16, r() * 16, '#545458');
+      if (mask & 1) { p.rect(0, 0, 16, 2, '#f0f0ec'); p.hline(0, 15, 2, '#48484c'); }
+      if (mask & 4) { p.rect(0, 14, 16, 2, '#2a2a2e'); }
+    },
+    renRug(p, r, v) {
+      p.rect(0, 0, 16, 16, '#4a7ac0');
+      for (let i = 0; i < 10; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#4472b6' : '#5484ca');
+      p.hline(0, 15, 15, '#3a64a4'); p.vline(15, 0, 15, '#3a64a4');
+    },
+    // the wooden chapel: warm old brick at the stage end, dark floor, the gray carpeted stage,
+    // and the wood-paneled partition at the back
+    faceChapel(p, r, v, mask) {
+      for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++) { const row = Math.floor(y / 3), off = row % 2 ? 3 : 0; p.set(x, y, y % 3 === 2 || (x + off) % 6 === 0 ? '#5a4030' : G.hash(Math.floor((x + off) / 6) + v * 5, row, 571) < 0.3 ? '#7a5038' : '#8a5c40'); }
+      if (mask & 1) { p.rect(0, 0, 16, 3, '#6a4a2a'); p.hline(0, 15, 0, '#8a6438'); p.hline(0, 15, 3, '#3a2818'); }
+      if (mask & 4) { p.rect(0, 14, 16, 2, '#2a1e16'); }
+    },
+    renSlate(p, r, v) {
+      p.rect(0, 0, 16, 16, '#3a3e46');
+      for (let i = 0; i < 10; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#343840' : '#42464e');
+      p.hline(0, 15, 15, '#30343a'); p.vline(15, 0, 15, '#30343a');
+    },
+    renStageGray(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#7a7c80');
+      for (let i = 0; i < 14; i++) p.set(r() * 16, r() * 16, r() < 0.5 ? '#72747a' : '#84868a');
+      if (mask & 4) { p.rect(0, 12, 16, 4, '#5e6064'); p.hline(0, 15, 12, '#9a9ca0'); }
+    },
+    faceWoodPanel(p, r, v, mask) {
+      p.rect(0, 0, 16, 16, '#8a5a30');
+      for (let x = 0; x < 16; x += 4) { p.vline(x, 0, 15, '#6a4220'); p.vline(x + 1, 0, 15, '#9a6a3a'); }
+      for (let i = 0; i < 4; i++) p.set(r() * 16, r() * 16, '#7a4e28');
+      if (mask & 1) { p.rect(0, 0, 16, 2, '#4a3018'); }
+      if (mask & 4) { p.rect(0, 14, 16, 2, '#3a2412'); }
+    },
+    renLightWood(p, r, v) {
+      p.rect(0, 0, 16, 16, '#d8ccb8');
+      for (let row = 0; row < 4; row++) { const y = row * 4, seam = (v * 7 + row * 6) % 16; p.hline(0, 15, y + 3, '#c4b8a2'); p.vline(seam, y, y + 2, '#c4b8a2'); p.set(r() * 16, y + 1, '#e4d8c6'); }
+    },
     whiteTile(p, r) {
       p.rect(0, 0, 16, 16, '#f0f0ec');
       p.hline(0, 15, 7, '#d0d0cc'); p.hline(0, 15, 15, '#d0d0cc'); p.vline(7, 0, 15, '#d0d0cc'); p.vline(15, 0, 15, '#d0d0cc');
@@ -11277,6 +11355,551 @@
     G.font.draw(x, t, Math.round((W - G.font.width(t)) / 2), 14, '#f8f0d8', { shadow: '#0e1e30' });
     return cv;
   }
+  // ================================================================ RENAISSANCE CHURCH
+  // (Springfield, NJ, drawn from the user's photos and walk-through videos)
+  const renTxt = (cv, t, x, y, c, o) => { G.font.draw(cv.getContext('2d'), t, x, y, c, o); return cv; };
+  // the front: two stories of salmon split-face block with a pale stone band, dark shingled roof
+  // wings, and in the middle a tall white portico: a tan stucco gable with dentils and a round
+  // louvered vent, four big round columns, and a two-story wall of glass in dark bronze frames.
+  // The doors are at the bottom middle (x 96-112).
+  function renFront() {
+    const W = 208, H = 96, p = new Pix(W, H);
+    const blk = '#c98a6a', blkD = '#b07558', blkL = '#d89c7c', mortar = '#e2bfa6', stone = '#ddd4c2', stoneD = '#c4baa6';
+    const sh = ['#5c4c42', '#66554a', '#4e4038'];
+    // the brick wings (both stories)
+    for (let y = 30; y < H; y++) for (let x = 0; x < W; x++) {
+      const row = Math.floor(y / 4), off = row % 2 ? 5 : 0;
+      const m = y % 4 === 3 || (x + off) % 10 === 0;
+      p.set(x, y, m ? mortar : G.hash(Math.floor((x + off) / 10), row, 501) < 0.2 ? blkD : G.hash(Math.floor((x + off) / 10), row, 502) < 0.15 ? blkL : blk);
+    }
+    // the shingled roof wings, sloping back, with a white fascia
+    for (let y = 16; y < 30; y++) { const inset = Math.floor((29 - y) / 3); for (let x = inset; x < W - inset; x++) p.set(x, y, y % 3 === 0 ? sh[2] : sh[(Math.floor((x + (y % 6 < 3 ? 3 : 0)) / 5)) % 2]); }
+    p.hline(0, W - 1, 29, '#f2f0ea'); p.hline(0, W - 1, 30, '#c8c2b8');
+    // the stone band between the stories, and the sill line
+    p.rect(0, 58, W, 3, stone); p.hline(0, W - 1, 60, stoneD);
+    p.rect(0, 92, W, 4, '#a8a094');
+    // windows: upstairs and down, dark glass in bronze frames with a white sill
+    const win = (x0, y0, w, h) => {
+      p.rect(x0, y0, w, h, '#3c3028'); p.rect(x0 + 1, y0 + 1, w - 2, h - 2, '#56687a');
+      p.vline(x0 + Math.floor(w / 2), y0 + 1, y0 + h - 2, '#3c3028');
+      p.set(x0 + 2, y0 + 2, '#9ab4c8'); p.set(x0 + 3, y0 + 2, '#9ab4c8'); p.set(x0 + 2, y0 + 3, '#9ab4c8');
+      p.hline(x0 - 1, x0 + w, y0 + h, stone);
+    };
+    for (const x0 of [8, 34, 160, 186]) { win(x0, 36, 14, 16); win(x0, 66, 14, 18); }
+    // the glass wall behind the portico: two stories of panes in bronze frames, doors at the bottom
+    const gx0 = 80, gx1 = 128;
+    p.rect(gx0 - 6, 30, gx1 - gx0 + 12, 66, blk);
+    p.rect(gx0, 34, gx1 - gx0, 62, '#2e241e');
+    for (let y = 35; y < 95; y++) for (let x = gx0 + 1; x < gx1 - 1; x++) {
+      const t = (x - gx0) / (gx1 - gx0);
+      p.set(x, y, y > 52 && y < 60 && G.hash(x >> 1, y, 503) < 0.5 ? '#6a7a86' : t + (y - 35) / 120 < 0.55 ? '#62788a' : '#4c5e6e');
+    }
+    // reflected bare trees in the glass
+    for (let i = 0; i < 9; i++) { const tx = gx0 + 3 + Math.floor(G.hash(i, 1, 504) * 42), th = 6 + Math.floor(G.hash(i, 2, 504) * 8); p.vline(tx, 68 - th, 68, '#3a4650'); p.set(tx - 1, 68 - th + 2, '#3a4650'); p.set(tx + 1, 68 - th + 4, '#3a4650'); }
+    for (const x of [gx0 + 12, gx0 + 24, gx0 + 36]) p.vline(x, 35, 94, '#2e241e');
+    for (const y of [48, 62, 76]) p.hline(gx0, gx1 - 1, y, '#2e241e');
+    // the doors (four glass doors, the logo on the middle two)
+    p.rect(gx0 + 1, 78, gx1 - gx0 - 2, 17, '#3e4c58');
+    for (const x of [gx0 + 12, gx0 + 24, gx0 + 36]) p.vline(x, 78, 94, '#2e241e');
+    for (const x of [gx0 + 22, gx0 + 26]) p.vline(x, 84, 88, '#c8b890');
+    for (const cx of [gx0 + 18, gx0 + 30]) { p.set(cx, 81, '#f0f0f0'); p.set(cx + 1, 81, '#f0f0f0'); p.set(cx, 82, '#f0f0f0'); p.set(cx + 1, 82, '#f0f0f0'); }
+    // the lanterns on the brick, either side of the glass
+    for (const lx of [gx0 - 12, gx1 + 9]) { p.rect(lx, 64, 4, 6, '#4a3424'); p.rect(lx + 1, 65, 2, 4, '#f0d890'); p.hline(lx - 1, lx + 4, 63, '#3a2818'); p.set(lx + 1, 62, '#3a2818'); p.set(lx + 2, 62, '#3a2818'); }
+    // the portico roof: dark trim, then the tan stucco gable with white raking trim and dentils
+    const px0 = 56, px1 = 152, pmid = 104;
+    for (let j = 0; j <= 26; j++) {
+      const half = Math.round(j * 1.85), y = 2 + j;
+      p.hline(pmid - half - 2, pmid + half + 1, y, '#f4f2ec');
+      if (j >= 3) { p.hline(pmid - half + 2, pmid + half - 3, y, '#d8ccae'); if (j % 2 === 0 && j < 26) { p.set(pmid - half + 2, y, '#e8e2d2'); p.set(pmid + half - 3, y, '#e8e2d2'); } }
+    }
+    // dentils along the rake and the base of the gable
+    for (let j = 4; j < 26; j += 2) { const half = Math.round(j * 1.85); p.set(pmid - half + 3, 2 + j, '#b8ae96'); p.set(pmid + half - 4, 2 + j, '#b8ae96'); }
+    // the round louvered vent in the gable
+    for (let y = -5; y <= 5; y++) for (let x = -5; x <= 5; x++) { const d = x * x + y * y; if (d <= 30) p.set(pmid + x, 15 + y, d > 18 ? '#f6f4ee' : (y + 5) % 2 ? '#e2ddd0' : '#c8c0b0'); }
+    // the entablature, with its row of dentils
+    p.rect(px0 - 2, 28, px1 - px0 + 4, 6, '#f4f2ec'); p.hline(px0 - 2, px1 + 1, 33, '#d4cfc4');
+    for (let x = px0; x < px1; x += 3) p.set(x, 30, '#c8c2b4');
+    p.rect(px0, 34, px1 - px0, 3, '#3a3028');
+    // four big round columns (the outer two stand out front), with caps and bases
+    for (const cx of [62, 82, 126, 146]) {
+      p.rect(cx - 5, 36, 10, 3, '#f6f4ee'); p.hline(cx - 5, cx + 4, 38, '#d8d4ca');
+      for (let y = 39; y < 92; y++) { p.hline(cx - 3, cx + 3, y, '#f2f0ea'); p.set(cx - 3, y, '#ffffff'); p.set(cx + 2, y, '#d8d4ca'); p.set(cx + 3, y, '#c4c0b6'); }
+      p.rect(cx - 5, 91, 10, 4, '#e8e4dc'); p.hline(cx - 5, cx + 4, 94, '#c4c0b6');
+    }
+    p.outline();
+    return p.canvas();
+  }
+  // a white steel bollard (four of them out front)
+  function renBollard() {
+    const p = new Pix(6, 14);
+    p.rect(1, 1, 4, 12, '#f2f0ea'); p.vline(1, 1, 12, '#ffffff'); p.vline(4, 1, 12, '#c8c4bc'); p.hline(1, 4, 0, '#e0dcd4');
+    p.outline();
+    return p.canvas();
+  }
+  // the sign out by the road: a black panel with the logo ring and the name
+  function renMonument() {
+    const W = G.font.width('RENAISSANCE') + 26, p = new Pix(W, 24);
+    p.rect(2, 18, W - 4, 6, '#b07558'); for (let x = 2; x < W - 2; x += 5) p.vline(x, 18, 23, '#d89c7c');
+    p.rect(0, 0, W, 18, '#1e1c1c'); p.hline(0, W - 1, 0, '#3a3634');
+    for (let y = -4; y <= 4; y++) for (let x = -4; x <= 4; x++) { const d = x * x + y * y; if (d <= 18 && d >= 8) p.set(9 + x, 9 + y, '#f4f2ec'); }
+    p.rect(8, 7, 3, 5, '#f4f2ec');
+    p.outline();
+    const cv = p.canvas();
+    renTxt(cv, 'RENAISSANCE', 18, 1, '#f4f2ec');
+    renTxt(cv, 'church', 18, 9, '#b8b0a4');
+    return cv;
+  }
+  // ---- the lobby
+  // the sanctuary doors: tall wood double doors with a pointed slit of blue glass in each
+  function renSanctDoors() {
+    const p = new Pix(32, 32), wood = '#b06a30', woodD = '#8e5224', woodL = '#c47c3e';
+    p.rect(0, 0, 32, 32, '#7a4a24'); p.rect(1, 1, 30, 31, wood);
+    for (let y = 1; y < 32; y++) { p.set(1, y, woodL); p.set(30, y, woodD); }
+    p.vline(15, 1, 31, '#5a3418'); p.vline(16, 1, 31, '#5a3418');
+    const slit = (x0, dir) => { for (let y = 8; y < 26; y++) { const w = y < 13 ? Math.max(1, y - 8) : 4; for (let i = 0; i < w; i++) p.set(dir > 0 ? x0 + i : x0 - i, y, '#3a4a68'); } };
+    slit(9, 1); slit(22, -1);
+    p.vline(10, 9, 24, '#5a6a88');
+    p.rect(13, 17, 1, 5, '#e0c060'); p.rect(18, 17, 1, 5, '#e0c060');
+    p.outline('#3a2010');
+    return p.canvas();
+  }
+  // the other big doors: a pointed top over a window, and wood panels with diamond glass
+  function renPointDoors() {
+    const p = new Pix(32, 32), wood = '#b87436', woodD = '#94582a';
+    for (let y = 0; y < 32; y++) for (let x = 0; x < 32; x++) {
+      if (y < 8 && Math.abs(x - 15.5) > y * 2 + 1) continue;
+      p.set(x, y, wood);
+    }
+    for (let y = 2; y < 7; y++) for (let x = 0; x < 32; x++) if (Math.abs(x - 15.5) < y * 2 - 2) p.set(x, y, '#e4ecf2');
+    p.hline(0, 31, 8, woodD);
+    p.vline(15, 9, 31, '#6a3e1a'); p.vline(16, 9, 31, '#6a3e1a');
+    for (const x0 of [3, 19]) for (const y0 of [11, 21]) for (let j = 0; j < 9; j++) { const w = j < 5 ? j : 8 - j; p.hline(x0 + 4 - w, x0 + 4 + w, y0 + j, '#c8d8e4'); }
+    p.rect(13, 19, 1, 4, '#e0c060'); p.rect(18, 19, 1, 4, '#e0c060');
+    p.outline('#3a2010');
+    return p.canvas();
+  }
+  // a flocked Christmas tree with silver and blue ornaments and a plaid ribbon
+  function renXmasTree() {
+    const W = 24, H = 38, p = new Pix(W, H);
+    for (let y = 2; y < 33; y++) {
+      const half = Math.min(11, Math.floor((y - 1) * 0.36) + 1 + ((y % 5) === 0 ? 1 : 0));
+      for (let x = 12 - half; x <= 11 + half; x++) p.set(x, y, G.hash(x, y, 511) < 0.35 ? '#e8ece8' : G.hash(x, y, 512) < 0.5 ? '#3e5a48' : '#4e6c56');
+    }
+    for (let i = 0; i < 18; i++) { const y = 6 + Math.floor(G.hash(i, 1, 513) * 25), half = Math.floor((y - 1) * 0.36); const x = 12 - half + Math.floor(G.hash(i, 2, 513) * half * 2); p.set(x, y, ['#c8ccd8', '#4a6ac8', '#f0f0f8', '#2a3a6a'][i % 4]); }
+    for (let y = 10; y < 30; y += 6) for (let k = 0; k < 6; k++) p.set(6 + k * 2 + (y % 4), y + (k % 2), k % 2 ? '#2a3a5a' : '#6a7a9a');
+    p.set(12, 1, '#f0e8c0'); p.set(11, 2, '#f0e8c0'); p.set(12, 2, '#fff8d8'); p.set(13, 2, '#f0e8c0');
+    p.rect(9, 33, 6, 5, '#c8a040'); p.hline(9, 14, 33, '#e0c060');
+    p.outline();
+    return p.canvas();
+  }
+  // a black high-top table
+  function renBistro() {
+    const p = new Pix(14, 22);
+    for (let y = 0; y < 6; y++) for (let x = 0; x < 14; x++) { const d = ((x - 6.5) / 7) ** 2 + ((y - 2.5) / 3) ** 2; if (d <= 1) p.set(x, y, y < 2 ? '#4a4a50' : '#2a2a2e'); }
+    p.vline(6, 5, 19, '#1e1e22'); p.vline(7, 5, 19, '#2e2e34');
+    for (let x = 3; x < 11; x++) p.set(x, 20, '#1e1e22'); p.rect(4, 19, 6, 1, '#2a2a2e'); p.rect(4, 21, 6, 1, '#141418');
+    p.outline();
+    return p.canvas();
+  }
+  // the Connect Center: wood shelves of books and baskets, under a dark sign
+  function renConnectShelf() {
+    const W = 44, H = 30, p = new Pix(W, H), wood = '#c8955a', woodD = '#a87840';
+    p.rect(0, 0, W, H, wood); p.vline(0, 0, H - 1, woodD); p.vline(W - 1, 0, H - 1, woodD); p.vline(21, 0, H - 1, woodD);
+    for (const y of [9, 19, 29]) p.hline(0, W - 1, y, woodD);
+    const cs = ['#2a4a7a', '#f0ece0', '#7a3a3a', '#3a6a5a', '#d8c8a0', '#2a2a30'];
+    for (const y0 of [2, 12]) { let x = 2, i = y0; while (x < W - 4) { if (x > 18 && x < 23) { x = 23; continue; } const w = 3 + (i % 2), c = cs[(i * 5 + x) % cs.length]; p.rect(x, y0, w, 7, c); p.hline(x, x + w - 1, y0, shade(c, 0.2)); x += w + 1; i++; } }
+    for (const x0 of [3, 24]) { p.rect(x0, 22, 14, 6, '#a88050'); for (let x = x0; x < x0 + 14; x += 2) p.vline(x, 22, 27, '#8a6438'); p.hline(x0, x0 + 13, 22, '#c8a070'); }
+    p.outline();
+    return p.canvas();
+  }
+  function renConnectSign() {
+    const W = G.font.width('Connect Center') + 8, p = new Pix(W, 10);
+    p.rect(0, 0, W, 10, '#2a2c34'); p.outline();
+    return renTxt(p.canvas(), 'Connect Center', 4, 1, '#f0f0ec');
+  }
+  // a wall TV with the church's logo on it
+  function renLogoTV() {
+    const p = new Pix(30, 18);
+    p.rect(0, 0, 30, 18, '#141418'); p.rect(1, 1, 28, 16, '#1c1c24');
+    for (let y = -3; y <= 3; y++) for (let x = -3; x <= 3; x++) { const d = x * x + y * y; if (d <= 10 && d >= 4) p.set(8 + x, 9 + y, '#f0f0f0'); }
+    p.hline(13, 24, 7, '#e0e0e0'); p.hline(13, 20, 10, '#a0a0a8'); p.rect(22, 3, 6, 12, '#3a6ac8'); p.hline(23, 26, 6, '#9ab8f0'); p.hline(23, 26, 9, '#9ab8f0');
+    p.outline();
+    return p.canvas();
+  }
+  // a pair of narrow stained glass windows on the lobby wall
+  function renLobbyGlass() {
+    const p = new Pix(22, 26), cs = ['#2a8a4a', '#c83838', '#e8b830', '#2a5ab8'];
+    for (const x0 of [0, 12]) {
+      p.rect(x0, 0, 10, 26, '#1a1a1e');
+      for (let y = 1; y < 25; y++) for (let x = x0 + 1; x < x0 + 9; x++) p.set(x, y, (x + y) % 5 === 0 ? '#1a1a1e' : cs[(Math.floor((x - x0) / 3) + Math.floor(y / 4)) % 4]);
+    }
+    p.outline();
+    return p.canvas();
+  }
+  // a roll-up banner: CHRISTMAS FOR KIDS
+  function renKidsBanner() {
+    const p = new Pix(16, 34);
+    p.rect(1, 0, 14, 31, '#3a8a9a'); p.rect(1, 0, 14, 2, '#d8d4cc');
+    for (let i = 0; i < 6; i++) p.set(3 + (i * 5) % 10, 4 + i * 4, '#f0f0f0');
+    p.rect(3, 14, 10, 2, '#f0f0f0'); p.rect(3, 18, 10, 2, '#c83838'); p.rect(3, 22, 7, 2, '#f0f0f0');
+    p.rect(0, 31, 16, 3, '#9a9aa0');
+    p.outline();
+    return p.canvas();
+  }
+  // a round black trash can
+  function renBin() {
+    const p = new Pix(10, 14);
+    p.rect(1, 2, 8, 12, '#1e1e22'); p.rect(0, 0, 10, 3, '#2a2a30'); p.hline(0, 9, 0, '#4a4a50'); p.vline(2, 3, 12, '#34343a');
+    p.outline();
+    return p.canvas();
+  }
+  // the black metal railing around the stairs down to renkids
+  function renRailing(w) {
+    const p = new Pix(w, 14);
+    p.hline(0, w - 1, 1, '#2a2a2e'); p.hline(0, w - 1, 2, '#1a1a1e'); p.hline(0, w - 1, 9, '#1a1a1e');
+    for (let x = 1; x < w; x += 4) p.vline(x, 2, 13, '#1e1e22');
+    return p.canvas();
+  }
+  function renkidsSign() {
+    const W = G.font.width('renkids') + 12, p = new Pix(W, 13);
+    p.rect(0, 0, W, 13, '#1c1a18'); p.outline();
+    const cv = p.canvas();
+    renTxt(cv, 'ren', 6, 2, '#c8a058'); renTxt(cv, 'kids', 6 + G.font.width('ren'), 2, '#f4f2ec');
+    return cv;
+  }
+  // ---- the main sanctuary
+  // a tall white arched window with clear glass
+  function renArchWin() {
+    const p = new Pix(12, 30);
+    for (let y = 0; y < 30; y++) for (let x = 0; x < 12; x++) {
+      if (y < 6 && (x - 5.5) ** 2 + ((y - 6) * 1.1) ** 2 > 36) continue;
+      p.set(x, y, '#f4f4f0');
+      if (x > 1 && x < 10 && y > 1 && y < 28 && !(y < 7 && (x - 5.5) ** 2 + ((y - 6) * 1.2) ** 2 > 16)) p.set(x, y, y % 9 === 4 ? '#e8ecf0' : '#dce8f4');
+    }
+    p.vline(5, 3, 27, '#f4f4f0'); p.vline(6, 3, 27, '#f4f4f0');
+    p.outline('#b8bcc4');
+    return p.canvas();
+  }
+  // a beige acoustic panel
+  function renPanel() {
+    const p = new Pix(12, 22);
+    p.rect(0, 0, 12, 22, '#d8d0c0'); for (let i = 0; i < 10; i++) p.set(1 + (i * 7) % 10, 1 + (i * 5) % 20, '#ccc4b2');
+    p.outline('#a8a090');
+    return p.canvas();
+  }
+  // the big LED wall in its black truss, full of stars
+  function renLedWall() {
+    const W = 144, H = 60, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#16161c');
+    for (let x = 0; x < W; x += 4) { p.set(x, 1, '#3a3a44'); p.set(x + 2, 3, '#3a3a44'); p.set(x, H - 2, '#3a3a44'); }
+    p.hline(0, W - 1, 0, '#2e2e38'); p.hline(0, W - 1, 4, '#2e2e38'); p.vline(0, 0, H - 1, '#2e2e38'); p.vline(W - 1, 0, H - 1, '#2e2e38');
+    for (let y = 6; y < H - 4; y++) for (let x = 4; x < W - 4; x++) {
+      const n = G.hash(x, y, 521), band = Math.abs((x - 4) / (W - 8) - 0.5 - (y - 6) / (H - 10) * 0.3);
+      p.set(x, y, n < 0.04 ? '#f0f4ff' : n < 0.09 ? '#a8b8f0' : band < 0.12 && n < 0.5 ? '#3a4ab8' : '#1e2a7a');
+    }
+    // lights hung on the truss
+    for (let x = 10; x < W - 6; x += 16) { p.rect(x, 1, 3, 3, '#e8f0ff'); }
+    p.outline();
+    return p.canvas();
+  }
+  // a projection screen off to the side (stars on it too)
+  function renSideScreen() {
+    const p = new Pix(40, 24);
+    p.rect(0, 0, 40, 24, '#f0f0f0');
+    for (let y = 2; y < 22; y++) for (let x = 2; x < 38; x++) { const n = G.hash(x, y, 522); p.set(x, y, n < 0.05 ? '#f0f4ff' : n < 0.1 ? '#9aaae8' : '#2a3a9a'); }
+    p.outline('#8a8a94');
+    return p.canvas();
+  }
+  // a padded blue-gray chair, and the sound booth at the back
+  function renChair() {
+    const p = new Pix(14, 14);
+    p.rect(1, 0, 12, 6, '#5a6478'); p.hline(1, 12, 0, '#6e788c'); p.hline(1, 12, 5, '#4a5468');
+    p.rect(0, 6, 14, 5, '#4e586c'); p.hline(0, 13, 6, '#646e84');
+    p.vline(1, 11, 13, '#1e1e24'); p.vline(12, 11, 13, '#1e1e24');
+    p.outline('#14141a');
+    return p.canvas();
+  }
+  function renBooth() {
+    const W = 80, H = 30, p = new Pix(W, H);
+    p.rect(0, 8, W, 22, '#e8e8e4'); p.hline(0, W - 1, 8, '#ffffff'); p.hline(0, W - 1, 29, '#b8b8b4');
+    p.rect(2, 2, W - 4, 7, '#2a2a30'); p.hline(2, W - 3, 2, '#3a3a44');
+    for (let x = 4; x < W - 6; x += 3) { p.set(x, 4, ['#e85848', '#58e868', '#e8d848'][x % 3]); p.set(x, 6, '#8a8a94'); }
+    p.rect(30, 0, 14, 8, '#1a1a1e'); p.rect(31, 1, 12, 5, '#3a6ac8'); p.hline(32, 41, 3, '#9ab8f0');
+    p.rect(52, 0, 10, 7, '#1a1a1e'); p.rect(53, 1, 8, 4, '#4a8a5a');
+    p.outline();
+    return p.canvas();
+  }
+  // ---- renkids
+  // an oak door with a tall narrow window, and the little black signs over the doors
+  function renOakDoor() {
+    const p = new Pix(16, 30), oak = '#c89040', oakD = '#a87430';
+    p.rect(0, 0, 16, 30, '#f0f0ec'); p.rect(1, 1, 14, 29, oak);
+    for (let y = 2; y < 30; y += 3) p.hline(2, 13, y, G.hash(y, 1, 531) < 0.5 ? oakD : '#d49c4c');
+    p.rect(4, 4, 6, 14, '#dce8ec'); p.vline(4, 4, 17, '#9ab0b8'); p.set(5, 5, '#ffffff');
+    p.rect(12, 16, 2, 3, '#c8c8cc');
+    p.outline();
+    return p.canvas();
+  }
+  function renRoomSign(t) {
+    const W = G.font.width(t) + 6, p = new Pix(W, 10);
+    p.rect(0, 0, W, 10, '#2a2826'); p.outline();
+    return renTxt(p.canvas(), t, 3, 1, '#f0eee8');
+  }
+  // plywood double doors with a wreath on each, by the check-in desk
+  function renWreathDoors() {
+    const p = new Pix(32, 30), ply = '#c8aa80';
+    p.rect(0, 0, 32, 30, ply); for (let i = 0; i < 30; i++) p.set(G.hash(i, 1, 532) * 32, G.hash(i, 2, 532) * 30, '#b8986c');
+    p.vline(15, 0, 29, '#8a6c48'); p.vline(16, 0, 29, '#8a6c48');
+    for (const cx of [8, 24]) for (let a = 0; a < 24; a++) { const t = a / 24 * Math.PI * 2, x = Math.round(cx + Math.cos(t) * 5), y = Math.round(10 + Math.sin(t) * 5); p.set(x, y, a % 4 === 0 ? '#c83838' : a % 4 === 2 ? '#e8ecf0' : '#4a6a5a'); p.set(x + (x < cx ? 1 : -1), y, '#5a7a6a'); }
+    p.outline();
+    return p.canvas();
+  }
+  // the check-in table (NEW FAMILY REGISTRATION), a black metal shelf, a wall clock
+  function renRegTable() {
+    const p = new Pix(32, 18);
+    p.rect(0, 4, 32, 3, '#1e1e22'); p.vline(1, 7, 17, '#1e1e22'); p.vline(30, 7, 17, '#1e1e22');
+    p.rect(10, 0, 12, 5, '#f4f2ec'); p.hline(11, 20, 2, '#8a8a90');
+    p.rect(24, 1, 5, 3, '#2a2a30');
+    p.outline();
+    return p.canvas();
+  }
+  function renMetalShelf() {
+    const p = new Pix(14, 32);
+    p.vline(0, 0, 31, '#1e1e22'); p.vline(13, 0, 31, '#1e1e22');
+    for (const y of [2, 10, 18, 26]) { p.hline(0, 13, y, '#c8a070'); p.hline(0, 13, y + 1, '#a88050'); }
+    p.rect(2, 4, 4, 6, '#c83838'); p.rect(7, 5, 5, 5, '#e8e0c8'); p.rect(3, 12, 8, 6, '#2a4a7a'); p.rect(2, 20, 3, 6, '#e8b830'); p.rect(6, 21, 6, 5, '#f0f0ec');
+    p.outline();
+    return p.canvas();
+  }
+  function renClock() {
+    const p = new Pix(10, 10);
+    for (let y = 0; y < 10; y++) for (let x = 0; x < 10; x++) { const d = (x - 4.5) ** 2 + (y - 4.5) ** 2; if (d < 22) p.set(x, y, d > 14 ? '#1e1e22' : '#f8f8f4'); }
+    p.vline(4, 2, 4, '#1e1e22'); p.hline(5, 6, 5, '#1e1e22');
+    return p.canvas();
+  }
+  // the lounge: a black leather couch, and a window
+  function renCouch() {
+    const p = new Pix(44, 20), lth = '#2a2a2e', lthL = '#3e3e44';
+    p.rect(0, 2, 44, 14, lth); p.rect(0, 2, 5, 16, lthL); p.rect(39, 2, 5, 16, lthL);
+    p.rect(5, 0, 34, 8, lthL); p.hline(5, 38, 0, '#56565e'); p.vline(21, 1, 7, lth); p.vline(22, 1, 7, lth);
+    p.rect(5, 9, 34, 6, '#34343a'); p.vline(21, 9, 14, '#1e1e22');
+    p.vline(2, 18, 19, '#141418'); p.vline(41, 18, 19, '#141418');
+    p.outline();
+    return p.canvas();
+  }
+  function renWindow() {
+    const p = new Pix(30, 22);
+    p.rect(0, 0, 30, 22, '#f4f4f0'); p.rect(2, 2, 26, 18, '#c8dce8'); p.vline(14, 2, 19, '#f4f4f0'); p.vline(15, 2, 19, '#f4f4f0');
+    p.rect(2, 13, 26, 7, '#e8ecee'); p.hline(2, 27, 13, '#a8b0b4');
+    p.outline('#8a8e94');
+    return p.canvas();
+  }
+  // "Welcome, friends!" in green moss letters
+  function renMossWelcome() {
+    const t1 = 'Welcome,', t2 = 'friends!', W = Math.max(G.font.width(t1), G.font.width(t2)) * 1 + 6, H = 20;
+    const cv = G.canvas(W, H), x = cv.getContext('2d');
+    G.font.draw(x, t1, 3, 1, '#4a7a34', { shadow: '#2a4a1c' }); G.font.draw(x, t2, 6, 10, '#4a7a34', { shadow: '#2a4a1c' });
+    return cv;
+  }
+  // a paper snowflake (they hang all down the hall and in the chapel)
+  function renPaperFlake() {
+    const p = new Pix(11, 11);
+    for (let a = 0; a < 12; a++) { const t = a / 12 * Math.PI * 2; for (let r = 1; r <= 5; r++) p.set(Math.round(5 + Math.cos(t) * r), Math.round(5 + Math.sin(t) * r), r % 2 ? '#f8f8f4' : '#e0e0dc'); }
+    p.set(5, 5, '#ffffff');
+    return p.canvas();
+  }
+  // ---- the wooden chapel
+  // a tall, narrow stained glass slit (red, gold and blue, abstract) with a diamond on top
+  function renSlit(k, h) {
+    const H = [26, 32, 38, 44][h], p = new Pix(10, H), cs = ['#d83030', '#f0c030', '#2a5ad8', '#f0f0e8', '#e87830'];
+    for (let y = 0; y < H; y++) for (let x = 0; x < 10; x++) {
+      const top = y < 10;
+      if (top && Math.abs(x - 4.5) > (y < 5 ? y : 10 - y) + 0.5) continue;
+      if (!top && (x < 2 || x > 7)) continue;
+      p.set(x, y, (y + x * 3 + k) % 7 === 0 ? '#2a2420' : cs[Math.floor(G.hash(Math.floor(x / 2), Math.floor((y + k * 2) / 3), 541 + k) * cs.length)]);
+    }
+    p.outline('#4a3a2e');
+    return p.canvas();
+  }
+  // the wood A-frame over the chapel's brick end wall: two big beams meeting at the peak
+  function renGable() {
+    const W = 320, H = 48, p = new Pix(W, H);
+    for (let x = 0; x < W; x++) {
+      const y = Math.round(Math.abs(x - W / 2) / (W / 2) * (H - 6));
+      for (let t = 0; t < 5; t++) p.set(x, y + t, t === 0 ? '#e0a860' : t === 4 ? '#7a5028' : '#c8904a');
+    }
+    for (let x = 0; x < W; x++) { const y = Math.round(Math.abs(x - W / 2) / (W / 2) * (H - 6)); for (let yy = 0; yy < y; yy++) p.set(x, yy, (yy + x) % 4 === 0 ? '#6a4626' : '#7a5230'); }
+    return p.canvas();
+  }
+  // the pastel block glass in the chapel's side windows, as a strip on the side wall
+  function renSideGlass() {
+    const p = new Pix(8, 40), cs = ['#5ab8d8', '#f0f0e8', '#c8b888', '#d84850', '#e0e0d8', '#9ad0e0'];
+    p.rect(0, 0, 8, 40, '#6a4a2a');
+    for (let y = 1; y < 39; y++) for (let x = 1; x < 7; x++) p.set(x, y, (y % 5 === 0 || x === 4) ? '#8a7050' : cs[Math.floor(G.hash(x > 4 ? 1 : 0, Math.floor(y / 5), 542) * cs.length)]);
+    return p.canvas();
+  }
+  // the foot of one of the big curved glulam arches, where it comes down to the floor
+  function renRib() {
+    const p = new Pix(10, 26);
+    for (let y = 0; y < 26; y++) { const w = 4 + Math.floor(y / 6); p.hline(0, w, y, '#c8904a'); p.set(0, y, '#e0a860'); p.set(w, y, '#a07034'); }
+    p.outline('#4a3018');
+    return p.canvas();
+  }
+  // a baby grand piano (lid down), a speaker on its stand, a black-draped sound table
+  function renGrand() {
+    const W = 34, H = 30, p = new Pix(W, H), body = '#7a4a2a', bodyL = '#94603a';
+    for (let y = 0; y < 22; y++) for (let x = 0; x < W; x++) {
+      const curve = y < 12 ? 0 : Math.round(((y - 12) / 10) ** 1.6 * 16);
+      if (x > W - 1 - curve) continue;
+      p.set(x, y, y < 2 ? bodyL : (x + y) % 9 === 0 ? bodyL : body);
+    }
+    p.rect(0, 18, 18, 5, '#f4f2ec'); for (let x = 1; x < 18; x += 2) p.vline(x, 18, 20, '#1e1e22');
+    p.rect(0, 23, 18, 2, '#4a2a18');
+    for (const lx of [2, 15, 28]) p.rect(lx, 22, 2, 8, '#4a2a18');
+    p.rect(4, 26, 10, 3, '#2a2a30');
+    p.outline();
+    return p.canvas();
+  }
+  function renSpeaker() {
+    const p = new Pix(12, 32);
+    p.rect(1, 0, 10, 13, '#1e1e22'); for (let y = -2; y <= 2; y++) for (let x = -2; x <= 2; x++) if (x * x + y * y <= 5) p.set(6 + x, 8 + y, '#3a3a40');
+    p.rect(4, 2, 4, 2, '#3a3a40');
+    p.vline(6, 13, 27, '#4a4a50'); p.hline(1, 11, 31, '#3a3a40'); p.set(3, 30, '#3a3a40'); p.set(9, 30, '#3a3a40'); p.set(4, 29, '#3a3a40'); p.set(8, 29, '#3a3a40');
+    p.outline();
+    return p.canvas();
+  }
+  function renSoundTable() {
+    const p = new Pix(20, 18);
+    p.rect(0, 4, 20, 14, '#1a1a1e'); for (let x = 1; x < 20; x += 3) p.vline(x, 6, 17, '#24242a');
+    p.rect(4, 0, 12, 5, '#c8c8cc'); p.rect(5, 1, 10, 3, '#3a3a44'); p.set(7, 2, '#58e868'); p.set(10, 2, '#e85848');
+    p.outline();
+    return p.canvas();
+  }
+  function renStandTV() {
+    const p = new Pix(26, 30);
+    p.rect(0, 0, 26, 16, '#141418'); p.rect(1, 1, 24, 14, '#2a2a34'); p.hline(2, 12, 3, '#4a4a58');
+    p.vline(12, 16, 27, '#3a3a40'); p.vline(13, 16, 27, '#3a3a40'); p.hline(5, 20, 28, '#3a3a40'); p.hline(5, 20, 29, '#2a2a30');
+    p.outline();
+    return p.canvas();
+  }
+  // a round table with folding chairs around it, a stack of folding chairs
+  function renRoundTable() {
+    const W = 40, H = 30, p = new Pix(W, H), chair = '#8a8a90', chairD = '#6a6a70';
+    const seat = (x, y) => { p.rect(x, y, 7, 6, chair); p.hline(x, x + 6, y, '#a0a0a8'); p.hline(x, x + 6, y + 5, chairD); };
+    seat(2, 6); seat(31, 6); seat(16, 0);
+    for (let y = 0; y < 18; y++) for (let x = 0; x < 30; x++) { const d = ((x - 14.5) / 15) ** 2 + ((y - 8.5) / 8.5) ** 2; if (d <= 1) p.set(x + 5, y + 4, d > 0.82 ? '#a8a8ac' : '#c8c8c8'); }
+    p.rect(14, 10, 6, 3, '#e8e8e4'); p.rect(21, 11, 5, 2, '#c84848');
+    seat(4, 21); seat(29, 21); seat(16, 24);
+    p.outline();
+    return p.canvas();
+  }
+  function renChairStack() {
+    const p = new Pix(14, 28);
+    for (let i = 0; i < 9; i++) { p.rect(1, 2 + i * 2, 12, 2, i % 2 ? '#8a8a90' : '#9a9aa0'); }
+    p.rect(1, 0, 12, 3, '#a8a8ae'); p.vline(1, 20, 27, '#5a5a60'); p.vline(12, 20, 27, '#5a5a60');
+    p.outline();
+    return p.canvas();
+  }
+  // the back of the chapel: wood cubbies, a water cooler, a white table with a paper ball on it
+  function renCubbies() {
+    const W = 40, H = 30, p = new Pix(W, H), wood = '#d8b07a', woodD = '#b88e58';
+    p.rect(0, 0, W, H, wood);
+    for (let x = 0; x < W; x += 8) p.vline(x, 0, H - 1, woodD);
+    for (const y of [12, 22]) p.hline(0, W - 1, y, woodD);
+    for (let x = 2; x < W; x += 8) for (let y = 2; y < 11; y += 2) p.set(x + (y % 4 ? 2 : 0), y, woodD);
+    for (let x = 1; x < W - 1; x += 8) p.rect(x, 23, 6, 6, '#a88050');
+    p.set(10, 15, '#e85848'); p.set(26, 16, '#4a8ae8');
+    p.outline();
+    return p.canvas();
+  }
+  function renCooler() {
+    const p = new Pix(10, 26);
+    for (let y = 0; y < 8; y++) p.hline(2, 7, y, y === 0 ? '#a8d8f0' : '#78b8e0');
+    p.rect(1, 8, 8, 18, '#f0f0f0'); p.vline(1, 8, 25, '#ffffff'); p.vline(8, 8, 25, '#c8c8cc');
+    p.set(3, 12, '#3a6ac8'); p.set(6, 12, '#d83838');
+    p.outline();
+    return p.canvas();
+  }
+  function renPaperBallTable() {
+    const p = new Pix(16, 26);
+    for (let y = 0; y < 10; y++) for (let x = 0; x < 12; x++) if ((x - 5.5) ** 2 + (y - 4.5) ** 2 < 26) p.set(x + 2, y, G.hash(x, y, 551) < 0.4 ? '#d8d8d4' : '#f4f4f0');
+    p.rect(0, 10, 16, 2, '#f4f4f0'); p.hline(0, 15, 11, '#c8c8c4');
+    p.vline(3, 12, 25, '#e8e8e4'); p.vline(12, 12, 25, '#e8e8e4'); p.hline(3, 12, 19, '#d8d8d4');
+    p.outline();
+    return p.canvas();
+  }
+  function renExitSign() {
+    const p = new Pix(16, 7);
+    p.rect(0, 0, 16, 7, '#3a1a1a'); p.outline();
+    return renTxt(p.canvas(), 'EXIT', 1, -1, '#ff4838', { shadow: '#801010' });
+  }
+  // the window in the wood partition, looking into the dark chapel
+  function renChapelWindow() {
+    const p = new Pix(44, 20);
+    p.rect(0, 0, 44, 20, '#6a4a2a'); p.rect(2, 2, 40, 16, '#1a1a24');
+    for (let i = 0; i < 6; i++) p.vline(6 + i * 6, 6, 15, ['#d83030', '#f0c030', '#2a5ad8'][i % 3]);
+    p.rect(8, 12, 10, 4, '#3a3a44'); p.rect(26, 12, 10, 4, '#3a3a44');
+    p.hline(0, 43, 19, '#4a3018');
+    p.outline();
+    return p.canvas();
+  }
+  // ---- Mom's Sunday school class
+  function renBeanbag(c) {
+    const p = new Pix(16, 13);
+    for (let y = 0; y < 13; y++) for (let x = 0; x < 16; x++) { const d = ((x - 7.5) / 8) ** 2 + ((y - 7) / 6.5) ** 2; if (d <= 1) p.set(x, y, d < 0.3 && y < 7 ? shade(c, 0.2) : y > 9 ? shade(c, -0.25) : c); }
+    p.outline();
+    return p.canvas();
+  }
+  function renFeltBoard() {
+    const p = new Pix(24, 30);
+    p.rect(0, 0, 24, 18, '#a87840'); p.rect(1, 1, 22, 16, '#3a6a4a');
+    p.rect(4, 8, 14, 5, '#a86a3a'); p.hline(5, 16, 8, '#c8844a'); p.vline(11, 3, 8, '#e8e0c8'); p.hline(8, 14, 4, '#e8e0c8');
+    for (const [x, y] of [[6, 6], [9, 7], [15, 6], [17, 7]]) { p.set(x, y, '#f0f0f0'); p.set(x + 1, y, '#e85848'); }
+    p.rect(2, 3, 3, 2, '#f0c830'); p.set(19, 3, '#f0f0f0');
+    p.vline(3, 18, 29, '#7a5428'); p.vline(20, 18, 29, '#7a5428'); p.vline(12, 16, 26, '#7a5428');
+    p.outline();
+    return p.canvas();
+  }
+  function renToyBins() {
+    const p = new Pix(32, 18);
+    const cs = ['#e85848', '#3a78d8', '#f0c838', '#48b060'];
+    for (let i = 0; i < 4; i++) { const x = i * 8; p.rect(x, 4, 7, 14, cs[i]); p.hline(x, x + 6, 4, shade(cs[i], 0.3)); p.rect(x + 1, 1, 5, 4, ['#f0f0f0', '#e8b830', '#c83838', '#8a58c8'][i]); }
+    p.outline();
+    return p.canvas();
+  }
+  function renSnackTable() {
+    const p = new Pix(28, 18);
+    p.rect(0, 4, 28, 4, '#e8e4dc'); p.hline(0, 27, 4, '#ffffff'); p.vline(2, 8, 17, '#9a9aa0'); p.vline(25, 8, 17, '#9a9aa0');
+    p.rect(4, 0, 9, 5, '#c8c8d0'); for (let x = 5; x < 12; x++) p.set(x, 1 + (x % 2), '#f0a030');
+    p.rect(16, 0, 3, 5, '#e85848'); p.rect(20, 1, 3, 4, '#3a78d8'); p.rect(24, 2, 2, 3, '#f8f8f0');
+    p.outline();
+    return p.canvas();
+  }
+  // trouble: a spill of Goldfish crackers, and a crayon scribble on the wall
+  function renSpill() {
+    const p = new Pix(16, 10);
+    for (let i = 0; i < 14; i++) { const x = 1 + Math.floor(G.hash(i, 1, 561) * 13), y = 1 + Math.floor(G.hash(i, 2, 561) * 7); p.set(x, y, '#f0a030'); p.set(x + 1, y, '#e08820'); }
+    p.rect(10, 5, 5, 4, '#c8c8d0'); p.hline(10, 14, 5, '#e8e8f0');
+    return p.canvas();
+  }
+  function renScribble(k) {
+    const p = new Pix(18, 12), c = ['#e83838', '#3a68d8', '#38a048'][k % 3];
+    let x = 1, y = 6;
+    for (let i = 0; i < 40; i++) { p.set(x, y, c); x += G.hash(i, 1, 562 + k) < 0.5 ? 1 : 0; y += G.hash(i, 2, 562 + k) < 0.5 ? -1 : 1; if (x > 16) x = 2; y = Math.max(1, Math.min(10, y)); }
+    return p.canvas();
+  }
+  // a kid's drawing: Nate, a shark tooth, and MR. NAIT
+  function renDrawing() {
+    const p = new Pix(22, 18);
+    p.rect(0, 0, 22, 18, '#f8f8f0'); p.hline(0, 21, 17, '#d8d8d0');
+    for (let y = 3; y < 7; y++) p.hline(4, 7, y, '#e8b878'); p.hline(3, 8, 2, '#7a4a28');
+    p.vline(5, 7, 12, '#3a6ad8'); p.vline(6, 7, 12, '#3a6ad8'); p.set(4, 9, '#3a6ad8'); p.set(7, 9, '#3a6ad8'); p.set(3, 8, '#e8b878'); p.set(8, 8, '#e8b878');
+    p.vline(5, 13, 15, '#2a2a30'); p.vline(6, 13, 15, '#2a2a30');
+    for (let j = 0; j < 6; j++) p.hline(14 - Math.floor(j / 2), 14 + Math.floor(j / 2), 4 + j, '#4a4a52');
+    p.set(17, 2, '#f0c830'); p.set(2, 15, '#e85848');
+    p.outline();
+    return p.canvas();
+  }
   // the pile of mine tailings in the Fossil Park: gray-tan sand and gravel, muddy at the bottom, with
   // bits of shell and the odd glint of a tooth
   function tailingsPile() {
@@ -11911,6 +12534,18 @@
     S.squirrel = squirrel(); S.goat = [goat(0), goat(1)]; S.turtle = turtle(); S.bookmarkIcon = bookmarkIcon(); S.clubDoor = clubDoor();
     S.gardenDeer = { left: [gardenDeer(0), gardenDeer(1)] }; S.gardenDeer.right = S.gardenDeer.left.map(mirror); S.rainBarrel = rainBarrel(); S.marigold = marigold(); S.wetBlanket = wetBlanket();
     // Aurora, NC
+    S.renFront = renFront(); S.renBollard = renBollard(); S.renMonument = renMonument(); S.renSanctDoors = renSanctDoors(); S.renPointDoors = renPointDoors();
+    S.renXmasTree = renXmasTree(); S.renBistro = renBistro(); S.renConnectShelf = renConnectShelf(); S.renConnectSign = renConnectSign(); S.renLogoTV = renLogoTV(); S.renLobbyGlass = renLobbyGlass();
+    S.renKidsBanner = renKidsBanner(); S.renBin = renBin(); S.renRailing = renRailing(48); S.renRailingV = renRailing(16); S.renkidsSign = renkidsSign();
+    S.renArchWin = renArchWin(); S.renPanel = renPanel(); S.renLedWall = renLedWall(); S.renSideScreen = renSideScreen(); S.renChair = renChair(); S.renBooth = renBooth();
+    S.renOakDoor = renOakDoor(); S.renRoomSigns = {}; for (const t of ['nursery', '2s & 3s', 'the chill room', '4s-K', 'chapel', 'check-in']) S.renRoomSigns[t] = renRoomSign(t);
+    S.renWreathDoors = renWreathDoors(); S.renRegTable = renRegTable(); S.renMetalShelf = renMetalShelf(); S.renClock = renClock(); S.renCouch = renCouch(); S.renWindow = renWindow();
+    S.renMossWelcome = renMossWelcome(); S.renPaperFlake = renPaperFlake();
+    S.renSlits = []; for (let h = 0; h < 4; h++) for (let k = 0; k < 4; k++) S.renSlits.push(renSlit(k, h)); S.renGable = renGable(); S.renSideGlass = renSideGlass(); S.renRib = renRib(); { const c = G.canvas(S.renRib.width, S.renRib.height), x = c.getContext('2d'); x.scale(-1, 1); x.drawImage(S.renRib, -S.renRib.width, 0); S.renRibR = c; } S.renGrand = renGrand(); S.renSpeaker = renSpeaker(); S.renSoundTable = renSoundTable();
+    S.renStandTV = renStandTV(); S.renRoundTable = renRoundTable(); S.renChairStack = renChairStack(); S.renCubbies = renCubbies(); S.renCooler = renCooler(); S.renPaperBallTable = renPaperBallTable();
+    S.renExitSign = renExitSign(); S.renChapelWindow = renChapelWindow();
+    S.renBeanbags = ['#e85848', '#3a78d8', '#f0c838', '#48b060', '#8a58c8'].map(renBeanbag); S.renFeltBoard = renFeltBoard(); S.renToyBins = renToyBins(); S.renSnackTable = renSnackTable();
+    S.renSpill = renSpill(); S.renScribbles = [0, 1, 2].map(renScribble); S.renDrawing = renDrawing();
     S.auroraMuseum = auroraMuseum(); S.tailingsPile = tailingsPile(); S.fossilIdBoard = fossilIdBoard(); S.siftScreens = siftScreens(); S.hamBillboard = hamBillboard(); S.hamShop = hamShop();
     S.augustHam = {}; for (const k of ['stand', 'squash', 'dizzy', 'glaze', 'spiral', 'sleep']) S.augustHam[k] = augustHam(k);
     // Shoolby Bones Lumpsucker, in Unit B
