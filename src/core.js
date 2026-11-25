@@ -52,6 +52,9 @@ G.input = (function () {
     KeyM: 'mute',
     KeyB: 'bug', KeyP: 'pause',
     Digit6: 'six', Numpad6: 'six',
+    // (the other numbers: dance moves in the Renaissance chapel)
+    Digit1: 'n1', Digit2: 'n2', Digit3: 'n3', Digit4: 'n4', Digit5: 'n5', Digit7: 'n7', Digit8: 'n8', Digit9: 'n9', Digit0: 'n0',
+    Numpad1: 'n1', Numpad2: 'n2', Numpad3: 'n3', Numpad4: 'n4', Numpad5: 'n5', Numpad7: 'n7', Numpad8: 'n8', Numpad9: 'n9', Numpad0: 'n0',
   };
   const held = {};
   const pressed = {};

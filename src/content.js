@@ -879,7 +879,7 @@
   G.SONG_FILES = {
     bookworm: 'assets/music/globglogabgalab.m4a', // the 8-bit Globglogabgalab, in the basement until he's beaten
     serenade: 'assets/music/golden-hour.m4a', // the 8-bit "Golden Hour", for Lily vs. Mikey at the end of the driveway
-    jjChapel: 'assets/music/icejj-got-that.mp3', // Ice JJ Fish playing kids' church in the Renaissance chapel (the user's file)
+    jjChapel: 'assets/music/icejj-got-that.m4a', // Ice JJ Fish playing kids' church in the Renaissance chapel (the user's file)
   };
   // (Father Christmas's theme speeds up as he gets angrier: fc2, fc3 are set below)
   G.SONGS = {
@@ -24378,6 +24378,51 @@
   };
 
   // ---- the wooden chapel (Ice JJ Fish, playing kids' church)
+  // Dancing with the kids in the chapel: every number key is a move (6 is still the sacred number,
+  // so it isn't one). Nate can walk around and dance any time. String moves together quickly and
+  // the kids (and Ice JJ) notice.
+  const REN_DANCES = {
+    n1: { name: 'THE ROBOT', dirs: ['down'], hop: 3 },
+    n2: { name: 'THE SPRINKLER', dirs: ['left', 'right', 'left'], hop: 4 },
+    n3: { name: 'THE RUNNING MAN', dirs: ['right'], hop: 6 },
+    n4: { name: 'THE MOONWALK', dirs: ['left'], hop: 2 },
+    n5: { name: 'THE SPIN', dirs: ['down', 'left', 'up', 'right', 'down'], hop: 5 },
+    n7: { name: 'THE WORM', dirs: ['down'], hop: 1 },
+    n8: { name: 'THE FLOSS', dirs: ['left', 'right', 'left', 'right'], hop: 3 },
+    n9: { name: 'JUMPING JACKS', dirs: ['down'], hop: 10 },
+    n0: { name: 'THE DAB', dirs: ['right'], hop: 4 },
+  };
+  const REN_CHEERS = ['GO MR. NATE!', 'HE CAN DANCE!', 'DO THE ROBOT!', 'AGAIN! AGAIN!', 'MR. NATE IS SO COOL.'];
+  function renDanceTick(w) {
+    const P = G.play.player, d = w.dance || (w.dance = { t: 0, lastT: -99, combo: 0, move: null, mt: 0 });
+    d.t++;
+    // the move in progress: a hop, turning through its directions
+    if (d.move) {
+      const m = d.move, k = 1 - d.mt / 24;
+      P.z = Math.round(Math.sin(k * Math.PI) * m.hop);
+      P.dir = m.dirs[Math.min(m.dirs.length - 1, Math.floor(k * m.dirs.length))];
+      if (--d.mt <= 0) { d.move = null; P.z = 0; }
+    }
+    if (G.script.busy || G.play.menu) return;
+    for (const key in REN_DANCES) {
+      if (!G.input.hit(key)) continue;
+      G.input.eat(key);
+      const m = REN_DANCES[key];
+      d.move = m; d.mt = 24;
+      d.combo = d.t - d.lastT < 50 ? d.combo + 1 : 1; d.lastT = d.t;
+      // (one move name at a time over Nate's head)
+      w.texts = w.texts.filter((tx) => !tx.renMove);
+      w.pop(P.x, P.y - 34, m.name, '#f8f8f0'); w.texts[w.texts.length - 1].renMove = true;
+      G.audio.sfx('blip');
+      if (d.combo >= 4 && d.combo % 4 === 0) {
+        const kids = w.ents.filter((e) => e.sprite && /^renKid/.test(e.sprite)), kid = kids[Math.floor(Math.random() * kids.length)];
+        if (kid) w.pop(kid.x, kid.y - 28, REN_CHEERS[Math.floor(Math.random() * REN_CHEERS.length)], '#78e070');
+        G.audio.sfx('pop');
+      }
+      if (d.combo === 12 && w.jjNpc) w.pop(w.jjNpc.x, w.jjNpc.y - 36, 'AYYY! PASTOR\'S KID GOT MOVES!', '#a8e0ff');
+      break;
+    }
+  }
   G.MAPS.renChapel = {
     name: 'Renaissance Church: the chapel',
     music: 'jjChapel',
@@ -24424,7 +24469,7 @@
       for (const x of [18, 19]) F.stand(sp.renChairStack, x, 15, 1, look('A stack of folding chairs, taller than some of the kids.'));
       // the kids, up front, dancing
       [[6, 9, 0], [8, 10, 4], [10, 9, 1], [12, 10, 5], [14, 9, 2], [7, 12, 3], [11, 12, 6], [13, 12, 7]].forEach(([x, y, k]) => {
-        const kid = w.add(new G.NPC({ sprite: 'renKid' + k, name: REN_KIDS[k].name, x: x * 16 + 8, y: y * 16 + 12, dir: 'up', talk: function* () { yield G.say(REN_KIDS[k].name, ['THIS IS MY FAVORITE SONG.', 'I know all the words!', 'Is he famous? He seems famous.', 'Mr. Nate, DANCE.'][k % 4]); } }));
+        const kid = w.add(new G.NPC({ sprite: 'renKid' + k, name: REN_KIDS[k].name, x: x * 16 + 8, y: y * 16 + 12, dir: 'up', talk: function* () { yield G.say(REN_KIDS[k].name, k === 7 ? 'You can dance by pressing a number! Any number! ...Except that one.' : ['THIS IS MY FAVORITE SONG.', 'I know all the words!', 'Is he famous? He seems famous.', 'Mr. Nate, DANCE.'][k % 4]); } }));
         kid.draw = function (ctx, cx, cy) {
           const S = G.sprites['renKid' + k], img = S[this.dir][(G.tick >> 4) % 2 ? 1 : 2] || S[this.dir][0], hop = (G.tick + k * 9) % 32 < 8 ? 2 : 0;
           ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy - hop);
@@ -24441,7 +24486,15 @@
       F.stand(sp.renRegTable, 2, 21, 2, look('The kids\' church check-in. A sign: PARENTS, PICK UP AT THE DOOR. NOT THE WINDOW.'));
       w.addWarp(10, 23, 1, 1, 'renHall', 45, 5, 'left');
     },
-    tint(ctx) { renFlakes(ctx, [[3, 8], [8, 7.5], [13, 8.2], [18, 7.8], [5, 12], [11, 12.5], [16, 11.8], [6, 20], [15, 20.5]]); },
+    tick(w) { renDanceTick(w); },
+    onEnter() { return (function* () { const f = flags(); if (f.renDanceHint) return; f.renDanceHint = true; yield G.wait(30); yield G.say('Ava', 'Mr. Nate! You can dance by pressing a number!'); })(); },
+    tint(ctx) {
+      renFlakes(ctx, [[3, 8], [8, 7.5], [13, 8.2], [18, 7.8], [5, 12], [11, 12.5], [16, 11.8], [6, 20], [15, 20.5]]);
+      if (!G.script.busy && !G.play.overlay) {
+        const d = G.play.world.dance, t = d && d.combo > 1 && d.t - d.lastT < 50 ? 'COMBO x' + G.sayable(d.combo) : 'Numbers: dance';
+        G.font.draw(ctx, t, 236 - G.font.width(t), G.H - 11, '#f8d850', { shadow: '#0c0814' });
+      }
+    },
   };
 
 
