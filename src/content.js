@@ -24769,18 +24769,14 @@
 
 
   // ---- MOM'S SUNDAY SCHOOL (draft minigame), in the chill room
-  // Mom teaches; Nate is her helper. Kids raise their hands (a yellow !): walk over and press Z to
-  // call on them, and Mom answers. Meanwhile the room tries to fall apart: a kid wanders off to the
-  // toys, Goldfish crackers end up on the floor, somebody draws on the wall. Walk over and press Z
-  // to fix it before the CHAOS meter fills (it fills faster the more is going wrong). Three parts:
-  // easy questions, harder ones, then the big ones, when the room goes quiet and nothing goes
-  // wrong, and it's just Mom answering. Too much chaos and Mom stops class and starts that part
-  // over. (Mom's answers to the big questions are placeholders until the user writes them.)
+  // Mom teaches; Nate is her helper. Kids sit criss-cross on the rug and raise their hands (a
+  // yellow !): walk over and press Z to call on them, then pick what Mom says. Three parts: easy
+  // questions, harder ones, then the big ones.
   const KID_NAME = (i) => REN_KIDS[i].name;
   // Every question is multiple choice: the kid asks, you pick what Mom says (choice.right is hers,
   // choice.wrong are the ones she catches herself on), then choice.after plays.
   const SS_ROUNDS = [
-    { name: 'Easy questions', ask: 3, every: [230, 340], qs: [
+    { name: 'Easy questions', ask: 3, qs: [
       { kid: 0, lines: [['K', 'Did Noah bring dinosaurs on the ark?']],
         choice: { right: 'The far end of the boat.', wrong: ['Dinosaurs are made up.', 'He rode one.'],
           after: [['Michelle', 'Hmm. If he did, I hope he put them at the far end of the boat.'], ['K', 'Away from the bunnies?'], ['Michelle', 'Away from EVERYBODY, hon.']] } },
@@ -24800,7 +24796,7 @@
         choice: { right: 'Probably fish.', wrong: ['Pancakes.', 'Cereal. The good kind.'],
           after: [['Michelle', 'Probably fish. He was always hanging out with fishermen.'], ['K', 'FISH? For BREAKFAST?'], ['Nate', 'Fish is great for breakfast.'], ['K', 'Mr. Nate is weird.']] } },
     ] },
-    { name: 'Harder questions', ask: 4, every: [150, 240], qs: [
+    { name: 'Harder questions', ask: 4, qs: [
       { kid: 1, lines: [['K', 'Will my dog go to heaven?']],
         choice: { right: 'Yes. God redeems the animals too.', wrong: ['Only the good dogs.', 'Just the cats.'],
           after: [['Michelle', 'Yes, hon. God redeems the animals too. Not just people. All of it.'], ['K', 'Even Biscuit?'], ['Michelle', 'Even Biscuit.']] } },
@@ -24818,7 +24814,7 @@
         choice: { right: 'It\'s true. Be nice to bald people.', wrong: ['No, that\'s a cartoon.', 'Bears aren\'t real.'],
           after: [['Michelle', 'It\'s true. Elisha. A bunch of boys made fun of his bald head, and two bears came out of the woods.'], ['K', 'WHOA.'], ['Michelle', 'So what do we learn?'], ['Kids', 'BE NICE TO BALD PEOPLE!'], ['Michelle', 'Be nice to EVERYBODY. But yes. Especially bald people.']] } },
     ] },
-    { name: 'The big questions', ask: 3, every: null, qs: [
+    { name: 'The big questions', ask: 3, qs: [
       { kid: 3, lines: [['K', 'Miss Michelle? If God loves us... then why is there so much pain in the world?'], [null, 'The whole room goes quiet.'], ['Michelle', '...']],
         choice: { right: 'I don\'t know.', wrong: ['God is punishing bad people.', 'Pain is good for us and we don\'t realize it.'],
           after: [['Michelle', 'Honestly, hon? I don\'t know.']] } },
@@ -24840,43 +24836,11 @@
   function ssState(w) { return w.ss; }
   function ssStartRound(w, r) {
     const ss = w.ss;
-    Object.assign(ss, { round: r, left: SS_ROUNDS[r].ask, chaos: 0, t: 0, nextHand: 90, nextEvent: 260, asked: [] });
+    Object.assign(ss, { round: r, left: SS_ROUNDS[r].ask, t: 0, nextHand: 90, asked: [] });
     ssClearTrouble(w);
   }
   function ssClearTrouble(w) {
     for (const k of w.ssKids) { k.roam = null; k.hand = null; k.x = k.seat.x; k.y = k.seat.y; k.dir = 'up'; k.moving = false; }
-    w.props = w.props.filter((pr) => !pr.ssTrouble);
-  }
-  const ssTrouble = (w) => w.props.filter((pr) => pr.ssTrouble).length + w.ssKids.filter((k) => k.roam).length;
-  function ssSpill(w) {
-    const free = [[3, 4], [5, 4], [11, 4], [12, 7], [2, 7], [12, 4], [2, 5], [8, 4]].filter(([x, y]) => !w.props.some((pr) => pr.ssTrouble && pr.tx === x && pr.ty === y));
-    if (!free.length) return false;
-    const [tx, ty] = free[Math.floor(Math.random() * free.length)], x = tx * 16, y = ty * 16 + 4;
-    const pr = { img: null, x: 0, y: 0, flat: true, base: 0, ssTrouble: 'spill', tx, ty, rate: 0.035, hit: [x - 2, y - 4, x + 18, y + 14],
-      draw(ctx, cx, cy) { ctx.drawImage(G.spr.renSpill, x - cx, y - cy); },
-      talk() { const me = this; return (function* () { w.props = w.props.filter((p2) => p2 !== me); G.audio.sfx('pop'); w.pop(x + 8, y - 12, ['Cleaned up!', 'Mostly into Nate\'s mouth.', 'Goldfish: saved.'][Math.floor(Math.random() * 3)], '#f0a030'); })(); } };
-    w.props.push(pr);
-    w.pop(x + 8, y - 10, 'Uh oh. Goldfish.', '#f0a030');
-    return true;
-  }
-  function ssScribble(w) {
-    const free = SS_WALL.filter((tx) => !w.props.some((pr) => pr.ssTrouble === 'scribble' && pr.tx === tx));
-    if (!free.length) return false;
-    const tx = free[Math.floor(Math.random() * free.length)], k = Math.floor(Math.random() * 3), x = tx * 16 - 1, y = 1 * 16 + 14;
-    const pr = { img: null, x: 0, y: 0, flat: true, base: 0, ssTrouble: 'scribble', tx, rate: 0.045, hit: [x - 2, 2 * 16, x + 20, 3 * 16 + 2],
-      draw(ctx, cx, cy) { ctx.drawImage(G.spr.renScribbles[k], x - cx, y - cy); },
-      talk() { const me = this; return (function* () { w.props = w.props.filter((p2) => p2 !== me); G.audio.sfx('blip'); w.pop(x + 9, y - 6, 'Wiped off!', '#78e8e8'); })(); } };
-    w.props.push(pr);
-    w.pop(x + 9, y - 4, 'Somebody\'s drawing on the wall!', '#f86858');
-    return true;
-  }
-  function ssWander(w) {
-    const pick = w.ssKids.filter((k) => !k.roam && !k.hand);
-    if (!pick.length) return false;
-    const k = pick[Math.floor(Math.random() * pick.length)], [tx, ty] = SS_WANDER[Math.floor(Math.random() * SS_WANDER.length)];
-    k.roam = { x: tx * 16 + 8, y: ty * 16 + 12, back: false };
-    w.pop(k.x, k.y - 26, ['I\'m gonna look at the toys.', 'BRB.', 'I have to show Mr. Nate something!', 'I\'m a dinosaur now.'][Math.floor(Math.random() * 4)], '#f8d850');
-    return true;
   }
   function* ssCallOn(w, k) {
     const ss = w.ss, q = k.hand;
@@ -24906,7 +24870,6 @@
   }
   function* ssNextRound(w) {
     const ss = w.ss, r = ss.round + 1;
-    ssClearTrouble(w);
     if (r === 1) {
       yield G.say('Michelle', 'Okay! Good questions, everybody. Who\'s got a harder one?');
       yield G.say(null, 'Every hand in the room goes up.');
@@ -24933,23 +24896,14 @@
     f.renClassDone = true;
     if (first) { G.play.addTeeth(25); yield G.say(null, 'Mom slips Nate {y}25 shark teeth{/} "for gas." Nate didn\'t drive here.'); }
   }
-  function* ssFail(w) {
-    w.ss.phase = 'fail';
-    G.audio.sfx('no');
-    yield G.say('Michelle', 'OKAY. EVERYBODY FREEZE.');
-    yield G.say(null, 'Every kid freezes. One of them is upside down on a beanbag.');
-    yield G.say('Michelle', 'Back on the rug. Hands in laps. We\'re starting this part over.');
-    ssStartRound(w, w.ss.round);
-    w.ss.phase = 'play';
-  }
   S.renClassIntro = function* () {
     const w = G.play.world;
     yield G.wait(20);
     yield G.say('Michelle', 'Nate! You made it. My helper called out, so you\'re my helper.');
-    yield G.say('Michelle', 'When somebody raises their hand, go call on them. And keep this room in one piece. Spills, wanderers, crayons on the walls.');
-    yield G.say('Nate', 'How hard can it be? It\'s a handful of kids.');
-    yield G.say('Michelle', 'Oh, hon.');
-    yield howToCmd('SUNDAY SCHOOL', ['A kid with a yellow ! has a question. Walk over and press Z to call on them.', 'Trouble: a kid wandering off, Goldfish on the floor, crayon on the wall. Walk over and press Z to fix it.', 'The more that goes wrong, the faster the CHAOS meter fills. If it fills up, Mom starts that part over.', 'Three parts: easy questions, harder ones, then the big ones. For every question, you pick what Mom says.']);
+    yield G.say('Michelle', 'When somebody raises their hand, go call on them. You help me pick the answers.');
+    yield G.say('Nate', 'How hard can it be? They\'re kids.');
+    yield G.say('Michelle', 'Oh, hon. Kids ask the hardest questions there are.');
+    yield howToCmd('SUNDAY SCHOOL', ['A kid with a yellow ! has a question. Walk over and press Z to call on them.', 'Then pick what Mom says. If it\'s not right, she\'ll catch herself, and you can pick again.', 'Three parts: easy questions, harder ones, then the big ones.']);
     G.play.overlay = null;
     w.ss.phase = 'play';
   };
@@ -24978,7 +24932,7 @@
       w.ssMom = w.add(new G.NPC({ sprite: 'michelle', name: 'Michelle', x: 7 * 16 + 8, y: 4 * 16 + 10, dir: 'down', talk: function* () {
         const ss = w.ss;
         if (ss.phase === 'done') { yield G.say('Michelle', 'Snack time is the best time. Grab a juice box, hon.'); return; }
-        yield G.say('Michelle', ss.round === 2 ? 'Go on. They\'ve got the big ones.' : 'Kids with their hands up, hon. And keep the Goldfish off the floor.');
+        yield G.say('Michelle', ss.round === 2 ? 'Go on. They\'ve got the big ones.' : 'Kids with their hands up, hon. Go call on them.');
       } }));
       // the kids, criss-cross on the rug, facing her
       w.ssKids = SS_SEATS.map(([tx, ty], i) => {
@@ -24994,7 +24948,17 @@
           const img = S[this.dir][walking && this.moving ? ((G.tick >> 3) % 2 ? 1 : 2) : 0] || S[this.dir][0];
           const X = Math.round(this.x - img.width / 2) - cx, Y = Math.round(this.y - img.height) - cy;
           if (walking) ctx.drawImage(img, X, Y);
-          else { const cut = 4; ctx.drawImage(img, 0, 0, img.width, img.height - cut, X, Y + cut, img.width, img.height - cut); }
+          else {
+            // sitting criss-cross: everything down to the waist, lowered onto the rug, and a lap of
+            // crossed legs (knees out to the sides, shoes tucked in) in place of the standing legs
+            const C = G.CAST['renKid' + i], legs = 4, top = img.height - legs, sy = Y + 3;
+            ctx.drawImage(img, 0, 0, img.width, top, X, sy, img.width, top);
+            const lx = X + 1, ly = sy + top - 1, lw = img.width - 2;
+            ctx.fillStyle = '#1c1424'; ctx.fillRect(lx - 1, ly, lw + 2, 4);
+            ctx.fillStyle = C.pants; ctx.fillRect(lx, ly, lw, 2);
+            ctx.fillStyle = 'rgba(0,0,0,0.18)'; ctx.fillRect(lx + (lw >> 1) - 1, ly + 1, 2, 1);
+            ctx.fillStyle = C.shoes; ctx.fillRect(lx + 2, ly + 2, 2, 1); ctx.fillRect(lx + lw - 4, ly + 2, 2, 1);
+          }
           if (this.hand) {
             // a hand way up in the air, and a yellow ! bubble over it
             const wave = ((G.tick >> 3) % 2) ? 1 : 0, hx = X + img.width - 3, top = Y + (walking ? 0 : 4);
@@ -25008,7 +24972,7 @@
         };
         return k;
       });
-      w.ss = { phase: 'intro', round: 0, left: 0, chaos: 0, t: 0, nextHand: 90, nextEvent: 260, asked: [] };
+      w.ss = { phase: 'intro', round: 0, left: 0, t: 0, nextHand: 90, asked: [] };
       ssStartRound(w, 0);
       w.addWarp(7, 10, 1, 1, 'renHall', 26, 3, 'down');
     },
@@ -25039,32 +25003,17 @@
         const q = open.length ? open[Math.floor(Math.random() * open.length)] : null;
         if (q) { const k = w.ssKids[q.kid]; k.hand = q; k.handT = 0; G.audio.sfx('blip'); w.pop(k.x, k.y - 28, 'Ooh! Ooh! Me!', '#f8d850'); }
       }
-      // trouble
-      if (R.every && ss.t >= ss.nextEvent) {
-        if (ssTrouble(w) < 2 + ss.round) { const kinds = [ssWander, ssSpill, ssScribble]; kinds[Math.floor(Math.random() * kinds.length)](w); }
-        ss.nextEvent = ss.t + R.every[0] + Math.floor(Math.random() * (R.every[1] - R.every[0]));
-      }
-      // the meter: everything going wrong adds to it, and a hand left up too long makes the room antsy
-      let rate = 0;
-      for (const pr of w.props) if (pr.ssTrouble) rate += pr.rate;
-      for (const k of w.ssKids) { if (k.roam && !k.roam.back) rate += 0.055; if (k.hand && ++k.handT > 540) rate += 0.02; }
-      ss.chaos = Math.max(0, Math.min(100, ss.chaos + (rate > 0 ? rate * (ss.round ? 1.6 : 1.1) : -0.04)));
-      if (ss.chaos >= 100) G.script.run(ssFail(w));
     },
     tint(ctx) {
       const w = G.play.world, ss = w && w.ss;
       renFlakes(ctx, [[2, 3.5], [5, 4], [9.5, 3.6], [12.5, 4.2]]);
       if (!ss || ss.phase === 'intro') return;
       const FT = G.font, sh = { shadow: '#0c0814' };
-      // the HUD: which part, how many questions left, and the CHAOS meter
-      ctx.fillStyle = 'rgba(12,8,20,0.78)'; ctx.fillRect(84, G.H - 22, 152, 20);
+      // the HUD: which part, and how many questions are left
       const label = ss.phase === 'done' ? 'Class is over!' : SS_ROUNDS[ss.round].name + ': ' + G.sayable(ss.left) + ' left';
-      FT.draw(ctx, label, 88, G.H - 21, '#f8d850', sh);
-      FT.draw(ctx, 'CHAOS', 88, G.H - 12, '#c8c0d8', sh);
-      const mx = 88 + FT.width('CHAOS') + 4, mw = 232 - mx, k = ss.chaos / 100;
-      ctx.fillStyle = '#0c0814'; ctx.fillRect(mx, G.H - 11, mw, 7);
-      ctx.fillStyle = k > 0.7 ? '#f86858' : k > 0.4 ? '#f8d850' : '#78e070'; ctx.fillRect(mx + 1, G.H - 10, Math.round((mw - 2) * k), 5);
-      if (k > 0.7 && (G.tick >> 3) % 2) { ctx.fillStyle = 'rgba(248,104,88,0.12)'; ctx.fillRect(0, 0, G.W, G.H); }
+      const lw = FT.width(label) + 8;
+      ctx.fillStyle = 'rgba(12,8,20,0.78)'; ctx.fillRect(236 - lw, G.H - 13, lw, 11);
+      FT.draw(ctx, label, 232 - FT.width(label), G.H - 12, '#f8d850', sh);
     },
   };
 
