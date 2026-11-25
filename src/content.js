@@ -24381,16 +24381,200 @@
   // Dancing with the kids in the chapel: every number key is a move (6 is still the sacred number,
   // so it isn't one). Nate can walk around and dance any time. String moves together quickly and
   // the kids (and Ice JJ) notice.
+  // Each move draws Nate its own way (t runs 0 to 1 over the move). His sprite is 16 wide and 23
+  // tall: head on rows 0-10, shirt on 11-16 (shoulders on row 12), legs 17-22. For poses where
+  // his arms move, his own arms are erased (armless copies, cached) and new ones drawn on from
+  // the shoulders in his flannel: upper arm in the shirt color, forearm in the light plaid, a hand.
+  const OUTL = '#1c1424';
+  const armlessCache = new WeakMap();
+  const armless = (img, side) => {
+    let c = armlessCache.get(img);
+    if (c) return c;
+    c = G.canvas(img.width, img.height);
+    const x = c.getContext('2d'); x.drawImage(img, 0, 0);
+    const d = x.getImageData(0, 0, img.width, img.height), px = (xx, yy, col) => { const i = (yy * img.width + xx) * 4; if (!col) { d.data[i + 3] = 0; return; } const v = parseInt(col.slice(1), 16); d.data[i] = v >> 16; d.data[i + 1] = (v >> 8) & 255; d.data[i + 2] = v & 255; d.data[i + 3] = 255; };
+    const C = G.CAST.nate;
+    if (side) {
+      // facing right: the near arm hangs over the shirt at x 6-7; paint the shirt back in
+      for (let yy = 12; yy <= 16; yy++) for (const xx of [6, 7]) px(xx, yy, yy === 13 || yy === 16 ? C.plaidL : C.shirt);
+    } else {
+      // facing front/back: arms are columns 4 and 11 (outlined at 3 and 12) on rows 12-16
+      for (let yy = 12; yy <= 16; yy++) { px(3, yy, null); px(12, yy, null); px(4, yy, OUTL); px(11, yy, OUTL); }
+    }
+    x.putImageData(d, 0, 0);
+    armlessCache.set(img, c);
+    return c;
+  };
+  // an arm: from the shoulder (sx, sy: the top-left of its 2x2), through each joint (relative to
+  // the shoulder); the last point gets the hand. All in sprite pixels, at (bx, by).
+  const drawArm = (ctx, bx, by, sx, sy, joints) => {
+    const C = G.CAST.nate, pts = [[0, 0]].concat(joints), cells = [];
+    for (let s = 1; s < pts.length; s++) {
+      const [x1, y1] = pts[s - 1], [x2, y2] = pts[s], n = Math.max(Math.abs(x2 - x1), Math.abs(y2 - y1), 1);
+      for (let i = s === 1 ? 0 : 1; i <= n; i++) cells.push([Math.round(x1 + (x2 - x1) * i / n), Math.round(y1 + (y2 - y1) * i / n), s]);
+    }
+    const X = bx + sx, Y = by + sy;
+    ctx.fillStyle = OUTL;
+    for (const [x, y] of cells) ctx.fillRect(X + x - 1, Y + y - 1, 4, 4);
+    cells.forEach(([x, y, s], i) => { ctx.fillStyle = i >= cells.length - 1 ? C.skin : s === 1 ? C.shirt : C.plaidL; ctx.fillRect(X + x, Y + y, 2, 2); });
+  };
+  // shoulder anchors: front view (left arm, right arm), side view (the near arm)
+  const SH_L = [3, 12], SH_R = [11, 12], SH_SIDE = [6, 12];
+  const polar = (len, deg) => [Math.round(Math.cos(deg * Math.PI / 180) * len), Math.round(Math.sin(deg * Math.PI / 180) * len)];
+  const ease = (k) => k * k * (3 - 2 * k);
+  const lerp = (a, b, k) => a + (b - a) * k;
+  const danceBase = (P, cx, cy) => { const S = P.spr; return { S, x: Math.round(P.x - 8) - cx, y: Math.round(P.y - S.h + 2 - (P.z || 0)) - cy }; };
+  // draw a sprite split at the waist (row 17), the top and the legs shifted separately
+  const drawSplit = (ctx, img, x, y, topDx, legDx, legSpread) => {
+    ctx.drawImage(img, 0, 0, 16, 17, x + topDx, y, 16, 17);
+    if (legSpread) { ctx.drawImage(img, 0, 17, 8, 6, x + legDx - legSpread, y + 17, 8, 6); ctx.drawImage(img, 8, 17, 8, 6, x + legDx + 8 + legSpread, y + 17, 8, 6); }
+    else ctx.drawImage(img, 0, 17, 16, 6, x + legDx, y + 17, 16, 6);
+  };
+  const REN_DANCE_DRAW = {
+    // 1: THE ROBOT. Four hard snaps, arms locked at right angles, a little settle on each snap and a
+    // stiff knee dip on the third.
+    n1(ctx, P, cx, cy, t) {
+      const b = danceBase(P, cx, cy), img = armless(b.S.down[0]), beat = Math.min(3, Math.floor(t * 4)), into = (t * 4) % 1;
+      const settle = into < 0.08 ? -1 : 0, dip = beat === 2 ? 1 : 0, y = b.y + settle + dip, jx = [0, 1, 0, -1][beat];
+      const POSES = [
+        [[[-3, 0], [-3, -4]], [[3, 0], [3, 4]]],
+        [[[-3, 0], [-3, 4]], [[3, 0], [3, -4]]],
+        [[[-4, 0], [-4, -4]], [[4, 0], [4, -4]]],
+        [[[0, 4], [-4, 4]], [[0, 4], [4, 4]]],
+      ];
+      ctx.drawImage(img, b.x + jx, y);
+      drawArm(ctx, b.x + jx, y, SH_L[0], SH_L[1], POSES[beat][0]);
+      drawArm(ctx, b.x + jx, y, SH_R[0], SH_R[1], POSES[beat][1]);
+    },
+    // 2: THE SPRINKLER. One hand behind his head; the other arm straight out, ticking across in
+    // three sharp clicks, then sweeping back in one smooth move.
+    n2(ctx, P, cx, cy, t) {
+      const b = danceBase(P, cx, cy), img = armless(b.S.down[0]);
+      let ang, lean;
+      if (t < 0.7) { const k = Math.min(2, Math.floor(t / 0.7 * 3)); ang = [35, 10, -15][k]; lean = k - 1; }
+      else { const k = ease((t - 0.7) / 0.3); ang = lerp(-15, 35, k); lean = Math.round(lerp(1, -1, k)); }
+      ctx.drawImage(img, b.x + lean, b.y);
+      drawArm(ctx, b.x + lean, b.y, SH_L[0], SH_L[1], [[-3, -3], [-1, -8]]);
+      drawArm(ctx, b.x + lean, b.y, SH_R[0], SH_R[1], [polar(6, ang)]);
+    },
+    // 3: THE RUNNING MAN. Side on: knee up, slide back, the other knee, arms pumping, a bob.
+    n3(ctx, P, cx, cy, t) {
+      const b = danceBase(P, cx, cy), step = Math.floor(t * 8), f = step % 2, sub = (t * 8) % 1;
+      const img = armless(b.S.right[1 + f], true), bob = sub < 0.5 ? -2 : -1;
+      const back = Math.round(lerp(1, -1, sub));
+      ctx.drawImage(img, b.x + back, b.y + bob);
+      drawArm(ctx, b.x + back, b.y + bob, SH_SIDE[0], SH_SIDE[1], f ? [[3, 2], [6, -1]] : [[-3, 2], [-5, 5]]);
+    },
+    // 4: THE MOONWALK. Facing right, stepping, gliding backwards; a toe-stand and a gleam at the end.
+    n4(ctx, P, cx, cy, t) {
+      const b = danceBase(P, cx, cy), glide = t < 0.82 ? ease(t / 0.82) : 1, slide = Math.round(lerp(6, -6, glide));
+      const toe = t >= 0.82, f = toe ? 0 : Math.floor(t * 10) % 2, img = armless(b.S.right[toe ? 0 : 1 + f], true), y = b.y - (toe ? 2 : 0);
+      ctx.drawImage(img, b.x + slide, y);
+      drawArm(ctx, b.x + slide, y, SH_SIDE[0], SH_SIDE[1], toe ? [[4, 0], [7, -2]] : [[-1, 3], [-2, 6]]);
+      if (toe && (G.tick >> 2) % 2) { ctx.fillStyle = '#f8f8f0'; ctx.fillRect(b.x + slide + 10, y - 4, 1, 3); ctx.fillRect(b.x + slide + 9, y - 3, 3, 1); }
+    },
+    // 5: THE SPIN. Up on his toes, arms out, around twice, and a ta-da at the end.
+    n5(ctx, P, cx, cy, t) {
+      const b = danceBase(P, cx, cy), S = b.S;
+      if (t >= 0.82) {
+        const img = armless(S.down[0]), y = b.y + (t < 0.86 ? 1 : 0);
+        ctx.drawImage(img, b.x, y);
+        drawArm(ctx, b.x, y, SH_L[0], SH_L[1], [[-3, -4], [-5, -8]]); drawArm(ctx, b.x, y, SH_R[0], SH_R[1], [[3, -4], [5, -8]]);
+        return;
+      }
+      const order = ['down', 'right', 'up', 'left'], d = order[Math.floor(t / 0.82 * 8) % 4], lift = Math.round(Math.sin(t / 0.82 * Math.PI) * 3), y = b.y - lift;
+      if (d === 'down' || d === 'up') {
+        const img = armless(S[d][0]);
+        if (d === 'up') { drawArm(ctx, b.x, y, SH_L[0], SH_L[1], [[-6, -1]]); drawArm(ctx, b.x, y, SH_R[0], SH_R[1], [[6, -1]]); }
+        ctx.drawImage(img, b.x, y);
+        if (d === 'down') { drawArm(ctx, b.x, y, SH_L[0], SH_L[1], [[-6, -1]]); drawArm(ctx, b.x, y, SH_R[0], SH_R[1], [[6, -1]]); }
+      } else {
+        // side on: the far arm out behind him, the near arm out in front (left is the right view, mirrored)
+        ctx.save();
+        if (d === 'left') { ctx.translate(b.x * 2 + 16, 0); ctx.scale(-1, 1); }
+        drawArm(ctx, b.x, y, SH_SIDE[0] - 1, SH_SIDE[1], [[-7, -1]]);
+        ctx.drawImage(armless(S.right[0], true), b.x, y);
+        drawArm(ctx, b.x, y, SH_SIDE[0], SH_SIDE[1], [[7, -1]]);
+        ctx.restore();
+      }
+      // a few motion streaks
+      ctx.fillStyle = 'rgba(248,248,240,0.6)';
+      for (let i = 0; i < 3; i++) { const a = t * 30 + i * 2.1; ctx.fillRect(b.x + 8 + Math.round(Math.cos(a) * 11), y + 12 + Math.round(Math.sin(a) * 3), 2, 1); }
+    },
+    // 7: THE WORM. Down onto his belly, a ripple rolling from his feet up through his head as he
+    // inches forward, twice, then back up.
+    n7(ctx, P, cx, cy, t) {
+      // (he falls forward onto his belly, to the right, pivoting on the toes of his front foot)
+      const S = P.spr, img = S.right[0], H = S.h, fx = Math.round(P.x) - cx, fy = Math.round(P.y) - cy + 1, pivX = fx + 8;
+      if (t < 0.16 || t > 0.86) {
+        const k = t < 0.16 ? ease(t / 0.16) : ease((1 - t) / 0.14);
+        ctx.save(); ctx.translate(pivX, fy); ctx.rotate(k * Math.PI / 2); ctx.drawImage(img, -16, -H + 1); ctx.restore();
+        return;
+      }
+      // lying flat, head to the right: the sprite's rows become columns, a ripple rolling from his
+      // feet up through his head (twice)
+      const k = (t - 0.16) / 0.7, phase = k * Math.PI * 4;
+      for (let r = 0; r < H; r++) {
+        const lift = Math.round(Math.max(0, Math.sin(phase - (H - 1 - r) * 0.32)) * 3);
+        ctx.save(); ctx.translate(pivX + (H - 1 - r), fy - 16 - lift); ctx.rotate(Math.PI / 2); ctx.drawImage(img, 0, r, 16, 1, 0, -1, 16, 1); ctx.restore();
+      }
+    },
+    // 8: THE FLOSS. Arms straight and stiff, swinging side to side, one passing in front of him and
+    // one behind, his hips going the other way.
+    n8(ctx, P, cx, cy, t) {
+      const b = danceBase(P, cx, cy), img = armless(b.S.down[0]), cyc = (t * 4) % 1;
+      // A (arms left) 0-.3, middle .3-.5, B (arms right) .5-.8, middle .8-1
+      const st = cyc < 0.3 ? 'A' : cyc < 0.5 ? 'M' : cyc < 0.8 ? 'B' : 'M';
+      const hip = st === 'A' ? 2 : st === 'B' ? -2 : 0;
+      if (st === 'M') {
+        drawSplit(ctx, img, b.x, b.y, 0, 0);
+        drawArm(ctx, b.x, b.y, SH_L[0], SH_L[1], [[-1, 6]]); drawArm(ctx, b.x, b.y, SH_R[0], SH_R[1], [[1, 6]]);
+        return;
+      }
+      const L = st === 'A';
+      // the arm going behind first, then him, then the arm crossing in front
+      if (L) drawArm(ctx, b.x - 1, b.y, SH_L[0], SH_L[1], [[-5, 5]]); else drawArm(ctx, b.x + 1, b.y, SH_R[0], SH_R[1], [[5, 5]]);
+      drawSplit(ctx, img, b.x, b.y, -Math.sign(hip), hip);
+      if (L) drawArm(ctx, b.x - 1, b.y, SH_R[0], SH_R[1], [[-9, 6]]); else drawArm(ctx, b.x + 1, b.y, SH_L[0], SH_L[1], [[9, 6]]);
+    },
+    // 9: JUMPING JACKS. Two of them: a dip, up with his arms sweeping overhead and his legs out, a
+    // clap at the top, and down with a squash.
+    n9(ctx, P, cx, cy, t) {
+      const b = danceBase(P, cx, cy), img = armless(b.S.down[0]), k = (t * 2) % 1;
+      const air = k < 0.15 ? 0 : k > 0.85 ? 0 : Math.sin((k - 0.15) / 0.7 * Math.PI);
+      const dip = k < 0.15 || k > 0.9 ? 1 : 0, lift = Math.round(air * 7), y = b.y - lift + dip, spread = Math.round(air * 3);
+      // the arms sweep from down at his sides, out, and up into a V over his head (behind it once
+      // they're above his shoulders, longer as they reach, so his hands show up over his hair)
+      const ang = lerp(100, -58, air), len = Math.round(lerp(6, 10, Math.max(0, -ang) / 58));
+      const [lx, ly] = polar(len, 180 - ang), [rx, ry] = polar(len, ang), arms = () => { drawArm(ctx, b.x, y, SH_L[0], SH_L[1], [[lx, ly]]); drawArm(ctx, b.x, y, SH_R[0], SH_R[1], [[rx, ry]]); };
+      if (ang < 0) arms();
+      drawSplit(ctx, img, b.x, y, 0, 0, spread);
+      if (ang >= 0) arms();
+      if (air > 0.95) { ctx.fillStyle = '#f8d850'; ctx.fillRect(b.x + 7, y - 2, 2, 1); ctx.fillRect(b.x + 5, y - 1, 1, 1); ctx.fillRect(b.x + 10, y - 1, 1, 1); }
+    },
+    // 0: THE DAB. A little bounce to wind up, then the snap: a lean, one arm thrown straight up and
+    // out, his face buried in the crook of the other elbow. Hold it. Back to normal.
+    n0(ctx, P, cx, cy, t) {
+      const b = danceBase(P, cx, cy), img = armless(b.S.down[0]);
+      if (t < 0.22 || t > 0.9) {
+        const y = b.y + (t < 0.22 && t > 0.11 ? 1 : 0);
+        ctx.drawImage(img, b.x, y);
+        drawArm(ctx, b.x, y, SH_L[0], SH_L[1], [[-1, 6]]); drawArm(ctx, b.x, y, SH_R[0], SH_R[1], [[1, 6]]);
+        return;
+      }
+      // (the lean is a shear, a row at a time, so the pixels stay crisp: head 2 over, shirt 1, feet planted)
+      const snap = t < 0.25 ? 1 : 2, hold = t > 0.27 && t < 0.34 ? 1 : 0, y = b.y + hold, S = b.S;
+      for (let r = 0; r < S.h; r++) { const dx = r <= 10 ? -snap : r <= 16 ? -Math.ceil(snap / 2) : 0; ctx.drawImage(img, 0, r, 16, 1, b.x + dx, y + r, 16, 1); }
+      const sx = b.x - Math.ceil(snap / 2);
+      drawArm(ctx, sx, y, SH_L[0], SH_L[1], [[-4, -4], [-9, -9]]);
+      drawArm(ctx, sx, y, SH_R[0], SH_R[1], [[-4, -6], [-9, -5]]);
+    },
+  };
+  G.REN_DANCE_DRAW = REN_DANCE_DRAW;   // (for checking the poses)
   const REN_DANCES = {
-    n1: { name: 'THE ROBOT', dirs: ['down'], hop: 3 },
-    n2: { name: 'THE SPRINKLER', dirs: ['left', 'right', 'left'], hop: 4 },
-    n3: { name: 'THE RUNNING MAN', dirs: ['right'], hop: 6 },
-    n4: { name: 'THE MOONWALK', dirs: ['left'], hop: 2 },
-    n5: { name: 'THE SPIN', dirs: ['down', 'left', 'up', 'right', 'down'], hop: 5 },
-    n7: { name: 'THE WORM', dirs: ['down'], hop: 1 },
-    n8: { name: 'THE FLOSS', dirs: ['left', 'right', 'left', 'right'], hop: 3 },
-    n9: { name: 'JUMPING JACKS', dirs: ['down'], hop: 10 },
-    n0: { name: 'THE DAB', dirs: ['right'], hop: 4 },
+    n1: { name: 'THE ROBOT', len: 56 }, n2: { name: 'THE SPRINKLER', len: 52 }, n3: { name: 'THE RUNNING MAN', len: 44 },
+    n4: { name: 'THE MOONWALK', len: 56 }, n5: { name: 'THE SPIN', len: 44 }, n7: { name: 'THE WORM', len: 72 },
+    n8: { name: 'THE FLOSS', len: 48 }, n9: { name: 'JUMPING JACKS', len: 52 }, n0: { name: 'THE DAB', len: 56 },
   };
   const REN_CHEERS = ['GO MR. NATE!', 'HE CAN DANCE!', 'DO THE ROBOT!', 'AGAIN! AGAIN!', 'MR. NATE IS SO COOL.'];
   function renDanceTick(w) {
@@ -24398,21 +24582,18 @@
     d.t++;
     // the move in progress: a hop, turning through its directions
     if (d.move) {
-      const m = d.move, k = 1 - d.mt / 24;
-      P.z = Math.round(Math.sin(k * Math.PI) * m.hop);
-      P.dir = m.dirs[Math.min(m.dirs.length - 1, Math.floor(k * m.dirs.length))];
-      if (--d.mt <= 0) { d.move = null; P.z = 0; }
+      const m = d.move, k = 1 - d.mt / m.len, fn = REN_DANCE_DRAW[d.key];
+      P.danceDraw = (ctx, p, cx, cy) => fn(ctx, p, cx, cy, k);
+      // (walking off cuts the move short)
+      if (P.moving || --d.mt <= 0) { d.move = null; P.danceDraw = null; P.dir = 'down'; }
     }
     if (G.script.busy || G.play.menu) return;
     for (const key in REN_DANCES) {
       if (!G.input.hit(key)) continue;
       G.input.eat(key);
       const m = REN_DANCES[key];
-      d.move = m; d.mt = 24;
-      d.combo = d.t - d.lastT < 50 ? d.combo + 1 : 1; d.lastT = d.t;
-      // (one move name at a time over Nate's head)
-      w.texts = w.texts.filter((tx) => !tx.renMove);
-      w.pop(P.x, P.y - 34, m.name, '#f8f8f0'); w.texts[w.texts.length - 1].renMove = true;
+      d.move = m; d.key = key; d.mt = m.len;
+      d.combo = d.t - d.lastT < 90 ? d.combo + 1 : 1; d.lastT = d.t;
       G.audio.sfx('blip');
       if (d.combo >= 4 && d.combo % 4 === 0) {
         const kids = w.ents.filter((e) => e.sprite && /^renKid/.test(e.sprite)), kid = kids[Math.floor(Math.random() * kids.length)];
@@ -24468,8 +24649,8 @@
       for (const [x, y] of [[2, 9], [16, 9], [2, 13], [16, 13]]) F.stand(sp.renRoundTable, x, y, 3, look('A round table with folding chairs. Crayons in a basket, and a coloring sheet of a sheep.'), { ht: 2 });
       for (const x of [18, 19]) F.stand(sp.renChairStack, x, 15, 1, look('A stack of folding chairs, taller than some of the kids.'));
       // the kids, up front, dancing
-      [[6, 9, 0], [8, 10, 4], [10, 9, 1], [12, 10, 5], [14, 9, 2], [7, 12, 3], [11, 12, 6], [13, 12, 7]].forEach(([x, y, k]) => {
-        const kid = w.add(new G.NPC({ sprite: 'renKid' + k, name: REN_KIDS[k].name, x: x * 16 + 8, y: y * 16 + 12, dir: 'up', talk: function* () { yield G.say(REN_KIDS[k].name, k === 7 ? 'You can dance by pressing a number! Any number! ...Except that one.' : ['THIS IS MY FAVORITE SONG.', 'I know all the words!', 'Is he famous? He seems famous.', 'Mr. Nate, DANCE.'][k % 4]); } }));
+      [[6, 9, 0], [8, 10, 4], [10, 9, 1], [12, 10, 5], [14, 9, 2], [7, 12, 3], [11, 12, 6], [12, 20, 7]].forEach(([x, y, k]) => {
+        const kid = w.add(new G.NPC({ sprite: 'renKid' + k, name: REN_KIDS[k].name, x: x * 16 + 8, y: y * 16 + 12, dir: 'up', talk: function* () { yield G.say(REN_KIDS[k].name, k === 7 ? 'Mr. Nate! You can dance by pressing a number! ...Except that one.' : ['THIS IS MY FAVORITE SONG.', 'I know all the words!', 'Is he famous? He seems famous.', 'Mr. Nate, DANCE.'][k % 4]); } }));
         kid.draw = function (ctx, cx, cy) {
           const S = G.sprites['renKid' + k], img = S[this.dir][(G.tick >> 4) % 2 ? 1 : 2] || S[this.dir][0], hop = (G.tick + k * 9) % 32 < 8 ? 2 : 0;
           ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy - hop);
@@ -24487,12 +24668,11 @@
       w.addWarp(10, 23, 1, 1, 'renHall', 45, 5, 'left');
     },
     tick(w) { renDanceTick(w); },
-    onEnter() { return (function* () { const f = flags(); if (f.renDanceHint) return; f.renDanceHint = true; yield G.wait(30); yield G.say('Ava', 'Mr. Nate! You can dance by pressing a number!'); })(); },
     tint(ctx) {
       renFlakes(ctx, [[3, 8], [8, 7.5], [13, 8.2], [18, 7.8], [5, 12], [11, 12.5], [16, 11.8], [6, 20], [15, 20.5]]);
       if (!G.script.busy && !G.play.overlay) {
-        const d = G.play.world.dance, t = d && d.combo > 1 && d.t - d.lastT < 50 ? 'COMBO x' + G.sayable(d.combo) : 'Numbers: dance';
-        G.font.draw(ctx, t, 236 - G.font.width(t), G.H - 11, '#f8d850', { shadow: '#0c0814' });
+        const d = G.play.world.dance;
+        if (d && d.combo > 1 && d.t - d.lastT < 90) { const t = 'COMBO x' + G.sayable(d.combo); G.font.draw(ctx, t, 236 - G.font.width(t), G.H - 11, '#f8d850', { shadow: '#0c0814' }); }
       }
     },
   };

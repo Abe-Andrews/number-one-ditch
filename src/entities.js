@@ -437,6 +437,8 @@
       if (G.state.playAs === 'romulus') { this.drawDog(ctx, cx, cy); return; }
       if (!this.noShadow) drawShadow(ctx, this.x, this.y, cx, cy);
       if (this.inv > 0 && this.state !== 'hurt' && (this.inv >> 2) & 1) return;
+      // (dancing in the Renaissance chapel: the dance draws him)
+      if (this.danceDraw) { this.danceDraw(ctx, this, cx, cy); return; }
       let img;
       // left standing around long enough, Nate gets bored and looks around (just how he's drawn:
       // which way he's facing, for talking and swinging, doesn't change)
