@@ -24181,6 +24181,9 @@
     { name: 'Priya', skin: '#c8946c', hair: '#1e1410', hairStyle: 'shoulder', smile: '#ffffff', blush: true, shirt: '#8a58c8', pattern: 'stripes', pants: '#2e3a5a', shoes: '#f0f0ec' },
     { name: 'Sam', skin: '#f0c4a4', hair: '#d8a048', hairStyle: 'short', smile: '#ffffff', shirt: '#f0c838', pants: '#6a6a74', shoes: '#2a2a30' },
     { name: 'June', skin: '#e8bc98', hair: '#5a3018', hairStyle: 'long', smile: '#ffffff', blush: true, shirt: '#48b060', pants: '#f0f0ec', shoes: '#e85848' },
+    // (two more, who only come to kids' church in the chapel)
+    { name: 'Leo', skin: '#6a4028', hair: '#16100e', hairStyle: 'buzz', smile: '#ffffff', shirt: '#f08a28', pants: '#3a4a6a', shoes: '#f0f0ec' },
+    { name: 'Ava', skin: '#f4d4bc', hair: '#e0c088', hairStyle: 'pony', smile: '#ffffff', blush: true, shirt: '#e888c0', pants: '#5a7ab8', shoes: '#f8f8f0' },
   ];
   REN_KIDS.forEach((k, i) => { const c = Object.assign({ torso: 4, legs: 2 }, k); delete c.name; G.CAST['renKid' + i] = c; });
   [
@@ -24244,20 +24247,20 @@
     music: 'house',
     noFollower: true,
     tiles() {
-      const W = 22, H = 14, g = Array.from({ length: H }, () => Array(W).fill('w'));
+      const W = 35, H = 14, g = Array.from({ length: H }, () => Array(W).fill('w'));
       const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
       fill(1, 1, 20, 2, 'ã'); fill(1, 3, 20, 10, 'å');
-      fill(9, 1, 2, 2, 'å');                                // the sanctuary doors
-      fill(1, 9, 3, 3, 'D');                                     // the stairs down to renkids
+      fill(9, 1, 2, 2, 'å');                                // the sanctuary doors (open)
+      // off the right side of the lobby: the hallway to renkids, and the stairs down at the end
+      fill(21, 6, 13, 2, 'ã'); fill(21, 8, 13, 3, 'å');
+      fill(31, 9, 3, 2, 'D');
       fill(7, 13, 8, 1, 'G'); g[13][10] = 'x'; g[13][11] = 'x';  // the glass front, and its doors
       return g.map((r) => r.join(''));
     },
     setup(w) {
       const F = furnish(w), sp = G.spr;
-      w.addProp({ img: sp.renSanctDoors, tx: 9, ty: 2, flat: true });
+      w.addProp({ img: sp.renSanctDoorsOpen, tx: 9, ty: 2, flat: true });
       w.addWarp(9, 1, 2, 1, 'renSanctuary', 12, 17, 'up');
-      w.addProp({ img: sp.renPointDoors, tx: 15, ty: 2, flat: true, hit: [15, 2, 2, 1], talk: look('Big wood doors with diamond windows. Behind them: the church offices. Locked on Sunday mornings.', ['Nate', 'Dad\'s office is back there. It smells like pipe tobacco and Bible pages.']) });
-      w.blockTiles(15, 1, 2, 2);
       F.hang(sp.renLobbyGlass, 2, 2, 2, look('Two narrow stained glass windows: green, red, gold and blue.'), 3);
       F.hang(sp.renLogoTV, 6, 2, 2, look('A TV on the wall: the Renaissance Church logo, and this week\'s announcements. KIDS\' CHURCH DOWNSTAIRS.'), 6);
       F.hang(sp.renConnectSign, 17, 2, 3, look('CONNECT CENTER'), 18);
@@ -24266,12 +24269,12 @@
       F.stand(sp.renKidsBanner, 13, 3, 1, look('A banner: CHRISTMAS FOR KIDS.'));
       F.stand(sp.renBin, 20, 4, 1, look('A trash can. Very clean. Somebody empties it between services.'));
       for (const [x, y] of [[6, 6], [15, 7], [7, 10], [17, 10]]) F.stand(sp.renBistro, x, y, 1, look('A black high-top table. Perfect for a coffee and a "so how have you BEEN?"'));
-      // the stairs down to renkids, with their black railing
-      w.addProp({ img: sp.renRailing, tx: 1, ty: 8, flat: true, dy: 4 });
-      w.addProp({ img: sp.renRailingV, tx: 4, ty: 9, flat: true, dy: -2 }); w.addProp({ img: sp.renRailingV, tx: 4, ty: 10, flat: true, dy: -2 });
-      w.blockTiles(1, 8, 3, 1);
-      w.add(new G.Sign(5, 11, ['RENKIDS', 'Downstairs. Check in at the desk, then find your room!']));
-      w.addWarp(1, 9, 3, 3, 'renHall', 3, 5, 'right');
+      // the hallway to renkids: a sign pointing the way, and the stairs down with their black railing
+      F.hang(sp.renkidsSign, 23, 7, 3, look('A black sign: renkids. An arrow points down the hall. Kids\' check-in is downstairs.'), 10);
+      F.hang(sp.renLogoTV, 27, 7, 2, look('Another TV: RENKIDS. CHECK IN DOWNSTAIRS. Somebody drew a smiley face on a sticky note and stuck it to the screen.'), 8);
+      w.addProp({ img: sp.renRailing, tx: 31, ty: 8, flat: true, dy: 4 });
+      w.blockTiles(31, 8, 3, 1);
+      w.addWarp(31, 9, 3, 2, 'renHall', 3, 5, 'right');
       renNpc('renAdult0', 'Greeter', 8, 11, 'down', ['Welcome! First time? ...Oh, you\'re the pastor\'s kid. Welcome back!'])(w);
       renNpc('renAdult1', 'Churchgoer', 16, 6, 'left', ['Nate! Your mom says you found a whole shark tooth. She showed us the picture. Twice.'])(w);
       w.addWarp(10, 13, 2, 1, 'renaissance', 12, 8, 'down');
@@ -24339,7 +24342,7 @@
     },
     setup(w) {
       const F = furnish(w), sp = G.spr;
-      w.addWarp(1, 4, 2, 3, 'renLobby', 4, 10, 'right');
+      w.addWarp(1, 4, 2, 3, 'renLobby', 29, 9, 'left');
       w.addProp({ img: sp.renRailingV, tx: 3, ty: 3, flat: true, dy: -2 });
       F.hang(sp.renkidsSign, 3, 2, 3, look('A black sign: renkids.'), 12);
       // classrooms along the hall, with their little black signs
@@ -24419,14 +24422,14 @@
       for (const [x, y] of [[2, 9], [16, 9], [2, 13], [16, 13]]) F.stand(sp.renRoundTable, x, y, 3, look('A round table with folding chairs. Crayons in a basket, and a coloring sheet of a sheep.'), { ht: 2 });
       for (const x of [18, 19]) F.stand(sp.renChairStack, x, 15, 1, look('A stack of folding chairs, taller than some of the kids.'));
       // the kids, up front, dancing
-      [[7, 9, 0], [9, 10, 4], [12, 9, 5], [14, 10, 2]].forEach(([x, y, k]) => {
+      [[6, 9, 0], [8, 10, 4], [10, 9, 1], [12, 10, 5], [14, 9, 2], [7, 12, 3], [11, 12, 6], [13, 12, 7]].forEach(([x, y, k]) => {
         const kid = w.add(new G.NPC({ sprite: 'renKid' + k, name: REN_KIDS[k].name, x: x * 16 + 8, y: y * 16 + 12, dir: 'up', talk: function* () { yield G.say(REN_KIDS[k].name, ['THIS IS MY FAVORITE SONG.', 'I know all the words!', 'Is he famous? He seems famous.', 'Mr. Nate, DANCE.'][k % 4]); } }));
         kid.draw = function (ctx, cx, cy) {
           const S = G.sprites['renKid' + k], img = S[this.dir][(G.tick >> 4) % 2 ? 1 : 2] || S[this.dir][0], hop = (G.tick + k * 9) % 32 < 8 ? 2 : 0;
           ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy - hop);
         };
       });
-      renNpc('renAdult2', 'Kids\' church leader', 6, 11, 'up', ['We booked a special guest this week. The kids voted. It was unanimous. I have regrets.'])(w);
+      renNpc('renAdult2', 'Kids\' church leader', 5, 12, 'up', ['We booked a special guest this week. The kids voted. It was unanimous. I have regrets.'])(w);
       // the back: the wood partition with windows into the chapel, the check-in room behind it
       F.hang(sp.renChapelWindow, 2, 18, 3, null, 4); F.hang(sp.renChapelWindow, 16, 18, 3, null, 4);
       F.hang(sp.renExitSign, 10, 17, 2, null, -2);

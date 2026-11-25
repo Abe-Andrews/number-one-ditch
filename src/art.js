@@ -11463,6 +11463,22 @@
     p.outline('#3a2010');
     return p.canvas();
   }
+  // ...and the same doors standing open: both leaves swung in, and the dark, blue-lit sanctuary beyond
+  function renSanctDoorsOpen() {
+    const p = new Pix(32, 32);
+    p.rect(0, 0, 32, 32, '#7a4a24');
+    for (let y = 1; y < 32; y++) for (let x = 5; x < 27; x++) {
+      const glow = Math.max(0, (y - 14) / 18) * (1 - Math.abs(x - 16) / 14);
+      p.set(x, y, glow > 0.45 ? '#3a4ad8' : glow > 0.25 ? '#2a3498' : glow > 0.1 ? '#1e2462' : '#14141e');
+    }
+    for (let x = 7; x < 26; x += 4) p.set(x, 3, '#e8f0ff');
+    p.rect(9, 6, 14, 6, '#1e2a7a'); for (let i = 0; i < 8; i++) p.set(10 + (i * 5) % 12, 7 + (i * 3) % 4, '#c8d4ff');
+    for (const x of [8, 12, 16, 20, 24]) { p.rect(x, 25, 3, 3, '#3a4050'); p.hline(x, x + 2, 25, '#5a6478'); }
+    // the two leaves, swung back against the frame
+    for (const [x0, dir] of [[1, 1], [27, -1]]) { p.rect(x0, 1, 4, 31, '#b06a30'); p.vline(dir > 0 ? x0 + 3 : x0, 1, 31, '#8e5224'); p.vline(x0 + 1, 9, 24, '#3a4a68'); p.vline(x0 + 2, 11, 24, '#3a4a68'); }
+    p.outline('#3a2010');
+    return p.canvas();
+  }
   // the other big doors: a pointed top over a window, and wood panels with diamond glass
   function renPointDoors() {
     const p = new Pix(32, 32), wood = '#b87436', woodD = '#94582a';
@@ -12534,7 +12550,7 @@
     S.squirrel = squirrel(); S.goat = [goat(0), goat(1)]; S.turtle = turtle(); S.bookmarkIcon = bookmarkIcon(); S.clubDoor = clubDoor();
     S.gardenDeer = { left: [gardenDeer(0), gardenDeer(1)] }; S.gardenDeer.right = S.gardenDeer.left.map(mirror); S.rainBarrel = rainBarrel(); S.marigold = marigold(); S.wetBlanket = wetBlanket();
     // Aurora, NC
-    S.renFront = renFront(); S.renBollard = renBollard(); S.renMonument = renMonument(); S.renSanctDoors = renSanctDoors(); S.renPointDoors = renPointDoors();
+    S.renFront = renFront(); S.renBollard = renBollard(); S.renMonument = renMonument(); S.renSanctDoors = renSanctDoors(); S.renSanctDoorsOpen = renSanctDoorsOpen(); S.renPointDoors = renPointDoors();
     S.renXmasTree = renXmasTree(); S.renBistro = renBistro(); S.renConnectShelf = renConnectShelf(); S.renConnectSign = renConnectSign(); S.renLogoTV = renLogoTV(); S.renLobbyGlass = renLobbyGlass();
     S.renKidsBanner = renKidsBanner(); S.renBin = renBin(); S.renRailing = renRailing(48); S.renRailingV = renRailing(16); S.renkidsSign = renkidsSign();
     S.renArchWin = renArchWin(); S.renPanel = renPanel(); S.renLedWall = renLedWall(); S.renSideScreen = renSideScreen(); S.renChair = renChair(); S.renBooth = renBooth();
