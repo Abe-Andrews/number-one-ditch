@@ -24466,15 +24466,21 @@
       { kid: 5, lines: [['K', 'What did Jesus eat for breakfast?'], ['Michelle', 'Probably fish. He was always hanging out with fishermen.'], ['K', 'FISH? For BREAKFAST?'], ['Nate', 'Fish is great for breakfast.'], ['K', 'Mr. Nate is weird.']] },
     ] },
     { name: 'Harder questions', ask: 3, every: [150, 240], qs: [
-      { kid: 1, lines: [['K', 'Will my dog go to heaven?'], ['Michelle', 'I really, really hope so, hon. A heaven with no dogs doesn\'t sound like heaven to me.']] },
+      { kid: 1, lines: [['K', 'Will my dog go to heaven?'], ['Michelle', 'Yes, hon. God redeems the animals too. Not just people. All of it.'], ['K', 'Even Biscuit?'], ['Michelle', 'Even Biscuit.']] },
       { kid: 0, lines: [['K', 'Why can\'t I see God?'], ['Michelle', 'Can you see the wind?'], ['K', 'No.'], ['Michelle', 'But you can see the trees move. It\'s kind of like that.'], ['K', '...So God is wind?'], ['Michelle', 'That\'s not— we\'ll come back to that one.']] },
       { kid: 5, lines: [['K', 'If God made everything, who made God?'], ['Michelle', 'Nobody. He was always there.'], ['K', 'ALWAYS always?'], ['Michelle', 'Always always.'], ['K', 'My brain hurts.'], ['Michelle', 'Mine too, bud.']] },
       { kid: 2, lines: [['K', 'Does God love the bad guys too?'], ['Michelle', 'Yep. Even the bad guys.'], ['K', 'Even Kevin from my bus?'], ['Michelle', '...Even Kevin.']] },
     ] },
     { name: 'The big questions', ask: 3, every: null, qs: [
-      { kid: 3, lines: [['K', 'Miss Michelle? If God loves us... then why is there so much pain in the world?'], [null, 'The whole room goes quiet.'], ['Michelle', '...'], ['Michelle', '[Mom\'s answer goes here.]']] },
-      { kid: 4, lines: [['K', 'I prayed for my grandpa to get better. And he died anyway.'], ['K', 'Why didn\'t God listen?'], ['Michelle', '...Come here, Sam.'], ['Michelle', '[Mom\'s answer goes here.]']] },
-      { kid: 1, lines: [['K', 'How do we know it\'s all true?'], ['Michelle', '[Mom\'s answer goes here.]']] },
+      { kid: 3, lines: [['K', 'Miss Michelle? If God loves us... then why is there so much pain in the world?'], [null, 'The whole room goes quiet.'], ['Michelle', '...']],
+        choice: { right: 'I don\'t know.', wrong: ['God is punishing bad people.', 'Pain is good for us and we don\'t realize it.'],
+          after: [['Michelle', 'Honestly, hon? I don\'t know.']] } },
+      { kid: 4, lines: [['K', 'I prayed for my grandpa to get better. And he died anyway.'], ['K', 'Why didn\'t God listen?'], ['Michelle', '...Come here, Sam.']],
+        choice: { right: 'God heard you. Sometimes we can\'t know why.', wrong: ['You didn\'t pray hard enough.', 'God was too busy that day.'],
+          after: [['Michelle', 'God heard you. He hears every single prayer.'], ['Michelle', 'But sometimes He doesn\'t give us what we ask for. And we can\'t always know why.']] } },
+      { kid: 1, lines: [['K', 'How do we know it\'s all true?']],
+        choice: { right: 'We can\'t know for sure. We trust and believe.', wrong: ['Because I said so.', 'Grown-ups are never wrong.'],
+          after: [['Michelle', 'Honestly, hon? We can\'t know for sure.'], ['Michelle', 'But we trust. And we believe. That\'s what faith is.']] } },
     ] },
   ];
   const SS_IDLE = [
@@ -24527,9 +24533,24 @@
   }
   function* ssCallOn(w, k) {
     const ss = w.ss, q = k.hand;
-    k.hand = null; ss.left--; ss.asked.push(q);
+    k.hand = null; ss.asked.push(q);
     G.audio.sfx('select');
     for (const [who, text] of q.lines) yield G.say(who === 'K' ? KID_NAME(k.idx) : who, text);
+    // the big questions: the player picks what Mom says. A wrong pick, and she stops herself
+    // (that's not what she believes) and you pick again from what's left.
+    if (q.choice) {
+      const left = [q.choice.right].concat(q.choice.wrong).sort(() => Math.random() - 0.5);
+      for (;;) {
+        const c = yield G.ask(null, 'What does Mom say?', left);
+        if (left[c] === q.choice.right) break;
+        G.audio.sfx('no');
+        yield G.say(null, 'Mom opens her mouth to say it, and stops. That\'s not right. That\'s not what she believes.');
+        left.splice(c, 1);
+      }
+      G.audio.sfx('select');
+      for (const [who, text] of q.choice.after) yield G.say(who === 'K' ? KID_NAME(k.idx) : who, text);
+    }
+    ss.left--;
     ss.nextHand = ss.t + 110 + Math.floor(Math.random() * 80);
     if (ss.left > 0) return;
     if (ss.round < SS_ROUNDS.length - 1) yield* ssNextRound(w);
@@ -24580,7 +24601,7 @@
     yield G.say('Michelle', 'When somebody raises their hand, go call on them. And keep this room in one piece. Spills, wanderers, crayons on the walls.');
     yield G.say('Nate', 'How hard can it be? It\'s a handful of kids.');
     yield G.say('Michelle', 'Oh, hon.');
-    yield howToCmd('SUNDAY SCHOOL', ['A kid with a yellow ! has a question. Walk over and press Z to call on them.', 'Trouble: a kid wandering off, Goldfish on the floor, crayon on the wall. Walk over and press Z to fix it.', 'The more that goes wrong, the faster the CHAOS meter fills. If it fills up, Mom starts that part over.', 'Three parts: easy questions, harder ones, then the big ones.']);
+    yield howToCmd('SUNDAY SCHOOL', ['A kid with a yellow ! has a question. Walk over and press Z to call on them.', 'Trouble: a kid wandering off, Goldfish on the floor, crayon on the wall. Walk over and press Z to fix it.', 'The more that goes wrong, the faster the CHAOS meter fills. If it fills up, Mom starts that part over.', 'Three parts: easy questions, harder ones, then the big ones. For the big ones, you pick what Mom says.']);
     G.play.overlay = null;
     w.ss.phase = 'play';
   };
