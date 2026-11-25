@@ -2895,7 +2895,7 @@
   // Shark teeth for prices (no sacred numbers on the price tags, of course).
   function* momPay(n) {
     if (G.state.teeth >= n) { G.play.addTeeth(-n); G.audio.sfx('tooth'); return true; }
-    yield G.say('Michelle', 'You\'re a little short, hon. Shark teeth don\'t grow on trees. They grow on SHARKS.');
+    yield G.say('Michelle', 'You\'re a little short. Shark teeth don\'t grow on trees. They grow on SHARKS.');
     return false;
   }
   const MOM_CHAT = [
@@ -2925,7 +2925,7 @@
       yield G.say('Michelle', 'And I\'m a small business. A dozen for 10 teeth.');
     }]);
     if (s.items.chicken) menu.push(['Eggs (a dozen): 10', function* () {
-      if ((s.items.eggs || 0) >= 40) { yield G.say('Michelle', 'Henrietta can\'t hold any more eggs, hon. Nobody can.'); return; }
+      if ((s.items.eggs || 0) >= 40) { yield G.say('Michelle', 'Henrietta can\'t hold any more eggs. Nobody can.'); return; }
       if (!(yield* momPay(10))) return;
       s.items.eggs = Math.min(40, (s.items.eggs || 0) + 12);
       yield G.itemGet(G.spr.egg, 'You got {y}a dozen eggs{/}! (' + G.sayable(s.items.eggs) + ' loaded)');
@@ -2936,7 +2936,7 @@
       s.items.andoverKey = true;
       yield G.say('Michelle', 'The Andover mines? The man who owns that land goes to my church. He gave me a key to the gate years ago. "For the rock boy."');
       yield G.say('Nate', 'The rock boy?');
-      yield G.say('Michelle', 'You, hon. Everyone at church calls you the rock boy.');
+      yield G.say('Michelle', 'You, Nate. Everyone at church calls you the rock boy.');
       yield G.itemGet(G.spr.gateKey, 'You got the {y}Andover Mines Key{/}! Pick {y}The Andover mines{/} when you leave home.');
       yield G.say('Nate', 'Two HUNDRED teeth for a key?');
       yield G.say('Michelle', 'It\'s a very special key. The flower fund thanks you.');
@@ -2960,7 +2960,7 @@
     }]);
     if (f.gardenMet) menu.push(['Guard the garden', S.gardenPick]);
     menu.push(['Doosh De Luche: 10', function* () {
-      if ((s.items.doosh || 0) >= 3) { yield G.say('Michelle', 'Your pockets are already full of Doosh, hon.'); return; }
+      if ((s.items.doosh || 0) >= 3) { yield G.say('Michelle', 'Your pockets are already full of Doosh.'); return; }
       if (!(yield* momPay(10))) return;
       s.items.doosh = (s.items.doosh || 0) + 1;
       f.hadDoosh = true;
@@ -2970,7 +2970,7 @@
     }]);
     // the same deal as Pyro Pete's at the fair: 5 for 10 teeth, 10 at most
     menu.push(['Booby-Trapped Packages (5): 10', function* () {
-      if ((s.items.package || 0) >= 10) { yield G.say('Michelle', 'You\'ve already got ten of those in your pockets. Walk carefully, hon.'); return; }
+      if ((s.items.package || 0) >= 10) { yield G.say('Michelle', 'You\'ve already got ten of those in your pockets. Walk carefully.'); return; }
       if (!(yield* momPay(10))) return;
       s.items.package = Math.min(10, (s.items.package || 0) + 5);
       if (!s.xItem) s.xItem = 'package';
@@ -24892,7 +24892,7 @@
     G.audio.sfx('fanfare');
     yield G.itemGet(G.spr.renDrawing, 'June hands Nate a drawing: him, a shark tooth, and {y}MR. NAIT{/} in green crayon.');
     yield G.say('Nate', 'It\'s perfect. I\'m putting it on the fridge.');
-    yield G.say('Michelle', 'You were good with them, hon. Same time next week?');
+    yield G.say('Michelle', 'You were good with them. Same time next week?');
     f.renClassDone = true;
     if (first) { G.play.addTeeth(25); yield G.say(null, 'Mom slips Nate {y}25 shark teeth{/} "for gas." Nate didn\'t drive here.'); }
   }
@@ -24902,7 +24902,7 @@
     yield G.say('Michelle', 'Nate! You made it. My helper called out, so you\'re my helper.');
     yield G.say('Michelle', 'When somebody raises their hand, go call on them. You help me pick the answers.');
     yield G.say('Nate', 'How hard can it be? They\'re kids.');
-    yield G.say('Michelle', 'Oh, hon. Kids ask the hardest questions there are.');
+    yield G.say('Michelle', 'Oh, Nate. Kids ask the hardest questions there are.');
     yield howToCmd('SUNDAY SCHOOL', ['A kid with a yellow ! has a question. Walk over and press Z to call on them.', 'Then pick what Mom says. If it\'s not right, she\'ll catch herself, and you can pick again.', 'Three parts: easy questions, harder ones, then the big ones.']);
     G.play.overlay = null;
     w.ss.phase = 'play';
@@ -24931,8 +24931,8 @@
       // Mom, at the front
       w.ssMom = w.add(new G.NPC({ sprite: 'michelle', name: 'Michelle', x: 7 * 16 + 8, y: 4 * 16 + 10, dir: 'down', talk: function* () {
         const ss = w.ss;
-        if (ss.phase === 'done') { yield G.say('Michelle', 'Snack time is the best time. Grab a juice box, hon.'); return; }
-        yield G.say('Michelle', ss.round === 2 ? 'Go on. They\'ve got the big ones.' : 'Kids with their hands up, hon. Go call on them.');
+        if (ss.phase === 'done') { yield G.say('Michelle', 'Snack time is the best time. Grab a juice box.'); return; }
+        yield G.say('Michelle', ss.round === 2 ? 'Go on. They\'ve got the big ones.' : 'Kids with their hands up. Go call on them.');
       } }));
       // the kids, criss-cross on the rug, facing her
       w.ssKids = SS_SEATS.map(([tx, ty], i) => {
@@ -25499,7 +25499,7 @@
   S.gardenStart = function* () {
     const f = flags();
     f.gardenMet = true;
-    yield G.say('Michelle', 'That\'s the last of it, hon. You\'ve bought everything I sell.');
+    yield G.say('Michelle', 'That\'s the last of it. You\'ve bought everything I sell.');
     yield G.say('Michelle', 'Now I need a favor. Something has been getting into my garden at night. I\'ve lost three rows of dahlias.');
     yield G.say('Nate', 'What kind of something?');
     yield G.say('Michelle', 'I don\'t know yet. But I\'m sitting up tonight with my watering can, and you\'re sitting up with me. Henrietta will make it worth your while.');
@@ -25520,7 +25520,7 @@
     if (nights[c].endless) {
       const best = r.shooed > (f.gardenBest || 0);
       if (best) f.gardenBest = r.shooed;
-      yield G.say('Michelle', G.sayable(r.shooed) + ' animals.' + (best ? ' That\'s your best yet, hon.' : ' We\'ve done better.') + ' And we\'re going to need more dahlias.');
+      yield G.say('Michelle', G.sayable(r.shooed) + ' animals.' + (best ? ' That\'s your best yet.' : ' We\'ve done better.') + ' And we\'re going to need more dahlias.');
       G.play.autosave();
       return;
     }
