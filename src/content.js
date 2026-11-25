@@ -879,6 +879,7 @@
   G.SONG_FILES = {
     bookworm: 'assets/music/globglogabgalab.m4a', // the 8-bit Globglogabgalab, in the basement until he's beaten
     serenade: 'assets/music/golden-hour.m4a', // the 8-bit "Golden Hour", for Lily vs. Mikey at the end of the driveway
+    jjChapel: 'assets/music/icejj-got-that.mp3', // Ice JJ Fish playing kids' church in the Renaissance chapel (the user's file)
   };
   // (Father Christmas's theme speeds up as he gets angrier: fc2, fc3 are set below)
   G.SONGS = {
@@ -24379,7 +24380,7 @@
   // ---- the wooden chapel (Ice JJ Fish, playing kids' church)
   G.MAPS.renChapel = {
     name: 'Renaissance Church: the chapel',
-    music: 'icejj',
+    music: 'jjChapel',
     noFollower: true,
     tiles() {
       const W = 22, H = 24, g = Array.from({ length: H }, () => Array(W).fill('w'));
@@ -24439,12 +24440,6 @@
       F.stand(sp.renPaperBallTable, 17, 20, 1, look('A white table with a big ball made of paper snowflakes on it.'));
       F.stand(sp.renRegTable, 2, 21, 2, look('The kids\' church check-in. A sign: PARENTS, PICK UP AT THE DOOR. NOT THE WINDOW.'));
       w.addWarp(10, 23, 1, 1, 'renHall', 45, 5, 'left');
-    },
-    tick(w) {
-      const g = w.jjNpc;
-      if (!g || G.script.busy || G.tick % 70) return;
-      w.jjVerse = ((w.jjVerse == null ? -1 : w.jjVerse) + 1) % G.JJ_SONG.length;
-      w.pop(g.x, g.y - 36, G.JJ_SONG[w.jjVerse], '#a8e0ff');
     },
     tint(ctx) { renFlakes(ctx, [[3, 8], [8, 7.5], [13, 8.2], [18, 7.8], [5, 12], [11, 12.5], [16, 11.8], [6, 20], [15, 20.5]]); },
   };
