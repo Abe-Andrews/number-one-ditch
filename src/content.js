@@ -4187,7 +4187,7 @@
     { name: 'Renaissance Church (outside)', map: 'renaissance', at: [12, 9, 'up'] },
     { name: 'Renaissance Church: lobby', map: 'renLobby', at: [10, 11, 'up'] },
     { name: 'Renaissance Church: sanctuary', map: 'renSanctuary', at: [12, 17, 'up'] },
-    { name: 'Renaissance Church: renkids hall', map: 'renHall', at: [3, 5, 'right'] },
+    { name: 'Renaissance Church: renkids hall', map: 'renHall', at: [2, 5, 'right'] },
     { name: 'Renaissance Church: Mom\'s Sunday school', map: 'renClass', at: [7, 9, 'up'] },
     { name: 'Renaissance Church: the chapel (Ice JJ)', map: 'renChapel', at: [10, 21, 'up'] },
     { name: 'Nate\'s lab', map: 'lab', at: [3, 4, 'down'] },
@@ -24195,7 +24195,7 @@
   ].forEach((k, i) => { G.CAST['renAdult' + i] = Object.assign({ torso: 6, legs: 4 }, k); });
   // Real people from Renaissance (from the user's photos)
   // Josh Dyke, the technical director: short dark hair, a dark beard, a black button-up, a big grin.
-  G.CAST.joshDyke = { skin: '#eab894', hair: '#1e1612', hairStyle: 'short', beard: '#2a1e16', smile: '#ffffff', shirt: '#1e1e24', collar: '#2c2c34', pants: '#2a2a30', shoes: '#1e1e22', wide: true, torso: 7, legs: 4 };
+  G.CAST.joshDyke = { skin: '#eeb894', hair: '#1a1210', hairStyle: 'short', beard: '#3a2a1e', smile: '#ffffff', grin: true, shirt: '#1c1c22', collar: '#34343c', pants: '#3a4a68', shoes: '#141418', wide: true, torso: 7, legs: 4 };
   // Mitchell Chwatt: silver hair, a pink button-up open over a black tee, jeans, a watch.
   G.CAST.mitchell = { skin: '#e8bc9a', hair: '#bcb8b4', hairStyle: 'short', shirt: '#f0c4ca', neck: '#1c1c22', pants: '#4a6a9a', shoes: '#3a2a20', torso: 6, legs: 4 };
   // Joe Narciso: short dark hair, rectangular glasses, a gray quarter-zip over a black mock neck.
@@ -24344,8 +24344,7 @@
       fill(1, 1, 20, 2, 'ã'); fill(1, 3, 20, 10, 'å');
       fill(9, 1, 2, 2, 'å');                                // the sanctuary doors (open)
       // off the right side of the lobby: the hallway to renkids, and the stairs down at the end
-      fill(21, 6, 13, 2, 'ã'); fill(21, 8, 13, 3, 'å');
-      fill(31, 9, 3, 2, 'D');
+      fill(21, 6, 13, 2, 'ã'); fill(21, 8, 14, 3, 'å');   // (it runs out the right edge, into renkids)
       fill(7, 13, 8, 1, 'G'); g[13][10] = 'x'; g[13][11] = 'x';  // the glass front, and its doors
       return g.map((r) => r.join(''));
     },
@@ -24361,12 +24360,10 @@
       F.stand(sp.renKidsBanner, 13, 3, 1, look('A banner: CHRISTMAS FOR KIDS.'));
       F.stand(sp.renBin, 20, 4, 1, look('A trash can. Very clean. Somebody empties it between services.'));
       for (const [x, y] of [[6, 6], [15, 7], [7, 10], [17, 10]]) F.stand(sp.renBistro, x, y, 1, look('A black high-top table. Perfect for a coffee and a "so how have you BEEN?"'));
-      // the hallway to renkids: a sign pointing the way, and the stairs down with their black railing
-      F.hang(sp.renkidsSign, 23, 7, 3, look('A black sign: renkids. An arrow points down the hall. Kids\' check-in is downstairs.'), 10);
-      F.hang(sp.renLogoTV, 27, 7, 2, look('Another TV: RENKIDS. CHECK IN DOWNSTAIRS. Somebody drew a smiley face on a sticky note and stuck it to the screen.'), 8);
-      w.addProp({ img: sp.renRailing, tx: 31, ty: 8, flat: true, dy: 4 });
-      w.blockTiles(31, 8, 3, 1);
-      w.addWarp(31, 9, 3, 2, 'renHall', 3, 5, 'right');
+      // the hallway to renkids: a sign pointing the way, and it carries straight on into the kids' wing
+      F.hang(sp.renkidsSign, 23, 7, 3, look('A black sign: renkids. An arrow points down the hall.'), 10);
+      F.hang(sp.renLogoTV, 28, 7, 2, look('Another TV: RENKIDS. CHECK IN DOWN THE HALL. Somebody drew a smiley face on a sticky note and stuck it to the screen.'), 8);
+      w.addWarp(34, 8, 1, 3, 'renHall', 1, 5, 'right');
       w.add(new G.NPC({ sprite: 'joeNarciso', name: 'Joe Narciso', x: 8 * 16 + 8, y: 11 * 16 + 14, dir: 'down', talk: S.renJoe }));
       w.add(new G.NPC({ sprite: 'mitchell', name: 'Mitchell Chwatt', x: 16 * 16 + 8, y: 6 * 16 + 14, dir: 'left', talk: S.renMitchell }));
       w.addWarp(10, 13, 2, 1, 'renaissance', 12, 8, 'down');
@@ -24413,7 +24410,7 @@
       // the sound booth at the back
       F.stand(sp.renBooth, 10, 16, 5, look('The sound booth: a big mixing board, two screens, and a camera on a tripod.', ['Nate', 'So many buttons. I would press all of them.']));
       // Josh, the technical director, behind the board
-      w.add(new G.NPC({ sprite: 'joshDyke', name: 'Josh Dyke', x: 12 * 16 + 8, y: 17 * 16 + 14, dir: 'up', talk: S.renJosh }));
+      w.add(new G.NPC({ sprite: 'joshDyke', name: 'Josh Dyke', x: 10 * 16 + 4, y: 17 * 16 + 12, dir: 'up', talk: S.renJosh }));
       w.addWarp(12, 19, 2, 1, 'renLobby', 9, 3, 'down');
     },
   };
@@ -24428,15 +24425,14 @@
       const fill = (x, y, w, h, c) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) g[y + j][x + i] = c; };
       fill(1, 1, 45, 2, 'æ'); fill(1, 3, 45, 5, 'ì');
       fill(35, 1, 6, 2, 'ÿ');                               // the lounge's gray wall
-      fill(1, 4, 2, 3, 'S');                                     // the stairs back up
+      fill(0, 4, 1, 3, 'ì');                               // the hall from the lobby
       fill(26, 1, 1, 2, 'ì');                               // the chill room's door
       fill(46, 4, 1, 2, 'ì');                               // the way into the chapel
       return g.map((r) => r.join(''));
     },
     setup(w) {
       const F = furnish(w), sp = G.spr;
-      w.addWarp(1, 4, 2, 3, 'renLobby', 29, 9, 'left');
-      w.addProp({ img: sp.renRailingV, tx: 3, ty: 3, flat: true, dy: -2 });
+      w.addWarp(0, 4, 1, 3, 'renLobby', 33, 9, 'left');
       F.hang(sp.renkidsSign, 3, 2, 3, look('A black sign: renkids.'), 12);
       // classrooms along the hall, with their little black signs
       const sign = (x, name) => w.addProp({ img: sp.renRoomSigns[name], tx: x + 1, ty: 2, flat: true, dx: 2, dy: -15 });
@@ -24779,20 +24775,46 @@
   // wrong, and it's just Mom answering. Too much chaos and Mom stops class and starts that part
   // over. (Mom's answers to the big questions are placeholders until the user writes them.)
   const KID_NAME = (i) => REN_KIDS[i].name;
+  // Every question is multiple choice: the kid asks, you pick what Mom says (choice.right is hers,
+  // choice.wrong are the ones she catches herself on), then choice.after plays.
   const SS_ROUNDS = [
     { name: 'Easy questions', ask: 3, every: [230, 340], qs: [
-      { kid: 0, lines: [['K', 'Did Noah bring dinosaurs on the ark?'], ['Michelle', 'Hmm. If he did, I hope he put them at the far end of the boat.'], ['K', 'Away from the bunnies?'], ['Michelle', 'Away from EVERYBODY, hon.']] },
-      { kid: 1, lines: [['K', 'Does God sleep?'], ['Michelle', 'Nope. Never. He\'s up all night.'], ['K', 'Like you when the deer get in the garden?'], ['Michelle', '...Exactly like that.']] },
-      { kid: 2, lines: [['K', 'Can Jesus see me in the bathroom?'], ['Michelle', 'He\'s very polite about it.'], ['K', 'Oh no.'], ['Nate', 'You\'re okay, buddy.']] },
-      { kid: 3, lines: [['K', 'Did Adam and Eve have belly buttons?'], ['Nate', 'Oh, that\'s actually a really good—'], ['Michelle', 'NEXT question.']] },
-      { kid: 4, lines: [['K', 'Is it a sin if I give my broccoli to my dog?'], ['Michelle', 'It\'s not a sin. It\'s a tactic.'], ['Michelle', 'And your mom knows about the dog, Sam.']] },
-      { kid: 5, lines: [['K', 'What did Jesus eat for breakfast?'], ['Michelle', 'Probably fish. He was always hanging out with fishermen.'], ['K', 'FISH? For BREAKFAST?'], ['Nate', 'Fish is great for breakfast.'], ['K', 'Mr. Nate is weird.']] },
+      { kid: 0, lines: [['K', 'Did Noah bring dinosaurs on the ark?']],
+        choice: { right: 'The far end of the boat.', wrong: ['Dinosaurs are made up.', 'He rode one.'],
+          after: [['Michelle', 'Hmm. If he did, I hope he put them at the far end of the boat.'], ['K', 'Away from the bunnies?'], ['Michelle', 'Away from EVERYBODY, hon.']] } },
+      { kid: 1, lines: [['K', 'Does God sleep?']],
+        choice: { right: 'Nope. Never.', wrong: ['Only during sermons.', 'Eight hours, like you.'],
+          after: [['Michelle', 'Nope. Never. He\'s up all night.'], ['K', 'Like you when the deer get in the garden?'], ['Michelle', '...Exactly like that.']] } },
+      { kid: 2, lines: [['K', 'Can Jesus see me in the bathroom?']],
+        choice: { right: 'He\'s very polite about it.', wrong: ['Every single time.', 'Not if you lock the door.'],
+          after: [['Michelle', 'He\'s very polite about it.'], ['K', 'Oh no.'], ['Nate', 'You\'re okay, buddy.']] } },
+      { kid: 3, lines: [['K', 'Did Adam and Eve have belly buttons?'], ['Nate', 'Oh, that\'s actually a really good—']],
+        choice: { right: 'NEXT question.', wrong: ['Let me draw you a diagram.', 'Go ask Pastor.'],
+          after: [['Michelle', 'NEXT question.']] } },
+      { kid: 4, lines: [['K', 'Is it a sin if I give my broccoli to my dog?']],
+        choice: { right: 'It\'s not a sin. It\'s a tactic.', wrong: ['A big one.', 'Dogs love broccoli.'],
+          after: [['Michelle', 'It\'s not a sin. It\'s a tactic.'], ['Michelle', 'And your mom knows about the dog, Sam.']] } },
+      { kid: 5, lines: [['K', 'What did Jesus eat for breakfast?']],
+        choice: { right: 'Probably fish.', wrong: ['Pancakes.', 'Cereal. The good kind.'],
+          after: [['Michelle', 'Probably fish. He was always hanging out with fishermen.'], ['K', 'FISH? For BREAKFAST?'], ['Nate', 'Fish is great for breakfast.'], ['K', 'Mr. Nate is weird.']] } },
     ] },
-    { name: 'Harder questions', ask: 3, every: [150, 240], qs: [
-      { kid: 1, lines: [['K', 'Will my dog go to heaven?'], ['Michelle', 'Yes, hon. God redeems the animals too. Not just people. All of it.'], ['K', 'Even Biscuit?'], ['Michelle', 'Even Biscuit.']] },
-      { kid: 0, lines: [['K', 'Why can\'t I see God?'], ['Michelle', 'Can you see the wind?'], ['K', 'No.'], ['Michelle', 'But you can see the trees move. It\'s kind of like that.'], ['K', '...So God is wind?'], ['Michelle', 'That\'s not— we\'ll come back to that one.']] },
-      { kid: 5, lines: [['K', 'If God made everything, who made God?'], ['Michelle', 'Nobody. He was always there.'], ['K', 'ALWAYS always?'], ['Michelle', 'Always always.'], ['K', 'My brain hurts.'], ['Michelle', 'Mine too, bud.']] },
-      { kid: 2, lines: [['K', 'Does God love the bad guys too?'], ['Michelle', 'Yep. Even the bad guys.'], ['K', 'Even Kevin from my bus?'], ['Michelle', '...Even Kevin.']] },
+    { name: 'Harder questions', ask: 4, every: [150, 240], qs: [
+      { kid: 1, lines: [['K', 'Will my dog go to heaven?']],
+        choice: { right: 'Yes. God redeems the animals too.', wrong: ['Only the good dogs.', 'Just the cats.'],
+          after: [['Michelle', 'Yes, hon. God redeems the animals too. Not just people. All of it.'], ['K', 'Even Biscuit?'], ['Michelle', 'Even Biscuit.']] } },
+      { kid: 0, lines: [['K', 'Why can\'t I see God?']],
+        choice: { right: 'Can you see the wind?', wrong: ['He\'s shy.', 'He\'s right behind you.'],
+          after: [['Michelle', 'Can you see the wind?'], ['K', 'No.'], ['Michelle', 'But you can see the trees move. It\'s kind of like that.'], ['K', '...So God is wind?'], ['Michelle', 'That\'s not— we\'ll come back to that one.']] } },
+      { kid: 5, lines: [['K', 'If God made everything, who made God?']],
+        choice: { right: 'Nobody. He was always there.', wrong: ['His mom.', 'Pastor did.'],
+          after: [['Michelle', 'Nobody. He was always there.'], ['K', 'ALWAYS always?'], ['Michelle', 'Always always.'], ['K', 'My brain hurts.'], ['Michelle', 'Mine too, bud.']] } },
+      { kid: 2, lines: [['K', 'Does God love the bad guys too?']],
+        choice: { right: 'Yep. Even the bad guys.', wrong: ['Only on Sundays.', 'Not Kevin from your bus.'],
+          after: [['Michelle', 'Yep. Even the bad guys.'], ['K', 'Even Kevin from my bus?'], ['Michelle', '...Even Kevin.']] } },
+      // (2 Kings 2: some boys made fun of the prophet Elisha's bald head, and two bears came out of the woods)
+      { kid: 4, lines: [['K', 'Is it true God sent BEARS after some kids for making fun of a bald guy?'], ['Nate', '...It\'s in there. Second Kings.']],
+        choice: { right: 'It\'s true. Be nice to bald people.', wrong: ['No, that\'s a cartoon.', 'Bears aren\'t real.'],
+          after: [['Michelle', 'It\'s true. Elisha. A bunch of boys made fun of his bald head, and two bears came out of the woods.'], ['K', 'WHOA.'], ['Michelle', 'So what do we learn?'], ['Kids', 'BE NICE TO BALD PEOPLE!'], ['Michelle', 'Be nice to EVERYBODY. But yes. Especially bald people.']] } },
     ] },
     { name: 'The big questions', ask: 3, every: null, qs: [
       { kid: 3, lines: [['K', 'Miss Michelle? If God loves us... then why is there so much pain in the world?'], [null, 'The whole room goes quiet.'], ['Michelle', '...']],
@@ -24867,7 +24889,8 @@
         const c = yield G.ask(null, 'What does Mom say?', left);
         if (left[c] === q.choice.right) break;
         G.audio.sfx('no');
-        yield G.say(null, 'Mom opens her mouth to say it, and stops. That\'s not right. That\'s not what she believes.');
+        if (ss.round === 2) yield G.say(null, 'Mom opens her mouth to say it, and stops. That\'s not right. That\'s not what she believes.');
+        else yield G.say(null, ['Mom almost says it. ...Nope. Not that.', 'Mom catches herself. That\'s not it.', 'Mom starts to say it, and changes her mind.'][Math.floor(Math.random() * 3)]);
         left.splice(c, 1);
       }
       G.audio.sfx('select');
@@ -24924,7 +24947,7 @@
     yield G.say('Michelle', 'When somebody raises their hand, go call on them. And keep this room in one piece. Spills, wanderers, crayons on the walls.');
     yield G.say('Nate', 'How hard can it be? It\'s a handful of kids.');
     yield G.say('Michelle', 'Oh, hon.');
-    yield howToCmd('SUNDAY SCHOOL', ['A kid with a yellow ! has a question. Walk over and press Z to call on them.', 'Trouble: a kid wandering off, Goldfish on the floor, crayon on the wall. Walk over and press Z to fix it.', 'The more that goes wrong, the faster the CHAOS meter fills. If it fills up, Mom starts that part over.', 'Three parts: easy questions, harder ones, then the big ones. For the big ones, you pick what Mom says.']);
+    yield howToCmd('SUNDAY SCHOOL', ['A kid with a yellow ! has a question. Walk over and press Z to call on them.', 'Trouble: a kid wandering off, Goldfish on the floor, crayon on the wall. Walk over and press Z to fix it.', 'The more that goes wrong, the faster the CHAOS meter fills. If it fills up, Mom starts that part over.', 'Three parts: easy questions, harder ones, then the big ones. For every question, you pick what Mom says.']);
     G.play.overlay = null;
     w.ss.phase = 'play';
   };

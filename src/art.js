@@ -270,7 +270,8 @@
       const b = c.beard;
       if (!c.beardLow) { p.set(3, y0 + 6, b); p.set(12, y0 + 6, b); }
       p.hline(3, 4, y0 + 7, b); p.hline(11, 12, y0 + 7, b);
-      p.hline(4, 6, y0 + 8, b); p.hline(9, 11, y0 + 8, b);
+      // (a grin shows through the beard: only the corners of the jaw on the smile's row)
+      if (c.grin) { p.set(4, y0 + 8, b); p.set(11, y0 + 8, b); } else { p.hline(4, 6, y0 + 8, b); p.hline(9, 11, y0 + 8, b); }
       p.hline(5, 10, y0 + 9, b);
       // (longBeard: a mustache, and a beard all the way down the chest: Dan Hurd's)
       if (c.longBeard) {
@@ -11845,9 +11846,10 @@
     return p.canvas();
   }
   function renExitSign() {
-    const p = new Pix(16, 7);
-    p.rect(0, 0, 16, 7, '#3a1a1a'); p.outline();
-    return renTxt(p.canvas(), 'EXIT', 1, -1, '#ff4838', { shadow: '#801010' });
+    // (sized to the word, with room for the letters' full height)
+    const W = G.font.width('EXIT') + 6, H = 11, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#2a1414'); p.hline(0, W - 1, 0, '#4a2424'); p.outline();
+    return renTxt(p.canvas(), 'EXIT', 3, 1, '#ff5040', { shadow: '#7a1010' });
   }
   // the window in the wood partition, looking into the dark chapel
   function renChapelWindow() {
