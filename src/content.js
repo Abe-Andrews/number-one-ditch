@@ -24779,7 +24779,7 @@
     { name: 'Easy questions', ask: 3, qs: [
       { kid: 0, lines: [['K', 'Did Noah bring dinosaurs on the ark?']],
         choice: { right: 'The far end of the boat.', wrong: ['Dinosaurs are made up.', 'He rode one.'],
-          after: [['Michelle', 'Hmm. If he did, I hope he put them at the far end of the boat.'], ['K', 'Away from the bunnies?'], ['Michelle', 'Away from EVERYBODY, hon.']] } },
+          after: [['Michelle', 'Hmm. If he did, I hope he put them at the far end of the boat.'], ['K', 'Away from the bunnies?'], ['Michelle', 'Away from EVERYBODY.']] } },
       { kid: 1, lines: [['K', 'Does God sleep?']],
         choice: { right: 'Nope. Never.', wrong: ['Only during sermons.', 'Eight hours, like you.'],
           after: [['Michelle', 'Nope. Never. He\'s up all night.'], ['K', 'Like you when the deer get in the garden?'], ['Michelle', '...Exactly like that.']] } },
@@ -24799,13 +24799,13 @@
     { name: 'Harder questions', ask: 4, qs: [
       { kid: 1, lines: [['K', 'Will my dog go to heaven?']],
         choice: { right: 'Yes. God redeems the animals too.', wrong: ['Only the good dogs.', 'Just the cats.'],
-          after: [['Michelle', 'Yes, hon. God redeems the animals too. Not just people. All of it.'], ['K', 'Even Biscuit?'], ['Michelle', 'Even Biscuit.']] } },
+          after: [['Michelle', 'Yes. God redeems the animals too. Not just people. All of it.'], ['K', 'Even Biscuit?'], ['Michelle', 'Even Biscuit.']] } },
       { kid: 0, lines: [['K', 'Why can\'t I see God?']],
         choice: { right: 'Can you see the wind?', wrong: ['He\'s shy.', 'He\'s right behind you.'],
           after: [['Michelle', 'Can you see the wind?'], ['K', 'No.'], ['Michelle', 'But you can see the trees move. It\'s kind of like that.'], ['K', '...So God is wind?'], ['Michelle', 'That\'s not— we\'ll come back to that one.']] } },
       { kid: 5, lines: [['K', 'If God made everything, who made God?']],
         choice: { right: 'Nobody. He was always there.', wrong: ['His mom.', 'Pastor did.'],
-          after: [['Michelle', 'Nobody. He was always there.'], ['K', 'ALWAYS always?'], ['Michelle', 'Always always.'], ['K', 'My brain hurts.'], ['Michelle', 'Mine too, bud.']] } },
+          after: [['Michelle', 'Nobody. He was always there.'], ['K', 'ALWAYS always?'], ['Michelle', 'Always always.'], ['K', 'My brain hurts.'], ['Michelle', 'Mine too.']] } },
       { kid: 2, lines: [['K', 'Does God love the bad guys too?']],
         choice: { right: 'Yep. Even the bad guys.', wrong: ['Only on Sundays.', 'Not Kevin from your bus.'],
           after: [['Michelle', 'Yep. Even the bad guys.'], ['K', 'Even Kevin from my bus?'], ['Michelle', '...Even Kevin.']] } },
@@ -24817,13 +24817,13 @@
     { name: 'The big questions', ask: 3, qs: [
       { kid: 3, lines: [['K', 'Miss Michelle? If God loves us... then why is there so much pain in the world?'], [null, 'The whole room goes quiet.'], ['Michelle', '...']],
         choice: { right: 'I don\'t know.', wrong: ['God is punishing bad people.', 'Pain is good for us and we don\'t realize it.'],
-          after: [['Michelle', 'Honestly, hon? I don\'t know.']] } },
+          after: [['Michelle', 'Honestly? I don\'t know.']] } },
       { kid: 4, lines: [['K', 'I prayed for my grandpa to get better. And he died anyway.'], ['K', 'Why didn\'t God listen?'], ['Michelle', '...Come here, Sam.']],
         choice: { right: 'God heard you. Sometimes we can\'t know why.', wrong: ['You didn\'t pray hard enough.', 'God was too busy that day.'],
           after: [['Michelle', 'God heard you. He hears every single prayer.'], ['Michelle', 'But sometimes He doesn\'t give us what we ask for. And we can\'t always know why.']] } },
       { kid: 1, lines: [['K', 'How do we know it\'s all true?']],
         choice: { right: 'We can\'t know for sure. We trust and believe.', wrong: ['Because I said so.', 'Grown-ups are never wrong.'],
-          after: [['Michelle', 'Honestly, hon? We can\'t know for sure.'], ['Michelle', 'But we trust. And we believe. That\'s what faith is.']] } },
+          after: [['Michelle', 'Honestly? We can\'t know for sure.'], ['Michelle', 'But we trust. And we believe. That\'s what faith is.']] } },
     ] },
   ];
   const SS_IDLE = [
@@ -24920,7 +24920,7 @@
     },
     setup(w) {
       const F = furnish(w), sp = G.spr;
-      F.hang(sp.renWindow, 6, 2, 2, look('A window, up high. Somebody stuck paper snowflakes all over it.'), 6);
+      F.hang(sp.renWindow, 6, 2, 2, look('A window, up high. Bright out.'), 6);
       F.hang(sp.renClock, 12, 1, 1, look('A clock. It\'s been 9:20 for a while now. Probably.'), -2);
       F.stand(sp.renToyBins, 1, 3, 2, look('Toy bins: blocks, plastic animals, a toy ark, and every crayon ever made.'));
       F.stand(sp.renFeltBoard, 9, 3, 2, look('A felt board: a little felt boat, a lot of felt animals, and a felt rainbow.'));
@@ -25006,7 +25006,6 @@
     },
     tint(ctx) {
       const w = G.play.world, ss = w && w.ss;
-      renFlakes(ctx, [[2, 3.5], [5, 4], [9.5, 3.6], [12.5, 4.2]]);
       if (!ss || ss.phase === 'intro') return;
       const FT = G.font, sh = { shadow: '#0c0814' };
       // the HUD: which part, and how many questions are left
