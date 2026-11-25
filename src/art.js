@@ -11657,6 +11657,33 @@
     p.outline();
     return p.canvas();
   }
+  // ...the same door, cracked open: swung in a little, a slice of the bright room showing past it
+  // (white brick, the blue rug, a beanbag, warm light spilling onto the hall floor)
+  function renOakDoorAjar() {
+    const p = new Pix(16, 30), oak = '#c89040', oakD = '#a87430';
+    p.rect(0, 0, 16, 30, '#f0f0ec');
+    // the room beyond
+    p.rect(1, 1, 6, 29, '#f8f4e8'); for (let y = 3; y < 16; y += 4) p.hline(1, 6, y, '#e4e0d4');
+    p.rect(1, 18, 6, 12, '#4a7ac0'); p.hline(1, 6, 18, '#5a8ad0'); p.rect(2, 21, 3, 3, '#e85848'); p.hline(2, 4, 21, '#f07868');
+    p.set(5, 6, '#ffffff'); p.set(4, 7, '#c8d8f0');
+    // the door, swung in: narrower, its edge toward us darker
+    p.rect(7, 1, 8, 29, oak); p.vline(7, 1, 29, '#7a5228'); p.vline(8, 1, 29, oakD);
+    for (let y = 2; y < 30; y += 3) p.hline(9, 14, y, G.hash(y, 1, 531) < 0.5 ? oakD : '#d49c4c');
+    p.rect(10, 4, 4, 14, '#dce8ec'); p.vline(10, 4, 17, '#9ab0b8');
+    p.rect(8, 16, 1, 3, '#c8c8cc');
+    p.outline();
+    return p.canvas();
+  }
+  // the chapel's EXIT sign, mounted on the wood header over the doorway in the partition
+  function renExitHeader() {
+    const W = 32, H = 13, p = new Pix(W, H);
+    p.rect(0, 0, W, H, '#6a4220'); p.hline(0, W - 1, 0, '#8a5a30'); p.hline(0, W - 1, H - 1, '#3a2412');
+    for (let x = 0; x < W; x += 4) p.set(x, 6, '#5a3818');
+    const sw = G.font.width('EXIT') + 6, sx = (W - sw) >> 1;
+    p.rect(sx, 1, sw, 10, '#2a1414'); p.hline(sx, sx + sw - 1, 1, '#4a2424');
+    const cv = p.canvas(); renTxt(cv, 'EXIT', sx + 3, 1, '#ff5040', { shadow: '#7a1010' });
+    return cv;
+  }
   function renRoomSign(t) {
     const W = G.font.width(t) + 6, p = new Pix(W, 10);
     p.rect(0, 0, W, 10, '#2a2826'); p.outline();
@@ -12556,7 +12583,7 @@
     S.renXmasTree = renXmasTree(); S.renBistro = renBistro(); S.renConnectShelf = renConnectShelf(); S.renConnectSign = renConnectSign(); S.renLogoTV = renLogoTV(); S.renLobbyGlass = renLobbyGlass();
     S.renKidsBanner = renKidsBanner(); S.renBin = renBin(); S.renRailing = renRailing(48); S.renRailingV = renRailing(16); S.renkidsSign = renkidsSign();
     S.renArchWin = renArchWin(); S.renPanel = renPanel(); S.renLedWall = renLedWall(); S.renSideScreen = renSideScreen(); S.renChair = renChair(); S.renBooth = renBooth();
-    S.renOakDoor = renOakDoor(); S.renRoomSigns = {}; for (const t of ['nursery', '2s & 3s', 'the chill room', '4s-K', 'chapel', 'check-in']) S.renRoomSigns[t] = renRoomSign(t);
+    S.renOakDoor = renOakDoor(); S.renOakDoorAjar = renOakDoorAjar(); S.renExitHeader = renExitHeader(); S.renRoomSigns = {}; for (const t of ['nursery', '2s & 3s', 'the chill room', '4s-K', 'chapel', 'check-in']) S.renRoomSigns[t] = renRoomSign(t);
     S.renWreathDoors = renWreathDoors(); S.renRegTable = renRegTable(); S.renMetalShelf = renMetalShelf(); S.renClock = renClock(); S.renCouch = renCouch(); S.renWindow = renWindow();
     S.renMossWelcome = renMossWelcome(); S.renPaperFlake = renPaperFlake();
     S.renSlits = []; for (let h = 0; h < 4; h++) for (let k = 0; k < 4; k++) S.renSlits.push(renSlit(k, h)); S.renGable = renGable(); S.renSideGlass = renSideGlass(); S.renRib = renRib(); { const c = G.canvas(S.renRib.width, S.renRib.height), x = c.getContext('2d'); x.scale(-1, 1); x.drawImage(S.renRib, -S.renRib.width, 0); S.renRibR = c; } S.renGrand = renGrand(); S.renSpeaker = renSpeaker(); S.renSoundTable = renSoundTable();

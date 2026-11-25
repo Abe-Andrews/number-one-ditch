@@ -24439,7 +24439,9 @@
       const room = (x, name, lines) => { F.hang(sp.renOakDoor, x, 2, 1, lines ? look(...lines) : null, 0); sign(x, name); };
       room(7, 'nursery', ['The nursery. Through the window: a row of cribs, and every single baby asleep at once.', ['Nate', 'A miracle. I\'m not going in there.']]);
       room(16, '2s & 3s', ['The 2s & 3s room. Somebody in there is singing the clean-up song. Nobody is cleaning up.']);
-      w.addProp({ img: sp.renOakDoor, tx: 26, ty: 2, flat: true }); sign(26, 'the chill room');
+      w.addProp({ img: sp.renOakDoorAjar, tx: 26, ty: 2, flat: true }); sign(26, 'the chill room');
+      // (warm light from the cracked door, spilling onto the hall floor)
+      w.props.push({ img: null, x: 0, y: 0, flat: true, base: 0, draw(ctx, cx, cy) { ctx.fillStyle = 'rgba(255,236,190,0.22)'; ctx.fillRect(26 * 16 + 1 - cx, 3 * 16 - cy, 7, 10); ctx.fillRect(26 * 16 - cx, 3 * 16 + 10 - cy, 9, 6); } });
       w.addWarp(26, 1, 1, 1, 'renClass', 7, 9, 'up');
       room(31, '4s-K', ['The 4s-K room. A table of kids gluing cotton balls onto paper sheep. One kid is gluing them onto himself.']);
       // the check-in desk, by the doors with the wreaths
@@ -24747,7 +24749,7 @@
       w.add(new G.NPC({ sprite: 'daveMacarone', name: 'Dave Macarone', x: 5 * 16 + 8, y: 12 * 16 + 14, dir: 'up', talk: S.renDave }));
       // the back: the wood partition with windows into the chapel, the check-in room behind it
       F.hang(sp.renChapelWindow, 2, 18, 3, null, 4); F.hang(sp.renChapelWindow, 16, 18, 3, null, 4);
-      F.hang(sp.renExitSign, 10, 17, 2, null, -2);
+      w.addProp({ img: sp.renExitHeader, tx: 10, ty: 17, flat: true, dy: -3 });
       F.stand(sp.renCubbies, 4, 19, 3, look('Wood cubbies, one per kid. Somebody\'s cubby has a single shoe in it.'));
       F.stand(sp.renCubbies, 13, 19, 3, look('More cubbies. A coat, a backpack, and half a granola bar.'));
       F.stand(sp.renCooler, 8, 19, 1, look('A water cooler. The little paper cones are all gone.'));
