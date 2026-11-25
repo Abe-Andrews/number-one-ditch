@@ -24193,6 +24193,97 @@
     { skin: '#e8bc98', hair: '#5a3a24', hairStyle: 'shoulder', smile: '#ffffff', coat: '#7a9ac8', shirt: '#f0f0ec', pants: '#e888a8', shoes: '#c8a888' },
     { skin: '#6a4028', hair: '#16100e', hairStyle: 'cropped', smile: '#ffffff', shirt: '#3a5a3a', pants: '#2a2a30', shoes: '#1e1e22' },
   ].forEach((k, i) => { G.CAST['renAdult' + i] = Object.assign({ torso: 6, legs: 4 }, k); });
+  // Real people from Renaissance (from the user's photos)
+  // Josh Dyke, the technical director: short dark hair, a dark beard, a black button-up, a big grin.
+  G.CAST.joshDyke = { skin: '#eab894', hair: '#1e1612', hairStyle: 'short', beard: '#2a1e16', smile: '#ffffff', shirt: '#1e1e24', collar: '#2c2c34', pants: '#2a2a30', shoes: '#1e1e22', wide: true, torso: 7, legs: 4 };
+  // Mitchell Chwatt: silver hair, a pink button-up open over a black tee, jeans, a watch.
+  G.CAST.mitchell = { skin: '#e8bc9a', hair: '#bcb8b4', hairStyle: 'short', shirt: '#f0c4ca', neck: '#1c1c22', pants: '#4a6a9a', shoes: '#3a2a20', torso: 6, legs: 4 };
+  // Joe Narciso: short dark hair, rectangular glasses, a gray quarter-zip over a black mock neck.
+  G.CAST.joeNarciso = { skin: '#eec4a2', hair: '#2a1e18', hairStyle: 'buzz', glasses: '#2a2a30', smile: '#ffffff', shirt: '#5e6878', neck: '#1c1c22', pants: '#3a3a44', shoes: '#2a2a30', wide: true, torso: 6, legs: 4 };
+  // Dave Macarone, the creative director: wavy shoulder-length hair, a beard, a navy blazer over a brown shirt.
+  G.CAST.daveMacarone = { skin: '#eabd98', hair: '#5a3a24', hairStyle: 'shoulder', beard: '#5a3e2c', smile: '#ffffff', coat: '#1e2a48', shirt: '#8a6a54', pants: '#2a2a30', shoes: '#3a2a20', torso: 7, legs: 4 };
+  // Josh, behind the sound board: he bet Dad five dollars he couldn't get the word "rebag" into his sermon
+  S.renJosh = function* () {
+    const f = flags();
+    if (!f.joshBet) {
+      f.joshBet = true;
+      yield G.say('Josh Dyke', 'Nate! Big day. Big, big day.');
+      yield G.say('Josh Dyke', 'I bet your dad five bucks he can\'t slip the word "rebag" into his sermon.');
+      yield G.say('Nate', '...Rebag?');
+      yield G.say('Josh Dyke', 'Rebag. Into the sermon. Out loud. On purpose. In front of everybody.');
+      yield G.say('Nate', 'He\'s going to do it.');
+      yield G.say('Josh Dyke', 'He\'s going to TRY. And I\'m the guy with his microphone.');
+      return;
+    }
+    f.joshLine = ((f.joshLine || 0) + 1) % 4;
+    yield G.say('Josh Dyke', [
+      'I\'m listening to every single word. Every "Amen" sounds like "rebag" to me now.',
+      'If he pulls it off, I lose five dollars. If he doesn\'t, I\'m getting lunch on the pastor.',
+      'He just said "regard." That was close. That was TOO close.',
+      'Don\'t tell him I\'m recording this. I\'m recording this.',
+    ][f.joshLine]);
+  };
+  // Mitchell, who always has a riddle for Nate
+  const MITCHELL_RIDDLES = [
+    ['What has keys, but can\'t open a single lock?', 'A piano.', ['A janitor.', 'A map.']],
+    ['The more you take, the more you leave behind. What are they?', 'Footsteps.', ['Cookies.', 'Photos.']],
+    ['What has a neck but no head?', 'A bottle.', ['A giraffe.', 'A turtle.']],
+    ['What gets wetter the more it dries?', 'A towel.', ['A fish.', 'A cloud.']],
+    ['What can you catch, but never throw?', 'A cold.', ['A ball.', 'A fish.']],
+    ['What has hands, but can\'t clap?', 'A clock.', ['A glove.', 'A mime.']],
+    ['What goes up but never comes down?', 'Your age.', ['A balloon.', 'A kite.']],
+    ['What has one eye, but can\'t see?', 'A needle.', ['A pirate.', 'A potato.']],
+  ];
+  S.renMitchell = function* () {
+    const f = flags(), i = (f.mitchellRiddle || 0) % MITCHELL_RIDDLES.length, [q, right, wrong] = MITCHELL_RIDDLES[i];
+    f.mitchellRiddle = i + 1;
+    yield G.say('Mitchell Chwatt', i === 0 && !f.mitchellMet ? 'Nate. Good to see you. I\'ve got one for you.' : 'Nate. Riddle.');
+    f.mitchellMet = true;
+    const opts = [right].concat(wrong).sort(() => Math.random() - 0.5);
+    const c = yield G.ask('Mitchell Chwatt', q, opts);
+    if (opts[c] === right) {
+      G.audio.sfx('secret');
+      f.mitchellRight = (f.mitchellRight || 0) + 1;
+      yield G.say('Mitchell Chwatt', ['...Correct. Hm.', 'Correct. Lucky guess.', 'Correct. You\'ve heard that one.', 'Correct. I\'ll get you next week.'][f.mitchellRight % 4]);
+    } else {
+      G.audio.sfx('no');
+      yield G.say('Mitchell Chwatt', right + ' Think about it.');
+      yield G.say('Nate', '...Oh. OH.');
+    }
+  };
+  // Joe, who has asked Nate the same question since he was little
+  S.renJoe = function* () {
+    const f = flags(), n = f.joeAsked || 0;
+    f.joeAsked = n + 1;
+    yield G.say('Joe Narciso', 'Nate! Where are you going to college?');
+    const answers = [
+      [['Nate', 'Lafayette, Joe. In Easton. I\'m a geology major.'], ['Joe Narciso', 'Lafayette! Good school. Good for you, buddy.']],
+      [['Nate', 'Still Lafayette. Go Leopards.'], ['Joe Narciso', 'The Leopards! I love it. Love it.']],
+      [['Nate', 'Lafayette, Joe. You\'ve asked me that since I was little.'], ['Joe Narciso', 'And look at you! Now you finally have an answer!']],
+      [['Nate', 'Lafayette. I study rocks. I have a whole lab now.'], ['Joe Narciso', 'Rocks! Can you make money in rocks?'], ['Nate', '...Next question.']],
+      [['Nate', 'Lafayette. On the hill, over the river. Pardee Hall looks like a castle.'], ['Joe Narciso', 'A castle! Look at that. Proud of you.']],
+    ];
+    for (const [who, line] of answers[n % answers.length]) yield G.say(who, line);
+  };
+  // Dave, the creative director, who said yes to Ice JJ Fish and wants to talk music
+  S.renDave = function* () {
+    const f = flags();
+    if (!f.daveMet) {
+      f.daveMet = true;
+      yield G.say('Dave Macarone', 'Nate! Dave. Creative director. Which means I\'m the guy who said yes to Ice JJ Fish.');
+      yield G.say('Nate', 'YOU booked him?');
+      yield G.say('Dave Macarone', 'The kids voted. I just signed the form. ...Honestly? I\'d do it again. Look at them.');
+      return;
+    }
+    f.daveLine = ((f.daveLine || 0) + 1) % 4;
+    const talk = [
+      [['Dave Macarone', 'So what are you playing these days? Still making stuff?'], ['Nate', 'I\'ve been making tracks in Studio B at school. Prof. Watts lets me use the good mic.'], ['Dave Macarone', 'Studio B! Send me something. I\'m serious. I want to hear it.']],
+      [['Dave Macarone', 'Best part of my job? A whole room singing the same song at the same time.'], ['Dave Macarone', 'Even if the song is four words long.']],
+      [['Dave Macarone', 'If you ever want to play on a Sunday, the band could always use another guitar.'], ['Nate', 'For real?'], ['Dave Macarone', 'For real. Bring your own cable.'], ['Nate', 'My brother has thousands of cables. He\'d be thrilled.']],
+      [['Dave Macarone', 'You know what makes a good worship set? Same as any good set. Know when to get loud, and know when to get out of the way.']],
+    ][f.daveLine];
+    for (const [who, line] of talk) yield G.say(who, line);
+  };
   // paper snowflakes hanging from the ceiling, drawn over everything (map tint): [x, y] in tiles
   const renFlakes = (ctx, spots) => {
     const cam = G.play.cam, img = G.spr.renPaperFlake;
@@ -24276,8 +24367,8 @@
       w.addProp({ img: sp.renRailing, tx: 31, ty: 8, flat: true, dy: 4 });
       w.blockTiles(31, 8, 3, 1);
       w.addWarp(31, 9, 3, 2, 'renHall', 3, 5, 'right');
-      renNpc('renAdult0', 'Greeter', 8, 11, 'down', ['Welcome! First time? ...Oh, you\'re the pastor\'s kid. Welcome back!'])(w);
-      renNpc('renAdult1', 'Churchgoer', 16, 6, 'left', ['Nate! Your mom says you found a whole shark tooth. She showed us the picture. Twice.'])(w);
+      w.add(new G.NPC({ sprite: 'joeNarciso', name: 'Joe Narciso', x: 8 * 16 + 8, y: 11 * 16 + 14, dir: 'down', talk: S.renJoe }));
+      w.add(new G.NPC({ sprite: 'mitchell', name: 'Mitchell Chwatt', x: 16 * 16 + 8, y: 6 * 16 + 14, dir: 'left', talk: S.renMitchell }));
       w.addWarp(10, 13, 2, 1, 'renaissance', 12, 8, 'down');
     },
   };
@@ -24316,12 +24407,13 @@
       F.stand(sp.drumKit, 18, 4, 3, look('The drum kit, behind a clear shield.'));
       F.stand(sp.microphone, 10, 5, 1, look('A mic stand at center stage.'));
       F.stand(sp.microphone, 16, 5, 1, look('A mic stand, for the backup singer.'));
-      renNpc('dad', 'Dad', 13, 5, 'down', ['Nate! You came! Grab a seat. Not the front row. That\'s for the brave.', 'Do you speak EEENGLISH? ...Just checking.'])(w);
+      renNpc('dad', 'Dad', 13, 5, 'down', ['Nate! You came! Grab a seat. Not the front row. That\'s for the brave.', 'And if I say a strange word in the sermon today, don\'t react. Don\'t look at Josh.'])(w);
       // rows of chairs, with two aisles
       for (const y of [8, 10, 12, 14]) for (let x = 2; x <= 23; x++) if (x !== 7 && x !== 8 && x !== 17 && x !== 18) F.stand(sp.renChair, x, y, 1);
       // the sound booth at the back
       F.stand(sp.renBooth, 10, 16, 5, look('The sound booth: a big mixing board, two screens, and a camera on a tripod.', ['Nate', 'So many buttons. I would press all of them.']));
-      renNpc('renAdult3', 'Tech guy', 12, 17, 'up', ['Sound check in ten. If you hear feedback, it wasn\'t me.'])(w);
+      // Josh, the technical director, behind the board
+      w.add(new G.NPC({ sprite: 'joshDyke', name: 'Josh Dyke', x: 12 * 16 + 8, y: 17 * 16 + 14, dir: 'up', talk: S.renJosh }));
       w.addWarp(12, 19, 2, 1, 'renLobby', 9, 3, 'down');
     },
   };
@@ -24656,7 +24748,7 @@
           ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height) - cy - hop);
         };
       });
-      renNpc('renAdult2', 'Kids\' church leader', 5, 12, 'up', ['We booked a special guest this week. The kids voted. It was unanimous. I have regrets.'])(w);
+      w.add(new G.NPC({ sprite: 'daveMacarone', name: 'Dave Macarone', x: 5 * 16 + 8, y: 12 * 16 + 14, dir: 'up', talk: S.renDave }));
       // the back: the wood partition with windows into the chapel, the check-in room behind it
       F.hang(sp.renChapelWindow, 2, 18, 3, null, 4); F.hang(sp.renChapelWindow, 16, 18, 3, null, 4);
       F.hang(sp.renExitSign, 10, 17, 2, null, -2);
