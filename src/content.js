@@ -32,10 +32,10 @@
       skin: '#f6d0bc', hair: '#c8995a', hairStyle: 'wavy', hairEnd: 3, blush: true, smile: '#ffffff',
       shirt: '#2e56a6', neckline: true, logo: '#f4f0e8', pants: '#2e56a6', shoes: '#f0f0ec', torso: 5, legs: 3,
     },
-    // ...and off shift (anywhere but inside CHKD): jeans and a coral tee.
+    // ...and off shift (anywhere but inside CHKD): jeans and a black tee.
     hannahCasual: {
       skin: '#f6d0bc', hair: '#c8995a', hairStyle: 'wavy', hairEnd: 3, blush: true, smile: '#ffffff',
-      shirt: '#d8706a', neckline: true, pants: '#3e5a8a', shoes: '#f0f0ec', torso: 5, legs: 3,
+      shirt: '#24242a', neckline: true, pants: '#3e5a8a', shoes: '#f0f0ec', torso: 5, legs: 3,
     },
     // 6'2", army, fitness: gray polo, earring.
     doron: {
