@@ -3212,7 +3212,6 @@
       Object.assign(count('Every rock', G.rocksFound(), G.ROCKS.length, 'Everywhere', 'See the Rocks page in COLLECTABLES. Every rock has a hint.'), { core: true }),
       Object.assign(count('Every photo', G.photosFound(), G.PHOTOS.length, 'Everywhere', 'See the Photos page in COLLECTABLES. Every photo has a hint.'), { core: true }),
       count('Every pipe song', G.SIGNALS.filter((sg) => sg.known()).length, G.SIGNALS.length, 'Everywhere', 'People teach them along the way. Ask around, and don\'t skip the side quests.'),
-      count('The Dunk Log', G.dunksFound(), G.DUNKS.length, 'Everywhere', 'With Abe in the party, say the sacred number three times and he throws Nate in the nearest water. The Dunk Log in COLLECTABLES says where the rest are.'),
       count('Every heart container', Math.floor((s.maxHp - 6) / 2), HEARTS, 'Everywhere', 'Gus, the Chem Final, Mom\'s stand, the rock crusher, and most of the hardest things on this list.'),
       count('Everyone you can meet', met[0], met[1], 'Everywhere', 'Talk to people. See the PEOPLE page.'),
       f.fcAwake ? row('Father Christmas', f.fcBeaten, 'Andover - the deep stope', 'A cave-in opened up off the east stope of the tunnels.') : row('???', false, '???', 'Finish the story, every rock and every photo, and see what wakes up.'),
@@ -3272,7 +3271,6 @@
     'The World\'s Largest August Ham': (f) => f.hamSign,
     'The museum\'s stamp card': (f) => f.museumCard,
     'Every pipe song': (f, s) => s.items.pipe,
-    'The Dunk Log': (f, s) => s.party.includes('abe'),
   };
   const rawCompletion = G.completion;
   G.completion = () => {
@@ -21945,6 +21943,42 @@
     for (const [id, w] of entries) if ((r -= w) <= 0) return id;
     return entries[0][0];
   }
+  // Tooth quality: every find comes up Broken, Good or Perfect. The Tooth Book keeps the best of
+  // each kind (old saves' finds count as Good), and a Perfect one is worth double.
+  G.FOSSIL_Q = ['Broken', 'Good', 'Perfect'];
+  G.FOSSIL_QC = ['#a8a0b8', '#f8f8f0', '#f8d850'];
+  G.fossilBest = () => (G.state.fossilQ = G.state.fossilQ || {});
+  G.fossilBestOf = (id) => { const q = G.fossilBest()[id]; return q !== undefined ? q : G.fossilBook()[id] ? 1 : -1; };
+  const rollQ = () => { const r = Math.random(); return r < 0.25 ? 0 : r < 0.85 ? 1 : 2; };
+  const brokenArt = {}, decoyArt = {};
+  // a broken one: the same fossil with a corner snapped off
+  G.fossilArt = (id, q) => {
+    const im = G.spr.fossils[id];
+    if (q !== 0) return im;
+    if (brokenArt[id]) return brokenArt[id];
+    const c = document.createElement('canvas'); c.width = im.width; c.height = im.height;
+    const x = c.getContext('2d'); x.drawImage(im, 0, 0);
+    const rows = Math.ceil(im.height * 0.4);
+    for (let j = 0; j < rows; j++) x.clearRect(im.width - Math.ceil((rows - j) * im.width / im.height), j, im.width, 1);
+    return (brokenArt[id] = c);
+  };
+  // look-alikes: a black pebble shaped like a tooth (flat gray, no shine, no glint), or a bit of shell
+  const DECOY_IDS = ['sandTiger', 'bull', 'tiger', 'snaggle', 'mako', 'white'];
+  function decoyOf(kind) {
+    if (decoyArt[kind]) return decoyArt[kind];
+    const c = document.createElement('canvas'), im = kind === 'shell' ? null : G.spr.fossils[kind];
+    c.width = im ? im.width : 9; c.height = im ? im.height : 6;
+    const x = c.getContext('2d');
+    if (!im) {
+      [[2, 4], [1, 7], [0, 8], [1, 7], [2, 5], [3, 2]].forEach(([a, w], j) => { x.fillStyle = '#d8ccb0'; x.fillRect(a, j, w, 1); });
+      x.fillStyle = '#b4a484'; x.fillRect(3, 1, 1, 4); x.fillRect(5, 1, 1, 4); x.fillStyle = '#f0e8d4'; x.fillRect(2, 1, 1, 1);
+    } else {
+      x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-atop';
+      x.fillStyle = '#423e38'; x.fillRect(0, 0, c.width, c.height);
+      x.fillStyle = '#56524a'; for (let i = 0; i < 4; i++) x.fillRect(Math.floor(G.hash(i, 7, 362) * c.width), Math.floor(G.hash(i, 8, 362) * c.height), 1, 1);
+    }
+    return (decoyArt[kind] = c);
+  }
   // SIFTING: dig (hold Z; deeper is better, but too deep and it spills), shake the sand out (← → ← →),
   // then pick the fossils out of the gravel by hand before Nate's arms give out. X dumps it early.
   // Result: { got: [fossil ids], junk: [ids] } (or 'quit').
@@ -21953,20 +21987,30 @@
     const ROCK = ['#8a7a62', '#a8967a', '#6a5e4c', '#c0b090', '#50483c', '#3a3430', '#7a6a58'];
     return {
       start() {
-        Object.assign(this, { step: 'dig', t: 0, depth: 0, shook: 0, need: 1, side: null, jig: 0, left: 1, arms: 1, finds: [], peb: [], grains: [], got: [], junk: [], cx: TX + TW / 2, cy: TY + TH / 2, msg: null, msgT: 0, endT: 0, zReady: false, spilled: false });
+        Object.assign(this, { step: 'dig', t: 0, depth: 0, shook: 0, need: 1, side: null, jig: 0, left: 1, arms: 1, finds: [], peb: [], grains: [], got: [], q: [], junk: [], spark: [], freeze: 0, flash: 0, shakeT: 0, close: null, msgC: null, cx: TX + TW / 2, cy: TY + TH / 2, msg: null, msgT: 0, endT: 0, zReady: false, spilled: false });
         G.play.overlay = this;
       },
-      say(text, n) { this.msg = text; this.msgT = n || 80; },
+      say(text, n, c) { this.msg = text; this.msgT = n || 80; this.msgC = c || null; },
+      sparks(x, y, r) { for (let i = 0; i < 6 + r * 5; i++) { const a = Math.random() * Math.PI * 2, v = 0.6 + Math.random() * (1 + r * 0.4); this.spark.push({ x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.6, life: 18 + Math.random() * 14, c: i % 3 ? G.FOSSIL_COLOR[r] : '#ffffff' }); } },
       fill() {
         const d = this.depth, n = 1 + Math.round(d * 3) + (Math.random() < 0.3 ? 1 : 0);
         const spotAt = () => [TX + 16 + Math.random() * (TW - 32), TY + 14 + Math.random() * (TH - 26)];
         const free = () => { for (let k = 0; k < 40; k++) { const [x, y] = spotAt(); if (this.finds.every((f) => Math.hypot(f.x - x, f.y - y) > 26)) return [x, y]; } return spotAt(); };
-        for (let i = 0; i < n; i++) { const [x, y] = free(), id = siftRoll(spot, d); this.finds.push({ id, x, y, flip: Math.random() < 0.5 }); }
+        for (let i = 0; i < n; i++) { const [x, y] = free(), id = siftRoll(spot, d); this.finds.push({ id, x, y, flip: Math.random() < 0.5, q: rollQ() }); }
         if (Math.random() < 0.3) { const [x, y] = free(), jk = SIFT_SPOTS[spot].junk || ['cable', 'bulb', 'cap'], id = jk[Math.floor(Math.random() * jk.length)]; this.finds.push({ id, x, y, junk: true }); }
+        for (let i = Math.round(d * 2) + (Math.random() < 0.5 ? 1 : 0); i > 0; i--) { const [x, y] = free(); this.finds.push({ decoy: Math.random() < 0.35 ? 'shell' : DECOY_IDS[Math.floor(Math.random() * DECOY_IDS.length)], x, y, flip: Math.random() < 0.5 }); }
         for (let i = 0; i < 110; i++) {
           const [x, y] = [TX + 4 + Math.random() * (TW - 8), TY + 4 + Math.random() * (TH - 8)];
           if (this.finds.some((f) => Math.hypot(f.x - x, f.y - y) < 7)) continue;
           this.peb.push({ x, y, w: 3 + Math.floor(Math.random() * 6), h: 2 + Math.floor(Math.random() * 4), c: ROCK[Math.floor(Math.random() * ROCK.length)] });
+        }
+        // about half the real finds end up under a pebble (Z flips it off)
+        for (const f of this.finds) if (!f.decoy && Math.random() < 0.45) {
+          const im = f.junk ? null : G.spr.fossils[f.id], w = Math.min(14, (im ? im.width : 7) + 2), h = Math.min(12, (im ? im.height : 7) + 2);
+          // (a little heap of three pebbles, so it doesn't stand out from the rest)
+          const R = () => ROCK[Math.floor(Math.random() * ROCK.length)], fl = Math.floor;
+          const parts = [[0, 0, fl(w * 0.6), fl(h * 0.65)], [fl(w * 0.4), fl(h * 0.25), w - fl(w * 0.4), h - fl(h * 0.25)], [fl(w * 0.05), fl(h * 0.5), fl(w * 0.5), h - fl(h * 0.5)]].map((r) => r.concat(R()));
+          this.peb.push(f.under = { x: f.x - w / 2, y: f.y - h / 2, w, h, c: parts[0][4], parts, cover: true });
         }
         this.need = Math.round((8 + Math.round(d * 14)) * (flags().fineScreen ? 0.6 : 1));
         this.ARMS = this.arms = 780 + n * 120;
@@ -21978,7 +22022,15 @@
         if (this.jig > 0) this.jig--;
         for (const g of this.grains) { g.y += g.v; g.v += 0.2; g.life--; }
         this.grains = this.grains.filter((g) => g.life > 0);
-        if (this.endT > 0) { if (--this.endT === 0) { this.result = { got: this.got, junk: this.junk }; return true; } return false; }
+        for (const p of this.spark) { p.x += p.vx; p.y += p.vy; p.vy += 0.06; p.life--; }
+        this.spark = this.spark.filter((p) => p.life > 0);
+        if (this.flash > 0) this.flash--;
+        if (this.shakeT > 0) this.shakeT--;
+        // a first-ever find: a big close-up, and everything waits for it
+        if (this.close) { if (++this.close.t >= 150 || (this.close.t > 40 && inp.hit('a'))) { inp.eat('a'); this.close = null; } return false; }
+        // a rare find: the whole screen holds still for a beat
+        if (this.freeze > 0) { this.freeze--; return false; }
+        if (this.endT > 0) { if (--this.endT === 0) { this.result = { got: this.got, q: this.q, junk: this.junk }; return true; } return false; }
         if (quitHit()) { this.result = 'quit'; return true; }
         if (this.step === 'dig') {
           if (zHeld(this)) {
@@ -22009,21 +22061,34 @@
         this.cx = G.clamp(this.cx, TX + 1, TX + TW - 2); this.cy = G.clamp(this.cy, TY + 1, TY + TH - 2);
         if (inp.hit('a')) {
           inp.eat('a');
+          // (a find under a pebble can't be grabbed until the pebble is flipped off it)
+          const open = (f) => !f.under || !this.peb.includes(f.under);
           let best = null, bd = 11;
-          for (const f of this.finds) { const d = Math.hypot(f.x - this.cx, f.y - this.cy); if (d < bd) { bd = d; best = f; } }
+          for (const f of this.finds) { if (!open(f)) continue; const d = Math.hypot(f.x - this.cx, f.y - this.cy); if (d < bd) { bd = d; best = f; } }
           if (best) {
             this.finds.splice(this.finds.indexOf(best), 1);
-            if (best.junk) { this.junk.push(best.id); G.audio.sfx('blip'); this.say('Not a fossil. Nate keeps it anyway.', 70); }
+            if (best.decoy) {
+              this.arms -= 150; this.shakeT = 12; G.audio.sfx('bump');
+              this.say(best.decoy === 'shell' ? 'A bit of broken shell. Not a tooth.' : ['...that\'s a rock.', 'Just a black pebble. Nice try, pebble.', 'A tooth-shaped rock. Rude.'][Math.floor(Math.random() * 3)], 70, '#f86858');
+            } else if (best.junk) { this.junk.push(best.id); G.audio.sfx('blip'); this.say('Not a fossil. Nate keeps it anyway.', 70); }
             else {
-              this.got.push(best.id); G.audio.sfx('heart');
-              const k = G.FOSSILS.find((x) => x.id === best.id);
-              this.say(k.name + '!', 90);
+              const k = G.FOSSILS.find((x) => x.id === best.id), isNew = !G.fossilBook()[best.id] && !this.got.includes(best.id);
+              this.got.push(best.id); this.q.push(best.q);
+              this.sparks(best.x, best.y, k.r);
+              if (isNew) { this.close = { id: best.id, q: best.q, t: 0 }; G.audio.sfx('secret'); }
+              else if (k.r >= 2 || best.q === 2) { this.freeze = 14; this.flash = 10; G.audio.sfx('secret'); }
+              else G.audio.sfx('tooth');
+              this.say(G.FOSSIL_Q[best.q] + ' ' + k.name + '!', 90, G.FOSSIL_QC[best.q]);
             }
-            if (!this.finds.length) { this.endT = 50; this.say('That\'s everything in this scoop.', 60); }
+            if (!this.finds.some((f) => !f.decoy)) { this.endT = 60; if (best.junk) this.say('That\'s everything in this scoop.', 60); }
           } else {
+            // flip a pebble out of the way
             let pb = null, pd = 9;
-            for (const b of this.peb) { const d = Math.hypot(b.x - this.cx, b.y - this.cy); if (d < pd) { pd = d; pb = b; } }
-            if (pb) { this.peb.splice(this.peb.indexOf(pb), 1); this.arms -= 50; G.audio.sfx('bump'); this.say('Just a pebble.', 40); }
+            for (const b of this.peb) { const d = Math.hypot(b.x + b.w / 2 - this.cx, b.y + b.h / 2 - this.cy); if (d < pd) { pd = d; pb = b; } }
+            if (pb) {
+              this.peb.splice(this.peb.indexOf(pb), 1); G.audio.sfx(pb.cover ? 'blip' : 'scoop');
+              for (let i = 0; i < 5; i++) this.spark.push({ x: pb.x + pb.w / 2, y: pb.y + pb.h / 2, vx: (Math.random() - 0.5) * 1.6, vy: -0.8 - Math.random(), life: 12 + Math.random() * 8, c: pb.c });
+            }
           }
         }
         if (inp.hit('b')) { inp.eat('b'); this.endT = 30; G.audio.sfx('select'); return false; }
@@ -22036,7 +22101,7 @@
         for (let i = 0; i < 90; i++) { ctx.fillStyle = i % 2 ? '#34522a' : '#46683a'; ctx.fillRect(Math.floor(G.hash(i, 1, 360) * G.W), Math.floor(G.hash(i, 2, 360) * G.H), 3, 2); }
         ctx.fillStyle = '#16100c'; ctx.fillRect(0, 0, G.W, 12);
         FT2.draw(ctx, 'SIFTING: ' + SIFT_SPOTS[spot].name, 4, 2, '#f8d850', sh);
-        const ox = this.step === 'shake' && this.jig > 0 ? (this.side === 'left' ? -3 : 3) : 0;
+        const ox = (this.step === 'shake' && this.jig > 0 ? (this.side === 'left' ? -3 : 3) : 0) + (this.shakeT > 0 ? (this.shakeT & 2 ? 2 : -2) : 0);
         // the frame and the mesh
         ctx.fillStyle = '#5a3818'; ctx.fillRect(FX + ox, FY, FW, FH); ctx.fillStyle = '#7a5028'; ctx.fillRect(FX + 1 + ox, FY + 1, FW - 2, 4); ctx.fillRect(FX + 1 + ox, FY + 1, 4, FH - 2);
         ctx.fillStyle = '#26221e'; ctx.fillRect(TX + ox, TY, TW, TH);
@@ -22047,14 +22112,15 @@
           for (let i = 0; i < 300 * d; i++) { ctx.fillStyle = ROCK[i % ROCK.length]; ctx.fillRect(TX + 4 + Math.floor(G.hash(i, 3, 361) * (TW - 8)), TY + TH - 4 - Math.floor(G.hash(i, 4, 361) * hh), 3, 2); }
         } else {
           for (const f of this.finds) {
-            const img = f.junk ? (f.id === 'cable' ? G.spr.cableIcon : null) : G.spr.fossils[f.id], x = Math.round(f.x + ox), y = Math.round(f.y);
+            const img = f.decoy ? decoyOf(f.decoy) : f.junk ? (f.id === 'cable' ? G.spr.cableIcon : null) : G.fossilArt(f.id, f.q), x = Math.round(f.x + ox), y = Math.round(f.y);
             if (img) { ctx.save(); ctx.translate(x, y); if (f.flip) ctx.scale(-1, 1); ctx.drawImage(img, -Math.round(img.width / 2), -Math.round(img.height / 2)); ctx.restore(); }
             else if (f.id === 'bulb') { ctx.fillStyle = '#e83838'; ctx.fillRect(x - 2, y - 3, 5, 6); ctx.fillStyle = '#c8ccd4'; ctx.fillRect(x - 1, y + 3, 3, 2); }
             else { ctx.fillStyle = '#c8ccd4'; ctx.fillRect(x - 3, y - 3, 7, 7); ctx.fillStyle = '#3a68c8'; ctx.fillRect(x - 2, y - 2, 5, 5); }
-            // now and then, a glint
-            if (this.step === 'pick' && (this.t + Math.floor(f.x)) % 100 < 7) { ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 3, y - 4, 1, 3); ctx.fillRect(x - 4, y - 3, 3, 1); }
           }
-          for (const b of this.peb) { ctx.fillStyle = '#1c1814'; ctx.fillRect(Math.round(b.x + ox), Math.round(b.y) + 1, b.w, b.h); ctx.fillStyle = b.c; ctx.fillRect(Math.round(b.x + ox), Math.round(b.y), b.w, b.h); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(Math.round(b.x + ox), Math.round(b.y), b.w, 1); }
+          for (const b of this.peb) if (b.parts) for (const [px, py, pw, ph, pc] of b.parts) { const X = Math.round(b.x + px + ox), Y = Math.round(b.y + py); ctx.fillStyle = '#1c1814'; ctx.fillRect(X, Y + 1, pw, ph); ctx.fillStyle = pc; ctx.fillRect(X, Y, pw, ph); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(X, Y, pw, 1); }
+          for (const b of this.peb) { if (b.parts) continue; ctx.fillStyle = '#1c1814'; ctx.fillRect(Math.round(b.x + ox), Math.round(b.y) + 1, b.w, b.h); ctx.fillStyle = b.c; ctx.fillRect(Math.round(b.x + ox), Math.round(b.y), b.w, b.h); ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(Math.round(b.x + ox), Math.round(b.y), b.w, 1); }
+          // now and then, a glint, even through a pebble (the fakes never glint)
+          if (this.step === 'pick') for (const f of this.finds) if (!f.decoy && (this.t + Math.floor(f.x)) % 100 < 7) { const x = Math.round(f.x + ox), y = Math.round(f.y); ctx.fillStyle = '#ffffff'; ctx.fillRect(x - 3, y - 4, 1, 3); ctx.fillRect(x - 4, y - 3, 3, 1); }
           if (this.step === 'shake') {
             const sand = 1 - this.shook / this.need;
             ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, sand * 1.3)); ctx.fillStyle = '#b8a078'; ctx.fillRect(TX + ox, TY, TW, TH);
@@ -22062,6 +22128,8 @@
             ctx.restore();
           }
           ctx.fillStyle = '#c8b490'; for (const g of this.grains) ctx.fillRect(Math.round(g.x), Math.round(g.y), 1, 1);
+        for (const p of this.spark) { ctx.fillStyle = p.c; ctx.fillRect(Math.round(p.x), Math.round(p.y), p.life > 10 ? 2 : 1, p.life > 10 ? 2 : 1); }
+        if (this.flash > 0) { ctx.save(); ctx.globalAlpha = this.flash / 20; ctx.fillStyle = '#ffffff'; ctx.fillRect(FX, FY, FW, FH); ctx.restore(); }
         }
         if (this.step === 'pick') {
           // Nate's fingers
@@ -22081,7 +22149,7 @@
           ctx.fillStyle = '#f86858'; ctx.fillRect(PX + 22, 125 - Math.round((1 / 1.15) * 88), 18, 1);
         } else {
           FT2.draw(ctx, 'FOUND', PX + 7, 24, '#c8c0d8', sh);
-          this.got.forEach((id, i) => { const im = G.spr.fossils[id]; ctx.drawImage(im, PX + 7 + (i % 3) * 17, 36 + Math.floor(i / 3) * 18); });
+          this.got.forEach((id, i) => { const im = G.fossilArt(id, this.q[i]), gx = PX + 7 + (i % 3) * 17, gy = 36 + Math.floor(i / 3) * 18; if (this.q[i] === 2) { ctx.fillStyle = '#f8d850'; ctx.fillRect(gx - 1, gy + im.height + 1, im.width + 2, 1); } ctx.drawImage(im, gx, gy); });
           if (this.step === 'pick') {
             FT2.draw(ctx, 'ARMS', PX + 7, 108, '#c8c0d8', sh);
             const k = Math.max(0, this.arms / this.ARMS);
@@ -22092,22 +22160,41 @@
           }
         }
         const hint = this.msg || (this.step === 'dig' ? 'Hold Z to dig. Let go to scoop. Not too deep!' : this.step === 'shake' ? 'Tap ← → ← → to shake out the sand.' : 'Arrows: move.  Z: pick it up.  X: dump the rest.');
-        FT2.draw(ctx, hint, 120 - Math.round(FT2.width(hint) / 2), 145, this.msg ? '#f8d850' : '#f8f8f0', sh);
+        FT2.draw(ctx, hint, 120 - Math.round(FT2.width(hint) / 2), 145, this.msg ? this.msgC || '#f8d850' : '#f8f8f0', sh);
+        if (this.close) {
+          // a first-ever find, up close
+          const c = this.close, k = G.FOSSILS.find((x) => x.id === c.id), im = G.fossilArt(c.id, c.q), sc = Math.min(4, 1 + (c.t >> 2));
+          ctx.fillStyle = 'rgba(8,4,16,0.82)'; ctx.fillRect(0, 0, G.W, G.H);
+          ctx.save(); ctx.translate(120, 70); ctx.rotate(c.t * 0.01); ctx.fillStyle = 'rgba(248,216,80,0.10)';
+          for (let i = 0; i < 8; i++) { ctx.rotate(Math.PI / 4); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-12, -150); ctx.lineTo(12, -150); ctx.fill(); }
+          ctx.restore();
+          ctx.imageSmoothingEnabled = false;
+          ctx.drawImage(im, Math.round(120 - im.width * sc / 2), Math.round(70 - im.height * sc / 2), im.width * sc, im.height * sc);
+          const T = (t, y, col) => FT2.draw(ctx, t, 120 - Math.round(FT2.width(t) / 2), y, col, sh);
+          T('NEW FOSSIL!', 16, '#f8d850');
+          T(k.name, 112, G.FOSSIL_COLOR[k.r]);
+          T(G.FOSSIL_Q[c.q] + '  -  ' + G.FOSSIL_RARITY[k.r], 124, G.FOSSIL_QC[c.q]);
+          if (c.t > 40 && (c.t >> 4) % 2) FT2.draw(ctx, 'Z', 228, 146, '#f8d850', sh);
+        }
       },
     };
   }
-  HOW_TO.sift = ['Scoop the gravel: HOLD Z to dig, and let go. Deeper finds more and rarer fossils, but it takes more shaking, and if you dig past the red line it spills.', 'Shake out the sand: tap ← → ← →.', 'Pick the fossils out of the gravel: arrows to move your fingers, Z to grab. Watch for a glint. Grabbing a plain pebble tires out your arms.', 'Each gravel bed holds different fossils. New ones go in the {y}Tooth Book{/}, in COLLECTABLES.'];
+  HOW_TO.sift = ['HOLD Z to dig, then let go. Deeper is better, but past the red line it spills. Then tap ← → ← → to shake out the sand.', 'Pick out the fossils: arrows move, Z grabs. Z on a pebble flips it off, and some finds hide under one. Watch for a glint.', 'Black tooth-shaped pebbles and bits of shell are fakes. Grabbing one tires out your arms.', 'Finds come up Broken, Good or Perfect (worth double). The {y}Tooth Book{/} keeps your best.'];
   function* siftReport(r) {
     const B = G.fossilBook(), f = flags(), s = G.state;
     let coins = 0;
-    for (const id of r.got) {
-      const k = G.FOSSILS.find((x) => x.id === id), isNew = !B[id];
+    for (let i = 0; i < r.got.length; i++) {
+      const id = r.got[i], q = r.q ? r.q[i] : 1, k = G.FOSSILS.find((x) => x.id === id), isNew = !B[id], best = G.fossilBestOf(id);
       B[id] = (B[id] || 0) + 1;
-      coins += k.coin;
+      if (q > best) G.fossilBest()[id] = q; else if (G.fossilBest()[id] === undefined) G.fossilBest()[id] = best;
+      coins += q === 0 ? Math.ceil(k.coin / 2) : q === 2 ? k.coin * 2 : k.coin;
       if (isNew) {
         G.audio.sfx('fanfare');
-        yield G.itemGet(G.spr.fossils[id], 'NEW! {y}' + k.name + '{/} (' + G.FOSSIL_RARITY[k.r] + ')');
+        yield G.itemGet(G.fossilArt(id, q), 'NEW! {y}' + k.name + '{/} (' + G.FOSSIL_Q[q] + ', ' + G.FOSSIL_RARITY[k.r] + ')');
         yield G.say(null, k.line);
+      } else if (q === 2 && best < 2) {
+        G.audio.sfx('secret');
+        yield G.say(null, 'A {y}perfect{/} ' + k.name + '! The Tooth Book gets this one now.');
       }
     }
     if (coins) { G.play.addTeeth(coins); yield G.say(null, 'That scoop is worth {y}' + G.sayable(coins) + ' shark teeth{/}.'); }
@@ -22126,7 +22213,7 @@
     const f = flags();
     if (!direct) { const c = yield G.ask(null, SIFT_SPOTS[i].text, ['Sift it', 'Leave it']); if (c) return; }
     for (;;) {
-      if (!f.siftHow) { f.siftHow = true; yield howToCmd('SIFTING', HOW_TO.sift); }
+      if (!f.siftHow2) { f.siftHow = f.siftHow2 = true; yield howToCmd('SIFTING', HOW_TO.sift); }
       const r = yield siftCmd(i);
       G.play.overlay = null;
       if (r === 'quit') return;
@@ -22854,7 +22941,7 @@
   // ================================================================ THREE STRIKES (Abe's Rule #1)
   // Say the sacred number three times and Abe throws Nate in the nearest water. If there's water on
   // this level, he walks over and uses it; anywhere dry (indoors, Aurora, CHKD) he carries Nate off to
-  // the nearest real water instead. Every one goes in the DUNK LOG, and Nate drips for a while after.
+  // the nearest real water instead. Nate drips for a while after.
   const WATER_K = new Set(['water', 'mineWater', 'bay', 'ice', 'iceHole']);
   const SPLASH = ['#3a7ab0', '#a8d8f0', '#ffffff'], MINE_SPLASH = ['#2a3a48', '#6a8a9a', '#c8d8e0'];
   G.DUNKS = [
@@ -23029,10 +23116,7 @@
   function* logDunk(d) {
     const L = G.dunkLog(), isNew = !L[d.id];
     L[d.id] = (L[d.id] || 0) + 1;
-    if (!isNew) return;
-    G.audio.sfx('secret');
-    yield G.say(null, 'New in the {c}Dunk Log{/}: {y}' + d.name + '{/}.');
-    if (G.dunksFound() === 1) yield G.say(null, 'Every place Abe has thrown Nate in goes in the {c}Dunk Log{/}, in COLLECTABLES.');
+    // (kept quietly, for the Splash Zone achievement and STATS: there's no Dunk Log page anymore)
   }
   // every time Nate said it before Abe joined: he heard them all
   const TIMES = ['zero', 'once', 'twice', 'three times', 'four times', 'five times', 'six times', 'seven times', 'eight times', 'nine times', 'ten times', 'eleven times', 'twelve times'];
@@ -23146,7 +23230,6 @@
     G.play.snapCam();
     yield G.wait(10);
     yield G.fadeIn(24);
-    // (the Dunk Log note comes once Nate's back where he can be seen)
     if (logged) yield* logDunk(logged);
     G.play.autosave();
   };

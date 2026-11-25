@@ -343,7 +343,6 @@
     { id: 'fish', name: 'Matt\'s Survey', icon: 'fish', count: () => [G.fishCaughtKinds(), G.FISH_ORDER.length], blurb: 'Every kind of fish Nate has caught for Matt Oliver\'s survey out on the bay, and the biggest one of each.' },
     { id: 'animals', name: 'Animal Friends', short: 'Animals', icon: 'paw', when: () => G.state.party.includes('hannah'), count: () => [G.animalsFound(), G.ANIMALS.length], blurb: 'Every animal Hannah has made friends with. Bring her along: animals won\'t attack her, and Z says hello.' },
     { id: 'teeth', name: 'Tooth Book', icon: 'tooth', when: () => G.state.flags.fin_done, count: () => [G.fossilsFound(), G.FOSSILS.length], blurb: 'Everything Nate has sifted out of the Number One Ditch and the pile in Aurora. Every kind is a real fossil from the old sea floor under the coast.' },
-    { id: 'dunks', name: 'Dunk Log', short: 'Dunks', icon: 'splash', when: () => G.dunksFound() > 0, count: () => [G.dunksFound(), G.DUNKS.length], blurb: 'Every body of water Abe has thrown Nate into. Say the sacred number three times and he\'ll find the nearest one.' },
     { id: 'instruments', name: 'Instruments', icon: 'guitar', count: () => [G.instrumentsCount(), G.INSTRUMENTS.length], blurb: 'Nate\'s instruments: the ones he builds, and the ones he earns jamming with Abe.' },
   ];
   const colls = () => COLLECTIONS.filter((c) => !c.when || c.when());
@@ -898,8 +897,8 @@
           const ph = G.PHOTOS[this.sel];
           if (ph && G.photoHas(ph.id)) { this.photoView = ph; G.audio.sfx('select'); } else G.audio.sfx('bump');
         }
-      } else if (this.tab === COLL_TAB && (this.coll === 'fish' || this.coll === 'teeth' || this.coll === 'animals' || this.coll === 'dunks')) {
-        const n = this.coll === 'fish' ? G.FISH_ORDER.length : this.coll === 'teeth' ? G.FOSSILS.length : this.coll === 'dunks' ? G.DUNKS.length : G.ANIMALS.length;
+      } else if (this.tab === COLL_TAB && (this.coll === 'fish' || this.coll === 'teeth' || this.coll === 'animals')) {
+        const n = this.coll === 'fish' ? G.FISH_ORDER.length : this.coll === 'teeth' ? G.FOSSILS.length : G.ANIMALS.length;
         const cols = this.coll === 'fish' ? 5 : 4, col = this.sel % cols, row = Math.floor(this.sel / cols);
         if (inp.hit('left') && col > 0) this.move(-1, n);
         if (inp.hit('right') && col < cols - 1 && this.sel + 1 < n) this.move(1, n);
@@ -1503,7 +1502,6 @@
       else if (this.coll === 'photos') this.drawPhotos(ctx);
       else if (this.coll === 'teeth') this.drawTeeth(ctx);
       else if (this.coll === 'animals') this.drawAnimals(ctx);
-      else if (this.coll === 'dunks') this.drawDunks(ctx);
       else if (this.coll === 'pipes' || this.coll === 'tins') this.drawBench(ctx);
       else if (this.coll === 'instruments') this.drawInstruments(ctx);
       else if (this.coll === 'fish') this.drawFish(ctx);
@@ -1649,49 +1647,14 @@
       TXT(ctx, a.where, 125, 54, C.gold);
       F().wrap(a.note, 104).slice(0, 8).forEach((l, i) => TXT(ctx, l, 125, 66 + i * 9, C.soft));
     }
-    // ---- the DUNK LOG: every body of water Abe has thrown Nate into
-    drawDunks(ctx) {
-      const L = G.dunkLog();
-      const swatch = (d, x, y, w, h) => {
-        ctx.fillStyle = d.col[0]; ctx.fillRect(x, y, w, h);
-        ctx.fillStyle = d.col[1];
-        for (let j = 3; j < h; j += 5) for (let i = ((j * 7 + (G.tick >> 3)) % 10) - 10; i < w; i += 10) ctx.fillRect(Math.max(x, x + i), y + j, Math.min(4, w - Math.max(0, i)), 1);
-      };
-      card(ctx, 5, 21, 112, 121, 'DUNK LOG', C.gold, G.sayable(G.dunksFound()) + '/' + G.sayable(G.DUNKS.length));
-      G.DUNKS.forEach((d, i) => {
-        const x = 10 + (i % 4) * 26, y = 39 + Math.floor(i / 4) * 24, sel = i === this.sel && !this.onTabs, got = !!L[d.id];
-        slot(ctx, x, y, 24, 22, got ? C.cyan : undefined);
-        if (got) swatch(d, x + 2, y + 2, 20, 18);
-        else TXT(ctx, '?', x + 10, y + 7, C.faint);
-        if (sel) brackets(ctx, x - 1, y - 1, 26, 24);
-      });
-      const d = G.DUNKS[this.sel];
-      card(ctx, 120, 21, 115, 121);
-      if (!d) return;
-      if (!L[d.id]) {
-        TXT(ctx, '???', 125, 27, C.cyan);
-        ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 40, 107, 1);
-        TXT(ctx, d.where, 125, 44, C.gold);
-        F().wrap(d.how, 104).slice(0, 7).forEach((l, i) => TXT(ctx, l, 125, 56 + i * 9, C.dim));
-        return;
-      }
-      slot(ctx, 124, 25, 24, 22, C.cyan);
-      swatch(d, 126, 27, 20, 18);
-      F().wrap(d.name, 82).slice(0, 2).forEach((l, i) => TXT(ctx, l, 151, 26 + i * 9, C.cyan));
-      ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 50, 107, 1);
-      TXT(ctx, d.where, 125, 54, C.gold);
-      F().wrap(d.note, 104).slice(0, 6).forEach((l, i) => TXT(ctx, l, 125, 66 + i * 9, C.soft));
-      const n = L[d.id];
-      TXT(ctx, 'Thrown in: ' + G.sayable(n) + (n === 1 ? ' time' : ' times'), 125, 128, C.dim);
-    }
     // ---- the TOOTH BOOK: fifteen fossils, four to a row
     drawTeeth(ctx) {
       const B = G.fossilBook(), S0 = G.spr.fossils;
       card(ctx, 5, 21, 112, 121, 'TOOTH BOOK', C.gold, G.sayable(G.fossilsFound()) + '/' + G.sayable(G.FOSSILS.length));
       G.FOSSILS.forEach((k, i) => {
         const x = 10 + (i % 4) * 26, y = 39 + Math.floor(i / 4) * 24, sel = i === this.sel && !this.onTabs, got = !!B[k.id], im = S0[k.id];
-        slot(ctx, x, y, 24, 22, got ? (k.r >= 3 ? C.gold : C.cyan) : undefined);
-        if (got) ctx.drawImage(im, x + 12 - Math.floor(im.width / 2), y + 11 - Math.floor(im.height / 2));
+        slot(ctx, x, y, 24, 22, got ? (G.fossilBestOf(k.id) === 2 ? C.gold : C.cyan) : undefined);
+        if (got) { const bi = G.fossilArt(k.id, G.fossilBestOf(k.id)); ctx.drawImage(bi, x + 12 - Math.floor(bi.width / 2), y + 11 - Math.floor(bi.height / 2)); }
         else TXT(ctx, '?', x + 10, y + 7, C.faint);
         if (sel) brackets(ctx, x - 1, y - 1, 26, 24);
       });
@@ -1705,15 +1668,17 @@
         F().wrap('Not found yet. Keep sifting. Some gravel beds are better for this than others.', 104).slice(0, 6).forEach((l, i) => TXT(ctx, l, 125, 56 + i * 9, C.dim));
         return;
       }
-      slot(ctx, 124, 25, 24, 22, k.r >= 3 ? C.gold : C.cyan);
-      const im = S0[k.id];
+      const bq = G.fossilBestOf(k.id);
+      slot(ctx, 124, 25, 24, 22, bq === 2 ? C.gold : C.cyan);
+      const im = G.fossilArt(k.id, bq);
       ctx.drawImage(im, 136 - Math.floor(im.width / 2), 36 - Math.floor(im.height / 2));
       F().wrap(k.name, 82).slice(0, 2).forEach((l, i) => TXT(ctx, l, 151, 26 + i * 9, C.cyan));
       ctx.fillStyle = '#3e3460'; ctx.fillRect(124, 50, 107, 1);
       TXT(ctx, G.FOSSIL_RARITY[k.r], 125, 54, G.FOSSIL_COLOR[k.r]);
       const n = 'x' + G.sayable(B[k.id]);
       TXT(ctx, n, 231 - F().width(n), 54, C.gold);
-      F().wrap(k.line, 104).slice(0, 8).forEach((l, i) => TXT(ctx, l, 125, 66 + i * 9, C.soft));
+      TXT(ctx, 'Best: ' + G.FOSSIL_Q[bq], 125, 64, G.FOSSIL_QC[bq]);
+      F().wrap(k.line, 104).slice(0, 7).forEach((l, i) => TXT(ctx, l, 125, 75 + i * 9, C.soft));
     }
     drawFish(ctx) {
       const log = G.fishLog(), have = (k) => !!log[k];
