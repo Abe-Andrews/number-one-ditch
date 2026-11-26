@@ -11440,16 +11440,27 @@
     return p.canvas();
   }
   // the sign out by the road: a black panel with the logo ring and the name
+  // the Renaissance Church logo (from the user's file, Refe Photos/Renaissance Church/ren_chirch_logo.webp):
+  // a square frame around a ring, with a thick curved band cutting across it and out to the frame.
+  // Hand-cleaned at 16 px and 14 px.
+  const REN_LOGO = {
+    16: ['################', '#..............#', '#.....####.....#', '#...##....##...#', '#..#........#..#', '#..#........#..#', '#.#..........#.#', '#.#..........#.#',
+      '#.#..........#.#', '#.############.#', '#####......#####', '#..##......##..#', '#...##....##...#', '#.....####.....#', '#..............#', '################'],
+    14: ['##############', '#............#', '#....####....#', '#..##....##..#', '#..#......#..#', '#.#........#.#', '#.#........#.#',
+      '#.#........#.#', '#.##########.#', '####......####', '#..##....##..#', '#....####....#', '#............#', '##############'],
+  };
+  function renLogoMark(p, x0, y0, n, col) {
+    REN_LOGO[n].forEach((row, y) => { for (let x = 0; x < row.length; x++) if (row[x] === '#') p.set(x0 + x, y0 + y, col); });
+  }
   function renMonument() {
-    const W = G.font.width('RENAISSANCE') + 26, p = new Pix(W, 24);
+    const W = G.font.width('RENAISSANCE') + 27, p = new Pix(W, 24);
     p.rect(2, 18, W - 4, 6, '#b07558'); for (let x = 2; x < W - 2; x += 5) p.vline(x, 18, 23, '#d89c7c');
     p.rect(0, 0, W, 18, '#1e1c1c'); p.hline(0, W - 1, 0, '#3a3634');
-    for (let y = -4; y <= 4; y++) for (let x = -4; x <= 4; x++) { const d = x * x + y * y; if (d <= 18 && d >= 8) p.set(9 + x, 9 + y, '#f4f2ec'); }
-    p.rect(8, 7, 3, 5, '#f4f2ec');
+    renLogoMark(p, 1, 1, 16, '#f4f2ec');
     p.outline();
     const cv = p.canvas();
-    renTxt(cv, 'RENAISSANCE', 18, 1, '#f4f2ec');
-    renTxt(cv, 'church', 18, 9, '#b8b0a4');
+    renTxt(cv, 'RENAISSANCE', 19, 1, '#f4f2ec');
+    renTxt(cv, 'church', 19, 9, '#b8b0a4');
     return cv;
   }
   // ---- the lobby
@@ -11540,8 +11551,7 @@
   function renLogoTV() {
     const p = new Pix(30, 18);
     p.rect(0, 0, 30, 18, '#141418'); p.rect(1, 1, 28, 16, '#1c1c24');
-    for (let y = -3; y <= 3; y++) for (let x = -3; x <= 3; x++) { const d = x * x + y * y; if (d <= 10 && d >= 4) p.set(8 + x, 9 + y, '#f0f0f0'); }
-    p.hline(13, 24, 7, '#e0e0e0'); p.hline(13, 20, 10, '#a0a0a8'); p.rect(22, 3, 6, 12, '#3a6ac8'); p.hline(23, 26, 6, '#9ab8f0'); p.hline(23, 26, 9, '#9ab8f0');
+    renLogoMark(p, 8, 2, 14, '#f0f0f0');
     p.outline();
     return p.canvas();
   }

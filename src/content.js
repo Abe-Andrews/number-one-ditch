@@ -24210,7 +24210,7 @@
   // Joe Narciso: short dark hair, rectangular glasses, a gray quarter-zip over a black mock neck.
   G.CAST.joeNarciso = { skin: '#eec4a2', hair: '#2a1e18', hairStyle: 'buzz', glasses: '#2a2a30', smile: '#ffffff', shirt: '#5e6878', neck: '#1c1c22', pants: '#3a3a44', shoes: '#2a2a30', wide: true, torso: 6, legs: 4 };
   // Dave Macarone, the creative director: wavy shoulder-length hair, a beard, a navy blazer over a brown shirt.
-  G.CAST.daveMacarone = { skin: '#eabd98', hair: '#5a3a24', hairStyle: 'shoulder', beard: '#5a3e2c', smile: '#ffffff', coat: '#1e2a48', shirt: '#8a6a54', pants: '#2a2a30', shoes: '#3a2a20', torso: 7, legs: 4 };
+  G.CAST.daveMacarone = { skin: '#eabd98', hair: '#5a3a24', hairStyle: 'mop', beard: '#5a3e2c', smile: '#ffffff', coat: '#1e2a48', shirt: '#8a6a54', pants: '#2a2a30', shoes: '#3a2a20', torso: 7, legs: 4 };
   // Josh, behind the sound board: he bet Dad five dollars he couldn't get the word "rebag" into his sermon
   S.renJosh = function* () {
     const f = flags();
@@ -24274,23 +24274,35 @@
     ];
     for (const [who, line] of answers[n % answers.length]) yield G.say(who, line);
   };
-  // Nani and Pops, standing together in the lobby. Pops wants to come fix up Nate's car.
+  // Nani and Pops, standing together in the lobby. Nate's brakes are squealing and need new pads,
+  // and Pops wants to come put them on. Pops can barely hear, so Nate ends up yelling.
   S.renPops = function* () {
     const f = flags();
     if (f.popsCar == null) {
-      yield G.say('Pops', 'There he is! Nate!');
-      yield G.say('Pops', 'How\'s that car of yours running?');
-      yield G.say('Nate', 'It\'s... running.');
-      yield G.say('Pops', 'That\'s what I was afraid of. When do you want me to come fix it up?');
-      const c = yield G.ask('Nate', 'When should Pops come look at the car?', ['This weekend?', 'After finals.', 'It\'s fine, Pops!']);
+      yield G.say('Pops', 'There he is! Nate! How\'s that car of yours running?');
+      yield G.say('Nate', 'The brakes are kind of squealing.');
+      yield G.say('Pops', 'The what?');
+      yield G.say('Nate', 'THE BRAKES. THEY\'RE SQUEALING.');
+      yield G.say('Pops', 'Wheeling? You\'re going on a trip?');
+      yield G.say('Nate', 'THE BRAKES!! WHEN I STOP!! THEY GO EEEEEEE!!');
+      yield G.say('Pops', 'Oh, the BRAKES. Why didn\'t you say so? That\'s your pads. They\'re worn down to the metal.');
+      yield G.say('Nani', 'He heard you pull in from inside the church. He just can\'t hear you.');
+      yield G.say('Pops', 'You need new brake pads before you need new rotors. When do you want me to come put them on?');
+      const c = yield G.ask('Nate', 'When should Pops come do the brakes?', ['This weekend?', 'After finals.', 'It\'s fine, Pops!']);
       f.popsCar = c;
       if (c === 0) {
-        yield G.say('Pops', 'This weekend it is. I\'ll bring my tools. You bring the coffee.');
+        yield G.say('Pops', 'Next weekend? Sure.');
+        yield G.say('Nate', 'THIS WEEKEND!');
+        yield G.say('Pops', 'This weekend it is. I\'ll bring the pads. You bring the coffee.');
       } else if (c === 1) {
+        yield G.say('Pops', 'After what?');
+        yield G.say('Nate', 'FINALS!!');
         yield G.say('Pops', 'After finals. Nani, put it on the calendar.');
         yield G.say('Nani', 'It\'s on the calendar.');
       } else {
-        yield G.say('Pops', '"Fine" is what people say right before the check engine light comes on.');
+        yield G.say('Pops', 'What?');
+        yield G.say('Nate', 'IT\'S FINE!!');
+        yield G.say('Pops', 'It is NOT fine. I could hear it from in here.');
         yield G.say('Pops', 'I\'ll come by anyway. You don\'t even have to be there. Just leave me the keys.');
       }
       return;
@@ -24298,9 +24310,9 @@
     f.popsLine = ((f.popsLine || 0) + 1) % 3;
     const when = ['this weekend', 'after finals', 'whether you like it or not'][f.popsCar] || 'soon';
     const talk = [
-      [['Pops', 'Don\'t forget, I\'m coming to look at that car ' + when + '.']],
-      [['Pops', 'Check your oil on the way home. Then check it again.'], ['Nate', 'Why twice?'], ['Pops', 'Because you didn\'t check it the first time.']],
-      [['Pops', 'When was the last time somebody rotated your tires?'], ['Nate', '...What does that mean?'], ['Pops', 'That\'s it. I\'m coming ' + when + '.']],
+      [['Pops', 'Don\'t forget, I\'m putting new brake pads on that car ' + when + '.']],
+      [['Pops', 'Go easy on the brakes till I get there. Stop early.'], ['Nate', 'OKAY!'], ['Pops', 'No need to yell, Nate.']],
+      [['Pops', 'What\'s that?'], ['Nate', 'I DIDN\'T SAY ANYTHING!'], ['Pops', 'Well, speak up when you do.']],
     ];
     for (const [who, line] of talk[f.popsLine]) yield G.say(who, line);
   };
@@ -24311,6 +24323,7 @@
       yield G.say('Nani', 'Nate! Come here, give me a hug.');
       yield G.say('Nani', 'You are a shining star! Keep shining!');
       yield G.say('Nani', 'And talk to Pops. He\'s been talking about your car all week. Just let him fix it. It makes him happy.');
+      yield G.say('Nani', 'And speak up. He won\'t admit it, but he can\'t hear a thing.');
       return;
     }
     f.naniLine = ((f.naniLine || 0) + 1) % 2;
@@ -24325,7 +24338,7 @@
     const f = flags();
     if (!f.adamMet) {
       f.adamMet = true;
-      yield G.say('Adam Edgerly', 'Nate! Good to see you. Your dad\'s preaching this morning, so I get to just listen for once.');
+      yield G.say('Adam Edgerly', 'Nate! Good to see you. Your dad\'s preaching this morning. Grab a seat early, it\'s filling up fast.');
       yield G.say('Adam Edgerly', 'Looking for your mom? She\'s down the hall in the chill room. It\'s the door that\'s propped open.');
       yield G.say('Nate', 'Thanks, Pastor Adam.');
       return;
@@ -24543,12 +24556,9 @@
       F.hang(sp.renMossWelcome, 19, 2, 4, look('WELCOME, FRIENDS! in big green moss letters. Nate touches it. It\'s real moss.'), 8);
       // the lounge: gray walls, a window, a black leather couch, a little tree, high-tops
       F.hang(sp.renWindow, 37, 2, 2, look('A window. The parking lot, and a guy circling it for the third time.'), 6);
-      F.stand(sp.renCouch, 36, 3, 3, look('A black leather couch. For parents. And for dads who "just need a minute."'));
+      F.stand(sp.renCouch, 36, 3, 3, look('A black leather couch. Still warm. Somebody just needed a minute.'));
       F.stand(sp.renXmasTree, 40, 3, 1, look('A little flocked Christmas tree in a gold pot.'));
       F.stand(sp.renBistro, 34, 4, 1, look('A black high-top table.'));
-      const couchDad = renNpc('renAdult0', 'Dad on the couch', 37, 3, 'down', ['I\'m on nursery duty. The nursery is asleep. I\'m going to sit here very, very still.'])(w);
-      couchDad.y = 3 * 16 + 8; couchDad.x = 37 * 16 + 14;
-      couchDad.draw = function (ctx, cx, cy) { const img = G.sprites.renAdult0.down[0], cut = 7; ctx.drawImage(img, 0, 0, img.width, img.height - cut, Math.round(this.x - img.width / 2) - cx, Math.round(this.y - img.height + cut) - cy, img.width, img.height - cut); };
       // the chapel, at the end of the hall
       F.hang(sp.renRoomSigns.chapel, 44, 2, 2, look('A sign: chapel. Somebody is singing in there. Loud.'), 12);
       w.addWarp(46, 4, 1, 2, 'renChapel', 10, 22, 'up');
