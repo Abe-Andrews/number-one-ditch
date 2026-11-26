@@ -819,6 +819,7 @@
     if (f.bassQuest) add('Nate\'s bass', f.bassDone, ['', 'Needs strings', 'Needs a finish', 'Needs a cable'][f.bassQuest] || '', f.bassQuest === 1 ? 'Chesapeake - El Toro Loco' : f.bassQuest === 2 ? 'Home - Dad\'s workshop' : 'Chesapeake - Abe\'s office', ['', 'The Paul McCartney Lady keeps bass strings at El Toro Loco.', 'Dad can help Nate finish it, at his bench.', 'Ask Abe for a cable. Just one.'][f.bassQuest] || '');
     if (f.dayIntro) add('The Tooth Book', G.fossilsFound() >= G.FOSSILS.length && 'All found!', G.sayable(G.fossilsFound()) + '/' + G.sayable(G.FOSSILS.length) + ' fossils', 'The Ditch', 'Sift the gravel at the Number One Ditch with Tyler\'s Sifter.', [G.fossilsFound(), G.FOSSILS.length]);
     if (f.museumCard) add('The museum\'s stamp card', f.museumDone && 'Fine screen!', G.museumStamps() >= G.MUSEUM_STAMPS ? 'Back to the front desk' : G.sayable(G.museumStamps()) + '/' + G.sayable(G.MUSEUM_STAMPS) + ' stamps', 'Aurora - the museum', 'Read the plaque on every big exhibit in the Aurora Fossil Museum, then see the Volunteer at the front desk.', [Math.min(G.museumStamps(), G.MUSEUM_STAMPS), G.MUSEUM_STAMPS]);
+    if (f.churchNews) add('Sunday at Renaissance', f.renClassDone, 'Help Mom', 'Renaissance Church', 'Mom needs a helper for Sunday school. She\'s in the chill room, down the hall from the lobby.');
     if (f.auroraNews && !f.hamSign) side.push({ name: 'Aurora, NC', status: f.auroraArrived ? 'A shop down the street' : 'Go see the pile', kind: 'rumor', where: 'Aurora', hint: f.auroraArrived ? 'There\'s a little shop on Main Street, a couple of doors down from the museum. Nobody seems to go in.' : 'Tyler says the fossil pile in Aurora, NC is good right now. Drive there from the MAP.' });
     if (f.hamSign) add('The World\'s Largest August Ham', f.hamBeaten && 'Seen it!', f.hamOpen ? 'The door is open' : f.daleTooth ? 'Bring Dale his tooth' : f.daleQuest ? 'Find Dale\'s lucky tooth' : f.hamDoor ? 'Back in 5 minutes' : 'It\'s right there', 'Aurora',
       f.hamOpen ? 'Dale gave you the key. The shop is two doors down from the museum.' : f.daleTooth ? 'Dale is digging at the pile.' : f.daleQuest ? 'Sift the pile for Dale\'s lucky tooth: a big megalodon with a hole drilled through it, on a string.' : f.hamDoor ? 'The door is locked. Somebody in Aurora has to know whose place this is. Try the museum.' : 'Try the door.');
@@ -3286,6 +3287,7 @@
   G.fcReady = () => G.completion().every((c) => !c.core || c.ok);
   G.allDone = () => G.completion().every((c) => c.ok);
   // checked every half second or so from the play loop
+  const HOME_MAPS = ['home', 'homeDown', 'homeUp', 'garage', 'basement', 'bookClub', 'north'];
   G.postgameTick = () => {
     const f = flags();
     if (G.state.playAs || G.play.dying) return;
@@ -3296,7 +3298,12 @@
     const jk = G.jackTextDue();
     if (jk != null && G.dunkReady()) { G.script.run(S.jackText(jk)); return; }
     if (!f.fcAwake && G.fcReady()) { G.script.run(S.fcWakes()); return; }
-    if (f.dayIntro && !f.auroraNews && G.play.world && !['ditchFinal', 'ditchDay', 'ditchRoad'].includes(G.play.world.id)) { G.script.run(S.auroraNews()); return; }
+    // After the finale, two texts: Tyler's (Aurora), the first place Nate goes after the Ditch, and Dad's
+    // and Mom's (the church), when Nate gets home. At home the church one goes first, and each waits at
+    // least two minutes of play after the other, so they never land back to back.
+    const wid = G.play.world && G.play.world.id, atHome = HOME_MAPS.includes(wid), gap = (t) => !t || (G.state.playTime || 0) - t > 7200;
+    if (f.dayIntro && !f.churchNews && atHome && gap(f.auroraNewsT) && G.dunkReady()) { G.script.run(S.churchNews()); return; }
+    if (f.dayIntro && !f.auroraNews && wid && !['ditchFinal', 'ditchDay', 'ditchRoad'].includes(wid) && !(atHome && !f.churchNews) && gap(f.churchNewsT)) { G.script.run(S.auroraNews()); return; }
     if (f.fcAwake && !f.hundred && G.allDone()) G.script.run(S.hundred());
   };
   // the real 100%: every row on the list
@@ -22386,6 +22393,7 @@
     { id: 'ches', label: 'Abe and Hannah\'s', open: (f) => !!f.condoArrived },
     { id: 'chkd', label: 'CHKD', open: (f) => !!f.chkdArrived },
     { id: 'aurora', label: 'Aurora', open: (f) => !!f.auroraNews },
+    { id: 'ren', label: 'Renaissance Church', open: (f) => !!f.churchNews },
     { id: 'ditch', label: 'The Number One Ditch', open: (f) => !!(f.fin_done && f.dayIntro) },
   ];
   const CAR_ARRIVE = { laf: ['campus', 19, 27, 'up'], home: ['home', 1, 53, 'right'] };
@@ -22434,6 +22442,7 @@
   // daleTooth, hamOpen, hamSeen, hamBeaten, hamHint, auroraTyler, tylerMako ('given' or 'kept'),
   // auroraTalk_<who>.
   G.TRAVEL.aurora = ['aurora', 4, 9, 'up'];
+  G.TRAVEL.ren = ['renaissance', 12, 12, 'up'];
   G.CAST.museumVolunteer = { skin: '#f0c8a8', hair: '#d8d8dc', hairStyle: 'short', glasses: '#6a5a8a', smile: '#ffffff', blush: true, shirt: '#24486a', logo: '#f2ece0', pants: '#8a7a5a', shoes: '#4a3428', torso: 6, legs: 3 };
   G.CAST.pitKid = { skin: '#e8b890', hair: '#5a3a24', hairStyle: 'short', hat: '#e05a30', hatStyle: 'ball', shirt: '#3a9a5a', pants: '#3a4a6a', shoes: '#f0f0f0', torso: 5, legs: 3 };
   const AURORA_MID = 15;
@@ -22442,6 +22451,7 @@
   S.auroraNews = function* () {
     const f = flags();
     f.auroraNews = true;
+    f.auroraNewsT = G.state.playTime || 1;
     yield G.wait(20);
     G.audio.sfx('buzz');
     yield G.say(null, 'Nate\'s phone buzzes. A number he doesn\'t know.');
@@ -24210,7 +24220,7 @@
   // Joe Narciso: short dark hair, rectangular glasses, a gray quarter-zip over a black mock neck.
   G.CAST.joeNarciso = { skin: '#eec4a2', hair: '#2a1e18', hairStyle: 'buzz', glasses: '#2a2a30', smile: '#ffffff', shirt: '#5e6878', neck: '#1c1c22', pants: '#3a3a44', shoes: '#2a2a30', wide: true, torso: 6, legs: 4 };
   // Dave Macarone, the creative director: wavy shoulder-length hair, a beard, a navy blazer over a brown shirt.
-  G.CAST.daveMacarone = { skin: '#eabd98', hair: '#5a3a24', hairStyle: 'mop', beard: '#5a3e2c', smile: '#ffffff', coat: '#1e2a48', shirt: '#8a6a54', pants: '#2a2a30', shoes: '#3a2a20', torso: 7, legs: 4 };
+  G.CAST.daveMacarone = { skin: '#eabd98', hair: '#5a3a24', hairStyle: 'wavy', hairEnd: -2, beard: '#6e6054', smile: '#ffffff', coat: '#1e2a48', shirt: '#8a6a54', pants: '#2a2a30', shoes: '#3a2a20', torso: 7, legs: 4 };
   // Josh, behind the sound board: he bet Dad five dollars he couldn't get the word "rebag" into his sermon
   S.renJosh = function* () {
     const f = flags();
@@ -24391,6 +24401,36 @@
   };
   const renNpc = (sprite, name, tx, ty, dir, lines) => (w) => w.add(new G.NPC({ sprite, name, x: tx * 16 + 8, y: ty * 16 + 14, dir, talk: function* () { for (const l of lines) yield Array.isArray(l) ? G.say(l[0], l[1]) : G.say(name, l); } }));
 
+  // After the finale, when Nate gets home (G.postgameTick): Dad texts about
+  // Sunday, and Mom needs a helper for Sunday school. (Nobody mentions Ice JJ Fish: his dance party in
+  // the chapel, at the end of the hall, is a surprise.) The church goes on the MAP and
+  // the car's "Where to?" list. Flags: churchNews, churchNewsT (and auroraNewsT: the two texts stay apart).
+  S.churchNews = function* () {
+    const f = flags();
+    f.churchNews = true;
+    f.churchNewsT = G.state.playTime || 1;
+    yield G.wait(20);
+    G.audio.sfx('buzz');
+    yield G.say(null, 'Nate\'s phone buzzes. It\'s Dad.');
+    yield G.text('Dad', 'Sunday. 9am. Renaissance.');
+    yield G.text('Dad', 'You have been gone all summer. You are coming to church.');
+    yield G.text('Nate', 'ok ok');
+    yield G.text('Dad', 'Wear something without a hole in it.');
+    G.audio.sfx('buzz');
+    yield G.text('Michelle', 'And I need you in the chill room! My Sunday school helper called out.');
+    yield G.text('Michelle', 'Eight kids. Questions about God. You\'ll be great.');
+    yield G.text('Nate', 'questions about GOD??');
+    yield G.text('Michelle', 'See you Sunday!');
+    G.audio.sfx('secret');
+    yield G.say(null, '{y}RENAISSANCE CHURCH{/} is on the MAP now. Open the menu and drive there.');
+    G.play.autosave();
+  };
+  // Dad's teal pickup in the church lot: Nate borrowed it for church, and it takes him anywhere he's been
+  S.renTruck = function* () {
+    yield G.say(null, 'Dad\'s old teal Ford pickup. Nate borrowed it for church. Dad got a ride with Mom.');
+    yield* S.drive('ren', { text: 'Where to?' });
+  };
+
   // ---- the front
   G.MAPS.renaissance = {
     name: 'Renaissance Church',
@@ -24424,6 +24464,8 @@
       w.addProp({ img: sp.lamppost, tx: 24, ty: 8, dx: 2, solid: [24, 8, 1, 1] });
       // Sunday morning: the lot's filling up (a white truck and a dark one by the doors, like always)
       for (const [c, x, y] of [[2, 8, 9], [5, 16, 9], [0, 2, 9], [1, 20, 9], [3, 4, 13], [4, 18, 13], [5, 22, 13]]) w.addProp({ img: sp.cars[c], tx: x, ty: y, h: 2, dx: 4, solid: [x, y, 2, 2] });
+      // Dad's pickup, which Nate drove here (and drives home in)
+      w.addProp({ img: sp.truck, tx: 7, ty: 13, h: 3, dx: 2, solid: [7, 13, 2, 3], hit: [7, 13, 2, 3], talk: S.renTruck });
       w.add(new G.NPC({ sprite: 'rick', name: 'Rick', x: 16 * 16 + 8, y: 7 * 16 + 14, dir: 'down', talk: S.renRick }));
     },
   };
@@ -24987,7 +25029,7 @@
     yield G.say(null, 'EVERY kid wants snack.');
     yield G.say('Michelle', 'You were good with them. Same time next week?');
     f.renClassDone = true;
-    if (first) { G.play.addTeeth(25); yield G.say(null, 'Mom slips Nate {y}25 shark teeth{/} "for gas." Nate didn\'t drive here.'); }
+    if (first) { G.play.addTeeth(25); yield G.say(null, 'Mom slips Nate {y}25 shark teeth{/} "for gas."'); }
   }
   S.renClassIntro = function* () {
     const w = G.play.world;

@@ -377,6 +377,7 @@
     house: ['....k....', '...krk...', '..krrrk..', '.krrrrrk.', 'kkkkkkkkk', '.kwwwwwk.', '.kukbkuk.', '.kwkbkwk.', '.kkkkkkk.'],
     mine: ['..kkkkk..', '.kbbbbbk.', 'kbkkkkkbk', 'kbk...kbk', 'kbk...kbk', 'kbk...kbk', 'kbk.y.kbk', 'kbk...kbk', 'kkkkkkkkk'],
     bridge: ['..k...k..', '.kgk.kgk.', 'kkgkkkgkk', 'ggggggggg', 'kkkkkkkkk', '.k.k.k.k.', 'ulululull', 'uuuuuuuuu', '.........'],
+    church: ['....k....', '...kyk...', '..kkykk..', '...kyk...', '..kkkkk..', '.kwwwwwk.', 'kwwwwwwwk', 'kwwkbkwwk', 'kkkkbkkkk'],
     trophy: ['kkkkkkkkk', 'kyyyyyyyk', 'kkyyyyykk', '.kyywyyk.', '..kyyyk..', '...kyk...', '...kyk...', '..kkkkk..', '..koook..'],
     party: ['.kk...kk.', 'khhk.kssk', 'kssk.kssk', '.kk...kk.', 'knnk.kuuk', 'nnnnkuuuu', 'nnnnkuuuu', 'nnnnkuuuu', '.........'],
     collect: ['....k....', '...kyk...', 'kkkkykkkk', 'kyyyyyyyk', '.kyyyyyk.', '..kyyyk..', '.kyykyyk.', '.kyk.kyk.', '.kk...kk.'],
@@ -490,19 +491,20 @@
 
   // ---- the MAP page: where Nate has been, where he is, and where the quests are
   const PLACES = [
-    { id: 'laf', name: 'LAFAYETTE', x: 28, y: 30, icon: 'college', key: 'Lafayette',
+    { id: 'laf', name: 'LAFAYETTE', x: 28, y: 27, icon: 'college', key: 'Lafayette',
       maps: [['lab', 'Nate\'s Lab'], ['campus', 'The Quad'], ['science', 'Science Center'], ['geology', 'Van Wickle Hall'], ['pardee', 'Pardee Hall'], ['collegeHill', 'College Hill'], ['toms', 'Tom\'s Pizza']] },
-    { id: 'fair', name: 'EASTON FAIR', x: 100, y: 28, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
+    { id: 'fair', name: 'EASTON FAIR', x: 100, y: 23, icon: 'fair', key: 'Easton', maps: [['fair', 'Fairgrounds'], ['arena', 'Expo Hall'], ['fairCave', 'The Little Cave']] },
     { id: 'home', name: 'HOME', x: 36, y: 56, icon: 'house', key: 'Home',
       maps: [['home', 'The Yard'], ['homeDown', 'Downstairs'], ['homeUp', 'Upstairs'], ['garage', 'Dad\'s Workshop'], ['basement', 'Basement'], ['bookClub', 'The Book Club'], ['north', 'The Frozen Pond']] },
-    { id: 'andover', name: 'ANDOVER', x: 112, y: 54, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
+    { id: 'andover', name: 'ANDOVER', x: 116, y: 52, icon: 'mine', key: 'Andover', maps: [['andover', 'The Mines'], ['andoverMine', 'The Tunnels'], ['andoverFlood', 'The Flooded Level'], ['andoverOld', 'Continental Workings'], ['andoverVault', 'The Lodestone Vault'], ['andoverDeep', 'The Deep Stope']] },
     { id: 'bay', name: 'THE BAY', x: 70, y: 74, icon: 'bridge', key: 'Bay', maps: [['cbbtToll', 'Toll Plaza'], ['cbbt', 'The First Island'], ['chesTunnel', 'Chesapeake Channel Tunnel'], ['cbbtMid', 'Between the Tunnels'], ['cbbtTunnel', 'Thimble Shoal Tunnel'], ['bayBoat', 'Out on the Bay']] },
     { id: 'ches', name: 'CHESAPEAKE', x: 30, y: 92, icon: 'house', key: 'Chesapeake', maps: [['condo', 'The Condo'], ['condoDown', 'Downstairs'], ['condoUp', 'Upstairs'], ['condoStorage', 'Storage'], ['golf', 'The Golf Course'], ['toroLoco', 'El Toro Loco']] },
     { id: 'chkd', name: 'CHKD', x: 68, y: 104, labelRight: true, icon: 'college', key: 'CHKD', maps: [['chkd', 'Outside'], ['chkdLobby', 'The Lobby'], ['chkdWard', 'The Ward'], ['chkdNicu', 'The NICU'], ['chkdRoof', 'The Roof']] },
     { id: 'ditch', name: 'THE DITCH', x: 114, y: 100, icon: 'trophy', key: 'The Ditch', maps: [['ditchRoad', 'The Last Road'], ['ditchFinal', 'The Number One Ditch'], ['ditchDay', 'In the Morning']] },
-    { id: 'aurora', name: 'AURORA', x: 126, y: 78, icon: 'trophy', key: 'Aurora', labelLeft: true, maps: [['aurora', 'Main Street'], ['auroraMuseum', 'The Fossil Museum'], ['hamStand', 'The August Ham']] },
+    { id: 'ren', name: 'CHURCH', x: 56, y: 54, labelRight: true, icon: 'church', key: 'Renaissance', maps: [['renaissance', 'The Front'], ['renLobby', 'The Lobby'], ['renSanctuary', 'The Sanctuary'], ['renHall', 'The Hall'], ['renChapel', 'The Chapel'], ['renClass', 'The Chill Room']] },
+    { id: 'aurora', name: 'AURORA', x: 126, y: 80, icon: 'trophy', key: 'Aurora', labelLeft: true, maps: [['aurora', 'Main Street'], ['auroraMuseum', 'The Fossil Museum'], ['hamStand', 'The August Ham']] },
   ];
-  const ROADS = [['laf', 'fair'], ['laf', 'home'], ['home', 'andover'], ['home', 'bay'], ['bay', 'ches'], ['ches', 'chkd'], ['ches', 'ditch'], ['ditch', 'aurora']];
+  const ROADS = [['laf', 'fair'], ['laf', 'home'], ['home', 'andover'], ['home', 'bay'], ['bay', 'ches'], ['ches', 'chkd'], ['ches', 'ditch'], ['ditch', 'aurora'], ['home', 'ren']];
   const placeById = (id) => PLACES.find((p) => p.id === id);
   // somewhere Nate has been (older saves didn't keep track, so the story fills in)
   const SEEN_IF = {
@@ -516,7 +518,7 @@
   // can Nate get there yet?
   const placeOpen = (pl) => {
     const f = G.state.flags, s = G.state;
-    return { laf: true, fair: s.items.cap || f.doronChat, home: f.boulderGone, andover: s.items.andoverKey || f.andoverLocked, bay: f.mikeyBeaten, ches: f.condoArrived, chkd: f.chkdArrived, ditch: f.finDrive || f.fin_done, aurora: f.auroraNews }[pl.id] || placeVisited(pl);
+    return { laf: true, fair: s.items.cap || f.doronChat, home: f.boulderGone, andover: s.items.andoverKey || f.andoverLocked, bay: f.mikeyBeaten, ches: f.condoArrived, chkd: f.chkdArrived, ditch: f.finDrive || f.fin_done, aurora: f.auroraNews, ren: f.churchNews }[pl.id] || placeVisited(pl);
   };
   // which place Nate is standing in
   const placeOf = (mapId) => {
