@@ -273,6 +273,8 @@
       // (a grin shows through the beard: only the corners of the jaw on the smile's row)
       if (c.grin) { p.set(4, y0 + 8, b); p.set(11, y0 + 8, b); } else { p.hline(4, 6, y0 + 8, b); p.hline(9, 11, y0 + 8, b); }
       p.hline(5, 10, y0 + 9, b);
+      // (mustache: a band over the mouth, joined to the beard at the corners: Rick's)
+      if (c.mustache && !c.longBeard) { p.hline(6, 9, y0 + 7, b); p.set(5, y0 + 7, shade(b, -0.1)); p.set(10, y0 + 7, shade(b, -0.1)); }
       // (longBeard: a mustache, and a beard all the way down the chest: Dan Hurd's)
       if (c.longBeard) {
         const bd = shade(b, -0.16);

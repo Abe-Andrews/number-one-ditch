@@ -24194,6 +24194,15 @@
     { skin: '#6a4028', hair: '#16100e', hairStyle: 'cropped', smile: '#ffffff', shirt: '#3a5a3a', pants: '#2a2a30', shoes: '#1e1e22' },
   ].forEach((k, i) => { G.CAST['renAdult' + i] = Object.assign({ torso: 6, legs: 4 }, k); });
   // Real people from Renaissance (from the user's photos)
+  // Adam Edgerly, pastor of preaching and teaching: shaved head, dark rectangular glasses, a goatee,
+  // a royal blue button-up under a dark blazer, a big smile.
+  G.CAST.adamEdgerly = { skin: '#7a4c34', hair: '#7a4c34', hairStyle: 'bald', goatee: '#2a1e1a', glasses: '#24242a', smile: '#ffffff', coat: '#262a36', shirt: '#2a56c8', pants: '#2a2a32', shoes: '#18181c', torso: 7, legs: 4 };
+  // Rick, the facilities manager (and the greeter at the front doors): white hair on the sides,
+  // a full white beard and mustache, a gray tweed blazer over a black shirt.
+  G.CAST.rick = { skin: '#ecc0a0', hair: '#e8e4dc', hairStyle: 'receding', beard: '#eeeae4', mustache: true, smile: '#ffffff', coat: '#8a8884', shirt: '#1c1c22', pants: '#3a3a44', shoes: '#2a2018', wide: true, torso: 7, legs: 4 };
+  // Pops (from the user's photo with Nani): way taller than her, thinning white-blond hair, rosy
+  // cheeks, a navy blazer over a light blue checked button-down, khakis. (Nani uses her own cast.)
+  G.CAST.pops = { skin: '#f0b89e', hair: '#e4d8bc', hairStyle: 'receding', blush: true, smile: '#ffffff', coat: '#1e2440', shirt: '#c8d6ee', pattern: 'plaid', plaidL: '#90a8d6', plaidW: '#5a78b8', sleeves: 'long', pants: '#c8b48a', shoes: '#5a3a24', wide: true, torso: 8, legs: 6 };
   // Josh Dyke, the technical director: short dark hair, a dark beard, a black button-up, a big grin.
   G.CAST.joshDyke = { skin: '#eeb894', hair: '#1a1210', hairStyle: 'short', beard: '#3a2a1e', smile: '#ffffff', grin: true, shirt: '#1c1c22', collar: '#34343c', pants: '#3a4a68', shoes: '#141418', wide: true, torso: 7, legs: 4 };
   // Mitchell Chwatt: silver hair, a pink button-up open over a black tee, jeans, a watch.
@@ -24265,6 +24274,89 @@
     ];
     for (const [who, line] of answers[n % answers.length]) yield G.say(who, line);
   };
+  // Nani and Pops, standing together in the lobby. Pops wants to come fix up Nate's car.
+  S.renPops = function* () {
+    const f = flags();
+    if (f.popsCar == null) {
+      yield G.say('Pops', 'There he is! Nate!');
+      yield G.say('Pops', 'How\'s that car of yours running?');
+      yield G.say('Nate', 'It\'s... running.');
+      yield G.say('Pops', 'That\'s what I was afraid of. When do you want me to come fix it up?');
+      const c = yield G.ask('Nate', 'When should Pops come look at the car?', ['This weekend?', 'After finals.', 'It\'s fine, Pops!']);
+      f.popsCar = c;
+      if (c === 0) {
+        yield G.say('Pops', 'This weekend it is. I\'ll bring my tools. You bring the coffee.');
+      } else if (c === 1) {
+        yield G.say('Pops', 'After finals. Nani, put it on the calendar.');
+        yield G.say('Nani', 'It\'s on the calendar.');
+      } else {
+        yield G.say('Pops', '"Fine" is what people say right before the check engine light comes on.');
+        yield G.say('Pops', 'I\'ll come by anyway. You don\'t even have to be there. Just leave me the keys.');
+      }
+      return;
+    }
+    f.popsLine = ((f.popsLine || 0) + 1) % 3;
+    const when = ['this weekend', 'after finals', 'whether you like it or not'][f.popsCar] || 'soon';
+    const talk = [
+      [['Pops', 'Don\'t forget, I\'m coming to look at that car ' + when + '.']],
+      [['Pops', 'Check your oil on the way home. Then check it again.'], ['Nate', 'Why twice?'], ['Pops', 'Because you didn\'t check it the first time.']],
+      [['Pops', 'When was the last time somebody rotated your tires?'], ['Nate', '...What does that mean?'], ['Pops', 'That\'s it. I\'m coming ' + when + '.']],
+    ];
+    for (const [who, line] of talk[f.popsLine]) yield G.say(who, line);
+  };
+  S.renNani = function* () {
+    const f = flags();
+    if (!f.naniChurch) {
+      f.naniChurch = true;
+      yield G.say('Nani', 'Nate! Come here, give me a hug.');
+      yield G.say('Nani', 'You are a shining star! Keep shining!');
+      yield G.say('Nani', 'And talk to Pops. He\'s been talking about your car all week. Just let him fix it. It makes him happy.');
+      return;
+    }
+    f.naniLine = ((f.naniLine || 0) + 1) % 2;
+    const talk = [
+      [['Nani', 'I sent you a message this morning. Did you read it?'], ['Nate', '...I\'m going to read it right now.']],
+      [['Nani', 'Look at you. All grown up and still the same sweet boy.'], ['Nani', 'Pops! Isn\'t he getting tall?'], ['Pops', 'Not as tall as me.']],
+    ];
+    for (const [who, line] of talk[f.naniLine]) yield G.say(who, line);
+  };
+  // Adam, the pastor of preaching and teaching, by the check-in desk; he still points Nate to Mom
+  S.renAdam = function* () {
+    const f = flags();
+    if (!f.adamMet) {
+      f.adamMet = true;
+      yield G.say('Adam Edgerly', 'Nate! Good to see you. Your dad\'s preaching this morning, so I get to just listen for once.');
+      yield G.say('Adam Edgerly', 'Looking for your mom? She\'s down the hall in the chill room. It\'s the door that\'s propped open.');
+      yield G.say('Nate', 'Thanks, Pastor Adam.');
+      return;
+    }
+    f.adamLine = ((f.adamLine || 0) + 1) % 3;
+    const talk = [
+      [['Adam Edgerly', 'Josh told me about the bet. I\'m not saying a word.'], ['Adam Edgerly', 'I\'m a pastor, not a referee.']],
+      [['Adam Edgerly', 'Teaching tip: if you can\'t say it simple, you don\'t know it yet.'], ['Nate', 'That\'s how I feel about chemistry.'], ['Adam Edgerly', 'Then you\'re halfway there.']],
+      [['Adam Edgerly', 'Your mom\'s got the kids today? Pray for her.'], ['Adam Edgerly', '...I\'m kidding. Pray for the kids.']],
+    ];
+    for (const [who, line] of talk[f.adamLine]) yield G.say(who, line);
+  };
+  // Rick, the facilities manager, greeting at the front doors
+  S.renRick = function* () {
+    const f = flags();
+    if (!f.rickMet) {
+      f.rickMet = true;
+      yield G.say('Rick', 'Good morning! Welcome to Renaissance. I\'m Rick.');
+      yield G.say('Rick', 'If it\'s broken, leaking, or making a noise it shouldn\'t, that\'s me. The rest of the time, I hold the door.');
+      yield G.say('Nate', 'Do you know where everything is?');
+      yield G.say('Rick', 'Every light switch in the building. Go on in, the doors are right there.');
+      return;
+    }
+    f.rickLine = ((f.rickLine || 0) + 1) % 3;
+    const talk = [
+      [['Rick', 'Wipe your feet. I just did the lobby floor.']],
+      [['Rick', 'Somebody always asks me to turn the heat up. Somebody else always asks me to turn it down.'], ['Rick', 'So I leave it right where it is.']],
+      [['Rick', 'Good to have you here, Nate. Go grab a coffee before the good cups are gone.']],
+    ];
+    for (const [who, line] of talk[f.rickLine]) yield G.say(who, line);
+  };
   // Dave, the creative director, who said yes to Ice JJ Fish and wants to talk music
   S.renDave = function* () {
     const f = flags();
@@ -24319,7 +24411,7 @@
       w.addProp({ img: sp.lamppost, tx: 24, ty: 8, dx: 2, solid: [24, 8, 1, 1] });
       // Sunday morning: the lot's filling up (a white truck and a dark one by the doors, like always)
       for (const [c, x, y] of [[2, 8, 9], [5, 16, 9], [0, 2, 9], [1, 20, 9], [3, 4, 13], [4, 18, 13], [5, 22, 13]]) w.addProp({ img: sp.cars[c], tx: x, ty: y, h: 2, dx: 4, solid: [x, y, 2, 2] });
-      renNpc('renAdult2', 'Churchgoer', 13, 11, 'up', ['Good morning! The nine o\'clock is about to start. Doors are right there, hon.'])(w);
+      w.add(new G.NPC({ sprite: 'rick', name: 'Rick', x: 16 * 16 + 8, y: 7 * 16 + 14, dir: 'down', talk: S.renRick }));
     },
   };
 
@@ -24355,6 +24447,9 @@
       F.hang(sp.renLogoTV, 28, 7, 2, look('Another TV: RENKIDS. CHECK IN DOWN THE HALL. Somebody drew a smiley face on a sticky note and stuck it to the screen.'), 8);
       w.addWarp(34, 8, 1, 3, 'renHall', 1, 5, 'right');
       w.add(new G.NPC({ sprite: 'joeNarciso', name: 'Joe Narciso', x: 8 * 16 + 8, y: 11 * 16 + 14, dir: 'down', talk: S.renJoe }));
+      // Nani and Pops, side by side by the high-tops (off the path from the front doors to the sanctuary)
+      w.add(new G.NPC({ sprite: 'pops', name: 'Pops', x: 13 * 16 + 8, y: 9 * 16 + 14, dir: 'down', talk: S.renPops }));
+      w.add(new G.NPC({ sprite: 'nani', name: 'Nani', x: 14 * 16 + 6, y: 9 * 16 + 14, dir: 'down', talk: S.renNani }));
       w.add(new G.NPC({ sprite: 'mitchell', name: 'Mitchell Chwatt', x: 16 * 16 + 8, y: 6 * 16 + 14, dir: 'left', talk: S.renMitchell }));
       w.addWarp(10, 13, 2, 1, 'renaissance', 12, 8, 'down');
     },
@@ -24443,7 +24538,7 @@
       F.hang(sp.renClock, 13, 1, 1, look('A clock. 9:12. Service started twelve minutes ago. Everybody here is still checking in.'), -2);
       F.stand(sp.renRegTable, 10, 3, 2, look('A black table with a sign: NEW FAMILY REGISTRATION. A tablet, and a jar of stickers.'));
       F.stand(sp.renMetalShelf, 14, 3, 1, look('A black metal shelf: picture books, a Bible storybook, and a lost-and-found sneaker.'));
-      renNpc('renAdult1', 'Volunteer', 12, 4, 'left', ['Hi! Name? ...Oh, you\'re not a kid. You\'re Michelle\'s. She\'s in the chill room, hon.'])(w);
+      w.add(new G.NPC({ sprite: 'adamEdgerly', name: 'Adam Edgerly', x: 12 * 16 + 8, y: 4 * 16 + 14, dir: 'left', talk: S.renAdam }));
       // Welcome, friends! in moss on the wall
       F.hang(sp.renMossWelcome, 19, 2, 4, look('WELCOME, FRIENDS! in big green moss letters. Nate touches it. It\'s real moss.'), 8);
       // the lounge: gray walls, a window, a black leather couch, a little tree, high-tops
