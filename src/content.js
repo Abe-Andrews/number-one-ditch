@@ -24218,9 +24218,9 @@
   G.CAST.jimmy = { skin: '#eebc9a', hair: '#e8e0c4', hairStyle: 'shoulder', bangs: true, smile: '#ffffff', coat: '#1c1c22', shirt: '#24365e', pants: '#18181c', shoes: '#1a1a1e', boots: true, torso: 7, legs: 4 };
   // Blaise, Nate and Lily's friend: messy, spiky black hair over his forehead, a little earring.
   G.CAST.blaise = { skin: '#f0cfb0', hair: '#141216', hairStyle: 'mop', messy: true, earring: '#d8d8e0', shirt: '#f2f2ee', pants: '#2a2a32', shoes: '#f0f0f0', torso: 6, legs: 4 };
-  // Madelina: brown hair pulled back with loose strands, rosy cheeks, gold hoops, a black dress with
+  // Madelena: brown hair pulled back with loose strands, rosy cheeks, gold hoops, a black dress with
   // little flowers on it, a necklace.
-  G.CAST.madelina = { skin: '#f4cfb8', hair: '#4a2e20', hairStyle: 'pony', blush: true, smile: '#ffffff', earring: '#e0b860', earrings2: true, necklace: '#d8d8e0', neckline: true, shirt: '#1e1c22', pattern: 'floral', dress: '#1e1c22', shoes: '#2a2420', torso: 5, legs: 3 };
+  G.CAST.madelena = { skin: '#f4cfb8', hair: '#4a2e20', hairStyle: 'pony', blush: true, smile: '#ffffff', earring: '#e0b860', earrings2: true, necklace: '#d8d8e0', neckline: true, shirt: '#1e1c22', pattern: 'floral', dress: '#1e1c22', shoes: '#2a2420', torso: 5, legs: 3 };
   // Josh Dyke, the technical director: short dark hair, a dark beard, a black button-up, a big grin.
   G.CAST.joshDyke = { skin: '#eeb894', hair: '#1a1210', hairStyle: 'short', beard: '#3a2a1e', smile: '#ffffff', grin: true, shirt: '#1c1c22', collar: '#34343c', pants: '#3a4a68', shoes: '#141418', wide: true, torso: 7, legs: 4 };
   // Mitchell Chwatt: silver hair, a pink button-up open over a black tee, jeans, a watch.
@@ -24409,33 +24409,33 @@
     ];
     for (const [who, line] of talk[f.blaiseLine]) yield G.say(who, line);
   };
-  // Madelina is flirting with Nate. Nate has no idea.
-  S.renMadelina = function* () {
+  // Madelena is flirting with Nate. Nate has no idea.
+  S.renMadelena = function* () {
     const f = flags();
-    if (!f.madelinaMet) {
-      f.madelinaMet = true;
-      yield G.say('Madelina', 'Oh, hi Nate.');
-      yield G.say(null, 'Madelina tucks a strand of hair behind her ear.');
-      yield G.say('Madelina', 'I like your shirt. Is that new?');
+    if (!f.madelenaMet) {
+      f.madelenaMet = true;
+      yield G.say('Madelena', 'Oh, hi Nate.');
+      yield G.say(null, 'Madelena tucks a strand of hair behind her ear.');
+      yield G.say('Madelena', 'I like your shirt. Is that new?');
       yield G.say('Nate', 'This? I\'ve had it since freshman year. It\'s mostly holes now.');
-      yield G.say('Madelina', 'Well, it looks good on you.');
+      yield G.say('Madelena', 'Well, it looks good on you.');
       yield G.say('Nate', 'Thanks! The holes keep me cool.');
-      yield G.say('Madelina', 'So... are you doing anything after church?');
+      yield G.say('Madelena', 'So... are you doing anything after church?');
       yield G.say('Nate', 'Yeah! My brakes are squealing. Pops is gonna look at them.');
-      yield G.say('Madelina', 'Maybe I could come... see the brakes sometime?');
+      yield G.say('Madelena', 'Maybe I could come... see the brakes sometime?');
       yield G.say('Nate', 'You like brakes?! You should talk to Pops. He knows EVERYTHING about brakes.');
-      yield G.say('Madelina', '...That\'s not what I meant.');
+      yield G.say('Madelena', '...That\'s not what I meant.');
       yield G.say('Nate', 'Oh! Do yours squeal too?');
-      yield G.say('Madelina', 'Bye, Nate.');
+      yield G.say('Madelena', 'Bye, Nate.');
       return;
     }
-    f.madelinaLine = ((f.madelinaLine || 0) + 1) % 3;
+    f.madelenaLine = ((f.madelenaLine || 0) + 1) % 3;
     const talk = [
-      [['Madelina', 'Hold still. You\'ve got something in your hair.'], ['Nate', 'Oh! Thanks. What was it?'], ['Madelina', '...Nothing. There was nothing there.'], ['Nate', 'Huh. Okay!']],
-      [['Madelina', 'I heard you play guitar with Jimmy. You\'re really good.'], ['Nate', 'Thanks! He says I need to practice slower.'], ['Madelina', 'I\'d listen to you practice slow.'], ['Nate', 'That would be SO boring for you.']],
-      [['Madelina', 'My phone\'s about to die. You should put your number in it. You know. For emergencies.'], ['Nate', 'Good idea! I\'ll put in Rick\'s. He fixes everything.'], ['Madelina', '...']],
+      [['Madelena', 'Hold still. You\'ve got something in your hair.'], ['Nate', 'Oh! Thanks. What was it?'], ['Madelena', '...Nothing. There was nothing there.'], ['Nate', 'Huh. Okay!']],
+      [['Madelena', 'I heard you play guitar with Jimmy. You\'re really good.'], ['Nate', 'Thanks! He says I need to practice slower.'], ['Madelena', 'I\'d listen to you practice slow.'], ['Nate', 'That would be SO boring for you.']],
+      [['Madelena', 'My phone\'s about to die. You should put your number in it. You know. For emergencies.'], ['Nate', 'Good idea! I\'ll put in Rick\'s. He fixes everything.'], ['Madelena', '...']],
     ];
-    for (const [who, line] of talk[f.madelinaLine]) yield G.say(who, line);
+    for (const [who, line] of talk[f.madelenaLine]) yield G.say(who, line);
   };
   // Adam, the pastor of preaching and teaching, by the check-in desk; he still points Nate to Mom
   S.renAdam = function* () {
@@ -24694,7 +24694,7 @@
       F.hang(sp.renClock, 13, 1, 1, look('A clock. 9:12. Service started twelve minutes ago. Everybody here is still checking in.'), -2);
       F.stand(sp.renRegTable, 10, 3, 2, look('A black table with a sign: NEW FAMILY REGISTRATION. A tablet, and a jar of stickers.'));
       F.stand(sp.renMetalShelf, 14, 3, 1, look('A black metal shelf: picture books, a Bible storybook, and a lost-and-found sneaker.'));
-      w.add(new G.NPC({ sprite: 'madelina', name: 'Madelina', x: 22 * 16 + 8, y: 4 * 16 + 14, dir: 'down', talk: S.renMadelina }));
+      w.add(new G.NPC({ sprite: 'madelena', name: 'Madelena', x: 22 * 16 + 8, y: 4 * 16 + 14, dir: 'down', talk: S.renMadelena }));
       w.add(new G.NPC({ sprite: 'adamEdgerly', name: 'Adam Edgerly', x: 12 * 16 + 8, y: 4 * 16 + 14, dir: 'left', talk: S.renAdam }));
       // Welcome, friends! in moss on the wall
       F.hang(sp.renMossWelcome, 19, 2, 4, look('WELCOME, FRIENDS! in big green moss letters. Nate touches it. It\'s real moss.'), 8);
