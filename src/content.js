@@ -24439,9 +24439,13 @@
       const room = (x, name, lines) => { F.hang(sp.renOakDoor, x, 2, 1, lines ? look(...lines) : null, 0); sign(x, name); };
       room(7, 'nursery', ['The nursery. Through the window: a row of cribs, and every single baby asleep at once.', ['Nate', 'A miracle. I\'m not going in there.']]);
       room(16, '2s & 3s', ['The 2s & 3s room. Somebody in there is singing the clean-up song. Nobody is cleaning up.']);
-      w.addProp({ img: sp.renOakDoorAjar, tx: 26, ty: 2, flat: true }); sign(26, 'the chill room');
-      // (warm light from the cracked door, spilling onto the hall floor)
-      w.props.push({ img: null, x: 0, y: 0, flat: true, base: 0, draw(ctx, cx, cy) { ctx.fillStyle = 'rgba(255,236,190,0.22)'; ctx.fillRect(26 * 16 + 1 - cx, 3 * 16 - cy, 7, 10); ctx.fillRect(26 * 16 - cx, 3 * 16 + 10 - cy, 9, 6); } });
+      w.addProp({ img: sp.renOakDoorOpen, tx: 26, ty: 2, flat: true }); sign(26, 'the chill room');
+      // (the door's wide open: warm light pours out onto the hall floor, over a welcome mat)
+      w.props.push({ img: null, x: 0, y: 0, flat: true, base: 0, draw(ctx, cx, cy) {
+        const x = 26 * 16 - cx, y = 3 * 16 - cy;
+        ctx.fillStyle = 'rgba(255,236,190,0.28)'; ctx.fillRect(x + 1, y, 14, 6); ctx.fillRect(x - 1, y + 6, 18, 6); ctx.fillRect(x - 3, y + 12, 22, 5);
+        ctx.drawImage(G.spr.renMatSm, x + 1, y + 2);
+      } });
       w.addWarp(26, 1, 1, 1, 'renClass', 7, 9, 'up');
       room(31, '4s-K', ['The 4s-K room. A table of kids gluing cotton balls onto paper sheep. One kid is gluing them onto himself.']);
       // the check-in desk, by the doors with the wreaths
@@ -24810,7 +24814,7 @@
         choice: { right: 'Yep. Even the bad guys.', wrong: ['Only on Sundays.', 'Not Kevin from your bus.'],
           after: [['Michelle', 'Yep. Even the bad guys.'], ['K', 'Even Kevin from my bus?'], ['Michelle', '...Even Kevin.']] } },
       // (2 Kings 2: some boys made fun of the prophet Elisha's bald head, and two bears came out of the woods)
-      { kid: 4, lines: [['K', 'Is it true God sent BEARS after some kids for making fun of a bald guy?'], ['Nate', '...It\'s in there. Second Kings.']],
+      { kid: 4, must: true, lines: [['K', 'Is it true God sent BEARS after some kids for making fun of a bald guy?'], ['Nate', '...It\'s in there. Second Kings.']],
         choice: { right: 'It\'s true. Be nice to bald people.', wrong: ['No, that\'s a cartoon.', 'Bears aren\'t real.'],
           after: [['Michelle', 'It\'s true. Elisha. A bunch of boys made fun of his bald head, and two bears came out of the woods.'], ['K', 'WHOA.'], ['Michelle', 'So what do we learn?'], ['Kids', 'BE NICE TO BALD PEOPLE!'], ['Michelle', 'Be nice to EVERYBODY. But yes. Especially bald people.']] } },
     ] },
@@ -24888,10 +24892,6 @@
     yield G.say('Michelle', '...');
     yield G.say('Michelle', 'Okay. Who wants snack?');
     yield G.say(null, 'EVERY kid wants snack.');
-    yield G.say('June', 'Mr. Nate. I made you something.');
-    G.audio.sfx('fanfare');
-    yield G.itemGet(G.spr.renDrawing, 'June hands Nate a drawing: him, a shark tooth, and {y}MR. NAIT{/} in green crayon.');
-    yield G.say('Nate', 'It\'s perfect. I\'m putting it on the fridge.');
     yield G.say('Michelle', 'You were good with them. Same time next week?');
     f.renClassDone = true;
     if (first) { G.play.addTeeth(25); yield G.say(null, 'Mom slips Nate {y}25 shark teeth{/} "for gas." Nate didn\'t drive here.'); }
@@ -24903,8 +24903,6 @@
     yield G.say('Michelle', 'When somebody raises their hand, go call on them. You help me pick the answers.');
     yield G.say('Nate', 'How hard can it be? They\'re kids.');
     yield G.say('Michelle', 'Oh, Nate. Kids ask the hardest questions there are.');
-    yield howToCmd('SUNDAY SCHOOL', ['A kid with a yellow ! has a question. Walk over and press Z to call on them.', 'Then pick what Mom says. If it\'s not right, she\'ll catch herself, and you can pick again.', 'Three parts: easy questions, harder ones, then the big ones.']);
-    G.play.overlay = null;
     w.ss.phase = 'play';
   };
   G.MAPS.renClass = {
@@ -24999,8 +24997,11 @@
       const R = SS_ROUNDS[ss.round];
       // a hand goes up
       if (ss.left > 0 && !w.ssKids.some((k) => k.hand) && ss.t >= ss.nextHand) {
-        const open = R.qs.filter((q) => !ss.asked.includes(q) && !w.ssKids[q.kid].roam);
-        const q = open.length ? open[Math.floor(Math.random() * open.length)] : null;
+        const unasked = R.qs.filter((q) => !ss.asked.includes(q)), seated = (q) => !w.ssKids[q.kid].roam;
+        // (a must question always gets asked: once the slots left are down to the musts, it's them,
+        // and if that kid is off wandering, nobody else's hand goes up until they're back on the rug)
+        const musts = unasked.filter((q) => q.must), pool = (musts.length && ss.left <= musts.length ? musts : unasked).filter(seated);
+        const q = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
         if (q) { const k = w.ssKids[q.kid]; k.hand = q; k.handT = 0; G.audio.sfx('blip'); w.pop(k.x, k.y - 28, 'Ooh! Ooh! Me!', '#f8d850'); }
       }
     },

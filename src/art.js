@@ -11674,6 +11674,30 @@
     p.outline();
     return p.canvas();
   }
+  // the chill room's door standing wide open: the leaf swung all the way back against the wall, and
+  // the bright room right there through the frame (Mom at the front, the rug, a kid on it)
+  function renOakDoorOpen() {
+    const p = new Pix(16, 30);
+    p.rect(0, 0, 16, 30, '#f0f0ec');
+    p.rect(1, 1, 12, 29, '#fbf7ea');
+    for (let y = 3; y < 14; y += 4) p.hline(1, 12, y, '#e8e2d2');
+    p.rect(1, 14, 12, 1, '#d8b888');
+    p.rect(1, 17, 12, 13, '#4a7ac0'); p.hline(1, 12, 17, '#5a8ad0'); for (let i = 0; i < 5; i++) p.set(2 + (i * 5) % 10, 20 + (i * 3) % 8, '#4472b6');
+    // Mom at the front of the room, small, and a kid's head on the rug
+    p.rect(6, 7, 3, 3, '#8a5a3a'); p.rect(6, 10, 3, 4, '#c87898'); p.set(7, 9, '#f4cdb0');
+    p.rect(3, 22, 3, 3, '#c89858'); p.rect(9, 23, 3, 3, '#1a1210');
+    // the open leaf, flat against the wall, edge-on
+    p.rect(13, 1, 2, 29, '#a87430'); p.vline(13, 1, 29, '#c89040');
+    p.outline();
+    return p.canvas();
+  }
+  // a welcome mat for the hall floor in front of a door
+  function renMat() {
+    const p = new Pix(14, 7);
+    p.rect(0, 0, 14, 7, '#5a4632'); p.rect(1, 1, 12, 5, '#7a5e40');
+    for (let x = 2; x < 12; x += 2) p.vline(x, 2, 4, '#8a6c4a');
+    return p.canvas();
+  }
   // the chapel's EXIT sign, mounted on the wood header over the doorway in the partition
   function renExitHeader() {
     const W = 32, H = 13, p = new Pix(W, H);
@@ -12583,7 +12607,7 @@
     S.renXmasTree = renXmasTree(); S.renBistro = renBistro(); S.renConnectShelf = renConnectShelf(); S.renConnectSign = renConnectSign(); S.renLogoTV = renLogoTV(); S.renLobbyGlass = renLobbyGlass();
     S.renKidsBanner = renKidsBanner(); S.renBin = renBin(); S.renRailing = renRailing(48); S.renRailingV = renRailing(16); S.renkidsSign = renkidsSign();
     S.renArchWin = renArchWin(); S.renPanel = renPanel(); S.renLedWall = renLedWall(); S.renSideScreen = renSideScreen(); S.renChair = renChair(); S.renBooth = renBooth();
-    S.renOakDoor = renOakDoor(); S.renOakDoorAjar = renOakDoorAjar(); S.renExitHeader = renExitHeader(); S.renRoomSigns = {}; for (const t of ['nursery', '2s & 3s', 'the chill room', '4s-K', 'chapel', 'check-in']) S.renRoomSigns[t] = renRoomSign(t);
+    S.renOakDoor = renOakDoor(); S.renOakDoorAjar = renOakDoorAjar(); S.renOakDoorOpen = renOakDoorOpen(); S.renMatSm = renMat(); S.renExitHeader = renExitHeader(); S.renRoomSigns = {}; for (const t of ['nursery', '2s & 3s', 'the chill room', '4s-K', 'chapel', 'check-in']) S.renRoomSigns[t] = renRoomSign(t);
     S.renWreathDoors = renWreathDoors(); S.renRegTable = renRegTable(); S.renMetalShelf = renMetalShelf(); S.renClock = renClock(); S.renCouch = renCouch(); S.renWindow = renWindow();
     S.renMossWelcome = renMossWelcome(); S.renPaperFlake = renPaperFlake();
     S.renSlits = []; for (let h = 0; h < 4; h++) for (let k = 0; k < 4; k++) S.renSlits.push(renSlit(k, h)); S.renGable = renGable(); S.renSideGlass = renSideGlass(); S.renRib = renRib(); { const c = G.canvas(S.renRib.width, S.renRib.height), x = c.getContext('2d'); x.scale(-1, 1); x.drawImage(S.renRib, -S.renRib.width, 0); S.renRibR = c; } S.renGrand = renGrand(); S.renSpeaker = renSpeaker(); S.renSoundTable = renSoundTable();
