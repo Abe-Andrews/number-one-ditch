@@ -24284,16 +24284,6 @@
     ][f.daveLine];
     for (const [who, line] of talk) yield G.say(who, line);
   };
-  // paper snowflakes hanging from the ceiling, drawn over everything (map tint): [x, y] in tiles
-  const renFlakes = (ctx, spots) => {
-    const cam = G.play.cam, img = G.spr.renPaperFlake;
-    for (const [tx, ty] of spots) {
-      const x = Math.round(tx * 16 - cam.x), y = Math.round(ty * 16 - cam.y + Math.sin((G.tick + tx * 40) * 0.03) * 1.5);
-      if (x < -16 || y < -16 || x > G.W + 16 || y > G.H + 16) continue;
-      ctx.fillStyle = 'rgba(255,255,255,0.35)'; ctx.fillRect(x + 5, y - 10, 1, 10);
-      ctx.drawImage(img, x, y);
-    }
-  };
   const renNpc = (sprite, name, tx, ty, dir, lines) => (w) => w.add(new G.NPC({ sprite, name, x: tx * 16 + 8, y: ty * 16 + 14, dir, talk: function* () { for (const l of lines) yield Array.isArray(l) ? G.say(l[0], l[1]) : G.say(name, l); } }));
 
   // ---- the front
@@ -24468,7 +24458,6 @@
       F.hang(sp.renRoomSigns.chapel, 44, 2, 2, look('A sign: chapel. Somebody is singing in there. Loud.'), 12);
       w.addWarp(46, 4, 1, 2, 'renChapel', 10, 22, 'up');
     },
-    tint(ctx) { const s = []; for (let x = 4; x < 46; x += 3) s.push([x + (x % 2) * 0.5, 3 + (x % 3) * 0.4]); renFlakes(ctx, s); },
   };
 
   // ---- the wooden chapel (Ice JJ Fish, playing kids' church)
@@ -24763,7 +24752,6 @@
     },
     tick(w) { renDanceTick(w); },
     tint(ctx) {
-      renFlakes(ctx, [[3, 8], [8, 7.5], [13, 8.2], [18, 7.8], [5, 12], [11, 12.5], [16, 11.8], [6, 20], [15, 20.5]]);
       if (!G.script.busy && !G.play.overlay) {
         const d = G.play.world.dance;
         if (d && d.combo > 1 && d.t - d.lastT < 90) { const t = 'COMBO x' + G.sayable(d.combo); G.font.draw(ctx, t, 236 - G.font.width(t), G.H - 11, '#f8d850', { shadow: '#0c0814' }); }
