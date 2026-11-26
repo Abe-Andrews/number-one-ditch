@@ -24213,6 +24213,14 @@
   // Pops (from the user's photo with Nani): way taller than her, thinning white-blond hair, rosy
   // cheeks, a navy blazer over a light blue checked button-down, khakis. (Nani uses her own cast.)
   G.CAST.pops = { skin: '#f0b89e', hair: '#e4d8bc', hairStyle: 'receding', blush: true, smile: '#ffffff', coat: '#1e2440', shirt: '#c8d6ee', pattern: 'plaid', plaidL: '#90a8d6', plaidW: '#5a78b8', sleeves: 'long', pants: '#c8b48a', shoes: '#5a3a24', wide: true, torso: 8, legs: 6 };
+  // Jimmy Leahy, the guitarist (and Nate's guitar teacher): platinum shoulder-length hair with bangs,
+  // a black leather jacket over a dark blue shirt, black jeans, boots.
+  G.CAST.jimmy = { skin: '#eebc9a', hair: '#e8e0c4', hairStyle: 'shoulder', bangs: true, smile: '#ffffff', coat: '#1c1c22', shirt: '#24365e', pants: '#18181c', shoes: '#1a1a1e', boots: true, torso: 7, legs: 4 };
+  // Blaise, Nate and Lily's friend: messy, spiky black hair over his forehead, a little earring.
+  G.CAST.blaise = { skin: '#f0cfb0', hair: '#141216', hairStyle: 'mop', messy: true, earring: '#d8d8e0', shirt: '#f2f2ee', pants: '#2a2a32', shoes: '#f0f0f0', torso: 6, legs: 4 };
+  // Madelina: brown hair pulled back with loose strands, rosy cheeks, gold hoops, a black dress with
+  // little flowers on it, a necklace.
+  G.CAST.madelina = { skin: '#f4cfb8', hair: '#4a2e20', hairStyle: 'pony', blush: true, smile: '#ffffff', earring: '#e0b860', earrings2: true, necklace: '#d8d8e0', neckline: true, shirt: '#1e1c22', pattern: 'floral', dress: '#1e1c22', shoes: '#2a2420', torso: 5, legs: 3 };
   // Josh Dyke, the technical director: short dark hair, a dark beard, a black button-up, a big grin.
   G.CAST.joshDyke = { skin: '#eeb894', hair: '#1a1210', hairStyle: 'short', beard: '#3a2a1e', smile: '#ffffff', grin: true, shirt: '#1c1c22', collar: '#34343c', pants: '#3a4a68', shoes: '#141418', wide: true, torso: 7, legs: 4 };
   // Mitchell Chwatt: silver hair, a pink button-up open over a black tee, jeans, a watch.
@@ -24342,6 +24350,92 @@
       [['Nani', 'Look at you. All grown up and still the same sweet boy.'], ['Nani', 'Pops! Isn\'t he getting tall?'], ['Pops', 'Not as tall as me.']],
     ];
     for (const [who, line] of talk[f.naniLine]) yield G.say(who, line);
+  };
+  // Jimmy, the guitarist, on stage: Nate's guitar teacher, always on about scales and modes
+  S.renJimmy = function* () {
+    const f = flags();
+    if (!f.jimmyMet) {
+      f.jimmyMet = true;
+      yield G.say('Jimmy', 'Nate! My guy. You been practicing your scales?');
+      yield G.say('Nate', 'Every day. Well. Most days. Some days.');
+      yield G.say('Jimmy', 'Run me the major scale.');
+      yield G.say('Nate', 'Do, re, mi, fa, sol, la, ti, do.');
+      yield G.say('Jimmy', 'Good. Now play those exact same notes, but start on the second one. Re to re.');
+      yield G.say('Nate', '...That\'s Dorian.');
+      yield G.say('Jimmy', 'That\'s Dorian! Same notes, different home. That\'s all a mode is.');
+      yield G.say('Jimmy', 'Pop quiz. Same notes, start on the fifth one. Sol to sol. What\'s that?');
+      const c = yield G.ask('Nate', 'Sol to sol is...', ['Mixolydian', 'Lydian', 'Locrian']);
+      if (c === 0) {
+        yield G.say('Jimmy', 'MIXOLYDIAN! Major, with a flat seventh. That\'s half the rock solos ever played.');
+        yield G.say('Nate', 'I KNEW that one.');
+      } else if (c === 1) {
+        yield G.say('Jimmy', 'Close! Lydian starts on the fourth. Sol to sol is Mixolydian. Write it on your hand.');
+      } else {
+        yield G.say('Jimmy', 'Locrian?! Locrian starts on the seventh. Nobody plays Locrian. Locrian is a cry for help.');
+        yield G.say('Jimmy', 'Sol to sol is Mixolydian.');
+      }
+      return;
+    }
+    f.jimmyLine = ((f.jimmyLine || 0) + 1) % 4;
+    const talk = [
+      [['Jimmy', 'Phrygian. Start on the third note. Sounds like a movie where somebody\'s about to steal a diamond.'], ['Nate', 'That\'s my favorite one.'], ['Jimmy', 'Everybody\'s favorite is Phrygian for about a week.']],
+      [['Jimmy', 'Lydian is major, but one note floats up. Sounds like a dream.'], ['Nate', 'Like a dream sequence in a movie.'], ['Jimmy', 'EVERY dream sequence in a movie.']],
+      [['Jimmy', 'Aeolian. Start on la. That\'s just your natural minor.'], ['Nate', 'Wait, so minor is just a mode of major?'], ['Jimmy', 'Now you\'re getting it. It\'s all the same seven notes, man.']],
+      [['Jimmy', 'Practice slow. Slow is smooth, and smooth is fast.'], ['Nate', 'You say that every lesson.'], ['Jimmy', 'Because you never practice slow.']],
+    ];
+    for (const [who, line] of talk[f.jimmyLine]) yield G.say(who, line);
+  };
+  // Blaise, Nate and Lily's friend, on a sugar high from the coffee bar. Nate is worried.
+  S.renBlaise = function* () {
+    const f = flags();
+    if (!f.blaiseMet) {
+      f.blaiseMet = true;
+      yield G.say('Blaise', 'NATE! NATE. Nate. Hi. Hey. NATE.');
+      yield G.say('Nate', 'Blaise. Hey. Are you okay?');
+      yield G.say('Blaise', 'I\'m GREAT. The coffee bar has free donuts. I had some donuts.');
+      yield G.say('Nate', 'How many is "some"?');
+      yield G.say('Blaise', 'Seven? No. Nine. Plus the jelly ones. Plus three hot chocolates with extra marshmallows.');
+      yield G.say('Blaise', 'My heart is going BUH-BUH-BUH-BUH-BUH. Is that normal?');
+      yield G.say('Nate', 'No! Blaise, that is a medically concerning amount of sugar. Sit down. Drink some water.');
+      yield G.say('Blaise', 'Water is just boring juice.');
+      yield G.say('Blaise', 'Tell Lily I said hi! Tell her I said HI!');
+      return;
+    }
+    f.blaiseLine = ((f.blaiseLine || 0) + 1) % 3;
+    const talk = [
+      [['Blaise', 'I\'m gonna go back for one more donut.'], ['Nate', 'Blaise, NO.'], ['Blaise', 'A little one!'], ['Nate', 'Have a banana. Or a glass of water. Or a nap.']],
+      [['Blaise', 'Can you see me vibrating? I think I\'m vibrating.'], ['Nate', '...A little, yeah. Breathe. In through the nose.'], ['Blaise', 'I CAN SMELL THE DONUTS FROM HERE.']],
+      [['Blaise', 'I feel kind of sleepy all of a sudden.'], ['Nate', 'That\'s the crash. Sit down before you fall down.'], ['Blaise', 'Wake me up for the next donut.']],
+    ];
+    for (const [who, line] of talk[f.blaiseLine]) yield G.say(who, line);
+  };
+  // Madelina is flirting with Nate. Nate has no idea.
+  S.renMadelina = function* () {
+    const f = flags();
+    if (!f.madelinaMet) {
+      f.madelinaMet = true;
+      yield G.say('Madelina', 'Oh, hi Nate.');
+      yield G.say(null, 'Madelina tucks a strand of hair behind her ear.');
+      yield G.say('Madelina', 'I like your shirt. Is that new?');
+      yield G.say('Nate', 'This? I\'ve had it since freshman year. It\'s mostly holes now.');
+      yield G.say('Madelina', 'Well, it looks good on you.');
+      yield G.say('Nate', 'Thanks! The holes keep me cool.');
+      yield G.say('Madelina', 'So... are you doing anything after church?');
+      yield G.say('Nate', 'Yeah! My brakes are squealing. Pops is gonna look at them.');
+      yield G.say('Madelina', 'Maybe I could come... see the brakes sometime?');
+      yield G.say('Nate', 'You like brakes?! You should talk to Pops. He knows EVERYTHING about brakes.');
+      yield G.say('Madelina', '...That\'s not what I meant.');
+      yield G.say('Nate', 'Oh! Do yours squeal too?');
+      yield G.say('Madelina', 'Bye, Nate.');
+      return;
+    }
+    f.madelinaLine = ((f.madelinaLine || 0) + 1) % 3;
+    const talk = [
+      [['Madelina', 'Hold still. You\'ve got something in your hair.'], ['Nate', 'Oh! Thanks. What was it?'], ['Madelina', '...Nothing. There was nothing there.'], ['Nate', 'Huh. Okay!']],
+      [['Madelina', 'I heard you play guitar with Jimmy. You\'re really good.'], ['Nate', 'Thanks! He says I need to practice slower.'], ['Madelina', 'I\'d listen to you practice slow.'], ['Nate', 'That would be SO boring for you.']],
+      [['Madelina', 'My phone\'s about to die. You should put your number in it. You know. For emergencies.'], ['Nate', 'Good idea! I\'ll put in Rick\'s. He fixes everything.'], ['Madelina', '...']],
+    ];
+    for (const [who, line] of talk[f.madelinaLine]) yield G.say(who, line);
   };
   // Adam, the pastor of preaching and teaching, by the check-in desk; he still points Nate to Mom
   S.renAdam = function* () {
@@ -24502,6 +24596,12 @@
       F.hang(sp.renLogoTV, 28, 7, 2, look('Another TV: RENKIDS. CHECK IN DOWN THE HALL. Somebody drew a smiley face on a sticky note and stuck it to the screen.'), 8);
       w.addWarp(34, 8, 1, 3, 'renHall', 1, 5, 'right');
       w.add(new G.NPC({ sprite: 'joeNarciso', name: 'Joe Narciso', x: 8 * 16 + 8, y: 11 * 16 + 14, dir: 'down', talk: S.renJoe }));
+      // Blaise, by the high-tops, on a sugar high (he can't stand still)
+      const blaise = w.add(new G.NPC({ sprite: 'blaise', name: 'Blaise', x: 4 * 16 + 8, y: 8 * 16 + 14, dir: 'right', talk: S.renBlaise }));
+      blaise.draw = function (ctx, cx, cy) {
+        const S2 = G.sprites.blaise, img = S2[this.dir][0], jx = (G.tick >> 1) % 2 ? 1 : -1, jy = (G.tick >> 2) % 3 === 0 ? -1 : 0;
+        ctx.drawImage(img, Math.round(this.x - img.width / 2) - cx + jx, Math.round(this.y - img.height) - cy + jy);
+      };
       // Nani and Pops, side by side by the high-tops (off the path from the front doors to the sanctuary)
       w.add(new G.NPC({ sprite: 'pops', name: 'Pops', x: 13 * 16 + 8, y: 9 * 16 + 14, dir: 'down', talk: S.renPops }));
       w.add(new G.NPC({ sprite: 'nani', name: 'Nani', x: 14 * 16 + 6, y: 9 * 16 + 14, dir: 'down', talk: S.renNani }));
@@ -24550,6 +24650,7 @@
       // the sound booth at the back
       F.stand(sp.renBooth, 10, 16, 5, look('The sound booth: a big mixing board, two screens, and a camera on a tripod.', ['Nate', 'So many buttons. I would press all of them.']));
       // Josh, the technical director, behind the board
+      w.add(new G.NPC({ sprite: 'jimmy', name: 'Jimmy', x: 7 * 16 + 8, y: 6 * 16 + 12, dir: 'down', talk: S.renJimmy }));
       w.add(new G.NPC({ sprite: 'joshDyke', name: 'Josh Dyke', x: 10 * 16 + 4, y: 17 * 16 + 12, dir: 'up', talk: S.renJosh }));
       w.addWarp(12, 19, 2, 1, 'renLobby', 9, 3, 'down');
     },
@@ -24593,6 +24694,7 @@
       F.hang(sp.renClock, 13, 1, 1, look('A clock. 9:12. Service started twelve minutes ago. Everybody here is still checking in.'), -2);
       F.stand(sp.renRegTable, 10, 3, 2, look('A black table with a sign: NEW FAMILY REGISTRATION. A tablet, and a jar of stickers.'));
       F.stand(sp.renMetalShelf, 14, 3, 1, look('A black metal shelf: picture books, a Bible storybook, and a lost-and-found sneaker.'));
+      w.add(new G.NPC({ sprite: 'madelina', name: 'Madelina', x: 22 * 16 + 8, y: 4 * 16 + 14, dir: 'down', talk: S.renMadelina }));
       w.add(new G.NPC({ sprite: 'adamEdgerly', name: 'Adam Edgerly', x: 12 * 16 + 8, y: 4 * 16 + 14, dir: 'left', talk: S.renAdam }));
       // Welcome, friends! in moss on the wall
       F.hang(sp.renMossWelcome, 19, 2, 4, look('WELCOME, FRIENDS! in big green moss letters. Nate touches it. It\'s real moss.'), 8);
