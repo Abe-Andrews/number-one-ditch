@@ -10839,6 +10839,17 @@
     ['#f8f8f0', '#ff6a4a', '#f8d850', '#4af0a8'].forEach((c, i) => { p.rect(2 + i * 7, 9, 5, 3, c); p.rect(2 + i * 7, 13, 5, 3, '#8a8a96'); });
     return finish(p);
   }
+  // the Sermon Sampler: a dark blue pad box, a little green screen (a waveform), and seven pads, one
+  // for each time Dad says "English" (the eighth spot is a big red button)
+  function sermonSampler() {
+    const p = new Pix(30, 18);
+    p.rect(0, 2, 30, 16, '#2a3a5e'); p.hline(0, 29, 2, '#4a5a86'); p.hline(0, 29, 17, '#1a2440');
+    p.rect(2, 4, 13, 4, '#0c1a10'); for (const [x, h] of [[3, 1], [4, 2], [5, 1], [6, 3], [7, 1], [8, 2], [9, 1], [10, 3], [11, 2], [12, 1], [13, 1]]) p.vline(x, 6 - Math.floor(h / 2), 6 - Math.floor(h / 2) + h - 1, '#58f088');
+    for (const x of [19, 23, 27]) { p.rect(x - 1, 4, 2, 2, '#1c1c22'); p.set(x - 1, 4, '#c8ccd4'); }
+    const pads = ['#f8f8f0', '#78c8f8', '#f8d850', '#f898c8', '#78e070', '#c8a8f8', '#f8a848'];
+    for (let i = 0; i < 8; i++) { const x = 2 + (i % 4) * 7, y = 9 + Math.floor(i / 4) * 4; p.rect(x, y, 5, 3, i < 7 ? pads[i] : '#e83a3a'); }
+    return finish(p);
+  }
   // The novelties: a red plastic kazoo (its silver cap on top), a cowbell (and the stick), and a
   // theremin (a wooden cabinet on legs, its pitch antenna standing up, its volume loop out the side)
   function kazoo() {
@@ -12580,7 +12591,7 @@
     S.tins = {}; for (const id of G.TIN_IDS) S.tins[id] = tinArt(id);
     S.pipeBook = pipeBookIcon(); S.beltIcon = beltIcon(); S.bmfIcon = bmfIcon();
     S.pvcFlute = pvcFlute(); S.silverFlute = silverFlute(); S.violin = violin();
-    S.cello = cello(); S.uprightBass = uprightBass(); S.trumpet = trumpet(); S.trombone = trombone(); S.sax = sax(); S.synth = synth(); S.drumMachine = drumMachine(); S.kazoo = kazoo(); S.cowbell = cowbell(); S.theremin = theremin(); S.microphone = microphone();
+    S.cello = cello(); S.uprightBass = uprightBass(); S.trumpet = trumpet(); S.trombone = trombone(); S.sax = sax(); S.synth = synth(); S.drumMachine = drumMachine(); S.sermonSampler = sermonSampler(); S.kazoo = kazoo(); S.cowbell = cowbell(); S.theremin = theremin(); S.microphone = microphone();
     S.uprightPiano = uprightPiano(); S.casioKeyboard = casioKeyboard(); S.rhodesPiano = rhodesPiano();
     S.jazzmaster = jazzmaster(); S.stratocaster = stratocaster(); S.teleDeluxe = teleDeluxe(); S.bongos = bongos(); S.steelPan = steelPan(); S.drumKit = drumKit();
     S.williamsCenter = williamsCenter(); S.parkBench = parkBench(); S.arcSculpture = arcSculpture(); S.posterKiosk = posterKiosk(); S.mixingDesk = mixingDesk(); S.studioMonitor = studioMonitor(); S.acousticPanel = acousticPanel(); S.studioCouch = studioCouch(); S.metronomeIcon = metronomeIcon(); S.pedalsIcon = pedalsIcon();

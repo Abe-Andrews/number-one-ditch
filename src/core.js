@@ -572,6 +572,17 @@ G.audio = (function () {
     return h;
   }
 
+  // Short recorded one-shots (Dad's sermon sound bites, on the Sermon Sampler): decoded once and
+  // kept in the same cache as the recorded songs. preload fetches them ahead (a hit on one that
+  // hasn't loaded yet is silent and starts it loading).
+  const loading = {};
+  function loadBuf(file) {
+    if (!ctx || file in recorded || loading[file]) return;
+    loading[file] = true;
+    fetch(file).then((r) => r.arrayBuffer()).then((ab) => new Promise((ok, no) => ctx.decodeAudioData(ab, ok, no)))
+      .then((buf) => { recorded[file] = buf; }, () => { recorded[file] = false; }).then(() => { delete loading[file]; });
+  }
+
   // a hidden tab stops its sound (browsers slow a hidden tab's timers, and the music would stutter)
   document.addEventListener('visibilitychange', () => {
     if (!ctx) return;
@@ -590,6 +601,7 @@ G.audio = (function () {
     },
     stop() { want = null; stopSong(); },
     clip,
+    preload(files) { for (const f of files) loadBuf(f); },
     // Dad's pipe: each direction is a breathy note.
     puff(dir) {
       if (!ctx || muted) return;
@@ -786,6 +798,15 @@ G.audio = (function () {
       // a rimshot) and a cowbell (two square waves through a bandpass; hi: the high one)
       boom(at) { if (!ctx || muted) return; const t = when(at); tone(150, t, 0.7, 'sine', lv(0.8), bus(), 42); tone(60, t, 0.5, 'sine', lv(0.3), bus(), 40); },
       clap(at) { if (!ctx || muted) return; const t = when(at); for (const d of [0, 0.011, 0.022]) noise(t + d, 0.02, lv(0.28), bus(), 1300); noise(t + 0.03, 0.16, lv(0.2), bus(), 1100); },
+      // a recorded one-shot (file), into the instruments' bus like any drum hit
+      sample(file, at, g) {
+        if (!ctx || muted) return;
+        const buf = recorded[file];
+        if (!buf) { loadBuf(file); return; }
+        const t = when(at), src = ctx.createBufferSource(), gn = ctx.createGain();
+        src.buffer = buf; gn.gain.value = lv(g == null ? 0.8 : g);
+        src.connect(gn); gn.connect(bus()); src.start(t);
+      },
       openhat(at) { if (!ctx || muted) return; const t = when(at); noise(t, 0.32, lv(0.1), bus(), 8000); },
       rim(at) { if (!ctx || muted) return; const t = when(at); tone(1700, t, 0.03, 'square', lv(0.1), bus()); noise(t, 0.02, lv(0.15), bus(), 3000); },
       cowbell(hi, at) {
