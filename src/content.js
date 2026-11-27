@@ -829,9 +829,14 @@
       add('Dad\'s snacks', f.snacksDone, n === 2 ? 'Bring them to Dad' : G.sayable(n) + '/2 snacks', 'Home', n === 2 ? 'Dad is in his workshop.' : 'Candy corn: Mom hides it somewhere. Doritos: follow the muddy tracks.', [n, 2]);
     }
     if (G.condoDone && G.condoDone()) {
-      const jams = G.JAM_SONGS.filter((sg) => !sg.elec || f.bassDone), nj = jams.filter((sg) => (s.jams || {})[sg.id]).length;
+      // (the songs on the setlist right now: the bass page once Nate's bass is done, the bonus page once it's open)
+      const J = s.jams || {}, open = G.englishOpen && G.englishOpen();
+      const jams = G.JAM_SONGS.filter((sg) => (!sg.elec || f.bassDone) && (!sg.bonus || open)), nj = jams.filter((sg) => J[sg.id]).length;
+      const pages = 'guitar, drums, flute, piano, strings, horns, synths, novelty' + (f.bassDone ? ', bass' : '') + (open ? ', and a bonus' : '');
+      const jamHint = !J.shoolby ? 'Play along with Abe at the little amp upstairs in his office. Start with Shoolby Blues, on the Strat: nothing else opens until you pass it.'
+        : 'Abe\'s setlist, at the little amp upstairs in his office: a page for ' + pages + '. On each page, pass a song to open the next.';
       if (!f.jamMet) side.push({ name: 'Abe\'s office', status: 'Abe wants to jam', kind: 'rumor', where: 'Chesapeake - the condo', hint: 'Things are quiet at the condo. Abe\'s little amp is upstairs, in his office.' });
-      else add('Jamming with Abe', nj >= jams.length && 'All played!', G.sayable(nj) + '/' + G.sayable(jams.length) + ' songs', 'Chesapeake - Abe\'s office', 'Play along with Abe at the little amp in Abe\'s office, upstairs: three guitar songs and three drum songs.', [nj, G.JAM_SONGS.length]);
+      else add('Jamming with Abe', nj >= jams.length && 'All played!', G.sayable(nj) + '/' + G.sayable(jams.length) + ' songs', 'Chesapeake - Abe\'s office', jamHint, [nj, jams.length]);
     }
     if (f.dadBeaten) {
       const FS = s.fights || {}, five = G.FIGHTERS.filter((F) => !F.secret), nf = five.filter((F) => FS[F.id]).length;
@@ -8115,14 +8120,18 @@
     c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
     return (guitarSmallC[it.id] = c);
   };
-  // Nate with a cello or an upright bass, standing it on the floor beside him (cx, by: the endpin), tilted
-  // in a little, at scale k; saw (-1 to 1) slides a bow across it (none for the plucked bass)
-  const standHold = (ctx, img, cx, by, k, saw) => {
-    const w = img.width * k, h = img.height * k;
-    ctx.save(); ctx.translate(cx, by); ctx.rotate(-0.12); ctx.drawImage(img, -w / 2, -h, w, h); ctx.restore();
-    if (saw == null) return;
-    const bx = cx - h * 0.38 * Math.sin(-0.12), by2 = by - h * 0.36, L = 40 * k, off = saw * L * 0.2;
+  // Nate with a cello or an upright bass, standing on the floor in front of him (cx, by: the endpin),
+  // leaning back against him with its neck up by his left shoulder (tilt: how far the top leans to our
+  // right), at scale k; saw (-1 to 1) slides a bow across it (none for the plucked bass). Returns where
+  // his hands go: neck (his left hand, up the neck) and hand (his right: the bow's frog, or plucking)
+  const standHold = (ctx, img, cx, by, k, saw, tilt = 0.2) => {
+    const w = img.width * k, h = img.height * k, at = (t) => [cx + t * h * Math.sin(tilt), by - t * h * Math.cos(tilt)];
+    ctx.save(); ctx.imageSmoothingEnabled = false; ctx.translate(cx, by); ctx.rotate(tilt); ctx.drawImage(img, -w / 2, -h, w, h); ctx.restore();
+    const neck = at(0.72).map(Math.round);
+    if (saw == null) { const pl = at(0.45); return { neck, hand: [Math.round(pl[0]) - 1, Math.round(pl[1])] }; }
+    const [bx, by2] = at(0.3), L = 40 * k, off = saw * L * 0.2;
     for (let i = 0; i <= Math.round(L); i++) { const d = -0.75 * L + off + i, x = Math.round(bx + d), y = Math.round(by2 - d * 0.15); ctx.fillStyle = '#6a3a1a'; ctx.fillRect(x, y, 1, 1); ctx.fillStyle = '#f0e8d0'; ctx.fillRect(x, y + 1, 1, 1); }
+    return { neck, hand: [Math.round(bx - 0.75 * L + off), Math.round(by2 + 0.75 * L * 0.15)] };
   };
   // Nate with a horn (mx, my: his mouth; by: his feet; k: scale; lane: the note he's on, for the
   // trombone's slide and the hand at the theremin): a trumpet, trombone or kazoo pointed out to our
@@ -9118,7 +9127,7 @@
         const NS = G.nateSprites ? G.nateSprites() : G.sprites.nate, nate = NS.down[0], b = this.bob > 3 ? 1 : 0;
         // (held up in his hands: the guitars and the bass, the violin, the flutes, the kazoo; he's drawn
         // armless and his arms reach for it. At a piano or a keyboard he plays with his back to us.)
-        const held = !drums && !keys && (!bow || bow === 'violin') && (!horn || horn !== 'theremin'), upright = !!keys;
+        const held = !drums && !keys && (!horn || horn !== 'theremin'), upright = !!keys;
         const X0 = 24, Y0 = 46 + b, hit = this.hitT.some((h) => h > 4) ? 1 : 0;
         if (upright) {
           // (the upright at 1.5x; a keyboard on its stand at 1.25x, its feet on the floor; either one a
@@ -9131,7 +9140,12 @@
         if (drums) { const img = gt.art(); ctx.drawImage(img, Math.round(40 - img.width / 2), { bongos: 80, pan: 74, kit: 66, machine: 78, sampler: 78, cowbell: 72 }[drums] + hit); }
         else if (upright) { /* (the piano or keyboard: drawn above, behind him) */ }
         // (a cello or an upright bass standing beside him; a horn at his mouth, or a theremin in front)
-        else if (bow && bow !== 'violin') standHold(ctx, gt.art(), 50, 95 + b, bow === 'cello' ? 0.7 : 0.68, bow === 'cello' ? (this.hitT.some((h) => h > 0) || this.holds.some(Boolean) ? Math.sin(this.f * 0.2) : 0) : null);
+        // (a cello or an upright bass on its endpin in front of him, leaning back against him: his left
+        // hand up the neck, his right on the bow (the cello) or plucking the strings (the bass))
+        else if (bow && bow !== 'violin') {
+          const sh = standHold(ctx, gt.art(), bow === 'cello' ? 40 : 41, 95 + b, bow === 'cello' ? 0.7 : 0.68, bow === 'cello' ? (this.hitT.some((h) => h > 0) || this.holds.some(Boolean) ? Math.sin(this.f * 0.2) : 0) : null, bow === 'cello' ? 0.3 : 0.28);
+          arms(sh.hand, sh.neck);
+        }
         else if (horn === 'kazoo') {
           // the kazoo in his mouth, its wide end (the one you hum into) at his lips, one hand on it
           const img = gt.art();
@@ -10397,7 +10411,7 @@
           // the violin under his chin (the bow saws while a note's sounding); a cello or the bass on the floor beside him
           const saw = this.hitT > 0 || Object.keys(this.voices).length ? Math.sin(this.t * 0.2) : 0;
           if (it.bow === 'violin') violinHold(ctx, nx + 33, ny + 37 + jolt, 0.75, saw);
-          else standHold(ctx, img, nx + 58, FLOOR + 1, it.bow === 'cello' ? 1.05 : 1, it.bow === 'cello' ? saw : null);
+          else standHold(ctx, img, nx + 58, FLOOR + 1, it.bow === 'cello' ? 1.05 : 1, it.bow === 'cello' ? saw : null, -0.12);
         } else if (it.horn) {
           // a horn at his mouth (or the theremin in front of him, his hand over it)
           hornHold(ctx, it.horn, img, nx + 26, ny + 26 + jolt, FLOOR + 1, { trumpet: 1.2, trombone: 1, sax: 1.2, kazoo: 1.6, theremin: 1.3 }[it.horn], Object.keys(this.lit).length ? Math.floor(this.t / 6) % 4 : 0);
