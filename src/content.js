@@ -3215,6 +3215,7 @@
       row('Tyler\'s tooth', f.toothGiven || f.toothKept, 'The Ditch', 'Find Tyler at the Ditch and decide what to do about the mosasaur tooth.'),
       count('The Tooth Book', G.fossilsFound(), G.FOSSILS.length, 'The Ditch + Aurora', 'Sift the gravel with Tyler\'s Sifter until you have one of every fossil.'),
       row('The World\'s Largest August Ham', f.hamBeaten, 'Aurora', 'Two doors down from the museum. Find out who has the key.'),
+      row('Renaissance Church', s.visited && (s.visited.renaissance || s.visited.renLobby), 'Home - the car', 'Dad\'s church is open now. Take the car and pick Renaissance Church.'),
       row('The museum\'s stamp card', f.museumDone, 'Aurora - the museum', 'Get a stamp card from the Volunteer, read every exhibit, then bring it back.'),
       Object.assign(count('Every rock', G.rocksFound(), G.ROCKS.length, 'Everywhere', 'See the Rocks page in COLLECTABLES. Every rock has a hint.'), { core: true }),
       Object.assign(count('Every photo', G.photosFound(), G.PHOTOS.length, 'Everywhere', 'See the Photos page in COLLECTABLES. Every photo has a hint.'), { core: true }),
@@ -3277,6 +3278,7 @@
     'The Tooth Book': (f) => f.dayIntro,
     'The World\'s Largest August Ham': (f) => f.hamSign,
     'The museum\'s stamp card': (f) => f.museumCard,
+    'Renaissance Church': (f) => f.churchNews,
     'Every pipe song': (f, s) => s.items.pipe,
   };
   const rawCompletion = G.completion;
