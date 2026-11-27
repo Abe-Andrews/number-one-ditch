@@ -23624,7 +23624,6 @@
     yield bassOilCmd(dadTalk(['Long strokes. With the grain.', 'Walnut drinks it right up. Look at it go.', 'You did good work on this, you know. Clean joints.', 'Get the horns. Everybody forgets the horns.']));
     G.play.overlay = null;
     yield G.say(null, 'Dad holds the iron while Nate wires in the pickups. It takes the rest of the afternoon. Neither of them is in any hurry.');
-    yield G.say('Dad', 'A good finish is like a good sermon. It takes patience, and you know when it\'s over.');
     yield G.say('Nate', 'It\'s beautiful, Dad.');
     yield G.say('Dad', 'It is. Now go plug it in. And Nate? Tell Abe I said take it easy.');
     f.bassQuest = 3;
