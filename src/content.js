@@ -5835,7 +5835,7 @@
       };
       if (!G.night()) { at(G.Corncob, 12, 8); at(G.Corncob, 9, 15); at(G.CerealBox, 41, 8); at(G.CerealBox, 47, 13); at(G.Firework, 18, 12); }
       // ---- ways out (at 2 AM: Lily's way out, S.nightSetup)
-      if (!G.night() && !G.flashback) F.hang(sp.switchTape, 21, 17, 1, S.switchTape, -2);
+      if (!G.night() && !G.flashback) F.hang(sp.switchTape, 21, 7, 1, S.switchTape, 6);
       w.addTrigger(17, 3, 2, 1, () => { if (G.night() && G.state.night.abe) G.script.run(S.lastUpStairs()); else G.play.warp('homeUp', 13, 13, 'up'); });
       if (G.night()) S.nightSetup(w, 'down');
       else {
@@ -23932,10 +23932,11 @@
     // the next morning, in the old-photo look of the other family stories
     s.night = null;
     G.flashback = true;
-    G.play.loadMap('homeDown', 20 * 16 + 8, 14 * 16 + 14, 'up', true);
+    // (Abe up the hall, so Mom flipping the switch by the coat closet is on screen)
+    G.play.loadMap('homeDown', 20 * 16 + 8, 11 * 16 + 14, 'up', true);
     const w = G.play.world;
     w.ents.filter((e) => e.enemy).forEach((e) => { e.dead = true; });
-    const dad = w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 21 * 16 + 8, y: 9 * 16 + 14, dir: 'up' }));
+    const dad = w.add(new G.NPC({ sprite: 'dad', name: 'Dad', x: 19 * 16 + 8, y: 9 * 16 + 14, dir: 'up' }));
     const mom = w.add(new G.NPC({ sprite: 'michelle', name: 'Michelle', x: 19 * 16 + 8, y: 11 * 16 + 14, dir: 'right' }));
     yield G.fadeIn(40);
     yield G.say(null, 'The next morning.');
@@ -23952,13 +23953,14 @@
     yield G.say('Abe', 'The note said last one up turns off the lights.');
     yield G.say('Michelle', 'Abe. There\'s a SWITCH.');
     yield G.say('Abe', 'There is NOT a switch. I tried every switch in this house. One of them is a garbage disposal.');
-    yield G.walkTo(mom, 21 * 16 + 8, 16 * 16 + 14, 1.4);
-    mom.dir = 'down';
+    // (to the switch on the front hall wall, by the coat closet, where the tape goes)
+    yield G.walkTo(mom, 21 * 16 + 8, 8 * 16 + 14, 1.4);
+    mom.dir = 'up';
     yield G.wait(40);
     G.audio.sfx('blip');
     yield G.say(null, 'Click. Nothing comes on, because there isn\'t a bulb in anything. But that is very clearly a light switch.');
     yield G.say('Abe', '...How long has that been there?');
-    yield G.say('Dad', 'Abe. Do you speak EEENGLISH?');
+    yield G.say('Dad', 'Since we moved in, Abe. It\'s been there since we moved in.');
     yield G.say(null, 'That afternoon, Michelle went and got the masking tape.');
     yield G.fadeOut(40);
     // back to now
