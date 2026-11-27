@@ -15985,6 +15985,9 @@
       }
       if (f.romulusBeaten && f.sbl >= 1) w.addProp({ img: sp.fakeRock, tx: 31, ty: 11, dx: 1, dy: -2, solid: [31, 11, 1, 1], hit: [31, 11, 1, 1], talk: () => S.sblFakeRock() });
 
+      // ---- the hose spigot on the front wall, by the end of the mulch bed: it fills the bidet
+      // (face it from the grass below or the mulch beside it and hold X)
+      w.addProp({ img: sp.hoseReel, tx: 19, ty: 18, dy: -10, solid: [19, 18, 1, 1], hit: [19, 18, 1, 1], talk: look('Abe and Hannah\'s hose. With the bidet out, face it and hold X to fill up.') }).refill = 'hose';
       // ---- out front: the brick step, boxwoods and azaleas in the mulch
       w.addProp({ img: sp.brickStep, tx: 22, ty: 18, dx: 4, dy: -6, flat: true });
       const shrub = (img, x, y, talk) => w.addProp({ img, tx: x, ty: y, dx: Math.round((16 - img.width) / 2), solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk });
@@ -17057,6 +17060,9 @@
   S.bidetBirdbath = function* () {
     yield G.say('Nate', 'Filling a bidet from Anette\'s birdbath.');
     yield G.say('Nate', 'If she asks, the birds did it.');
+  };
+  S.bidetHose = function* () {
+    yield G.say('Nate', 'A hose. Actual clean water. For once.');
   };
   S.bidetPool = function* () {
     yield G.say('Nate', 'Filling a bidet from the pool.');
