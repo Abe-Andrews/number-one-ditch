@@ -131,6 +131,8 @@
     set.hold = make('down', 0, 'hold');
     set.whipUp = make('down', 0, 'whipUp'); set.whipOut = make('down', 0, 'whipOut');
     set.torso = make('right', 0, 'torso');
+    // (facing you with no arms at all, so a jam can draw them reaching for an instrument)
+    set.noarms = make('down', 0, 'noarms');
     // (standing still facing you, everybody blinks now and then)
     if (!c.mask && !c.shades) set.blink = make('down', 0, 'blink');
     if (c.post) c.post(set, c);
@@ -242,7 +244,7 @@
           p.set(ax, y, sleeve ? (c.coat || c.cloak || armColor(c, ax, y, ty)) : c.skin);
         }
       }
-    } else {
+    } else if (pose !== 'noarms') {
       armsFront(p, c, step, ty, ly, ax0, ax1);
     }
 
@@ -10601,55 +10603,72 @@
   // Abe's Jazzmaster (from the user's photo): a sparkly plum offset body, a tortoiseshell pickguard,
   // two cream soapbar pickups, the chrome bridge and tremolo (and its arm), a rosewood board with
   // pearl dots on an aged maple neck, and the headstock with its gold logo and six tuners down one side
+  // ---- Abe's guitars (from the user's photos in Refe Photos/instruments), all 24x74, headstock up.
+  // Shared bits: a Fender headstock (tuners down the left side, w[y]: its right edge row by row), the
+  // neck (frets closer together toward the body, dots at 3 5 7 9 and two at 12), and the strings,
+  // nut to bridge. lerpEdge: an outline's x at row y, from [y, x] points.
+  const lerpEdge = (pts, y) => { if (y <= pts[0][0]) return pts[0][1]; for (let k = 1; k < pts.length; k++) if (y <= pts[k][0]) { const [y0, x0] = pts[k - 1], [y1, x1] = pts[k]; return x0 + ((x1 - x0) * (y - y0)) / (y1 - y0); } return pts[pts.length - 1][1]; };
+  function guitarHead(p, w, wood, woodD, tunerYs) {
+    w.forEach((x1, y) => { p.hline(9, x1, y, wood); p.set(x1, y, woodD); p.set(9, y, woodD); });
+    p.hline(10, w[0] - 1, 0, shade(wood, 0.18));
+    for (const y of tunerYs) { p.set(7, y, '#e8ecf0'); p.set(8, y, '#a8acb4'); p.set(10, y, '#5a5e68'); }
+  }
+  function guitarNeck(p, y0, y1, maple, mapleD, board, fret, dot) {
+    for (let y = y0; y < y1; y++) { p.set(10, y, mapleD); p.hline(11, 13, y, board); p.set(14, y, mapleD); }
+    p.hline(10, 14, y0, '#f4f0e0'); // the nut
+    let fy = y0 + 3;
+    for (let k = 1; fy < y1 - 1; k++) {
+      p.hline(11, 13, fy, fret);
+      if ([3, 5, 7, 9].includes(k)) p.set(12, fy + 1, dot);
+      if (k === 12) { p.set(11, fy + 1, dot); p.set(13, fy + 1, dot); }
+      fy += Math.max(2, Math.round(4.2 - k * 0.22));
+    }
+  }
+  // the strings: two lines (they read as six at this size), from the nut down to the bridge; over
+  // the fretboard (down to row nEnd) just a shade lighter than the board, so it doesn't turn pale
+  function guitarStrings(p, y0, y1, col, nEnd, onBoard) { for (let y = y0 + 1; y < y1; y++) { const c = y < nEnd ? onBoard : col; p.set(11, y, c); p.set(13, y, c); } }
+  // a body, filled row by row: L/R its outline, gap(x, y) true for the cutaways between the horns;
+  // paint(x, y, rim, inset) its color (rim: on the outline; inset: how far in from the left edge)
+  function guitarBody(p, y0, y1, L, R, gap, paint) {
+    const inB = (x, y) => y >= y0 && y < y1 && x >= Math.round(lerpEdge(L, y)) && x <= Math.round(lerpEdge(R, y)) && !gap(x, y);
+    for (let y = y0; y < y1; y++) for (let x = 0; x < 24; x++) {
+      if (!inB(x, y)) continue;
+      const rim = !inB(x - 1, y) || !inB(x + 1, y) || !inB(x, y - 1) || !inB(x, y + 1);
+      p.set(x, y, paint(x, y, rim, x - Math.round(lerpEdge(L, y))));
+    }
+    return inB;
+  }
+  // a pickguard over the body (inB): gL/gR its outline, fill(x, y) its color, with a light bevel on its edge
+  function guitarGuard(p, y0, y1, gL, gR, inB, fill, bevel) {
+    const inG = (x, y) => y >= y0 && y < y1 && x >= Math.round(lerpEdge(gL, y)) && x <= Math.round(lerpEdge(gR, y)) && inB(x, y) && inB(x - 1, y) && inB(x + 1, y) && inB(x, y + 1);
+    for (let y = y0; y < y1; y++) for (let x = 0; x < 24; x++) if (inG(x, y)) p.set(x, y, !inG(x - 1, y) || !inG(x + 1, y) || !inG(x, y - 1) || !inG(x, y + 1) ? bevel : fill(x, y));
+  }
+  // Abe's Jazzmaster (from the user's photo): a sparkly plum offset body (the waist is crooked on
+  // purpose), a big tortoiseshell pickguard, two cream soapbar pickups, the rhythm-circuit rollers up
+  // on the bass horn, a floating bridge and the vibrato tailpiece with its arm, a rosewood board with
+  // pearl dots, and an amber headstock with a gold decal
   function jazzmaster() {
-    const W = 24, H = 74, p = new Pix(W, H);
-    // the headstock
-    for (let y = 0; y < 13; y++) {
-      const x0 = 9 + Math.round(y * 0.18), x1 = y < 2 ? 14 + y : 15;
-      p.hline(x0, x1, y, y < 1 ? '#c89048' : '#d8a058');
-      p.set(x1, y, '#b07838');
-    }
-    for (const y of [2, 4, 6, 8, 10, 12]) { p.set(7 + Math.round(y * 0.18), y, '#c8ccd4'); p.set(8 + Math.round(y * 0.18), y, '#8a8e98'); }
-    p.vline(13, 3, 6, '#e8c050'); p.set(12, 4, '#e8c050'); p.set(14, 6, '#e8c050');
-    // the neck: maple, with a rosewood board, frets and pearl dots
-    for (let y = 13; y < 50; y++) { p.hline(10, 14, y, '#d8a058'); p.hline(11, 13, y, '#3a2214'); }
-    let fy = 15;
-    for (let k = 1; fy < 48; k++) {
-      p.hline(11, 13, fy, '#c8ccd4');
-      if ([3, 5, 7, 9].includes(k)) p.set(12, fy + 1, '#f0e8d8');
-      if (k === 12) { p.set(11, fy - 1, '#f0e8d8'); p.set(13, fy - 1, '#f0e8d8'); }
-      fy += Math.max(2, Math.round(4 - k * 0.2));
-    }
-    // the body: an offset outline (the waist is crooked on purpose), plum with a little sparkle
-    const L = [[42, 6], [44, 3], [49, 3], [54, 5], [58, 3], [62, 2], [68, 2], [71, 4], [73, 8]];
-    const R = [[44, 18], [47, 21], [52, 20], [56, 19], [61, 22], [68, 22], [71, 20], [73, 16]];
-    const edge = (pts, y) => { if (y <= pts[0][0]) return pts[0][1]; for (let k = 1; k < pts.length; k++) if (y <= pts[k][0]) { const [y0, x0] = pts[k - 1], [y1, x1] = pts[k]; return x0 + ((x1 - x0) * (y - y0)) / (y1 - y0); } return pts[pts.length - 1][1]; };
-    for (let y = 42; y < H; y++) {
-      const x0 = Math.round(edge(L, y)), x1 = Math.round(y < 44 ? 15 : edge(R, y));
-      for (let x = x0; x <= x1; x++) {
-        const rim = x === x0 || x === x1 || y === H - 1;
-        p.set(x, y, rim ? '#5a1a40' : G.hash(x, y, 13) < 0.1 ? '#c868a8' : x < x0 + 2 ? '#a8447e' : '#8a2e62');
-      }
-    }
-    // the tortoiseshell pickguard, around the neck and both pickups
-    for (let y = 44; y < 65; y++) {
-      const x0 = Math.round(edge(L, y)) + 2, x1 = Math.round(edge(R, y)) - 2;
-      for (let x = x0; x <= x1; x++) {
-        if (y > 59 && x < 9 + (y - 59)) continue;
-        const h = G.hash(x, y, 17);
-        p.set(x, y, h < 0.25 ? '#c06a28' : h < 0.4 ? '#3a1a08' : '#7a3a14');
-      }
-    }
-    // the neck runs onto the body, then the strings to the bridge
-    for (let y = 42; y < 47; y++) { p.hline(10, 14, y, '#d8a058'); p.hline(11, 13, y, '#3a2214'); }
-    for (let y = 47; y < 62; y++) if (y % 2) { p.set(11, y, '#d8d8e0'); p.set(13, y, '#d8d8e0'); }
-    // the two soapbar pickups
-    for (const py of [49, 56]) { p.rect(8, py, 8, 3, '#efe6c8'); p.hline(8, 15, py + 2, '#c8bea0'); for (let k = 0; k < 6; k++) p.set(9 + k, py + 1, '#b8b0a0'); }
-    // the bridge, the tremolo plate and its arm, and the knobs
-    p.hline(9, 15, 62, '#c8ccd4'); p.hline(9, 15, 63, '#8a8e98');
-    p.rect(9, 65, 7, 5, '#b8bcc4'); p.hline(9, 15, 65, '#e8ecf0'); p.set(12, 67, '#8a8e98');
-    for (let k = 0; k < 5; k++) p.set(16 + k, 65 - k, '#c8ccd4');
-    p.set(18, 59, '#efe6c8'); p.set(19, 62, '#efe6c8'); p.set(6, 46, '#efe6c8');
+    const p = new Pix(24, 74), MAP = '#d8a058', MAPD = '#a87430';
+    guitarHead(p, [13, 15, 16, 17, 17, 17, 17, 16, 16, 15, 15, 14, 14, 14], '#c8883c', '#94602a', [1, 3, 5, 7, 9, 11]);
+    p.set(13, 3, '#f0c850'); p.set(14, 4, '#f0c850'); p.set(13, 5, '#f0c850'); p.set(15, 4, '#f0c850');
+    guitarNeck(p, 14, 50, MAP, MAPD, '#3a2214', '#b8bcc4', '#f0e8d8');
+    const L = [[41, 6], [42, 4], [43, 3], [44, 2], [47, 2], [48, 3], [50, 5], [52, 5], [54, 3], [56, 1], [65, 1], [67, 2], [69, 4], [71, 6], [72, 8], [73, 11]];
+    const R = [[45, 19], [46, 20], [47, 21], [49, 21], [51, 20], [53, 21], [55, 22], [66, 22], [68, 20], [70, 18], [71, 17], [72, 15], [73, 13]];
+    const gap = (x, y) => (y < 47 && x > 9 && x < 15) || (y < 43 && x > [8, 9][y - 41]) || (y < 47 && x >= 15 && x < [17, 16][Math.min(1, y - 45)]) || (y < 45 && x >= 15);
+    const inB = guitarBody(p, 41, 74, L, R, gap, (x, y, rim, k) => rim ? '#3e1030' : G.hash(x, y, 13) < 0.12 ? '#e088c0' : k < 2 ? '#b0508e' : x > 18 ? '#6a2050' : '#7e2c62');
+    const tort = (x, y) => { const h = G.hash(x >> 1, (y >> 1) + (x & 1), 17), h2 = G.hash(x, y, 19); return h < 0.3 ? (h2 < 0.5 ? '#c86a28' : '#a85420') : h < 0.55 ? '#2e1206' : '#7a3412'; };
+    guitarGuard(p, 44, 67, [[44, 5], [45, 4], [47, 4], [49, 6], [52, 6], [54, 4], [57, 4], [59, 6], [61, 8], [63, 11], [66, 14]], [[44, 15], [46, 18], [47, 19], [51, 19], [52, 20], [64, 20], [65, 19], [66, 18]], inB, tort, '#d89a58');
+    guitarNeck(p, 41, 50, MAP, MAPD, '#3a2214', '#b8bcc4', '#f0e8d8'); p.hline(10, 14, 41, MAPD);
+    guitarStrings(p, 14, 63, '#e0e2ea', 50, '#6a5040');
+    // the soapbars, the bridge, the tailpiece and its arm
+    for (const py of [49, 55]) { p.rect(8, py, 9, 3, '#f0e8c8'); p.hline(8, 16, py, '#fff8e0'); p.hline(8, 16, py + 2, '#c8bc98'); for (let k = 0; k < 6; k++) p.set(9 + k + (k > 2 ? 1 : 0), py + 1, '#a89c80'); }
+    p.hline(9, 15, 61, '#e8ecf0'); p.hline(9, 15, 62, '#8a8e98');
+    p.rect(9, 65, 7, 5, '#b8bcc4'); p.hline(9, 15, 65, '#eef0f4'); p.vline(15, 65, 69, '#8a8e98'); p.set(12, 67, '#7a7e88'); p.hline(10, 14, 69, '#9aa0aa');
+    for (let k = 0; k < 6; k++) p.set(16 + k, 66 - Math.round(k * 0.7), k ? '#d8dce4' : '#9aa0aa');
+    // the rhythm circuit up on the bass horn (two rollers and a slide switch), the knobs, the switch
+    p.set(4, 47, '#f0e8c8'); p.set(5, 48, '#f0e8c8'); p.set(3, 49, '#f0e8c8');
+    for (const [x, y] of [[18, 59], [19, 62]]) { p.set(x, y, '#fff4d8'); p.set(x, y + 1, '#c8b890'); }
+    p.set(18, 54, '#f0e8c8'); p.set(20, 66, '#c8ccd4');
     return finish(p);
   }
   // Abe's 1984 Stratocaster (from the user's photo): black, a white pickguard and three white
@@ -10887,103 +10906,55 @@
     return finish(p);
   }
   function stratocaster() {
-    const W = 24, H = 74, p = new Pix(W, H), MAP = '#e8b058', MAPD = '#c08838', DOT = '#2a2018';
-    const edge = (pts, y) => { if (y <= pts[0][0]) return pts[0][1]; for (let k = 1; k < pts.length; k++) if (y <= pts[k][0]) { const [y0, x0] = pts[k - 1], [y1, x1] = pts[k]; return x0 + ((x1 - x0) * (y - y0)) / (y1 - y0); } return pts[pts.length - 1][1]; };
-    // the headstock: tuners down the left, the curvy end bulging right
-    for (let y = 0; y < 14; y++) {
-      const x0 = 9 + Math.round(y * 0.1), x1 = y < 1 ? 13 : y < 2 ? 15 : y < 6 ? 16 : y < 9 ? 15 : 14;
-      p.hline(x0, x1, y, MAP); p.set(x1, y, MAPD);
-    }
-    for (const y of [1, 3, 5, 7, 9, 11]) { p.set(7 + Math.round(y * 0.1), y, '#c8ccd4'); p.set(8 + Math.round(y * 0.1), y, '#8a8e98'); }
-    p.set(13, 4, '#8a6030'); p.set(13, 5, '#8a6030'); p.set(14, 6, '#8a6030');
-    // the maple neck: frets and black dots
-    for (let y = 14; y < 52; y++) { p.hline(10, 14, y, MAP); p.set(14, y, MAPD); }
-    let fy = 16;
-    for (let k = 1; fy < 50; k++) {
-      p.hline(10, 14, fy, '#c8ccd4');
-      if ([3, 5, 7, 9].includes(k)) p.set(12, fy + 1, DOT);
-      if (k === 12) { p.set(11, fy - 1, DOT); p.set(13, fy - 1, DOT); }
-      fy += Math.max(2, Math.round(4 - k * 0.2));
-    }
-    // the body: the bass-side horn reaches higher than the treble side's, a waist, a round bottom
-    const L = [[41, 3], [42, 2], [44, 1], [47, 1], [50, 2], [53, 3], [56, 3], [59, 2], [62, 1], [66, 1], [69, 2], [71, 4], [73, 7]];
-    const R = [[45, 19], [46, 21], [48, 22], [50, 22], [53, 21], [56, 21], [59, 22], [62, 23], [66, 23], [69, 22], [71, 20], [73, 16]];
-    const LIN = [[41, 5], [43, 6], [45, 7], [47, 8], [49, 9]], RIN = [[45, 18], [47, 17], [49, 16]];
-    const inBody = (x, y) => {
-      if (y < 41 || y >= H) return false;
-      const x0 = Math.round(edge(L, y)), x1 = Math.round(edge(R, y));
-      if (x < x0 || x > x1 || (y < 45 && x > Math.round(edge(LIN, y)))) return false;
-      return y >= 50 || x <= Math.round(edge(LIN, y)) || x >= Math.round(edge(RIN, y));
-    };
-    for (let y = 41; y < H; y++) for (let x = 0; x < W; x++) {
-      if (!inBody(x, y)) continue;
-      const rim = !inBody(x - 1, y) || !inBody(x + 1, y) || !inBody(x, y + 1) || !inBody(x, y - 1);
-      p.set(x, y, rim ? '#0c0c10' : x < edge(L, y) + 2 ? '#4a4a56' : '#1a1a20');
-    }
-    // the white pickguard: from the neck down the middle to the knobs, black all around it
-    const GL = [[47, 9], [49, 7], [51, 5], [54, 4], [57, 4], [60, 5], [63, 7], [66, 9], [69, 12]];
-    const GR = [[47, 15], [49, 18], [51, 20], [54, 20], [57, 20], [60, 21], [63, 21], [66, 20], [69, 19], [70, 17]];
-    for (let y = 47; y < 71; y++) {
-      const x0 = Math.round(edge(GL, y)), x1 = Math.round(edge(GR, y));
-      for (let x = x0; x <= x1; x++) if (inBody(x, y)) p.set(x, y, x === x0 || x === x1 || y === 70 ? '#c8c8c0' : '#f2f2ec');
-    }
-    for (let y = 47; y < 52; y++) { p.hline(10, 14, y, MAP); p.set(14, y, MAPD); }
-    // strings, three single-coils, the bridge, knobs, the switch and the jack
-    for (let y = 52; y < 64; y++) if (y % 2) { p.set(11, y, '#a8acb4'); p.set(13, y, '#a8acb4'); }
-    for (const py of [52, 56, 60]) { p.rect(8, py, 9, 3, '#a8a8a0'); p.rect(9, py + 1, 7, 1, '#fafaf4'); for (let k = 0; k < 3; k++) p.set(10 + k * 2, py + 1, '#7a7a74'); }
-    p.rect(9, 64, 7, 2, '#c8ccd4'); p.hline(9, 15, 64, '#e8ecf0');
-    for (const [x, y] of [[18, 62], [19, 65], [18, 68]]) { p.set(x, y, '#fafaf4'); p.set(x, y + 1, '#a8a8a0'); }
-    p.set(19, 59, '#fafaf4');
-    p.set(21, 69, '#c8ccd4'); p.set(21, 70, '#8a8e98');
+    const p = new Pix(24, 74), MAP = '#e8b058', MAPD = '#b88030';
+    guitarHead(p, [12, 14, 15, 16, 16, 16, 15, 14, 14, 14, 14, 14, 14], MAP, MAPD, [1, 3, 5, 7, 9, 11]);
+    p.set(12, 4, '#2a1a10'); p.set(13, 5, '#2a1a10'); p.set(14, 4, '#2a1a10'); p.set(12, 7, '#c8ccd4');
+    guitarNeck(p, 13, 50, MAP, MAPD, MAP, '#c8ccd4', '#2a2018');
+    // the body: the bass horn reaches higher than the treble horn, a waist, a round lower bout
+    const L = [[40, 5], [41, 4], [42, 3], [44, 2], [48, 2], [50, 3], [52, 4], [55, 4], [57, 3], [59, 2], [60, 1], [66, 1], [68, 2], [69, 3], [70, 4], [71, 5], [72, 7], [73, 9]];
+    const R = [[44, 19], [45, 20], [46, 21], [48, 22], [50, 22], [52, 21], [53, 20], [56, 20], [58, 21], [59, 22], [66, 22], [68, 21], [69, 20], [70, 19], [71, 18], [72, 16], [73, 14]];
+    const gap = (x, y) => (y < 47 && x > 9 && x < 15) || (y < 44 && x > [7, 8, 9, 10][y - 40]) || (y < 47 && x >= 15 && x < [17, 16, 15][y - 44]);
+    const inB = guitarBody(p, 40, 74, L, R, gap, (x, y, rim, k) => rim ? '#060608' : k === 1 ? '#5a5a6a' : k === 2 ? '#2e2e38' : (x + y) % 11 === 0 && x > 16 ? '#2a2a34' : '#121218');
+    // the white pickguard: around the neck, down the middle, out to the knobs; black body all around it
+    guitarGuard(p, 46, 69, [[46, 9], [48, 8], [50, 7], [55, 7], [57, 7], [59, 8], [61, 9], [63, 11], [66, 13], [68, 15]], [[46, 15], [48, 17], [50, 18], [54, 17], [56, 18], [58, 19], [65, 19], [67, 18], [68, 17]], inB, () => '#f4f2ea', '#c8c4b8');
+    guitarNeck(p, 40, 50, MAP, MAPD, MAP, '#c8ccd4', '#2a2018'); p.hline(10, 14, 40, MAPD);
+    guitarStrings(p, 13, 63, '#d8dce4', 50, '#f4cc80');
+    // three white single-coils (the bridge one slanted), the vintage tremolo bridge, knobs, switch, jack
+    for (const py of [51, 55]) { p.hline(9, 15, py, '#fafaf4'); p.hline(9, 15, py + 1, '#d8d4c8'); for (let k = 0; k < 6; k++) p.set(9 + k + (k > 2 ? 1 : 0), py, '#8a8a84'); }
+    for (let x = 9; x <= 15; x++) { const y = 59 + (x < 12 ? 1 : 0); p.set(x, y, x === 9 || x === 15 ? '#d8d4c8' : (x % 2 ? '#fafaf4' : '#8a8a84')); p.set(x, y + 1, '#d8d4c8'); }
+    p.rect(9, 63, 7, 2, '#c8ccd4'); p.hline(9, 15, 63, '#f0f2f6'); for (let k = 0; k < 3; k++) p.set(10 + k * 2, 64, '#7a7e88');
+    for (const [x, y] of [[17, 61], [18, 64], [18, 67]]) { p.set(x, y, '#fafaf4'); p.set(x + 1, y, '#e8e4d8'); p.set(x, y + 1, '#b8b4a8'); }
+    p.set(19, 58, '#fafaf4'); p.set(20, 59, '#c8c4b8');
+    p.set(20, 70, '#e8ecf0'); p.set(21, 70, '#a8acb4'); p.set(20, 71, '#8a8e98');
     return finish(p);
   }
   // Abe's 1974 Telecaster Deluxe (from the user's photo): a red single-cutaway body with the paint
   // worn through in spots, a big black pickguard, two chrome Wide Range humbuckers, four knobs, a
   // hardtail bridge, a maple neck with black dots and the big '70s headstock
   function teleDeluxe() {
-    const W = 24, H = 74, p = new Pix(W, H), MAP = '#ecc478', MAPD = '#c89c50', DOT = '#2a2018';
-    // the big headstock
-    for (let y = 0; y < 15; y++) {
-      const x0 = 9 + Math.round(y * 0.08), x1 = y < 1 ? 15 : y < 9 ? 18 - (y < 2 || y > 7 ? 1 : 0) : y < 12 ? 16 : 14;
-      p.hline(x0, x1, y, MAP); p.set(x1, y, MAPD);
-    }
-    for (const y of [2, 4, 6, 8, 10, 12]) { p.set(7 + Math.round(y * 0.08), y, '#c8ccd4'); p.set(8 + Math.round(y * 0.08), y, '#8a8e98'); }
-    p.set(14, 3, '#8a6030'); p.set(15, 4, '#8a6030'); p.set(15, 5, '#8a6030'); p.set(16, 6, '#8a6030');
-    for (let y = 15; y < 50; y++) { p.hline(10, 14, y, MAP); p.set(14, y, MAPD); }
-    let fy = 17;
-    for (let k = 1; fy < 48; k++) {
-      p.hline(10, 14, fy, '#c8ccd4');
-      if ([3, 5, 7, 9].includes(k)) p.set(12, fy + 1, DOT);
-      if (k === 12) { p.set(11, fy - 1, DOT); p.set(13, fy - 1, DOT); }
-      fy += Math.max(2, Math.round(4 - k * 0.2));
-    }
-    // the body: a rounded bass-side shoulder, one cutaway and a little horn on the treble side
-    const inBody = (x, y) => {
-      if (y < 43 || y >= H || x < 1 || x > 22) return false;
-      if (y < 48) return (x <= 10 && x >= 10 - (y - 43) * 2) || ((x - 19.5) ** 2 / 8 + (y - 48) ** 2 / 20 <= 1);
-      if (y < 51 && x >= 15 && x <= 17) return (x - 15) ** 2 + (y - 48) ** 2 > 9;
-      const bx = Math.max(0, 6 - x, x - 17), by = Math.max(0, y - 68);
-      return bx * bx + by * by <= 30;
-    };
-    for (let y = 43; y < H; y++) for (let x = 0; x < W; x++) {
-      if (!inBody(x, y) || (x >= 10 && x <= 14 && y < 50)) continue;
-      const edge = !inBody(x - 1, y) || !inBody(x + 1, y) || !inBody(x, y + 1), h = G.hash(x, y, 23);
-      p.set(x, y, h < 0.07 ? '#e8d8c0' : edge ? (h < 0.3 ? '#e8d8c0' : '#a02018') : x < 4 ? '#f05040' : '#d83828');
-    }
-    // the black pickguard: around the neck, both pickups and the knobs on the lower right
-    const edge = (pts, y) => { if (y <= pts[0][0]) return pts[0][1]; for (let k = 1; k < pts.length; k++) if (y <= pts[k][0]) { const [y0, x0] = pts[k - 1], [y1, x1] = pts[k]; return x0 + ((x1 - x0) * (y - y0)) / (y1 - y0); } return pts[pts.length - 1][1]; };
-    const GL = [[44, 9], [45, 7], [46, 5], [47, 3], [60, 3], [61, 4], [62, 6], [63, 14], [71, 14]];
-    const GR = [[44, 15], [46, 20], [48, 21], [66, 21], [67, 20], [69, 19], [71, 17]];
-    for (let y = 44; y < 72; y++) for (let x = Math.round(edge(GL, y)); x <= Math.round(edge(GR, y)); x++) {
-      if (!inBody(x, y) || !inBody(x - 1, y) || !inBody(x + 1, y) || !inBody(x, y + 1)) continue;
-      p.set(x, y, '#141418');
-    }
-    for (let y = 43; y < 50; y++) { p.hline(10, 14, y, MAP); p.set(14, y, MAPD); }
-    // strings, the two humbuckers, the hardtail bridge and the four knobs
-    for (let y = 50; y < 64; y++) if (y % 2) { p.set(11, y, '#a8acb4'); p.set(13, y, '#a8acb4'); }
-    for (const py of [51, 57]) { p.rect(8, py, 8, 3, '#c8ccd4'); p.hline(8, 15, py, '#e8ecf0'); for (let k = 0; k < 6; k++) p.set(9 + k, py + 1, '#6a6e78'); }
-    p.rect(8, 63, 8, 3, '#c8ccd4'); p.hline(8, 15, 63, '#e8ecf0'); for (let k = 0; k < 3; k++) p.set(9 + k * 2, 64, '#8a8e98');
-    for (const [x, y] of [[16, 63], [19, 64], [16, 67], [19, 68]]) { p.set(x, y, '#e8ecf0'); p.set(x + 1, y, '#a8acb4'); p.set(x, y + 1, '#5a5e68'); p.set(x + 1, y + 1, '#3a3e48'); }
+    const p = new Pix(24, 74), MAP = '#eec47a', MAPD = '#c09048';
+    // the big CBS-era headstock
+    guitarHead(p, [14, 16, 17, 18, 18, 18, 18, 17, 17, 16, 15, 15, 14, 14, 14], MAP, MAPD, [2, 4, 6, 8, 10, 12]);
+    for (const [x, y] of [[13, 3], [14, 4], [15, 4], [16, 5], [14, 6]]) p.set(x, y, '#1c140c');
+    p.set(13, 8, '#c8ccd4'); p.set(11, 2, '#2a2a30'); p.set(12, 2, '#2a2a30');
+    guitarNeck(p, 15, 50, MAP, MAPD, MAP, '#c8ccd4', '#2a2018');
+    // the body: a round bass-side shoulder up high, one cutaway curving in on the treble side
+    const L = [[41, 6], [42, 4], [43, 2], [44, 1], [65, 1], [66, 2], [68, 3], [69, 3], [70, 4], [71, 5], [72, 7], [73, 10]];
+    const R = [[47, 16], [48, 18], [49, 20], [50, 21], [51, 22], [66, 22], [67, 21], [68, 21], [69, 20], [70, 19], [71, 18], [72, 16], [73, 13]];
+    const gap = (x, y) => (y < 48 && x > 9 && x < 15) || (y < 47 && x >= 15);
+    const inB = guitarBody(p, 41, 74, L, R, gap, (x, y, rim, k) => {
+      const h = G.hash(x, y, 23), wear = h < 0.05 || (rim && h < 0.35);
+      return wear ? '#ead8b8' : rim ? '#8a1a14' : k === 1 ? '#f8705c' : k === 2 ? '#e8483a' : x > 19 ? '#b82a20' : '#d83228';
+    });
+    // the big black pickguard (it covers the whole upper body), with a gray bevel
+    guitarGuard(p, 43, 71, [[43, 8], [44, 6], [45, 5], [46, 4], [47, 3], [60, 3], [61, 4], [62, 6], [63, 9], [64, 13], [70, 14]], [[43, 15], [47, 17], [48, 19], [49, 20], [66, 20], [67, 19], [69, 18], [70, 16]], inB, () => '#141418', '#4a4a52');
+    guitarNeck(p, 41, 50, MAP, MAPD, MAP, '#c8ccd4', '#2a2018'); p.hline(10, 14, 41, MAPD);
+    guitarStrings(p, 15, 63, '#d8dce4', 50, '#f8dca0');
+    // two chrome Wide Range humbuckers (pole pieces down the middle), the hardtail bridge, four knobs
+    for (const py of [50, 56]) { p.rect(8, py, 9, 3, '#c8ccd4'); p.hline(8, 16, py, '#f0f2f6'); p.hline(8, 16, py + 2, '#8a8e98'); for (let k = 0; k < 9; k += 2) p.set(8 + k, py + 1, '#4a4e58'); }
+    p.rect(8, 62, 9, 3, '#b8bcc4'); p.hline(8, 16, 62, '#eef0f4'); for (let k = 0; k < 3; k++) p.set(9 + k * 3, 63, '#6a6e78'); p.hline(8, 16, 64, '#8a8e98');
+    for (const [x, y] of [[17, 61], [20, 62], [17, 65], [20, 66]]) { p.set(x, y, '#e8ecf0'); p.set(x + 1, y, '#a8acb4'); p.set(x, y + 1, '#5a5e68'); p.set(x + 1, y + 1, '#2a2e38'); }
+    p.set(4, 46, '#c8ccd4'); p.set(4, 47, '#5a5e68');
     return finish(p);
   }
   G.TIN_IDS = ['lane1q', 'borkum', 'maidenLane', 'royalJersey', 'scottishCake', 'capstan', 'oldGowrie', 'cravensClaw', 'orlik', 'margate'];
