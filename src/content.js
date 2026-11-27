@@ -15985,9 +15985,6 @@
       }
       if (f.romulusBeaten && f.sbl >= 1) w.addProp({ img: sp.fakeRock, tx: 31, ty: 11, dx: 1, dy: -2, solid: [31, 11, 1, 1], hit: [31, 11, 1, 1], talk: () => S.sblFakeRock() });
 
-      // ---- the hose spigot on the front wall, by the end of the mulch bed: it fills the bidet
-      // (face it from the grass below or the mulch beside it and hold X)
-      w.addProp({ img: sp.hoseReel, tx: 19, ty: 18, dy: -10, solid: [19, 18, 1, 1], hit: [19, 18, 1, 1], talk: look('Abe and Hannah\'s hose. With the bidet out, face it and hold X to fill up.') }).refill = 'hose';
       // ---- out front: the brick step, boxwoods and azaleas in the mulch
       w.addProp({ img: sp.brickStep, tx: 22, ty: 18, dx: 4, dy: -6, flat: true });
       const shrub = (img, x, y, talk) => w.addProp({ img, tx: x, ty: y, dx: Math.round((16 - img.width) / 2), solid: [x, y, 1, 1], hit: [x, y, 1, 1], talk });
@@ -17060,9 +17057,6 @@
   S.bidetBirdbath = function* () {
     yield G.say('Nate', 'Filling a bidet from Anette\'s birdbath.');
     yield G.say('Nate', 'If she asks, the birds did it.');
-  };
-  S.bidetHose = function* () {
-    yield G.say('Nate', 'A hose. Actual clean water. For once.');
   };
   S.bidetPool = function* () {
     yield G.say('Nate', 'Filling a bidet from the pool.');
@@ -24486,9 +24480,10 @@
   // Pops (from the user's photo with Nani): way taller than her, thinning white-blond hair, rosy
   // cheeks, a navy blazer over a light blue checked button-down, khakis. (Nani uses her own cast.)
   G.CAST.pops = { skin: '#f0b89e', hair: '#e4d8bc', hairStyle: 'receding', blush: true, smile: '#ffffff', coat: '#1e2440', shirt: '#c8d6ee', pattern: 'plaid', plaidL: '#90a8d6', plaidW: '#5a78b8', sleeves: 'long', pants: '#c8b48a', shoes: '#5a3a24', wide: true, torso: 8, legs: 6 };
-  // Jimmy Leahy, the guitarist (and Nate's guitar teacher): platinum shoulder-length hair with bangs,
-  // a black leather jacket over a dark blue shirt, black jeans, boots.
-  G.CAST.jimmy = { skin: '#eebc9a', hair: '#e8e0c4', hairStyle: 'shoulder', bangs: true, smile: '#ffffff', coat: '#1c1c22', shirt: '#24365e', pants: '#18181c', shoes: '#1a1a1e', boots: true, torso: 7, legs: 4 };
+  // Jimmy Leahy, the guitarist (and Nate's guitar teacher): shaggy, layered platinum hair down to the
+  // jaw (no bangs), light stubble, a squarer face, a black leather jacket over a dark blue shirt open
+  // at the collar, black jeans, boots.
+  G.CAST.jimmy = { skin: '#eebc9a', hair: '#e8e0c4', hairStyle: 'shoulder', hairEnd: -1, messy: true, beard: '#c49a7e', collar: '#2e4472', wide: true, coat: '#1c1c22', shirt: '#24365e', pants: '#18181c', shoes: '#1a1a1e', boots: true, torso: 7, legs: 4 };
   // Blaise, Nate and Lily's friend: messy, spiky black hair over his forehead, a little earring.
   G.CAST.blaise = { skin: '#f0cfb0', hair: '#141216', hairStyle: 'mop', messy: true, earring: '#d8d8e0', shirt: '#f2f2ee', pants: '#2a2a32', shoes: '#f0f0f0', torso: 6, legs: 4 };
   // Madelena: brown hair pulled back with loose strands, rosy cheeks, gold hoops, a black dress with
@@ -24670,7 +24665,7 @@
       yield G.say('Blaise', 'Seven? No. Nine. Plus the jelly ones. Plus three hot chocolates with extra marshmallows.');
       yield G.say('Blaise', 'My heart is going BUH-BUH-BUH-BUH-BUH. Is that normal?');
       yield G.say('Nate', 'No! Blaise, that is a medically concerning amount of sugar. Sit down. Drink some water.');
-      yield G.say('Blaise', 'Water is just boring juice.');
+      yield G.say('Blaise', 'Water is boring.');
       yield G.say('Blaise', 'Tell Lily I said hi! Tell her I said HI!');
       return;
     }
@@ -25302,8 +25297,8 @@
         choice: { right: 'He\'s very polite about it.', wrong: ['Every single time.', 'Not if you lock the door.'],
           after: [['Michelle', 'He\'s very polite about it.'], ['K', 'Oh no.'], ['Nate', 'You\'re okay, buddy.']] } },
       { kid: 3, lines: [['K', 'Did Adam and Eve have belly buttons?'], ['Nate', 'Oh, that\'s actually a really good—']],
-        choice: { right: 'NEXT question.', wrong: ['Let me draw you a diagram.', 'Go ask Pastor.'],
-          after: [['Michelle', 'NEXT question.']] } },
+        choice: { right: 'Save that one for God.', wrong: ['Let me draw you a diagram.', 'Go ask Pastor.'],
+          after: [['Michelle', 'You know what? Nobody knows. Save that one, and ask God yourself someday.'], ['K', 'I\'m putting it on my list.'], ['Michelle', 'Put it near the top.']] } },
       { kid: 4, lines: [['K', 'Is it a sin if I give my broccoli to my dog?']],
         choice: { right: 'It\'s not a sin. It\'s a tactic.', wrong: ['A big one.', 'Dogs love broccoli.'],
           after: [['Michelle', 'It\'s not a sin. It\'s a tactic.'], ['Michelle', 'And your mom knows about the dog, Sam.']] } },

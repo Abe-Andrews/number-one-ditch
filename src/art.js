@@ -9163,25 +9163,6 @@
     p.set(4, 1, '#5a8a3a'); p.set(12, 1, '#5a8a3a');
     return finish(p);
   }
-  // the hose spigot on the front of Abe and Hannah's condo: a brass bib on the siding, and a green
-  // garden hose coiled on a little wall-mounted reel under it (the bidet fills here)
-  function hoseReel() {
-    const p = new Pix(16, 24);
-    // the spigot: a gray pipe stub out of the wall, a brass body and a round red handle on top
-    p.rect(7, 2, 2, 3, '#8a8a92'); p.rect(6, 4, 4, 3, '#c8a040'); p.hline(6, 9, 4, '#e8c860'); p.rect(7, 7, 2, 2, '#a88030');
-    p.rect(6, 0, 4, 2, '#c83a30'); p.hline(6, 9, 0, '#e86a58'); p.set(7, 2, '#5a5a62');
-    // the hose, down from the spigot to the reel
-    p.vline(8, 9, 11, '#3a8a3a'); p.vline(9, 9, 11, '#2a6a2a');
-    // the reel's bracket on the wall
-    p.rect(2, 11, 12, 2, '#5a5a62'); p.hline(2, 13, 11, '#7a7a82');
-    // the coils: rows of green hose wrapped round the drum
-    for (let y = 13; y < 21; y++) { const half = 6 - (y === 13 || y === 20 ? 1 : 0); p.hline(8 - half, 7 + half, y, y % 2 ? '#3a8a3a' : '#4aa04a'); }
-    for (let y = 14; y < 20; y += 2) p.hline(3, 12, y, '#58b858');
-    p.vline(1, 13, 20, '#4a4a52'); p.vline(14, 13, 20, '#4a4a52');
-    // the end of the hose, hanging down with its nozzle
-    p.vline(12, 21, 22, '#3a8a3a'); p.rect(11, 22, 3, 2, '#c8a040');
-    return finish(p);
-  }
   function stoneBench() {
     const p = new Pix(30, 14);
     p.rect(0, 2, 30, 5, '#a8a8a0'); p.hline(0, 29, 2, '#c8c8c0'); p.hline(0, 29, 6, '#7a7a72');
@@ -12593,7 +12574,7 @@
     S.pedal_fuzz = pedalIcon('#b8bcc8', 3); S.pedal_wah = pedalIcon('#3a3a44', 3); S.pedal_octave = pedalIcon('#d8c040', 3); S.pedal_phaser = pedalIcon('#f08020', 1); S.pedal_comp = pedalIcon('#d83838', 2); S.pedal_looper = pedalIcon('#7a5ac8', 2);
     S.shards = ['#d83030', '#2e9a4a', '#d8b040'].map(shard);
     S.kiteInTree = kiteInTree(); S.tallHedge = tallHedge(); S.gardenGate = gardenGate(false); S.gardenGateOpen = gardenGate(true);
-    S.birdbath = birdbath(); S.hoseReel = hoseReel(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();
+    S.birdbath = birdbath(); S.stoneBench = stoneBench(); S.gardenGnome = gardenGnome(); S.roseBush = roseBush();
     S.slothPlush = slothPlush(); S.slothIcon = slothIcon(); S.abeBassIcon = abeBassIcon(); S.bassHeld = bassHeld(); S.cableIcon = cableIcon(); S.romSnout = [romSnout(false), romSnout(true)]; S.romSnoutLeaves = romSnoutLeaves();
     S.condoBed = condoBed(); S.nightstandAmber = nightstandAmber(); S.nightstandDark = nightstandDark(); S.creamDresser = creamDresser();
     S.ceilingFan = [0, 1, 2, 3].map(ceilingFan);
