@@ -23618,10 +23618,10 @@
   S.bassFinish = function* () {
     const f = flags();
     yield G.say('Nate', 'Dad? Can you help me finish my bass?');
-    yield G.say('Dad', '...Son. I have been waiting for you to say that since you were in high school.');
-    yield G.say(null, 'Dad clears off the bench without saying another word. He\'s had the oil on the shelf this whole time.');
+    yield G.say('Dad', '...Of course. Bring it over here. Let\'s see what you\'ve got.');
+    yield G.say(null, 'Dad clears off the bench and pulls a can of Danish oil down off the shelf.');
     yield G.say('Dad', 'Danish oil. Rub it in, every inch, the way we do a pipe. The walnut will tell you when it\'s had enough.');
-    yield bassOilCmd(dadTalk(['Long strokes. With the grain.', 'Walnut drinks it right up. Look at it go.', 'You did good work on this, you know. You just stopped.', 'Get the horns. Everybody forgets the horns.']));
+    yield bassOilCmd(dadTalk(['Long strokes. With the grain.', 'Walnut drinks it right up. Look at it go.', 'You did good work on this, you know. Clean joints.', 'Get the horns. Everybody forgets the horns.']));
     G.play.overlay = null;
     yield G.say(null, 'Dad holds the iron while Nate wires in the pickups. It takes the rest of the afternoon. Neither of them is in any hurry.');
     yield G.say('Dad', 'A good finish is like a good sermon. It takes patience, and you know when it\'s over.');
