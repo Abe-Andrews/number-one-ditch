@@ -4833,6 +4833,37 @@
     p.rect(12, 3, 6, 5, '#e8d8b0');
     return finish(p);
   }
+  // the old Micro Mayhem photo in Pardee Hall: El EEENGLISH flying mid-dropkick across the ring, in
+  // sepia, with the crowd's heads along the bottom and "OUR FOUNDER" scrawled on the frame
+  function sepiaDropkick() {
+    const p = new Pix(30, 22);
+    const FR = '#3a2a1c', BG = '#c8b088', BGD = '#b89c72', DK = '#4a3826', MID = '#8a6e4c', LT = '#e8d8b0';
+    p.rect(0, 0, 30, 22, FR); p.rect(2, 2, 26, 17, BG);
+    // the arena lights: a brighter patch up top
+    p.rect(9, 2, 12, 3, '#d8c49c');
+    // the ropes, faint, behind everybody
+    for (const y of [7, 10, 13]) p.hline(2, 27, y, '#dccca8');
+    // the mat
+    p.rect(2, 15, 26, 2, BGD);
+    // the other guy, on the right, knocked back by the kick (leaning away, arms flung up)
+    p.rect(23, 4, 2, 2, DK); p.rect(23, 6, 3, 5, MID); p.set(25, 6, DK); p.rect(26, 3, 1, 3, MID); p.rect(21, 5, 2, 1, MID);
+    p.rect(23, 11, 1, 4, DK); p.rect(25, 11, 1, 4, DK);
+    // El EEENGLISH, flat out in the air, both feet into the other guy's chest: dark against the light
+    p.rect(4, 8, 3, 3, DK); p.set(5, 9, LT); p.set(6, 9, LT);             // the mask, with its white eye trim
+    p.rect(7, 8, 7, 3, DK); p.hline(7, 13, 8, MID);                       // the body
+    p.rect(8, 11, 2, 2, DK); p.rect(11, 6, 2, 2, DK);                     // arms flung out
+    p.rect(14, 8, 3, 3, '#2e2216');                                       // the trunks
+    p.rect(17, 8, 4, 1, DK); p.rect(17, 10, 4, 1, DK);                    // both legs, out straight
+    p.rect(21, 7, 2, 2, '#2e2216'); p.rect(21, 10, 2, 2, '#2e2216');      // the boots, right into his chest
+    // a burst where they hit, and motion lines behind El
+    p.set(22, 6, LT); p.set(20, 6, LT); p.set(22, 12, LT);
+    p.hline(2, 3, 8, LT); p.hline(2, 3, 10, LT);
+    // the crowd: a row of heads along the bottom
+    for (let x = 3; x < 27; x += 2) p.rect(x, 17 + ((x >> 1) % 2), 2, 2, (x >> 1) % 3 ? DK : MID);
+    // "OUR FOUNDER", scrawled in pen on the bottom of the frame
+    p.hline(8, 21, 20, '#e8dcc0'); for (const x of [9, 12, 15, 18]) p.set(x, 21, '#e8dcc0');
+    return finish(p);
+  }
   function toolChest() {
     const p = new Pix(16, 36);
     p.rect(0, 0, 16, 12, '#c83030'); p.hline(0, 15, 0, '#e85050'); p.rect(2, 2, 12, 3, '#a02020');
@@ -12436,7 +12467,7 @@
     S.chewedPage = chewedPage(); S.pastorBook = pastorBook(); S.keyring = keyring(); S.earplugs = earplugs();
     // Dad's workshop
     S.convertible = convertible(); S.workbench = workbench(); S.bassOnBench = bassOnBench(); S.natesBass = natesBass(); S.bassIcon = bassIcon();
-    S.shopShelves = shopShelves(false); S.shopShelvesPlane = shopShelves(true); S.sepiaPhoto = sepiaPhoto(); S.toolChest = toolChest(); S.lumberPile = lumberPile();
+    S.shopShelves = shopShelves(false); S.shopShelvesPlane = shopShelves(true); S.sepiaPhoto = sepiaPhoto(); S.sepiaDropkick = sepiaDropkick(); S.toolChest = toolChest(); S.lumberPile = lumberPile();
     S.drillPress = drillPress(); S.lathe = lathe(); S.bandsaw = bandsaw(); S.tableSaw = tableSaw(); S.planer = planer(); S.sander = sander();
     S.miterSaw = miterSaw(); S.dustCollector = dustCollector(); S.shopVac = shopVac(); S.feedBags = feedBags(); S.buckets = buckets(); S.oldFridge = oldFridge();
     S.note = noteSprite(); S.heartRed = heartBalloon('#e83848'); S.heartPink = heartBalloon('#f080b0');

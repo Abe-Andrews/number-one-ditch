@@ -5644,7 +5644,7 @@
     setup(w) {
       const F = furnish(w), sp = G.spr;
       w.addProp({ img: sp.chalkboardEng, tx: 5, ty: 1, flat: true, dy: -1, hit: [5, 1, 5, 1], talk: look('The chalkboard: "EEENGLISH 101." Underneath, in smaller letters: "muffins, channels, horns, breakfast, pints, cricket."') });
-      F.hang(sp.sepiaPhoto, 1, 1, 2, look('A framed photo from Micro Mayhem: El EEENGLISH, mid-dropkick. Someone has written "OUR FOUNDER" on the frame.', ['Nate', 'That\'s my dad.']), 4);
+      F.hang(sp.sepiaDropkick, 1, 1, 2, look('A framed photo from Micro Mayhem: El EEENGLISH, mid-dropkick. Someone has written "OUR FOUNDER" on the frame.', ['Nate', 'That\'s my dad.']), 4);
       F.stand(sp.bookshelf2, 12, 2, 1, look('"The Complete Works of EEENGLISH." Every book has had extra Es added in pen.'));
       F.stand(sp.bookshelf2, 13, 2, 1, look('A whole shelf of English muffin cookbooks. All of them are from New York.'));
       w.addProp({ img: sp.desk, tx: 6, ty: 3, solid: [6, 3, 2, 1] });
