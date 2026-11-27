@@ -8168,23 +8168,29 @@
   // arm runs from its shoulder to a hand point, or hangs at his side if there's none (hl: the arm
   // on our left, his right; hr: the one on our right). Its sleeve and hand colors come off his own
   // sprite, so it works for anybody he's playing as.
+  // geo: where a body's arms are (Nate's by default): its shoulders (left/right x, y, at 2x from the
+  // sprite's corner), where a hanging hand ends, where to sample the sleeve and the hand, and how much
+  // of the arm is sleeve (1 for long sleeves; Abe's tee, a third)
   const ARM_COL = new WeakMap();
-  function jamArms(ctx, nate, x0, y0, hl, hr) {
+  const NATE_ARMS = { sl: 9, sr: 23, sy: 25, hang: 33, sleeve: [4, 13], hand: [4, 16], frac: 1 };
+  G.ABE_ARMS = { sl: 7, sr: 25, sy: 25, hang: 37, sleeve: [4, 12], hand: [3, 16], frac: 0.3 };
+  function jamArms(ctx, nate, x0, y0, hl, hr, geo = NATE_ARMS) {
     let col = ARM_COL.get(nate);
     if (!col) {
       const d = nate.getContext('2d').getImageData(0, 0, nate.width, nate.height).data, px = (x, y) => { const k = (y * nate.width + x) * 4; return 'rgb(' + d[k] + ',' + d[k + 1] + ',' + d[k + 2] + ')'; };
-      col = { sleeve: px(4, 13), hand: px(4, 16) }; ARM_COL.set(nate, col);
+      col = { sleeve: px(...geo.sleeve), hand: px(...geo.hand) }; ARM_COL.set(nate, col);
     }
     const arm = (sx, sy, h) => {
-      const [hx, hy] = h || [sx, y0 + 33], n = Math.max(1, Math.abs(hx - sx), Math.abs(hy - sy)), pts = [];
+      const [hx, hy] = h || [sx, y0 + geo.hang], n = Math.max(1, Math.abs(hx - sx), Math.abs(hy - sy)), pts = [];
       for (let i = 0; i <= n; i++) pts.push([Math.round(sx + ((hx - sx) * i) / n), Math.round(sy + ((hy - sy) * i) / n)]);
       ctx.fillStyle = '#1a1420'; for (const [x, y] of pts) ctx.fillRect(x - 2, y - 2, 4, 4);
       ctx.fillRect(hx - 2, hy - 2, 5, 5);
-      ctx.fillStyle = col.sleeve; for (const [x, y] of pts.slice(0, -2)) ctx.fillRect(x - 1, y - 1, 2, 2);
+      pts.slice(0, -2).forEach(([x, y], i) => { ctx.fillStyle = i <= n * geo.frac ? col.sleeve : col.hand; ctx.fillRect(x - 1, y - 1, 2, 2); });
       ctx.fillStyle = col.hand; ctx.fillRect(hx - 1, hy - 1, 3, 3);
     };
-    arm(x0 + 9, y0 + 25, hl); arm(x0 + 23, y0 + 25, hr);
+    arm(x0 + geo.sl, y0 + geo.sy, hl); arm(x0 + geo.sr, y0 + geo.sy, hr);
   }
+  G.jamArms = jamArms;
   // The songs (all original). A riff is notes (or chords, joined with +) and how many beats each
   // gets, "r" a rest, eight beats a riff; bass: the root of each of its two bars. form: the riffs
   // in order. perfect/good: the timing windows (frames), drain: how much a miss costs the groove,
@@ -9236,13 +9242,22 @@
           ctx.restore();
           ctx.fillStyle = '#7a4a24'; ctx.fillRect(178, seatY, 44, 4); ctx.fillStyle = '#a06a3a'; ctx.fillRect(178, seatY, 44, 1); ctx.fillStyle = '#5a3418'; ctx.fillRect(180, seatY + 4, 3, 10); ctx.fillRect(217, seatY + 4, 3, 10);
           ctx.fillStyle = '#2a2a30'; ctx.fillRect(193, seatY + 9, 5, 3); ctx.fillRect(202, seatY + 9, 5, 3);
+        } else if (A.axe && G.sprites.abe.noarms) {
+          // (the BASS page: Abe with a real guitar, slung low across his hips like Nate's, right-handed,
+          // the neck out to our right: his strumming hand on the body (bobbing on the beat), his
+          // fretting hand on the neck. On a GUITAR SOLO the neck swings up.)
+          const AB = G.sprites.abe, x0 = 200 + A.dx - aw / 2, y0 = 40 + A.dy, img = abeGuitar.art(), k = 0.6;
+          const th = Math.PI / 2 - (A.name === 'GUITAR SOLO' ? 0.55 : 0.12), cx = x0 + 9, cy = y0 + 40;
+          const at = (ay) => [Math.round(cx + (60 - ay) * k * Math.sin(th)), Math.round(cy - (60 - ay) * k * Math.cos(th))];
+          ctx.drawImage(AB.noarms, x0, y0, aw, ah);
+          ctx.save(); ctx.imageSmoothingEnabled = false; ctx.translate(cx, cy); ctx.rotate(th); ctx.drawImage(img, -12 * k, -60 * k, img.width * k, img.height * k); ctx.restore();
+          const st = at(56), bob = (this.f / fpb) % 1 < 0.25 ? 1 : 0;
+          jamArms(ctx, AB.down[0], x0, y0, [st[0], st[1] - bob], at(28), G.ABE_ARMS);
         } else {
           ctx.save(); ctx.translate(px, py); ctx.rotate(A.rot); ctx.scale(A.sx, A.sy);
           ctx.drawImage(A.img, -aw / 2, A.mid ? -ah / 2 : -ah, aw, ah);
           ctx.restore();
         }
-        // (the BASS page: Abe with a real guitar in his hands)
-        if (A.axe) { ctx.save(); ctx.translate(200 + A.dx, 84 + A.dy); ctx.rotate(-1.1); ctx.drawImage(guitarSmall(abeGuitar), -6, -18); ctx.restore(); }
         // (his imaginary shopping cart, made a little less imaginary)
         if (A.cart) {
           const cx = 214 + Math.max(0, A.dx), cy = 82;
