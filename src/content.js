@@ -9185,8 +9185,9 @@
         }
         else if (horn === 'sax') {
           // the sax hanging from his mouth, both hands on its keys (his left hand above his right)
-          const img = gt.art(), k = 0.8, x0 = 43 - img.width * k * 0.35, y0 = 63 + b - 2 * k;
-          hornHold(ctx, horn, img, 43, 63 + b, 95 + b, k);
+          // (its mouthpiece at his mouth, sprite row 9: not up at his nose)
+          const img = gt.art(), k = 0.8, x0 = 43 - img.width * k * 0.35, y0 = 66 + b - 2 * k;
+          hornHold(ctx, horn, img, 43, 66 + b, 95 + b, k);
           arms([Math.round(x0 + 9 * k), Math.round(y0 + 24 * k)], [Math.round(x0 + 8.5 * k), Math.round(y0 + 12 * k)]);
         }
         else if (horn) hornHold(ctx, horn, gt.art(), 43, 63 + b, 95 + b, 0.8, [0, 1, 2, 3].filter((L) => this.hitT[L] > 0 || this.holds[L]).pop());
