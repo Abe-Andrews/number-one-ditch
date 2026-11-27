@@ -8386,20 +8386,6 @@
     }
     return finish(p);
   }
-  // brand-new white high-tops, on the workshop floor (Dad wears loafers), with a mixtape tucked in one
-  function highTops() {
-    const p = new Pix(20, 12);
-    for (const x0 of [0, 10]) {
-      p.rect(x0 + 1, 2, 5, 6, '#f8f8f4'); p.rect(x0 + 1, 7, 9, 3, '#f8f8f4'); p.hline(x0 + 1, x0 + 9, 10, '#c8c8c0'); p.hline(x0, x0 + 9, 11, '#3a3a40');
-      p.vline(x0 + 1, 2, 9, '#e0e0d8'); p.hline(x0 + 2, x0 + 8, 8, '#d83030');
-      for (const y of [3, 5]) p.hline(x0 + 2, x0 + 4, y, '#b8b8c0');
-      p.rect(x0 + 2, 1, 4, 1, '#e8e8e0');
-    }
-    p.rect(3, 0, 5, 3, '#2a2a30'); p.hline(4, 6, 1, '#f8e070');
-    return finish(p);
-  }
-  // Lily's trash can, full of taxidermy catalogs still in their plastic (Abe signed her up), the top
-  // one with a squirrel in a tiny top hat on the cover
   function catalogBin() {
     const p = new Pix(16, 18);
     // the catalogs sticking up out of it, glossy, in plastic wrap
@@ -12544,7 +12530,7 @@
     for (const pose of ['stand', 'walk1', 'walk2', 'raise', 'slam', 'pour']) S.twoLiter[pose] = twoLiterBrute(pose);
     S.fizzDrop = fizzDrop(); S.tollPlaza = tollPlaza();
     // Tom's Pizza
-    S.tomsPizza = tomsPizza(); S.groceryStore = groceryStore(); S.broom = broom(); S.catalogBin = catalogBin(); S.catalog = catalog(); S.highTops = highTops(); S.goose = { right: {} }; for (const k of ['walk1', 'walk2', 'graze', 'hiss', 'fly1', 'fly2']) S.goose.right[k] = goose(k); S.goose.left = {}; for (const k in S.goose.right) S.goose.left[k] = mirror(S.goose.right[k]); S.produceStand = produceStand(); S.dairyCooler = dairyCooler(); S.aisleShelf = aisleShelf(); S.checkout = checkout(); S.boombox = [0, 1].map(boombox); S.mopBucket = mopBucket(); S.produceSign = produceSign(); S.forLeaseShop = forLeaseShop(); S.rockShopFront = rockShopFront(); S.rockCase = rockCase(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
+    S.tomsPizza = tomsPizza(); S.groceryStore = groceryStore(); S.broom = broom(); S.catalogBin = catalogBin(); S.catalog = catalog(); S.goose = { right: {} }; for (const k of ['walk1', 'walk2', 'graze', 'hiss', 'fly1', 'fly2']) S.goose.right[k] = goose(k); S.goose.left = {}; for (const k in S.goose.right) S.goose.left[k] = mirror(S.goose.right[k]); S.produceStand = produceStand(); S.dairyCooler = dairyCooler(); S.aisleShelf = aisleShelf(); S.checkout = checkout(); S.boombox = [0, 1].map(boombox); S.mopBucket = mopBucket(); S.produceSign = produceSign(); S.forLeaseShop = forLeaseShop(); S.rockShopFront = rockShopFront(); S.rockCase = rockCase(); S.deckOven = deckOven(); S.ovenHood = ovenHood(); S.tomsCounter = tomsCounter(7);
     S.pizzaBoxes = pizzaBoxes(); S.checkTable = checkTable(); S.dadTomPicture = dadTomPicture();
     // Abe and Hannah's condo
     S.condo = condoBuilding(); S.brickStep = brickStep();

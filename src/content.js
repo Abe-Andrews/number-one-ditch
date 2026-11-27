@@ -6025,10 +6025,6 @@
       F.stand(sp.shopVac, 7, 10, 1, look('An orange shop vac, also losing the war.'));
       F.stand(sp.buckets, 20, 11, 1, look('Five-gallon buckets. Every garage has somewhere between four and four hundred.'));
       // (clues for the grocery store on College Hill)
-      w.addProp({ img: sp.highTops, tx: 13, ty: 4, dx: -2, dy: -2, hit: [13, 4, 1, 1], talk: function* () {
-        yield G.say(null, 'A pair of brand-new white high-tops. There\'s a cassette tucked in one of them, labeled TUESDAY.');
-        yield G.say('Nate', flags().hipHopDone ? 'His dancing shoes. Of course.' : 'Dad wears loafers. Dad has ALWAYS worn loafers.');
-      } });
       // Dad, in the middle of something different every time Nate walks in (DAD_SHOP)
       const f = flags();
       if (f.homeArrived) {
@@ -6584,7 +6580,8 @@
   // slides the block to keep the blade on his pencil line. Above the line is the pipe (cut far
   // enough into it and the block's ruined); below is waste (staying low just leaves extra wood).
   // Two cuts: the bottom, then the block turned around for the back of the bowl. Knots jolt the
-  // block. Result: { score, ruined } (or 'quit').
+  // block. Each cut starts a little low, in the waste. Sawdust sprays off the blade while it cuts,
+  // and when a cut's done the waste drops away from the pipe. Result: { score, ruined } (or 'quit').
   const BLADE_X = 66, BLADE_Y = 70, BLOCK_H = 80;
   function sawCmd(pipe, talk) {
     const w = WORK[pipe.id].saw;
@@ -6597,31 +6594,37 @@
       }
       return pts[pts.length - 1][1];
     };
-    // the block for a cut, drawn once: the pipe's side a little lighter, the waste darker, the line
+    // the block for a cut, drawn once, in two pieces that come apart at the end: the pipe's side
+    // (lighter briar, with grain) and the waste (darker, hatched in pencil), and Dad's line
     const blockArt = (pts) => {
-      const len = pts[pts.length - 1][0], W = len + 40, c = G.canvas(W, BLOCK_H), x = c.getContext('2d');
+      const len = pts[pts.length - 1][0], W = len + 40;
+      const top = G.canvas(W, BLOCK_H), tx = top.getContext('2d'), bot = G.canvas(W, BLOCK_H), wx = bot.getContext('2d');
       for (let u = 0; u < W; u++) {
         const ly = Math.round(lineAt(pts, u - 20));
         for (let y = 0; y < BLOCK_H; y++) {
           const g = G.hash(u >> 1, y, 4) < 0.08 ? -0.12 : Math.sin(y * 0.5 + u * 0.03) > 0.85 ? -0.06 : 0;
-          x.fillStyle = G.art.shade(y < ly ? '#d8a670' : '#b07a48', g); x.fillRect(u, y, 1, 1);
+          if (y < ly) { tx.fillStyle = G.art.shade('#d8a670', g); tx.fillRect(u, y, 1, 1); }
+          else { wx.fillStyle = G.art.shade((u + y) % 7 === 0 ? '#9a6a3c' : '#b07a48', g); wx.fillRect(u, y, 1, 1); }
         }
-        if (u % 3 !== 2) { x.fillStyle = '#2a2a30'; x.fillRect(u, ly, 1, 1); }
+        if (u % 3 !== 2) { tx.fillStyle = '#2a2a30'; tx.fillRect(u, ly - 1, 1, 1); }
+        // the wood's top and bottom faces
+        tx.fillStyle = '#e8bc88'; tx.fillRect(u, 0, 1, 1);
+        wx.fillStyle = '#5a3a20'; wx.fillRect(u, BLOCK_H - 1, 1, 1);
       }
-      x.fillStyle = '#5a3a20'; x.fillRect(0, 0, W, 1); x.fillRect(0, BLOCK_H - 1, W, 1);
-      for (let u = 6; u < len; u += 80) {
-        FT().draw(x, 'PIPE', 20 + u, Math.max(2, Math.round(lineAt(pts, u)) - 12), '#7a4a28');
-        FT().draw(x, 'waste', 20 + u, Math.min(BLOCK_H - 10, Math.round(lineAt(pts, u)) + 5), '#5a3a20');
-      }
-      return c;
+      // the two words, once, at the near end, on little pencil tags
+      const tag = (x, text, y, ink) => { const tw = FT().width(text); x.fillStyle = 'rgba(255,248,230,0.55)'; x.fillRect(26, y - 1, tw + 4, 9); FT().draw(x, text, 28, y, ink); };
+      tag(tx, 'PIPE', Math.max(3, Math.round(lineAt(pts, 6)) - 13), '#6a3a18');
+      tag(wx, 'waste', Math.min(BLOCK_H - 11, Math.round(lineAt(pts, 6)) + 4), '#4a2a14');
+      return { top, bot };
     };
     const arts = w.cuts.map(blockArt);
     return {
-      start() { Object.assign(this, { cut: 0, t: 0, pen: 0, frames: 0, endT: 0, ruined: null, msg: null, msgT: 0, w, lineAt }); this.begin(); talk.nowT = 0; G.play.overlay = this; },
+      start() { Object.assign(this, { cut: 0, t: 0, pen: 0, frames: 0, endT: 0, ruined: null, msg: null, msgT: 0, w, lineAt, v: 0, dust: [], dropT: 0 }); this.begin(); talk.nowT = 0; G.play.overlay = this; },
       begin() {
         const pts = w.cuts[this.cut];
-        Object.assign(this, { pts, len: pts[pts.length - 1][0], p: -36, kerf: [], shoveT: 0, knots: w.knots.filter((u) => u < pts[pts.length - 1][0]) });
-        this.o = BLADE_Y - lineAt(pts, 0) + 12;
+        Object.assign(this, { pts, len: pts[pts.length - 1][0], p: -36, kerf: [], shoveT: 0, v: 0, knots: w.knots.filter((u) => u < pts[pts.length - 1][0]) });
+        // (it starts a little LOW, down in the waste, so the first thing to do is ease up onto the line)
+        this.o = BLADE_Y - lineAt(pts, 0) - 10;
       },
       pop(m) { this.msg = m; this.msgT = 50; },
       score() { return Math.max(0, Math.min(100, Math.round(100 - (this.pen / Math.max(1, this.frames)) * 9))); },
@@ -6629,11 +6632,21 @@
         const inp = G.input;
         this.t++; talk.update();
         if (this.msgT > 0) this.msgT--;
-        if (this.endT > 0) { if (--this.endT === 0) { const sc = this.score(); this.result = { score: sc, ruined: this.ruined || (sc < WORK[pipe.id].pass ? 'rough' : null) }; return true; } return false; }
+        // the sawdust: little specks thrown down and back off the blade
+        for (const d of this.dust) { d.x += d.vx; d.y += d.vy; d.vy += 0.08; d.life--; }
+        this.dust = this.dust.filter((d) => d.life > 0);
+        if (this.endT > 0) { if (this.dropT) this.dropT++; if (--this.endT === 0) { const sc = this.score(); this.result = { score: sc, ruined: this.ruined || (sc < WORK[pipe.id].pass ? 'rough' : null) }; return true; } return false; }
         if (quitHit()) { this.result = 'quit'; return true; }
-        if (inp.down('up')) this.o -= 0.85;
-        if (inp.down('down')) this.o += 0.85;
-        this.o = Math.max(-20, Math.min(100, this.o));
+        // the waste from the last cut, falling away before the block turns around
+        if (this.dropT > 0) {
+          if (++this.dropT > 40) { this.dropT = 0; this.begin(); this.pop('TURN THE BLOCK'); G.audio.sfx('menu'); talk.say('Good. Now turn it around and cut the back of the bowl.'); }
+          return false;
+        }
+        // (the block eases up to speed and back down, so a tap is a small nudge and a hold is a slide)
+        const want = (inp.down('down') ? 1 : 0) - (inp.down('up') ? 1 : 0);
+        this.v += (want * 0.85 - this.v) * 0.35;
+        if (Math.abs(this.v) < 0.02) this.v = 0;
+        this.o = Math.max(-20, Math.min(100, this.o + this.v));
         this.p += w.feed;
         // a knot in the briar: the blade grabs it and shoves the block for a moment (fight it!)
         if (this.knots.length && this.p >= this.knots[0]) { this.knots.shift(); this.shove = (G.hash(this.cut, Math.round(this.p), 3) < 0.5 ? -1 : 1) * 0.45; this.shoveT = 16; G.audio.sfx('bump'); G.play.shake(6, 2); this.pop('KNOT!'); }
@@ -6643,6 +6656,7 @@
           this.kerf.push(this.p, cutY);
           this.frames++;
           if (this.t % 6 === 0) G.audio.sfx('blip');
+          if (this.t % 2 === 0) for (let k = 0; k < 2; k++) this.dust.push({ x: BLADE_X + 1, y: BLADE_Y + 1, vx: 0.4 + Math.random() * 1.2, vy: -0.6 + Math.random() * 0.9, life: 14 + Math.floor(Math.random() * 10), c: Math.random() < 0.5 ? '#f0d0a0' : '#c89868' });
           if (e < -w.ruin) {
             this.ruined = 'saw'; this.endT = 60; G.audio.sfx('crack'); G.play.shake(10, 3); this.pop('INTO THE PIPE!');
             talk.say('Stop! Stop. You cut right into the pipe.');
@@ -6653,28 +6667,57 @@
         }
         if (this.warnT) this.warnT--;
         if (this.p > this.len + 14) {
-          if (++this.cut < w.cuts.length) { this.begin(); this.pop('TURN THE BLOCK'); G.audio.sfx('menu'); talk.say('Good. Now turn it around and cut the back of the bowl.'); }
-          else { this.endT = 40; G.audio.sfx('select'); this.pop('CUT!'); }
+          G.audio.sfx('select');
+          if (this.cut + 1 < w.cuts.length) { this.cut++; this.dropT = 1; this.pop('CUT!'); }
+          else { this.cut++; this.endT = 50; this.dropT = 1; this.pop('CUT!'); }
         }
         return false;
       },
       draw(ctx) {
-        benchBack(ctx, 'THE BANDSAW', 'CUT ' + G.sayable(Math.min(this.cut + 1, w.cuts.length)) + '/' + G.sayable(w.cuts.length));
-        // the table
+        const shown = Math.min(this.cut + (this.dropT > 0 && this.endT === 0 ? 0 : 1), w.cuts.length);
+        benchBack(ctx, 'THE BANDSAW', 'CUT ' + G.sayable(Math.max(1, shown)) + '/' + G.sayable(w.cuts.length));
+        // the table, with the throat plate the blade comes up through
         ctx.fillStyle = '#4a5058'; ctx.fillRect(0, 14, G.W, 118); ctx.fillStyle = '#5a626c'; ctx.fillRect(0, 14, G.W, 2);
         ctx.fillStyle = '#3e444c'; for (let y = 30; y < 132; y += 24) ctx.fillRect(0, y, G.W, 1);
-        // the block, sliding past the blade (and the cut it's left behind)
+        ctx.fillStyle = '#3a3f46'; ctx.beginPath(); ctx.arc(BLADE_X + 1, BLADE_Y + 30, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#62686f'; ctx.beginPath(); ctx.arc(BLADE_X + 1, BLADE_Y + 30, 12, 0, Math.PI * 2); ctx.fill();
+        // the block (or, between cuts, the piece that just came off it, with its waste dropping away)
+        const ci = Math.min(this.dropT > 0 ? this.cut - 1 : this.cut, arts.length - 1), art = arts[Math.max(0, ci)];
         const bx = Math.round(BLADE_X - this.p - 20), by = Math.round(this.o);
-        ctx.drawImage(arts[Math.min(this.cut, arts.length - 1)], bx, by);
-        ctx.fillStyle = '#1a1210';
-        for (let k = 0; k < this.kerf.length; k += 2) ctx.fillRect(Math.round(BLADE_X - this.p + this.kerf[k]), Math.round(this.o + this.kerf[k + 1]) - 1, 1, 2);
-        // the blade (its teeth running down), its guard, and where it cuts
+        ctx.drawImage(art.top, bx, by);
+        if (this.dropT > 0 && !this.ruined) {
+          const k = this.dropT, dy = Math.round(k * k * 0.06), a = Math.max(0, 1 - k / 40);
+          ctx.globalAlpha = a; ctx.drawImage(art.bot, bx - Math.round(k * 0.4), by + dy); ctx.globalAlpha = 1;
+        } else ctx.drawImage(art.bot, bx, by);
+        // the kerf the blade has left behind
+        if (!this.dropT || this.ruined) {
+          ctx.fillStyle = '#1a1210';
+          for (let k = 0; k < this.kerf.length; k += 2) ctx.fillRect(Math.round(BLADE_X - this.p + this.kerf[k]), Math.round(this.o + this.kerf[k + 1]) - 1, 1, 2);
+        }
+        // the lower blade guide under the table, the blade (its teeth running down) and the upper guard
         ctx.fillStyle = '#c8ccd4'; ctx.fillRect(BLADE_X - 1, 14, 3, 118);
         ctx.fillStyle = '#7a7e88'; for (let y = 14 + (this.t * 3) % 6; y < 132; y += 6) ctx.fillRect(BLADE_X - 1, y, 1, 2);
-        ctx.fillStyle = '#c83838'; ctx.fillRect(BLADE_X - 8, 14, 17, 22); ctx.fillStyle = '#e85050'; ctx.fillRect(BLADE_X - 8, 14, 17, 2);
-        const e = this.p >= 0 && this.p <= this.len ? BLADE_Y - this.o - lineAt(this.pts, this.p) : 0;
-        ctx.fillStyle = e < -w.tol ? '#f86858' : e > w.tol ? '#f8d850' : '#78e070';
-        ctx.fillRect(BLADE_X - 6, BLADE_Y, 3, 1); ctx.fillRect(BLADE_X + 4, BLADE_Y, 3, 1);
+        ctx.fillStyle = '#a02828'; ctx.fillRect(BLADE_X - 10, 14, 21, 24);
+        ctx.fillStyle = '#c83838'; ctx.fillRect(BLADE_X - 9, 14, 19, 22); ctx.fillStyle = '#e85050'; ctx.fillRect(BLADE_X - 9, 14, 19, 2);
+        ctx.fillStyle = '#2a2a30'; ctx.fillRect(BLADE_X - 4, 36, 9, 3); ctx.fillStyle = '#8a8e96'; ctx.fillRect(BLADE_X - 3, 37, 2, 1); ctx.fillRect(BLADE_X + 2, 37, 2, 1);
+        ctx.fillStyle = '#f0e0d8'; ctx.fillRect(BLADE_X - 6, 22, 13, 1); ctx.fillRect(BLADE_X - 6, 25, 9, 1);
+        // sawdust
+        for (const d of this.dust) { ctx.fillStyle = d.c; ctx.fillRect(Math.round(d.x), Math.round(d.y), 1, 1); }
+        // where the blade is cutting, compared with the line: brackets either side, green on it,
+        // yellow low, red high, and when it's off, an arrow for the key that fixes it (the block slides
+        // the way the arrow points: cutting low means the line's above the blade, so bring it down)
+        const cutting = this.p >= 0 && this.p <= this.len && !this.dropT;
+        const e = cutting ? BLADE_Y - this.o - lineAt(this.pts, this.p) : 0;
+        const col = !cutting ? '#78e070' : e < -w.tol ? '#f86858' : e > w.tol ? '#f8d850' : '#78e070';
+        ctx.fillStyle = col;
+        ctx.fillRect(BLADE_X - 7, BLADE_Y - 2, 1, 5); ctx.fillRect(BLADE_X - 7, BLADE_Y, 4, 1);
+        ctx.fillRect(BLADE_X + 7, BLADE_Y - 2, 1, 5); ctx.fillRect(BLADE_X + 4, BLADE_Y, 4, 1);
+        if (cutting && Math.abs(e) > w.tol && (this.t >> 3) % 2) {
+          const up = e < 0, ax = BLADE_X - 14, ay = up ? BLADE_Y - 6 : BLADE_Y + 6;
+          for (let i = 0; i < 4; i++) ctx.fillRect(ax - i, ay + (up ? i : -i), 1 + i * 2, 1);
+        }
+        // how on the line it's been, so far
+        if (this.frames > 0 && !this.ruined) { const sc = this.score(), st = 'ON THE LINE ' + G.sayable(sc) + '%'; FT().draw(ctx, st, G.W - 4 - FT().width(st), 108, sc >= 85 ? '#78e070' : sc >= 65 ? '#f8d850' : '#f86858', { shadow: '#000' }); }
         if (this.msgT > 0) { const tw = FT().width(this.msg); FT().draw(ctx, this.msg, 150 - Math.round(tw / 2), 40, this.msg === 'INTO THE PIPE!' || this.msg === 'TOO HIGH!' ? '#f86858' : '#f8d850', { shadow: '#000' }); }
         FT().draw(ctx, '↑↓ keep the blade on the line', 100, 120, '#c8c0d8', { shadow: '#000' });
         talk.draw(ctx);
@@ -17738,7 +17781,7 @@
   // A real Dad joke (the user's): he swears he teaches hip hop dance at the local grocery store
   // after they close, and none of the kids believe him. Here it's true, and it's a SURPRISE: nobody
   // says it before Nate walks in. Just clues that make sense afterward: one-banana receipts in
-  // Dad's truck (from this store, Tuesdays, 10:45 at night), brand-new high-tops in his workshop,
+  // Dad's truck (from this store, Tuesdays, 10:45 at night),
   // Dad caught mid-move ("...Stretching."), Mom's "Tuesday thing", Doron on Dad's Running Man, a
   // boombox in the produce section through the store's window. After the main event, the door is
   // propped open with a beat coming out. Inside, after close: Dad's class (two church ladies,
