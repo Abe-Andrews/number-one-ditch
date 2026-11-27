@@ -9247,7 +9247,7 @@
           // the neck out to our right: his strumming hand on the body (bobbing on the beat), his
           // fretting hand on the neck. On a GUITAR SOLO the neck swings up.)
           const AB = G.sprites.abe, x0 = 200 + A.dx - aw / 2, y0 = 40 + A.dy, img = abeGuitar.art(), k = 0.6;
-          const th = Math.PI / 2 - (A.name === 'GUITAR SOLO' ? 0.55 : 0.12), cx = x0 + 9, cy = y0 + 40;
+          const th = Math.PI / 2 - (A.name === 'GUITAR SOLO' ? 0.55 : 0.12), cx = x0 + 9, cy = y0 + 35;
           const at = (ay) => [Math.round(cx + (60 - ay) * k * Math.sin(th)), Math.round(cy - (60 - ay) * k * Math.cos(th))];
           ctx.drawImage(AB.noarms, x0, y0, aw, ah);
           ctx.save(); ctx.imageSmoothingEnabled = false; ctx.translate(cx, cy); ctx.rotate(th); ctx.drawImage(img, -12 * k, -60 * k, img.width * k, img.height * k); ctx.restore();
