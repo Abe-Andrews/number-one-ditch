@@ -768,7 +768,7 @@
       // (Manual: the instruction booklet, src/manual.js)
       // (New Game+ shows up once any file has cleared the Boss Rush: it has the golden hammer)
       const ngReady = [1, 2, 3].some((n) => { const sv = G.readSave(n); return sv && sv.items && sv.items.goldHammer && !sv.admin; });
-      this.opts = (G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game']).concat(ngReady ? ['New Game+'] : [], 'Admin', 'Manual');
+      this.opts = (G.hasSave() ? ['Continue', 'Load File', 'New Game'] : ['New Game']).concat(ngReady ? ['New Game+'] : [], 'Admin', 'Manual', 'Get the App');
       // which landmarks drift by: the places the latest save has been to
       const v = ((G.hasSave() && G.readSave(G.latestSave())) || {}).visited || {};
       this.reached = [['campus'], ['fair'], ['home'], ['cbbtToll', 'cbbt'], ['chkd'], ['ditchFinal', 'ditchDay']]
@@ -793,6 +793,8 @@
           G.adminPick.enter();
         } else if (opt === 'Manual') {
           G.manual.enter(this);
+        } else if (opt === 'Get the App') {
+          G.appGet.enter(this);
         } else if (opt === 'New Game+') {
           G.files.enter('new', true);
         } else if (G.hasSave()) {
@@ -811,8 +813,8 @@
       const eg = G.spr.eggmas;
       ctx.drawImage(eg, 206, 92 + 31 - eg.height);
       // menu
-      // (five or six options: the rows close up a little so the box still clears the logo and the bottom)
-      const n = this.opts.length, rh = n > 4 ? 11 : 12, w = 84, h = n * rh + 8, x = Math.round((G.W - w) / 2), y = n > 5 ? 80 : n > 4 ? 90 : n > 3 ? 100 : n > 2 ? 108 : 114;
+      // (five, six or seven options: the rows close up a little so the box still clears the logo and the bottom)
+      const n = this.opts.length, rh = n > 6 ? 10 : n > 4 ? 11 : 12, w = 84, h = n * rh + 8, x = Math.round((G.W - w) / 2), y = n > 6 ? 78 : n > 5 ? 80 : n > 4 ? 90 : n > 3 ? 100 : n > 2 ? 108 : 114;
       G.box(ctx, x, y, w, h);
       this.opts.forEach((o, i) => {
         F().draw(ctx, o, x + 18, y + 5 + i * rh, i === this.sel ? '#f8d850' : o === 'Admin' ? '#9890a8' : '#f8f8f0', { shadow: '#0c0814' });
@@ -1343,6 +1345,117 @@
   // clipboard, to paste into a text to Abe
   G.version = (() => { const sc = [...document.scripts].find((x) => /main\.js\?v=/.test(x.src)); return sc ? 'v' + sc.src.split('?v=')[1] : 'dev'; })();
   G.notice = null;
+
+  // ---- GET THE APP (title screen): install the game as an app on a Mac or Windows computer. It's a
+  // web app: the browser installs it with its own icon and window, sw.js keeps every file so it plays
+  // offline, and it updates itself on each new version. (A real .app or .exe would need paid Apple and
+  // Microsoft signing, or both systems block it with scary warnings.) Chrome and Edge can install it
+  // with one button (G.installPrompt, from beforeinstallprompt); Safari on a Mac uses File > Add to
+  // Dock; Firefox can't install apps at all. The screen is a page over the game (like the manual), so
+  // the steps are big and readable. Its text is picked for the browser it's open in.
+  if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol) && G.version !== 'dev' && !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) {
+    // (not on this computer's test server: a cached copy there would hide every edit until the cache reset)
+    addEventListener('load', () => navigator.serviceWorker.register('sw.js?v=' + G.version.slice(1)).catch(() => {}));
+  }
+  G.installPrompt = null; G.appInstalled = false;
+  addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); G.installPrompt = e; if (G.appGet.root) G.appGet.render(); });
+  addEventListener('appinstalled', () => { G.appInstalled = true; G.installPrompt = null; if (G.appGet.root) G.appGet.render(); });
+  G.appGet = {
+    root: null,
+    enter(back) {
+      this.back = back || G.scene; this.t = 0; this.done = false;
+      if (!document.getElementById('appget-style')) {
+        const st = document.createElement('style'); st.id = 'appget-style';
+        st.textContent = `#appget{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;background:rgba(10,8,16,.86);font-family:ui-monospace,Menlo,Consolas,monospace;color:#e8e0f0}
+#appget .card{width:min(560px,92vw);max-height:92vh;overflow:auto;background:#1e1830;border:3px solid #f8d850;border-radius:10px;padding:22px 26px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+#appget h1{margin:0 0 6px;font-size:24px;color:#f8d850;letter-spacing:.04em}
+#appget p{margin:8px 0;line-height:1.55;font-size:15px}
+#appget .lead{color:#c8c0d8}
+#appget ol{margin:12px 0;padding-left:26px;font-size:16px;line-height:1.6}
+#appget li{margin:6px 0}
+#appget b{color:#fff4b0}
+#appget .btn{display:inline-block;margin:10px 0 4px;padding:12px 22px;font:inherit;font-size:17px;font-weight:bold;color:#1c1424;background:#78e070;border:0;border-radius:8px;cursor:pointer}
+#appget .btn:hover{background:#98f090}
+#appget .ok{color:#78e070;font-weight:bold}
+#appget .note{font-size:13px;color:#a8a0b8}
+#appget .url{color:#78c8f8;word-break:break-all}
+#appget .back{margin-top:16px;font-size:13px;color:#9890a8}
+#appget kbd{padding:0 6px;border-radius:4px;background:#2a2236;border:1px solid #4a3e5c;color:#f0e8ff}`;
+        document.head.appendChild(st);
+      }
+      this.root = document.createElement('div'); this.root.id = 'appget';
+      this.root.addEventListener('click', (e) => { if (e.target === this.root) this.close(); });
+      document.body.appendChild(this.root);
+      this.render();
+      G.scene = this;
+      G.audio.sfx('select');
+    },
+    // which browser, on what
+    env() {
+      const ua = navigator.userAgent, edge = /Edg\//.test(ua), firefox = /Firefox\//.test(ua);
+      const chrome = !edge && /Chrome\//.test(ua) && !/OPR\//.test(ua), safari = /Safari\//.test(ua) && !/Chrome|Chromium|Edg|OPR|Firefox/.test(ua);
+      const standalone = (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+      return { mac: /Macintosh|Mac OS X/.test(ua), win: /Windows/.test(ua), edge, chrome, firefox, safari, standalone, web: /^https?:$/.test(location.protocol) };
+    },
+    render() {
+      const E = this.env(), url = location.href.split('#')[0].split('?')[0];
+      const where = E.win ? '<b>Windows:</b> it\'s in the Start menu (and there\'s a shortcut on your desktop).' : E.mac ? '<b>Mac:</b> it\'s in your Applications folder' + (E.chrome ? ' (in <b>Chrome Apps</b>)' : E.edge ? ' (in <b>Edge Apps</b>)' : '') + ', and in Launchpad. Drag it to your Dock to keep it handy.' : 'Look for <b>Number One Ditch</b> with your other apps.';
+      const saves = '<p class="note">Your save files come with you: the app and this page share them.</p>';
+      let body, canRemove = true;
+      if (E.standalone || this.done || G.appInstalled) {
+        body = `<p class="ok">${E.standalone ? 'You\'re playing the app right now.' : 'Installed!'}</p>
+<p>${where}</p><p>It opens in its own window, plays without the internet, and updates itself when there's a new version.</p>${saves}`;
+      } else if (!E.web) {
+        canRemove = false;
+        body = `<p>To install the game, open it from its web address first:</p><p class="url">https://abe-andrews.github.io/number-one-ditch/</p><p>Then choose <b>Get the App</b> again.</p>`;
+      } else if (G.installPrompt) {
+        body = `<p>Press the button. Your browser will ask if you want to install it: click <b>Install</b>.</p>
+<button class="btn" id="appget-go">Install the game</button>
+<p class="note">(Or press <kbd>Z</kbd>.)</p>
+<p>When it's done: ${where}</p>${saves}`;
+      } else if (E.safari && E.mac) {
+        body = `<ol><li>Click <b>File</b> in the menu bar at the very top of your screen.</li><li>Click <b>Add to Dock…</b></li><li>Click <b>Add</b>.</li></ol>
+<p>That's it: the game is in your Dock now, and in your Applications folder. It opens in its own window and plays without the internet.</p>
+<p class="note">Needs macOS Sonoma (14) or newer. If you don't see Add to Dock, open this page in Chrome or Edge instead. The Dock app keeps its own save files, separate from Safari's.</p>`;
+      } else if (E.chrome || E.edge) {
+        body = `<ol><li>Look at the right end of the address bar for the <b>install icon</b> (a little screen with a down arrow) and click it.</li><li>Click <b>Install</b>.</li></ol>
+<p class="note">Don't see the icon? ${E.edge ? 'Click the <b>···</b> menu (top right), then <b>Apps</b>, then <b>Install this site as an app</b>.' : 'Click the <b>⋮</b> menu (top right), then <b>Cast, save, and share</b>, then <b>Install page as app</b>.'}</p>
+<p>When it's done: ${where}</p>${saves}`;
+      } else if (E.firefox) {
+        canRemove = false;
+        body = `<p>Firefox can't install apps, sorry.</p><p>Open this page in <b>Chrome</b> or <b>Edge</b>${E.mac ? ' (or <b>Safari</b>)' : ''}:</p><p class="url">${url}</p><p>Then choose <b>Get the App</b> on the title screen again.</p>`;
+      } else {
+        canRemove = false;
+        body = `<p>Open this page in <b>Chrome</b> or <b>Edge</b>${E.mac ? ' (or <b>Safari</b>)' : ''}, then choose <b>Get the App</b> again:</p><p class="url">${url}</p>`;
+      }
+      const remove = E.mac ? 'To remove it later: drag it from your Applications folder to the Trash.' : E.win ? 'To remove it later: right-click it in the Start menu and choose Uninstall.' : '';
+      this.root.innerHTML = `<div class="card"><h1>Get the App</h1>
+<p class="lead">Put <b>Journey to the Number One Ditch</b> on this computer as its own app: its own icon, its own window, and it plays without the internet.</p>
+${body}${remove && canRemove && !E.standalone ? `<p class="note">${remove}</p>` : ''}
+<p class="back"><kbd>X</kbd> or <kbd>Esc</kbd> to go back</p></div>`;
+      const go = document.getElementById('appget-go');
+      if (go) go.addEventListener('click', () => this.install());
+    },
+    install() {
+      const e = G.installPrompt;
+      if (!e) return;
+      G.installPrompt = null;
+      e.prompt();
+      (e.userChoice || Promise.resolve({})).then((c) => { if (c.outcome === 'accepted') { this.done = true; G.audio.sfx('fanfare'); } if (this.root) this.render(); });
+    },
+    close() {
+      if (this.root) { this.root.remove(); this.root = null; }
+      G.audio.sfx('cancel');
+      G.scene = this.back || G.title;
+    },
+    update() {
+      const inp = G.input;
+      this.t++;
+      if (this.t > 10 && inp.hit('a') && G.installPrompt) { inp.eat('a'); this.install(); }
+      if (this.t > 10 && (inp.hit('b') || inp.hit('start'))) { inp.eat('b'); inp.eat('start'); this.close(); }
+    },
+    draw(ctx) { ctx.fillStyle = '#0c0a10'; ctx.fillRect(0, 0, G.W, G.H); },
+  };
   G.bugReport = () => {
     const s = G.state || {}, w = G.play && G.play.world, p = G.play && G.play.player, f = s.flags || {};
     const sceneName = G.scene === G.play ? 'playing' : G.scene === G.title ? 'title screen' : G.scene === G.gameOver ? 'fainted' : G.scene === G.manual ? 'manual' : 'menu';
