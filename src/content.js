@@ -8709,15 +8709,13 @@
         // a new move every bar
         if (this.danceBar !== bar) {
           this.danceBar = bar;
-          const pool = ['sprinkler', 'robot', 'noodle', 'shopping', 'floss', 'runningman', 'twist', 'shimmy'].concat(this.combo >= 16 ? ['spin', 'limbo', 'headbang', 'moonwalk', 'disco', 'jacks'] : [], this.combo >= 24 ? ['dab'] : [], this.combo >= 32 ? ['worm', 'worm'] : []);
+          // (none of Nate's chapel moves: the robot, the sprinkler, the running man, the moonwalk, the
+          // spin, the worm, the floss, jumping jacks and the dab are his surprise, in the chapel)
+          const pool = ['noodle', 'shopping', 'twist', 'shimmy', 'swim', 'cabbage', 'chicken'].concat(this.combo >= 16 ? ['limbo', 'headbang', 'disco', 'slide', 'pony'] : [], this.combo >= 24 ? ['lawnmower'] : [], this.combo >= 32 ? ['splits', 'splits'] : []);
           const choices = pool.filter((m) => m !== this.move);
           this.move = choices[Math.floor(Math.random() * choices.length)];
         }
         switch (this.move) {
-          // one arm out, ticking around like a lawn sprinkler... then snapping back
-          case 'sprinkler': { const k = Math.floor(p * 8); return pose(A.right[0], { rot: k < 7 ? -0.3 + k * 0.09 : -0.3, dy: k % 2 ? -1 : 0, name: 'THE SPRINKLER' }); }
-          // stiff, jerky, a new direction every half beat
-          case 'robot': { const k = Math.floor(beatF * 2); return pose(A[['down', 'left', 'down', 'right'][k % 4]][0], { dx: [0, -4, 0, 4][k % 4], dy: k % 2 ? -1 : 0, name: '*BEEP BOOP*' }); }
           // the shopping cart: push it along, grab something off a high shelf, drop it in, keep pushing
           // (the cart gets drawn in front of him: cart)
           case 'shopping': {
@@ -8727,43 +8725,45 @@
           }
           // all rubber: squash and stretch on every beat
           case 'noodle': { const w = Math.sin(ph * Math.PI * 2); return pose(A.down[(beat % 2) + 1], { sx: 1 + w * 0.22, sy: 1 - w * 0.18, rot: Math.sin(beatF * Math.PI) * 0.12, name: 'THE NOODLE' }); }
-          // a big jump and a full spin
-          case 'spin': return pose(A.hold, { mid: true, rot: p * Math.PI * 2, dy: -Math.round(Math.sin(p * Math.PI) * 6), name: 'SPIN!' });
           // all 6'5" of him, bending back under the bar (away from the notes)
           case 'limbo': return pose(A.hold, { rot: Math.sin(p * Math.PI) * 0.65, dx: -Math.round(p * 6), name: 'LIMBO!' });
           // fast, on every half beat
           case 'headbang': { const k = Math.floor(beatF * 2); return pose(A.down[0], { dy: k % 2 ? 3 : 0, rot: k % 2 ? 0.1 : -0.06, name: 'HEADBANG' }); }
-          // flat on the floor, rippling (head toward the edge, out of the way of the notes)
-          case 'worm': return pose(A.right[0], { rot: Math.PI / 2, dy: 4 - Math.round(Math.abs(Math.sin(p * Math.PI * 4)) * 4), dx: -26 + Math.round(Math.sin(p * Math.PI) * 4), name: 'THE WORM' });
-          // hips one way, arms the other, every half beat
-          case 'floss': { const k = Math.floor(beatF * 2); return pose(A.down[0], { dx: k % 2 ? 3 : -3, rot: k % 2 ? -0.08 : 0.08, name: 'THE FLOSS' }); }
-          // running in place, going nowhere, very fast
-          case 'runningman': { const k = Math.floor(beatF * 2); return pose(A.right[(k % 2) + 1], { dy: k % 2 ? -2 : 0, name: 'RUNNING MAN' }); }
           // twisting all the way down, and back up
           case 'twist': return pose(A.down[(beat % 2) + 1], { sx: 1 - Math.abs(Math.sin(beatF * Math.PI)) * 0.35, dy: Math.round(Math.sin(p * Math.PI) * 5), name: 'THE TWIST' });
           // shoulders, fast
           case 'shimmy': return pose(A.down[0], { dx: (this.f >> 1) % 2 ? 1 : -1, rot: (this.f >> 1) % 2 ? 0.04 : -0.04, name: 'SHIMMY' });
-          // walking forward, sliding backward
-          case 'moonwalk': { const k = Math.floor(beatF * 2); return pose(A.right[(k % 2) + 1], { dx: Math.round(8 - p * 16), name: 'MOONWALK' }); }
           // the point: up to the ceiling, down to the floor
           case 'disco': return beat % 2 ? pose(A.hold, { dx: 2, rot: -0.15, name: 'DISCO' }) : pose(A.right[0], { rot: -0.35, dy: -2, name: 'DISCO' });
-          case 'jacks': { const k = Math.floor(beatF * 2); return k % 2 ? pose(A.hold, { sx: 1.12, dy: -2, name: 'JUMPING JACKS' }) : pose(A.down[0], { name: 'JUMPING JACKS' }); }
-          // a dab on every other beat (he thinks it's still cool)
-          case 'dab': return beat % 2 === 0 ? pose(A.left[0], { rot: 0.4, dy: 1, name: 'DAB' }) : pose(A.down[0], { name: 'DAB' });
+          // swimming: a stroke to each side, every half beat
+          case 'swim': { const k = Math.floor(beatF * 2); return pose(A[k % 2 ? 'left' : 'right'][0], { rot: k % 2 ? -0.18 : 0.18, dy: k % 2 ? -1 : 0, name: 'THE SWIM' }); }
+          // stirring the pot, round and round
+          case 'cabbage': { const a = beatF * Math.PI; return pose(A.down[(beat % 2) + 1], { dx: Math.round(Math.cos(a) * 3), dy: Math.round(Math.sin(a) * 2), name: 'CABBAGE PATCH' }); }
+          // elbows out, flapping, a little hop
+          case 'chicken': { const k = Math.floor(beatF * 2); return pose(A.down[0], { sx: k % 2 ? 1.18 : 0.92, dy: k % 2 ? -2 : 0, name: 'THE CHICKEN' }); }
+          // the grapevine, all the way over and all the way back
+          case 'slide': { const a = p * Math.PI * 2; return pose(A[Math.cos(a) > 0 ? 'right' : 'left'][(Math.floor(beatF * 2) % 2) + 1], { dx: Math.round(Math.sin(a) * 7), name: 'ELECTRIC SLIDE' }); }
+          // hopping foot to foot
+          case 'pony': { const k = Math.floor(beatF * 2); return pose(A.down[(k % 2) + 1], { dx: k % 2 ? 3 : -3, dy: -Math.round(Math.abs(Math.sin(ph * Math.PI * 2)) * 2), name: 'THE PONY' }); }
+          // bend down, grab the cord, yank: the mower never starts
+          case 'lawnmower': return p % 0.5 < 0.25 ? pose(A.right[0], { rot: 0.35, sy: 0.9, dy: 2, name: 'THE LAWNMOWER' }) : pose(A.hold, { rot: -0.2, dy: -3, name: 'THE LAWNMOWER' });
+          // all the way down into the splits (and he will feel it tomorrow)
+          case 'splits': return pose(A.hold, { sx: 1.3, sy: 0.72 + Math.sin(beatF * Math.PI) * 0.04, dy: 6, name: 'THE SPLITS' });
           default: return pose(A.down[0]);
         }
       },
-      // the cello: Abe dances sitting down, on a chair. Seated sways, then a new move every bar: the chair
-      // spin, raise the roof, the conductor, the seat bounce, the lean back
+      // the cello: Abe dances sitting down, on a chair. Seated sways, then a new move every bar: the shoulder
+      // roll, raise the roof, the conductor, the seat bounce, the lean back, air drums, the wave, the slow clap
       chairDance() {
         const A = G.sprites.abe, beatF = this.f / fpb, beat = Math.floor(beatF), ph = beatF - beat, bar = Math.floor(beat / 4), p = (beatF % 4) / 4;
         const pose = (img, o = {}) => Object.assign({ img, dx: 0, dy: 0, rot: 0, sx: 1, sy: 1, mid: false, name: null, seat: true }, o);
         if (this.oofT > 0) return pose(A.down[0], { sx: 1.12, sy: 0.9, name: 'OOF' });
         if (this.f < COUNT || this.groove < 0.35) return pose(A.down[0], { dy: this.f >= COUNT && ph < 0.25 ? 1 : 0 });
         if (this.combo < 8) return pose(A.down[beat % 2 ? 1 : 2], { rot: Math.sin((beatF * Math.PI) / 2) * 0.08 });
-        if (this.danceBar !== bar) { this.danceBar = bar; const pool = ['chairspin', 'roof', 'conductor', 'bounce', 'leanback', 'airdrums', 'wave', 'clap'].filter((m) => m !== this.move); this.move = pool[Math.floor(Math.random() * pool.length)]; }
+        if (this.danceBar !== bar) { this.danceBar = bar; const pool = ['shoulders', 'roof', 'conductor', 'bounce', 'leanback', 'airdrums', 'wave', 'clap'].filter((m) => m !== this.move); this.move = pool[Math.floor(Math.random() * pool.length)]; }
         switch (this.move) {
-          case 'chairspin': return pose(A[['down', 'right', 'down', 'left'][Math.floor(p * 8) % 4]][0], { sx: Math.max(0.2, Math.abs(Math.cos(p * Math.PI * 4))) * (Math.floor(p * 8) % 4 === 3 ? -1 : 1), name: 'CHAIR SPIN' });
+          // (no chair spin: the spin is one of Nate's chapel moves) a slow roll of the shoulders
+          case 'shoulders': return pose(A.down[0], { rot: Math.sin(beatF * Math.PI) * 0.1, dy: Math.round(Math.abs(Math.sin(beatF * Math.PI))), name: 'SHOULDER ROLL' });
           case 'roof': return pose(A.hold, { dy: ph < 0.5 ? -2 : 0, name: 'RAISE THE ROOF' });
           case 'conductor': { const k = Math.floor(beatF * 2); return pose(A[k % 2 ? 'left' : 'right'][0], { rot: k % 2 ? -0.1 : 0.1, name: 'THE CONDUCTOR' }); }
           case 'bounce': return pose(A.down[(beat % 2) + 1], { dy: -Math.round(Math.abs(Math.sin(ph * Math.PI)) * 3), name: 'SEAT BOUNCE' });
