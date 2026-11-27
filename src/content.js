@@ -9227,11 +9227,13 @@
           // sitting down on a chair: its back behind him, then him (cut off at the seat, lowered onto
           // it), then the seat and its legs in front, and his shoes under it
           const seatY = 40 + ah - 12;
-          ctx.fillStyle = '#5a3418'; ctx.fillRect(189, seatY - 28, 3, 30); ctx.fillRect(208, seatY - 28, 3, 30); ctx.fillRect(189, seatY - 28, 22, 3);
+          // (the chair a little wider than he is, so its back posts stand clear of him instead of showing
+          // through the gaps by his arms)
+          ctx.fillStyle = '#5a3418'; ctx.fillRect(180, seatY - 28, 3, 30); ctx.fillRect(217, seatY - 28, 3, 30); ctx.fillRect(180, seatY - 28, 40, 3);
           ctx.save(); ctx.beginPath(); ctx.rect(140, 0, 100, seatY + 1); ctx.clip();
           ctx.translate(200, 40 + ah + 6 + A.dy); ctx.rotate(A.rot); ctx.scale(A.sx, A.sy); ctx.drawImage(A.img, -aw / 2, -ah, aw, ah);
           ctx.restore();
-          ctx.fillStyle = '#7a4a24'; ctx.fillRect(186, seatY, 28, 4); ctx.fillStyle = '#5a3418'; ctx.fillRect(188, seatY + 4, 3, 10); ctx.fillRect(209, seatY + 4, 3, 10);
+          ctx.fillStyle = '#7a4a24'; ctx.fillRect(178, seatY, 44, 4); ctx.fillStyle = '#a06a3a'; ctx.fillRect(178, seatY, 44, 1); ctx.fillStyle = '#5a3418'; ctx.fillRect(180, seatY + 4, 3, 10); ctx.fillRect(217, seatY + 4, 3, 10);
           ctx.fillStyle = '#2a2a30'; ctx.fillRect(193, seatY + 9, 5, 3); ctx.fillRect(202, seatY + 9, 5, 3);
         } else {
           ctx.save(); ctx.translate(px, py); ctx.rotate(A.rot); ctx.scale(A.sx, A.sy);
