@@ -6420,7 +6420,7 @@
     jam_strings: ['Notes slide down the four strings: low on the left, high on the right. Play each one with its arrow (← ↓ ↑ →) right as it reaches the bridge.', 'A long tail means HOLD the arrow till the tail runs out, or it\'s DROPPED.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
     jam_horn: ['Notes slide down to the instrument: low on the left, high on the right. Play each one with its arrow (← ↓ ↑ →) right as it lands.', 'A long tail means HOLD it till the tail runs out, or it\'s DROPPED. (On the trombone, a held note slides right into the next one.)', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
     jam_machine: ['← hi-hat, ↓ BOOM, ↑ snare, → CLAP. Hit each pad right as its note lands on it.', 'Two at once (like BOOM and hi-hat)? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
-    jam_sampler: ['Seven pads, and every one is Dad saying "English." The number keys play them: 1 2 3 4 5 7 8. (Not 6. Never 6.) Hit each right as its note lands.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
+    jam_sampler: ['Seven pads, and every one is Dad saying "English." The top row plays them: Q W E R T Y U. Hit each right as its note lands.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
     jam_cowbell: ['Two cowbells: ← the high one, → the low one. Hit each right as its note lands.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
     jam_kit: ['← hi-hat, ↓ kick drum, ↑ snare, → crash and toms. Hit each note right as it lands on its drum.', 'Two at once (like kick and hi-hat)? Press both arrows.', 'Hits fill the GROOVE meter, misses drain it. If it empties, Abe stops the band.'],
   };
@@ -8476,7 +8476,7 @@
     // Sampler, Abe on the drum machine and synth bass. a-g: the seven clips (two to a lane, the last one alone)
     {
       id: 'eeenglish', name: 'The EEENGLISH Remix', bpm: 100, d: 2, drums: 'sampler', page: 'bonus', bonus: true, wide: true, style: 'electro', perfect: 4, good: 8, drain: 0.06, lead: 92,
-      blurb: 'Dad. Seven sermons. One word. Seven pads, keys 1 2 3 4 5 7 8. Not 6. Never 6.',
+      blurb: 'Dad. Seven sermons. One word. Seven pads, on the top row: Q W E R T Y U.',
       samples: ENGLISH_CLIPS,
       // a-g: the seven clips, one lane each (the vine, the y'all line, our language, the body of
       // Christ, melody, the Good Samaritan, the sower)
@@ -8639,10 +8639,10 @@
     // (wind: a flute song; keys: a piano song; bow: a violin song; solo: Nate on something other than guitar, with a backing guitar)
     // (horn: the horns, and the kazoo and the theremin)
     const S0 = buildSong(song), fpb = 3600 / song.bpm, COUNT = Math.round(4 * fpb), HIT_Y = 116, TOP = 14, drums = song.drums, wind = song.wind, keys = song.keys, bow = song.bow, horn = song.horn, elec = song.elec, solo = drums || wind || keys || bow || horn || elec;
-    // (a wide song, the EEENGLISH Remix: seven lanes on the number keys 1 2 3 4 5 7 8. Not 6. Never 6.)
+    // (a wide song, the EEENGLISH Remix: seven lanes on the top row, Q W E R T Y U)
     const WIDE = !!song.wide, NL = WIDE ? 7 : 4;
     const LANES = WIDE ? [82, 95, 108, 121, 134, 147, 160] : drums === 'bongos' || drums === 'cowbell' ? [96, 0, 0, 144] : [87, 109, 131, 153], USED = [...Array(NL).keys()].filter((L) => S0.notes.some((n) => n.lane === L));
-    const KEYS = WIDE ? ['n1', 'n2', 'n3', 'n4', 'n5', 'n7', 'n8'] : ['left', 'down', 'up', 'right'], ARROWS = WIDE ? ['1', '2', '3', '4', '5', '7', '8'] : ['←', '↓', '↑', '→'];
+    const KEYS = WIDE ? ['@KeyQ', '@KeyW', '@KeyE', '@KeyR', '@KeyT', '@KeyY', '@KeyU'] : ['left', 'down', 'up', 'right'], ARROWS = WIDE ? ['Q', 'W', 'E', 'R', 'T', 'Y', 'U'] : ['←', '↓', '↑', '→'];
     const GEM = { bongos: ['#f8d890', 0, 0, '#e09048'], pan: ['#b8d8f8', '#b8f0c8', '#f8e8a0', '#f8c0d8'], kit: ['#f8d850', '#c050a0', '#f0f0f0', '#78c8f8'], pvc: ['#78e8e8', '#78e070', '#f8d850', '#f898c8'], flute: ['#c8d8f8', '#a8e8f0', '#f0f0ff', '#f8e0a8'], upright: ['#f8d8a8', '#f8f0c8', '#c8e8a8', '#a8d8f8'], casio: ['#ff6ad5', '#78e8e8', '#f8f070', '#9a7af8'], rhodes: ['#f8c070', '#e89858', '#f0e0c0', '#c8a8f8'], violin: ['#f8c870', '#f89858', '#f0e0c0', '#e8f0ff'], cello: ['#e8a060', '#f8c870', '#f0e0c0', '#d8b8f8'], upbass: ['#c87848', '#e8a060', '#f8d8a0', '#a8c8f8'],
       trumpet: ['#f8e088', '#f8c848', '#fff4c8', '#f8a848'], trombone: ['#f8d070', '#e8b048', '#fff0b8', '#f89848'], sax: ['#f8d070', '#e8a048', '#c8a8f8', '#f878a8'], synth: ['#ff4ad8', '#4af0f8', '#f8f04a', '#9a6af8'],
       machine: ['#f8f8f0', '#ff6a4a', '#f8d850', '#4af0a8'], sampler: ['#f8f8f0', '#78c8f8', '#f8d850', '#f898c8', '#78e070', '#c8a8f8', '#f8a848'], kazoo: ['#ff6a6a', '#f8d850', '#78e070', '#78c8f8'], cowbell: ['#f8e8a0', 0, 0, '#d8b860'], theremin: ['#78f8a8', '#a8f878', '#f8f878', '#78f8f8'], elec: ['#f8a848', '#f8d850', '#78e070', '#68c8ff'] }[drums || wind || keys || bow || horn || (elec && 'elec')] || ['#c050a0', '#e08030', '#f0e6c0', '#78c8f8'];
@@ -9117,19 +9117,19 @@
         // Nate (with his guitar, or at his drum) on the left, the groove meter and the combo
         const NS = G.nateSprites ? G.nateSprites() : G.sprites.nate, nate = NS.down[0], b = this.bob > 3 ? 1 : 0;
         // (held up in his hands: the guitars and the bass, the violin, the flutes, the kazoo; he's drawn
-        // armless and his arms reach for it. At the upright piano he sits with his back to us.)
-        const held = !drums && !keys && (!bow || bow === 'violin') && (!horn || horn === 'kazoo'), upright = keys === 'upright';
+        // armless and his arms reach for it. At a piano or a keyboard he plays with his back to us.)
+        const held = !drums && !keys && (!bow || bow === 'violin') && (!horn || horn !== 'theremin'), upright = !!keys;
         const X0 = 24, Y0 = 46 + b, hit = this.hitT.some((h) => h > 4) ? 1 : 0;
         if (upright) {
-          const img = gt.art(), k = 1.5;
-          ctx.drawImage(img, Math.round(40 - (img.width * k) / 2), 47 + hit, Math.round(img.width * k), Math.round(img.height * k));
+          // (the upright at 1.5x; a keyboard on its stand at 1.25x, its feet on the floor; either one a
+          // little wider than he is, so it shows on both sides of him)
+          const img = gt.art(), k = keys === 'upright' ? 1.5 : 1.25, w = Math.round(img.width * k), h = Math.round(img.height * k);
+          ctx.drawImage(img, Math.round(41 - w / 2), keys === 'upright' ? 47 + hit : 97 - h + hit, w, h);
           ctx.drawImage(NS.up[0], X0, Y0, nate.width * 2, nate.height * 2);
         } else ctx.drawImage(held && NS.noarms ? NS.noarms : nate, X0, Y0, nate.width * 2, nate.height * 2);
         const arms = (hl, hr) => { if (NS.noarms) jamArms(ctx, nate, X0, Y0, hl, hr); };
         if (drums) { const img = gt.art(); ctx.drawImage(img, Math.round(40 - img.width / 2), { bongos: 80, pan: 74, kit: 66, machine: 78, sampler: 78, cowbell: 72 }[drums] + hit); }
-        // (a keyboard in front of him)
-        else if (keys && !upright) { const img = gt.art(); ctx.drawImage(img, Math.round(40 - img.width / 2), { casio: 72, rhodes: 70, synth: 72 }[keys] + hit); }
-        else if (upright) { /* (drawn above, behind him) */ }
+        else if (upright) { /* (the piano or keyboard: drawn above, behind him) */ }
         // (a cello or an upright bass standing beside him; a horn at his mouth, or a theremin in front)
         else if (bow && bow !== 'violin') standHold(ctx, gt.art(), 50, 95 + b, bow === 'cello' ? 0.7 : 0.68, bow === 'cello' ? (this.hitT.some((h) => h > 0) || this.holds.some(Boolean) ? Math.sin(this.f * 0.2) : 0) : null);
         else if (horn === 'kazoo') {
@@ -9138,15 +9138,32 @@
           ctx.save(); ctx.imageSmoothingEnabled = false; ctx.translate(39 + img.width, 62 + b); ctx.scale(-1, 1); ctx.drawImage(img, 0, 0); ctx.restore();
           arms(null, [51, 67 + b]);
         }
-        else if (horn) hornHold(ctx, horn, gt.art(), 43, 63 + b, 95 + b, horn === 'trombone' ? 0.6 : 0.8, [0, 1, 2, 3].filter((L) => this.hitT[L] > 0 || this.holds[L]).pop());
+        else if (horn === 'trumpet' || horn === 'trombone') {
+          // the mouthpiece at his lips, the bell out to our right. The trumpet: fingers on the valves,
+          // the other hand under the valve casing. The trombone: one hand at the bell brace, the
+          // other out on the slide (it follows the slide)
+          const img = gt.art(), k = horn === 'trombone' ? 0.6 : 0.8, lane = [0, 1, 2, 3].filter((L) => this.hitT[L] > 0 || this.holds[L]).pop();
+          hornHold(ctx, horn, img, 40, 65 + b, 95 + b, k, lane);
+          if (horn === 'trumpet') arms([Math.round(40 + 14 * k), Math.round(65 + b - 4 * k)], [Math.round(40 + 16 * k), Math.round(65 + b + 4 * k)]);
+          // (his slide hand reaches only as far as an arm can: it grips the slide partway along)
+          else arms([Math.min(58, Math.round(40 + img.width * k - 2 + (3 - (lane || 0)) * 3 * k)), 67 + b], [Math.round(40 + 8 * k), 66 + b]);
+        }
+        else if (horn === 'sax') {
+          // the sax hanging from his mouth, both hands on its keys (his left hand above his right)
+          const img = gt.art(), k = 0.8, x0 = 43 - img.width * k * 0.35, y0 = 63 + b - 2 * k;
+          hornHold(ctx, horn, img, 43, 63 + b, 95 + b, k);
+          arms([Math.round(x0 + 9 * k), Math.round(y0 + 24 * k)], [Math.round(x0 + 8.5 * k), Math.round(y0 + 12 * k)]);
+        }
+        else if (horn) hornHold(ctx, horn, gt.art(), 43, 63 + b, 95 + b, 0.8, [0, 1, 2, 3].filter((L) => this.hitT[L] > 0 || this.holds[L]).pop());
         else if (wind) {
-          const img = gt.art(), k = wind === 'pvc' ? 0.62 : 0.55, w = img.width * k, h = img.height * k;
+          const img = gt.art(), k = wind === 'pvc' ? 0.52 : 0.55, w = img.width * k, h = img.height * k;
           ctx.save(); ctx.imageSmoothingEnabled = false; ctx.translate(40, 65 + b);
           if (wind === 'pvc') {
             // the Happy Magic Flute: blown from the end, like a recorder, pointing down and out a little
             ctx.rotate(-0.28); ctx.drawImage(img, -w / 2, 0, w, h); ctx.restore();
             const along = (f) => [Math.round(40 + Math.sin(0.28) * h * f), Math.round(65 + b + Math.cos(0.28) * h * f)];
-            arms(along(0.72), along(0.4));
+            // (his hands close together up near the top, like a recorder: short arms, elbows in)
+            arms(along(0.5), along(0.26));
           } else {
             // the silver flute: blown across, held out sideways to his right (our left)
             ctx.rotate(Math.PI / 2 + 0.06); ctx.drawImage(img, -w / 2, 0, w, h); ctx.restore();

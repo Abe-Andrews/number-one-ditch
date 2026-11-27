@@ -58,23 +58,29 @@ G.input = (function () {
   };
   const held = {};
   const pressed = {};
+  // the top row, Q to U, also tracked as physical keys ('@KeyQ' and so on), whatever else they do,
+  // for the EEENGLISH Remix's seven pads (W is still up, Q and E still flip pages)
+  const RAW = new Set(['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU']);
 
   // (keys typed into a text box, like the bug report's, belong to the box)
   const typing = (e) => e.target && /^(TEXTAREA|INPUT)$/.test(e.target.tagName);
   addEventListener('keydown', (e) => {
-    const b = KEYMAP[e.code];
-    if (!b || typing(e)) return;
+    const b = KEYMAP[e.code], raw = RAW.has(e.code) ? '@' + e.code : null;
+    if ((!b && !raw) || typing(e)) return;
     e.preventDefault();
+    if (raw) { if (!held[raw]) pressed[raw] = true; held[raw] = true; }
+    if (!b) return;
     if (!held[b]) pressed[b] = true;
     held[b] = true;
     G.audio.unlock();
     if (b === 'mute') G.audio.toggleMute();
   });
   addEventListener('keyup', (e) => {
-    const b = KEYMAP[e.code];
-    if (!b || typing(e)) return;
+    const b = KEYMAP[e.code], raw = RAW.has(e.code) ? '@' + e.code : null;
+    if ((!b && !raw) || typing(e)) return;
     e.preventDefault();
-    held[b] = false;
+    if (raw) held[raw] = false;
+    if (b) held[b] = false;
   });
   addEventListener('blur', () => {
     for (const k in held) held[k] = false;

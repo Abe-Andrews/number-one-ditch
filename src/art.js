@@ -10938,17 +10938,21 @@
     for (const [x, y] of [[13, 3], [14, 4], [15, 4], [16, 5], [14, 6]]) p.set(x, y, '#1c140c');
     p.set(13, 8, '#c8ccd4'); p.set(11, 2, '#2a2a30'); p.set(12, 2, '#2a2a30');
     guitarNeck(p, 15, 50, MAP, MAPD, MAP, '#c8ccd4', '#2a2018');
-    // the body: a round bass-side shoulder up high, one cutaway curving in on the treble side
-    const L = [[41, 6], [42, 4], [43, 2], [44, 1], [65, 1], [66, 2], [68, 3], [69, 3], [70, 4], [71, 5], [72, 7], [73, 10]];
-    const R = [[47, 16], [48, 18], [49, 20], [50, 21], [51, 22], [66, 22], [67, 21], [68, 21], [69, 20], [70, 19], [71, 18], [72, 16], [73, 13]];
-    const gap = (x, y) => (y < 48 && x > 9 && x < 15) || (y < 47 && x >= 15);
-    const inB = guitarBody(p, 41, 74, L, R, gap, (x, y, rim, k) => {
+    // the body (measured off the photo): a Tele slab, wider than it is long. A rounded bass-side
+    // shoulder, straight sides, a broad rounded bottom, and on the treble side the pointed horn,
+    // about as high as the shoulder, with the deep U of the cutaway between it and the neck
+    // (both sides flare out a little toward the bottom, like a bell)
+    const L = [[43, 5], [44, 4], [45, 3], [47, 3], [52, 2], [57, 1], [66, 1], [68, 2], [70, 3], [71, 5]];
+    const R = [[43, 20], [44, 21], [49, 21], [55, 22], [66, 22], [68, 21], [70, 20], [71, 18]];
+    const HORN = { 43: 19, 44: 18, 45: 18, 46: 18, 47: 17, 48: 17 };
+    const gap = (x, y) => (y < 49 && x > 9 && x < HORN[y]) || (y === 49 && x >= 15 && x <= 16);
+    const inB = guitarBody(p, 43, 72, L, R, gap, (x, y, rim, k) => {
       const h = G.hash(x, y, 23), wear = h < 0.05 || (rim && h < 0.35);
       return wear ? '#ead8b8' : rim ? '#8a1a14' : k === 1 ? '#f8705c' : k === 2 ? '#e8483a' : x > 19 ? '#b82a20' : '#d83228';
     });
     // the big black pickguard (it covers the whole upper body), with a gray bevel
-    guitarGuard(p, 43, 71, [[43, 8], [44, 6], [45, 5], [46, 4], [47, 3], [60, 3], [61, 4], [62, 6], [63, 9], [64, 13], [70, 14]], [[43, 15], [47, 17], [48, 19], [49, 20], [66, 20], [67, 19], [69, 18], [70, 16]], inB, () => '#141418', '#4a4a52');
-    guitarNeck(p, 41, 50, MAP, MAPD, MAP, '#c8ccd4', '#2a2018'); p.hline(10, 14, 41, MAPD);
+    guitarGuard(p, 44, 70, [[44, 8], [45, 6], [46, 5], [47, 4], [52, 3], [60, 3], [61, 4], [62, 6], [63, 9], [64, 13], [69, 14]], [[44, 15], [47, 18], [48, 19], [50, 20], [66, 20], [67, 19], [68, 18], [69, 16]], inB, () => '#141418', '#4a4a52');
+    guitarNeck(p, 43, 50, MAP, MAPD, MAP, '#c8ccd4', '#2a2018'); p.hline(10, 14, 43, MAPD);
     guitarStrings(p, 15, 63, '#d8dce4', 50, '#f8dca0');
     // two chrome Wide Range humbuckers (pole pieces down the middle), the hardtail bridge, four knobs
     for (const py of [50, 56]) { p.rect(8, py, 9, 3, '#c8ccd4'); p.hline(8, 16, py, '#f0f2f6'); p.hline(8, 16, py + 2, '#8a8e98'); for (let k = 0; k < 9; k += 2) p.set(8 + k, py + 1, '#4a4e58'); }
