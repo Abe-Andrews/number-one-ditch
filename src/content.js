@@ -9383,6 +9383,8 @@
       if (first && prize) yield* abeStudioNews();
       if (first) yield* S.bassNews();
       if (first) yield* S.englishNews();
+      // (finishing the last song on the setlist: QUEST COMPLETE, right here, not once Nate walks away)
+      yield* S.questCheer();
       const nextSong = JAM_SONGS[idx + 1];
       if (first && nextSong && jamTrack(nextSong) === jamTrack(song)) {
         const next = jamPrize(nextSong);
@@ -23516,6 +23518,23 @@
   // Nate on bass and Abe (for once) on guitar, and the bass goes to Studio B.
   // Flags: bassQuest (1 go see the Lady, 2 go see Dad, 3 go see Abe, 4 done), bassDone.
   G.jamAllPassed = () => { const J = G.state.jams || {}; return G.JAM_SONGS.filter((sg) => !sg.elec && !sg.bonus).every((sg) => J[sg.id]); };
+  // A quest finished: a big banner and a fanfare (from the quest watcher, G.questWatch, whenever nothing
+  // else is going on). questCheer: check right now, in the middle of a long scene (like a jam session,
+  // which is one script the whole time), and show any that just finished.
+  S.questComplete = function* (name) {
+    G.audio.sfx('fanfare');
+    yield G.banner('QUEST COMPLETE', name, 160);
+  };
+  S.questCheer = function* () {
+    if (G.questWatch) G.questWatch();
+    for (;;) {
+      const T = G.toasts, i = T.list.findIndex((q, k) => q.kind === 'done' && (k > 0 || !T.t));
+      if (i < 0) return;
+      const q = T.list.splice(i, 1)[0];
+      G.play.overlay = null;
+      yield* S.questComplete(q.name);
+    }
+  };
   // ...and once the bass songs are done too (every song on every page): Abe has made one more
   S.englishNews = function* () {
     const f = flags();

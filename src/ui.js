@@ -195,7 +195,7 @@
   // last look. A new quest, a new rumor or a finished one pops a little card up
   // from the bottom of the screen, and new ones say NEW on the QUESTS page
   // until Nate looks at it.
-  const TOAST = { active: ['NEW QUEST', '#f8d850'], rumor: ['NEW RUMOR', '#78e8e8'], done: ['QUEST COMPLETE', '#78e070'], achieve: ['ACHIEVEMENT', '#ff98d0'] };
+  const TOAST = { active: ['NEW QUEST', '#f8d850'], reopen: ['QUEST UPDATED', '#f8d850'], rumor: ['NEW RUMOR', '#78e8e8'], done: ['QUEST COMPLETE', '#78e070'], achieve: ['ACHIEVEMENT', '#ff98d0'] };
   const TOAST_T = 170;
 
   // ---- achievements: little milestones, kept in s.achieved, with a toast when one lands. Listed on
@@ -239,6 +239,8 @@
     list: [], t: 0, dur: TOAST_T,
     update() {
       if (!this.list.length || G.script.busy) return;
+      // (a finished quest isn't a little card: it gets the big banner and a fanfare, S.questComplete)
+      if (this.list[0].kind === 'done' && !this.t && G.SCRIPTS.questComplete) { G.script.run(G.SCRIPTS.questComplete(this.list.shift().name)); return; }
       // (quicker when there's a line of them)
       // (quicker when there's a line of them, but only achievements hurry: a new quest or rumor always
       // gets its full time on screen, even with achievements waiting behind it)
@@ -266,7 +268,7 @@
       ctx.fillStyle = '#1c1424';
       if (q.kind === 'done') [[3, 7], [4, 8], [5, 9], [6, 8], [7, 7], [8, 6], [9, 5], [10, 4]].forEach(([dx, dy]) => ctx.fillRect(bx + dx, by + dy, 1, 2));
       else if (q.kind === 'achieve') { ctx.fillRect(bx + 6, by + 2, 2, 10); ctx.fillRect(bx + 2, by + 5, 10, 2); ctx.fillRect(bx + 4, by + 4, 6, 6); ctx.fillRect(bx + 3, by + 10, 2, 2); ctx.fillRect(bx + 9, by + 10, 2, 2); }
-      else F().draw(ctx, q.kind === 'active' ? '!' : '?', bx + 7 - Math.floor(F().width(q.kind === 'active' ? '!' : '?') / 2), by + 4, '#1c1424');
+      else F().draw(ctx, q.kind === 'rumor' ? '?' : '!', bx + 7 - Math.floor(F().width(q.kind === 'rumor' ? '?' : '!') / 2), by + 4, '#1c1424');
       F().draw(ctx, label, x + 22, y + 3, col, { shadow: SH });
       F().draw(ctx, name, x + 22, y + 12, '#f8f8f0', { shadow: SH });
       // a glint across the card as it lands
@@ -312,11 +314,14 @@
     s.questNew = s.questNew || {};
     for (const q of side) {
       const was = s.questLog[q.name];
-      if (was === q.kind || was === 'done' || (was && q.kind === 'rumor')) continue;
+      if (was === q.kind || (was && q.kind === 'rumor')) continue;
       s.questLog[q.name] = q.kind;
+      // (a finished quest that opens back up, like Abe's setlist growing a BASS page, is QUEST UPDATED;
+      // finishing it again gets the banner again)
+      const kind = was === 'done' && q.kind === 'active' ? 'reopen' : q.kind;
       // (ahead of any achievements still waiting their turn, but not ahead of the one on screen)
       const T = G.toasts, wait = T.list.findIndex((x, i) => x.kind === 'achieve' && (i > 0 || !T.t));
-      if (wait >= 0) T.list.splice(wait, 0, { kind: q.kind, name: q.name }); else T.list.push({ kind: q.kind, name: q.name });
+      if (wait >= 0) T.list.splice(wait, 0, { kind, name: q.name }); else T.list.push({ kind, name: q.name });
       if (q.kind === 'done') delete s.questNew[q.name];
       else s.questNew[q.name] = 1;
     }
