@@ -25238,9 +25238,11 @@
       F.stand(sp.microphone, 9, 6, 1, look('A mic stand. Ice JJ Fish brought his own mic.'));
       // Ice JJ Fish, center stage, singing
       const jj = w.jjNpc = w.add(new G.NPC({ sprite: 'icejj', name: 'Ice JJ Fish', x: 11 * 16, y: 6 * 16 + 12, dir: 'down', talk: function* () {
-        yield G.say('Ice JJ Fish', 'AYY! The pastor\'s kid! Kids\' church, baby! These little guys know ALL the words.');
-        yield G.say('Nate', 'Your song only has like four words.');
-        yield G.say('Ice JJ Fish', 'And they know ALL of them.');
+        yield G.say('Ice JJ Fish', 'AYY! The pastor\'s kid made it! You here to sit there, or you here to DANCE?');
+        yield G.say('Ice JJ Fish', 'Hit the number keys. Every number\'s a different move. Go ahead, try \'em all.');
+        yield G.say('Ice JJ Fish', 'Chain \'em fast for a COMBO. The kids lose their minds for combos.');
+        yield G.say('Nate', 'Every number?');
+        yield G.say('Ice JJ Fish', 'Every number but THAT one. I heard about you, man.');
       } }));
       jj.draw = function (ctx, cx, cy) {
         const img = G.sprites.icejj[this.dir][0], bob = Math.round(Math.abs(Math.sin(G.tick * 0.12)) * 2);
